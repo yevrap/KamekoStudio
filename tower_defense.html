@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Simple Tower Defense - Upgrades</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive; overscroll-behavior: none; touch-action: none;
+            background-color: #2e3440; color: #eceff4; display: flex; flex-direction: column;
+            align-items: center; padding: 5px; min-height: 100vh; margin: 0;
+        }
+        #gameCanvas {
+            display: block; background-color: #88c0d0; max-width: 100%; max-height: 75vh;
+            aspect-ratio: 4 / 3; margin: 0 auto; cursor: pointer;
+            border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .ui-row {
+            background-color: #434c5e; padding: 8px 12px; border-radius: 8px;
+            display: flex; align-items: center; flex-wrap: wrap;
+            gap: 8px 15px; width: 100%; max-width: 800px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-size: 0.65rem;
+            margin-bottom: 8px;
+        }
+        .game-stats-info { justify-content: space-around; }
+        .game-controls {
+            justify-content: center; background-color: transparent; box-shadow: none;
+            padding: 0; margin-bottom: 10px;
+        }
+        .ui-item { color: #d8dee9; white-space: nowrap; }
+        .ui-value { color: #ebcb8b; font-weight: bold; }
+        .game-button {
+            background-color: #a3be8c; color: #2e3440; border: none; padding: 7px 10px;
+            border-radius: 5px; cursor: pointer; font-family: 'Press Start 2P', cursive;
+            font-size: 0.65rem; transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;
+            min-width: 130px; text-align: center;
+        }
+        .game-button:hover:not(:disabled) { background-color: #b4d0a0; transform: translateY(-1px); }
+        .game-button:disabled { background-color: #5e6a7e; color: #9aabbb; cursor: not-allowed; transform: none; box-shadow: none;}
+        #upgradeTowerButton { background-color: #b48ead; }
+        #upgradeTowerButton:hover:not(:disabled) { background-color: #c7a5c9; }
+        /* --- NEW: Slow Button Style --- */
+        #slowAbilityButton { background-color: #88c0d0; /* Light blue button */ }
+        #slowAbilityButton:hover:not(:disabled) { background-color: #9dc9da; }
+
+
+        .tower-info {
+            min-height: 1.5em; color: #d8dee9; text-align: center;
+            flex-grow: 1; margin-top: 0; padding: 0 10px;
+        }
+        .tower-info span { color: #ebcb8b; }
+        .message-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background-color: rgba(46, 52, 64, 0.9); color: #e5e9f0; padding: 20px 30px;
+            border-radius: 10px; text-align: center; font-size: 1.2rem; display: none;
+            z-index: 100; border: 2px solid #d08770;
+        }
+        .message-overlay h2 { font-size: 1.5rem; margin-bottom: 15px; color: #ebcb8b; }
+        .message-overlay button {
+             background-color: #a3be8c; color: #2e3440; border: none; padding: 10px 15px;
+             border-radius: 5px; cursor: pointer; font-family: 'Press Start 2P', cursive;
+             font-size: 0.9rem; margin-top: 20px; transition: background-color 0.2s ease;
+        }
+        .message-overlay button:hover { background-color: #b4d0a0; }
+    </style>
+</head>
+<body>
+    <div class="ui-row game-stats-info">
+        <div class="ui-item">Score: <span id="score" class="ui-value">0</span></div>
+        <div class="ui-item">Money: <span id="money" class="ui-value">100</span>$</div>
+        <div class="ui-item">Lives: <span id="lives" class="ui-value">10</span></div>
+        <div class="ui-item">Wave: <span id="wave" class="ui-value">0</span> / <span id="totalWaves" class="ui-value">0</span></div>
+        <div class="tower-info" id="towerInfoPanel">Lvl:<span>--</span> Dmg:<span>--</span> Rng:<span>--</span> Kills:<span>--</span></div>
+    </div>
+    <div class="ui-row game-controls">
+        <button id="waveControlButton" class="game-button">Start Game</button>
+        <button id="upgradeTowerButton" class="game-button" disabled>Upgrade</button>
+        <button id="slowAbilityButton" class="game-button" disabled>Slow Wave</button>
+    </div>
+    <div id="canvasContainer" style="position: relative; width: 100%; max-width: 800px;">
+         <canvas id="gameCanvas"></canvas>
+         <div id="gameOverMessage" class="message-overlay">
+             <h2>GAME OVER!</h2> Score: <span id="finalScoreGO">0</span><br>
+             <button onclick="restartGame()">Restart</button>
+         </div>
+         <div id="gameWonMessage" class="message-overlay">
+             <h2>YOU WIN!</h2> Score: <span id="finalScoreWin">0</span><br>
+             <button onclick="restartGame()">Play Again?</button>
+         </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score'); const moneyElement = document.getElementById('money');
+        const livesElement = document.getElementById('lives'); const waveElement = document.getElementById('wave');
+        const totalWavesElement = document.getElementById('totalWaves'); const waveControlButton = document.getElementById('waveControlButton');
+        const upgradeTowerButton = document.getElementById('upgradeTowerButton'); const towerInfoPanel = document.getElementById('towerInfoPanel');
+        const slowAbilityButton = document.getElementById('slowAbilityButton'); // Added
+        const gameOverMessage = document.getElementById('gameOverMessage'); const finalScoreGOElement = document.getElementById('finalScoreGO');
+        const gameWonMessage = document.getElementById('gameWonMessage'); const finalScoreWinElement = document.getElementById('finalScoreWin');
+
+        // --- Canvas & Scaling (Unchanged) ---
+        let canvasWidth, canvasHeight; let scale = 1;
+
+        // --- Game Configuration ---
+        const TILE_SIZE = 40; let scaledTileSize = TILE_SIZE; const ENEMY_BASE_SPEED = 1.5; const ENEMY_BASE_HEALTH = 50;
+        const TOWER_BASE_RANGE = 100; const TOWER_BASE_DAMAGE = 10; const TOWER_BASE_FIRE_RATE = 55; const TOWER_MAX_LEVEL = 5;
+        const UPGRADE_COST_BASE = 75; const UPGRADE_COST_MULTIPLIER = 1.5; const STARTING_MONEY = 150; const STARTING_LIVES = 10;
+        const MONEY_PER_KILL = 12; const SCORE_PER_KILL = 5;
+        // --- NEW: Slow Ability Config ---
+        const SLOW_ABILITY_DURATION_FRAMES = 300; // 5 seconds at 60fps
+        const SLOW_ABILITY_COOLDOWN_FRAMES = 1200; // 20 seconds at 60fps
+        const SLOW_EFFECT_MULTIPLIER = 0.4; // Reduce speed to 40%
+
+
+        // --- Wave Definition (Unchanged) ---
+        const waves = [ { count: 5, spawnRate: 90, healthMultiplier: 1.0, speedMultiplier: 1.0 }, { count: 8, spawnRate: 80, healthMultiplier: 1.1, speedMultiplier: 1.0 }, { count: 10, spawnRate: 70, healthMultiplier: 1.2, speedMultiplier: 1.1 }, { count: 15, spawnRate: 60, healthMultiplier: 1.4, speedMultiplier: 1.1 }, { count: 20, spawnRate: 50, healthMultiplier: 1.6, speedMultiplier: 1.2 }, { count: 25, spawnRate: 45, healthMultiplier: 1.8, speedMultiplier: 1.3 }, ]; const totalWaves = waves.length;
+
+        // --- Game State ---
+        const GAME_STATES = { PRE_GAME: 'PRE_GAME', WAVE_IN_PROGRESS: 'WAVE_IN_PROGRESS', WAVE_COMPLETE: 'WAVE_COMPLETE', GAME_OVER: 'GAME_OVER', GAME_WON: 'GAME_WON' };
+        let gameState = GAME_STATES.PRE_GAME; let score = 0; let money = STARTING_MONEY; let lives = STARTING_LIVES; let currentWaveIndex = -1;
+        let enemies = []; let towers = []; let projectiles = []; let frameCount = 0; let waveFrameCount = 0; let enemiesSpawnedThisWave = 0;
+        let grid = []; let selectedTower = null;
+        // --- NEW: Slow Ability State ---
+        let slowAbilityActive = false;
+        let slowAbilityDuration = 0;
+        let slowAbilityCooldown = 0; // Start ready
+
+
+        // --- Path Definition (Unchanged) ---
+        const pathWaypoints = [ { x: -1, y: 2 }, { x: 3, y: 2 }, { x: 3, y: 6 }, { x: 8, y: 6 }, { x: 8, y: 1 }, { x: 14, y: 1 }, { x: 14, y: 5 }, { x: 19, y: 5 }, { x: 21, y: 5 } ]; let pathPixels = [];
+
+        // --- Predefined Tower Positions (Unchanged) ---
+        const predefinedTowerPositions = [ { x: 2, y: 1 }, { x: 4, y: 3 }, { x: 2, y: 5 }, { x: 5, y: 7 }, { x: 9, y: 3 }, { x: 12, y: 0 }, { x: 15, y: 3 }, { x: 17, y: 6 }, ];
+
+        // --- Tower Level Colors (Unchanged) ---
+        const towerLevelColors = [ '#3b4252', '#4c566a', '#5e81ac', '#81A1C1', '#b48ead' ];
+        const towerSelectedColor = '#ebcb8b';
+
+        // --- Classes ---
+        // Enemy Class (Update and Draw methods modified)
+        class Enemy {
+             constructor(x, y, healthMultiplier = 1, speedMultiplier = 1) {
+                 this.x = x; this.y = y; this.size = scaledTileSize * 0.6;
+                 this.maxHealth = ENEMY_BASE_HEALTH * healthMultiplier; this.health = this.maxHealth;
+                 this.baseSpeedMultiplier = speedMultiplier; // Store base multiplier for wave
+                 this.speed = ENEMY_BASE_SPEED * this.baseSpeedMultiplier * scale; // Initial speed
+                 this.pathIndex = 0; this.targetX = pathPixels[0].x; this.targetY = pathPixels[0].y;
+                 this.baseColor = '#bf616a'; // Store base color
+                 this.slowedColor = '#88c0d0'; // Color when slowed
+             }
+             update() {
+                 if (this.pathIndex >= pathPixels.length - 1 || gameState !== GAME_STATES.WAVE_IN_PROGRESS) return;
+
+                 // --- UPDATED: Apply slow effect ---
+                 const speedMultiplier = slowAbilityActive ? SLOW_EFFECT_MULTIPLIER : 1;
+                 const currentSpeed = ENEMY_BASE_SPEED * this.baseSpeedMultiplier * scale * speedMultiplier;
+                 // --- End UPDATED ---
+
+                 const dx = this.targetX - this.x; const dy = this.targetY - this.y;
+                 const distance = Math.sqrt(dx * dx + dy * dy);
+
+                 if (distance < currentSpeed) { // Use currentSpeed
+                     this.pathIndex++;
+                     if (this.pathIndex >= pathPixels.length) {
+                         lives--; updateUI();
+                         if (lives <= 0 && gameState !== GAME_STATES.GAME_OVER) { gameOver(); }
+                         this.health = 0; return;
+                     }
+                     this.targetX = pathPixels[this.pathIndex].x; this.targetY = pathPixels[this.pathIndex].y;
+                     this.x = pathPixels[this.pathIndex - 1].x + dx; this.y = pathPixels[this.pathIndex - 1].y + dy;
+                 } else {
+                     this.x += (dx / distance) * currentSpeed; // Use currentSpeed
+                     this.y += (dy / distance) * currentSpeed; // Use currentSpeed
+                 }
+             }
+             draw() {
+                 // --- UPDATED: Change color if slowed ---
+                 ctx.fillStyle = slowAbilityActive ? this.slowedColor : this.baseColor;
+                 // --- End UPDATED ---
+
+                 ctx.beginPath(); ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2); ctx.fill();
+                 ctx.strokeStyle = '#4c566a'; ctx.lineWidth = 1 * scale; ctx.stroke();
+                 // Health bar (unchanged)
+                 const healthBarWidth = this.size; const healthBarHeight = 5 * scale;
+                 const healthBarX = this.x - healthBarWidth / 2; const healthBarY = this.y - this.size / 2 - healthBarHeight * 1.5;
+                 ctx.fillStyle = '#bf616a'; ctx.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
+                 const currentHealthWidth = (this.health / this.maxHealth) * healthBarWidth;
+                 ctx.fillStyle = '#a3be8c'; ctx.fillRect(healthBarX, healthBarY, currentHealthWidth > 0 ? currentHealthWidth : 0, healthBarHeight);
+             }
+              takeDamage(amount) { this.health -= amount; }
+         }
+
+        // Tower Class (Unchanged)
+        class Tower {
+             constructor(gridX, gridY) { this.gridX = gridX; this.gridY = gridY; this.x = (gridX + 0.5) * scaledTileSize; this.y = (gridY + 0.5) * scaledTileSize; this.size = scaledTileSize * 0.8; this.level = 1; this.maxLevel = TOWER_MAX_LEVEL; this.updateStats(); this.fireCooldown = 0; this.target = null; this.kills = 0; }
+             updateStats() { this.range = (TOWER_BASE_RANGE + (this.level - 1) * 15) * scale; this.damage = TOWER_BASE_DAMAGE + (this.level - 1) * 5; this.fireRate = TOWER_BASE_FIRE_RATE - (this.level - 1) * 5; this.upgradeCost = Math.floor(UPGRADE_COST_BASE * Math.pow(UPGRADE_COST_MULTIPLIER, this.level - 1)); }
+             upgrade() { if (this.level >= this.maxLevel) { console.log("Tower is already max level!"); return false; } if (money >= this.upgradeCost) { money -= this.upgradeCost; this.level++; this.updateStats(); console.log(`Tower upgraded to level ${this.level}`); updateUI(); return true; } else { console.log("Not enough money to upgrade!"); return false; } }
+             findTarget() { if (this.target && this.target.health > 0 && this.isInRange(this.target)) return; this.target = null; let closestDistSq = this.range * this.range; for (const enemy of enemies) { if (enemy.health <= 0) continue; const dx = enemy.x - this.x; const dy = enemy.y - this.y; const distSq = dx * dx + dy * dy; if (distSq <= closestDistSq) { closestDistSq = distSq; this.target = enemy; } } }
+              isInRange(enemy) { const dx = enemy.x - this.x; const dy = enemy.y - this.y; return dx * dx + dy * dy <= this.range * this.range; }
+             update() { if (gameState !== GAME_STATES.WAVE_IN_PROGRESS) { this.target = null; this.fireCooldown = this.fireRate; return; } this.fireCooldown--; this.findTarget(); if (this.target && this.fireCooldown <= 0) { this.fire(); this.fireCooldown = this.fireRate; } }
+              fire() { projectiles.push(new Projectile(this.x, this.y, this.target, this.damage, this)); }
+             draw() {
+                 const isSelected = (selectedTower === this); const baseLevelColor = towerLevelColors[this.level - 1] || towerLevelColors[0]; const currentFillColor = isSelected ? towerSelectedColor : baseLevelColor;
+                 ctx.save(); ctx.fillStyle = currentFillColor; ctx.beginPath(); ctx.rect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size); ctx.fill();
+                 if (this.level > 2) { ctx.fillStyle = '#ebcb8b'; ctx.fillRect(this.x - this.size * 0.1, this.y - this.size * 0.1, this.size * 0.2, this.size * 0.2); }
+                 if (this.level > 4) { ctx.fillStyle = '#d08770'; ctx.fillRect(this.x - this.size * 0.4, this.y - this.size * 0.4, this.size * 0.15, this.size * 0.15); ctx.fillRect(this.x + this.size * 0.25, this.y - this.size * 0.4, this.size * 0.15, this.size * 0.15); }
+                 ctx.strokeStyle = '#4c566a'; ctx.lineWidth = (3 + this.level) * scale; ctx.beginPath(); ctx.moveTo(this.x, this.y); if (this.target && gameState === GAME_STATES.WAVE_IN_PROGRESS) { ctx.lineTo(this.target.x, this.target.y); } else { ctx.lineTo(this.x, this.y - this.size / 2); } ctx.stroke();
+                 if (isSelected) {
+                     const originalStrokeStyle = ctx.strokeStyle; const originalLineWidth = ctx.lineWidth;
+                     ctx.strokeStyle = 'rgba(236, 239, 244, 0.4)'; ctx.lineWidth = 1 * scale; ctx.beginPath(); ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2); ctx.stroke();
+                     ctx.strokeStyle = towerSelectedColor; ctx.lineWidth = 3 * scale; ctx.beginPath(); ctx.rect(this.x - this.size / 2 - ctx.lineWidth / 2, this.y - this.size / 2 - ctx.lineWidth / 2, this.size + ctx.lineWidth, this.size + ctx.lineWidth); ctx.stroke();
+                     ctx.strokeStyle = originalStrokeStyle; ctx.lineWidth = originalLineWidth;
+                 }
+                 ctx.restore();
+             }
+         }
+        // Projectile Class (Unchanged)
+        class Projectile {
+              constructor(startX, startY, target, damage, sourceTower) { /* ... */ this.x = startX; this.y = startY; this.target = target; this.damage = damage; this.speed = 6 * scale; this.size = 5 * scale; this.color = '#ebcb8b'; this.sourceTower = sourceTower; }
+              update() { /* ... */ if (!this.target || this.target.health <= 0 || gameState !== GAME_STATES.WAVE_IN_PROGRESS) { return false; } const dx = this.target.x - this.x; const dy = this.target.y - this.y; const distance = Math.sqrt(dx * dx + dy * dy); if (distance < this.speed) { this.target.takeDamage(this.damage); if (this.target.health <= 0) { this.sourceTower.kills++; } return false; } else { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; return true; } }
+              draw() { /* ... */ ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2); ctx.fill(); }
+          }
+
+        // --- Utility Functions ---
+        function resizeCanvas() { /* ... (Unchanged) ... */ const container = document.getElementById('canvasContainer'); const containerWidth = container.clientWidth; const availableHeight = window.innerHeight * 0.9 - 100; const maxHeight = window.innerHeight * 0.75; const targetHeight = Math.min(availableHeight, maxHeight); const aspectRatio = 4 / 3; let newWidth = containerWidth; let newHeight = containerWidth / aspectRatio; if (newHeight > targetHeight) { newHeight = targetHeight; newWidth = targetHeight * aspectRatio; } if (newWidth > containerWidth) { newWidth = containerWidth; newHeight = containerWidth / aspectRatio; } canvas.width = Math.floor(newWidth); canvas.height = Math.floor(newHeight); scale = canvas.width / (20 * TILE_SIZE); scaledTileSize = TILE_SIZE * scale; calculatePathPixels(); createGrid(); setupPredefinedTowers(); towers.forEach(t => t.updateStats()); selectedTower = null; updateUI(); }
+        function calculatePathPixels() { /* ... (Unchanged) ... */ pathPixels = pathWaypoints.map(wp => ({ x: (wp.x + 0.5) * scaledTileSize, y: (wp.y + 0.5) * scaledTileSize })); }
+        function createGrid() { /* ... (Unchanged) ... */ grid = []; const cols = Math.floor(canvas.width / scaledTileSize); const rows = Math.floor(canvas.height / scaledTileSize); for (let y = 0; y < rows; y++) { grid[y] = []; for (let x = 0; x < cols; x++) { grid[y][x] = { tower: null, isPath: false }; } } for (let i = 0; i < pathWaypoints.length -1; i++) { const start = pathWaypoints[i]; const end = pathWaypoints[i+1]; const x1 = Math.floor(start.x); const y1 = Math.floor(start.y); const x2 = Math.floor(end.x); const y2 = Math.floor(end.y); if (x1 === x2) { for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) { if (grid[y] && grid[y][x1] !== undefined) grid[y][x1].isPath = true; } } else if (y1 === y2) { for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) { if (grid[y1] && grid[y1][x] !== undefined) grid[y1][x].isPath = true; } } if (grid[y1] && grid[y1][x1] !== undefined) grid[y1][x1].isPath = true; if (grid[y2] && grid[y2][x2] !== undefined) grid[y2][x2].isPath = true; } }
+        function drawGrid() { /* Optional */ }
+        function drawPath() { /* ... (Unchanged) ... */ if (pathPixels.length < 2) return; ctx.strokeStyle = '#4c566a'; ctx.lineWidth = scaledTileSize * 0.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(pathPixels[0].x, pathPixels[0].y); for (let i = 1; i < pathPixels.length; i++) { ctx.lineTo(pathPixels[i].x, pathPixels[i].y); } ctx.stroke(); }
+        function spawnEnemy() { /* ... (Unchanged) ... */ const currentWaveData = waves[currentWaveIndex]; if (!currentWaveData) return; enemies.push(new Enemy(pathPixels[0].x, pathPixels[0].y, currentWaveData.healthMultiplier, currentWaveData.speedMultiplier)); enemiesSpawnedThisWave++; }
+        function setupPredefinedTowers() { /* ... (Unchanged) ... */ towers = []; const cols = Math.floor(canvas.width / scaledTileSize); const rows = Math.floor(canvas.height / scaledTileSize); predefinedTowerPositions.forEach(pos => { if (pos.y >= 0 && pos.y < rows && pos.x >= 0 && pos.x < cols) { if (grid[pos.y] && grid[pos.y][pos.x] && !grid[pos.y][pos.x].isPath && !grid[pos.y][pos.x].tower) { const newTower = new Tower(pos.x, pos.y); towers.push(newTower); grid[pos.y][pos.x].tower = newTower; } else { console.warn(`Predefined tower position [${pos.x}, ${pos.y}] is invalid or on path.`); } } else { console.warn(`Predefined tower position [${pos.x}, ${pos.y}] is out of bounds.`); } }); }
+
+        // --- UPDATED: updateUI function ---
+        function updateUI() {
+            scoreElement.textContent = score; moneyElement.textContent = money; livesElement.textContent = lives;
+            waveElement.textContent = currentWaveIndex < 0 ? 0 : currentWaveIndex + 1; totalWavesElement.textContent = totalWaves;
+
+            // Wave Control Button State
+            switch (gameState) { case GAME_STATES.PRE_GAME: waveControlButton.textContent = "Start Game"; waveControlButton.disabled = false; break; case GAME_STATES.WAVE_IN_PROGRESS: waveControlButton.textContent = `Wave ${currentWaveIndex + 1} Ongoing`; waveControlButton.disabled = true; break; case GAME_STATES.WAVE_COMPLETE: if (currentWaveIndex + 1 >= totalWaves) { waveControlButton.textContent = "You Win!"; waveControlButton.disabled = true; } else { waveControlButton.textContent = `Start Wave ${currentWaveIndex + 2}`; waveControlButton.disabled = false; } break; case GAME_STATES.GAME_OVER: case GAME_STATES.GAME_WON: waveControlButton.textContent = "Restart"; waveControlButton.disabled = true; break; }
+
+            // Upgrade Button and Tower Info Panel Logic
+            if (selectedTower) { towerInfoPanel.innerHTML = `Lvl:<span>${selectedTower.level}</span> Dmg:<span>${selectedTower.damage.toFixed(0)}</span> Rng:<span>${(selectedTower.range / scale).toFixed(0)}</span> Kills:<span>${selectedTower.kills}</span>`; if (gameState === GAME_STATES.WAVE_IN_PROGRESS) { upgradeTowerButton.textContent = "Upgrade"; upgradeTowerButton.disabled = true; } else { if (selectedTower.level < selectedTower.maxLevel) { upgradeTowerButton.textContent = `Upgrade (${selectedTower.upgradeCost}$)`; upgradeTowerButton.disabled = money < selectedTower.upgradeCost; } else { upgradeTowerButton.textContent = "Max Level"; upgradeTowerButton.disabled = true; } } } else { towerInfoPanel.innerHTML = `Lvl:<span>--</span> Dmg:<span>--</span> Rng:<span>--</span> Kills:<span>--</span>`; upgradeTowerButton.textContent = "Upgrade"; upgradeTowerButton.disabled = true; }
+
+            // --- NEW: Slow Ability Button Update ---
+            if (slowAbilityCooldown > 0) {
+                const secondsLeft = Math.ceil(slowAbilityCooldown / 60); // Assuming 60fps
+                slowAbilityButton.textContent = `Slow (${secondsLeft}s)`;
+                slowAbilityButton.disabled = true;
+            } else {
+                slowAbilityButton.textContent = "Slow Wave";
+                // Enable only if game is actually started and wave is in progress
+                slowAbilityButton.disabled = gameState !== GAME_STATES.WAVE_IN_PROGRESS;
+            }
+             // --- End NEW ---
+        }
+        // --- End UPDATED: updateUI function ---
+
+        function redrawStaticState() { /* ... (Unchanged) ... */ console.log("Redrawing static state for selection change."); ctx.clearRect(0, 0, canvas.width, canvas.height); drawPath(); towers.forEach(tower => tower.draw()); }
+        function handleCanvasClick(event) { /* ... (Unchanged) ... */
+             if (gameState === GAME_STATES.GAME_OVER || gameState === GAME_STATES.GAME_WON) return;
+             const rect = canvas.getBoundingClientRect(); const clientX = event.clientX ?? event.touches[0].clientX; const clientY = event.clientY ?? event.touches[0].clientY;
+             const x = clientX - rect.left; const y = clientY - rect.top; const gridX = Math.floor(x / scaledTileSize); const gridY = Math.floor(y / scaledTileSize);
+             let clickedTowerObject = null; if (gridY >= 0 && gridY < grid.length && gridX >= 0 && gridX < grid[0].length) { clickedTowerObject = grid[gridY][gridX].tower; }
+             let selectionChanged = false;
+             if (clickedTowerObject) { if (selectedTower === clickedTowerObject) { selectedTower = null; selectionChanged = true; console.log(`Deselected tower at [${gridX}, ${gridY}] by re-clicking.`); } else { selectedTower = clickedTowerObject; selectionChanged = true; console.log(`Selected tower at [${gridX}, ${gridY}], Level: ${selectedTower.level}`); } } else { if (selectedTower !== null) { selectedTower = null; selectionChanged = true; console.log("Deselected tower by clicking empty space."); } }
+             updateUI();
+             if (selectionChanged && (gameState === GAME_STATES.PRE_GAME || gameState === GAME_STATES.WAVE_COMPLETE)) { redrawStaticState(); }
+         }
+         // --- Game State Management Functions ---
+         function startGame() { if (gameState === GAME_STATES.PRE_GAME) { startNextWave(); animationFrameId = requestAnimationFrame(gameLoop); } }
+         function startNextWave() { if (gameState === GAME_STATES.WAVE_IN_PROGRESS || gameState === GAME_STATES.GAME_OVER || gameState === GAME_STATES.GAME_WON) return; currentWaveIndex++; if (currentWaveIndex >= totalWaves) { gameWon(); return; } gameState = GAME_STATES.WAVE_IN_PROGRESS; waveFrameCount = 0; enemiesSpawnedThisWave = 0; projectiles = []; selectedTower = null; console.log(`Starting Wave ${currentWaveIndex + 1}`); updateUI(); } // updateUI enables slow button here
+         function checkWaveCompletion() { if (gameState !== GAME_STATES.WAVE_IN_PROGRESS) return; const currentWaveData = waves[currentWaveIndex]; if (enemiesSpawnedThisWave >= currentWaveData.count && enemies.length === 0) { waveComplete(); } }
+         function waveComplete() { console.log(`Wave ${currentWaveIndex + 1} Complete!`); gameState = GAME_STATES.WAVE_COMPLETE; slowAbilityActive = false; /* Ensure slow ends between waves */ updateUI(); if (currentWaveIndex + 1 >= totalWaves) { gameWon(); } } // updateUI disables slow button here
+         function gameOver() { if (gameState === GAME_STATES.GAME_OVER) return; cancelAnimationFrame(animationFrameId); animationFrameId = null; gameState = GAME_STATES.GAME_OVER; finalScoreGOElement.textContent = score; gameOverMessage.style.display = 'block'; updateUI(); console.log("GAME OVER!"); }
+         function gameWon() { if (gameState === GAME_STATES.GAME_WON) return; cancelAnimationFrame(animationFrameId); animationFrameId = null; gameState = GAME_STATES.GAME_WON; finalScoreWinElement.textContent = score; gameWonMessage.style.display = 'block'; updateUI(); console.log("YOU WIN!"); }
+         function restartGame() {
+             if (animationFrameId !== null) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+             gameState = GAME_STATES.PRE_GAME; score = 0; money = STARTING_MONEY; lives = STARTING_LIVES; currentWaveIndex = -1;
+             enemies = []; towers = []; projectiles = []; frameCount = 0; waveFrameCount = 0; enemiesSpawnedThisWave = 0; selectedTower = null;
+             // --- NEW: Reset Slow Ability State ---
+             slowAbilityActive = false; slowAbilityDuration = 0; slowAbilityCooldown = 0;
+             // --- End NEW ---
+             gameOverMessage.style.display = 'none'; gameWonMessage.style.display = 'none';
+             createGrid(); setupPredefinedTowers(); updateUI(); redrawStaticState();
+        }
+
+        // --- Game Loop (Updated for Slow Ability) ---
+        let animationFrameId = null;
+        function gameLoop() {
+            if (gameState !== GAME_STATES.WAVE_IN_PROGRESS && gameState !== GAME_STATES.WAVE_COMPLETE) { animationFrameId = null; return; }
+            animationFrameId = requestAnimationFrame(gameLoop);
+
+            // --- NEW: Update Slow Ability ---
+            if (slowAbilityCooldown > 0) {
+                slowAbilityCooldown--;
+                if (slowAbilityCooldown === 0) {
+                    updateUI(); // Update button state when cooldown finishes
+                }
+            }
+            if (slowAbilityActive) {
+                slowAbilityDuration--;
+                if (slowAbilityDuration <= 0) {
+                    slowAbilityActive = false;
+                    console.log("Slow effect ended.");
+                }
+            }
+            // --- End NEW ---
+
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height); drawPath();
+            towers.forEach(tower => { tower.update(); tower.draw(); });
+            projectiles = projectiles.filter(p => { const active = p.update(); if (active) p.draw(); return active; });
+            enemies = enemies.filter(enemy => { if (enemy.health <= 0) { if (enemy.pathIndex < pathPixels.length) { money += MONEY_PER_KILL; score += SCORE_PER_KILL; updateUI(); } return false; } enemy.update(); enemy.draw(); return true; });
+            if (gameState === GAME_STATES.WAVE_IN_PROGRESS) { waveFrameCount++; const currentWaveData = waves[currentWaveIndex]; if (enemiesSpawnedThisWave < currentWaveData.count && waveFrameCount % currentWaveData.spawnRate === 0) { spawnEnemy(); } checkWaveCompletion(); }
+
+            // Update cooldown display continuously if > 0
+             if (slowAbilityCooldown > 0 && frameCount % 60 === 0) { // Update roughly every second
+                 updateUI();
+             }
+
+            frameCount++;
+        }
+
+        // --- Initialization ---
+        waveControlButton.addEventListener('click', () => { if (gameState === GAME_STATES.PRE_GAME) { startGame(); } else if (gameState === GAME_STATES.WAVE_COMPLETE) { startNextWave(); if (animationFrameId === null) { gameLoop(); } } });
+        upgradeTowerButton.addEventListener('click', () => { if (selectedTower && gameState !== GAME_STATES.WAVE_IN_PROGRESS) { if (selectedTower.upgrade()) { redrawStaticState(); } } });
+        canvas.addEventListener('click', handleCanvasClick); canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleCanvasClick(e); }, { passive: false });
+
+        // --- NEW: Slow Ability Button Listener ---
+        slowAbilityButton.addEventListener('click', () => {
+            if (slowAbilityCooldown <= 0 && gameState === GAME_STATES.WAVE_IN_PROGRESS) {
+                slowAbilityActive = true;
+                slowAbilityDuration = SLOW_ABILITY_DURATION_FRAMES;
+                slowAbilityCooldown = SLOW_ABILITY_COOLDOWN_FRAMES;
+                console.log("Slow ability activated!");
+                updateUI(); // Immediately update button state
+            }
+        });
+        // --- End NEW ---
+
+        window.addEventListener('resize', resizeCanvas);
+        window.onload = () => { resizeCanvas(); restartGame(); };
+
+    </script>
+</body>
+</html>
