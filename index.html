@@ -1,351 +1,459 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Simple Tower Defense - Upgrades</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Defense Rogue-like</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Apply the game font to the body */
         body {
-            font-family: 'Press Start 2P', cursive; overscroll-behavior: none; touch-action: none;
-            background-color: #2e3440; color: #eceff4; display: flex; flex-direction: column;
-            align-items: center; padding: 5px; min-height: 100vh; margin: 0;
+            font-family: 'Press Start 2P', cursive;
+            background-color: #1a1a1a;
+            /* Dark background */
+            color: #e0e0e0;
+            /* Light text */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* Ensure full height */
+            padding: 1rem;
+            /* Add padding */
+            /* overflow: hidden; */
+            /* REMOVED to allow scrolling on mobile */
         }
-        #gameCanvas {
-            display: block; background-color: #88c0d0; max-width: 100%; max-height: 75vh;
-            aspect-ratio: 4 / 3; margin: 0 auto; cursor: pointer;
-            border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-        .ui-row {
-            background-color: #434c5e; padding: 8px 12px; border-radius: 8px;
-            display: flex; align-items: center; flex-wrap: wrap;
-            gap: 8px 15px; width: 100%; max-width: 800px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2); font-size: 0.65rem;
-            margin-bottom: 8px;
-        }
-        .game-stats-info { justify-content: space-around; }
-        .game-controls {
-            justify-content: center; background-color: transparent; box-shadow: none;
-            padding: 0; margin-bottom: 10px;
-        }
-        .ui-item { color: #d8dee9; white-space: nowrap; }
-        .ui-value { color: #ebcb8b; font-weight: bold; }
-        .game-button {
-            background-color: #a3be8c; color: #2e3440; border: none; padding: 7px 10px;
-            border-radius: 5px; cursor: pointer; font-family: 'Press Start 2P', cursive;
-            font-size: 0.65rem; transition: background-color 0.2s ease, transform 0.1s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); white-space: nowrap;
-            min-width: 130px; text-align: center;
-        }
-        .game-button:hover:not(:disabled) { background-color: #b4d0a0; transform: translateY(-1px); }
-        .game-button:disabled { background-color: #5e6a7e; color: #9aabbb; cursor: not-allowed; transform: none; box-shadow: none;}
-        #upgradeTowerButton { background-color: #b48ead; }
-        #upgradeTowerButton:hover:not(:disabled) { background-color: #c7a5c9; }
-        /* --- NEW: Slow Button Style --- */
-        #slowAbilityButton { background-color: #88c0d0; /* Light blue button */ }
-        #slowAbilityButton:hover:not(:disabled) { background-color: #9dc9da; }
 
+        /* Style the canvas */
+        canvas {
+            background-color: #333;
+            display: block;
+            border: 4px solid #555;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            width: 100%;
+            /* Make canvas take full width of its container */
+            max-width: 100%;
+            aspect-ratio: 16 / 9;
+            cursor: default;
+        }
 
-        .tower-info {
-            min-height: 1.5em; color: #d8dee9; text-align: center;
-            flex-grow: 1; margin-top: 0; padding: 0 10px;
+        /* Style buttons */
+        button {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: 2px solid #0056b3;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px #003d80;
+            margin: 5px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            position: relative;
+            overflow: hidden;
         }
-        .tower-info span { color: #ebcb8b; }
-        .message-overlay {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background-color: rgba(46, 52, 64, 0.9); color: #e5e9f0; padding: 20px 30px;
-            border-radius: 10px; text-align: center; font-size: 1.2rem; display: none;
-            z-index: 100; border: 2px solid #d08770;
+
+        button:hover {
+            background-color: #0056b3;
         }
-        .message-overlay h2 { font-size: 1.5rem; margin-bottom: 15px; color: #ebcb8b; }
-        .message-overlay button {
-             background-color: #a3be8c; color: #2e3440; border: none; padding: 10px 15px;
-             border-radius: 5px; cursor: pointer; font-family: 'Press Start 2P', cursive;
-             font-size: 0.9rem; margin-top: 20px; transition: background-color 0.2s ease;
+
+        button:active {
+            background-color: #003d80;
+            box-shadow: 0 2px #002a59;
+            transform: translateY(2px);
         }
-        .message-overlay button:hover { background-color: #b4d0a0; }
+
+        button:disabled {
+            background-color: #555;
+            color: #aaa;
+            cursor: not-allowed;
+            border-color: #444;
+            box-shadow: 0 4px #333;
+        }
+
+        /* Specific style for AoE button */
+        button#aoe-btn.cooldown {
+            background-color: #6c757d;
+            border-color: #5a6268;
+            box-shadow: 0 4px #495057;
+        }
+
+        button#aoe-btn.armed {
+            background-color: #28a745;
+            border-color: #218838;
+            box-shadow: 0 4px #1e7e34;
+        }
+
+        button#aoe-btn.armed:hover {
+            background-color: #218838;
+        }
+
+        /* Style the game info panel */
+        #game-info {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            /* max-width: 800px; */
+            /* Max width handled by layout container */
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            border: 2px solid #444;
+            font-size: 0.9rem;
+        }
+
+        /* Style the message overlay */
+        #message-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 100;
+            padding: 20px;
+            cursor: default;
+        }
+
+        #message-box {
+            background-color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            border: 3px solid #555;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        #message-box h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #00ffff;
+        }
+
+        #message-box p {
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        #rogue-choices button {
+            margin: 10px;
+        }
+
+        /* --- Memory Game Styles --- */
+        #memory-game-panel {
+            width: 100%;
+            /* max-width: 800px; */
+            /* Max width handled by layout container or self */
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            border: 2px solid #444;
+            padding: 15px;
+            font-size: 0.8rem;
+        }
+
+        .tab-buttons button {
+            background-color: #444;
+            border-color: #333;
+            box-shadow: 0 4px #222;
+            padding: 8px 15px;
+            font-size: 0.7rem;
+        }
+
+        .tab-buttons button.active {
+            background-color: #555;
+            border-color: #444;
+            box-shadow: 0 2px #333;
+            transform: translateY(2px);
+            color: #0ff;
+        }
+
+        .tab-content {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        #memory-game-panel textarea,
+        #memory-game-panel input[type="text"] {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #111;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px;
+            color: #e0e0e0;
+            width: 100%;
+            margin-bottom: 10px;
+            font-size: 0.75rem;
+            box-sizing: border-box;
+        }
+
+        #memory-game-panel textarea {
+            min-height: 80px;
+        }
+
+        #memory-game-panel button {
+            padding: 8px 15px;
+            font-size: 0.7rem;
+        }
+
+        #quiz-key {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #0ff;
+            word-wrap: break-word;
+        }
+
+        #quiz-feedback {
+            margin-top: 10px;
+            min-height: 1.2em;
+            font-size: 0.75rem;
+        }
+
+        #quiz-feedback.correct {
+            color: #28a745;
+        }
+
+        #quiz-feedback.incorrect {
+            color: #dc3545;
+        }
     </style>
 </head>
+
 <body>
-    <div class="ui-row game-stats-info">
-        <div class="ui-item">Score: <span id="score" class="ui-value">0</span></div>
-        <div class="ui-item">Money: <span id="money" class="ui-value">100</span>$</div>
-        <div class="ui-item">Lives: <span id="lives" class="ui-value">10</span></div>
-        <div class="ui-item">Wave: <span id="wave" class="ui-value">0</span> / <span id="totalWaves" class="ui-value">0</span></div>
-        <div class="tower-info" id="towerInfoPanel">Lvl:<span>--</span> Dmg:<span>--</span> Rng:<span>--</span> Kills:<span>--</span></div>
+    <div id="layout-container"
+        class="w-full max-w-screen-xl mx-auto space-y-4 md:flex md:flex-row md:items-start md:space-y-0 md:gap-6 lg:gap-8">
+
+        <div class="w-full md:w-2/3 space-y-4">
+            <h1 class="text-3xl font-bold text-cyan-400 text-center md:text-left">Pixel Path Defense</h1>
+            <div id="game-info">
+                <span>Wave: <span id="wave-number">0</span> / <span id="final-wave">--</span></span>
+                <span>Lives: <span id="lives-count">20</span></span>
+                <span>Cash: $<span id="cash-count">100</span></span>
+            </div>
+            <div id="canvas-container" class="w-full">
+                <canvas id="gameCanvas" width="800" height="450"></canvas>
+            </div>
+            <div class="flex justify-center items-center flex-wrap">
+                <button id="build-turret-btn">Build Turret ($50)</button>
+                <button id="aoe-btn">Arm Zap ($5)</button>
+                <button id="start-wave-btn">Start Next Wave</button>
+                <button id="upgrade-turret-btn" disabled>Upgrade Turret</button>
+            </div>
+        </div>
+
+        <div class="w-full md:w-1/3 mt-4 md:mt-0">
+            <div id="memory-game-panel">
+                <div class="tab-buttons border-b border-gray-600 pb-2 mb-4">
+                    <button id="input-tab-btn" class="active">Input Pairs</button>
+                    <button id="quiz-tab-btn">Memory Quiz</button>
+                </div>
+                <div id="input-tab-content" class="tab-content active">
+                    <p class="text-xs mb-2">Enter pairs: key1,value1;key2,value2;...</p>
+                    <textarea id="pairs-input" placeholder="e.g., Mitochondria,Powerhouse;France,Paris"></textarea>
+                    <button id="save-pairs-btn">Save & Start Quiz</button>
+                    <p id="input-feedback" class="text-xs mt-2"></p>
+                </div>
+                <div id="quiz-tab-content" class="tab-content">
+                    <label for="quiz-answer-input" class="block mb-2">What is the value for:</label>
+                    <span id="quiz-key" class="text-lg">...</span>
+                    <input type="text" id="quiz-answer-input" placeholder="Enter value...">
+                    <button id="submit-answer-btn">Submit Answer</button>
+                    <p id="quiz-feedback"></p>
+                </div>
+            </div>
+        </div>
+
     </div>
-    <div class="ui-row game-controls">
-        <button id="waveControlButton" class="game-button">Start Game</button>
-        <button id="upgradeTowerButton" class="game-button" disabled>Upgrade</button>
-        <button id="slowAbilityButton" class="game-button" disabled>Slow Wave</button>
-    </div>
-    <div id="canvasContainer" style="position: relative; width: 100%; max-width: 800px;">
-         <canvas id="gameCanvas"></canvas>
-         <div id="gameOverMessage" class="message-overlay">
-             <h2>GAME OVER!</h2> Score: <span id="finalScoreGO">0</span><br>
-             <button onclick="restartGame()">Restart</button>
-         </div>
-         <div id="gameWonMessage" class="message-overlay">
-             <h2>YOU WIN!</h2> Score: <span id="finalScoreWin">0</span><br>
-             <button onclick="restartGame()">Play Again?</button>
-         </div>
+    <div id="message-overlay">
+        <div id="message-box">
+            <h2 id="message-title">Message</h2>
+            <p id="message-text">Text goes here.</p>
+            <div id="rogue-choices" class="flex flex-wrap justify-center"></div>
+            <button id="message-close-btn">OK</button>
+        </div>
     </div>
 
     <script>
-        // --- DOM Elements ---
+        // --- Game Setup ---
         const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
-        const scoreElement = document.getElementById('score'); const moneyElement = document.getElementById('money');
-        const livesElement = document.getElementById('lives'); const waveElement = document.getElementById('wave');
-        const totalWavesElement = document.getElementById('totalWaves'); const waveControlButton = document.getElementById('waveControlButton');
-        const upgradeTowerButton = document.getElementById('upgradeTowerButton'); const towerInfoPanel = document.getElementById('towerInfoPanel');
-        const slowAbilityButton = document.getElementById('slowAbilityButton'); // Added
-        const gameOverMessage = document.getElementById('gameOverMessage'); const finalScoreGOElement = document.getElementById('finalScoreGO');
-        const gameWonMessage = document.getElementById('gameWonMessage'); const finalScoreWinElement = document.getElementById('finalScoreWin');
+        const gameInfo = { waveNumber: document.getElementById('wave-number'), finalWave: document.getElementById('final-wave'), livesCount: document.getElementById('lives-count'), cashCount: document.getElementById('cash-count'), };
+        const buttons = { buildTurret: document.getElementById('build-turret-btn'), startWave: document.getElementById('start-wave-btn'), upgradeTurret: document.getElementById('upgrade-turret-btn'), aoe: document.getElementById('aoe-btn'), };
+        const messageOverlay = document.getElementById('message-overlay'); const messageBox = document.getElementById('message-box'); const messageTitle = document.getElementById('message-title'); const messageText = document.getElementById('message-text'); const messageCloseBtn = document.getElementById('message-close-btn'); const rogueChoicesContainer = document.getElementById('rogue-choices');
 
-        // --- Canvas & Scaling (Unchanged) ---
-        let canvasWidth, canvasHeight; let scale = 1;
-
-        // --- Game Configuration ---
-        const TILE_SIZE = 40; let scaledTileSize = TILE_SIZE; const ENEMY_BASE_SPEED = 1.5; const ENEMY_BASE_HEALTH = 50;
-        const TOWER_BASE_RANGE = 100; const TOWER_BASE_DAMAGE = 10; const TOWER_BASE_FIRE_RATE = 55; const TOWER_MAX_LEVEL = 5;
-        const UPGRADE_COST_BASE = 75; const UPGRADE_COST_MULTIPLIER = 1.5; const STARTING_MONEY = 150; const STARTING_LIVES = 10;
-        const MONEY_PER_KILL = 12; const SCORE_PER_KILL = 5;
-        // --- NEW: Slow Ability Config ---
-        const SLOW_ABILITY_DURATION_FRAMES = 300; // 5 seconds at 60fps
-        const SLOW_ABILITY_COOLDOWN_FRAMES = 1200; // 20 seconds at 60fps
-        const SLOW_EFFECT_MULTIPLIER = 0.4; // Reduce speed to 40%
-
-
-        // --- Wave Definition (Unchanged) ---
-        const waves = [ { count: 5, spawnRate: 90, healthMultiplier: 1.0, speedMultiplier: 1.0 }, { count: 8, spawnRate: 80, healthMultiplier: 1.1, speedMultiplier: 1.0 }, { count: 10, spawnRate: 70, healthMultiplier: 1.2, speedMultiplier: 1.1 }, { count: 15, spawnRate: 60, healthMultiplier: 1.4, speedMultiplier: 1.1 }, { count: 20, spawnRate: 50, healthMultiplier: 1.6, speedMultiplier: 1.2 }, { count: 25, spawnRate: 45, healthMultiplier: 1.8, speedMultiplier: 1.3 }, ]; const totalWaves = waves.length;
+        // --- Memory Game Elements ---
+        const memoryPanel = document.getElementById('memory-game-panel');
+        const inputTabBtn = document.getElementById('input-tab-btn');
+        const quizTabBtn = document.getElementById('quiz-tab-btn');
+        const inputTabContent = document.getElementById('input-tab-content');
+        const quizTabContent = document.getElementById('quiz-tab-content');
+        const pairsInput = document.getElementById('pairs-input');
+        const savePairsBtn = document.getElementById('save-pairs-btn');
+        const inputFeedback = document.getElementById('input-feedback');
+        const quizKeyDisplay = document.getElementById('quiz-key');
+        const quizAnswerInput = document.getElementById('quiz-answer-input');
+        const submitAnswerBtn = document.getElementById('submit-answer-btn');
+        const quizFeedback = document.getElementById('quiz-feedback');
 
         // --- Game State ---
-        const GAME_STATES = { PRE_GAME: 'PRE_GAME', WAVE_IN_PROGRESS: 'WAVE_IN_PROGRESS', WAVE_COMPLETE: 'WAVE_COMPLETE', GAME_OVER: 'GAME_OVER', GAME_WON: 'GAME_WON' };
-        let gameState = GAME_STATES.PRE_GAME; let score = 0; let money = STARTING_MONEY; let lives = STARTING_LIVES; let currentWaveIndex = -1;
-        let enemies = []; let towers = []; let projectiles = []; let frameCount = 0; let waveFrameCount = 0; let enemiesSpawnedThisWave = 0;
-        let grid = []; let selectedTower = null;
-        // --- NEW: Slow Ability State ---
-        let slowAbilityActive = false;
-        let slowAbilityDuration = 0;
-        let slowAbilityCooldown = 0; // Start ready
+        let lives = 20; let cash = 100; let wave = 0; let enemies = []; let towers = []; let projectiles = []; let selectedTower = null; let buildMode = false; let waveInProgress = false; let currentWaveEnemies = []; let enemiesSpawnedThisWave = 0; let spawnInterval = 1000; let lastSpawnTime = 0; let gameOver = false; let gamePaused = false; let mouseX = 0; let mouseY = 0; let mouseInCanvas = false; let aoeEffects = []; let aoeArmed = false;
 
+        // --- Memory Game State ---
+        let memoryPairs = {}; let quizKeys = []; let currentQuizIndex = 0; let currentQuizKey = null;
+        const REWARD_AMOUNT = 10;
 
-        // --- Path Definition (Unchanged) ---
-        const pathWaypoints = [ { x: -1, y: 2 }, { x: 3, y: 2 }, { x: 3, y: 6 }, { x: 8, y: 6 }, { x: 8, y: 1 }, { x: 14, y: 1 }, { x: 14, y: 5 }, { x: 19, y: 5 }, { x: 21, y: 5 } ]; let pathPixels = [];
+        // --- Temporary Effects / Rogue Choices State ---
+        let buildDiscount = 0; let upgradeDiscount = 0; let globalDamageMultiplier = 1.0; let globalRangeMultiplier = 1.0;
 
-        // --- Predefined Tower Positions (Unchanged) ---
-        const predefinedTowerPositions = [ { x: 2, y: 1 }, { x: 4, y: 3 }, { x: 2, y: 5 }, { x: 5, y: 7 }, { x: 9, y: 3 }, { x: 12, y: 0 }, { x: 15, y: 3 }, { x: 17, y: 6 }, ];
+        // --- Game Constants ---
+        const TILE_SIZE = 50; const TURRET_COST = 50; const UPGRADE_COST_BASE = 75; const ENEMY_START_HP = 50; const ENEMY_HP_SCALING = 1.2; const ENEMY_SPEED = 30; const ENEMY_SPEED_SCALING = 1.03; const TURRET_RANGE = 100; const TURRET_DAMAGE = 10; const TURRET_FIRE_RATE = 1000; const FINAL_WAVE = 20;
 
-        // --- Tower Level Colors (Unchanged) ---
-        const towerLevelColors = [ '#3b4252', '#4c566a', '#5e81ac', '#81A1C1', '#b48ead' ];
-        const towerSelectedColor = '#ebcb8b';
+        // --- AoE Ability Constants ---
+        const AOE_COST = 5; const AOE_DAMAGE = 25; const AOE_RADIUS = TILE_SIZE * 1.2; const AOE_COOLDOWN = 2000; const AOE_EFFECT_DURATION = 300; let lastAoeTime = -Infinity;
 
-        // --- Classes ---
-        // Enemy Class (Update and Draw methods modified)
-        class Enemy {
-             constructor(x, y, healthMultiplier = 1, speedMultiplier = 1) {
-                 this.x = x; this.y = y; this.size = scaledTileSize * 0.6;
-                 this.maxHealth = ENEMY_BASE_HEALTH * healthMultiplier; this.health = this.maxHealth;
-                 this.baseSpeedMultiplier = speedMultiplier; // Store base multiplier for wave
-                 this.speed = ENEMY_BASE_SPEED * this.baseSpeedMultiplier * scale; // Initial speed
-                 this.pathIndex = 0; this.targetX = pathPixels[0].x; this.targetY = pathPixels[0].y;
-                 this.baseColor = '#bf616a'; // Store base color
-                 this.slowedColor = '#88c0d0'; // Color when slowed
-             }
-             update() {
-                 if (this.pathIndex >= pathPixels.length - 1 || gameState !== GAME_STATES.WAVE_IN_PROGRESS) return;
+        // --- Circular Path Definition ---
+        const PATH_CENTER_X = canvas.width / 2; const PATH_CENTER_Y = canvas.height / 2; const PATH_RADIUS = Math.min(canvas.width, canvas.height) * 0.35; const PATH_START_ANGLE = Math.PI;
 
-                 // --- UPDATED: Apply slow effect ---
-                 const speedMultiplier = slowAbilityActive ? SLOW_EFFECT_MULTIPLIER : 1;
-                 const currentSpeed = ENEMY_BASE_SPEED * this.baseSpeedMultiplier * scale * speedMultiplier;
-                 // --- End UPDATED ---
+        // --- Game Objects (Minimized) ---
+        class Enemy { constructor(a, hp, s) { this.angle = a; this.hp = hp; this.maxHp = hp; this.speed = s; this.width = TILE_SIZE * 0.6; this.height = TILE_SIZE * 0.6; this.x = PATH_CENTER_X + PATH_RADIUS * Math.cos(a); this.y = PATH_CENTER_Y + PATH_RADIUS * Math.sin(a); this.dead = false; } move(dt) { if (this.dead) return; const as = this.speed / PATH_RADIUS; this.angle += as * (dt / 1000); this.x = PATH_CENTER_X + PATH_RADIUS * Math.cos(this.angle); this.y = PATH_CENTER_Y + PATH_RADIUS * Math.sin(this.angle); } takeDamage(amt) { if (this.dead) return; this.hp -= amt; if (this.hp <= 0) { this.dead = true; cash += 5 + Math.floor(wave / 5); updateUI(); } } draw(ctx) { if (this.dead) return; ctx.fillStyle = 'hsl(' + (wave * 10) + ', 70%, 50%)'; ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height); const hbw = this.width; const hbh = 5; const chw = Math.max(0, (this.hp / this.maxHp) * hbw); ctx.fillStyle = 'darkred'; ctx.fillRect(this.x - hbw / 2, this.y - this.height / 2 - hbh - 2, hbw, hbh); ctx.fillStyle = 'lime'; ctx.fillRect(this.x - hbw / 2, this.y - this.height / 2 - hbh - 2, chw, hbh); } }
+        class Tower { constructor(x, y) { this.x = x; this.y = y; this.width = TILE_SIZE * 0.8; this.height = TILE_SIZE * 0.8; this.baseRange = TURRET_RANGE; this.baseDamage = TURRET_DAMAGE; this.baseFireRate = TURRET_FIRE_RATE; this.lastShotTime = 0; this.target = null; this.level = 1; this.baseUpgradeCost = UPGRADE_COST_BASE; } get range() { return this.baseRange * Math.pow(1.1, this.level - 1) * globalRangeMultiplier; } get damage() { return this.baseDamage * Math.pow(1.5, this.level - 1) * globalDamageMultiplier; } get fireRate() { return this.baseFireRate * Math.pow(0.9, this.level - 1); } get upgradeCost() { return Math.floor(this.baseUpgradeCost * Math.pow(1.8, this.level - 1)); } findTarget(es) { const cr = this.range; if (this.target && (this.target.dead || this.distanceTo(this.target) > cr)) { this.target = null; } if (!this.target) { let ce = null; let md = cr; for (const e of es) { if (!e.dead) { const d = this.distanceTo(e); if (d < md) { md = d; ce = e; } } } this.target = ce; } } distanceTo(e) { const dx = e.x - this.x; const dy = e.y - this.y; return Math.sqrt(dx * dx + dy * dy); } shoot(ct) { if (this.target && ct - this.lastShotTime >= this.fireRate) { projectiles.push(new Projectile(this.x, this.y, this.target, this.damage)); this.lastShotTime = ct; } } upgrade(cp) { cash -= cp; this.level++; updateUI(); deselectTower(); return true; } draw(ctx) { const lc = `hsl(${200 + this.level * 20}, 60%, 50%)`; ctx.fillStyle = lc; ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height); ctx.fillStyle = 'white'; ctx.font = '12px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillText(this.level, this.x, this.y + 5); if (selectedTower === this) { ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2); ctx.stroke(); } } }
+        class Projectile { constructor(sx, sy, t, d) { this.x = sx; this.y = sy; this.target = t; this.damage = d; this.speed = 5; this.dead = false; this.width = 5; this.height = 5; } move() { if (this.dead || !this.target || this.target.dead) { this.dead = true; return; } const dx = this.target.x - this.x; const dy = this.target.y - this.y; const dist = Math.sqrt(dx * dx + dy * dy); if (dist < this.speed) { if (!this.target.dead) { this.target.takeDamage(this.damage); } this.dead = true; } else { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; } } draw(ctx) { if (this.dead) return; ctx.fillStyle = 'yellow'; ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height); } }
 
-                 const dx = this.targetX - this.x; const dy = this.targetY - this.y;
-                 const distance = Math.sqrt(dx * dx + dy * dy);
+        // --- Game Logic ---
+        let lastTimestamp = 0;
+        function spawnWave() { /* ... */ globalDamageMultiplier = 1.0; globalRangeMultiplier = 1.0; wave++; enemiesSpawnedThisWave = 0; waveInProgress = true; buttons.startWave.disabled = true; deselectTower(); const ne = 5 + wave * 3; const ehp = ENEMY_START_HP * Math.pow(ENEMY_HP_SCALING, wave - 1); const es = ENEMY_SPEED * Math.pow(ENEMY_SPEED_SCALING, wave - 1); currentWaveEnemies = []; for (let i = 0; i < ne; i++) { currentWaveEnemies.push(new Enemy(PATH_START_ANGLE, ehp, es)); } spawnInterval = Math.max(150, 1000 - wave * 40); lastSpawnTime = performance.now(); updateUI(); }
+        function handleEnemySpawning(ct) { /* ... */ if (waveInProgress && enemiesSpawnedThisWave < currentWaveEnemies.length) { if (ct - lastSpawnTime >= spawnInterval) { enemies.push(currentWaveEnemies[enemiesSpawnedThisWave]); enemiesSpawnedThisWave++; lastSpawnTime = ct; } } }
 
-                 if (distance < currentSpeed) { // Use currentSpeed
-                     this.pathIndex++;
-                     if (this.pathIndex >= pathPixels.length) {
-                         lives--; updateUI();
-                         if (lives <= 0 && gameState !== GAME_STATES.GAME_OVER) { gameOver(); }
-                         this.health = 0; return;
-                     }
-                     this.targetX = pathPixels[this.pathIndex].x; this.targetY = pathPixels[this.pathIndex].y;
-                     this.x = pathPixels[this.pathIndex - 1].x + dx; this.y = pathPixels[this.pathIndex - 1].y + dy;
-                 } else {
-                     this.x += (dx / distance) * currentSpeed; // Use currentSpeed
-                     this.y += (dy / distance) * currentSpeed; // Use currentSpeed
-                 }
-             }
-             draw() {
-                 // --- UPDATED: Change color if slowed ---
-                 ctx.fillStyle = slowAbilityActive ? this.slowedColor : this.baseColor;
-                 // --- End UPDATED ---
+        function updateGame(currentTime, deltaTime) { /* ... */ handleEnemySpawning(currentTime); projectiles.forEach(p => p.move()); enemies.forEach(e => e.move(deltaTime)); towers.forEach(t => { t.findTarget(enemies); t.shoot(currentTime); }); aoeEffects = aoeEffects.filter(ef => currentTime < ef.startTime + ef.duration); enemies = enemies.filter(e => !e.dead); projectiles = projectiles.filter(p => !p.dead); if (waveInProgress && enemies.length === 0 && enemiesSpawnedThisWave === currentWaveEnemies.length) { waveInProgress = false; if (wave === FINAL_WAVE) { handleGameWin(); return; } buttons.startWave.disabled = false; let wb = 25 + wave * 5; cash += wb; updateUI(); offerRogueChoice(wb); } updateAoeButton(currentTime); updateCursor(); }
+        function drawGame() { /* ... */ ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(PATH_CENTER_X, PATH_CENTER_Y, PATH_RADIUS, 0, Math.PI * 2); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; for (let x = 0; x < canvas.width; x += TILE_SIZE) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); } for (let y = 0; y < canvas.height; y += TILE_SIZE) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); } towers.forEach(t => t.draw(ctx)); enemies.forEach(e => e.draw(ctx)); projectiles.forEach(p => p.draw(ctx)); const ct = performance.now(); aoeEffects.forEach(ef => { const el = ct - ef.startTime; const p = el / ef.duration; if (p < 1) { const cr = ef.radius * p; const a = 1 - p; ctx.fillStyle = `rgba(255,255,0,${a * 0.5})`; ctx.beginPath(); ctx.arc(ef.x, ef.y, cr, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = `rgba(255,200,0,${a})`; ctx.lineWidth = 2; ctx.stroke(); } }); if (buildMode && mouseInCanvas) { const gx = Math.floor(mouseX / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; const gy = Math.floor(mouseY / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; const cp = canPlaceTower(gx, gy); ctx.fillStyle = cp ? 'rgba(0,0,255,0.5)' : 'rgba(255,0,0,0.5)'; ctx.fillRect(gx - TILE_SIZE * 0.4, gy - TILE_SIZE * 0.4, TILE_SIZE * 0.8, TILE_SIZE * 0.8); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(gx, gy, TURRET_RANGE * globalRangeMultiplier, 0, Math.PI * 2); ctx.stroke(); } else if (selectedTower) { ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range, 0, Math.PI * 2); ctx.stroke(); } }
+        function gameLoop(timestamp) { /* ... */ if (gameOver) return; const dt = timestamp - lastTimestamp; lastTimestamp = timestamp; if (!gamePaused) { updateGame(timestamp, dt); } drawGame(); requestAnimationFrame(gameLoop); }
 
-                 ctx.beginPath(); ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2); ctx.fill();
-                 ctx.strokeStyle = '#4c566a'; ctx.lineWidth = 1 * scale; ctx.stroke();
-                 // Health bar (unchanged)
-                 const healthBarWidth = this.size; const healthBarHeight = 5 * scale;
-                 const healthBarX = this.x - healthBarWidth / 2; const healthBarY = this.y - this.size / 2 - healthBarHeight * 1.5;
-                 ctx.fillStyle = '#bf616a'; ctx.fillRect(healthBarX, healthBarY, healthBarWidth, healthBarHeight);
-                 const currentHealthWidth = (this.health / this.maxHealth) * healthBarWidth;
-                 ctx.fillStyle = '#a3be8c'; ctx.fillRect(healthBarX, healthBarY, currentHealthWidth > 0 ? currentHealthWidth : 0, healthBarHeight);
-             }
-              takeDamage(amount) { this.health -= amount; }
-         }
+        function updateAoeButton(currentTime) { /* ... */ const cr = lastAoeTime + AOE_COOLDOWN - currentTime; buttons.aoe.classList.remove('cooldown', 'armed'); if (aoeArmed) { buttons.aoe.disabled = false; buttons.aoe.textContent = `Cancel Zap`; buttons.aoe.classList.add('armed'); } else if (cr > 0) { buttons.aoe.disabled = true; buttons.aoe.textContent = `Zap (${(cr / 1000).toFixed(1)}s)`; buttons.aoe.classList.add('cooldown'); } else if (cash < AOE_COST) { buttons.aoe.disabled = true; buttons.aoe.textContent = `Arm Zap ($${AOE_COST})`; } else { buttons.aoe.disabled = false; buttons.aoe.textContent = `Arm Zap ($${AOE_COST})`; } }
+        function updateCursor() { /* ... */ if (aoeArmed) { canvas.style.cursor = 'crosshair'; } else if (buildMode) { canvas.style.cursor = 'copy'; } else { canvas.style.cursor = 'default'; } }
+        function updateUI() { /* ... */ gameInfo.waveNumber.textContent = wave; gameInfo.finalWave.textContent = FINAL_WAVE; gameInfo.livesCount.textContent = lives; gameInfo.cashCount.textContent = cash; const ctCost = Math.ceil(TURRET_COST * (1 - buildDiscount)); buttons.buildTurret.disabled = cash < ctCost || buildMode; buttons.buildTurret.textContent = buildMode ? 'Cancel Build' : `Build Turret ($${ctCost})`; if (selectedTower) { const cuCost = Math.ceil(selectedTower.upgradeCost * (1 - upgradeDiscount)); buttons.upgradeTurret.disabled = cash < cuCost; buttons.upgradeTurret.textContent = `Upgrade ($${cuCost})`; } else { buttons.upgradeTurret.disabled = true; buttons.upgradeTurret.textContent = "Upgrade Turret"; } }
 
-        // Tower Class (Unchanged)
-        class Tower {
-             constructor(gridX, gridY) { this.gridX = gridX; this.gridY = gridY; this.x = (gridX + 0.5) * scaledTileSize; this.y = (gridY + 0.5) * scaledTileSize; this.size = scaledTileSize * 0.8; this.level = 1; this.maxLevel = TOWER_MAX_LEVEL; this.updateStats(); this.fireCooldown = 0; this.target = null; this.kills = 0; }
-             updateStats() { this.range = (TOWER_BASE_RANGE + (this.level - 1) * 15) * scale; this.damage = TOWER_BASE_DAMAGE + (this.level - 1) * 5; this.fireRate = TOWER_BASE_FIRE_RATE - (this.level - 1) * 5; this.upgradeCost = Math.floor(UPGRADE_COST_BASE * Math.pow(UPGRADE_COST_MULTIPLIER, this.level - 1)); }
-             upgrade() { if (this.level >= this.maxLevel) { console.log("Tower is already max level!"); return false; } if (money >= this.upgradeCost) { money -= this.upgradeCost; this.level++; this.updateStats(); console.log(`Tower upgraded to level ${this.level}`); updateUI(); return true; } else { console.log("Not enough money to upgrade!"); return false; } }
-             findTarget() { if (this.target && this.target.health > 0 && this.isInRange(this.target)) return; this.target = null; let closestDistSq = this.range * this.range; for (const enemy of enemies) { if (enemy.health <= 0) continue; const dx = enemy.x - this.x; const dy = enemy.y - this.y; const distSq = dx * dx + dy * dy; if (distSq <= closestDistSq) { closestDistSq = distSq; this.target = enemy; } } }
-              isInRange(enemy) { const dx = enemy.x - this.x; const dy = enemy.y - this.y; return dx * dx + dy * dy <= this.range * this.range; }
-             update() { if (gameState !== GAME_STATES.WAVE_IN_PROGRESS) { this.target = null; this.fireCooldown = this.fireRate; return; } this.fireCooldown--; this.findTarget(); if (this.target && this.fireCooldown <= 0) { this.fire(); this.fireCooldown = this.fireRate; } }
-              fire() { projectiles.push(new Projectile(this.x, this.y, this.target, this.damage, this)); }
-             draw() {
-                 const isSelected = (selectedTower === this); const baseLevelColor = towerLevelColors[this.level - 1] || towerLevelColors[0]; const currentFillColor = isSelected ? towerSelectedColor : baseLevelColor;
-                 ctx.save(); ctx.fillStyle = currentFillColor; ctx.beginPath(); ctx.rect(this.x - this.size / 2, this.y - this.size / 2, this.size, this.size); ctx.fill();
-                 if (this.level > 2) { ctx.fillStyle = '#ebcb8b'; ctx.fillRect(this.x - this.size * 0.1, this.y - this.size * 0.1, this.size * 0.2, this.size * 0.2); }
-                 if (this.level > 4) { ctx.fillStyle = '#d08770'; ctx.fillRect(this.x - this.size * 0.4, this.y - this.size * 0.4, this.size * 0.15, this.size * 0.15); ctx.fillRect(this.x + this.size * 0.25, this.y - this.size * 0.4, this.size * 0.15, this.size * 0.15); }
-                 ctx.strokeStyle = '#4c566a'; ctx.lineWidth = (3 + this.level) * scale; ctx.beginPath(); ctx.moveTo(this.x, this.y); if (this.target && gameState === GAME_STATES.WAVE_IN_PROGRESS) { ctx.lineTo(this.target.x, this.target.y); } else { ctx.lineTo(this.x, this.y - this.size / 2); } ctx.stroke();
-                 if (isSelected) {
-                     const originalStrokeStyle = ctx.strokeStyle; const originalLineWidth = ctx.lineWidth;
-                     ctx.strokeStyle = 'rgba(236, 239, 244, 0.4)'; ctx.lineWidth = 1 * scale; ctx.beginPath(); ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2); ctx.stroke();
-                     ctx.strokeStyle = towerSelectedColor; ctx.lineWidth = 3 * scale; ctx.beginPath(); ctx.rect(this.x - this.size / 2 - ctx.lineWidth / 2, this.y - this.size / 2 - ctx.lineWidth / 2, this.size + ctx.lineWidth, this.size + ctx.lineWidth); ctx.stroke();
-                     ctx.strokeStyle = originalStrokeStyle; ctx.lineWidth = originalLineWidth;
-                 }
-                 ctx.restore();
-             }
-         }
-        // Projectile Class (Unchanged)
-        class Projectile {
-              constructor(startX, startY, target, damage, sourceTower) { /* ... */ this.x = startX; this.y = startY; this.target = target; this.damage = damage; this.speed = 6 * scale; this.size = 5 * scale; this.color = '#ebcb8b'; this.sourceTower = sourceTower; }
-              update() { /* ... */ if (!this.target || this.target.health <= 0 || gameState !== GAME_STATES.WAVE_IN_PROGRESS) { return false; } const dx = this.target.x - this.x; const dy = this.target.y - this.y; const distance = Math.sqrt(dx * dx + dy * dy); if (distance < this.speed) { this.target.takeDamage(this.damage); if (this.target.health <= 0) { this.sourceTower.kills++; } return false; } else { this.x += (dx / distance) * this.speed; this.y += (dy / distance) * this.speed; return true; } }
-              draw() { /* ... */ ctx.fillStyle = this.color; ctx.beginPath(); ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2); ctx.fill(); }
-          }
+        // --- Input Handling ---
+        function getMousePos(c, e) { /* ... */ const r = c.getBoundingClientRect(); const sx = c.width / r.width; const sy = c.height / r.height; return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy }; }
+        function canPlaceTower(gx, gy) { /* ... */ if (gx < TILE_SIZE / 2 || gx > canvas.width - TILE_SIZE / 2 || gy < TILE_SIZE / 2 || gy > canvas.height - TILE_SIZE / 2) return false; for (const t of towers) { const dx = t.x - gx; const dy = t.y - gy; if (Math.sqrt(dx * dx + dy * dy) < TILE_SIZE * 0.8) return false; } const dfc = Math.sqrt((gx - PATH_CENTER_X) ** 2 + (gy - PATH_CENTER_Y) ** 2); const pt = TILE_SIZE * 0.6; if (Math.abs(dfc - PATH_RADIUS) < pt) return false; return true; }
+        function selectTower(t) { /* ... */ selectedTower = t; buildMode = false; aoeArmed = false; updateUI(); updateCursor(); }
+        function deselectTower() { /* ... */ selectedTower = null; updateUI(); }
 
-        // --- Utility Functions ---
-        function resizeCanvas() { /* ... (Unchanged) ... */ const container = document.getElementById('canvasContainer'); const containerWidth = container.clientWidth; const availableHeight = window.innerHeight * 0.9 - 100; const maxHeight = window.innerHeight * 0.75; const targetHeight = Math.min(availableHeight, maxHeight); const aspectRatio = 4 / 3; let newWidth = containerWidth; let newHeight = containerWidth / aspectRatio; if (newHeight > targetHeight) { newHeight = targetHeight; newWidth = targetHeight * aspectRatio; } if (newWidth > containerWidth) { newWidth = containerWidth; newHeight = containerWidth / aspectRatio; } canvas.width = Math.floor(newWidth); canvas.height = Math.floor(newHeight); scale = canvas.width / (20 * TILE_SIZE); scaledTileSize = TILE_SIZE * scale; calculatePathPixels(); createGrid(); setupPredefinedTowers(); towers.forEach(t => t.updateStats()); selectedTower = null; updateUI(); }
-        function calculatePathPixels() { /* ... (Unchanged) ... */ pathPixels = pathWaypoints.map(wp => ({ x: (wp.x + 0.5) * scaledTileSize, y: (wp.y + 0.5) * scaledTileSize })); }
-        function createGrid() { /* ... (Unchanged) ... */ grid = []; const cols = Math.floor(canvas.width / scaledTileSize); const rows = Math.floor(canvas.height / scaledTileSize); for (let y = 0; y < rows; y++) { grid[y] = []; for (let x = 0; x < cols; x++) { grid[y][x] = { tower: null, isPath: false }; } } for (let i = 0; i < pathWaypoints.length -1; i++) { const start = pathWaypoints[i]; const end = pathWaypoints[i+1]; const x1 = Math.floor(start.x); const y1 = Math.floor(start.y); const x2 = Math.floor(end.x); const y2 = Math.floor(end.y); if (x1 === x2) { for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) { if (grid[y] && grid[y][x1] !== undefined) grid[y][x1].isPath = true; } } else if (y1 === y2) { for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) { if (grid[y1] && grid[y1][x] !== undefined) grid[y1][x].isPath = true; } } if (grid[y1] && grid[y1][x1] !== undefined) grid[y1][x1].isPath = true; if (grid[y2] && grid[y2][x2] !== undefined) grid[y2][x2].isPath = true; } }
-        function drawGrid() { /* Optional */ }
-        function drawPath() { /* ... (Unchanged) ... */ if (pathPixels.length < 2) return; ctx.strokeStyle = '#4c566a'; ctx.lineWidth = scaledTileSize * 0.8; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(pathPixels[0].x, pathPixels[0].y); for (let i = 1; i < pathPixels.length; i++) { ctx.lineTo(pathPixels[i].x, pathPixels[i].y); } ctx.stroke(); }
-        function spawnEnemy() { /* ... (Unchanged) ... */ const currentWaveData = waves[currentWaveIndex]; if (!currentWaveData) return; enemies.push(new Enemy(pathPixels[0].x, pathPixels[0].y, currentWaveData.healthMultiplier, currentWaveData.speedMultiplier)); enemiesSpawnedThisWave++; }
-        function setupPredefinedTowers() { /* ... (Unchanged) ... */ towers = []; const cols = Math.floor(canvas.width / scaledTileSize); const rows = Math.floor(canvas.height / scaledTileSize); predefinedTowerPositions.forEach(pos => { if (pos.y >= 0 && pos.y < rows && pos.x >= 0 && pos.x < cols) { if (grid[pos.y] && grid[pos.y][pos.x] && !grid[pos.y][pos.x].isPath && !grid[pos.y][pos.x].tower) { const newTower = new Tower(pos.x, pos.y); towers.push(newTower); grid[pos.y][pos.x].tower = newTower; } else { console.warn(`Predefined tower position [${pos.x}, ${pos.y}] is invalid or on path.`); } } else { console.warn(`Predefined tower position [${pos.x}, ${pos.y}] is out of bounds.`); } }); }
+        canvas.addEventListener('mousemove', (e) => { /* ... */ const p = getMousePos(canvas, e); mouseX = p.x; mouseY = p.y; mouseInCanvas = true; });
+        canvas.addEventListener('mouseleave', () => { /* ... */ mouseInCanvas = false; });
+        canvas.addEventListener('mouseenter', () => { /* ... */ mouseInCanvas = true; });
 
-        // --- UPDATED: updateUI function ---
-        function updateUI() {
-            scoreElement.textContent = score; moneyElement.textContent = money; livesElement.textContent = lives;
-            waveElement.textContent = currentWaveIndex < 0 ? 0 : currentWaveIndex + 1; totalWavesElement.textContent = totalWaves;
+        canvas.addEventListener('click', (e) => { /* ... */ if (gamePaused || !mouseInCanvas) return; const pos = getMousePos(canvas, e); const currentTime = performance.now(); if (aoeArmed) { aoeArmed = false; lastAoeTime = currentTime; const blastX = pos.x; const blastY = pos.y; enemies.forEach(enemy => { if (!enemy.dead) { const dx = enemy.x - blastX; const dy = enemy.y - blastY; const dSq = dx * dx + dy * dy; if (dSq < AOE_RADIUS * AOE_RADIUS) { enemy.takeDamage(AOE_DAMAGE); } } }); aoeEffects.push({ x: blastX, y: blastY, radius: AOE_RADIUS, startTime: currentTime, duration: AOE_EFFECT_DURATION }); updateUI(); updateCursor(); return; } const gridX = Math.floor(pos.x / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; const gridY = Math.floor(pos.y / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; if (buildMode) { const ctCost = TURRET_COST * (1 - buildDiscount); if (cash >= ctCost && canPlaceTower(gridX, gridY)) { towers.push(new Tower(gridX, gridY)); cash -= ctCost; buildMode = false; buildDiscount = 0; updateUI(); updateCursor(); } else if (cash < ctCost) { showMessage("Not Enough Cash!", `Need $${Math.ceil(ctCost)}`); buildMode = false; updateUI(); updateCursor(); } else if (!canPlaceTower(gridX, gridY)) { showMessage("Invalid Placement!", "Cannot build here."); } } else { let clickedOnTower = false; for (const t of towers) { if (pos.x >= t.x - t.width / 2 && pos.x <= t.x + t.width / 2 && pos.y >= t.y - t.height / 2 && pos.y <= t.y + t.height / 2) { selectTower(t); clickedOnTower = true; break; } } if (!clickedOnTower) deselectTower(); } });
+        buttons.buildTurret.addEventListener('click', () => { /* ... */ if (gamePaused) return; const ctCost = Math.ceil(TURRET_COST * (1 - buildDiscount)); if (buildMode) { buildMode = false; deselectTower(); } else if (cash >= ctCost) { buildMode = true; deselectTower(); aoeArmed = false; } else { showMessage("Not Enough Cash!", `Need $${ctCost}`); } updateUI(); updateCursor(); });
+        buttons.startWave.addEventListener('click', () => { /* ... */ if (!waveInProgress && !gameOver && !gamePaused) spawnWave(); });
+        buttons.upgradeTurret.addEventListener('click', () => { /* ... */ if (selectedTower && !gamePaused) { const cuCost = Math.ceil(selectedTower.upgradeCost * (1 - upgradeDiscount)); if (cash >= cuCost) { selectedTower.upgrade(cuCost); upgradeDiscount = 0; } else { showMessage("Not Enough Cash!", `Need $${cuCost}`); } } });
+        buttons.aoe.addEventListener('click', () => { /* ... */ if (gamePaused) return; const currentTime = performance.now(); if (aoeArmed) { aoeArmed = false; cash += AOE_COST; console.log("AoE Disarmed, refunded."); updateUI(); updateCursor(); } else { const isReady = currentTime - lastAoeTime >= AOE_COOLDOWN; const hasCash = cash >= AOE_COST; if (isReady && hasCash) { cash -= AOE_COST; aoeArmed = true; buildMode = false; deselectTower(); console.log("AoE Armed!"); updateUI(); updateCursor(); } else if (!isReady) { console.log("AoE on cooldown!"); } else if (!hasCash) { console.log("Not enough cash to arm AoE!"); } } });
 
-            // Wave Control Button State
-            switch (gameState) { case GAME_STATES.PRE_GAME: waveControlButton.textContent = "Start Game"; waveControlButton.disabled = false; break; case GAME_STATES.WAVE_IN_PROGRESS: waveControlButton.textContent = `Wave ${currentWaveIndex + 1} Ongoing`; waveControlButton.disabled = true; break; case GAME_STATES.WAVE_COMPLETE: if (currentWaveIndex + 1 >= totalWaves) { waveControlButton.textContent = "You Win!"; waveControlButton.disabled = true; } else { waveControlButton.textContent = `Start Wave ${currentWaveIndex + 2}`; waveControlButton.disabled = false; } break; case GAME_STATES.GAME_OVER: case GAME_STATES.GAME_WON: waveControlButton.textContent = "Restart"; waveControlButton.disabled = true; break; }
+        // --- Message/Overlay Logic ---
+        function showMessage(t, txt, cs = [], cbt = "OK") {/* ... */ gamePaused = true; canvas.style.cursor = 'default'; messageTitle.textContent = t; messageText.textContent = txt; messageCloseBtn.textContent = cbt; rogueChoicesContainer.innerHTML = ''; if (cs.length > 0) { cs.forEach(c => { const b = document.createElement('button'); b.textContent = c.text; b.onclick = () => { c.action(); hideMessage(); }; rogueChoicesContainer.appendChild(b); }); messageCloseBtn.style.display = 'none'; } else { messageCloseBtn.style.display = 'inline-block'; messageCloseBtn.onclick = hideMessage; } messageOverlay.style.display = 'flex'; }
+        function hideMessage() {/* ... */ messageOverlay.style.display = 'none'; gamePaused = false; updateUI(); buttons.startWave.disabled = waveInProgress || gameOver; updateCursor(); }
+        function handleGameOver(r) {/* ... */ if (gameOver) return; gameOver = true; showMessage("Game Over!", r, [], "Restart"); messageCloseBtn.style.display = 'inline-block'; messageCloseBtn.onclick = () => window.location.reload(); canvas.style.cursor = 'default'; }
+        function handleGameWin() {/* ... */ if (gameOver) return; gameOver = true; const s = Math.floor(cash + lives * 50 + (FINAL_WAVE - wave) * 100); showMessage("Victory!", `Survived ${FINAL_WAVE} waves! Score: ${s}`, [], "Play Again"); messageCloseBtn.style.display = 'inline-block'; messageCloseBtn.onclick = () => window.location.reload(); canvas.style.cursor = 'default'; }
 
-            // Upgrade Button and Tower Info Panel Logic
-            if (selectedTower) { towerInfoPanel.innerHTML = `Lvl:<span>${selectedTower.level}</span> Dmg:<span>${selectedTower.damage.toFixed(0)}</span> Rng:<span>${(selectedTower.range / scale).toFixed(0)}</span> Kills:<span>${selectedTower.kills}</span>`; if (gameState === GAME_STATES.WAVE_IN_PROGRESS) { upgradeTowerButton.textContent = "Upgrade"; upgradeTowerButton.disabled = true; } else { if (selectedTower.level < selectedTower.maxLevel) { upgradeTowerButton.textContent = `Upgrade (${selectedTower.upgradeCost}$)`; upgradeTowerButton.disabled = money < selectedTower.upgradeCost; } else { upgradeTowerButton.textContent = "Max Level"; upgradeTowerButton.disabled = true; } } } else { towerInfoPanel.innerHTML = `Lvl:<span>--</span> Dmg:<span>--</span> Rng:<span>--</span> Kills:<span>--</span>`; upgradeTowerButton.textContent = "Upgrade"; upgradeTowerButton.disabled = true; }
+        // --- Rogue-like Element ---
+        function offerRogueChoice(wb) {/* ... */ const cs = []; const cc = 3; const pc = [{ type: 'cash', text: `+ $${Math.floor(wb * 1.5)} Cash`, action: () => { cash += Math.floor(wb * 1.5); updateUI(); } }, { type: 'lives', text: `+ ${Math.min(5, Math.ceil(wave / 2))} Lives`, action: () => { lives = Math.min(20, lives + Math.min(5, Math.ceil(wave / 2))); updateUI(); } }, { type: 'build_discount', text: `15% Off Next Turret`, action: () => applyTemporaryBuildDiscount(0.15) }, { type: 'upgrade_discount', text: `20% Off Next Upgrade`, action: () => applyTemporaryUpgradeDiscount(0.20) }, { type: 'global_damage', text: `+10% Damage (Next Wave)`, action: () => applyGlobalDamageBoost(0.1) }, { type: 'global_range', text: `+10% Range (Next Wave)`, action: () => applyGlobalRangeBoost(0.1) },]; let fc = pc.filter(c => { if (c.type === 'lives' && lives >= 20) return false; if (c.type === 'build_discount' && buildDiscount > 0) return false; if (c.type === 'upgrade_discount' && upgradeDiscount > 0) return false; return true; }); const ac = [...fc]; for (let i = 0; i < cc && ac.length > 0; i++) { const ri = Math.floor(Math.random() * ac.length); cs.push(ac.splice(ri, 1)[0]); } if (cs.length > 0) { showMessage(`Wave ${wave} Cleared!`, `Bonus: $${wb}. Choose bonus for Wave ${wave + 1}:`, cs); } else { showMessage(`Wave ${wave} Cleared!`, `Bonus: $${wb}.`, [], "Continue"); } }
 
-            // --- NEW: Slow Ability Button Update ---
-            if (slowAbilityCooldown > 0) {
-                const secondsLeft = Math.ceil(slowAbilityCooldown / 60); // Assuming 60fps
-                slowAbilityButton.textContent = `Slow (${secondsLeft}s)`;
-                slowAbilityButton.disabled = true;
+        // --- Temporary Effects Implementation ---
+        function applyTemporaryBuildDiscount(d) { buildDiscount = d; updateUI(); } function applyTemporaryUpgradeDiscount(d) { upgradeDiscount = d; updateUI(); } function applyGlobalDamageBoost(b) { globalDamageMultiplier += b; } function applyGlobalRangeBoost(b) { globalRangeMultiplier += b; }
+
+        // --- Memory Game Logic ---
+        function switchTab(activeTab) {/* ... */ if (activeTab === 'input') { inputTabBtn.classList.add('active'); quizTabBtn.classList.remove('active'); inputTabContent.classList.add('active'); quizTabContent.classList.remove('active'); } else { inputTabBtn.classList.remove('active'); quizTabBtn.classList.add('active'); inputTabContent.classList.remove('active'); quizTabContent.classList.add('active'); if (!currentQuizKey && quizKeys.length > 0) { loadNextQuestion(); } else if (quizKeys.length === 0) { quizKeyDisplay.textContent = 'No pairs saved yet.'; quizAnswerInput.value = ''; quizFeedback.textContent = ''; } } }
+        function parseAndSavePairs() {/* ... */ const it = pairsInput.value.trim(); const np = {}; let c = 0; let err = null; if (!it) { inputFeedback.textContent = "Input is empty."; return; } const ps = it.split(';'); for (const p of ps) { const pts = p.split(','); if (pts.length === 2) { const k = pts[0].trim(); const v = pts[1].trim(); if (k && v) { np[k] = v; c++; } else { err = "Found pair with empty key or value."; break; } } else if (p.trim()) { err = `Invalid format near "${p}". Use "key,value;..."`; break; } } if (err) { inputFeedback.textContent = `Error: ${err}`; inputFeedback.classList.add('incorrect'); inputFeedback.classList.remove('correct'); } else if (c > 0) { memoryPairs = np; quizKeys = Object.keys(memoryPairs); currentQuizIndex = 0; currentQuizKey = null; inputFeedback.textContent = `Saved ${c} pairs successfully!`; inputFeedback.classList.add('correct'); inputFeedback.classList.remove('incorrect'); pairsInput.value = ''; loadNextQuestion(); switchTab('quiz'); } else { inputFeedback.textContent = "No valid pairs found in input."; inputFeedback.classList.add('incorrect'); inputFeedback.classList.remove('correct'); } }
+
+        function loadNextQuestion() {
+            quizFeedback.textContent = ''; // Clear previous feedback
+            // quizAnswerInput.value = ''; // Keep old answer until next question fully loads? No, clear it.
+            // quizAnswerInput.disabled = false; // REMOVED - Keep enabled
+            // submitAnswerBtn.disabled = false; // REMOVED - Keep enabled
+
+            if (quizKeys.length === 0) {
+                quizKeyDisplay.textContent = 'No pairs saved yet.';
+                currentQuizKey = null;
+                quizAnswerInput.disabled = true; // Disable if no questions
+                submitAnswerBtn.disabled = true; // Disable if no questions
+                return;
+            }
+
+            // Ensure enabled if there are questions
+            quizAnswerInput.disabled = false;
+            submitAnswerBtn.disabled = false;
+
+            // Cycle through keys
+            currentQuizKey = quizKeys[currentQuizIndex];
+            quizKeyDisplay.textContent = currentQuizKey;
+
+            currentQuizIndex = (currentQuizIndex + 1) % quizKeys.length; // Move to next index for next time
+        }
+
+        function checkAnswer() {
+            if (!currentQuizKey || quizKeys.length === 0) return; // No question loaded
+
+            const submittedAnswer = quizAnswerInput.value.trim();
+            const correctAnswer = memoryPairs[currentQuizKey];
+
+            quizFeedback.classList.remove('correct', 'incorrect');
+
+            if (submittedAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                quizFeedback.textContent = `Correct! +$${REWARD_AMOUNT}`;
+                quizFeedback.classList.add('correct');
+                cash += REWARD_AMOUNT;
+                updateUI();
             } else {
-                slowAbilityButton.textContent = "Slow Wave";
-                // Enable only if game is actually started and wave is in progress
-                slowAbilityButton.disabled = gameState !== GAME_STATES.WAVE_IN_PROGRESS;
+                quizFeedback.textContent = `Incorrect. The answer was: ${correctAnswer}`;
+                quizFeedback.classList.add('incorrect');
             }
-             // --- End NEW ---
-        }
-        // --- End UPDATED: updateUI function ---
 
-        function redrawStaticState() { /* ... (Unchanged) ... */ console.log("Redrawing static state for selection change."); ctx.clearRect(0, 0, canvas.width, canvas.height); drawPath(); towers.forEach(tower => tower.draw()); }
-        function handleCanvasClick(event) { /* ... (Unchanged) ... */
-             if (gameState === GAME_STATES.GAME_OVER || gameState === GAME_STATES.GAME_WON) return;
-             const rect = canvas.getBoundingClientRect(); const clientX = event.clientX ?? event.touches[0].clientX; const clientY = event.clientY ?? event.touches[0].clientY;
-             const x = clientX - rect.left; const y = clientY - rect.top; const gridX = Math.floor(x / scaledTileSize); const gridY = Math.floor(y / scaledTileSize);
-             let clickedTowerObject = null; if (gridY >= 0 && gridY < grid.length && gridX >= 0 && gridX < grid[0].length) { clickedTowerObject = grid[gridY][gridX].tower; }
-             let selectionChanged = false;
-             if (clickedTowerObject) { if (selectedTower === clickedTowerObject) { selectedTower = null; selectionChanged = true; console.log(`Deselected tower at [${gridX}, ${gridY}] by re-clicking.`); } else { selectedTower = clickedTowerObject; selectionChanged = true; console.log(`Selected tower at [${gridX}, ${gridY}], Level: ${selectedTower.level}`); } } else { if (selectedTower !== null) { selectedTower = null; selectionChanged = true; console.log("Deselected tower by clicking empty space."); } }
-             updateUI();
-             if (selectionChanged && (gameState === GAME_STATES.PRE_GAME || gameState === GAME_STATES.WAVE_COMPLETE)) { redrawStaticState(); }
-         }
-         // --- Game State Management Functions ---
-         function startGame() { if (gameState === GAME_STATES.PRE_GAME) { startNextWave(); animationFrameId = requestAnimationFrame(gameLoop); } }
-         function startNextWave() { if (gameState === GAME_STATES.WAVE_IN_PROGRESS || gameState === GAME_STATES.GAME_OVER || gameState === GAME_STATES.GAME_WON) return; currentWaveIndex++; if (currentWaveIndex >= totalWaves) { gameWon(); return; } gameState = GAME_STATES.WAVE_IN_PROGRESS; waveFrameCount = 0; enemiesSpawnedThisWave = 0; projectiles = []; selectedTower = null; console.log(`Starting Wave ${currentWaveIndex + 1}`); updateUI(); } // updateUI enables slow button here
-         function checkWaveCompletion() { if (gameState !== GAME_STATES.WAVE_IN_PROGRESS) return; const currentWaveData = waves[currentWaveIndex]; if (enemiesSpawnedThisWave >= currentWaveData.count && enemies.length === 0) { waveComplete(); } }
-         function waveComplete() { console.log(`Wave ${currentWaveIndex + 1} Complete!`); gameState = GAME_STATES.WAVE_COMPLETE; slowAbilityActive = false; /* Ensure slow ends between waves */ updateUI(); if (currentWaveIndex + 1 >= totalWaves) { gameWon(); } } // updateUI disables slow button here
-         function gameOver() { if (gameState === GAME_STATES.GAME_OVER) return; cancelAnimationFrame(animationFrameId); animationFrameId = null; gameState = GAME_STATES.GAME_OVER; finalScoreGOElement.textContent = score; gameOverMessage.style.display = 'block'; updateUI(); console.log("GAME OVER!"); }
-         function gameWon() { if (gameState === GAME_STATES.GAME_WON) return; cancelAnimationFrame(animationFrameId); animationFrameId = null; gameState = GAME_STATES.GAME_WON; finalScoreWinElement.textContent = score; gameWonMessage.style.display = 'block'; updateUI(); console.log("YOU WIN!"); }
-         function restartGame() {
-             if (animationFrameId !== null) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
-             gameState = GAME_STATES.PRE_GAME; score = 0; money = STARTING_MONEY; lives = STARTING_LIVES; currentWaveIndex = -1;
-             enemies = []; towers = []; projectiles = []; frameCount = 0; waveFrameCount = 0; enemiesSpawnedThisWave = 0; selectedTower = null;
-             // --- NEW: Reset Slow Ability State ---
-             slowAbilityActive = false; slowAbilityDuration = 0; slowAbilityCooldown = 0;
-             // --- End NEW ---
-             gameOverMessage.style.display = 'none'; gameWonMessage.style.display = 'none';
-             createGrid(); setupPredefinedTowers(); updateUI(); redrawStaticState();
-        }
+            // Clear input immediately, keep it focused (browser default usually)
+            quizAnswerInput.value = '';
 
-        // --- Game Loop (Updated for Slow Ability) ---
-        let animationFrameId = null;
-        function gameLoop() {
-            if (gameState !== GAME_STATES.WAVE_IN_PROGRESS && gameState !== GAME_STATES.WAVE_COMPLETE) { animationFrameId = null; return; }
-            animationFrameId = requestAnimationFrame(gameLoop);
-
-            // --- NEW: Update Slow Ability ---
-            if (slowAbilityCooldown > 0) {
-                slowAbilityCooldown--;
-                if (slowAbilityCooldown === 0) {
-                    updateUI(); // Update button state when cooldown finishes
+            // Load next question after a delay
+            // Input remains enabled during this time
+            setTimeout(() => {
+                // Check if still on quiz tab before loading next question
+                if (quizTabContent.classList.contains('active')) {
+                    loadNextQuestion();
                 }
-            }
-            if (slowAbilityActive) {
-                slowAbilityDuration--;
-                if (slowAbilityDuration <= 0) {
-                    slowAbilityActive = false;
-                    console.log("Slow effect ended.");
-                }
-            }
-            // --- End NEW ---
-
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height); drawPath();
-            towers.forEach(tower => { tower.update(); tower.draw(); });
-            projectiles = projectiles.filter(p => { const active = p.update(); if (active) p.draw(); return active; });
-            enemies = enemies.filter(enemy => { if (enemy.health <= 0) { if (enemy.pathIndex < pathPixels.length) { money += MONEY_PER_KILL; score += SCORE_PER_KILL; updateUI(); } return false; } enemy.update(); enemy.draw(); return true; });
-            if (gameState === GAME_STATES.WAVE_IN_PROGRESS) { waveFrameCount++; const currentWaveData = waves[currentWaveIndex]; if (enemiesSpawnedThisWave < currentWaveData.count && waveFrameCount % currentWaveData.spawnRate === 0) { spawnEnemy(); } checkWaveCompletion(); }
-
-            // Update cooldown display continuously if > 0
-             if (slowAbilityCooldown > 0 && frameCount % 60 === 0) { // Update roughly every second
-                 updateUI();
-             }
-
-            frameCount++;
+            }, 1500); // Wait 1.5 seconds before loading next question
         }
+
 
         // --- Initialization ---
-        waveControlButton.addEventListener('click', () => { if (gameState === GAME_STATES.PRE_GAME) { startGame(); } else if (gameState === GAME_STATES.WAVE_COMPLETE) { startNextWave(); if (animationFrameId === null) { gameLoop(); } } });
-        upgradeTowerButton.addEventListener('click', () => { if (selectedTower && gameState !== GAME_STATES.WAVE_IN_PROGRESS) { if (selectedTower.upgrade()) { redrawStaticState(); } } });
-        canvas.addEventListener('click', handleCanvasClick); canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleCanvasClick(e); }, { passive: false });
+        function init() {
+            gameInfo.finalWave.textContent = FINAL_WAVE;
+            updateUI(); updateAoeButton(performance.now()); updateCursor();
+            lastTimestamp = performance.now();
+            requestAnimationFrame(gameLoop);
 
-        // --- NEW: Slow Ability Button Listener ---
-        slowAbilityButton.addEventListener('click', () => {
-            if (slowAbilityCooldown <= 0 && gameState === GAME_STATES.WAVE_IN_PROGRESS) {
-                slowAbilityActive = true;
-                slowAbilityDuration = SLOW_ABILITY_DURATION_FRAMES;
-                slowAbilityCooldown = SLOW_ABILITY_COOLDOWN_FRAMES;
-                console.log("Slow ability activated!");
-                updateUI(); // Immediately update button state
-            }
-        });
-        // --- End NEW ---
-
-        window.addEventListener('resize', resizeCanvas);
-        window.onload = () => { resizeCanvas(); restartGame(); };
+            // Memory Game Init
+            inputTabBtn.addEventListener('click', () => switchTab('input'));
+            quizTabBtn.addEventListener('click', () => switchTab('quiz'));
+            savePairsBtn.addEventListener('click', parseAndSavePairs);
+            submitAnswerBtn.addEventListener('click', checkAnswer);
+            quizAnswerInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !submitAnswerBtn.disabled) { checkAnswer(); } });
+            quizAnswerInput.addEventListener('focus', () => { setTimeout(() => { quizAnswerInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); });
+            loadNextQuestion(); // Load initial state
+        }
+        window.onload = init;
 
     </script>
+
 </body>
+
 </html>
