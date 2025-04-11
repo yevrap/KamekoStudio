@@ -76,7 +76,7 @@
             font-family: 'Press Start 2P', cursive; background-color: #111;
             border: 1px solid #555; border-radius: 4px; padding: 8px;
             color: #e0e0e0; width: 100%; margin-bottom: 10px;
-            font-size: 1rem; /* CHANGED: Increased font size to 1rem (16px) */
+            font-size: 1rem; /* Increased font size to 1rem (16px) */
             box-sizing: border-box;
         }
         #memory-game-panel textarea { min-height: 60px; /* Slightly reduced height */ }
@@ -116,8 +116,8 @@
                     <button id="quiz-tab-btn">Memory Quiz</button>
                 </div>
                 <div id="input-tab-content" class="tab-content active">
-                    <p class="text-xs mb-2">Enter pairs: key1,value1;key2,value2;...</p>
-                    <textarea id="pairs-input" placeholder="e.g., Mitochondria,Powerhouse;France,Paris"></textarea>
+                    <p class="text-xs mb-2">Enter pairs: key1 value1 key2 value2 ...</p>
+                    <textarea id="pairs-input"></textarea>
                     <button id="save-pairs-btn">Save & Start Quiz</button>
                     <p id="input-feedback" class="text-xs mt-2"></p>
                 </div>
@@ -224,47 +224,61 @@
 
         // --- Memory Game Logic ---
         function switchTab(activeTab){/* ... */ if(activeTab==='input'){inputTabBtn.classList.add('active');quizTabBtn.classList.remove('active');inputTabContent.classList.add('active');quizTabContent.classList.remove('active');}else{inputTabBtn.classList.remove('active');quizTabBtn.classList.add('active');inputTabContent.classList.remove('active');quizTabContent.classList.add('active');if(!currentQuizKey&&quizKeys.length>0){loadNextQuestion();}else if(quizKeys.length===0){quizKeyDisplay.textContent='No pairs saved yet.';quizAnswerInput.value='';quizFeedback.textContent='';}}}
-        function parseAndSavePairs(){/* ... */ const it=pairsInput.value.trim();const np={};let c=0;let err=null;if(!it){inputFeedback.textContent="Input is empty.";return;}const ps=it.split(';');for(const p of ps){const pts=p.split(',');if(pts.length===2){const k=pts[0].trim();const v=pts[1].trim();if(k&&v){np[k]=v;c++;}else{err="Found pair with empty key or value.";break;}}else if(p.trim()){err=`Invalid format near "${p}". Use "key,value;..."`;break;}}if(err){inputFeedback.textContent=`Error: ${err}`;inputFeedback.classList.add('incorrect');inputFeedback.classList.remove('correct');}else if(c>0){memoryPairs=np;quizKeys=Object.keys(memoryPairs);currentQuizIndex=0;currentQuizKey=null;inputFeedback.textContent=`Saved ${c} pairs successfully!`;inputFeedback.classList.add('correct');inputFeedback.classList.remove('incorrect');pairsInput.value='';loadNextQuestion();switchTab('quiz');}else{inputFeedback.textContent="No valid pairs found in input.";inputFeedback.classList.add('incorrect');inputFeedback.classList.remove('correct');}}
 
-        function loadNextQuestion() { // MODIFIED
-            quizFeedback.textContent = '';
-            // Ensure enabled if there are questions (might have been disabled if list was empty before)
-            if (quizKeys.length > 0) {
-                quizAnswerInput.disabled = false;
-                submitAnswerBtn.disabled = false;
-            } else { // Disable if no questions
-                quizKeyDisplay.textContent = 'No pairs saved yet.';
-                currentQuizKey = null;
-                quizAnswerInput.disabled = true;
-                submitAnswerBtn.disabled = true;
+        function parseAndSavePairs() { // MODIFIED for new format
+            const inputText = pairsInput.value.trim();
+            const newPairs = {};
+            let count = 0;
+            inputFeedback.classList.remove('correct', 'incorrect'); // Clear previous feedback style
+
+            if (!inputText) {
+                 inputFeedback.textContent = "Input is empty.";
+                 inputFeedback.classList.add('incorrect');
+                 return;
+            }
+
+            // Split by space and filter out empty strings resulting from multiple spaces
+            const items = inputText.split(' ').filter(item => item.trim() !== '');
+
+            // Validation: Check for even number of items (must be pairs) and at least one pair
+            if (items.length < 2) {
+                 inputFeedback.textContent = "Error: Input requires at least one key-value pair.";
+                 inputFeedback.classList.add('incorrect');
+                 return;
+            }
+            if (items.length % 2 !== 0) {
+                inputFeedback.textContent = "Error: Input must have an even number of items (key value key value...).";
+                inputFeedback.classList.add('incorrect');
                 return;
             }
-            // Cycle through keys
-            currentQuizKey = quizKeys[currentQuizIndex];
-            quizKeyDisplay.textContent = currentQuizKey;
-            currentQuizIndex = (currentQuizIndex + 1) % quizKeys.length;
+
+            // Process valid pairs
+            for (let i = 0; i < items.length; i += 2) {
+                const key = items[i]; // Already trimmed by filter
+                const value = items[i + 1]; // Already trimmed by filter
+                newPairs[key] = value;
+                count++;
+            }
+
+            if (count > 0) {
+                memoryPairs = newPairs;
+                quizKeys = Object.keys(memoryPairs);
+                currentQuizIndex = 0;
+                currentQuizKey = null;
+                inputFeedback.textContent = `Saved ${count} pairs successfully!`;
+                inputFeedback.classList.add('correct');
+                pairsInput.value = ''; // Clear input area
+                loadNextQuestion(); // Load the first question
+                switchTab('quiz'); // Switch to quiz tab automatically
+            } else {
+                 // This case might not be reachable with current validation, but keep as fallback
+                 inputFeedback.textContent = "No valid pairs found in input.";
+                 inputFeedback.classList.add('incorrect');
+            }
         }
 
-        function checkAnswer() { // MODIFIED
-             if (!currentQuizKey || quizKeys.length === 0) return;
-             const submittedAnswer = quizAnswerInput.value.trim();
-             const correctAnswer = memoryPairs[currentQuizKey];
-             quizFeedback.classList.remove('correct', 'incorrect');
-
-             if (submittedAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
-                 quizFeedback.textContent = `Correct! +$${REWARD_AMOUNT}`;
-                 quizFeedback.classList.add('correct');
-                 cash += REWARD_AMOUNT;
-                 updateUI();
-             } else {
-                 quizFeedback.textContent = `Incorrect. The answer was: ${correctAnswer}`;
-                 quizFeedback.classList.add('incorrect');
-             }
-             // Clear input immediately
-             quizAnswerInput.value = '';
-             // Load next question after a delay
-             setTimeout(() => { if (quizTabContent.classList.contains('active')) { loadNextQuestion(); } }, 1500);
-         }
+        function loadNextQuestion() { /* ... */ quizFeedback.textContent=''; if(quizKeys.length>0){quizAnswerInput.disabled=false; submitAnswerBtn.disabled=false;} else {quizKeyDisplay.textContent='No pairs saved yet.'; currentQuizKey=null; quizAnswerInput.disabled=true; submitAnswerBtn.disabled=true; return;} currentQuizKey=quizKeys[currentQuizIndex]; quizKeyDisplay.textContent=currentQuizKey; currentQuizIndex=(currentQuizIndex+1)%quizKeys.length; }
+        function checkAnswer() { /* ... */ if(!currentQuizKey||quizKeys.length===0)return; const sa=quizAnswerInput.value.trim(); const ca=memoryPairs[currentQuizKey]; quizFeedback.classList.remove('correct','incorrect'); if(sa.toLowerCase()===ca.toLowerCase()){quizFeedback.textContent=`Correct! +$${REWARD_AMOUNT}`; quizFeedback.classList.add('correct'); cash+=REWARD_AMOUNT; updateUI();} else {quizFeedback.textContent=`Incorrect. The answer was: ${ca}`; quizFeedback.classList.add('incorrect');} quizAnswerInput.value=''; setTimeout(()=>{if(quizTabContent.classList.contains('active')){loadNextQuestion();}},1500); }
 
         // --- Initialization ---
         function init() {
