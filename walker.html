@@ -2,82 +2,130 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Walking Simulator - Interior Walls</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D Walking Simulator - Mobile</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #f0f0f0; }
         canvas { display: block; }
-        #blocker {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            display: flex; /* Use flexbox for centering */
-            justify-content: center; /* Center horizontally */
-            align-items: center; /* Center vertically */
-        }
-        #instructions {
-            width: 50%;
-            max-width: 400px; /* Max width for instructions */
-            padding: 20px;
-            background-color: white;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
         #crosshair {
             position: absolute;
             top: 50%;
             left: 50%;
             width: 4px;
             height: 4px;
-            background-color: white;
+            background-color: rgba(255, 255, 255, 0.7); /* Slightly transparent */
             border-radius: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none; /* Make sure it doesn't interfere with clicks */
-            display: none; /* Hidden until pointer lock */
+            display: block;
+            z-index: 10;
         }
         .message-box {
             position: absolute;
-            bottom: 20px;
+            bottom: 80px; /* Adjust position if needed due to controls */
             left: 50%;
             transform: translateX(-50%);
-            padding: 10px 20px;
+            padding: 8px 15px;
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
             border-radius: 5px;
             display: none; /* Hidden by default */
             z-index: 100;
+            font-size: 14px;
         }
+
+        /* --- Mobile Controls Styling --- */
+        .mobile-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px; /* Area for controls */
+            pointer-events: none; /* Allow clicks/touches to pass through container */
+            z-index: 20;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #joystick-area {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            pointer-events: auto; /* Enable touch events for joystick */
+        }
+
+        #joystick-base {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            background-color: rgba(128, 128, 128, 0.3);
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+
+        #joystick-nub {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            top: 30px; /* Center nub */
+            left: 30px; /* Center nub */
+            transform: translate(0, 0); /* Initial position */
+            transition: transform 0.1s linear; /* Smooth return */
+        }
+
+        #interact-button {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(0, 150, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            text-align: center;
+            pointer-events: auto; /* Enable touch events for button */
+            cursor: pointer;
+            user-select: none; /* Prevent text selection */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+        }
+         #interact-button:active {
+             background-color: rgba(0, 100, 200, 0.7); /* Darker when pressed */
+         }
+
     </style>
 </head>
 <body>
-    <div id="blocker">
-        <div id="instructions">
-            <h1>Click to Play</h1>
-            <p>W, A, S, D: Move<br>Mouse: Look<br>Click: Interact / Use Door</p>
-        </div>
-    </div>
     <div id="crosshair"></div>
     <div id="message-box" class="message-box"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/PointerLockControls.js"></script>
+    <div class="mobile-controls">
+        <div id="joystick-area">
+            <div id="joystick-base"></div>
+            <div id="joystick-nub"></div>
+        </div>
+        <div id="interact-button">Action</div>
+    </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // --- Core Scene Setup ---
-        let scene, camera, renderer, controls;
-        let moveForward = false, moveBackward = false, moveLeft = false, moveRight = false;
-        let velocity = new THREE.Vector3(); // Not currently used for primary movement
-        let direction = new THREE.Vector3(); // Player movement direction
-        const moveSpeed = 40.0; // Adjusted speed
-        const interactionDistance = 15; // Interaction distance
+        let scene, camera, renderer; // Controls removed
+        let moveDirection = new THREE.Vector2(0, 0); // x for right/left, y for forward/backward
+        const moveSpeed = 20.0;
+        const interactionDistance = 15;
 
         // --- State ---
         let playerLocation = 'outside'; // 'outside' or 'building1'
-        const outsideColor = new THREE.Color(0x87ceeb); // Sky blue background
-        const insideColor = new THREE.Color(0x333333); // Dark grey background for inside
+        const outsideColor = new THREE.Color(0x87ceeb);
+        const insideColor = new THREE.Color(0x333333);
 
         // --- Objects ---
         let objects = []; // Array to hold ALL collidable objects (buildings, walls)
@@ -88,24 +136,36 @@
         let insideObject; // The object inside the building
         let doorObject; // Reference to the door mesh
 
-        const raycaster = new THREE.Raycaster(); // For interactions
-        const mouse = new THREE.Vector2(); // For click detection
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
 
         // --- Animation Parameters ---
         const jumpDuration = 500; // ms
         const jumpHeight = 5; // units
 
+        // --- Mobile Control State ---
+        let joystickTouchId = null;
+        let lookTouchId = null;
+        let joystickStartPos = { x: 0, y: 0 };
+        let lookStartPos = { x: 0, y: 0 };
+        let lookDelta = { x: 0, y: 0 };
+        const lookSensitivity = 0.004;
+        const joystickRadius = 50;
+
+        let joystickNub, joystickArea;
+
         // --- Initialization ---
         function init() {
             // Scene
             scene = new THREE.Scene();
-            scene.background = outsideColor; // Start outside
-            scene.fog = new THREE.Fog(0x87ceeb, 0, 150); // Initial fog
+            scene.background = outsideColor;
+            scene.fog = new THREE.Fog(0x87ceeb, 0, 150);
 
             // Camera
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.y = 10; // Set initial camera height (eye level)
-            camera.position.z = 5; // Start closer to origin
+            camera.position.y = 10;
+            camera.position.z = 5;
+            camera.rotation.order = 'YXZ';
 
             // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -117,60 +177,42 @@
             // --- Lighting ---
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
             scene.add(ambientLight);
-
             const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
             directionalLight.position.set(50, 100, 75);
             directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 1024;
-            directionalLight.shadow.mapSize.height = 1024;
-            directionalLight.shadow.camera.near = 0.5;
-            directionalLight.shadow.camera.far = 500;
-            directionalLight.shadow.camera.left = -100;
-            directionalLight.shadow.camera.right = 100;
-            directionalLight.shadow.camera.top = 100;
-            directionalLight.shadow.camera.bottom = -100;
+            directionalLight.shadow.mapSize.width = 1024; directionalLight.shadow.mapSize.height = 1024;
+            directionalLight.shadow.camera.near = 0.5; directionalLight.shadow.camera.far = 500;
+            directionalLight.shadow.camera.left = -100; directionalLight.shadow.camera.right = 100;
+            directionalLight.shadow.camera.top = 100; directionalLight.shadow.camera.bottom = -100;
             scene.add(directionalLight);
 
-            // --- Controls ---
-            controls = new THREE.PointerLockControls(camera, document.body);
-
-            const blocker = document.getElementById('blocker');
-            const instructions = document.getElementById('instructions');
-            const crosshair = document.getElementById('crosshair');
-
-            instructions.addEventListener('click', () => controls.lock());
-
-            controls.addEventListener('lock', () => {
-                instructions.style.display = 'none';
-                blocker.style.display = 'none';
-                crosshair.style.display = 'block';
-            });
-
-            controls.addEventListener('unlock', () => {
-                blocker.style.display = 'flex';
-                instructions.style.display = '';
-                crosshair.style.display = 'none';
-            });
-
-            scene.add(controls.getObject());
+            // --- Controls Setup (Mobile) ---
+            joystickArea = document.getElementById('joystick-area');
+            joystickNub = document.getElementById('joystick-nub');
+            const interactButton = document.getElementById('interact-button');
+            renderer.domElement.addEventListener('touchstart', onTouchStart, false);
+            renderer.domElement.addEventListener('touchmove', onTouchMove, false);
+            renderer.domElement.addEventListener('touchend', onTouchEnd, false);
+            renderer.domElement.addEventListener('touchcancel', onTouchEnd, false);
+            interactButton.addEventListener('touchstart', (e) => { e.preventDefault(); onClick(); });
+            interactButton.addEventListener('click', onClick);
 
             // --- Event Listeners ---
-            document.addEventListener('keydown', onKeyDown);
-            document.addEventListener('keyup', onKeyUp);
-            document.addEventListener('click', onClick);
             window.addEventListener('resize', onWindowResize);
 
             // --- Create Environment ---
             createFloor();
-            createBuildings(); // Creates buildings and the door
-            createInteractableCube(); // Creates the green cube outside
-            createInsideObject(); // Creates the red cube inside
-            createInteriorWalls(); // Creates the walls inside the building
-
-            // Set initial visibility based on location
+            createBuildings();
+            createInteractableCube();
+            createInsideObject();
+            createInteriorWalls();
             updateObjectVisibility();
         }
 
+        // --- Floor, Buildings, Walls, Interactables ---
+        // createFloor, createBuildings, createInteriorWalls,
+        // createInteractableCube, createInsideObject functions remain the same
+        // (Code omitted for brevity, but it's identical to previous version)
         // --- Floor ---
         function createFloor() {
             const floorGeometry = new THREE.PlaneGeometry(500, 500);
@@ -181,151 +223,37 @@
             floor.userData.location = 'outside';
             scene.add(floor);
         }
-
         // --- Buildings & Door ---
         function createBuildings() {
             const buildingMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa });
             const buildingGeometry = new THREE.BoxGeometry(20, 40, 20);
-
-            const buildingPositions = [
-                { x: -30, y: 20, z: -40 }, { x: 30, y: 20, z: -40 },
-                { x: -30, y: 20, z: 40 }, { x: 30, y: 20, z: 40 },
-                { x: 0, y: 20, z: -60 }, { x: 60, y: 20, z: 0 },
-                { x: -60, y: 20, z: 0 },
-            ];
-
-            buildingPositions.forEach(pos => {
-                const building = new THREE.Mesh(buildingGeometry, buildingMaterial.clone());
-                building.position.set(pos.x, pos.y, pos.z);
-                building.castShadow = true;
-                building.receiveShadow = true;
-                building.userData.isBuilding = true;
-                building.userData.name = "Building";
-                building.userData.location = 'outside';
-                scene.add(building);
-                objects.push(building); // Add to collidable objects array
-            });
-
-            // --- Create THE Door ---
-            const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x553311, roughness: 0.8 });
-            const doorGeometry = new THREE.BoxGeometry(5, 10, 0.5);
-            doorObject = new THREE.Mesh(doorGeometry, doorMaterial);
-            const doorPosX = -30;
-            const doorPosZ = -29.8;
-            doorObject.position.set(doorPosX, 5, doorPosZ);
-            doorObject.userData.isDoor = true;
-            doorObject.userData.name = "Door";
-            doorObject.userData.buildingId = 'building1';
-            doorObject.userData.outsidePos = new THREE.Vector3(doorPosX, 10, doorPosZ + 2); // Teleport point outside
-            // Adjust inside position to be start of corridor/room
-            doorObject.userData.insidePos = new THREE.Vector3(doorPosX, 10, doorPosZ - 2); // Closer to door for entry point
-            doorObject.userData.location = 'both'; // Door is interactable in both locations
-            scene.add(doorObject);
-            interactableObjects.push(doorObject); // Door is interactable
+            const buildingPositions = [ { x: -30, y: 20, z: -40 }, { x: 30, y: 20, z: -40 }, { x: -30, y: 20, z: 40 }, { x: 30, y: 20, z: 40 }, { x: 0, y: 20, z: -60 }, { x: 60, y: 20, z: 0 }, { x: -60, y: 20, z: 0 }, ];
+            buildingPositions.forEach(pos => { const building = new THREE.Mesh(buildingGeometry, buildingMaterial.clone()); building.position.set(pos.x, pos.y, pos.z); building.castShadow = true; building.receiveShadow = true; building.userData = { isBuilding: true, name: "Building", location: 'outside' }; scene.add(building); objects.push(building); });
+            const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x553311, roughness: 0.8 }); const doorGeometry = new THREE.BoxGeometry(5, 10, 0.5); doorObject = new THREE.Mesh(doorGeometry, doorMaterial); const doorPosX = -30; const doorPosZ = -29.8; doorObject.position.set(doorPosX, 5, doorPosZ); doorObject.userData = { isDoor: true, name: "Door", buildingId: 'building1', outsidePos: new THREE.Vector3(doorPosX, 10, doorPosZ + 2), insidePos: new THREE.Vector3(doorPosX, 10, doorPosZ - 2), location: 'both' }; scene.add(doorObject); interactableObjects.push(doorObject);
         }
-
          // --- Interior Walls ---
          function createInteriorWalls() {
-            const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, side: THREE.DoubleSide }); // Lighter grey walls
-            const wallHeight = 15;
-            const wallDepth = 0.5;
-            const roomWidth = 15;
-            const roomLength = 20;
-
-            // Position walls relative to the door's *intended* inside space center
-            // Let's center the room around (-30, y, -40)
-            const roomCenter = new THREE.Vector3(-30, wallHeight / 2, -40);
-
-            // Wall definitions: [width, height, depth, offsetX, offsetY, offsetZ] relative to roomCenter
-            const wallDefs = [
-                // Back Wall
-                [roomWidth, wallHeight, wallDepth, 0, 0, -roomLength / 2],
-                // Front Wall (Left Part - leaving gap for door)
-                [roomWidth/2 - 3, wallHeight, wallDepth, -roomWidth/4 - 1.5 , 0, roomLength / 2],
-                 // Front Wall (Right Part - leaving gap for door)
-                [roomWidth/2 - 3, wallHeight, wallDepth, roomWidth/4 + 1.5, 0, roomLength / 2],
-                // Left Wall
-                [roomLength, wallHeight, wallDepth, -roomWidth / 2, 0, 0],
-                // Right Wall
-                [roomLength, wallHeight, wallDepth, roomWidth / 2, 0, 0]
-            ];
-
-            wallDefs.forEach(def => {
-                const geometry = new THREE.BoxGeometry(def[0], def[1], def[2]);
-                const wall = new THREE.Mesh(geometry, wallMaterial);
-                wall.position.copy(roomCenter).add(new THREE.Vector3(def[3], def[4], def[5]));
-                // Rotate side walls
-                if (def[0] === roomLength) { // Left or Right wall
-                    wall.rotation.y = Math.PI / 2;
-                }
-                wall.userData = { location: 'building1', isWall: true, name: "Wall" };
-                wall.visible = false; // Start hidden
-                wall.castShadow = true;
-                wall.receiveShadow = true;
-                scene.add(wall);
-                objects.push(wall); // Add wall to the main collision objects array
-                interiorWalls.push(wall); // Add to specific array for visibility toggling
-            });
+            const wallMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, side: THREE.DoubleSide }); const wallHeight = 15; const wallDepth = 0.5; const roomWidth = 15; const roomLength = 20; const roomCenter = new THREE.Vector3(-30, wallHeight / 2, -40); const wallDefs = [ [roomWidth, wallHeight, wallDepth, 0, 0, -roomLength / 2], [roomWidth/2 - 3, wallHeight, wallDepth, -roomWidth/4 - 1.5 , 0, roomLength / 2], [roomWidth/2 - 3, wallHeight, wallDepth, roomWidth/4 + 1.5, 0, roomLength / 2], [roomLength, wallHeight, wallDepth, -roomWidth / 2, 0, 0], [roomLength, wallHeight, wallDepth, roomWidth / 2, 0, 0] ];
+            wallDefs.forEach(def => { const geometry = new THREE.BoxGeometry(def[0], def[1], def[2]); const wall = new THREE.Mesh(geometry, wallMaterial); wall.position.copy(roomCenter).add(new THREE.Vector3(def[3], def[4], def[5])); if (def[0] === roomLength) { wall.rotation.y = Math.PI / 2; } wall.userData = { location: 'building1', isWall: true, name: "Wall" }; wall.visible = false; wall.castShadow = true; wall.receiveShadow = true; scene.add(wall); objects.push(wall); interiorWalls.push(wall); });
          }
-
         // --- Interactable Object (Outside) ---
         function createInteractableCube() {
-            const geometry = new THREE.BoxGeometry(3, 3, 3);
-            const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-            magicCube = new THREE.Mesh(geometry, material);
-            magicCube.position.set(0, 1.5, -15);
-            magicCube.castShadow = true;
-            magicCube.userData.isInteractable = true;
-            magicCube.userData.name = "Magic Cube";
-            magicCube.userData.location = 'outside';
-            magicCube.userData.baseY = magicCube.position.y;
-            magicCube.userData.isAnimating = false;
-            magicCube.userData.animationStartTime = 0;
-            scene.add(magicCube);
-            interactableObjects.push(magicCube);
+            const geometry = new THREE.BoxGeometry(3, 3, 3); const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 }); magicCube = new THREE.Mesh(geometry, material); magicCube.position.set(0, 1.5, -15); magicCube.castShadow = true; magicCube.userData = {isInteractable: true, name: "Magic Cube", location: 'outside', baseY: magicCube.position.y, isAnimating: false, animationStartTime: 0}; scene.add(magicCube); interactableObjects.push(magicCube);
         }
-
         // --- Interactable Object (Inside) ---
         function createInsideObject() {
-            const geometry = new THREE.SphereGeometry(2, 32, 16);
-            const material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-            insideObject = new THREE.Mesh(geometry, material);
-            // Position inside the room defined by walls, e.g., near the back
-            const roomCenterZ = -40;
-            const roomLength = 20;
-            insideObject.position.set(-30, 5, roomCenterZ - roomLength/2 + 5); // Place near back wall
-            insideObject.castShadow = true;
-            insideObject.userData.isInteractable = true;
-            insideObject.userData.name = "Mystic Sphere";
-            insideObject.userData.location = 'building1';
-            insideObject.userData.baseY = insideObject.position.y;
-            insideObject.userData.isAnimating = false;
-            insideObject.userData.animationStartTime = 0;
-            scene.add(insideObject);
-            interactableObjects.push(insideObject);
-            insideObject.visible = false; // Initially hidden
+            const geometry = new THREE.SphereGeometry(2, 32, 16); const material = new THREE.MeshStandardMaterial({ color: 0xff0000 }); insideObject = new THREE.Mesh(geometry, material); const roomCenterZ = -40; const roomLength = 20; insideObject.position.set(-30, 5, roomCenterZ - roomLength/2 + 5); insideObject.castShadow = true; insideObject.userData = { isInteractable: true, name: "Mystic Sphere", location: 'building1', baseY: insideObject.position.y, isAnimating: false, animationStartTime: 0 }; scene.add(insideObject); interactableObjects.push(insideObject); insideObject.visible = false;
         }
+
 
         // --- Update Object Visibility based on Player Location ---
         function updateObjectVisibility() {
             const isOutside = (playerLocation === 'outside');
-
-            // Toggle outside objects
             floor.visible = isOutside;
             magicCube.visible = isOutside;
-            objects.forEach(obj => {
-                 if (obj.userData.isBuilding) {
-                     obj.visible = isOutside;
-                 }
-            });
-
-            // Toggle inside objects
+            objects.forEach(obj => { if (obj.userData.isBuilding) { obj.visible = isOutside; } });
             insideObject.visible = !isOutside;
-            interiorWalls.forEach(wall => {
-                wall.visible = !isOutside;
-            });
-
-            // Reset animation state when visibility changes
+            interiorWalls.forEach(wall => { wall.visible = !isOutside; });
             if (!magicCube.visible) magicCube.userData.isAnimating = false;
             if (!insideObject.visible) insideObject.userData.isAnimating = false;
         }
@@ -337,91 +265,74 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
-        // --- Keyboard Input ---
-        function onKeyDown(event) {
-            switch (event.code) {
-                case 'KeyW': moveForward = true; break;
-                case 'KeyA': moveLeft = true; break;
-                case 'KeyS': moveBackward = true; break;
-                case 'KeyD': moveRight = true; break;
+        // --- Touch Event Handlers ---
+        function onTouchStart(event) {
+            event.preventDefault();
+            const joystickBounds = joystickArea.getBoundingClientRect();
+            for (let i = 0; i < event.changedTouches.length; i++) {
+                const touch = event.changedTouches[i];
+                if (joystickTouchId === null && touch.clientX >= joystickBounds.left && touch.clientX <= joystickBounds.right && touch.clientY >= joystickBounds.top && touch.clientY <= joystickBounds.bottom) {
+                    joystickTouchId = touch.identifier; joystickStartPos.x = touch.clientX; joystickStartPos.y = touch.clientY;
+                } else if (lookTouchId === null) {
+                    lookTouchId = touch.identifier; lookStartPos.x = touch.clientX; lookStartPos.y = touch.clientY; lookDelta.x = 0; lookDelta.y = 0;
+                }
+            }
+        }
+        function onTouchMove(event) {
+            event.preventDefault();
+            for (let i = 0; i < event.changedTouches.length; i++) {
+                const touch = event.changedTouches[i];
+                if (touch.identifier === joystickTouchId) {
+                    const currentPos = { x: touch.clientX, y: touch.clientY }; let deltaX = currentPos.x - joystickStartPos.x; let deltaY = currentPos.y - joystickStartPos.y;
+                    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY); const maxDistance = joystickRadius;
+                    if (distance > maxDistance) { deltaX = (deltaX / distance) * maxDistance; deltaY = (deltaY / distance) * maxDistance; }
+                    moveDirection.x = deltaX / maxDistance; moveDirection.y = -deltaY / maxDistance;
+                    joystickNub.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
+                } else if (touch.identifier === lookTouchId) {
+                    const currentPos = { x: touch.clientX, y: touch.clientY }; lookDelta.x = currentPos.x - lookStartPos.x; lookDelta.y = currentPos.y - lookStartPos.y;
+                    camera.rotation.y -= lookDelta.x * lookSensitivity; camera.rotation.x -= lookDelta.y * lookSensitivity;
+                    camera.rotation.x = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, camera.rotation.x));
+                    lookStartPos.x = currentPos.x; lookStartPos.y = currentPos.y;
+                }
+            }
+        }
+        function onTouchEnd(event) {
+            event.preventDefault();
+            for (let i = 0; i < event.changedTouches.length; i++) {
+                const touch = event.changedTouches[i];
+                if (touch.identifier === joystickTouchId) {
+                    joystickTouchId = null; moveDirection.set(0, 0); joystickNub.style.transform = `translate(0px, 0px)`;
+                } else if (touch.identifier === lookTouchId) {
+                    lookTouchId = null; lookDelta.x = 0; lookDelta.y = 0;
+                }
             }
         }
 
-        function onKeyUp(event) {
-            switch (event.code) {
-                case 'KeyW': moveForward = false; break;
-                case 'KeyA': moveLeft = false; break;
-                case 'KeyS': moveBackward = false; break;
-                case 'KeyD': moveRight = false; break;
-            }
-        }
 
         // --- Interaction Logic ---
         function onClick() {
-            if (!controls.isLocked) return;
-
-            mouse.x = 0;
-            mouse.y = 0;
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(interactableObjects);
-
+            mouse.x = 0; mouse.y = 0; raycaster.setFromCamera(mouse, camera); const intersects = raycaster.intersectObjects(interactableObjects);
             if (intersects.length > 0) {
-                const intersectedObject = intersects[0].object;
-                const distance = intersects[0].distance;
-
-                if (distance <= interactionDistance) { // Check uses the updated interactionDistance
-                    // --- Door Interaction ---
+                const intersectedObject = intersects[0].object; const distance = intersects[0].distance;
+                if (distance <= interactionDistance) {
                     if (intersectedObject.userData.isDoor) {
                         const door = intersectedObject;
-                        if (playerLocation === 'outside') {
-                            playerLocation = door.userData.buildingId;
-                            camera.position.copy(door.userData.insidePos); // Use defined inside entry point
-                            scene.background = insideColor;
-                            scene.fog = null;
-                            showMessage("Entered the building.");
-                        } else if (playerLocation === door.userData.buildingId) {
-                            playerLocation = 'outside';
-                            camera.position.copy(door.userData.outsidePos);
-                            scene.background = outsideColor;
-                            scene.fog = new THREE.Fog(0x87ceeb, 0, 150);
-                            showMessage("Exited the building.");
-                        }
-                        updateObjectVisibility();
-                        camera.updateProjectionMatrix(); // Ensure camera updates after teleport
+                        if (playerLocation === 'outside') { playerLocation = door.userData.buildingId; camera.position.copy(door.userData.insidePos); scene.background = insideColor; scene.fog = null; showMessage("Entered the building."); }
+                        else if (playerLocation === door.userData.buildingId) { playerLocation = 'outside'; camera.position.copy(door.userData.outsidePos); scene.background = outsideColor; scene.fog = new THREE.Fog(0x87ceeb, 0, 150); showMessage("Exited the building."); }
+                        updateObjectVisibility(); camera.updateProjectionMatrix();
+                    } else if (intersectedObject.userData.isInteractable) {
+                        if ((intersectedObject.userData.location === playerLocation || intersectedObject.userData.location === 'both') && !intersectedObject.userData.isAnimating) { intersectedObject.material.color.setHex(Math.random() * 0xffffff); intersectedObject.userData.isAnimating = true; intersectedObject.userData.animationStartTime = performance.now(); showMessage(`Interacted with: ${intersectedObject.userData.name}`); }
+                        else if (intersectedObject.userData.isAnimating) { showMessage("It's still moving!"); } else { showMessage("Cannot interact with that right now."); }
                     }
-                    // --- Other Interactable Objects ---
-                    else if (intersectedObject.userData.isInteractable) {
-                        if ((intersectedObject.userData.location === playerLocation || intersectedObject.userData.location === 'both') && !intersectedObject.userData.isAnimating) {
-                            intersectedObject.material.color.setHex(Math.random() * 0xffffff);
-                            intersectedObject.userData.isAnimating = true;
-                            intersectedObject.userData.animationStartTime = performance.now();
-                            showMessage(`Interacted with: ${intersectedObject.userData.name}`);
-                        } else if (intersectedObject.userData.isAnimating) {
-                             showMessage("It's still moving!");
-                        } else {
-                             showMessage("Cannot interact with that right now.");
-                        }
-                    }
-                } else {
-                    if (intersectedObject.userData.isInteractable || intersectedObject.userData.isDoor) {
-                         showMessage("Too far away.");
-                    }
-                }
+                } else { if (intersectedObject.userData.isInteractable || intersectedObject.userData.isDoor) { showMessage("Too far away."); } }
             }
         }
 
         // --- Message Display ---
         let messageTimeout;
-        function showMessage(text) {
-            const messageBox = document.getElementById('message-box');
-            if (!messageBox) return;
-            messageBox.textContent = text;
-            messageBox.style.display = 'block';
-            if (messageTimeout) clearTimeout(messageTimeout);
-            messageTimeout = setTimeout(() => {
-                if (messageBox) messageBox.style.display = 'none';
-            }, 3000);
-        }
+        function showMessage(text) { /* ... same as before ... */
+            const messageBox = document.getElementById('message-box'); if (!messageBox) return; messageBox.textContent = text; messageBox.style.display = 'block'; if (messageTimeout) clearTimeout(messageTimeout); messageTimeout = setTimeout(() => { if (messageBox) messageBox.style.display = 'none'; }, 3000);
+         }
 
         // --- Animation Loop ---
         let prevTime = performance.now();
@@ -429,91 +340,55 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            const time = performance.now(); // Get current time for animations
-            const delta = (time - prevTime) / 1000; // Delta time in seconds
+            const time = performance.now();
+            const delta = (time - prevTime) / 1000;
 
             // --- Update Object Animations ---
-            interactableObjects.forEach(obj => {
-                if (obj.userData.isInteractable && obj.userData.isAnimating) {
-                    const elapsedTime = time - obj.userData.animationStartTime;
-                    if (elapsedTime < jumpDuration) {
-                        const progress = elapsedTime / jumpDuration;
-                        const yOffset = jumpHeight * Math.sin(progress * Math.PI);
-                        obj.position.y = obj.userData.baseY + yOffset;
-                    } else {
-                        obj.position.y = obj.userData.baseY;
-                        obj.userData.isAnimating = false;
-                    }
-                }
-            });
-            // --- End Object Animations ---
+            interactableObjects.forEach(obj => { /* ... animation logic same as before ... */
+                 if (obj.userData.isInteractable && obj.userData.isAnimating) { const elapsedTime = time - obj.userData.animationStartTime; if (elapsedTime < jumpDuration) { const progress = elapsedTime / jumpDuration; const yOffset = jumpHeight * Math.sin(progress * Math.PI); obj.position.y = obj.userData.baseY + yOffset; } else { obj.position.y = obj.userData.baseY; obj.userData.isAnimating = false; } } });
 
+            // --- Player Movement (Based on Joystick) ---
+             const actualMoveSpeed = moveSpeed * delta;
+             const moveDeltaZ = moveDirection.y * actualMoveSpeed;
+             const moveDeltaX = moveDirection.x * actualMoveSpeed;
+             const originalPosition = camera.position.clone();
+             camera.translateZ(-moveDeltaZ);
+             camera.translateX(moveDeltaX);
 
-            if (controls.isLocked === true) {
-
-                 // Store position *before* movement is applied
-                const originalPosition = camera.position.clone();
-
-                // --- Movement Update (Always active when locked) ---
-                direction.z = Number(moveForward) - Number(moveBackward);
-                direction.x = Number(moveRight) - Number(moveLeft);
-                direction.normalize(); // Ensure consistent speed
-
-                const actualMoveSpeed = moveSpeed * delta;
-
-                // Apply movement using controls
-                if (direction.z !== 0) controls.moveForward(direction.z * actualMoveSpeed);
-                if (direction.x !== 0) controls.moveRight(direction.x * actualMoveSpeed);
-
-                // --- Collision Detection (Conditional based on location) ---
-                let collision = false;
-                const playerCollider = new THREE.Box3().setFromCenterAndSize(
-                    camera.position, // Check collision at the new position
-                    new THREE.Vector3(1.5, 10, 1.5) // Player's bounding box
-                );
-
-                if (playerLocation === 'outside') {
-                    // Check collision with exterior buildings
-                    for (let i = 0; i < objects.length; i++) {
-                        if (objects[i].userData.isBuilding) {
-                             const objectCollider = new THREE.Box3().setFromObject(objects[i]);
-                             if (playerCollider.intersectsBox(objectCollider)) {
-                                collision = true;
-                                break;
-                            }
-                        }
-                    }
-                } else if (playerLocation === 'building1') {
-                     // Check collision with interior walls
-                     for (let i = 0; i < objects.length; i++) {
-                        if (objects[i].userData.isWall) {
-                             const objectCollider = new THREE.Box3().setFromObject(objects[i]);
-                             if (playerCollider.intersectsBox(objectCollider)) {
-                                collision = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                // If collision detected, revert position to before movement was applied
-                if (collision) {
-                    camera.position.copy(originalPosition);
-                }
-                // --- End Collision Detection ---
-
-                // Keep player at fixed height (applies both inside and outside)
-                 if (!camera.position) {
-                     console.error("Camera position is undefined!");
-                 } else {
-                     // Ensure Y position is maintained AFTER collision resolution
-                     camera.position.y = 10;
+             // --- Collision Detection (Temporarily Disabled) ---
+             /* --- Start Temp Disable Collision ---
+             let collision = false;
+             const playerCollider = new THREE.Box3().setFromCenterAndSize(
+                 camera.position,
+                 new THREE.Vector3(1.5, 10, 1.5)
+             );
+             if (playerLocation === 'outside') {
+                 for (let i = 0; i < objects.length; i++) {
+                     if (objects[i].userData.isBuilding) {
+                          const objectCollider = new THREE.Box3().setFromObject(objects[i]);
+                          if (playerCollider.intersectsBox(objectCollider)) { collision = true; break; }
+                     }
                  }
+             } else if (playerLocation === 'building1') {
+                  for (let i = 0; i < objects.length; i++) {
+                     if (objects[i].userData.isWall) {
+                          const objectCollider = new THREE.Box3().setFromObject(objects[i]);
+                          if (playerCollider.intersectsBox(objectCollider)) { collision = true; break; }
+                     }
+                 }
+             }
+             if (collision) {
+                 camera.position.copy(originalPosition);
+             }
+             --- End Temp Disable Collision --- */
+             // --- End Collision Detection ---
+
+             // Keep player at fixed height
+              if (!camera.position) { console.error("Camera position is undefined!"); }
+              else { camera.position.y = 10; }
 
 
-            } // End if (controls.isLocked)
-
-            prevTime = time; // Update prevTime for next frame's delta calculation
+            prevTime = time;
             renderer.render(scene, camera);
         }
 
