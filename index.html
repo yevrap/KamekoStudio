@@ -78,11 +78,12 @@
             color: #e0e0e0; width: 100%; margin-bottom: 10px;
             font-size: 1rem; /* Increased font size to 1rem (16px) */
             box-sizing: border-box;
+            line-height: 1.4; /* Improve readability for multi-line */
         }
-        #memory-game-panel textarea { min-height: 60px; /* Slightly reduced height */ }
+        #memory-game-panel textarea { min-height: 80px; /* Adjusted height */ }
         #memory-game-panel button { padding: 8px 15px; font-size: 0.7rem; }
         #quiz-key { display: block; margin-bottom: 10px; font-size: 0.9rem; color: #0ff; word-wrap: break-word; }
-        #quiz-feedback { margin-top: 10px; min-height: 1.2em; font-size: 0.8rem; /* Slightly increased feedback size */ }
+        #quiz-feedback { margin-top: 10px; min-height: 1.2em; font-size: 0.8rem; }
         #quiz-feedback.correct { color: #28a745; }
         #quiz-feedback.incorrect { color: #dc3545; }
 
@@ -116,7 +117,7 @@
                     <button id="quiz-tab-btn">Memory Quiz</button>
                 </div>
                 <div id="input-tab-content" class="tab-content active">
-                    <p class="text-xs mb-2">Enter pairs: key1 value1 key2 value2 ...</p>
+                    <p class="text-xs mb-2">Enter pairs (one per line): Key:Value</p>
                     <textarea id="pairs-input"></textarea>
                     <button id="save-pairs-btn">Save & Start Quiz</button>
                     <p id="input-feedback" class="text-xs mt-2"></p>
@@ -225,11 +226,12 @@
         // --- Memory Game Logic ---
         function switchTab(activeTab){/* ... */ if(activeTab==='input'){inputTabBtn.classList.add('active');quizTabBtn.classList.remove('active');inputTabContent.classList.add('active');quizTabContent.classList.remove('active');}else{inputTabBtn.classList.remove('active');quizTabBtn.classList.add('active');inputTabContent.classList.remove('active');quizTabContent.classList.add('active');if(!currentQuizKey&&quizKeys.length>0){loadNextQuestion();}else if(quizKeys.length===0){quizKeyDisplay.textContent='No pairs saved yet.';quizAnswerInput.value='';quizFeedback.textContent='';}}}
 
-        function parseAndSavePairs() { // MODIFIED for new format
+        function parseAndSavePairs() { // MODIFIED for new line-based format
             const inputText = pairsInput.value.trim();
             const newPairs = {};
             let count = 0;
-            inputFeedback.classList.remove('correct', 'incorrect'); // Clear previous feedback style
+            let errors = []; // Store multiple errors
+            inputFeedback.classList.remove('correct', 'incorrect');
 
             if (!inputText) {
                  inputFeedback.textContent = "Input is empty.";
@@ -237,42 +239,59 @@
                  return;
             }
 
-            // Split by space and filter out empty strings resulting from multiple spaces
-            const items = inputText.split(' ').filter(item => item.trim() !== '');
+            const lines = inputText.split('\n'); // Split by newline
 
-            // Validation: Check for even number of items (must be pairs) and at least one pair
-            if (items.length < 2) {
-                 inputFeedback.textContent = "Error: Input requires at least one key-value pair.";
-                 inputFeedback.classList.add('incorrect');
-                 return;
-            }
-            if (items.length % 2 !== 0) {
-                inputFeedback.textContent = "Error: Input must have an even number of items (key value key value...).";
-                inputFeedback.classList.add('incorrect');
-                return;
-            }
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue; // Skip empty lines
 
-            // Process valid pairs
-            for (let i = 0; i < items.length; i += 2) {
-                const key = items[i]; // Already trimmed by filter
-                const value = items[i + 1]; // Already trimmed by filter
+                const delimiterIndex = line.indexOf(':');
+
+                // Validation for each line
+                if (delimiterIndex === -1) {
+                    errors.push(`Line ${i + 1}: Missing colon ':' separator.`);
+                    continue; // Skip this line
+                }
+                if (delimiterIndex === 0) {
+                    errors.push(`Line ${i + 1}: Key cannot be empty.`);
+                    continue; // Skip this line
+                }
+                 if (delimiterIndex === line.length - 1) {
+                    errors.push(`Line ${i + 1}: Value cannot be empty.`);
+                    continue; // Skip this line
+                }
+
+                const key = line.substring(0, delimiterIndex).trim();
+                const value = line.substring(delimiterIndex + 1).trim();
+
+                if (!key || !value) { // Double check key/value not empty after potential inner trim
+                     errors.push(`Line ${i + 1}: Key or value is empty after trimming.`);
+                     continue; // Skip this line
+                }
+
                 newPairs[key] = value;
                 count++;
             }
 
+            // Report results
             if (count > 0) {
                 memoryPairs = newPairs;
                 quizKeys = Object.keys(memoryPairs);
                 currentQuizIndex = 0;
                 currentQuizKey = null;
                 inputFeedback.textContent = `Saved ${count} pairs successfully!`;
+                if (errors.length > 0) {
+                     inputFeedback.textContent += ` Skipped ${errors.length} invalid line(s).`;
+                }
                 inputFeedback.classList.add('correct');
                 pairsInput.value = ''; // Clear input area
                 loadNextQuestion(); // Load the first question
                 switchTab('quiz'); // Switch to quiz tab automatically
             } else {
-                 // This case might not be reachable with current validation, but keep as fallback
-                 inputFeedback.textContent = "No valid pairs found in input.";
+                 inputFeedback.textContent = "No valid pairs found. Ensure format is 'Key:Value' on each line.";
+                 if (errors.length > 0) {
+                     inputFeedback.textContent += ` Errors: ${errors.join(' ')}`; // Show first few errors?
+                 }
                  inputFeedback.classList.add('incorrect');
             }
         }

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Auto-Aim Endless Shooter</title> <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .container {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            position: relative;
+        }
+        #gameCanvasContainer {
+            width: 100%;
+            height: 500px;
+            margin: 1rem auto;
+            background-color: #cccccc; /* Slightly darker background */
+            border-radius: 0.5rem;
+            border: 1px solid #cbd5e1;
+            position: relative;
+            cursor: default;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+        }
+        #scoreDisplay {
+            position: absolute;
+            top: 2.5rem;
+            left: 2.5rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            z-index: 10;
+        }
+        button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #3182ce;
+        }
+        .instructions {
+            margin-top: 0.5rem;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-2xl font-semibold mb-2 text-gray-800">3D Auto-Aim Endless Shooter</h1> <div id="scoreDisplay">Score: 0</div>
+
+        <div id="gameCanvasContainer"></div>
+
+        <div class="controls">
+             <p class="instructions">Press SPACE to shoot. Aiming is automatic! Hit the incoming boxes!</p> <button id="resetButton">Reset Game</button>
+        </div>
+    </div>
+
+    <script>
+        console.log("Script start.");
+
+        // --- Basic Setup ---
+        const container = document.getElementById('gameCanvasContainer');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const resetButton = document.getElementById('resetButton');
+        let score = 0;
+
+        // --- Scene, Camera, Renderer ---
+        let scene, camera, renderer;
+        let ground, shooterMesh;
+        const clock = new THREE.Clock();
+        const textureLoader = new THREE.TextureLoader();
+
+        // --- Obstacles ---
+        const obstacles = [];
+        const obstacleSpeed = 12.0; // Speed along Z-axis towards player
+        const spawnRangeX = 15; // Horizontal range for spawning
+        const obstacleSpawnZ = -60; // How far away obstacles spawn
+        let obstacleSpawnTimer = 0;
+        const obstacleSpawnInterval = 1.0; // Spawn slightly faster
+        const obstacleGeometry = new THREE.BoxGeometry(2, 2, 2);
+        const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+
+        // --- Bullet Meshes ---
+        const bullets = [];
+        const bulletGeometry = new THREE.SphereGeometry(0.15, 8, 6);
+        const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFF00 });
+
+        // --- Bullet Parameters ---
+        const gravity = 2.0;
+        const particleInitialSpeed = 100;
+        const particleLife = 0.75;
+        const shootRate = 3;
+
+        // --- Shooting Trigger (Space Bar) ---
+
+        // --- Aiming (Auto-Aim) ---
+        const waterSourcePosition = new THREE.Vector3(0, 1, 5); // Where bullets spawn
+        const shooterPosition = new THREE.Vector3(0, 1, 5.5); // Where visual cone is
+
+        // --- Sound Effects (Tone.js) ---
+        let shootSynth, hitSynth;
+        let soundsReady = false;
+
+        // --- Initialization ---
+        function init() {
+            console.log("init() called.");
+            try {
+                // Renderer, Scene, Camera, Lights, Ground setup
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.setClearColor(0x87CEEB);
+                container.appendChild(renderer.domElement);
+                scene = new THREE.Scene();
+                scene.fog = new THREE.Fog(0x87CEEB, 15, 60);
+                const aspect = container.clientWidth / container.clientHeight;
+                camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 100);
+                camera.position.set(0, 3.0, 10);
+                camera.lookAt(0, 1, 0);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+                scene.add(ambientLight);
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+                directionalLight.position.set(5, 15, 10);
+                scene.add(directionalLight);
+                const groundTexture = textureLoader.load(
+                     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAGRJREFUWEft0sENAAAIACB9+v+rARGEbCEz7nZ39gQAkLBYAgAILAEAEFgCAAgcAQAEjgAAAkcAAMFgCQAgsAQAEFgCAAgcAQAEjgAAAkcAAIGjBQBgcAQAEAwCAGCwBACQWAIAyHYB9bQ+g9dKAAAAAElFTkSuQmCC',
+                     (texture) => { texture.wrapS = texture.wrapT = THREE.RepeatWrapping; texture.repeat.set(100, 100); texture.needsUpdate = true; }
+                 );
+                const groundGeometry = new THREE.PlaneGeometry(100, 200);
+                const groundMaterial = new THREE.MeshStandardMaterial({ map: groundTexture, color: 0x90EE90 });
+                ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.position.y = -0.5;
+                scene.add(ground);
+
+                // Create Visible Shooter (points straight ahead now)
+                console.log("Creating Shooter Mesh...");
+                const shooterGeometry = new THREE.ConeGeometry(0.3, 1, 16);
+                const shooterMaterial = new THREE.MeshStandardMaterial({ color: 0x555555 });
+                shooterMesh = new THREE.Mesh(shooterGeometry, shooterMaterial);
+                shooterMesh.position.copy(shooterPosition);
+                shooterMesh.rotation.x = Math.PI / 2;
+                scene.add(shooterMesh);
+                console.log("Shooter Mesh created.");
+
+                // Initialize Sound Synths
+                setupSounds();
+
+                // Attempt to start audio context immediately
+                try {
+                    if (Tone.context.state !== 'running') {
+                        Tone.start().then(() => {
+                            console.log("Audio context started successfully via Tone.start().");
+                            soundsReady = true;
+                        }).catch(e => {
+                            console.warn("Audio context start failed via Tone.start() (may need user interaction):", e);
+                            soundsReady = false;
+                        });
+                    } else {
+                        console.log("Audio context was already running.");
+                        soundsReady = true;
+                    }
+                } catch(e) {
+                     console.error("Error during Tone.start() call:", e);
+                     soundsReady = false;
+                }
+
+                // Event Listeners
+                window.addEventListener('resize', onWindowResize);
+                document.addEventListener('keydown', handleKeyDown);
+                resetButton.addEventListener('click', resetGame);
+
+                // Start Animation Loop
+                renderer.setAnimationLoop(animate);
+                console.log("Initialization complete.");
+
+            } catch (error) {
+                console.error("Error during init():", error);
+            }
+        }
+
+        // --- Sound Setup ---
+        function setupSounds() {
+             try {
+                shootSynth = new Tone.Synth({ oscillator: { type: 'sine' }, volume: -15, envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.1 } }).toDestination();
+                hitSynth = new Tone.Synth({ oscillator: { type: 'square' }, volume: -10, envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 } }).toDestination();
+                console.log("Synth objects created successfully.");
+             } catch (e) {
+                console.error("Error creating Tone.js synths:", e);
+                soundsReady = false;
+             }
+        }
+
+        // --- Game Logic Functions ---
+        // --- Modified spawnObstacle for Z-axis movement ---
+        function spawnObstacle() {
+            const obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+
+            // Random X position, fixed Z spawn distance
+            obstacle.position.x = (Math.random() - 0.5) * spawnRangeX * 2; // Wider spawn range
+            obstacle.position.y = 1;
+            obstacle.position.z = obstacleSpawnZ; // Spawn far away
+
+            // No X velocity needed now
+            // obstacle.userData.velocityX = -startSide * obstacleSpeedX;
+
+            obstacle.geometry.computeBoundingBox();
+            obstacle.userData.boundingBox = new THREE.Box3();
+            obstacle.updateMatrixWorld();
+            obstacle.userData.boundingBox.copy(obstacle.geometry.boundingBox).applyMatrix4(obstacle.matrixWorld);
+            scene.add(obstacle);
+            obstacles.push(obstacle);
+        }
+
+        // --- shootWater with Auto-Aim (no changes needed here) ---
+        function shootWater() {
+             if (soundsReady && shootSynth) {
+                 try { shootSynth.triggerAttackRelease('G5', '32n', Tone.now()); }
+                 catch (e) { console.error("Error playing shoot sound:", e); }
+             }
+
+            let targetDirection = new THREE.Vector3(0, 0, -1);
+            let closestDistSq = Infinity;
+            let targetFound = false;
+
+            if (obstacles.length > 0) {
+                obstacles.forEach(obstacle => {
+                    // Only target obstacles that are in front of the shooter
+                    if (obstacle.position.z < waterSourcePosition.z) {
+                        const distSq = waterSourcePosition.distanceToSquared(obstacle.position);
+                        if (distSq < closestDistSq) {
+                            closestDistSq = distSq;
+                            targetDirection.copy(obstacle.position).sub(waterSourcePosition).normalize();
+                            targetFound = true;
+                        }
+                    }
+                });
+            }
+
+            const spread = 0.05;
+
+            for (let i = 0; i < shootRate; i++) {
+                const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+                const velocity = targetDirection.clone();
+                velocity.x += (Math.random() - 0.5) * spread;
+                velocity.y += (Math.random() - 0.5) * spread;
+                velocity.z += (Math.random() - 0.5) * spread;
+                velocity.normalize().multiplyScalar(particleInitialSpeed);
+                bullet.position.copy(waterSourcePosition);
+                bullet.userData.velocity = velocity;
+                bullet.userData.lifetime = particleLife;
+                scene.add(bullet);
+                bullets.push(bullet);
+            }
+        }
+
+        // --- Update bullet meshes function (no changes needed here) ---
+        function updateBullets(deltaTime) {
+            if (bullets.length === 0) return;
+            const tempBulletBox = new THREE.Box3();
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                const velocity = bullet.userData.velocity;
+                let lifetime = bullet.userData.lifetime;
+                velocity.y -= gravity * deltaTime;
+                bullet.position.addScaledVector(velocity, deltaTime);
+                lifetime -= deltaTime;
+                bullet.userData.lifetime = lifetime;
+                let removeBullet = false;
+                if (lifetime <= 0) {
+                    removeBullet = true;
+                } else if (bullet.position.y < -1.0 || bullet.position.y > 50 || Math.abs(bullet.position.x) > 50 || bullet.position.z > camera.position.z + 5 || bullet.position.z < -70) { // Adjusted Z bound check
+                    removeBullet = true;
+                } else {
+                    tempBulletBox.setFromObject(bullet);
+                    obstacleLoop: for (let j = obstacles.length - 1; j >= 0; j--) {
+                        const obstacle = obstacles[j];
+                        if (obstacle.userData.boundingBox && obstacle.userData.boundingBox.intersectsBox(tempBulletBox)) {
+                            score++;
+                            scoreDisplay.textContent = `Score: ${score}`;
+                            removeBullet = true;
+                            if (soundsReady && hitSynth) {
+                                 try { hitSynth.triggerAttackRelease('A3', '16n', Tone.now()); }
+                                 catch (e) { console.error("Error playing hit sound:", e); }
+                            }
+                            scene.remove(obstacle);
+                            obstacles.splice(j, 1);
+                            break obstacleLoop;
+                        }
+                    }
+                }
+                if (removeBullet) {
+                    scene.remove(bullet);
+                    bullets.splice(i, 1);
+                }
+            }
+        }
+
+
+        function resetGame() {
+            console.log("resetGame() called.");
+            score = 0;
+            scoreDisplay.textContent = `Score: ${score}`;
+            bullets.forEach(bullet => scene.remove(bullet));
+            bullets.length = 0;
+            obstacles.forEach(obstacle => scene.remove(obstacle));
+            obstacles.length = 0;
+            obstacleSpawnTimer = 0;
+            console.log("Game Reset complete.");
+        }
+
+        // --- Animation Loop ---
+        function animate() {
+             try {
+                const deltaTime = clock.getDelta();
+
+                // --- Removed Aim Direction Update ---
+                // --- Removed Shooter Orientation Update ---
+
+                // Update Obstacles (Move along Z towards player)
+                obstacleSpawnTimer += deltaTime;
+                if (obstacleSpawnTimer >= obstacleSpawnInterval) {
+                    spawnObstacle();
+                    obstacleSpawnTimer = 0;
+                }
+                for (let i = obstacles.length - 1; i >= 0; i--) {
+                    const obstacle = obstacles[i];
+                    // Move towards player along Z axis
+                    obstacle.position.z += obstacleSpeed * deltaTime;
+
+                    obstacle.updateMatrixWorld();
+                    if (obstacle.userData.boundingBox) {
+                       obstacle.userData.boundingBox.copy(obstacle.geometry.boundingBox).applyMatrix4(obstacle.matrixWorld);
+                    } else {
+                        obstacle.geometry.computeBoundingBox();
+                        obstacle.userData.boundingBox = new THREE.Box3();
+                        obstacle.userData.boundingBox.copy(obstacle.geometry.boundingBox).applyMatrix4(obstacle.matrixWorld);
+                    }
+                    // Remove if obstacle passed the camera
+                    if (obstacle.position.z > camera.position.z + 5) { // Adjusted removal check
+                        scene.remove(obstacle);
+                        obstacles.splice(i, 1);
+                    }
+                }
+
+                // Update Bullets
+                updateBullets(deltaTime);
+
+                // Scroll Ground Texture (Still vertical for depth)
+                if (ground && ground.material.map) {
+                    ground.material.map.offset.y -= (obstacleSpeed * 0.02) * deltaTime;
+                }
+
+                // Render
+                renderer.render(scene, camera);
+
+             } catch (error) {
+                 console.error("Error in animate() loop:", error);
+                 renderer.setAnimationLoop(null); // Stop the loop on error
+             }
+        }
+
+        // --- Event Handlers ---
+        function onWindowResize() {
+            console.log("Window resized.");
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        }
+
+        // Only handles shooting now
+        function handleKeyDown(event) {
+            if (event.code === 'Space') {
+                 shootWater();
+                 event.preventDefault();
+            }
+        }
+
+        // --- Start ---
+        console.log("Calling init()...");
+        init();
+
+    </script>
+</body>
+</html>
