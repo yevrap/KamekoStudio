@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>River Runner 3D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* Define CSS Variables for theming */
+        :root {
+            --body-bg-color: #e0f2fe;
+            --container-border-color: #0c4a6e;
+            --container-bg-color: #000;
+            --text-color-light: #ffffff;
+            --text-color-dark: #0c4a6e;
+            --button-text-color: #ffffff;
+            --button-bg-start: #f97316;
+            --button-bg-end: #ea580c;
+            /* Shoot button variables removed */
+            --message-box-bg: rgba(12, 74, 110, 0.9);
+            --message-box-text: #ffffff;
+            --score-bg: rgba(0, 0, 0, 0.5);
+            --score-text: #ffffff;
+            --scene-bg-color: 0x38bdf8;
+            --fog-color: 0x38bdf8;
+        }
+
+        /* Dark Mode Overrides */
+        body.dark-mode {
+            --body-bg-color: #1f2937;
+            --container-border-color: #9ca3af;
+            --container-bg-color: #000;
+            --text-color-light: #f3f4f6;
+            --text-color-dark: #d1d5db;
+            --button-text-color: #ffffff;
+            --button-bg-start: #1d4ed8;
+            --button-bg-end: #2563eb;
+            /* Shoot button variables removed */
+            --message-box-bg: rgba(55, 65, 81, 0.9);
+            --message-box-text: #f3f4f6;
+            --score-bg: rgba(255, 255, 255, 0.2);
+            --score-text: #f3f4f6;
+            --scene-bg-color: 0x1a2a3a;
+            --fog-color: 0x1a2a3a;
+        }
+
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center vertically */
+            align-items: center; /* Center horizontally */
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            height: 100vh; /* Fix body height to viewport */
+            margin: 0;
+            padding: 0; /* Remove default padding */
+            background-color: var(--body-bg-color);
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden; /* Prevent body scrollbars */
+            transition: background-color 0.3s ease;
+            -webkit-user-select: none; /* Prevent text selection */
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent; /* Prevent tap highlight */
+            position: relative;
+            /* Keep manipulation on body for buttons outside container */
+            touch-action: manipulation;
+        }
+
+        #game-container {
+            position: relative;
+            border: 5px solid var(--container-border-color);
+            border-radius: 10px;
+            overflow: hidden; /* Keep canvas contained */
+            background-color: var(--container-bg-color);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            width: 95%; /* Use slightly more width */
+            max-width: 500px;
+            height: calc(100vh - 55px); /* Fill most vertical space, leaving room for top button */
+            max-height: 900px; /* Optional: prevent extreme height on very tall/narrow screens */
+            cursor: grab;
+            transition: border-color 0.3s ease;
+            margin-bottom: 5px; /* Add small bottom margin if needed */
+            touch-action: none; /* Prevent ALL default touch actions (zoom, scroll) on container */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        #game-container:active {
+             cursor: grabbing;
+        }
+
+        #game-container canvas {
+             display: block;
+             width: 100%;
+             height: 100%;
+             touch-action: none; /* Also apply directly to canvas */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--score-text);
+            font-size: 1.2em;
+            background-color: var(--score-bg);
+            padding: 5px 15px;
+            border-radius: 5px;
+            z-index: 5;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--message-box-bg);
+            color: var(--message-box-text);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.2em;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+         #message-box[style*="display: block"] {
+            pointer-events: auto;
+         }
+        #message-box p {
+            margin-bottom: 20px;
+        }
+
+        /* General button style */
+         button {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9em;
+            padding: 8px 16px;
+            color: var(--button-text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.3s ease;
+            margin: 5px;
+            pointer-events: auto;
+         }
+         button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+         }
+         button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+         }
+
+         /* Specific button backgrounds */
+        #message-box button, #start-button { /* Start/Restart button */
+             background: linear-gradient(180deg, var(--button-bg-start), var(--button-bg-end));
+        }
+
+        /* Dark Mode Toggle Button Styling */
+        #dark-mode-toggle {
+             position: absolute;
+             top: 10px;
+             right: 10px;
+             font-size: 0.7em;
+             padding: 5px 10px;
+             background-color: #555;
+             margin: 0;
+             z-index: 20;
+        }
+         body.dark-mode #dark-mode-toggle {
+             background-color: #aaa;
+             color: #333;
+         }
+
+        /* Shoot Button Styling REMOVED */
+
+    </style>
+</head>
+<body>
+    <button id="dark-mode-toggle">Mode</button>
+
+    <div id="game-container">
+        <div id="score">Score: 0</div>
+        <div id="message-box">
+            <p id="message-text">River Runner 3D!</p>
+            <button id="start-button">Start Game</button>
+        </div>
+        </div>
+
+
+    <script>
+        // --- DOM Elements ---
+        const gameContainer = document.getElementById('game-container');
+        const scoreElement = document.getElementById('score');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const startButton = document.getElementById('start-button');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+
+        // --- Three.js Variables ---
+        let scene, camera, renderer;
+        let boat, boatBox;
+        let waterParticles;
+        let obstacles = [];
+        let ambientLight, directionalLight;
+        const riverWidth = 15;
+        const riverLength = 50;
+        const waterParticleCount = 5000;
+
+        // --- Projectile Variables ---
+        const PROJECTILE_POOL_SIZE = 15;
+        const PROJECTILE_SPEED = 0.4;
+        const SHOOT_COOLDOWN = 250;
+        const PROJECTILE_BONUS_POINTS = 5;
+        let projectilePool = [];
+        let activeProjectiles = [];
+        let lastShootTime = 0;
+        let projectileMaterial;
+        let projectileGeometry;
+        const defaultProjectileDirection = new THREE.Vector3(0, 0, 1);
+
+        // --- Explosion Particle System ---
+        const MAX_EXPLOSION_PARTICLES = 100;
+        const EXPLOSION_PARTICLE_LIFETIME = 25;
+        const EXPLOSION_PARTICLE_SPEED = 0.08;
+        let explosionParticles;
+        let explosionParticleInfo = [];
+        let currentExplosionParticleIndex = 0;
+
+        // --- Game Variables ---
+        let score = 0;
+        let gameSpeed = 0.1; // Base speed, will be increased in steps
+        const GAME_SPEED_INCREASE = 0.02; // How much to increase speed per step
+        const MAX_GAME_SPEED = 0.35; // Max speed cap
+        let obstacleSpawnTimer = 0;
+        let obstacleSpawnInterval = 100; // Initial interval, decreases over time
+        const MIN_SPAWN_INTERVAL = 40; // Minimum interval cap
+        let animationFrameId;
+        let isGameOver = true;
+        let keys = {};
+        let containerWidth, containerHeight;
+        let isDragging = false;
+        let dragStartX = 0;
+        let boatStartX = 0;
+
+        // --- Tap Detection Variables ---
+        let pointerDownTime = 0;
+        let pointerDownX = 0;
+        let pointerDownY = 0;
+        let potentialTap = false;
+        const MAX_TAP_DURATION = 250; // ms
+        const MAX_TAP_MOVEMENT = 10; // pixels
+
+        // --- Theme Variable ---
+        let isDarkMode = true; // Default to dark mode
+
+        // --- Color Progression ---
+        const waterColorsLight = [0x0055aa, 0x007799, 0x008877, 0x440088, 0x003388];
+        const waterColorsDark = [0x4477aa, 0x4499bb, 0x44aaaa, 0x7744aa, 0x4466aa];
+        let currentWaterColorIndex = 0;
+        const SCORE_THRESHOLD_COLOR_CHANGE = 25; // Also used for speed increase
+        let nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
+
+        // --- Constants ---
+        const BOAT_SPEED_X = 0.15;
+        const WATER_LEVEL = -0.5;
+        const CAMERA_OFFSET = new THREE.Vector3(0, 5, -10);
+        const BOAT_LENGTH = 2;
+        const BOAT_WIDTH = 1;
+        const PARTICLE_ABSORB_WIDTH_FACTOR = 1.5;
+        const PARTICLE_ABSORB_LENGTH_FACTOR = 1.2;
+        const TARGETING_MAX_ANGLE_DEG = 15;
+
+        // --- Initialization ---
+        function initThree() {
+            containerWidth = gameContainer.clientWidth;
+            containerHeight = gameContainer.clientHeight;
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, containerWidth / containerHeight, 0.1, 100);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(containerWidth, containerHeight);
+
+            const existingCanvas = gameContainer.querySelector('canvas');
+            if (existingCanvas) gameContainer.removeChild(existingCanvas);
+            gameContainer.insertBefore(renderer.domElement, gameContainer.firstChild);
+
+            ambientLight = new THREE.AmbientLight(0xffffff);
+            scene.add(ambientLight);
+            directionalLight = new THREE.DirectionalLight(0xffffff);
+            directionalLight.position.set(5, 10, 7.5);
+            scene.add(directionalLight);
+
+            createBoat();
+            createWater();
+            createProjectilePool();
+            createExplosionSystem();
+            applyTheme();
+        }
+
+        // --- Create Game Objects ---
+        // createBoat, createWater, createProjectilePool, createExplosionSystem, spawnObstacle
+        // findNearestObstacleAhead, shootProjectile, triggerExplosion remain the same
+        // (Code omitted for brevity, assume identical to previous version)
+         function createBoat() {
+             if (!boat) {
+                const boatGeo = new THREE.BoxGeometry(BOAT_WIDTH, 0.5, BOAT_LENGTH);
+                const boatMat = new THREE.MeshStandardMaterial({ color: 0xf97316 });
+                boat = new THREE.Mesh(boatGeo, boatMat);
+                boatBox = new THREE.Box3();
+            }
+            boat.position.set(0, WATER_LEVEL, 0);
+            scene.add(boat);
+            boatBox.setFromObject(boat);
+        }
+
+        function createWater() {
+             if (!waterParticles) {
+                const positions = [];
+                const waterMaterial = new THREE.PointsMaterial({
+                     size: 0.15, sizeAttenuation: true, transparent: true, opacity: 0.7
+                });
+                for (let i = 0; i < waterParticleCount; i++) {
+                    const x = (Math.random() - 0.5) * riverWidth * 1.2;
+                    const y = WATER_LEVEL;
+                    const z = (Math.random()) * riverLength;
+                    positions.push(x, y, z);
+                }
+                const waterGeometry = new THREE.BufferGeometry();
+                waterGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                waterParticles = new THREE.Points(waterGeometry, waterMaterial);
+             }
+             const positions = waterParticles.geometry.attributes.position.array;
+             for(let i=0; i < waterParticleCount; i++) {
+                 if(positions[i*3+1] < WATER_LEVEL - 1) positions[i*3+1] = WATER_LEVEL;
+             }
+             waterParticles.geometry.attributes.position.needsUpdate = true;
+             scene.add(waterParticles);
+        }
+
+        function createProjectilePool() {
+            projectileGeometry = new THREE.SphereGeometry(0.15, 6, 4);
+            projectileMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            projectilePool = [];
+            activeProjectiles = [];
+            for (let i = 0; i < PROJECTILE_POOL_SIZE; i++) {
+                const projectile = new THREE.Mesh(projectileGeometry, projectileMaterial);
+                projectile.visible = false;
+                scene.add(projectile);
+                projectilePool.push(projectile);
+            }
+        }
+
+        function createExplosionSystem() {
+            if (!explosionParticles) {
+                const positions = new Float32Array(MAX_EXPLOSION_PARTICLES * 3);
+                explosionParticleInfo = [];
+                for (let i = 0; i < MAX_EXPLOSION_PARTICLES; i++) {
+                    positions[i * 3] = 0; positions[i * 3 + 1] = -100; positions[i * 3 + 2] = 0;
+                    explosionParticleInfo.push({ lifetime: 0, velocity: new THREE.Vector3() });
+                }
+                const explosionGeometry = new THREE.BufferGeometry();
+                explosionGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const explosionMaterial = new THREE.PointsMaterial({
+                    color: 0xff8800, size: 0.2, sizeAttenuation: true, transparent: true, opacity: 0.9
+                });
+                explosionParticles = new THREE.Points(explosionGeometry, explosionMaterial);
+            }
+            scene.add(explosionParticles);
+             explosionParticleInfo.forEach(p => p.lifetime = 0);
+             const positions = explosionParticles.geometry.attributes.position.array;
+             for (let i = 0; i < MAX_EXPLOSION_PARTICLES; i++) positions[i * 3 + 1] = -100;
+             explosionParticles.geometry.attributes.position.needsUpdate = true;
+        }
+
+
+        function spawnObstacle() {
+             const type = Math.random() < 0.5 ? 'rock' : 'log';
+             let obstacleGeo, obstacleMat, obstacleMesh;
+             const scale = Math.random() * 0.5 + 0.8;
+             const rockColor = isDarkMode ? 0x888888 : 0x6b7280;
+             const logColor = isDarkMode ? 0xab7a3e : 0x854d0e;
+
+             if (type === 'rock') {
+                 obstacleGeo = new THREE.SphereGeometry(0.6 * scale, 8, 6);
+                 obstacleMat = new THREE.MeshStandardMaterial({ color: rockColor });
+             } else {
+                 obstacleGeo = new THREE.BoxGeometry(0.5 * scale, 0.5 * scale, 2.5 * scale);
+                 obstacleMat = new THREE.MeshStandardMaterial({ color: logColor });
+             }
+             obstacleMesh = new THREE.Mesh(obstacleGeo, obstacleMat);
+             const x = (Math.random() - 0.5) * (riverWidth - scale);
+             const y = WATER_LEVEL;
+             const z = riverLength * 0.8;
+             obstacleMesh.position.set(x, y, z);
+             scene.add(obstacleMesh);
+             const boundingBox = new THREE.Box3().setFromObject(obstacleMesh);
+             obstacles.push({ mesh: obstacleMesh, boundingBox: boundingBox });
+             obstacleSpawnTimer = 0;
+        }
+
+         // --- Targeting Logic ---
+         function findNearestObstacleAhead() {
+             let nearestObstacle = null;
+             let minDistanceSq = Infinity;
+             const boatWorldPos = boat.position;
+
+             obstacles.forEach(obs => {
+                 const obsPos = obs.mesh.position;
+                 if (obsPos.z > boatWorldPos.z) { // Check if obstacle is ahead
+                     const distanceSq = obsPos.distanceToSquared(boatWorldPos);
+                     const horizontalDist = Math.abs(obsPos.x - boatWorldPos.x);
+                     // Check if within horizontal threshold and closer
+                     if (horizontalDist < BOAT_WIDTH * 1.5 && distanceSq < minDistanceSq) {
+                         minDistanceSq = distanceSq;
+                         nearestObstacle = obs;
+                     }
+                 }
+             });
+             return nearestObstacle;
+         }
+
+
+        // --- Shooting ---
+        function shootProjectile(targetObstacle = null) {
+            if (isGameOver) return;
+            const now = Date.now();
+            if (now - lastShootTime < SHOOT_COOLDOWN) return;
+
+            const projectileMesh = projectilePool.pop();
+            if (projectileMesh) {
+                projectileMesh.visible = true;
+                const spawnPos = new THREE.Vector3(
+                    boat.position.x, boat.position.y, boat.position.z + BOAT_LENGTH / 2
+                );
+                projectileMesh.position.copy(spawnPos);
+
+                let direction = defaultProjectileDirection.clone();
+                if (targetObstacle) {
+                     direction = targetObstacle.mesh.position.clone().sub(spawnPos).normalize();
+                }
+
+                const projectileBox = new THREE.Box3().setFromObject(projectileMesh);
+                activeProjectiles.push({ mesh: projectileMesh, boundingBox: projectileBox, direction: direction });
+                lastShootTime = now;
+            }
+        }
+
+         // --- Explosion ---
+         function triggerExplosion(position) {
+             if (!explosionParticles) return;
+             const explosionParticlesToSpawn = 15;
+             const positions = explosionParticles.geometry.attributes.position.array;
+             for (let i = 0; i < explosionParticlesToSpawn; i++) {
+                  let index = currentExplosionParticleIndex;
+                  if (explosionParticleInfo[index].lifetime <= 0) {
+                      explosionParticleInfo[index].lifetime = EXPLOSION_PARTICLE_LIFETIME;
+                      explosionParticleInfo[index].velocity.set(
+                          (Math.random() - 0.5), (Math.random() - 0.2) * 0.8, (Math.random() - 0.5)
+                      ).normalize().multiplyScalar(EXPLOSION_PARTICLE_SPEED);
+                      positions[index * 3] = position.x + (Math.random()-0.5)*0.1;
+                      positions[index * 3 + 1] = position.y + (Math.random()-0.5)*0.1;
+                      positions[index * 3 + 2] = position.z + (Math.random()-0.5)*0.1;
+                      currentExplosionParticleIndex = (currentExplosionParticleIndex + 1) % MAX_EXPLOSION_PARTICLES;
+                  } else {
+                       currentExplosionParticleIndex = (currentExplosionParticleIndex + 1) % MAX_EXPLOSION_PARTICLES;
+                  }
+             }
+              explosionParticles.geometry.attributes.position.needsUpdate = true;
+         }
+
+
+        // --- Game Logic ---
+        function initGame() {
+             obstacles.forEach(obs => scene.remove(obs.mesh)); obstacles = [];
+             activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
+             if (explosionParticles) {
+                 explosionParticleInfo.forEach(p => p.lifetime = 0);
+                 const positions = explosionParticles.geometry.attributes.position.array;
+                 for (let i = 0; i < MAX_EXPLOSION_PARTICLES; i++) positions[i * 3 + 1] = -100;
+                 explosionParticles.geometry.attributes.position.needsUpdate = true;
+             }
+             isGameOver = false; score = 0; gameSpeed = 0.1; // Reset base speed
+             obstacleSpawnInterval = 100; // Reset spawn interval
+             obstacleSpawnTimer = 0; keys = {}; isDragging = false; dragStartX = 0; boatStartX = 0;
+             lastShootTime = 0; scoreElement.textContent = `Score: ${score}`; messageBox.style.display = 'none';
+             currentWaterColorIndex = 0; nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE; // Reset score threshold
+             createBoat(); createWater(); applyTheme(); updateCamera();
+             if (animationFrameId) cancelAnimationFrame(animationFrameId);
+             gameLoop();
+        }
+
+        function updateGame() {
+            if (isGameOver) return;
+
+            // Update Boat Position
+            if (!isDragging) {
+                let keyboardDeltaX = 0;
+                if (keys['arrowleft'] || keys['a']) keyboardDeltaX -= BOAT_SPEED_X;
+                if (keys['arrowright'] || keys['d']) keyboardDeltaX += BOAT_SPEED_X;
+                if (keyboardDeltaX !== 0) {
+                    let targetX = boat.position.x + keyboardDeltaX;
+                    const halfBoatWidth = BOAT_WIDTH / 2; const halfRiver = riverWidth / 2;
+                    const minX = -halfRiver + halfBoatWidth; const maxX = halfRiver - halfBoatWidth;
+                    boat.position.x = THREE.MathUtils.clamp(targetX, minX, maxX);
+                }
+            }
+            boatBox.setFromObject(boat);
+
+            // Update Water Particles & Absorption
+            if (waterParticles) {
+                const positions = waterParticles.geometry.attributes.position.array;
+                const boatPosX = boat.position.x; const boatPosZ = boat.position.z;
+                const absorbMinX = boatPosX - (BOAT_WIDTH * PARTICLE_ABSORB_WIDTH_FACTOR / 2);
+                const absorbMaxX = boatPosX + (BOAT_WIDTH * PARTICLE_ABSORB_WIDTH_FACTOR / 2);
+                const absorbMinZ = boatPosZ - (BOAT_LENGTH * PARTICLE_ABSORB_LENGTH_FACTOR / 2);
+                const absorbMaxZ = boatPosZ + (BOAT_LENGTH * PARTICLE_ABSORB_LENGTH_FACTOR / 2);
+                for (let i = 0; i < waterParticleCount; i++) {
+                    const indexOffset = i * 3; const particleX = positions[indexOffset];
+                    let particleY = positions[indexOffset + 1]; let particleZ = positions[indexOffset + 2];
+                    particleZ -= gameSpeed; // Use current gameSpeed for flow
+                    if (particleZ < -riverLength * 0.2) {
+                        particleZ = riverLength * 0.8 + Math.random() * riverLength * 0.2;
+                        positions[indexOffset] = (Math.random() - 0.5) * riverWidth * 1.2; particleY = WATER_LEVEL;
+                    } else { if (particleY > WATER_LEVEL - 1) { if (particleX >= absorbMinX && particleX <= absorbMaxX && particleZ >= absorbMinZ && particleZ <= absorbMaxZ) { particleY = -100; } } }
+                    positions[indexOffset + 1] = particleY; positions[indexOffset + 2] = particleZ;
+                }
+                waterParticles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // Update Projectiles
+            for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+                const projData = activeProjectiles[i];
+                projData.mesh.position.addScaledVector(projData.direction, PROJECTILE_SPEED);
+                projData.boundingBox.setFromObject(projData.mesh);
+                let hit = false;
+                for (let j = obstacles.length - 1; j >= 0; j--) {
+                    const obsData = obstacles[j];
+                    if (obsData.mesh.parent === scene && projData.boundingBox.intersectsBox(obsData.boundingBox)) {
+                        hit = true;
+                        triggerExplosion(obsData.mesh.position.clone());
+                        scene.remove(obsData.mesh); obstacles.splice(j, 1);
+                        score += PROJECTILE_BONUS_POINTS; scoreElement.textContent = `Score: ${score}`;
+
+                        // Check for color/speed change threshold
+                        if (score >= nextColorChangeScore) {
+                            // Change Color
+                            if(waterParticles){
+                                const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight;
+                                currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length;
+                                waterParticles.material.color.set(colorPalette[currentWaterColorIndex]);
+                            }
+                            // Increase Speed
+                            gameSpeed += GAME_SPEED_INCREASE;
+                            gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED); // Apply cap
+                            // Decrease Spawn Interval
+                            if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) {
+                                 obstacleSpawnInterval -= 5; // Decrease interval more significantly
+                            }
+                            // Set next threshold
+                            nextColorChangeScore += SCORE_THRESHOLD_COLOR_CHANGE;
+                        }
+                        break; // Obstacle hit, exit inner loop
+                    }
+                }
+                if (hit || projData.mesh.position.z > riverLength * 1.1) {
+                    projData.mesh.visible = false; projectilePool.push(projData.mesh); activeProjectiles.splice(i, 1);
+                }
+            }
+
+             // Update Explosion Particles
+             if (explosionParticles) {
+                 const positions = explosionParticles.geometry.attributes.position.array;
+                 let needsUpdate = false;
+                 for (let i = 0; i < MAX_EXPLOSION_PARTICLES; i++) {
+                     if (explosionParticleInfo[i].lifetime > 0) {
+                         explosionParticleInfo[i].lifetime--;
+                         positions[i * 3] += explosionParticleInfo[i].velocity.x;
+                         positions[i * 3 + 1] += explosionParticleInfo[i].velocity.y;
+                         positions[i * 3 + 2] += explosionParticleInfo[i].velocity.z;
+                         if (explosionParticleInfo[i].lifetime <= 0) {
+                             positions[i * 3 + 1] = -100; // Hide
+                         }
+                         needsUpdate = true;
+                     }
+                 }
+                 if (needsUpdate) explosionParticles.geometry.attributes.position.needsUpdate = true;
+             }
+
+            // Update Obstacles & Score (passing check)
+            obstacleSpawnTimer++;
+            if (obstacleSpawnTimer > obstacleSpawnInterval) spawnObstacle();
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obsData = obstacles[i];
+                if (obsData.mesh.parent !== scene) {
+                    obstacles.splice(i, 1); continue; // Already removed (shot)
+                }
+                obsData.mesh.position.z -= gameSpeed; // Move obstacle by current gameSpeed
+                obsData.boundingBox.setFromObject(obsData.mesh);
+                if (boatBox.intersectsBox(obsData.boundingBox)) { gameOver(); return; }
+
+                // Check if obstacle passed *behind* the boat
+                if (obsData.mesh.position.z < boat.position.z - BOAT_LENGTH * 1.5) {
+                    scene.remove(obsData.mesh); obstacles.splice(i, 1);
+                    score++; // Normal points for dodging
+                    scoreElement.textContent = `Score: ${score}`;
+
+                    // Check for color/speed change threshold
+                    if (score >= nextColorChangeScore) {
+                         // Change Color
+                        if(waterParticles){
+                            const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight;
+                            currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length;
+                            waterParticles.material.color.set(colorPalette[currentWaterColorIndex]);
+                        }
+                         // Increase Speed
+                         gameSpeed += GAME_SPEED_INCREASE;
+                         gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED); // Apply cap
+                         // Decrease Spawn Interval
+                         if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) {
+                              obstacleSpawnInterval -= 5; // Decrease interval more significantly
+                         }
+                         // Set next threshold
+                         nextColorChangeScore += SCORE_THRESHOLD_COLOR_CHANGE;
+                    }
+                    // Gradual difficulty increase REMOVED
+                }
+            }
+
+            // Update Camera
+            updateCamera();
+        }
+
+        function updateCamera() {
+             if(boat) {
+                 camera.position.x += (boat.position.x - camera.position.x) * 0.1;
+                 camera.position.y = boat.position.y + CAMERA_OFFSET.y;
+                 camera.position.z = boat.position.z + CAMERA_OFFSET.z;
+                 camera.lookAt(boat.position.x, boat.position.y, boat.position.z + 5);
+             }
+        }
+
+        function gameOver() {
+            isGameOver = true; isDragging = false; keys = {};
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null;
+            activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
+            messageText.innerHTML = `Game Over!<br>Final Score: ${score}`; startButton.textContent = 'Restart Game'; messageBox.style.display = 'block';
+        }
+
+        function gameLoop() {
+            if (isGameOver) { if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null; return; }
+            updateGame(); renderer.render(scene, camera); animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // --- Theme Handling ---
+        function applyTheme() {
+            const body = document.body; const needsDark = isDarkMode;
+            if (needsDark) body.classList.add('dark-mode'); else body.classList.remove('dark-mode');
+            if (scene) {
+                 const bgColor = needsDark ? 0x1a2a3a : 0x38bdf8;
+                 scene.background = new THREE.Color(bgColor); if (scene.fog) scene.fog.color.set(bgColor);
+                 ambientLight.intensity = needsDark ? 0.4 : 0.6; directionalLight.intensity = needsDark ? 0.9 : 0.8;
+                 if (waterParticles) { const colorPalette = needsDark ? waterColorsDark : waterColorsLight; waterParticles.material.color.set(colorPalette[currentWaterColorIndex]); }
+                 if (!isGameOver) { obstacles.forEach(obs => { const rockColor = needsDark ? 0x888888 : 0x6b7280; const logColor = needsDark ? 0xab7a3e : 0x854d0e; obs.mesh.material.color.set(obs.mesh.geometry.type === 'SphereGeometry' ? rockColor : logColor); }); }
+            }
+             darkModeToggle.textContent = needsDark ? 'Light Mode' : 'Dark Mode';
+        }
+        function toggleDarkMode() { isDarkMode = !isDarkMode; localStorage.setItem('darkMode', isDarkMode); applyTheme(); }
+
+        // --- Event Listeners ---
+        function onWindowResize() {
+            containerWidth = gameContainer.clientWidth; containerHeight = gameContainer.clientHeight;
+            if (camera && renderer) { camera.aspect = containerWidth / containerHeight; camera.updateProjectionMatrix(); renderer.setSize(containerWidth, containerHeight); }
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // Keyboard controls
+        window.addEventListener('keydown', (e) => {
+            if (isDragging) return; const key = e.key.toLowerCase();
+            if (key === ' ') { shootProjectile(); e.preventDefault(); return; } // Shoot straight
+            keys[key] = true; if (['arrowleft', 'arrowright', 'a', 'd'].includes(key)) e.preventDefault();
+        });
+        window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+
+        // --- Drag and Tap Controls ---
+        gameContainer.addEventListener('pointerdown', (e) => {
+            // Ensure event target is the canvas itself
+            if (isGameOver || messageBox.style.display === 'block' || e.target !== renderer.domElement) return;
+             e.preventDefault(); // Prevent default actions like text selection or zoom start
+            pointerDownTime = Date.now(); pointerDownX = e.clientX; pointerDownY = e.clientY; potentialTap = true;
+            isDragging = true; dragStartX = e.clientX; boatStartX = boat.position.x; keys = {};
+            gameContainer.style.cursor = 'grabbing';
+        });
+
+        gameContainer.addEventListener('pointermove', (e) => {
+            if (!isDragging || isGameOver) return;
+             e.preventDefault(); // Prevent scrolling during drag
+            const currentX = e.clientX; const currentY = e.clientY;
+            const deltaX = currentX - pointerDownX; const deltaY = currentY - pointerDownY;
+            const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            if (distanceMoved > MAX_TAP_MOVEMENT) { potentialTap = false; } // It's a drag
+            if (!potentialTap) { // Apply drag movement if not a tap
+                 const deltaScreenX_from_drag_start = currentX - dragStartX;
+                 const currentContainerWidth = gameContainer.clientWidth; if (currentContainerWidth === 0) return;
+                 const worldUnitsPerPixel = riverWidth / currentContainerWidth; const deltaWorldX = deltaScreenX_from_drag_start * worldUnitsPerPixel;
+                 let targetWorldX = boatStartX + deltaWorldX;
+                 const halfBoatWidth = BOAT_WIDTH / 2; const halfRiver = riverWidth / 2;
+                 const minX = -halfRiver + halfBoatWidth; const maxX = halfRiver - halfBoatWidth;
+                 boat.position.x = THREE.MathUtils.clamp(targetWorldX, minX, maxX);
+            }
+        });
+
+        function stopDraggingAndCheckTap(e) {
+             if (isDragging) { // Only process if a drag/tap was initiated
+                  e.preventDefault(); // Prevent default actions on pointer up/leave
+                 if (potentialTap && (Date.now() - pointerDownTime) < MAX_TAP_DURATION) {
+                     const target = findNearestObstacleAhead();
+                     shootProjectile(target);
+                 }
+                 isDragging = false; potentialTap = false; pointerDownTime = 0; pointerDownX = 0; pointerDownY = 0;
+                 dragStartX = 0; boatStartX = 0; gameContainer.style.cursor = 'grab';
+             }
+        }
+        gameContainer.addEventListener('pointerup', stopDraggingAndCheckTap);
+        gameContainer.addEventListener('pointerleave', stopDraggingAndCheckTap);
+
+
+        // Start/Restart button
+        startButton.addEventListener('click', (e) => { initGame(); e.stopPropagation(); });
+
+        // Dark Mode Toggle Button Listener
+        darkModeToggle.addEventListener('click', toggleDarkMode);
+
+        // --- Initial Setup ---
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('darkMode');
+            if (savedTheme !== null) {
+                 isDarkMode = savedTheme === 'true';
+            } else {
+                 isDarkMode = true; // Default dark
+            }
+            initThree();
+            messageText.textContent = 'River Runner 3D!';
+            startButton.textContent = 'Start Game';
+            messageBox.style.display = 'block';
+            updateCamera();
+            renderer.render(scene, camera);
+        };
+
+    </script>
+</body>
+</html>

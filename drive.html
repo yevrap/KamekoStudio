@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Driving Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #333; /* Dark background */
+            margin: 0;
+            font-family: 'Press Start 2P', cursive; /* Game-like font */
+            color: #fff; /* White text */
+            overflow: hidden; /* Hide scrollbars */
+        }
+
+        #game-container {
+            position: relative; /* Needed for absolute positioning of UI */
+            width: 800px; /* Fixed width */
+            height: 600px; /* Fixed height */
+            border: 5px solid #555; /* Border around the game area */
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Add some shadow */
+            border-radius: 10px; /* Rounded corners for the container */
+            overflow: hidden; /* Ensure canvas doesn't overflow container */
+        }
+
+        canvas {
+            display: block; /* Remove extra space below canvas */
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui-container {
+            display: flex;
+            justify-content: space-between; /* Space out score and speed */
+            width: 100%; /* Match container width */
+            padding: 10px 20px; /* Padding top/bottom and left/right */
+            position: absolute; /* Position over the canvas */
+            top: 0;
+            left: 0;
+            box-sizing: border-box; /* Include padding in width calculation */
+            text-shadow: 2px 2px #000; /* Text shadow for readability */
+            font-size: 16px;
+            z-index: 2; /* Ensure UI is above canvas */
+            pointer-events: none; /* Allow clicks to pass through to canvas if needed */
+        }
+
+         #instructions {
+            margin-top: 20px; /* Space above instructions */
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.5;
+         }
+
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 20px;
+            z-index: 10; /* Make sure it's above the canvas */
+            display: none; /* Hidden by default */
+            border: 3px solid #fff;
+            pointer-events: auto; /* Enable interaction with message box */
+        }
+         #message-box button {
+             font-family: 'Press Start 2P', cursive;
+             padding: 10px 20px;
+             margin-top: 20px;
+             cursor: pointer;
+             background-color: #4CAF50; /* Green */
+             color: white;
+             border: none;
+             border-radius: 5px;
+             font-size: 16px;
+             box-shadow: 2px 2px #000;
+         }
+         #message-box button:hover {
+             background-color: #45a049;
+         }
+
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-container">
+            <div id="score">Score: 0</div>
+            <div id="speed">Speed: 0.0</div>
+        </div>
+         <div id="message-box">
+            <p id="message-text"></p>
+            <button id="message-button">OK</button>
+        </div>
+    </div>
+
+    <div id="instructions">
+        Use ARROW KEYS to drive.<br>
+        UP: Accelerate | DOWN: Brake/Reverse | LEFT/RIGHT: Steer<br>
+        Hit the blue targets for points and speed boosts!
+    </div>
+
+    <script>
+        // --- Basic Setup ---
+        const container = document.getElementById('game-container');
+        const canvas = document.getElementById('gameCanvas');
+        const scoreElement = document.getElementById('score');
+        const speedElement = document.getElementById('speed');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const messageButton = document.getElementById('message-button');
+
+        // --- Three.js Setup ---
+        let scene, camera, renderer;
+        let carMesh, groundPlane, trackPlane; // 3D objects
+        let targets = []; // Array to hold target meshes
+        const clock = new THREE.Clock(); // For delta time calculation
+
+        // --- Game Variables ---
+        let score = 0;
+        let keys = {}; // Object to track pressed keys
+        const NUM_TARGETS = 5; // Number of targets on screen
+        let boostTimer = 0; // Timer for speed boost duration
+        const BOOST_DURATION = 2.0; // Duration of boost in seconds
+        const BOOST_MULTIPLIER = 1.8; // How much speed increases during boost
+        let gameRunning = false; // Control game state
+
+        // --- Car Properties (Control Logic) ---
+        const car = {
+            // Note: x, y, angle now control the *mesh*
+            speed: 0, // Current speed along its forward vector
+            angle: Math.PI, // Start facing towards -Z (away from camera)
+            maxSpeed: 40, // Units per second in 3D space
+            acceleration: 30.0, // Units per second squared
+            braking: 50.0, // Units per second squared
+            friction: 15.0, // Units per second squared
+            turnSpeed: 2.5, // Radians per second
+            // Dimensions for collision (approximate)
+            width: 2, // X-axis size
+            depth: 4, // Z-axis size (forward direction)
+            mesh: null // Will hold the THREE.Mesh object
+        };
+
+        // --- Target Properties ---
+        const targetProto = {
+            radius: 1.5, // Size for collision and visuals
+            height: 0.5,
+            color: 0x44aaff // Blue color (hexadecimal)
+        };
+
+        // --- Track Properties (Dimensions for Placement/Visuals) ---
+        const track = {
+            outerSize: 60, // Width/Depth of the outer square area
+            trackWidth: 15, // Width of the track surface
+            get innerSize() { return this.outerSize - 2 * this.trackWidth; },
+            // Center is implicitly (0, 0) in the XZ plane
+        };
+
+        // --- Camera Settings ---
+        const cameraOffset = new THREE.Vector3(0, 15, 20); // Position behind and above the car
+
+        // --- Input Handling ---
+        document.addEventListener('keydown', (e) => { keys[e.key] = true; });
+        document.addEventListener('keyup', (e) => { keys[e.key] = false; });
+
+        // --- Message Box ---
+        function showMessage(text, callback) {
+            messageText.textContent = text;
+            messageBox.style.display = 'block';
+            gameRunning = false; // Pause game when message shows
+            const newButton = messageButton.cloneNode(true);
+            messageButton.parentNode.replaceChild(newButton, messageButton);
+            const currentMessageButton = document.getElementById('message-button');
+            currentMessageButton.onclick = () => {
+                messageBox.style.display = 'none';
+                gameRunning = true; // Resume game
+                 if (callback) {
+                     // Delay callback slightly to ensure rendering catches up if needed
+                     setTimeout(callback, 50);
+                 } else {
+                    // If no callback, ensure game loop continues
+                     if (!gameRunning) {
+                        gameRunning = true;
+                        animate(); // Restart loop if it stopped
+                     }
+                 }
+            };
+        }
+
+
+        // --- Initialization Function ---
+        function init() {
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87ceeb); // Sky blue background
+            scene.fog = new THREE.Fog(0x87ceeb, 100, 200); // Add fog for depth effect
+
+            // Camera
+            const aspect = container.clientWidth / container.clientHeight;
+            camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
+            // Initial camera position will be set relative to the car later
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true; // Enable shadows
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Soft white light
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 100, 50);
+            directionalLight.castShadow = true;
+            // Configure shadow properties
+            directionalLight.shadow.mapSize.width = 1024;
+            directionalLight.shadow.mapSize.height = 1024;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 500;
+            directionalLight.shadow.camera.left = -100;
+            directionalLight.shadow.camera.right = 100;
+            directionalLight.shadow.camera.top = 100;
+            directionalLight.shadow.camera.bottom = -100;
+            scene.add(directionalLight);
+
+            // Ground Plane (Grass)
+            const groundGeometry = new THREE.PlaneGeometry(300, 300); // Large plane
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x55aa55 }); // Green grass
+            groundPlane = new THREE.Mesh(groundGeometry, groundMaterial);
+            groundPlane.rotation.x = -Math.PI / 2; // Rotate to be flat
+            groundPlane.receiveShadow = true;
+            scene.add(groundPlane);
+
+            // Track Plane (Visual)
+            const trackGeometry = new THREE.PlaneGeometry(track.outerSize, track.outerSize);
+            const trackMaterial = new THREE.MeshLambertMaterial({ color: 0x777777 }); // Gray track
+            trackPlane = new THREE.Mesh(trackGeometry, trackMaterial);
+            trackPlane.rotation.x = -Math.PI / 2;
+            trackPlane.position.y = 0.05; // Slightly above ground
+            trackPlane.receiveShadow = true;
+            scene.add(trackPlane);
+
+            // Inner Grass Plane (Visual Cutout)
+            const innerGrassGeometry = new THREE.PlaneGeometry(track.innerSize, track.innerSize);
+            const innerGrassMaterial = new THREE.MeshLambertMaterial({ color: 0x55aa55 }); // Match ground
+            const innerGrassPlane = new THREE.Mesh(innerGrassGeometry, innerGrassMaterial);
+            innerGrassPlane.rotation.x = -Math.PI / 2;
+            innerGrassPlane.position.y = 0.1; // Slightly above track
+            innerGrassPlane.receiveShadow = true; // Can receive shadows, though unlikely here
+            scene.add(innerGrassPlane);
+
+
+            // Car Mesh (Simple Box)
+            const carGeometry = new THREE.BoxGeometry(car.width, 1.5, car.depth); // width, height, depth
+            const carMaterial = new THREE.MeshStandardMaterial({ color: 0xff4444, roughness: 0.5, metalness: 0.3 }); // Red car
+            carMesh = new THREE.Mesh(carGeometry, carMaterial);
+            carMesh.position.y = 0.75; // Lift car slightly off the ground
+            carMesh.castShadow = true;
+            car.mesh = carMesh; // Link mesh to car control object
+            scene.add(carMesh);
+
+            // Initial Game State Reset
+            resetGame();
+
+            // Create initial targets
+            createTargets();
+
+            // Initial Message & Start Game Loop
+             showMessage("Get ready to drive! Use Arrow Keys. Hit targets!", () => {
+                gameRunning = true;
+                clock.start(); // Start the clock when game actually begins
+                animate(); // Start the animation loop
+             });
+        }
+
+        // --- Reset Game State ---
+        function resetGame() {
+            score = 0;
+            boostTimer = 0;
+            car.speed = 0;
+            car.angle = Math.PI; // Face away from typical camera start
+            if (car.mesh) {
+                car.mesh.position.set(0, 0.75, track.outerSize / 2 - track.trackWidth / 2); // Start on bottom part of track
+                car.mesh.rotation.y = car.angle;
+            }
+            keys = {}; // Reset keys
+
+            // Remove existing targets from scene and array
+            targets.forEach(target => scene.remove(target.mesh));
+            targets = [];
+
+            // Update UI
+            scoreElement.textContent = `Score: ${score}`;
+            speedElement.textContent = `Speed: 0.0`;
+            speedElement.style.color = '#fff';
+        }
+
+
+        // --- Target Management ---
+        function createTargets() {
+            for (let i = 0; i < NUM_TARGETS; i++) {
+                placeTarget();
+            }
+        }
+
+        function placeTarget() {
+            let placed = false;
+            let attempts = 0;
+            while (!placed && attempts < 100) {
+                // Generate random x, z within the *outer* bounds of the track
+                const potentialX = (Math.random() - 0.5) * track.outerSize;
+                const potentialZ = (Math.random() - 0.5) * track.outerSize;
+
+                // Check if the point is *outside* the inner square (i.e., on the track surface)
+                const isOnTrack = Math.abs(potentialX) > track.innerSize / 2 || Math.abs(potentialZ) > track.innerSize / 2;
+
+                 // Check if too close to existing targets or car (simple check)
+                 let tooClose = false;
+                 if (car.mesh && car.mesh.position.distanceTo(new THREE.Vector3(potentialX, 0, potentialZ)) < 10) {
+                    tooClose = true;
+                 }
+                 if (!tooClose) {
+                     for (const t of targets) {
+                         if (t.mesh.position.distanceTo(new THREE.Vector3(potentialX, 0, potentialZ)) < 5) {
+                             tooClose = true;
+                             break;
+                         }
+                     }
+                 }
+
+
+                if (isOnTrack && !tooClose) {
+                    const targetGeometry = new THREE.CylinderGeometry(targetProto.radius, targetProto.radius, targetProto.height, 16);
+                    const targetMaterial = new THREE.MeshStandardMaterial({ color: targetProto.color, roughness: 0.6 });
+                    const targetMesh = new THREE.Mesh(targetGeometry, targetMaterial);
+
+                    targetMesh.position.set(potentialX, targetProto.height / 2 + 0.1, potentialZ); // Place on track surface
+                    targetMesh.castShadow = true;
+                    targetMesh.receiveShadow = true; // Targets can receive shadows
+
+                    scene.add(targetMesh);
+                    targets.push({ mesh: targetMesh, ...targetProto }); // Store mesh and properties
+                    placed = true;
+                }
+                attempts++;
+            }
+             if (!placed) {
+                 console.error("Could not place target on track after 100 attempts.");
+                 // Fallback: place near center (less ideal)
+                  const targetGeometry = new THREE.CylinderGeometry(targetProto.radius, targetProto.radius, targetProto.height, 16);
+                  const targetMaterial = new THREE.MeshStandardMaterial({ color: targetProto.color, roughness: 0.6 });
+                  const targetMesh = new THREE.Mesh(targetGeometry, targetMaterial);
+                  targetMesh.position.set(0, targetProto.height / 2 + 0.1, track.innerSize / 2 + track.trackWidth / 2);
+                  targetMesh.castShadow = true;
+                  scene.add(targetMesh);
+                  targets.push({ mesh: targetMesh, ...targetProto });
+             }
+        }
+
+        // --- Update Function (Physics and Logic) ---
+        function update(deltaTime) {
+            if (!car.mesh) return; // Exit if car mesh doesn't exist
+
+            let currentMaxSpeed = car.maxSpeed;
+            let currentAcceleration = car.acceleration;
+            if (boostTimer > 0) {
+                currentMaxSpeed *= BOOST_MULTIPLIER;
+                currentAcceleration *= BOOST_MULTIPLIER; // Boost acceleration too
+                boostTimer -= deltaTime;
+                if (boostTimer < 0) boostTimer = 0;
+            }
+
+            // --- Steering ---
+            let turnDirection = 0;
+            if (keys['ArrowLeft']) turnDirection = 1;
+            if (keys['ArrowRight']) turnDirection = -1;
+
+            // Only allow turning when moving significantly (prevents spinning in place)
+            if (Math.abs(car.speed) > 1.0) {
+                 const turnFactor = Math.min(1, Math.abs(car.speed / (car.maxSpeed * 0.5))); // Turn less at low speed
+                 car.angle += turnDirection * car.turnSpeed * turnFactor * deltaTime;
+            }
+
+            // --- Acceleration / Braking ---
+            let accelerationInput = 0;
+            if (keys['ArrowUp']) accelerationInput = 1;
+            if (keys['ArrowDown']) accelerationInput = -1; // Represents braking/reverse
+
+            if (accelerationInput > 0) {
+                // Accelerating forward
+                car.speed += currentAcceleration * deltaTime;
+            } else if (accelerationInput < 0) {
+                // Braking or Reversing
+                if (car.speed > 0) { // Braking
+                    car.speed -= car.braking * deltaTime;
+                    if (car.speed < 0) car.speed = 0; // Don't instantly reverse when braking
+                } else { // Reversing
+                    car.speed -= currentAcceleration * 0.5 * deltaTime; // Slower reverse acceleration
+                }
+            } else {
+                // --- Apply Friction ---
+                if (car.speed > 0) {
+                    car.speed -= car.friction * deltaTime;
+                    if (car.speed < 0) car.speed = 0;
+                } else if (car.speed < 0) {
+                    car.speed += car.friction * deltaTime;
+                    if (car.speed > 0) car.speed = 0;
+                }
+            }
+
+            // Clamp speed
+            car.speed = Math.max(-car.maxSpeed / 2, Math.min(currentMaxSpeed, car.speed)); // Limit reverse speed too
+
+            // --- Update Car Mesh Position & Rotation ---
+            // Calculate movement vector based on current angle and speed
+            const moveX = -Math.sin(car.angle) * car.speed * deltaTime;
+            const moveZ = -Math.cos(car.angle) * car.speed * deltaTime;
+
+            car.mesh.position.x += moveX;
+            car.mesh.position.z += moveZ;
+            car.mesh.rotation.y = car.angle; // Align mesh rotation with movement angle
+
+            // --- Boundary Collision (Simple Clamp to Track Area) ---
+            const halfOuterSize = track.outerSize / 2;
+            car.mesh.position.x = Math.max(-halfOuterSize, Math.min(halfOuterSize, car.mesh.position.x));
+            car.mesh.position.z = Math.max(-halfOuterSize, Math.min(halfOuterSize, car.mesh.position.z));
+
+
+            // --- Target Collision ---
+            const carPos = car.mesh.position;
+            for (let i = targets.length - 1; i >= 0; i--) {
+                const target = targets[i];
+                const targetPos = target.mesh.position;
+                const distance = carPos.distanceTo(targetPos);
+
+                // Simple distance check (approximating car and target as spheres)
+                if (distance < (car.width / 2 + target.radius)) { // Use car width as approx radius
+                    // Collision!
+                    score += 10;
+                    boostTimer = BOOST_DURATION; // Reset boost timer
+
+                    // Remove target from scene and array
+                    scene.remove(target.mesh);
+                    targets.splice(i, 1);
+
+                    // Add a new target
+                    placeTarget();
+                }
+            }
+
+            // --- Update Camera ---
+            // Calculate desired camera position based on car's position and angle
+            const cameraTargetPosition = new THREE.Vector3();
+            cameraTargetPosition.copy(cameraOffset); // Start with the base offset
+            cameraTargetPosition.applyAxisAngle(new THREE.Vector3(0, 1, 0), car.angle); // Rotate offset by car's angle
+            cameraTargetPosition.add(car.mesh.position); // Add car's position
+
+            // Smoothly interpolate camera position (Lerp)
+            camera.position.lerp(cameraTargetPosition, 0.1); // Adjust lerp factor for smoothness (0.0 to 1.0)
+
+            // Make camera look at the car
+            camera.lookAt(car.mesh.position);
+
+
+            // --- Update UI ---
+            scoreElement.textContent = `Score: ${score}`;
+            let displaySpeed = Math.abs(car.speed).toFixed(1);
+            if (boostTimer > 0) {
+                speedElement.textContent = `Speed: ${displaySpeed} BOOST!`;
+                speedElement.style.color = '#ffff00'; // Yellow text for boost
+            } else {
+                speedElement.textContent = `Speed: ${displaySpeed}`;
+                 speedElement.style.color = '#fff'; // White text normally
+            }
+        }
+
+        // --- Animation Loop ---
+        function animate() {
+            if (!gameRunning) return; // Stop loop if game is paused
+
+            requestAnimationFrame(animate);
+
+            const deltaTime = clock.getDelta(); // Time since last frame
+
+            update(deltaTime); // Update game logic
+
+            renderer.render(scene, camera); // Render the scene
+        }
+
+        // --- Handle Window Resize ---
+        function onWindowResize() {
+            const newWidth = container.clientWidth;
+            const newHeight = container.clientHeight;
+
+            camera.aspect = newWidth / newHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(newWidth, newHeight);
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // --- Start Initialization ---
+        init();
+
+    </script>
+</body>
+</html>

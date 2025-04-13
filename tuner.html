@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Tuner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif; /* Ensure Inter font is used */
+            touch-action: manipulation; /* Improve touch responsiveness */
+        }
+        /* Style for the tuning indicator needle */
+        .needle {
+            width: 2px;
+            height: 80%;
+            background-color: red;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform-origin: bottom center;
+            transition: transform 0.1s linear; /* Faster, linear transition for responsiveness */
+            border-radius: 1px; /* Slightly rounded needle */
+        }
+        /* Style for the target zone */
+        .target-zone {
+            width: 10%; /* Width of the green "in-tune" area */
+            height: 100%;
+            background-color: rgba(74, 222, 128, 0.5); /* Semi-transparent green */
+            position: absolute;
+            left: 45%; /* Center the zone */
+            top: 0;
+            border-radius: 0.5rem; /* Rounded corners for the zone */
+        }
+        /* Prevent text selection on buttons */
+        .no-select {
+          -webkit-user-select: none; /* Safari */
+          -moz-user-select: none; /* Firefox */
+          -ms-user-select: none; /* IE10+/Edge */
+          user-select: none; /* Standard */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white p-6 md:p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+        <h1 class="text-2xl md:text-3xl font-bold mb-4 text-gray-800">Guitar Tuner</h1>
+        <p class="text-gray-600 mb-6">Click "Start Tuning" and play a string.</p>
+
+        <button id="startStopButton" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg mb-6 transition duration-200 ease-in-out shadow">
+            Start Tuning
+        </button>
+
+        <div class="mb-6 h-24 bg-gray-200 rounded-lg relative overflow-hidden shadow-inner">
+            <div class="target-zone"></div>
+            <div class="needle" id="needle"></div>
+            <div class="absolute left-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-500 font-semibold">♭ Flat</div>
+            <div class="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-gray-500 font-semibold">♯ Sharp</div>
+        </div>
+
+        <div class="mb-6 text-center">
+            <div id="noteDisplay" class="text-5xl font-bold text-gray-800 h-16 flex items-center justify-center">-</div>
+            <div id="frequencyDisplay" class="text-sm text-gray-500 h-4">Frequency: - Hz</div>
+            <div id="messageDisplay" class="text-sm text-red-500 h-4 mt-1"></div>
+        </div>
+
+        <div class="flex justify-around mb-4">
+            <span class="text-lg font-semibold text-gray-700 border-2 border-gray-300 rounded-full w-10 h-10 flex items-center justify-center no-select">E</span>
+            <span class="text-lg font-semibold text-gray-700 border-2 border-gray-300 rounded-full w-10 h-10 flex items-center justify-center no-select">A</span>
+            <span class="text-lg font-semibold text-gray-700 border-2 border-gray-300 rounded-full w-10 h-10 flex items-center justify-center no-select">D</span>
+            <span class="text-lg font-semibold text-gray-700 border-2 border-gray-300 rounded-full w-10 h-10 flex items-center justify-center no-select">G</span>
+            <span class="text-lg font-semibold text-gray-700 border-2 border-gray-300 rounded-full w-10 h-10 flex items-center justify-center no-select">B</span>
+            <span class="text-lg font-semibold text-gray-700 border-2 border-gray-300 rounded-full w-10 h-10 flex items-center justify-center no-select">e</span>
+        </div>
+
+    </div>
+
+    <script>
+        // DOM Elements
+        const startStopButton = document.getElementById('startStopButton');
+        const needle = document.getElementById('needle');
+        const noteDisplay = document.getElementById('noteDisplay');
+        const frequencyDisplay = document.getElementById('frequencyDisplay');
+        const messageDisplay = document.getElementById('messageDisplay');
+
+        // Tuning constants
+        const A4 = 440; // Standard pitch A4
+        const notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+        const standardTuning = { // Frequencies for standard EADGBe tuning
+            'E2': 82.41, 'A2': 110.00, 'D3': 146.83, 'G3': 196.00, 'B3': 246.94, 'E4': 329.63
+        };
+        const tuningThreshold = 3; // Cents threshold (slightly increased for FFT accuracy)
+
+        // Audio Processing State
+        let mic = null;
+        let analyser = null; // Changed from pitchDetect
+        let isTuning = false;
+        let animationFrameId = null; // To control the analysis loop
+        const FFT_SIZE = 2048; // FFT size, power of 2
+
+        // --- Helper Functions ---
+        // (freqToMidi, midiToNoteName, centsDifference, findClosestStandardNote, updateMeter remain mostly the same)
+         function freqToMidi(frequency) {
+            if (!frequency || frequency <= 0) return null;
+            return 69 + 12 * Math.log2(frequency / A4);
+        }
+        function midiToNoteName(midi) {
+            if (midi === null || midi === -Infinity || isNaN(midi) || midi < 0) return null;
+            const roundedMidi = Math.round(midi);
+            const noteIndex = roundedMidi % 12;
+            const octave = Math.floor(roundedMidi / 12) - 1;
+            return notes[noteIndex] + octave;
+        }
+        function centsDifference(freq1, freq2) {
+            if (!freq1 || freq1 <= 0 || !freq2 || freq2 <= 0) return 0;
+            return 1200 * Math.log2(freq1 / freq2);
+        }
+         function findClosestStandardNote(frequency) {
+            if (!frequency || frequency <= 0) return null;
+            let closestNote = null;
+            let minDifference = Infinity;
+            let closestNoteFreq = null;
+            for (const note in standardTuning) {
+                const targetFreq = standardTuning[note];
+                // Check if frequency is within a reasonable range (e.g., +/- one octave) of the target
+                 if (frequency > targetFreq / 2.1 && frequency < targetFreq * 2.1) {
+                    const diff = Math.abs(frequency - targetFreq);
+                    if (diff < minDifference) {
+                        minDifference = diff;
+                        closestNote = note;
+                        closestNoteFreq = targetFreq;
+                    }
+                 }
+            }
+             // Removed the 300 cents check here, rely on range check above
+            return closestNote;
+        }
+        function updateMeter(cents) {
+            const clampedCents = Math.max(-50, Math.min(50, cents));
+            const rotation = (clampedCents / 50) * 45;
+            needle.style.transform = `translateX(-50%) rotate(${rotation}deg)`;
+            needle.style.backgroundColor = Math.abs(cents) <= tuningThreshold ? 'rgb(34, 197, 94)' : 'red';
+        }
+
+        // --- New Pitch Detection from FFT ---
+        function getPitchFromFFT(fftData) {
+            if (!fftData || fftData.length === 0) {
+                return null; // No data
+            }
+            // Find the bin index with the maximum value (loudest frequency)
+            // Ignore the first bin (DC offset) and very high frequencies if needed
+            let maxVal = -Infinity;
+            let maxIndex = -1;
+
+            // Start from index 1 to ignore DC offset. Adjust upper bound if needed.
+            // The useful range depends on expected guitar frequencies. Max guitar freq (E4) is ~330Hz.
+            // Max useful bin index = MaxFreq * FFTSize / SampleRate
+            // e.g., 400Hz * 2048 / 44100 = ~18.5. We can search a bit higher.
+            const sampleRate = Tone.context.sampleRate;
+            const maxSearchIndex = Math.min(fftData.length, Math.ceil(600 * FFT_SIZE / sampleRate)); // Search up to ~600Hz
+
+            for (let i = 1; i < maxSearchIndex; i++) {
+                if (fftData[i] > maxVal && fftData[i] > -100) { // Add threshold to ignore deep noise floor
+                    maxVal = fftData[i];
+                    maxIndex = i;
+                }
+            }
+
+            // Check if a peak was found above noise floor
+            if (maxIndex === -1 || maxVal < -90) { // Adjusted noise floor threshold
+                 return null; // No clear peak found
+            }
+
+            // Calculate frequency from the bin index
+            const frequency = maxIndex * sampleRate / FFT_SIZE;
+            return frequency;
+        }
+
+
+        // --- Core Tuning Logic ---
+        async function startTuning() {
+            if (isTuning) return;
+
+            messageDisplay.textContent = '';
+            console.log('Attempting to start tuning...');
+
+            try {
+                // 1. Ensure Tone.js AudioContext is started
+                await Tone.start();
+                console.log('Tone.start() successful. AudioContext state:', Tone.context.state);
+
+                // 2. Check if UserMedia is supported
+                if (!Tone.UserMedia.supported) {
+                    console.error("Tone.UserMedia is not supported...");
+                    messageDisplay.textContent = 'Error: Mic input not supported by browser.';
+                    return;
+                }
+                console.log("Tone.UserMedia is supported.");
+
+                // 3. Direct getUserMedia Test (kept for debugging consistency)
+                try {
+                    console.log("Attempting direct getUserMedia test...");
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(track => track.stop());
+                    console.log("Direct getUserMedia test SUCCESSFUL.");
+                } catch (gumError) {
+                    console.error("Direct getUserMedia test FAILED:", gumError);
+                    throw gumError;
+                }
+
+                // 4. Get microphone access via Tone.UserMedia
+                console.log('Attempting to open microphone via Tone.UserMedia...');
+                mic = new Tone.UserMedia();
+                await Promise.race([
+                    mic.open(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Mic open timed out')), 10000))
+                ]);
+                console.log('Tone.UserMedia microphone opened successfully.');
+
+                // 5. Set up Analyser node (instead of PitchDetect)
+                console.log('Setting up Analyser...');
+                analyser = new Tone.Analyser('fft', FFT_SIZE); // Use 'fft' type
+
+                // 6. Connect microphone to analyser
+                mic.connect(analyser);
+                console.log('Microphone connected to Analyser.');
+
+                isTuning = true;
+                startStopButton.textContent = 'Stop Tuning';
+                startStopButton.classList.replace('bg-blue-500', 'bg-red-500');
+                startStopButton.classList.replace('hover:bg-blue-600', 'hover:bg-red-600');
+                console.log('Tuning started. Starting analysis loop...');
+
+                // 7. Start the analysis loop
+                analysisLoop();
+
+            } catch (err) {
+                console.error('Error starting tuning:', err);
+                console.error('Error name:', err?.name);
+                console.error('Error message:', err?.message);
+                console.error('Error stack:', err?.stack);
+                 // Display specific messages (same logic as before)
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                     messageDisplay.textContent = 'Error: Microphone permission denied.';
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                     messageDisplay.textContent = 'Error: No microphone found.';
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                     messageDisplay.textContent = 'Error: Mic hardware error or already in use.';
+                } else if (err.message === 'Mic open timed out') {
+                    messageDisplay.textContent = 'Error: Mic access timed out. Try refreshing.';
+                } else if (err instanceof DOMException) {
+                    messageDisplay.textContent = `Error: Mic access issue (${err.name}).`;
+                } else if (err instanceof TypeError) { // Catch potential constructor errors during setup
+                     messageDisplay.textContent = `Error: Setup issue (${err.message}). Check console.`;
+                }
+                 else {
+                    messageDisplay.textContent = 'Error: Could not access mic/setup. Check console.';
+                }
+                stopTuning(); // Clean up
+            }
+        }
+
+        function stopTuning() {
+            if (!isTuning && !mic && !analyser) return; // Check analyser now
+            console.log('Stopping tuning...');
+
+            // Stop the analysis loop
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+                animationFrameId = null;
+                console.log('Analysis loop stopped.');
+            }
+
+            if (analyser) { // Dispose analyser
+                analyser.dispose();
+                analyser = null;
+                console.log('Analyser disposed.');
+            }
+             if (mic) {
+                 if (mic.state === 'started') mic.close();
+                mic.dispose();
+                mic = null;
+                console.log('Microphone closed and disposed.');
+            }
+
+            isTuning = false;
+            startStopButton.textContent = 'Start Tuning';
+            startStopButton.classList.replace('bg-red-500', 'bg-blue-500');
+            startStopButton.classList.replace('hover:bg-red-600', 'hover:bg-blue-600');
+            // Reset UI
+            noteDisplay.textContent = '-';
+            frequencyDisplay.textContent = 'Frequency: - Hz';
+            messageDisplay.textContent = ''; // Clear message on stop
+            messageDisplay.classList.remove('text-green-600', 'text-red-500');
+            needle.style.transform = 'translateX(-50%) rotate(0deg)';
+            needle.style.backgroundColor = 'red';
+             console.log('Tuning stopped.');
+        }
+
+        // --- Analysis Loop ---
+        function analysisLoop() {
+            if (!isTuning || !analyser) {
+                return; // Stop if not tuning or analyser is gone
+            }
+            // Get FFT data
+            const fftData = analyser.getValue();
+
+            // Calculate pitch from FFT data
+            const frequency = getPitchFromFFT(fftData);
+
+            if (frequency) {
+                // Update UI based on the detected frequency
+                updateUIForFrequency(frequency);
+            } else {
+                 // Optionally reset UI elements if no clear frequency detected
+                 noteDisplay.textContent = '-';
+                 frequencyDisplay.textContent = 'Frequency: - Hz';
+                 updateMeter(0); // Reset meter
+                 messageDisplay.textContent = ''; // Clear message
+                 messageDisplay.classList.remove('text-green-600', 'text-red-500');
+            }
+
+
+            // Request next frame
+            animationFrameId = requestAnimationFrame(analysisLoop);
+        }
+
+        // --- Update UI based on frequency ---
+        // (This logic is extracted from the old handlePitch function)
+        function updateUIForFrequency(frequency) {
+            frequencyDisplay.textContent = `Frequency: ${frequency.toFixed(2)} Hz`;
+            const closestStandard = findClosestStandardNote(frequency);
+
+            if (closestStandard) {
+                const targetFreq = standardTuning[closestStandard];
+                const cents = centsDifference(frequency, targetFreq);
+
+                noteDisplay.textContent = closestStandard;
+                updateMeter(cents);
+
+                if (Math.abs(cents) <= tuningThreshold) {
+                    messageDisplay.textContent = 'In Tune!';
+                    messageDisplay.classList.remove('text-red-500'); // Ensure red removed
+                    messageDisplay.classList.add('text-green-600');
+                } else {
+                    messageDisplay.textContent = cents < 0 ? 'Too Low (Flat)' : 'Too High (Sharp)';
+                    messageDisplay.classList.remove('text-green-600'); // Ensure green removed
+                    messageDisplay.classList.add('text-red-500');
+                }
+            } else {
+                // If frequency doesn't match a standard tuning note closely
+                const detectedNoteName = midiToNoteName(freqToMidi(frequency));
+                noteDisplay.textContent = detectedNoteName ? detectedNoteName.replace(/[0-9]/g, '') : '-'; // Show note letter only
+                updateMeter(0); // Reset meter
+                messageDisplay.textContent = 'Play a standard tuning string';
+                messageDisplay.classList.remove('text-green-600');
+                messageDisplay.classList.add('text-red-500');
+            }
+        }
+
+
+        // --- Event Listeners ---
+        startStopButton.addEventListener('click', () => {
+            // Ensure Tone.js context is resumed ONLY on user interaction
+            if (Tone.context.state !== 'running') {
+                Tone.start().then(() => {
+                    console.log('AudioContext resumed on click.');
+                    toggleTuning();
+                }).catch(err => {
+                     console.error("Error resuming AudioContext:", err);
+                     messageDisplay.textContent = 'Error: Could not start audio.';
+                });
+            } else {
+                 toggleTuning();
+            }
+        });
+        function toggleTuning() {
+             if (isTuning) stopTuning(); else startTuning();
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && isTuning) { console.log('Page hidden, stopping tuning.'); stopTuning(); }
+        });
+        window.addEventListener('beforeunload', () => { if (isTuning) stopTuning(); });
+
+    </script>
+</body>
+</html>
