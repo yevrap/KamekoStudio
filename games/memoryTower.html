@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tower Defense Rogue-like</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apply the game font to the body */
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #1a1a1a;
+            /* Dark background */
+            color: #e0e0e0;
+            /* Light text */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            /* Ensure full height */
+            padding: 1rem;
+            /* Add padding */
+            /* overflow: hidden; */
+            /* REMOVED to allow scrolling on mobile */
+        }
+
+        /* Style the canvas */
+        canvas {
+            background-color: #333;
+            display: block;
+            border: 4px solid #555;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            width: 100%;
+            /* Make canvas take full width of its container */
+            max-width: 100%;
+            aspect-ratio: 16 / 9;
+            cursor: default;
+        }
+
+        /* Style buttons */
+        button {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: 2px solid #0056b3;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px #003d80;
+            margin: 5px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:active {
+            background-color: #003d80;
+            box-shadow: 0 2px #002a59;
+            transform: translateY(2px);
+        }
+
+        button:disabled {
+            background-color: #555;
+            color: #aaa;
+            cursor: not-allowed;
+            border-color: #444;
+            box-shadow: 0 4px #333;
+        }
+
+        /* Specific style for AoE button */
+        button#aoe-btn.cooldown {
+            background-color: #6c757d;
+            border-color: #5a6268;
+            box-shadow: 0 4px #495057;
+        }
+
+        button#aoe-btn.armed {
+            background-color: #28a745;
+            border-color: #218838;
+            box-shadow: 0 4px #1e7e34;
+        }
+
+        button#aoe-btn.armed:hover {
+            background-color: #218838;
+        }
+
+        /* Style the game info panel */
+        #game-info {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            border: 2px solid #444;
+            font-size: 0.9rem;
+        }
+
+        /* Style the message overlay */
+        #message-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 100;
+            padding: 20px;
+            cursor: default;
+        }
+
+        #message-box {
+            background-color: #333;
+            padding: 30px;
+            border-radius: 10px;
+            border: 3px solid #555;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        #message-box h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #00ffff;
+        }
+
+        #message-box p {
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+
+        #rogue-choices button {
+            margin: 10px;
+        }
+
+        /* --- Memory Game Styles --- */
+        #memory-game-panel {
+            width: 100%;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            border: 2px solid #444;
+            padding: 10px;
+            /* Slightly reduced padding */
+            font-size: 0.8rem;
+        }
+
+        .tab-buttons button {
+            background-color: #444;
+            border-color: #333;
+            box-shadow: 0 4px #222;
+            padding: 8px 15px;
+            font-size: 0.7rem;
+        }
+
+        .tab-buttons button.active {
+            background-color: #555;
+            border-color: #444;
+            box-shadow: 0 2px #333;
+            transform: translateY(2px);
+            color: #0ff;
+        }
+
+        .tab-content {
+            display: none;
+            margin-top: 10px;
+            /* Reduced margin */
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Ensure input font size is >= 16px to prevent iOS zoom */
+        #memory-game-panel textarea,
+        #memory-game-panel input[type="text"] {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #111;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 8px;
+            color: #e0e0e0;
+            width: 100%;
+            margin-bottom: 10px;
+            font-size: 1rem;
+            /* Increased font size to 1rem (16px) */
+            box-sizing: border-box;
+            line-height: 1.4;
+            /* Improve readability for multi-line */
+        }
+
+        #memory-game-panel textarea {
+            min-height: 80px;
+            /* Adjusted height */
+        }
+
+        #memory-game-panel button {
+            padding: 8px 15px;
+            font-size: 0.7rem;
+        }
+
+        #quiz-key {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #0ff;
+            word-wrap: break-word;
+        }
+
+        #quiz-feedback {
+            margin-top: 10px;
+            min-height: 1.2em;
+            font-size: 0.8rem;
+        }
+
+        #quiz-feedback.correct {
+            color: #28a745;
+        }
+
+        #quiz-feedback.incorrect {
+            color: #dc3545;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="layout-container"
+        class="w-full max-w-screen-xl mx-auto space-y-4 md:flex md:flex-row md:items-start md:space-y-0 md:gap-6 lg:gap-8">
+
+        <div class="w-full md:w-2/3 space-y-4">
+            <h1 class="text-3xl font-bold text-cyan-400 text-center md:text-left">Pixel Path Defense</h1>
+            <div id="game-info">
+                <span>Wave: <span id="wave-number">0</span> / <span id="final-wave">--</span></span>
+                <span>Lives: <span id="lives-count">20</span></span>
+                <span>Cash: $<span id="cash-count">100</span></span>
+            </div>
+            <div id="canvas-container" class="w-full">
+                <canvas id="gameCanvas" width="800" height="450"></canvas>
+            </div>
+            <div class="flex justify-center items-center flex-wrap">
+                <button id="build-turret-btn">Build Turret ($50)</button>
+                <button id="aoe-btn">Arm Zap ($5)</button>
+                <button id="start-wave-btn">Start Next Wave</button>
+                <button id="upgrade-turret-btn" disabled>Upgrade Turret</button>
+            </div>
+        </div>
+
+        <div class="w-full md:w-1/3 mt-4 md:mt-0">
+            <div id="memory-game-panel">
+                <div class="tab-buttons border-b border-gray-600 pb-2 mb-4">
+                    <button id="input-tab-btn" class="active">Input Pairs</button>
+                    <button id="quiz-tab-btn">Memory Quiz</button>
+                </div>
+                <div id="input-tab-content" class="tab-content active">
+                    <p class="text-xs mb-2">Enter pairs (one per line): Key:Value</p>
+                    <textarea id="pairs-input"></textarea>
+                    <button id="save-pairs-btn">Save & Start Quiz</button>
+                    <p id="input-feedback" class="text-xs mt-2"></p>
+                </div>
+                <div id="quiz-tab-content" class="tab-content">
+                    <label for="quiz-answer-input" class="block mb-2">What is the value for:</label>
+                    <span id="quiz-key" class="text-lg">...</span>
+                    <input type="text" id="quiz-answer-input" placeholder="Enter value...">
+                    <button id="submit-answer-btn">Submit Answer</button>
+                    <p id="quiz-feedback"></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div id="message-overlay">
+        <div id="message-box">
+            <h2 id="message-title">Message</h2>
+            <p id="message-text">Text goes here.</p>
+            <div id="rogue-choices" class="flex flex-wrap justify-center"></div>
+            <button id="message-close-btn">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Game Setup ---
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+        const gameInfo = { waveNumber: document.getElementById('wave-number'), finalWave: document.getElementById('final-wave'), livesCount: document.getElementById('lives-count'), cashCount: document.getElementById('cash-count'), };
+        const buttons = { buildTurret: document.getElementById('build-turret-btn'), startWave: document.getElementById('start-wave-btn'), upgradeTurret: document.getElementById('upgrade-turret-btn'), aoe: document.getElementById('aoe-btn'), };
+        const messageOverlay = document.getElementById('message-overlay'); const messageBox = document.getElementById('message-box'); const messageTitle = document.getElementById('message-title'); const messageText = document.getElementById('message-text'); const messageCloseBtn = document.getElementById('message-close-btn'); const rogueChoicesContainer = document.getElementById('rogue-choices');
+
+        // --- Memory Game Elements ---
+        const memoryPanel = document.getElementById('memory-game-panel');
+        const inputTabBtn = document.getElementById('input-tab-btn');
+        const quizTabBtn = document.getElementById('quiz-tab-btn');
+        const inputTabContent = document.getElementById('input-tab-content');
+        const quizTabContent = document.getElementById('quiz-tab-content');
+        const pairsInput = document.getElementById('pairs-input');
+        const savePairsBtn = document.getElementById('save-pairs-btn');
+        const inputFeedback = document.getElementById('input-feedback');
+        const quizKeyDisplay = document.getElementById('quiz-key');
+        const quizAnswerInput = document.getElementById('quiz-answer-input');
+        const submitAnswerBtn = document.getElementById('submit-answer-btn');
+        const quizFeedback = document.getElementById('quiz-feedback');
+
+        // --- Game State ---
+        let lives = 20; let cash = 100; let wave = 0; let enemies = []; let towers = []; let projectiles = []; let selectedTower = null; let buildMode = false; let waveInProgress = false; let currentWaveEnemies = []; let enemiesSpawnedThisWave = 0; let spawnInterval = 1000; let lastSpawnTime = 0; let gameOver = false; let gamePaused = false; let mouseX = 0; let mouseY = 0; let mouseInCanvas = false; let aoeEffects = []; let aoeArmed = false;
+
+        // --- Memory Game State ---
+        let memoryPairs = {}; let quizKeys = []; let currentQuizIndex = 0; let currentQuizKey = null;
+        const REWARD_AMOUNT = 10;
+
+        // --- Temporary Effects / Rogue Choices State ---
+        let buildDiscount = 0; let upgradeDiscount = 0; let globalDamageMultiplier = 1.0; let globalRangeMultiplier = 1.0;
+
+        // --- Game Constants ---
+        const TILE_SIZE = 50; const TURRET_COST = 50; const UPGRADE_COST_BASE = 75; const ENEMY_START_HP = 50; const ENEMY_HP_SCALING = 1.2; const ENEMY_SPEED = 30; const ENEMY_SPEED_SCALING = 1.03; const TURRET_RANGE = 100; const TURRET_DAMAGE = 10; const TURRET_FIRE_RATE = 1000; const FINAL_WAVE = 20;
+
+        // --- AoE Ability Constants ---
+        const AOE_COST = 5; const AOE_DAMAGE = 25; const AOE_RADIUS = TILE_SIZE * 1.2; const AOE_COOLDOWN = 2000; const AOE_EFFECT_DURATION = 300; let lastAoeTime = -Infinity;
+
+        // --- Circular Path Definition ---
+        const PATH_CENTER_X = canvas.width / 2; const PATH_CENTER_Y = canvas.height / 2; const PATH_RADIUS = Math.min(canvas.width, canvas.height) * 0.35; const PATH_START_ANGLE = Math.PI;
+
+        // --- Game Objects (Minimized) ---
+        class Enemy { constructor(a, hp, s) { this.angle = a; this.hp = hp; this.maxHp = hp; this.speed = s; this.width = TILE_SIZE * 0.6; this.height = TILE_SIZE * 0.6; this.x = PATH_CENTER_X + PATH_RADIUS * Math.cos(a); this.y = PATH_CENTER_Y + PATH_RADIUS * Math.sin(a); this.dead = false; } move(dt) { if (this.dead) return; const as = this.speed / PATH_RADIUS; this.angle += as * (dt / 1000); this.x = PATH_CENTER_X + PATH_RADIUS * Math.cos(this.angle); this.y = PATH_CENTER_Y + PATH_RADIUS * Math.sin(this.angle); } takeDamage(amt) { if (this.dead) return; this.hp -= amt; if (this.hp <= 0) { this.dead = true; cash += 5 + Math.floor(wave / 5); updateUI(); } } draw(ctx) { if (this.dead) return; ctx.fillStyle = 'hsl(' + (wave * 10) + ', 70%, 50%)'; ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height); const hbw = this.width; const hbh = 5; const chw = Math.max(0, (this.hp / this.maxHp) * hbw); ctx.fillStyle = 'darkred'; ctx.fillRect(this.x - hbw / 2, this.y - this.height / 2 - hbh - 2, hbw, hbh); ctx.fillStyle = 'lime'; ctx.fillRect(this.x - hbw / 2, this.y - this.height / 2 - hbh - 2, chw, hbh); } }
+        class Tower { constructor(x, y) { this.x = x; this.y = y; this.width = TILE_SIZE * 0.8; this.height = TILE_SIZE * 0.8; this.baseRange = TURRET_RANGE; this.baseDamage = TURRET_DAMAGE; this.baseFireRate = TURRET_FIRE_RATE; this.lastShotTime = 0; this.target = null; this.level = 1; this.baseUpgradeCost = UPGRADE_COST_BASE; } get range() { return this.baseRange * Math.pow(1.1, this.level - 1) * globalRangeMultiplier; } get damage() { return this.baseDamage * Math.pow(1.5, this.level - 1) * globalDamageMultiplier; } get fireRate() { return this.baseFireRate * Math.pow(0.9, this.level - 1); } get upgradeCost() { return Math.floor(this.baseUpgradeCost * Math.pow(1.8, this.level - 1)); } findTarget(es) { const cr = this.range; if (this.target && (this.target.dead || this.distanceTo(this.target) > cr)) { this.target = null; } if (!this.target) { let ce = null; let md = cr; for (const e of es) { if (!e.dead) { const d = this.distanceTo(e); if (d < md) { md = d; ce = e; } } } this.target = ce; } } distanceTo(e) { const dx = e.x - this.x; const dy = e.y - this.y; return Math.sqrt(dx * dx + dy * dy); } shoot(ct) { if (this.target && ct - this.lastShotTime >= this.fireRate) { projectiles.push(new Projectile(this.x, this.y, this.target, this.damage)); this.lastShotTime = ct; } } upgrade(cp) { cash -= cp; this.level++; updateUI(); deselectTower(); return true; } draw(ctx) { const lc = `hsl(${200 + this.level * 20}, 60%, 50%)`; ctx.fillStyle = lc; ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height); ctx.fillStyle = 'white'; ctx.font = '12px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillText(this.level, this.x, this.y + 5); if (selectedTower === this) { ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2); ctx.stroke(); } } }
+        class Projectile { constructor(sx, sy, t, d) { this.x = sx; this.y = sy; this.target = t; this.damage = d; this.speed = 5; this.dead = false; this.width = 5; this.height = 5; } move() { if (this.dead || !this.target || this.target.dead) { this.dead = true; return; } const dx = this.target.x - this.x; const dy = this.target.y - this.y; const dist = Math.sqrt(dx * dx + dy * dy); if (dist < this.speed) { if (!this.target.dead) { this.target.takeDamage(this.damage); } this.dead = true; } else { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; } } draw(ctx) { if (this.dead) return; ctx.fillStyle = 'yellow'; ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height); } }
+
+        // --- Game Logic ---
+        let lastTimestamp = 0;
+        function spawnWave() { /* ... */ globalDamageMultiplier = 1.0; globalRangeMultiplier = 1.0; wave++; enemiesSpawnedThisWave = 0; waveInProgress = true; buttons.startWave.disabled = true; deselectTower(); const ne = 5 + wave * 3; const ehp = ENEMY_START_HP * Math.pow(ENEMY_HP_SCALING, wave - 1); const es = ENEMY_SPEED * Math.pow(ENEMY_SPEED_SCALING, wave - 1); currentWaveEnemies = []; for (let i = 0; i < ne; i++) { currentWaveEnemies.push(new Enemy(PATH_START_ANGLE, ehp, es)); } spawnInterval = Math.max(150, 1000 - wave * 40); lastSpawnTime = performance.now(); updateUI(); }
+        function handleEnemySpawning(ct) { /* ... */ if (waveInProgress && enemiesSpawnedThisWave < currentWaveEnemies.length) { if (ct - lastSpawnTime >= spawnInterval) { enemies.push(currentWaveEnemies[enemiesSpawnedThisWave]); enemiesSpawnedThisWave++; lastSpawnTime = ct; } } }
+        function updateGame(currentTime, deltaTime) { /* ... */ handleEnemySpawning(currentTime); projectiles.forEach(p => p.move()); enemies.forEach(e => e.move(deltaTime)); towers.forEach(t => { t.findTarget(enemies); t.shoot(currentTime); }); aoeEffects = aoeEffects.filter(ef => currentTime < ef.startTime + ef.duration); enemies = enemies.filter(e => !e.dead); projectiles = projectiles.filter(p => !p.dead); if (waveInProgress && enemies.length === 0 && enemiesSpawnedThisWave === currentWaveEnemies.length) { waveInProgress = false; if (wave === FINAL_WAVE) { handleGameWin(); return; } buttons.startWave.disabled = false; let wb = 25 + wave * 5; cash += wb; updateUI(); offerRogueChoice(wb); } updateAoeButton(currentTime); updateCursor(); }
+        function drawGame() { /* ... */ ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(PATH_CENTER_X, PATH_CENTER_Y, PATH_RADIUS, 0, Math.PI * 2); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; for (let x = 0; x < canvas.width; x += TILE_SIZE) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); } for (let y = 0; y < canvas.height; y += TILE_SIZE) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); } towers.forEach(t => t.draw(ctx)); enemies.forEach(e => e.draw(ctx)); projectiles.forEach(p => p.draw(ctx)); const ct = performance.now(); aoeEffects.forEach(ef => { const el = ct - ef.startTime; const p = el / ef.duration; if (p < 1) { const cr = ef.radius * p; const a = 1 - p; ctx.fillStyle = `rgba(255,255,0,${a * 0.5})`; ctx.beginPath(); ctx.arc(ef.x, ef.y, cr, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = `rgba(255,200,0,${a})`; ctx.lineWidth = 2; ctx.stroke(); } }); if (buildMode && mouseInCanvas) { const gx = Math.floor(mouseX / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; const gy = Math.floor(mouseY / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; const cp = canPlaceTower(gx, gy); ctx.fillStyle = cp ? 'rgba(0,0,255,0.5)' : 'rgba(255,0,0,0.5)'; ctx.fillRect(gx - TILE_SIZE * 0.4, gy - TILE_SIZE * 0.4, TILE_SIZE * 0.8, TILE_SIZE * 0.8); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(gx, gy, TURRET_RANGE * globalRangeMultiplier, 0, Math.PI * 2); ctx.stroke(); } else if (selectedTower) { ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range, 0, Math.PI * 2); ctx.stroke(); } }
+        function gameLoop(timestamp) { /* ... */ if (gameOver) return; const dt = timestamp - lastTimestamp; lastTimestamp = timestamp; if (!gamePaused) { updateGame(timestamp, dt); } drawGame(); requestAnimationFrame(gameLoop); }
+        function updateAoeButton(currentTime) { /* ... */ const cr = lastAoeTime + AOE_COOLDOWN - currentTime; buttons.aoe.classList.remove('cooldown', 'armed'); if (aoeArmed) { buttons.aoe.disabled = false; buttons.aoe.textContent = `Cancel Zap`; buttons.aoe.classList.add('armed'); } else if (cr > 0) { buttons.aoe.disabled = true; buttons.aoe.textContent = `Zap (${(cr / 1000).toFixed(1)}s)`; buttons.aoe.classList.add('cooldown'); } else if (cash < AOE_COST) { buttons.aoe.disabled = true; buttons.aoe.textContent = `Arm Zap ($${AOE_COST})`; } else { buttons.aoe.disabled = false; buttons.aoe.textContent = `Arm Zap ($${AOE_COST})`; } }
+        function updateCursor() { /* ... */ if (aoeArmed) { canvas.style.cursor = 'crosshair'; } else if (buildMode) { canvas.style.cursor = 'copy'; } else { canvas.style.cursor = 'default'; } }
+        function updateUI() { /* ... */ gameInfo.waveNumber.textContent = wave; gameInfo.finalWave.textContent = FINAL_WAVE; gameInfo.livesCount.textContent = lives; gameInfo.cashCount.textContent = cash; const ctCost = Math.ceil(TURRET_COST * (1 - buildDiscount)); buttons.buildTurret.disabled = cash < ctCost || buildMode; buttons.buildTurret.textContent = buildMode ? 'Cancel Build' : `Build Turret ($${ctCost})`; if (selectedTower) { const cuCost = Math.ceil(selectedTower.upgradeCost * (1 - upgradeDiscount)); buttons.upgradeTurret.disabled = cash < cuCost; buttons.upgradeTurret.textContent = `Upgrade ($${cuCost})`; } else { buttons.upgradeTurret.disabled = true; buttons.upgradeTurret.textContent = "Upgrade Turret"; } }
+
+        // --- Input Handling ---
+        function getMousePos(c, e) { /* ... */ const r = c.getBoundingClientRect(); const sx = c.width / r.width; const sy = c.height / r.height; return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy }; }
+        function canPlaceTower(gx, gy) { /* ... */ if (gx < TILE_SIZE / 2 || gx > canvas.width - TILE_SIZE / 2 || gy < TILE_SIZE / 2 || gy > canvas.height - TILE_SIZE / 2) return false; for (const t of towers) { const dx = t.x - gx; const dy = t.y - gy; if (Math.sqrt(dx * dx + dy * dy) < TILE_SIZE * 0.8) return false; } const dfc = Math.sqrt((gx - PATH_CENTER_X) ** 2 + (gy - PATH_CENTER_Y) ** 2); const pt = TILE_SIZE * 0.6; if (Math.abs(dfc - PATH_RADIUS) < pt) return false; return true; }
+        function selectTower(t) { /* ... */ selectedTower = t; buildMode = false; aoeArmed = false; updateUI(); updateCursor(); }
+        function deselectTower() { /* ... */ selectedTower = null; updateUI(); }
+        canvas.addEventListener('mousemove', (e) => { /* ... */ const p = getMousePos(canvas, e); mouseX = p.x; mouseY = p.y; mouseInCanvas = true; });
+        canvas.addEventListener('mouseleave', () => { /* ... */ mouseInCanvas = false; });
+        canvas.addEventListener('mouseenter', () => { /* ... */ mouseInCanvas = true; });
+        canvas.addEventListener('click', (e) => { /* ... */ if (gamePaused || !mouseInCanvas) return; const pos = getMousePos(canvas, e); const currentTime = performance.now(); if (aoeArmed) { aoeArmed = false; lastAoeTime = currentTime; const blastX = pos.x; const blastY = pos.y; enemies.forEach(enemy => { if (!enemy.dead) { const dx = enemy.x - blastX; const dy = enemy.y - blastY; const dSq = dx * dx + dy * dy; if (dSq < AOE_RADIUS * AOE_RADIUS) { enemy.takeDamage(AOE_DAMAGE); } } }); aoeEffects.push({ x: blastX, y: blastY, radius: AOE_RADIUS, startTime: currentTime, duration: AOE_EFFECT_DURATION }); updateUI(); updateCursor(); return; } const gridX = Math.floor(pos.x / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; const gridY = Math.floor(pos.y / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; if (buildMode) { const ctCost = TURRET_COST * (1 - buildDiscount); if (cash >= ctCost && canPlaceTower(gridX, gridY)) { towers.push(new Tower(gridX, gridY)); cash -= ctCost; buildMode = false; buildDiscount = 0; updateUI(); updateCursor(); } else if (cash < ctCost) { showMessage("Not Enough Cash!", `Need $${Math.ceil(ctCost)}`); buildMode = false; updateUI(); updateCursor(); } else if (!canPlaceTower(gridX, gridY)) { showMessage("Invalid Placement!", "Cannot build here."); } } else { let clickedOnTower = false; for (const t of towers) { if (pos.x >= t.x - t.width / 2 && pos.x <= t.x + t.width / 2 && pos.y >= t.y - t.height / 2 && pos.y <= t.y + t.height / 2) { selectTower(t); clickedOnTower = true; break; } } if (!clickedOnTower) deselectTower(); } });
+        buttons.buildTurret.addEventListener('click', () => { /* ... */ if (gamePaused) return; const ctCost = Math.ceil(TURRET_COST * (1 - buildDiscount)); if (buildMode) { buildMode = false; deselectTower(); } else if (cash >= ctCost) { buildMode = true; deselectTower(); aoeArmed = false; } else { showMessage("Not Enough Cash!", `Need $${ctCost}`); } updateUI(); updateCursor(); });
+        buttons.startWave.addEventListener('click', () => { /* ... */ if (!waveInProgress && !gameOver && !gamePaused) spawnWave(); });
+        buttons.upgradeTurret.addEventListener('click', () => { /* ... */ if (selectedTower && !gamePaused) { const cuCost = Math.ceil(selectedTower.upgradeCost * (1 - upgradeDiscount)); if (cash >= cuCost) { selectedTower.upgrade(cuCost); upgradeDiscount = 0; } else { showMessage("Not Enough Cash!", `Need $${cuCost}`); } } });
+        buttons.aoe.addEventListener('click', () => { /* ... */ if (gamePaused) return; const currentTime = performance.now(); if (aoeArmed) { aoeArmed = false; cash += AOE_COST; console.log("AoE Disarmed, refunded."); updateUI(); updateCursor(); } else { const isReady = currentTime - lastAoeTime >= AOE_COOLDOWN; const hasCash = cash >= AOE_COST; if (isReady && hasCash) { cash -= AOE_COST; aoeArmed = true; buildMode = false; deselectTower(); console.log("AoE Armed!"); updateUI(); updateCursor(); } else if (!isReady) { console.log("AoE on cooldown!"); } else if (!hasCash) { console.log("Not enough cash to arm AoE!"); } } });
+
+        // --- Message/Overlay Logic ---
+        function showMessage(t, txt, cs = [], cbt = "OK") {/* ... */ gamePaused = true; canvas.style.cursor = 'default'; messageTitle.textContent = t; messageText.textContent = txt; messageCloseBtn.textContent = cbt; rogueChoicesContainer.innerHTML = ''; if (cs.length > 0) { cs.forEach(c => { const b = document.createElement('button'); b.textContent = c.text; b.onclick = () => { c.action(); hideMessage(); }; rogueChoicesContainer.appendChild(b); }); messageCloseBtn.style.display = 'none'; } else { messageCloseBtn.style.display = 'inline-block'; messageCloseBtn.onclick = hideMessage; } messageOverlay.style.display = 'flex'; }
+        function hideMessage() {/* ... */ messageOverlay.style.display = 'none'; gamePaused = false; updateUI(); buttons.startWave.disabled = waveInProgress || gameOver; updateCursor(); }
+        function handleGameOver(r) {/* ... */ if (gameOver) return; gameOver = true; showMessage("Game Over!", r, [], "Restart"); messageCloseBtn.style.display = 'inline-block'; messageCloseBtn.onclick = () => window.location.reload(); canvas.style.cursor = 'default'; }
+        function handleGameWin() {/* ... */ if (gameOver) return; gameOver = true; const s = Math.floor(cash + lives * 50 + (FINAL_WAVE - wave) * 100); showMessage("Victory!", `Survived ${FINAL_WAVE} waves! Score: ${s}`, [], "Play Again"); messageCloseBtn.style.display = 'inline-block'; messageCloseBtn.onclick = () => window.location.reload(); canvas.style.cursor = 'default'; }
+
+        // --- Rogue-like Element ---
+        function offerRogueChoice(wb) {/* ... */ const cs = []; const cc = 3; const pc = [{ type: 'cash', text: `+ $${Math.floor(wb * 1.5)} Cash`, action: () => { cash += Math.floor(wb * 1.5); updateUI(); } }, { type: 'lives', text: `+ ${Math.min(5, Math.ceil(wave / 2))} Lives`, action: () => { lives = Math.min(20, lives + Math.min(5, Math.ceil(wave / 2))); updateUI(); } }, { type: 'build_discount', text: `15% Off Next Turret`, action: () => applyTemporaryBuildDiscount(0.15) }, { type: 'upgrade_discount', text: `20% Off Next Upgrade`, action: () => applyTemporaryUpgradeDiscount(0.20) }, { type: 'global_damage', text: `+10% Damage (Next Wave)`, action: () => applyGlobalDamageBoost(0.1) }, { type: 'global_range', text: `+10% Range (Next Wave)`, action: () => applyGlobalRangeBoost(0.1) },]; let fc = pc.filter(c => { if (c.type === 'lives' && lives >= 20) return false; if (c.type === 'build_discount' && buildDiscount > 0) return false; if (c.type === 'upgrade_discount' && upgradeDiscount > 0) return false; return true; }); const ac = [...fc]; for (let i = 0; i < cc && ac.length > 0; i++) { const ri = Math.floor(Math.random() * ac.length); cs.push(ac.splice(ri, 1)[0]); } if (cs.length > 0) { showMessage(`Wave ${wave} Cleared!`, `Bonus: $${wb}. Choose bonus for Wave ${wave + 1}:`, cs); } else { showMessage(`Wave ${wave} Cleared!`, `Bonus: $${wb}.`, [], "Continue"); } }
+
+        // --- Temporary Effects Implementation ---
+        function applyTemporaryBuildDiscount(d) { buildDiscount = d; updateUI(); } function applyTemporaryUpgradeDiscount(d) { upgradeDiscount = d; updateUI(); } function applyGlobalDamageBoost(b) { globalDamageMultiplier += b; } function applyGlobalRangeBoost(b) { globalRangeMultiplier += b; }
+
+        // --- Memory Game Logic ---
+        function switchTab(activeTab) {/* ... */ if (activeTab === 'input') { inputTabBtn.classList.add('active'); quizTabBtn.classList.remove('active'); inputTabContent.classList.add('active'); quizTabContent.classList.remove('active'); } else { inputTabBtn.classList.remove('active'); quizTabBtn.classList.add('active'); inputTabContent.classList.remove('active'); quizTabContent.classList.add('active'); if (!currentQuizKey && quizKeys.length > 0) { loadNextQuestion(); } else if (quizKeys.length === 0) { quizKeyDisplay.textContent = 'No pairs saved yet.'; quizAnswerInput.value = ''; quizFeedback.textContent = ''; } } }
+
+        function parseAndSavePairs() { // MODIFIED for new line-based format
+            const inputText = pairsInput.value.trim();
+            const newPairs = {};
+            let count = 0;
+            let errors = []; // Store multiple errors
+            inputFeedback.classList.remove('correct', 'incorrect');
+
+            if (!inputText) {
+                inputFeedback.textContent = "Input is empty.";
+                inputFeedback.classList.add('incorrect');
+                return;
+            }
+
+            const lines = inputText.split('\n'); // Split by newline
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue; // Skip empty lines
+
+                const delimiterIndex = line.indexOf(':');
+
+                // Validation for each line
+                if (delimiterIndex === -1) {
+                    errors.push(`Line ${i + 1}: Missing colon ':' separator.`);
+                    continue; // Skip this line
+                }
+                if (delimiterIndex === 0) {
+                    errors.push(`Line ${i + 1}: Key cannot be empty.`);
+                    continue; // Skip this line
+                }
+                if (delimiterIndex === line.length - 1) {
+                    errors.push(`Line ${i + 1}: Value cannot be empty.`);
+                    continue; // Skip this line
+                }
+
+                const key = line.substring(0, delimiterIndex).trim();
+                const value = line.substring(delimiterIndex + 1).trim();
+
+                if (!key || !value) { // Double check key/value not empty after potential inner trim
+                    errors.push(`Line ${i + 1}: Key or value is empty after trimming.`);
+                    continue; // Skip this line
+                }
+
+                newPairs[key] = value;
+                count++;
+            }
+
+            // Report results
+            if (count > 0) {
+                memoryPairs = newPairs;
+                quizKeys = Object.keys(memoryPairs);
+                currentQuizIndex = 0;
+                currentQuizKey = null;
+                inputFeedback.textContent = `Saved ${count} pairs successfully!`;
+                if (errors.length > 0) {
+                    inputFeedback.textContent += ` Skipped ${errors.length} invalid line(s).`;
+                }
+                inputFeedback.classList.add('correct');
+                pairsInput.value = ''; // Clear input area
+                loadNextQuestion(); // Load the first question
+                switchTab('quiz'); // Switch to quiz tab automatically
+            } else {
+                inputFeedback.textContent = "No valid pairs found. Ensure format is 'Key:Value' on each line.";
+                if (errors.length > 0) {
+                    inputFeedback.textContent += ` Errors: ${errors.join(' ')}`; // Show first few errors?
+                }
+                inputFeedback.classList.add('incorrect');
+            }
+        }
+
+        function loadNextQuestion() { /* ... */ quizFeedback.textContent = ''; if (quizKeys.length > 0) { quizAnswerInput.disabled = false; submitAnswerBtn.disabled = false; } else { quizKeyDisplay.textContent = 'No pairs saved yet.'; currentQuizKey = null; quizAnswerInput.disabled = true; submitAnswerBtn.disabled = true; return; } currentQuizKey = quizKeys[currentQuizIndex]; quizKeyDisplay.textContent = currentQuizKey; currentQuizIndex = (currentQuizIndex + 1) % quizKeys.length; }
+        function checkAnswer() { /* ... */ if (!currentQuizKey || quizKeys.length === 0) return; const sa = quizAnswerInput.value.trim(); const ca = memoryPairs[currentQuizKey]; quizFeedback.classList.remove('correct', 'incorrect'); if (sa.toLowerCase() === ca.toLowerCase()) { quizFeedback.textContent = `Correct! +$${REWARD_AMOUNT}`; quizFeedback.classList.add('correct'); cash += REWARD_AMOUNT; updateUI(); } else { quizFeedback.textContent = `Incorrect. The answer was: ${ca}`; quizFeedback.classList.add('incorrect'); } quizAnswerInput.value = ''; setTimeout(() => { if (quizTabContent.classList.contains('active')) { loadNextQuestion(); } }, 1500); }
+
+        // --- Initialization ---
+        function init() {
+            gameInfo.finalWave.textContent = FINAL_WAVE;
+            updateUI(); updateAoeButton(performance.now()); updateCursor();
+            lastTimestamp = performance.now();
+            requestAnimationFrame(gameLoop);
+            // Memory Game Init
+            inputTabBtn.addEventListener('click', () => switchTab('input'));
+            quizTabBtn.addEventListener('click', () => switchTab('quiz'));
+            savePairsBtn.addEventListener('click', parseAndSavePairs);
+            submitAnswerBtn.addEventListener('click', checkAnswer);
+            quizAnswerInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !submitAnswerBtn.disabled) { checkAnswer(); } });
+            quizAnswerInput.addEventListener('focus', () => { setTimeout(() => { quizAnswerInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); });
+            loadNextQuestion(); // Load initial state
+        }
+        window.onload = init;
+
+    </script>
+
+</body>
+
+</html>
