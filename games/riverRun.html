@@ -6,6 +6,7 @@
     <title>River Runner 3D</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         /* Define CSS Variables for theming */
         :root {
@@ -172,28 +173,45 @@
              background: linear-gradient(180deg, var(--button-bg-start), var(--button-bg-end));
         }
 
-        /* Dark Mode Toggle Button Styling */
-        #dark-mode-toggle {
-             position: absolute;
-             top: 10px;
-             right: 10px;
+        /* --- Top Right Buttons Container --- */
+        #top-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 20;
+            display: flex; /* Arrange buttons side-by-side */
+            gap: 5px; /* Space between buttons */
+        }
+
+        /* Dark Mode & Mute Toggle Button Styling */
+        #dark-mode-toggle, #mute-toggle {
              font-size: 0.7em;
              padding: 5px 10px;
              background-color: #555;
-             margin: 0;
-             z-index: 20;
+             margin: 0; /* Remove default margin */
+             /* position, top, right removed as they are now in the container */
         }
-         body.dark-mode #dark-mode-toggle {
+         body.dark-mode #dark-mode-toggle, body.dark-mode #mute-toggle {
              background-color: #aaa;
              color: #333;
          }
+         /* Style for muted state */
+         #mute-toggle.muted {
+             background-color: #888; /* Indicate muted state */
+         }
+         body.dark-mode #mute-toggle.muted {
+              background-color: #666;
+         }
+
 
         /* Shoot Button Styling REMOVED */
 
     </style>
 </head>
 <body>
-    <button id="dark-mode-toggle">Mode</button>
+    <div id="top-controls">
+        <button id="mute-toggle">Mute</button> <button id="dark-mode-toggle">Mode</button>
+    </div>
 
     <div id="game-container">
         <div id="score">Score: 0</div>
@@ -212,6 +230,7 @@
         const messageText = document.getElementById('message-text');
         const startButton = document.getElementById('start-button');
         const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const muteToggle = document.getElementById('mute-toggle');
 
         // --- Three.js Variables ---
         let scene, camera, renderer;
@@ -243,14 +262,34 @@
         let explosionParticleInfo = [];
         let currentExplosionParticleIndex = 0;
 
+        // --- Audio Variables (Tone.js) ---
+        let musicSynth;
+        let musicSequence; // Holds the current Tone.Sequence object
+        let isMuted = true; // Default to muted
+        let audioStarted = false; // Flag to ensure Tone.start() is called only once
+        // --- Define Multiple Melodies ---
+        const musicMelodies = [
+            // Melody 1 (Initial - C Major Arp)
+            [["C4", "E4", "G4"], null, "E4", null, "G4", null, "C5", null],
+            // Melody 2 (Teal - G Major Arp)
+            [["G4", "B4", "D5"], null, "B4", null, "D5", null, "G5", null],
+            // Melody 3 (Greenish - F Major Arp)
+            [["F4", "A4", "C5"], null, "A4", null, "C5", null, "F5", null],
+            // Melody 4 (Purple - Am Arp)
+            [["A3", "C4", "E4"], null, "C4", null, "E4", null, "A4", null],
+            // Melody 5 (Dark Blue - Dm Arp)
+            [["D4", "F4", "A4"], null, "F4", null, "A4", null, "D5", null]
+        ];
+
+
         // --- Game Variables ---
         let score = 0;
-        let gameSpeed = 0.1; // Base speed, will be increased in steps
-        const GAME_SPEED_INCREASE = 0.02; // How much to increase speed per step
-        const MAX_GAME_SPEED = 0.35; // Max speed cap
+        let gameSpeed = 0.1;
+        const GAME_SPEED_INCREASE = 0.02;
+        const MAX_GAME_SPEED = 0.35;
         let obstacleSpawnTimer = 0;
-        let obstacleSpawnInterval = 100; // Initial interval, decreases over time
-        const MIN_SPAWN_INTERVAL = 40; // Minimum interval cap
+        let obstacleSpawnInterval = 100;
+        const MIN_SPAWN_INTERVAL = 40;
         let animationFrameId;
         let isGameOver = true;
         let keys = {};
@@ -264,8 +303,8 @@
         let pointerDownX = 0;
         let pointerDownY = 0;
         let potentialTap = false;
-        const MAX_TAP_DURATION = 250; // ms
-        const MAX_TAP_MOVEMENT = 10; // pixels
+        const MAX_TAP_DURATION = 250;
+        const MAX_TAP_MOVEMENT = 10;
 
         // --- Theme Variable ---
         let isDarkMode = true; // Default to dark mode
@@ -274,7 +313,7 @@
         const waterColorsLight = [0x0055aa, 0x007799, 0x008877, 0x440088, 0x003388];
         const waterColorsDark = [0x4477aa, 0x4499bb, 0x44aaaa, 0x7744aa, 0x4466aa];
         let currentWaterColorIndex = 0;
-        const SCORE_THRESHOLD_COLOR_CHANGE = 25; // Also used for speed increase
+        const SCORE_THRESHOLD_COLOR_CHANGE = 25;
         let nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
 
         // --- Constants ---
@@ -310,13 +349,15 @@
             createWater();
             createProjectilePool();
             createExplosionSystem();
+            setupMusic(); // Setup Tone.js elements (synth only now)
             applyTheme();
+            applyMuteState();
         }
 
         // --- Create Game Objects ---
         // createBoat, createWater, createProjectilePool, createExplosionSystem, spawnObstacle
         // findNearestObstacleAhead, shootProjectile, triggerExplosion remain the same
-        // (Code omitted for brevity, assume identical to previous version)
+        // (Code omitted for brevity, assume identical)
          function createBoat() {
              if (!boat) {
                 const boatGeo = new THREE.BoxGeometry(BOAT_WIDTH, 0.5, BOAT_LENGTH);
@@ -485,8 +526,18 @@
          }
 
 
+        // --- Music Setup (Tone.js) ---
+        function setupMusic() {
+            if (musicSynth) return; // Already setup
+
+            musicSynth = new Tone.FMSynth({ /* ... synth settings ... */ }).toDestination();
+            musicSynth.volume.value = -18;
+
+            // Don't create the sequence here, do it in initGame
+        }
+
         // --- Game Logic ---
-        function initGame() {
+        async function initGame() { // Make async for Tone.start()
              obstacles.forEach(obs => scene.remove(obs.mesh)); obstacles = [];
              activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
              if (explosionParticles) {
@@ -495,11 +546,34 @@
                  for (let i = 0; i < MAX_EXPLOSION_PARTICLES; i++) positions[i * 3 + 1] = -100;
                  explosionParticles.geometry.attributes.position.needsUpdate = true;
              }
-             isGameOver = false; score = 0; gameSpeed = 0.1; // Reset base speed
-             obstacleSpawnInterval = 100; // Reset spawn interval
-             obstacleSpawnTimer = 0; keys = {}; isDragging = false; dragStartX = 0; boatStartX = 0;
-             lastShootTime = 0; scoreElement.textContent = `Score: ${score}`; messageBox.style.display = 'none';
-             currentWaterColorIndex = 0; nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE; // Reset score threshold
+             isGameOver = false; score = 0; gameSpeed = 0.1;
+             obstacleSpawnInterval = 100; obstacleSpawnTimer = 0; keys = {}; isDragging = false;
+             dragStartX = 0; boatStartX = 0; lastShootTime = 0; scoreElement.textContent = `Score: ${score}`;
+             messageBox.style.display = 'none'; currentWaterColorIndex = 0;
+             nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
+
+             // --- Start Audio Context on User Interaction ---
+             if (!audioStarted) {
+                 await Tone.start();
+                 audioStarted = true;
+                 console.log('Audio context started');
+             }
+
+             // --- Setup and Start Initial Music Sequence ---
+             if (musicSequence) {
+                 musicSequence.stop();
+                 musicSequence.dispose(); // Clean up old sequence if restarting
+             }
+             musicSequence = new Tone.Sequence((time, note) => {
+                 if(musicSynth) musicSynth.triggerAttackRelease(note, "8n", time);
+             }, musicMelodies[currentWaterColorIndex], "4n").start(0); // Use initial melody
+
+             Tone.Transport.loop = true;
+             Tone.Transport.loopEnd = "2m"; // Loop length based on melody arrays
+             Tone.Transport.bpm.value = 90;
+             Tone.Transport.start();
+             // --- End Music Setup ---
+
              createBoat(); createWater(); applyTheme(); updateCamera();
              if (animationFrameId) cancelAnimationFrame(animationFrameId);
              gameLoop();
@@ -556,26 +630,23 @@
                         triggerExplosion(obsData.mesh.position.clone());
                         scene.remove(obsData.mesh); obstacles.splice(j, 1);
                         score += PROJECTILE_BONUS_POINTS; scoreElement.textContent = `Score: ${score}`;
-
-                        // Check for color/speed change threshold
+                        // --- Check for Progression Threshold ---
                         if (score >= nextColorChangeScore) {
                             // Change Color
-                            if(waterParticles){
-                                const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight;
-                                currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length;
-                                waterParticles.material.color.set(colorPalette[currentWaterColorIndex]);
-                            }
+                            if(waterParticles){ const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight; currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length; waterParticles.material.color.set(colorPalette[currentWaterColorIndex]); }
                             // Increase Speed
-                            gameSpeed += GAME_SPEED_INCREASE;
-                            gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED); // Apply cap
+                            gameSpeed += GAME_SPEED_INCREASE; gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED);
                             // Decrease Spawn Interval
-                            if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) {
-                                 obstacleSpawnInterval -= 5; // Decrease interval more significantly
+                            if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) { obstacleSpawnInterval -= 5; }
+                            // --- Change Music ---
+                            if (musicSequence) {
+                                 musicSequence.events = musicMelodies[currentWaterColorIndex % musicMelodies.length]; // Update sequence events
                             }
                             // Set next threshold
                             nextColorChangeScore += SCORE_THRESHOLD_COLOR_CHANGE;
                         }
-                        break; // Obstacle hit, exit inner loop
+                        // --- End Progression Check ---
+                        break;
                     }
                 }
                 if (hit || projData.mesh.position.z > riverLength * 1.1) {
@@ -608,37 +679,30 @@
             for (let i = obstacles.length - 1; i >= 0; i--) {
                 const obsData = obstacles[i];
                 if (obsData.mesh.parent !== scene) {
-                    obstacles.splice(i, 1); continue; // Already removed (shot)
+                    obstacles.splice(i, 1); continue;
                 }
                 obsData.mesh.position.z -= gameSpeed; // Move obstacle by current gameSpeed
                 obsData.boundingBox.setFromObject(obsData.mesh);
                 if (boatBox.intersectsBox(obsData.boundingBox)) { gameOver(); return; }
-
-                // Check if obstacle passed *behind* the boat
                 if (obsData.mesh.position.z < boat.position.z - BOAT_LENGTH * 1.5) {
                     scene.remove(obsData.mesh); obstacles.splice(i, 1);
-                    score++; // Normal points for dodging
-                    scoreElement.textContent = `Score: ${score}`;
-
-                    // Check for color/speed change threshold
-                    if (score >= nextColorChangeScore) {
+                    score++; scoreElement.textContent = `Score: ${score}`;
+                     // --- Check for Progression Threshold ---
+                     if (score >= nextColorChangeScore) {
                          // Change Color
-                        if(waterParticles){
-                            const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight;
-                            currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length;
-                            waterParticles.material.color.set(colorPalette[currentWaterColorIndex]);
-                        }
+                         if(waterParticles){ const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight; currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length; waterParticles.material.color.set(colorPalette[currentWaterColorIndex]); }
                          // Increase Speed
-                         gameSpeed += GAME_SPEED_INCREASE;
-                         gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED); // Apply cap
+                         gameSpeed += GAME_SPEED_INCREASE; gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED);
                          // Decrease Spawn Interval
-                         if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) {
-                              obstacleSpawnInterval -= 5; // Decrease interval more significantly
+                         if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) { obstacleSpawnInterval -= 5; }
+                          // --- Change Music ---
+                         if (musicSequence) {
+                              musicSequence.events = musicMelodies[currentWaterColorIndex % musicMelodies.length]; // Update sequence events
                          }
                          // Set next threshold
                          nextColorChangeScore += SCORE_THRESHOLD_COLOR_CHANGE;
-                    }
-                    // Gradual difficulty increase REMOVED
+                     }
+                     // --- End Progression Check ---
                 }
             }
 
@@ -659,6 +723,17 @@
             isGameOver = true; isDragging = false; keys = {};
             if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null;
             activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
+            // Stop music transport
+             if (Tone && Tone.Transport.state === "started") {
+                 Tone.Transport.stop();
+             }
+             // Optional: Stop and dispose of sequence if needed
+             // if (musicSequence) {
+             //     musicSequence.stop();
+             //     musicSequence.dispose();
+             //     musicSequence = null;
+             // }
+
             messageText.innerHTML = `Game Over!<br>Final Score: ${score}`; startButton.textContent = 'Restart Game'; messageBox.style.display = 'block';
         }
 
@@ -682,6 +757,28 @@
         }
         function toggleDarkMode() { isDarkMode = !isDarkMode; localStorage.setItem('darkMode', isDarkMode); applyTheme(); }
 
+        // --- Mute Handling ---
+        function applyMuteState() {
+             if (typeof Tone !== 'undefined') {
+                 Tone.Destination.mute = isMuted;
+             }
+             if (muteToggle) {
+                 muteToggle.textContent = isMuted ? "Unmute" : "Mute";
+                 if (isMuted) {
+                     muteToggle.classList.add('muted');
+                 } else {
+                     muteToggle.classList.remove('muted');
+                 }
+             }
+        }
+
+        function toggleMute() {
+             isMuted = !isMuted;
+             localStorage.setItem('muted', isMuted);
+             applyMuteState();
+        }
+
+
         // --- Event Listeners ---
         function onWindowResize() {
             containerWidth = gameContainer.clientWidth; containerHeight = gameContainer.clientHeight;
@@ -692,16 +789,20 @@
         // Keyboard controls
         window.addEventListener('keydown', (e) => {
             if (isDragging) return; const key = e.key.toLowerCase();
-            if (key === ' ') { shootProjectile(); e.preventDefault(); return; } // Shoot straight
+            if (key === ' ') {
+                 const target = findNearestObstacleAhead();
+                 shootProjectile(target);
+                 e.preventDefault();
+                 return;
+            }
             keys[key] = true; if (['arrowleft', 'arrowright', 'a', 'd'].includes(key)) e.preventDefault();
         });
         window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 
         // --- Drag and Tap Controls ---
         gameContainer.addEventListener('pointerdown', (e) => {
-            // Ensure event target is the canvas itself
             if (isGameOver || messageBox.style.display === 'block' || e.target !== renderer.domElement) return;
-             e.preventDefault(); // Prevent default actions like text selection or zoom start
+             e.preventDefault();
             pointerDownTime = Date.now(); pointerDownX = e.clientX; pointerDownY = e.clientY; potentialTap = true;
             isDragging = true; dragStartX = e.clientX; boatStartX = boat.position.x; keys = {};
             gameContainer.style.cursor = 'grabbing';
@@ -709,7 +810,7 @@
 
         gameContainer.addEventListener('pointermove', (e) => {
             if (!isDragging || isGameOver) return;
-             e.preventDefault(); // Prevent scrolling during drag
+             e.preventDefault();
             const currentX = e.clientX; const currentY = e.clientY;
             const deltaX = currentX - pointerDownX; const deltaY = currentY - pointerDownY;
             const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
@@ -726,8 +827,8 @@
         });
 
         function stopDraggingAndCheckTap(e) {
-             if (isDragging) { // Only process if a drag/tap was initiated
-                  e.preventDefault(); // Prevent default actions on pointer up/leave
+             if (isDragging) {
+                  e.preventDefault();
                  if (potentialTap && (Date.now() - pointerDownTime) < MAX_TAP_DURATION) {
                      const target = findNearestObstacleAhead();
                      shootProjectile(target);
@@ -746,15 +847,29 @@
         // Dark Mode Toggle Button Listener
         darkModeToggle.addEventListener('click', toggleDarkMode);
 
+        // Mute Toggle Button Listener
+        muteToggle.addEventListener('click', toggleMute);
+
+
         // --- Initial Setup ---
         window.onload = () => {
+            // Check saved theme preference
             const savedTheme = localStorage.getItem('darkMode');
             if (savedTheme !== null) {
                  isDarkMode = savedTheme === 'true';
             } else {
                  isDarkMode = true; // Default dark
             }
-            initThree();
+            // Check saved mute preference
+            const savedMute = localStorage.getItem('muted');
+             if (savedMute !== null) {
+                 isMuted = savedMute === 'true';
+             } else {
+                 isMuted = true; // Default muted
+             }
+
+
+            initThree(); // Setup scene, applying initial theme & mute state
             messageText.textContent = 'River Runner 3D!';
             startButton.textContent = 'Start Game';
             messageBox.style.display = 'block';
