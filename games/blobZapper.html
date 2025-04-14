@@ -6,72 +6,128 @@
     <title>Lava Plasma Flow - Destruction</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        html, body { margin: 0; padding: 0; overflow: hidden; height: 100%; background-color: #1a1a2e; font-family: 'Inter', sans-serif; color: white; display: flex; justify-content: center; align-items: center; }
-        canvas { display: block; background-color: #0f0f1a; max-width: 100vw; max-height: 100vh; box-shadow: 0 0 15px rgba(0,0,0,0.5); border-radius: 8px; }
-        .overlay { position: absolute; left: 50%; transform: translateX(-50%); color: rgba(255, 255, 255, 0.8); text-shadow: 0 0 5px rgba(0, 0, 0, 0.5); pointer-events: none; text-align: center; z-index: 10; width: 80%; }
-        .title-overlay { top: 15px; font-size: calc(0.8rem + 0.5vmin); }
-        #pushBtn { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 12px 25px; font-size: 1rem; font-weight: bold; color: white; background-color: #6272a4; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); transition: background-color 0.2s ease, transform 0.1s ease; z-index: 5; }
+        /* Ensure body takes full height and centers content */
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrollbars */
+            height: 100%;
+            background-color: #1a1a2e; /* Dark background */
+            font-family: 'Inter', sans-serif;
+            color: white;
+            /* Use Flexbox to center the canvas */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Canvas styling - JS will set width/height style */
+        canvas {
+            display: block;
+            background-color: #0f0f1a;
+            /* Add max dimensions to prevent potential overflow during resize */
+            max-width: 100vw;
+            max-height: 100vh;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            border-radius: 8px;
+        }
+        /* Style for overlays (Title Only) */
+        .overlay {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.8);
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            text-align: center;
+            z-index: 10;
+            width: 80%;
+        }
+        .title-overlay {
+            top: 15px;
+            font-size: calc(0.8rem + 0.5vmin);
+        }
+        /* Style for the push button */
+        #pushBtn {
+            position: absolute;
+            bottom: 20px; /* Position near the bottom */
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: white;
+            background-color: #6272a4; /* Button color */
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            z-index: 5;
+        }
         #pushBtn:hover { background-color: #7a8ac4; }
         #pushBtn:active { background-color: #505d8a; transform: translateX(-50%) scale(0.98); }
         body[data-game-over="true"] #pushBtn { display: none; }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div class="overlay title-overlay">Lava Plasma Flow - Clear the Blobs!</div>
+<body data-game-over="false"> <div class="overlay title-overlay">Lava Plasma Flow - Clear the Blobs!</div>
     <canvas id="gameCanvas"></canvas>
     <button id="pushBtn">Push Blobs</button>
 
     <script>
         console.log("Script start");
 
-        // Wrap main logic in DOMContentLoaded
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOM Loaded. Initializing script...");
 
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
-            // Get button reference *after* DOM is loaded
             const pushButton = document.getElementById('pushBtn');
 
             if (!ctx) {
                 console.error("Fatal Error: Failed to get 2D context for canvas.");
-                const errorDiv = document.createElement('div');
-                errorDiv.textContent = "Error: Could not initialize graphics.";
-                errorDiv.style.cssText = "color:red; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);";
-                document.body.appendChild(errorDiv);
-                return; // Stop script if context fails
+                // ... (error display code)
+                 const errorDiv = document.createElement('div');
+                 errorDiv.textContent = "Error: Could not initialize graphics.";
+                 errorDiv.style.cssText = "color:red; position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);";
+                 document.body.appendChild(errorDiv);
+                 return;
             }
-            // Check if button exists
             if (!pushButton) {
                  console.error("Fatal Error: Could not find push button element.");
-                 return; // Stop script if button not found
+                 return;
             }
-
             console.log("Canvas context and button obtained successfully.");
 
-            // --- Configuration (Simplified Sizes) ---
-            const NUM_BLOBS_START = 5;
-            const MIN_BLOB_RADIUS = 10;
-            const MAX_BLOB_RADIUS = 30;
-            const BLOB_SPEED = 0.3;
+            // --- Configuration ---
+            const TARGET_ASPECT_RATIO = 9 / 16; // Restore aspect ratio
+            const NUM_BLOBS_START = 18;
+            // Use Factors for relative sizing
+            const MIN_BLOB_RADIUS_FACTOR = 0.02;
+            const MAX_BLOB_RADIUS_FACTOR = 0.05;
+            const BLOB_SPEED_FACTOR = 0.0005;
             const TOUCH_REPULSION_FORCE = 2.0;
-            const TOUCH_REPULSION_RADIUS = 150;
-            const TENDRIL_MAX_DIST = 200;
+            const TOUCH_REPULSION_RADIUS_FACTOR = 0.25;
+            const TENDRIL_MAX_DIST_FACTOR = 0.35;
             const TENDRIL_COLOR = 'rgba(192, 132, 252, 0.6)';
             const BLOB_COLORS = [
                 'rgba(236, 72, 153, 0.7)', 'rgba(168, 85, 247, 0.7)', 'rgba(99, 102, 241, 0.7)',
                 'rgba(59, 130, 246, 0.7)', 'rgba(34, 197, 94, 0.7)'
             ];
-            const DESTRUCTION_ZONE_RADIUS = 60;
+            let DESTRUCTION_ZONE_RADIUS_FACTOR = 0.12;
             const DESTRUCTION_ZONE_COLOR_FILL = 'rgba(255, 50, 50, 0.2)';
             const DESTRUCTION_ZONE_COLOR_STROKE = 'rgba(255, 80, 80, 0.8)';
-            const DESTRUCTION_ZONE_SPEED = 0.5;
+            let DESTRUCTION_ZONE_SPEED_FACTOR = 0.001;
             const BUTTON_PUSH_IMPULSE = 4;
+
+            // --- Dynamic Variables ---
+            let minBlobRadius, maxBlobRadius, blobSpeed;
+            let touchRepulsionRadius, tendrilMaxDist;
+            let destructionZoneRadius, destructionZoneSpeed;
 
             let blobs = [];
             let touchPoints = [];
-            let destructionZone = { x: 0, y: 0, radius: DESTRUCTION_ZONE_RADIUS, vx: 0, vy: 0 };
+            let destructionZone = { x: 0, y: 0, radius: 0, vx: 0, vy: 0 };
 
             let isGameOver = false;
             let animationFrameId;
@@ -81,8 +137,9 @@
             class Blob {
                  constructor(x, y, radius, color) {
                     this.x = x; this.y = y; this.radius = radius; this.color = color;
-                    this.vx = (Math.random() - 0.5) * BLOB_SPEED * 2;
-                    this.vy = (Math.random() - 0.5) * BLOB_SPEED * 2;
+                    // Use calculated blobSpeed (with fallback)
+                    this.vx = (Math.random() - 0.5) * (blobSpeed || 0.1) * 2;
+                    this.vy = (Math.random() - 0.5) * (blobSpeed || 0.1) * 2;
                 }
                 update(deltaTime) {
                     try {
@@ -96,19 +153,20 @@
                         touchPoints.forEach(touch => {
                             const dx = this.x - touch.x; const dy = this.y - touch.y;
                             const distSq = dx * dx + dy * dy;
-                            const repulsionRadiusSq = TOUCH_REPULSION_RADIUS * TOUCH_REPULSION_RADIUS;
+                            // Use calculated radius (with fallback)
+                            const repulsionRadiusSq = (touchRepulsionRadius || 50) * (touchRepulsionRadius || 50);
                             if (distSq < repulsionRadiusSq && distSq > 1) {
                                 const dist = Math.sqrt(distSq);
-                                const force = (1 - dist / TOUCH_REPULSION_RADIUS) * TOUCH_REPULSION_FORCE;
-                                const forceMultiplier = deltaTime / Math.max(1, this.radius / MIN_BLOB_RADIUS);
+                                const force = (1 - dist / (touchRepulsionRadius || 50)) * TOUCH_REPULSION_FORCE;
+                                const forceMultiplier = deltaTime / Math.max(1, this.radius / (minBlobRadius || 10));
                                 this.vx += (dx / dist) * force * forceMultiplier;
                                 this.vy += (dy / dist) * force * forceMultiplier;
                             }
                         });
                         // Dampen & Wiggle
                         this.vx *= 0.995; this.vy *= 0.995;
-                        this.vx += (Math.random() - 0.5) * BLOB_SPEED * 0.1 * deltaTime;
-                        this.vy += (Math.random() - 0.5) * BLOB_SPEED * 0.1 * deltaTime;
+                        this.vx += (Math.random() - 0.5) * (blobSpeed || 0.1) * 0.1 * deltaTime;
+                        this.vy += (Math.random() - 0.5) * (blobSpeed || 0.1) * 0.1 * deltaTime;
                     } catch (error) { console.error("Error during Blob update:", error); }
                 }
                 draw() {
@@ -124,17 +182,22 @@
             function init() {
                 console.log("Initializing game...");
                 try {
-                    resizeCanvas();
+                    resizeCanvas(); // Sets dimensions and calculates relative sizes
                     isGameOver = false;
                     document.body.dataset.gameOver = "false";
                     blobs = [];
                     touchPoints = [];
 
-                    destructionZone.vx = (Math.random() - 0.5) * DESTRUCTION_ZONE_SPEED * 2;
-                    destructionZone.vy = (Math.random() - 0.5) * DESTRUCTION_ZONE_SPEED * 2;
+                    // Use calculated speed (with fallback)
+                    const initialSpeedX = (Math.random() - 0.5) * (destructionZoneSpeed || 0.1) * 2;
+                    const initialSpeedY = (Math.random() - 0.5) * (destructionZoneSpeed || 0.1) * 2;
+                    destructionZone.vx = isNaN(initialSpeedX) ? 0 : initialSpeedX;
+                    destructionZone.vy = isNaN(initialSpeedY) ? 0 : initialSpeedY;
+                    // Position/Radius set in resizeCanvas
 
                     for (let i = 0; i < NUM_BLOBS_START; i++) {
-                        const radius = MIN_BLOB_RADIUS + Math.random() * (MAX_BLOB_RADIUS - MIN_BLOB_RADIUS);
+                        // Use calculated radii (with fallback)
+                        const radius = (minBlobRadius || 10) + Math.random() * ((maxBlobRadius || 30) - (minBlobRadius || 10));
                         if (canvas.width > radius * 2 && canvas.height > radius * 2) {
                             const x = radius + Math.random() * (canvas.width - radius * 2);
                             const y = radius + Math.random() * (canvas.height - radius * 2);
@@ -153,15 +216,47 @@
                 } catch (error) { console.error("Error during init:", error); }
             }
 
-            // --- Canvas Resizing (Simplified) ---
+            // --- Canvas Resizing (Restored Aspect Ratio Logic) ---
             function resizeCanvas() {
-                console.log("Resizing canvas (Simplified)...");
+                console.log("Resizing canvas (Aspect Ratio Aware)...");
                 try {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
+                    const windowWidth = window.innerWidth;
+                    const windowHeight = window.innerHeight;
+                    const windowAspectRatio = windowWidth / windowHeight;
 
-                    // Update destruction zone radius
-                    destructionZone.radius = Math.max(30, Math.min(canvas.width, canvas.height) * 0.1);
+                    let canvasWidth, canvasHeight;
+
+                    // Determine dimensions based on aspect ratio
+                    if (windowAspectRatio > TARGET_ASPECT_RATIO) {
+                        // Window is wider than target: Pillarbox (height constrained)
+                        canvasHeight = windowHeight;
+                        canvasWidth = canvasHeight * TARGET_ASPECT_RATIO;
+                    } else {
+                        // Window is taller than target: Letterbox (width constrained)
+                        canvasWidth = windowWidth;
+                        canvasHeight = canvasWidth / TARGET_ASPECT_RATIO;
+                    }
+
+                    // Ensure dimensions are integers and apply to canvas buffer
+                    canvas.width = Math.max(1, Math.floor(canvasWidth));
+                    canvas.height = Math.max(1, Math.floor(canvasHeight));
+
+                    // Apply dimensions to canvas element style for display size
+                    canvas.style.width = canvas.width + 'px';
+                    canvas.style.height = canvas.height + 'px';
+
+                    // --- Recalculate dynamic sizes based on new canvas dimensions ---
+                    const smallerDim = Math.min(canvas.width, canvas.height);
+                    minBlobRadius = Math.max(1, canvas.height * MIN_BLOB_RADIUS_FACTOR);
+                    maxBlobRadius = Math.max(minBlobRadius + 1, canvas.height * MAX_BLOB_RADIUS_FACTOR);
+                    blobSpeed = canvas.height * BLOB_SPEED_FACTOR;
+                    touchRepulsionRadius = canvas.height * TOUCH_REPULSION_RADIUS_FACTOR;
+                    tendrilMaxDist = canvas.height * TENDRIL_MAX_DIST_FACTOR;
+                    destructionZoneRadius = Math.max(5, smallerDim * DESTRUCTION_ZONE_RADIUS_FACTOR);
+                    destructionZoneSpeed = smallerDim * DESTRUCTION_ZONE_SPEED_FACTOR;
+
+                    // Update destruction zone object
+                    destructionZone.radius = destructionZoneRadius;
 
                     // Center zone or keep it within bounds
                     if (!destructionZone.x || destructionZone.x === 0 || isNaN(destructionZone.x)) {
@@ -189,7 +284,7 @@
                  if (destructionZone.y - destructionZone.radius < 0) { destructionZone.y = destructionZone.radius; destructionZone.vy *= -1; }
                  else if (destructionZone.y + destructionZone.radius > canvas.height) { destructionZone.y = canvas.height - destructionZone.radius; destructionZone.vy *= -1; }
                  if (Math.random() < 0.015) {
-                      const speedFactor = DESTRUCTION_ZONE_SPEED;
+                      const speedFactor = destructionZoneSpeed || 0.1; // Use calculated speed
                       destructionZone.vx += (Math.random() - 0.5) * speedFactor * 0.6;
                       destructionZone.vy += (Math.random() - 0.5) * speedFactor * 0.6;
                       const speed = Math.sqrt(destructionZone.vx * destructionZone.vx + destructionZone.vy * destructionZone.vy);
@@ -203,7 +298,12 @@
 
 
             // --- Drawing ---
-            function drawDestructionZone() {
+            function drawDestructionZone() { /* ... */ }
+            function drawTendrils() { /* ... */ }
+            function drawBlobs() { /* ... */ }
+            function drawUI() { /* ... */ }
+            // --- Drawing Functions Implementation (Collapsed) ---
+             function drawDestructionZone() {
                 try {
                     const pulse = Math.sin(performance.now() * 0.003) * 3 + 3;
                     ctx.globalCompositeOperation = 'source-over';
@@ -218,7 +318,7 @@
                  try {
                     ctx.globalCompositeOperation = 'source-over'; ctx.strokeStyle = TENDRIL_COLOR;
                     ctx.lineWidth = 1.5;
-                    const maxDist = TENDRIL_MAX_DIST;
+                    const maxDist = tendrilMaxDist || 100; // Use calculated distance
                     touchPoints.forEach(touch => {
                         blobs.forEach(blob => {
                             const dx = blob.x - touch.x; const dy = blob.y - touch.y;
@@ -232,11 +332,11 @@
             }
             function drawBlobs() {
                 try {
-                    ctx.globalCompositeOperation = 'source-over'; // Simplified drawing
+                    ctx.globalCompositeOperation = 'source-over'; // Use source-over for simplicity
                     blobs.forEach(blob => blob.draw());
                 } catch (error) { console.error("Error drawing blobs:", error); }
             }
-            function drawUI() { // Draw Game Over on Canvas
+            function drawUI() {
                  if (isGameOver) {
                     try {
                         ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
@@ -268,13 +368,7 @@
 
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                    // --- DEBUG: Draw Red Square ---
-                    try {
-                         ctx.fillStyle = 'red';
-                         ctx.fillRect(10, 10, 50, 50);
-                    } catch(e) { console.error("Error drawing test rect:", e); }
-                    // --- END DEBUG ---
-
+                    // --- DEBUG: Draw Red Square Removed ---
 
                     if (!isGameOver) {
                         updateDestructionZone(deltaTime);
@@ -285,6 +379,7 @@
                             blob.update(deltaTime);
                             const dx = blob.x - destructionZone.x; const dy = blob.y - destructionZone.y;
                             const distSq = dx * dx + dy * dy;
+                            // Use calculated radius
                             if (distSq < (destructionZone.radius + blob.radius) * (destructionZone.radius + blob.radius)) {
                                 blobs.splice(i, 1);
                             }
@@ -327,14 +422,11 @@
 
 
             // --- Event Listeners ---
-            window.addEventListener('resize', init);
-            // Ensure pushButton exists before adding listener
+            window.addEventListener('resize', init); // Use init on resize
             if (pushButton) {
                  pushButton.addEventListener('click', pushBlobsTowardsCenter);
                  pushButton.addEventListener('touchstart', (e) => { e.preventDefault(); pushBlobsTowardsCenter(); }, { passive: false });
-            } else {
-                 console.error("Push button was not found, cannot add listeners.");
-            }
+            } else { console.error("Push button was not found, cannot add listeners."); }
 
 
             // --- Input Handling ---
@@ -346,7 +438,6 @@
                  if (isGameOver) { init(); return; }
                  try {
                      const rect = canvas.getBoundingClientRect();
-                     // Check if rect exists before accessing properties
                      if (!rect) { console.error("Canvas rect not found in handlePointerDown"); return; }
                      const x = clientX - rect.left; const y = clientY - rect.top;
                      if (x < 0 || x > canvas.width || y < 0 || y > canvas.height) return;
