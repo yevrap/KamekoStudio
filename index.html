@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,7 +9,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         /* Apply Inter font globally */
         body {
@@ -16,74 +19,88 @@
             /* Subtle gradient background */
             background: linear-gradient(to bottom right, #e0f2fe, #f0f9ff); /* Light blue gradient */
             padding-bottom: 4rem; /* Add some padding at the bottom */
+            box-sizing: border-box; /* Include padding and border in element's total width and height */
         }
+
         /* Custom class for card hover effect */
         .game-card {
             transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            display: flex; /* Ensure cards use flexbox */
+            flex-direction: column; /* Stack elements vertically */
         }
+
         .game-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
+
         /* Custom class for button hover effect */
         .play-button {
-            transition: background-color 0.3s ease, transform 0.2s ease;
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
         }
         .play-button:hover {
-            transform: scale(1.05);
+             transform: scale(1.05);
+             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        /* Specific transition for the 3D toggle link */
+        .toggle-3d-link {
+             transition: background-color 0.2s ease-in-out;
+        }
+
+
+        /* Ensure content within card grows */
+        .card-content {
+            flex-grow: 1; /* Allow content area to grow */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Ensure description takes available space */
+        .card-description {
+            flex-grow: 1; /* Allow description to push button down */
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center p-6 pt-12"> <div class="container mx-auto max-w-4xl text-center">
-        <header class="mb-10"> <h1 class="text-4xl font-bold text-gray-800">
-                <i class="fas fa-gamepad text-blue-500 mr-2"></i> Vibe Arcade
+
+<body class="min-h-screen flex flex-col items-center p-6 pt-12">
+    <div class="container mx-auto max-w-4xl text-center w-full">
+        <header class="mb-10">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-gamepad text-blue-500 mr-2"></i>
+                <span>Vibe Arcade</span>
             </h1>
         </header>
 
-        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
 
-            <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
+            <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="h-48 bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center">
-                     <i class="fas fa-chess-rook text-6xl text-white opacity-75"></i>
+                    <i class="fas fa-chess-rook text-6xl text-white opacity-75"></i>
                 </div>
-                <div class="p-6 flex flex-col flex-grow">
+                <div class="p-6 card-content">
                     <h2 class="text-xl font-semibold text-gray-800 mb-2">Memory Tower Defense</h2>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Test your memory and strategic skills in this unique tower defense challenge.</p>
-                    <a href="games/memoryTower.html" class="play-button mt-auto block w-full bg-green-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300">
+                    <p class="text-gray-600 text-sm mb-4 card-description">Test your memory and strategic skills in this unique tower defense challenge.</p>
+                    <a href="games/memoryTower.html"
+                        class="play-button mt-auto block w-full bg-green-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300">
                         Play Now <i class="fas fa-play ml-1 text-xs"></i>
                     </a>
                 </div>
             </div>
 
-            <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-                <div class="h-48 bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center">
+            <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden">
+                 <div class="h-48 bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center">
                     <i class="fas fa-water text-6xl text-white opacity-75"></i>
                 </div>
-                <div class="p-6 flex flex-col flex-grow">
+                 <div class="p-6 card-content">
                     <h2 class="text-xl font-semibold text-gray-800 mb-2">River Run</h2>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Navigate the treacherous waters and avoid obstacles in this fast-paced river adventure.</p>
-                    <a href="games/riverRun.html" class="play-button mt-auto block w-full bg-purple-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
-                         Play Now <i class="fas fa-play ml-1 text-xs"></i>
+                    <p class="text-gray-600 text-sm mb-4 card-description">Navigate the treacherous waters and avoid obstacles in this fast-paced river adventure.</p>
+                    <a href="games/riverRun.html"
+                        class="play-button mt-auto block w-full bg-purple-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
+                        Play Now <i class="fas fa-play ml-1 text-xs"></i>
                     </a>
                 </div>
             </div>
 
-            <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden flex flex-col">
-                 <div class="h-48 bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center">
-                    <i class="fas fa-person-walking text-6xl text-white opacity-75"></i>
-                </div>
-                <div class="p-6 flex flex-col flex-grow">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-2">3D Walker</h2>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Explore a simple 3D environment. A basic demo of walking mechanics.</p>
-                    <a href="games/walker.html" class="play-button mt-auto block w-full bg-orange-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-300">
-                         Play Now <i class="fas fa-play ml-1 text-xs"></i>
-                    </a>
-                </div>
-            </div>
+        </main> </div> </body>
 
-             </main>
-
-        </div>
-
-</body>
 </html>

@@ -18,7 +18,8 @@
             --button-text-color: #ffffff;
             --button-bg-start: #f97316;
             --button-bg-end: #ea580c;
-            /* Shoot button variables removed */
+            --shoot-button-bg-start: #dc2626; /* Red for shoot */
+            --shoot-button-bg-end: #b91c1c;
             --message-box-bg: rgba(12, 74, 110, 0.9);
             --message-box-text: #ffffff;
             --score-bg: rgba(0, 0, 0, 0.5);
@@ -37,7 +38,8 @@
             --button-text-color: #ffffff;
             --button-bg-start: #1d4ed8;
             --button-bg-end: #2563eb;
-            /* Shoot button variables removed */
+            --shoot-button-bg-start: #f43f5e; /* Pinkish-red in dark */
+            --shoot-button-bg-end: #e11d48;
             --message-box-bg: rgba(55, 65, 81, 0.9);
             --message-box-text: #f3f4f6;
             --score-bg: rgba(255, 255, 255, 0.2);
@@ -203,8 +205,26 @@
               background-color: #666;
          }
 
-
-        /* Shoot Button Styling REMOVED */
+        /* --- Shoot Button Styling RE-ADDED --- */
+        #shoot-button {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8em; /* Slightly smaller text */
+            padding: 0; /* Remove padding for circle */
+            border-radius: 50%; /* Make it round */
+            background: linear-gradient(180deg, var(--shoot-button-bg-start), var(--shoot-button-bg-end));
+            z-index: 15; /* Above canvas, below message box */
+            width: 60px; /* Fixed size for circle */
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0; /* Override default margin */
+            line-height: 1; /* Adjust line height */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+        }
 
     </style>
 </head>
@@ -219,6 +239,7 @@
             <p id="message-text">River Runner 3D!</p>
             <button id="start-button">Start Game</button>
         </div>
+         <button id="shoot-button">SHOOT</button>
         </div>
 
 
@@ -231,6 +252,7 @@
         const startButton = document.getElementById('start-button');
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const muteToggle = document.getElementById('mute-toggle');
+        const shootButton = document.getElementById('shoot-button'); // RE-ADDED
 
         // --- Three.js Variables ---
         let scene, camera, renderer;
@@ -243,13 +265,12 @@
         const waterParticleCount = 5000;
 
         // --- Projectile Variables ---
-        const PROJECTILE_POOL_SIZE = 15;
+        const PROJECTILE_POOL_SIZE = 30;
         const PROJECTILE_SPEED = 0.4;
-        const SHOOT_COOLDOWN = 250;
         const PROJECTILE_BONUS_POINTS = 5;
         let projectilePool = [];
         let activeProjectiles = [];
-        let lastShootTime = 0;
+        // let lastShootTime = 0; // Cooldown logic removed
         let projectileMaterial;
         let projectileGeometry;
         const defaultProjectileDirection = new THREE.Vector3(0, 0, 1);
@@ -264,20 +285,14 @@
 
         // --- Audio Variables (Tone.js) ---
         let musicSynth;
-        let musicSequence; // Holds the current Tone.Sequence object
-        let isMuted = true; // Default to muted
-        let audioStarted = false; // Flag to ensure Tone.start() is called only once
-        // --- Define Multiple Melodies ---
+        let musicSequence;
+        let isMuted = true;
+        let audioStarted = false;
         const musicMelodies = [
-            // Melody 1 (Initial - C Major Arp)
             [["C4", "E4", "G4"], null, "E4", null, "G4", null, "C5", null],
-            // Melody 2 (Teal - G Major Arp)
             [["G4", "B4", "D5"], null, "B4", null, "D5", null, "G5", null],
-            // Melody 3 (Greenish - F Major Arp)
             [["F4", "A4", "C5"], null, "A4", null, "C5", null, "F5", null],
-            // Melody 4 (Purple - Am Arp)
             [["A3", "C4", "E4"], null, "C4", null, "E4", null, "A4", null],
-            // Melody 5 (Dark Blue - Dm Arp)
             [["D4", "F4", "A4"], null, "F4", null, "A4", null, "D5", null]
         ];
 
@@ -298,16 +313,16 @@
         let dragStartX = 0;
         let boatStartX = 0;
 
-        // --- Tap Detection Variables ---
-        let pointerDownTime = 0;
-        let pointerDownX = 0;
-        let pointerDownY = 0;
-        let potentialTap = false;
-        const MAX_TAP_DURATION = 250;
-        const MAX_TAP_MOVEMENT = 10;
+        // --- Tap Detection Variables REMOVED ---
+        // let pointerDownTime = 0;
+        // let pointerDownX = 0;
+        // let pointerDownY = 0;
+        // let potentialTap = false;
+        // const MAX_TAP_DURATION = 250;
+        // const MAX_TAP_MOVEMENT = 10;
 
         // --- Theme Variable ---
-        let isDarkMode = true; // Default to dark mode
+        let isDarkMode = true;
 
         // --- Color Progression ---
         const waterColorsLight = [0x0055aa, 0x007799, 0x008877, 0x440088, 0x003388];
@@ -349,7 +364,7 @@
             createWater();
             createProjectilePool();
             createExplosionSystem();
-            setupMusic(); // Setup Tone.js elements (synth only now)
+            setupMusic();
             applyTheme();
             applyMuteState();
         }
@@ -399,7 +414,7 @@
             projectileMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
             projectilePool = [];
             activeProjectiles = [];
-            for (let i = 0; i < PROJECTILE_POOL_SIZE; i++) {
+            for (let i = 0; i < PROJECTILE_POOL_SIZE; i++) { // Uses updated pool size
                 const projectile = new THREE.Mesh(projectileGeometry, projectileMaterial);
                 projectile.visible = false;
                 scene.add(projectile);
@@ -480,8 +495,7 @@
         // --- Shooting ---
         function shootProjectile(targetObstacle = null) {
             if (isGameOver) return;
-            const now = Date.now();
-            if (now - lastShootTime < SHOOT_COOLDOWN) return;
+            // Cooldown check removed
 
             const projectileMesh = projectilePool.pop();
             if (projectileMesh) {
@@ -498,7 +512,7 @@
 
                 const projectileBox = new THREE.Box3().setFromObject(projectileMesh);
                 activeProjectiles.push({ mesh: projectileMesh, boundingBox: projectileBox, direction: direction });
-                lastShootTime = now;
+                // lastShootTime update removed
             }
         }
 
@@ -528,16 +542,16 @@
 
         // --- Music Setup (Tone.js) ---
         function setupMusic() {
-            if (musicSynth) return; // Already setup
+            if (musicSynth) return;
 
             musicSynth = new Tone.FMSynth({ /* ... synth settings ... */ }).toDestination();
             musicSynth.volume.value = -18;
 
-            // Don't create the sequence here, do it in initGame
+            // Sequence created/updated in initGame and updateGame
         }
 
         // --- Game Logic ---
-        async function initGame() { // Make async for Tone.start()
+        async function initGame() {
              obstacles.forEach(obs => scene.remove(obs.mesh)); obstacles = [];
              activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
              if (explosionParticles) {
@@ -548,31 +562,19 @@
              }
              isGameOver = false; score = 0; gameSpeed = 0.1;
              obstacleSpawnInterval = 100; obstacleSpawnTimer = 0; keys = {}; isDragging = false;
-             dragStartX = 0; boatStartX = 0; lastShootTime = 0; scoreElement.textContent = `Score: ${score}`;
-             messageBox.style.display = 'none'; currentWaterColorIndex = 0;
-             nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
+             dragStartX = 0; boatStartX = 0; // lastShootTime removed
+             scoreElement.textContent = `Score: ${score}`; messageBox.style.display = 'none';
+             currentWaterColorIndex = 0; nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
 
-             // --- Start Audio Context on User Interaction ---
              if (!audioStarted) {
-                 await Tone.start();
-                 audioStarted = true;
-                 console.log('Audio context started');
+                 await Tone.start(); audioStarted = true; console.log('Audio context started');
              }
-
-             // --- Setup and Start Initial Music Sequence ---
-             if (musicSequence) {
-                 musicSequence.stop();
-                 musicSequence.dispose(); // Clean up old sequence if restarting
-             }
+             if (musicSequence) { musicSequence.stop(); musicSequence.dispose(); }
              musicSequence = new Tone.Sequence((time, note) => {
                  if(musicSynth) musicSynth.triggerAttackRelease(note, "8n", time);
-             }, musicMelodies[currentWaterColorIndex], "4n").start(0); // Use initial melody
-
-             Tone.Transport.loop = true;
-             Tone.Transport.loopEnd = "2m"; // Loop length based on melody arrays
-             Tone.Transport.bpm.value = 90;
+             }, musicMelodies[currentWaterColorIndex], "4n").start(0);
+             Tone.Transport.loop = true; Tone.Transport.loopEnd = "2m"; Tone.Transport.bpm.value = 90;
              Tone.Transport.start();
-             // --- End Music Setup ---
 
              createBoat(); createWater(); applyTheme(); updateCamera();
              if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -632,17 +634,10 @@
                         score += PROJECTILE_BONUS_POINTS; scoreElement.textContent = `Score: ${score}`;
                         // --- Check for Progression Threshold ---
                         if (score >= nextColorChangeScore) {
-                            // Change Color
                             if(waterParticles){ const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight; currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length; waterParticles.material.color.set(colorPalette[currentWaterColorIndex]); }
-                            // Increase Speed
                             gameSpeed += GAME_SPEED_INCREASE; gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED);
-                            // Decrease Spawn Interval
                             if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) { obstacleSpawnInterval -= 5; }
-                            // --- Change Music ---
-                            if (musicSequence) {
-                                 musicSequence.events = musicMelodies[currentWaterColorIndex % musicMelodies.length]; // Update sequence events
-                            }
-                            // Set next threshold
+                            if (musicSequence) { musicSequence.events = musicMelodies[currentWaterColorIndex % musicMelodies.length]; }
                             nextColorChangeScore += SCORE_THRESHOLD_COLOR_CHANGE;
                         }
                         // --- End Progression Check ---
@@ -689,17 +684,10 @@
                     score++; scoreElement.textContent = `Score: ${score}`;
                      // --- Check for Progression Threshold ---
                      if (score >= nextColorChangeScore) {
-                         // Change Color
                          if(waterParticles){ const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight; currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length; waterParticles.material.color.set(colorPalette[currentWaterColorIndex]); }
-                         // Increase Speed
                          gameSpeed += GAME_SPEED_INCREASE; gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED);
-                         // Decrease Spawn Interval
                          if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) { obstacleSpawnInterval -= 5; }
-                          // --- Change Music ---
-                         if (musicSequence) {
-                              musicSequence.events = musicMelodies[currentWaterColorIndex % musicMelodies.length]; // Update sequence events
-                         }
-                         // Set next threshold
+                         if (musicSequence) { musicSequence.events = musicMelodies[currentWaterColorIndex % musicMelodies.length]; }
                          nextColorChangeScore += SCORE_THRESHOLD_COLOR_CHANGE;
                      }
                      // --- End Progression Check ---
@@ -723,17 +711,7 @@
             isGameOver = true; isDragging = false; keys = {};
             if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null;
             activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
-            // Stop music transport
-             if (Tone && Tone.Transport.state === "started") {
-                 Tone.Transport.stop();
-             }
-             // Optional: Stop and dispose of sequence if needed
-             // if (musicSequence) {
-             //     musicSequence.stop();
-             //     musicSequence.dispose();
-             //     musicSequence = null;
-             // }
-
+             if (Tone && Tone.Transport.state === "started") { Tone.Transport.stop(); }
             messageText.innerHTML = `Game Over!<br>Final Score: ${score}`; startButton.textContent = 'Restart Game'; messageBox.style.display = 'block';
         }
 
@@ -759,24 +737,10 @@
 
         // --- Mute Handling ---
         function applyMuteState() {
-             if (typeof Tone !== 'undefined') {
-                 Tone.Destination.mute = isMuted;
-             }
-             if (muteToggle) {
-                 muteToggle.textContent = isMuted ? "Unmute" : "Mute";
-                 if (isMuted) {
-                     muteToggle.classList.add('muted');
-                 } else {
-                     muteToggle.classList.remove('muted');
-                 }
-             }
+             if (typeof Tone !== 'undefined') { Tone.Destination.mute = isMuted; }
+             if (muteToggle) { muteToggle.textContent = isMuted ? "Unmute" : "Mute"; if (isMuted) { muteToggle.classList.add('muted'); } else { muteToggle.classList.remove('muted'); } }
         }
-
-        function toggleMute() {
-             isMuted = !isMuted;
-             localStorage.setItem('muted', isMuted);
-             applyMuteState();
-        }
+        function toggleMute() { isMuted = !isMuted; localStorage.setItem('muted', isMuted); applyMuteState(); }
 
 
         // --- Event Listeners ---
@@ -788,88 +752,107 @@
 
         // Keyboard controls
         window.addEventListener('keydown', (e) => {
-            if (isDragging) return; const key = e.key.toLowerCase();
+            // --- Allow spacebar even if dragging ---
+            const key = e.key.toLowerCase();
             if (key === ' ') {
                  const target = findNearestObstacleAhead();
                  shootProjectile(target);
                  e.preventDefault();
-                 return;
+                 return; // Prevent spacebar from doing anything else
             }
-            keys[key] = true; if (['arrowleft', 'arrowright', 'a', 'd'].includes(key)) e.preventDefault();
+            // Only prevent movement keys if dragging
+            if (isDragging) return;
+
+            keys[key] = true;
+            if (['arrowleft', 'arrowright', 'a', 'd'].includes(key)) e.preventDefault();
         });
         window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 
-        // --- Drag and Tap Controls ---
+        // --- Drag Controls (No Tap Logic) ---
         gameContainer.addEventListener('pointerdown', (e) => {
             if (isGameOver || messageBox.style.display === 'block' || e.target !== renderer.domElement) return;
              e.preventDefault();
-            pointerDownTime = Date.now(); pointerDownX = e.clientX; pointerDownY = e.clientY; potentialTap = true;
-            isDragging = true; dragStartX = e.clientX; boatStartX = boat.position.x; keys = {};
+            // Removed tap detection variables setup
+            isDragging = true;
+            dragStartX = e.clientX;
+            boatStartX = boat.position.x;
+            keys = {}; // Still clear keys on drag start
             gameContainer.style.cursor = 'grabbing';
         });
 
         gameContainer.addEventListener('pointermove', (e) => {
             if (!isDragging || isGameOver) return;
              e.preventDefault();
-            const currentX = e.clientX; const currentY = e.clientY;
-            const deltaX = currentX - pointerDownX; const deltaY = currentY - pointerDownY;
-            const distanceMoved = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            if (distanceMoved > MAX_TAP_MOVEMENT) { potentialTap = false; } // It's a drag
-            if (!potentialTap) { // Apply drag movement if not a tap
-                 const deltaScreenX_from_drag_start = currentX - dragStartX;
-                 const currentContainerWidth = gameContainer.clientWidth; if (currentContainerWidth === 0) return;
-                 const worldUnitsPerPixel = riverWidth / currentContainerWidth; const deltaWorldX = deltaScreenX_from_drag_start * worldUnitsPerPixel;
-                 let targetWorldX = boatStartX + deltaWorldX;
-                 const halfBoatWidth = BOAT_WIDTH / 2; const halfRiver = riverWidth / 2;
-                 const minX = -halfRiver + halfBoatWidth; const maxX = halfRiver - halfBoatWidth;
-                 boat.position.x = THREE.MathUtils.clamp(targetWorldX, minX, maxX);
-            }
+            // Removed tap detection check
+            // Apply drag movement directly
+            const currentX = e.clientX;
+            const deltaScreenX_from_drag_start = currentX - dragStartX;
+            const currentContainerWidth = gameContainer.clientWidth; if (currentContainerWidth === 0) return;
+            const worldUnitsPerPixel = riverWidth / currentContainerWidth;
+            const deltaWorldX = deltaScreenX_from_drag_start * worldUnitsPerPixel;
+            let targetWorldX = boatStartX + deltaWorldX;
+            const halfBoatWidth = BOAT_WIDTH / 2; const halfRiver = riverWidth / 2;
+            const minX = -halfRiver + halfBoatWidth; const maxX = halfRiver - halfBoatWidth;
+            boat.position.x = THREE.MathUtils.clamp(targetWorldX, minX, maxX);
         });
 
-        function stopDraggingAndCheckTap(e) {
+        function stopDragging(e) { // Renamed back from stopDraggingAndCheckTap
              if (isDragging) {
                   e.preventDefault();
-                 if (potentialTap && (Date.now() - pointerDownTime) < MAX_TAP_DURATION) {
-                     const target = findNearestObstacleAhead();
-                     shootProjectile(target);
-                 }
-                 isDragging = false; potentialTap = false; pointerDownTime = 0; pointerDownX = 0; pointerDownY = 0;
+                 // Removed tap check logic
+                 isDragging = false;
+                 // Removed tap detection variable reset
                  dragStartX = 0; boatStartX = 0; gameContainer.style.cursor = 'grab';
              }
         }
-        gameContainer.addEventListener('pointerup', stopDraggingAndCheckTap);
-        gameContainer.addEventListener('pointerleave', stopDraggingAndCheckTap);
+        gameContainer.addEventListener('pointerup', stopDragging);
+        gameContainer.addEventListener('pointerleave', stopDragging);
+
+
+        // --- Shoot Button Listener RE-ADDED ---
+        shootButton.addEventListener('click', (e) => {
+             if (isGameOver) return;
+             const target = findNearestObstacleAhead();
+             shootProjectile(target);
+             e.preventDefault();
+             e.stopPropagation();
+             e.currentTarget.blur(); // Remove focus
+        });
+        // Prevent drag start if clicking shoot button
+        shootButton.addEventListener('pointerdown', (e) => {
+            e.stopPropagation();
+            e.preventDefault(); // Also prevent default here
+        });
 
 
         // Start/Restart button
-        startButton.addEventListener('click', (e) => { initGame(); e.stopPropagation(); });
+        startButton.addEventListener('click', (e) => {
+             initGame();
+             e.stopPropagation();
+             e.currentTarget.blur();
+        });
 
         // Dark Mode Toggle Button Listener
-        darkModeToggle.addEventListener('click', toggleDarkMode);
+        darkModeToggle.addEventListener('click', (e) => {
+             toggleDarkMode();
+             e.currentTarget.blur();
+        });
 
         // Mute Toggle Button Listener
-        muteToggle.addEventListener('click', toggleMute);
+        muteToggle.addEventListener('click', (e) => {
+             toggleMute();
+             e.currentTarget.blur();
+        });
 
 
         // --- Initial Setup ---
         window.onload = () => {
-            // Check saved theme preference
             const savedTheme = localStorage.getItem('darkMode');
-            if (savedTheme !== null) {
-                 isDarkMode = savedTheme === 'true';
-            } else {
-                 isDarkMode = true; // Default dark
-            }
-            // Check saved mute preference
+            if (savedTheme !== null) { isDarkMode = savedTheme === 'true'; } else { isDarkMode = true; }
             const savedMute = localStorage.getItem('muted');
-             if (savedMute !== null) {
-                 isMuted = savedMute === 'true';
-             } else {
-                 isMuted = true; // Default muted
-             }
+            if (savedMute !== null) { isMuted = savedMute === 'true'; } else { isMuted = true; }
 
-
-            initThree(); // Setup scene, applying initial theme & mute state
+            initThree();
             messageText.textContent = 'River Runner 3D!';
             startButton.textContent = 'Start Game';
             messageBox.style.display = 'block';
