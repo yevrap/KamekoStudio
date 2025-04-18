@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grid Step Game - Shooter</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Grid and Cell Dimensions */
+            --grid-size: 20;
+            --cell-size: 30px;
+            --zone-size: 5;
+
+            /* --- Light Mode Colors (Default) --- */
+            --bg-color: #f0f0f0;
+            --text-color: #333;
+            --grid-bg-color: #ffffff;
+            --border-color: #ccc;
+            --button-bg: #eee;
+            --button-text: #333;
+            --button-hover-bg: #ddd;
+            --score-color: #111;
+            --target-blink-outline: yellow;
+            --bullet-color: #ff4500; /* Orangered */
+
+            /* Material Colors */
+            --grass-color: #8FBC8F; --water-color: #ADD8E6; --ice-color: #B0E0E6; --sand-color: #F4A460;
+
+            /* Player & Effects Colors */
+            --player-color: #FF6347; --player-border: #000000; --arc-color: rgba(51, 51, 51, 0.7);
+
+            /* --- Base Variables --- */
+            --player-diameter-ratio: 0.7;
+            --font-family: 'Press Start 2P', cursive;
+        }
+
+        body.dark-mode {
+             /* --- Dark Mode Colors --- */
+            --bg-color: #1a1a1a; --text-color: #f0f0f0; --grid-bg-color: #2a2a2a;
+            --border-color: #555; --button-bg: #444; --button-text: #f0f0f0;
+            --button-hover-bg: #555; --score-color: #eee;
+            --target-blink-outline: #FFD700; /* Gold */
+            --bullet-color: #ff6347; /* Tomato in dark mode */
+
+            /* Dark Material Colors */
+            --grass-color: #3E8E3E; --water-color: #5F9EA0; --ice-color: #778899; --sand-color: #A0522D;
+
+            /* Dark Player & Effects Colors */
+            --player-color: #FF6347; --player-border: #cccccc; --arc-color: rgba(220, 220, 220, 0.7);
+        }
+
+
+        body {
+            font-family: var(--font-family); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; min-height: 100vh;
+            background-color: var(--bg-color); color: var(--text-color);
+            padding: 10px; box-sizing: border-box; overflow: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
+            -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+        }
+
+        #theme-toggle {
+            position: absolute; top: 15px; right: 15px; background-color: var(--button-bg);
+            color: var(--button-text); border: 1px solid var(--border-color); border-radius: 50%;
+            width: 40px; height: 40px; font-size: 1.2em; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; padding: 0;
+            transition: background-color 0.3s ease, border-color 0.3s ease; z-index: 100;
+        }
+        #theme-toggle:hover { background-color: var(--button-hover-bg); }
+
+        #score-display {
+             position: absolute; top: 15px; left: 15px;
+             font-size: 1em; /* Adjust as needed */
+             color: var(--score-color);
+             z-index: 100;
+             transition: color 0.3s ease;
+        }
+
+
+        #game-container { display: flex; justify-content: center; align-items: center; width: 100%; }
+
+        #game-grid {
+            --grid-width: calc(var(--grid-size) * var(--cell-size));
+            --grid-height: calc(var(--grid-size) * var(--cell-size));
+            display: grid; grid-template-columns: repeat(var(--grid-size), var(--cell-size));
+            grid-template-rows: repeat(var(--grid-size), var(--cell-size));
+            width: var(--grid-width); height: var(--grid-height); border: 2px solid var(--border-color);
+            background-color: var(--grid-bg-color); position: relative; box-sizing: content-box;
+            max-width: 95vw; flex-shrink: 0; touch-action: none; cursor: pointer;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+            overflow: hidden; /* Hide bullets that go outside */
+        }
+
+        .cell {
+            width: var(--cell-size); height: var(--cell-size); border: 1px solid var(--border-color);
+            box-sizing: border-box; display: flex; align-items: center; justify-content: center;
+            transition: background-color 0.3s ease, border-color 0.3s ease, outline 0.1s linear; /* Added outline transition */
+            outline: 3px solid transparent; /* Prepare for blinking */
+            outline-offset: -3px; /* Keep outline inside */
+        }
+
+        .cell.blinking-target {
+             /* Use animation for blinking */
+             animation: blink-target 1s infinite step-end;
+        }
+
+        @keyframes blink-target {
+            50% { outline-color: var(--target-blink-outline); }
+        }
+
+
+        .cell.grass { background-color: var(--grass-color); }
+        .cell.water { background-color: var(--water-color); }
+        .cell.ice { background-color: var(--ice-color); }
+        .cell.sand { background-color: var(--sand-color); }
+
+        #player {
+            --player-diameter: calc(var(--cell-size) * var(--player-diameter-ratio));
+            position: absolute; top: 0; left: 0; width: var(--player-diameter); height: var(--player-diameter);
+            background-color: var(--player-color); border-radius: 50%; border: 2px solid var(--player-border);
+            box-sizing: border-box; pointer-events: none; z-index: 10;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .spin-arcs-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center center; pointer-events: none; }
+        .arc { position: absolute; top: 50%; left: 50%; width: 150%; height: 150%; border-radius: 50%; border: 2px solid transparent; border-top: 3px solid var(--arc-color); transform-origin: center center; box-sizing: border-box; transition: border-top-color 0.3s ease; }
+        .arc1 { transform: translate(-50%, -50%) rotate(0deg); opacity: 0.9; }
+        .arc2 { transform: translate(-50%, -50%) rotate(120deg); opacity: 0.7; width: 135%; height: 135%; }
+        .arc3 { transform: translate(-50%, -50%) rotate(240deg); opacity: 0.5; width: 120%; height: 120%; }
+
+        .bullet {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: var(--bullet-color);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 5; /* Below player, above grid */
+            transition: background-color 0.3s ease;
+        }
+
+        /* --- Responsive Adjustments --- */
+        @media (max-width: 700px) { :root { --cell-size: 25px; } #theme-toggle { top: 10px; right: 10px; width: 35px; height: 35px; font-size: 1.1em;} #score-display { top: 12px; left: 10px; font-size: 0.9em;} }
+        @media (max-width: 550px) { :root { --cell-size: 20px; } body { padding: 5px; } #theme-toggle { top: 8px; right: 8px; width: 32px; height: 32px; font-size: 1.0em;} #score-display { top: 10px; left: 8px; font-size: 0.8em;} }
+        @media (max-width: 420px) { :root { --cell-size: 18px; } #theme-toggle { width: 30px; height: 30px; font-size: 0.9em;} #score-display { font-size: 0.7em;} }
+    </style>
+</head>
+<body>
+    <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
+    <div id="score-display">Score: 0</div>
+
+    <div id="game-container">
+        <div id="game-grid">
+             <div id="player">
+                <div class="spin-arcs-container">
+                    <div class="arc arc1"></div>
+                    <div class="arc arc2"></div>
+                    <div class="arc arc3"></div>
+                </div>
+            </div>
+             </div>
+    </div>
+
+    <script>
+        // --- Game Configuration ---
+        const GRID_SIZE = 20; const ZONE_SIZE = 5;
+        const MATERIALS = { GRASS: 'grass', WATER: 'water', ICE: 'ice', SAND: 'sand' };
+        const MATERIAL_TYPES = Object.values(MATERIALS);
+
+        // --- Physics Configuration ---
+        const BASE_ACCELERATION = 300; const BASE_FRICTION = 0.9; const MAX_SPEED = 200;
+        const PHYSICS_MODIFIERS = { [MATERIALS.GRASS]: { acceleration: 1.0, friction: 1.0 }, [MATERIALS.WATER]: { acceleration: 0.5, friction: 0.5 }, [MATERIALS.ICE]:   { acceleration: 1.0, friction: 6.0 }, [MATERIALS.SAND]:  { acceleration: 0.6, friction: 0.6 } };
+        const ACCELERATION_THRESHOLD = 2; const ROTATION_FACTOR = 0.8;
+
+        // --- Gameplay Configuration ---
+        const SHOOTING_RANGE = 150; // Max distance in pixels to shoot
+        const SHOOTING_INTERVAL = 200; // Milliseconds between shots
+        const BULLET_SPEED = 300; // Pixels per second
+        const MIN_SPEED_TO_SHOOT = 20; // Min player speed to enable shooting
+
+        // --- Game State ---
+        let gridData = []; let playerPos = { x: 0, y: 0 }; let playerVel = { x: 0, y: 0 };
+        let playerRotation = 0; let targetPos = null; let isPointerDown = false; let activePointerId = null;
+        let cellSize = 30; let playerSize = 0; let gridPixelWidth = 0; let gridPixelHeight = 0;
+        let lastTimestamp = 0;
+        let score = 0; // Score counter
+        let targetTile = { x: null, y: null }; // Current target tile grid coords
+        let currentTargetElement = null; // DOM element of the target tile
+        let bullets = []; // Array to hold active bullets { id, x, y, vx, vy, element }
+        let nextBulletId = 0; // Simple ID counter for bullets
+        let lastShotTime = 0; // Timestamp of the last shot
+
+        // --- DOM Elements ---
+        const gridElement = document.getElementById('game-grid');
+        const playerElement = document.getElementById('player');
+        const themeToggle = document.getElementById('theme-toggle');
+        const bodyElement = document.body;
+        const scoreDisplay = document.getElementById('score-display'); // Get score display
+        let spinArcsContainer = null;
+
+        // --- Functions ---
+        function isInBounds(x, y) { return x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE; }
+        function getMaterialAtPixel(px, py) { const gridX = Math.floor(px / cellSize); const gridY = Math.floor(py / cellSize); if (!isInBounds(gridX, gridY)) return null; if (gridData.length > gridY && gridData[gridY].length > gridX) { return gridData[gridY][gridX]; } console.error(`Grid data error at (${gridX}, ${gridY})`); return MATERIALS.GRASS; }
+
+        /** Selects a new random target tile */
+        function selectNewTarget() {
+            // Clear previous target styling
+            if (currentTargetElement) {
+                currentTargetElement.classList.remove('blinking-target');
+            }
+
+            let newX, newY;
+            const playerGridX = Math.floor((playerPos.x + playerSize / 2) / cellSize);
+            const playerGridY = Math.floor((playerPos.y + playerSize / 2) / cellSize);
+
+            // Keep trying until a valid, non-player cell is found
+            do {
+                newX = Math.floor(Math.random() * GRID_SIZE);
+                newY = Math.floor(Math.random() * GRID_SIZE);
+            } while (!isInBounds(newX, newY) || (newX === playerGridX && newY === playerGridY) || (newX === targetTile.x && newY === targetTile.y)); // Avoid same tile or player tile
+
+            targetTile = { x: newX, y: newY };
+
+            // Find and style the new target DOM element
+            currentTargetElement = gridElement.querySelector(`.cell[data-x="${targetTile.x}"][data-y="${targetTile.y}"]`);
+            if (currentTargetElement) {
+                currentTargetElement.classList.add('blinking-target');
+                console.log("New target selected:", targetTile.x, targetTile.y);
+            } else {
+                console.error("Could not find DOM element for new target tile:", targetTile.x, targetTile.y);
+            }
+        }
+
+        function createGrid() {
+             cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size'));
+             const playerDiameterRatio = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--player-diameter-ratio'));
+             playerSize = cellSize * playerDiameterRatio;
+             gridPixelWidth = GRID_SIZE * cellSize; gridPixelHeight = GRID_SIZE * cellSize; gridData = [];
+             const cells = gridElement.querySelectorAll('.cell'); cells.forEach(cell => cell.remove());
+             const oldBullets = gridElement.querySelectorAll('.bullet'); oldBullets.forEach(b => b.remove());
+             bullets = [];
+
+             if (!gridElement.contains(playerElement)) { gridElement.appendChild(playerElement); }
+             spinArcsContainer = playerElement.querySelector('.spin-arcs-container'); if (!spinArcsContainer) { console.error("Spin arcs container element not found!"); }
+             const numZonesX = GRID_SIZE / ZONE_SIZE; const numZonesY = GRID_SIZE / ZONE_SIZE; if (!Number.isInteger(numZonesX) || !Number.isInteger(numZonesY)) { console.error("GRID_SIZE must be divisible by ZONE_SIZE."); return; }
+             const zoneMaterials = []; for (let zy = 0; zy < numZonesY; zy++) { zoneRow = []; for (let zx = 0; zx < numZonesX; zx++) { zoneRow.push(MATERIAL_TYPES[Math.floor(Math.random() * MATERIAL_TYPES.length)]); } zoneMaterials.push(zoneRow); }
+             for (let y = GRID_SIZE - 1; y >= 0; y--) { const row = []; for (let x = GRID_SIZE - 1; x >= 0; x--) { const zoneX = Math.floor(x / ZONE_SIZE); const zoneY = Math.floor(y / ZONE_SIZE); const material = zoneMaterials[zoneY][zoneX]; row.unshift(material); const cell = document.createElement('div'); cell.classList.add('cell', material); cell.dataset.x = x; cell.dataset.y = y; gridElement.insertBefore(cell, gridElement.firstChild); } gridData.unshift(row); }
+             let startGridX = -1, startGridY = -1; outerLoop: for (let y = 0; y < GRID_SIZE; y++) { for (let x = 0; x < GRID_SIZE; x++) { if (gridData[y][x] === MATERIALS.GRASS) { startGridX = x; startGridY = y; break outerLoop; } } } if (startGridX === -1) { startGridX = 0; startGridY = 0; }
+             const playerOffset = (cellSize - playerSize) / 2; playerPos.x = startGridX * cellSize + playerOffset; playerPos.y = startGridY * cellSize + playerOffset;
+             playerVel = { x: 0, y: 0 }; playerRotation = 0; targetPos = null; isPointerDown = false; activePointerId = null;
+             score = 0; updateScoreDisplay();
+             selectNewTarget();
+             renderPlayer();
+        }
+
+        function renderPlayer() { playerElement.style.transform = `translate(${playerPos.x}px, ${playerPos.y}px)`; if (spinArcsContainer) { spinArcsContainer.style.transform = `rotate(${playerRotation}deg)`; } else { spinArcsContainer = playerElement.querySelector('.spin-arcs-container'); if (spinArcsContainer) { spinArcsContainer.style.transform = `rotate(${playerRotation}deg)`; } else { console.warn("Spin arcs container not found for rotation."); } } }
+
+        /** Updates the score display */
+        function updateScoreDisplay() {
+             scoreDisplay.textContent = `Score: ${score}`;
+        }
+
+        /** Renders bullets based on the bullets array */
+        function renderBullets() {
+             const existingBulletElements = gridElement.querySelectorAll('.bullet');
+             const activeBulletIds = new Set(bullets.map(b => `bullet-${b.id}`));
+             existingBulletElements.forEach(el => { if (!activeBulletIds.has(el.id)) { el.remove(); } });
+             bullets.forEach(bullet => { if (!bullet.element) { bullet.element = document.createElement('div'); bullet.element.classList.add('bullet'); bullet.element.id = `bullet-${bullet.id}`; gridElement.appendChild(bullet.element); } bullet.element.style.left = `${bullet.x - 3}px`; bullet.element.style.top = `${bullet.y - 3}px`; });
+        }
+
+        function getPointerPosOnGrid(event) { const rect = gridElement.getBoundingClientRect(); if (!rect) return null; const pointerX = event.clientX - rect.left; const pointerY = event.clientY - rect.top; return { x: pointerX, y: pointerY }; }
+        function handlePointerDown(event) { if (event.pointerType === 'mouse' && event.button !== 0) return; if (isPointerDown) return; const pos = getPointerPosOnGrid(event); if (pos && pos.x >= 0 && pos.x <= gridPixelWidth && pos.y >= 0 && pos.y <= gridPixelHeight) { isPointerDown = true; targetPos = pos; activePointerId = event.pointerId; console.log("Pointer Down - Target set:", targetPos, "ID:", activePointerId); event.preventDefault(); try { gridElement.setPointerCapture(event.pointerId); } catch (e) { console.error("Failed to capture pointer:", e); } } else { isPointerDown = false; targetPos = null; activePointerId = null; } }
+        function handlePointerMove(event) { if (!isPointerDown || event.pointerId !== activePointerId) return; const pos = getPointerPosOnGrid(event); if (pos) { targetPos.x = Math.max(0, Math.min(gridPixelWidth, pos.x)); targetPos.y = Math.max(0, Math.min(gridPixelHeight, pos.y)); } event.preventDefault(); }
+        function handlePointerUpOrCancel(event) { if (!isPointerDown || event.pointerId !== activePointerId) return; isPointerDown = false; targetPos = null; console.log("Pointer Up/Cancel - Target cleared", "ID:", event.pointerId); try { gridElement.releasePointerCapture(event.pointerId); } catch(e) { console.error("Failed to release pointer capture:", e); } activePointerId = null; }
+
+        /** Main game update loop */
+        function update(deltaTime) {
+            if (!deltaTime || deltaTime > 0.1) { deltaTime = 0.016; }
+
+            const playerCenterX = playerPos.x + playerSize / 2;
+            const playerCenterY = playerPos.y + playerSize / 2;
+            const currentMaterial = getMaterialAtPixel(playerCenterX, playerCenterY) || MATERIALS.GRASS;
+            const mods = PHYSICS_MODIFIERS[currentMaterial] || PHYSICS_MODIFIERS[MATERIALS.GRASS];
+            const currentAcceleration = BASE_ACCELERATION * mods.acceleration;
+            const adjustedBaseFriction = Math.pow(BASE_FRICTION / mods.friction, deltaTime);
+
+            let accX = 0; let accY = 0;
+            if (isPointerDown && targetPos) { const directionX = targetPos.x - playerCenterX; const directionY = targetPos.y - playerCenterY; const distance = Math.sqrt(directionX**2 + directionY**2); if (distance > ACCELERATION_THRESHOLD) { const normX = directionX / distance; const normY = directionY / distance; accX = normX * currentAcceleration; accY = normY * currentAcceleration; } }
+
+            playerVel.x += accX * deltaTime; playerVel.y += accY * deltaTime;
+
+            if (accX === 0 && accY === 0) { playerVel.x *= adjustedBaseFriction; playerVel.y *= adjustedBaseFriction; if (Math.abs(playerVel.x) < 1) playerVel.x = 0; if (Math.abs(playerVel.y) < 1) playerVel.y = 0; }
+
+            let currentSpeed = Math.sqrt(playerVel.x**2 + playerVel.y**2);
+            if (currentSpeed > MAX_SPEED) { const scale = MAX_SPEED / currentSpeed; playerVel.x *= scale; playerVel.y *= scale; currentSpeed = MAX_SPEED; }
+
+            playerPos.x += playerVel.x * deltaTime; playerPos.y += playerVel.y * deltaTime;
+
+            let rotationSpeed = 0;
+            if (currentSpeed > 1.0 && (accX !== 0 || accY !== 0)) { const crossProduct = (playerVel.x * accY - playerVel.y * accX); const crossProductThreshold = 1000; if (Math.abs(crossProduct) > crossProductThreshold) { rotationSpeed = Math.sign(crossProduct) * currentSpeed * ROTATION_FACTOR; } }
+            playerRotation += rotationSpeed * deltaTime; playerRotation %= 360;
+
+            const minX = 0; const minY = 0; const maxX = gridPixelWidth - playerSize; const maxY = gridPixelHeight - playerSize;
+            if (playerPos.x < minX) { playerPos.x = minX; playerVel.x = 0; } if (playerPos.x > maxX) { playerPos.x = maxX; playerVel.x = 0; } if (playerPos.y < minY) { playerPos.y = minY; playerVel.y = 0; } if (playerPos.y > maxY) { playerPos.y = maxY; playerVel.y = 0; }
+
+            // --- Shooting Logic ---
+            const now = performance.now();
+            if (targetTile.x !== null && currentSpeed > MIN_SPEED_TO_SHOOT && now > lastShotTime + SHOOTING_INTERVAL) {
+                const targetCenterX = targetTile.x * cellSize + cellSize / 2;
+                const targetCenterY = targetTile.y * cellSize + cellSize / 2;
+                const distToTarget = Math.sqrt((targetCenterX - playerCenterX)**2 + (targetCenterY - playerCenterY)**2);
+                if (distToTarget <= SHOOTING_RANGE) {
+                    const velMagnitude = Math.sqrt(playerVel.x**2 + playerVel.y**2);
+                    if (velMagnitude > 0) {
+                        const bulletVx = (playerVel.x / velMagnitude) * BULLET_SPEED; const bulletVy = (playerVel.y / velMagnitude) * BULLET_SPEED;
+                        bullets.push({ id: nextBulletId++, x: playerCenterX, y: playerCenterY, vx: bulletVx, vy: bulletVy, element: null });
+                        lastShotTime = now; console.log("Fired bullet!");
+                    }
+                }
+            }
+
+            // --- Update Bullets & Check Collisions ---
+            const targetLeft = targetTile.x * cellSize; const targetRight = targetLeft + cellSize;
+            const targetTop = targetTile.y * cellSize; const targetBottom = targetTop + cellSize;
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                bullet.x += bullet.vx * deltaTime; bullet.y += bullet.vy * deltaTime;
+                let hit = false;
+                if (targetTile.x !== null && bullet.x >= targetLeft && bullet.x <= targetRight && bullet.y >= targetTop && bullet.y <= targetBottom) {
+                    console.log("Bullet hit target!"); hit = true; score++; updateScoreDisplay(); selectNewTarget();
+                }
+                 if (hit || bullet.x < 0 || bullet.x > gridPixelWidth || bullet.y < 0 || bullet.y > gridPixelHeight) {
+                     if (bullet.element) { bullet.element.remove(); } bullets.splice(i, 1);
+                 }
+            }
+        }
+
+        function gameLoop(timestamp) { const deltaTime = (timestamp - lastTimestamp) / 1000; lastTimestamp = timestamp; update(deltaTime); renderPlayer(); renderBullets(); requestAnimationFrame(gameLoop); }
+        function handleResize() { createGrid(); lastTimestamp = performance.now(); }
+
+        // --- Theme Toggle Logic ---
+        function applyTheme(theme) { if (theme === 'dark') { bodyElement.classList.add('dark-mode'); themeToggle.textContent = '☀️'; } else { bodyElement.classList.remove('dark-mode'); themeToggle.textContent = '🌙'; } }
+        themeToggle.addEventListener('click', () => { const isDarkMode = bodyElement.classList.toggle('dark-mode'); const newTheme = isDarkMode ? 'dark' : 'light'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); });
+
+        // --- Initialization ---
+        gridElement.addEventListener('pointerdown', handlePointerDown);
+        gridElement.addEventListener('pointermove', handlePointerMove);
+        gridElement.addEventListener('pointerup', handlePointerUpOrCancel);
+        gridElement.addEventListener('pointercancel', handlePointerUpOrCancel);
+        gridElement.addEventListener('pointerleave', handlePointerUpOrCancel);
+        window.addEventListener('resize', handleResize);
+        const savedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+        applyTheme(initialTheme);
+        createGrid();
+        lastTimestamp = performance.now();
+        requestAnimationFrame(gameLoop);
+
+    </script>
+    </body>
+</html>
