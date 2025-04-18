@@ -3,26 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grid Step Game - Shooter</title>
+    <title>Grid Step Game - Enemies</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
             /* Grid and Cell Dimensions */
-            --grid-size: 20;
-            --cell-size: 30px;
-            --zone-size: 5;
+            --grid-size: 20; --cell-size: 30px; --zone-size: 5;
 
             /* --- Light Mode Colors (Default) --- */
-            --bg-color: #f0f0f0;
-            --text-color: #333;
-            --grid-bg-color: #ffffff;
-            --border-color: #ccc;
-            --button-bg: #eee;
-            --button-text: #333;
-            --button-hover-bg: #ddd;
-            --score-color: #111;
-            --target-blink-outline: yellow;
-            --bullet-color: #ff4500; /* Orangered */
+            --bg-color: #f0f0f0; --text-color: #333; --grid-bg-color: #ffffff;
+            --border-color: #ccc; --button-bg: #eee; --button-text: #333;
+            --button-hover-bg: #ddd; --score-color: #111;
+            --timer-color: #111; --overlay-text: #ffffff; --info-overlay-text: #333; /* Text for info overlay */
+            --target-blink-outline: yellow; --bullet-color: #ff4500;
+            --danger-zone-outline: red; --game-over-bg: rgba(0, 0, 0, 0.75);
+            --win-bg: rgba(0, 100, 0, 0.75); --info-overlay-bg: rgba(255, 255, 255, 0.9); /* Lighter overlay for info */
+            --enemy-color: #8B008B; --enemy-border: #4B0082;
 
             /* Material Colors */
             --grass-color: #8FBC8F; --water-color: #ADD8E6; --ice-color: #B0E0E6; --sand-color: #F4A460;
@@ -31,17 +27,20 @@
             --player-color: #FF6347; --player-border: #000000; --arc-color: rgba(51, 51, 51, 0.7);
 
             /* --- Base Variables --- */
-            --player-diameter-ratio: 0.7;
-            --font-family: 'Press Start 2P', cursive;
+            --player-diameter-ratio: 0.7; --font-family: 'Press Start 2P', cursive;
+            --enemy-size-ratio: 0.6;
         }
 
         body.dark-mode {
              /* --- Dark Mode Colors --- */
             --bg-color: #1a1a1a; --text-color: #f0f0f0; --grid-bg-color: #2a2a2a;
             --border-color: #555; --button-bg: #444; --button-text: #f0f0f0;
-            --button-hover-bg: #555; --score-color: #eee;
-            --target-blink-outline: #FFD700; /* Gold */
-            --bullet-color: #ff6347; /* Tomato in dark mode */
+            --button-hover-bg: #555; --score-color: #eee; --timer-color: #eee;
+            --overlay-text: #f0f0f0; --info-overlay-text: #f0f0f0; /* Text for info overlay */
+            --target-blink-outline: #FFD700; --bullet-color: #ff6347;
+            --danger-zone-outline: #ff4d4d; --game-over-bg: rgba(20, 20, 20, 0.85);
+            --win-bg: rgba(0, 60, 0, 0.85); --info-overlay-bg: rgba(40, 40, 40, 0.9); /* Darker overlay for info */
+            --enemy-color: #DA70D6; --enemy-border: #BA55D3;
 
             /* Dark Material Colors */
             --grass-color: #3E8E3E; --water-color: #5F9EA0; --ice-color: #778899; --sand-color: #A0522D;
@@ -51,105 +50,53 @@
         }
 
 
-        body {
-            font-family: var(--font-family); display: flex; flex-direction: column;
-            align-items: center; justify-content: center; min-height: 100vh;
-            background-color: var(--bg-color); color: var(--text-color);
-            padding: 10px; box-sizing: border-box; overflow: hidden;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none;
-            -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
-        }
-
-        #theme-toggle {
-            position: absolute; top: 15px; right: 15px; background-color: var(--button-bg);
-            color: var(--button-text); border: 1px solid var(--border-color); border-radius: 50%;
-            width: 40px; height: 40px; font-size: 1.2em; cursor: pointer; display: flex;
-            align-items: center; justify-content: center; padding: 0;
-            transition: background-color 0.3s ease, border-color 0.3s ease; z-index: 100;
-        }
-        #theme-toggle:hover { background-color: var(--button-hover-bg); }
-
-        #score-display {
-             position: absolute; top: 15px; left: 15px;
-             font-size: 1em; /* Adjust as needed */
-             color: var(--score-color);
-             z-index: 100;
-             transition: color 0.3s ease;
-        }
-
-
-        #game-container { display: flex; justify-content: center; align-items: center; width: 100%; }
-
-        #game-grid {
-            --grid-width: calc(var(--grid-size) * var(--cell-size));
-            --grid-height: calc(var(--grid-size) * var(--cell-size));
-            display: grid; grid-template-columns: repeat(var(--grid-size), var(--cell-size));
-            grid-template-rows: repeat(var(--grid-size), var(--cell-size));
-            width: var(--grid-width); height: var(--grid-height); border: 2px solid var(--border-color);
-            background-color: var(--grid-bg-color); position: relative; box-sizing: content-box;
-            max-width: 95vw; flex-shrink: 0; touch-action: none; cursor: pointer;
-            transition: border-color 0.3s ease, background-color 0.3s ease;
-            overflow: hidden; /* Hide bullets that go outside */
-        }
-
-        .cell {
-            width: var(--cell-size); height: var(--cell-size); border: 1px solid var(--border-color);
-            box-sizing: border-box; display: flex; align-items: center; justify-content: center;
-            transition: background-color 0.3s ease, border-color 0.3s ease, outline 0.1s linear; /* Added outline transition */
-            outline: 3px solid transparent; /* Prepare for blinking */
-            outline-offset: -3px; /* Keep outline inside */
-        }
-
-        .cell.blinking-target {
-             /* Use animation for blinking */
-             animation: blink-target 1s infinite step-end;
-        }
-
-        @keyframes blink-target {
-            50% { outline-color: var(--target-blink-outline); }
-        }
-
-
-        .cell.grass { background-color: var(--grass-color); }
-        .cell.water { background-color: var(--water-color); }
-        .cell.ice { background-color: var(--ice-color); }
-        .cell.sand { background-color: var(--sand-color); }
-
-        #player {
-            --player-diameter: calc(var(--cell-size) * var(--player-diameter-ratio));
-            position: absolute; top: 0; left: 0; width: var(--player-diameter); height: var(--player-diameter);
-            background-color: var(--player-color); border-radius: 50%; border: 2px solid var(--player-border);
-            box-sizing: border-box; pointer-events: none; z-index: 10;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-
+        body { font-family: var(--font-family); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: var(--bg-color); color: var(--text-color); padding: 10px; box-sizing: border-box; overflow: hidden; transition: background-color 0.3s ease, color 0.3s ease; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+        #theme-toggle { position: absolute; top: 15px; right: 15px; background-color: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); border-radius: 50%; width: 40px; height: 40px; font-size: 1.2em; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: background-color 0.3s ease, border-color 0.3s ease; z-index: 100; } #theme-toggle:hover { background-color: var(--button-hover-bg); }
+        #score-display { position: absolute; top: 15px; left: 15px; font-size: 1em; color: var(--score-color); z-index: 100; transition: color 0.3s ease; }
+        #timer-display { position: absolute; top: 40px; left: 15px; font-size: 0.8em; color: var(--timer-color); z-index: 100; transition: color 0.3s ease; display: none; }
+        #ingame-buttons { position: absolute; top: 65px; left: 15px; z-index: 100; display: flex; flex-direction: column; gap: 5px; }
+        #ingame-buttons button { font-family: var(--font-family); font-size: 0.6em; padding: 5px 8px; background-color: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: background-color 0.3s ease; opacity: 0.8; }
+        #ingame-buttons button:hover { background-color: var(--button-hover-bg); opacity: 1.0; }
+        #game-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-top: 60px; }
+        #game-grid { --grid-width: calc(var(--grid-size) * var(--cell-size)); --grid-height: calc(var(--grid-size) * var(--cell-size)); display: grid; grid-template-columns: repeat(var(--grid-size), var(--cell-size)); grid-template-rows: repeat(var(--grid-size), var(--cell-size)); width: var(--grid-width); height: var(--grid-height); border: 2px solid var(--border-color); background-color: var(--grid-bg-color); position: relative; box-sizing: content-box; max-width: 95vw; flex-shrink: 0; touch-action: none; cursor: pointer; transition: border-color 0.3s ease, background-color 0.3s ease; overflow: hidden; }
+        .cell { width: var(--cell-size); height: var(--cell-size); border: 1px solid var(--border-color); box-sizing: border-box; display: flex; align-items: center; justify-content: center; transition: background-color 0.3s ease, border-color 0.3s ease, outline 0.1s linear; outline: 3px solid transparent; outline-offset: -3px; }
+        .cell.blinking-target { animation: blink-target 1s infinite step-end; } @keyframes blink-target { 50% { outline-color: var(--target-blink-outline); } }
+        .cell.danger-zone-blinking { animation: blink-danger 0.5s infinite step-end; } @keyframes blink-danger { 50% { outline-color: var(--danger-zone-outline); } }
+        .cell.grass { background-color: var(--grass-color); } .cell.water { background-color: var(--water-color); } .cell.ice { background-color: var(--ice-color); } .cell.sand { background-color: var(--sand-color); }
+        #player { --player-diameter: calc(var(--cell-size) * var(--player-diameter-ratio)); position: absolute; top: 0; left: 0; width: var(--player-diameter); height: var(--player-diameter); background-color: var(--player-color); border-radius: 50%; border: 2px solid var(--player-border); box-sizing: border-box; pointer-events: none; z-index: 10; transition: background-color 0.3s ease, border-color 0.3s ease; }
         .spin-arcs-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center center; pointer-events: none; }
         .arc { position: absolute; top: 50%; left: 50%; width: 150%; height: 150%; border-radius: 50%; border: 2px solid transparent; border-top: 3px solid var(--arc-color); transform-origin: center center; box-sizing: border-box; transition: border-top-color 0.3s ease; }
-        .arc1 { transform: translate(-50%, -50%) rotate(0deg); opacity: 0.9; }
-        .arc2 { transform: translate(-50%, -50%) rotate(120deg); opacity: 0.7; width: 135%; height: 135%; }
-        .arc3 { transform: translate(-50%, -50%) rotate(240deg); opacity: 0.5; width: 120%; height: 120%; }
-
-        .bullet {
-            position: absolute;
-            width: 6px;
-            height: 6px;
-            background-color: var(--bullet-color);
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 5; /* Below player, above grid */
-            transition: background-color 0.3s ease;
-        }
-
-        /* --- Responsive Adjustments --- */
-        @media (max-width: 700px) { :root { --cell-size: 25px; } #theme-toggle { top: 10px; right: 10px; width: 35px; height: 35px; font-size: 1.1em;} #score-display { top: 12px; left: 10px; font-size: 0.9em;} }
-        @media (max-width: 550px) { :root { --cell-size: 20px; } body { padding: 5px; } #theme-toggle { top: 8px; right: 8px; width: 32px; height: 32px; font-size: 1.0em;} #score-display { top: 10px; left: 8px; font-size: 0.8em;} }
-        @media (max-width: 420px) { :root { --cell-size: 18px; } #theme-toggle { width: 30px; height: 30px; font-size: 0.9em;} #score-display { font-size: 0.7em;} }
+        .arc1 { transform: translate(-50%, -50%) rotate(0deg); opacity: 0.9; } .arc2 { transform: translate(-50%, -50%) rotate(120deg); opacity: 0.7; width: 135%; height: 135%; } .arc3 { transform: translate(-50%, -50%) rotate(240deg); opacity: 0.5; width: 120%; height: 120%; }
+        .bullet { position: absolute; width: 6px; height: 6px; background-color: var(--bullet-color); border-radius: 50%; pointer-events: none; z-index: 5; transition: background-color 0.3s ease; }
+        .enemy { --enemy-diameter: calc(var(--cell-size) * var(--enemy-size-ratio)); position: absolute; top: 0; left: 0; width: var(--enemy-diameter); height: var(--enemy-diameter); background-color: var(--enemy-color); border: 2px solid var(--enemy-border); border-radius: 15%; box-sizing: border-box; pointer-events: none; z-index: 9; transition: background-color 0.3s ease, border-color 0.3s ease; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; text-align: center; font-size: 1.5em; line-height: 1.5; transition: background-color 0.3s ease, color 0.3s ease; }
+        #start-screen-overlay { background-color: var(--game-over-bg); color: var(--overlay-text); }
+        #game-over-overlay { background-color: var(--game-over-bg); color: var(--overlay-text); display: none; }
+        #win-overlay { background-color: var(--win-bg); color: var(--overlay-text); display: none; }
+        #top-scores-overlay { background-color: var(--info-overlay-bg); color: var(--info-overlay-text); display: none; z-index: 201; }
+        .overlay h2 { margin-bottom: 20px; font-size: 2em; } .overlay p { margin: 5px 0; font-size: 1em;} .overlay .top-scores { margin-top: 15px; font-size: 0.8em; line-height: 1.3; }
+        .overlay button { font-family: var(--font-family); font-size: 0.8em; padding: 10px 20px; margin-top: 25px; background-color: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; margin-left: 10px; margin-right: 10px; } .overlay button:hover { background-color: var(--button-hover-bg); }
+        #close-top-scores-button { font-size: 0.7em; padding: 8px 15px; }
+        @media (max-width: 700px) { :root { --cell-size: 25px; } #theme-toggle { top: 10px; right: 10px; width: 35px; height: 35px; font-size: 1.1em;} #score-display { top: 12px; left: 10px; font-size: 0.9em;} #timer-display { top: 35px; left: 10px; font-size: 0.7em;} #ingame-buttons { top: 60px; left: 10px;} #ingame-buttons button { font-size: 0.55em; } .overlay { font-size: 1.3em;} .overlay h2 { font-size: 1.8em;} }
+        @media (max-width: 550px) { :root { --cell-size: 20px; } body { padding: 5px; } #theme-toggle { top: 8px; right: 8px; width: 32px; height: 32px; font-size: 1.0em;} #score-display { top: 10px; left: 8px; font-size: 0.8em;} #timer-display { top: 30px; left: 8px; font-size: 0.65em;} #ingame-buttons { top: 50px; left: 8px;} #ingame-buttons button { font-size: 0.5em; padding: 4px 6px;} .overlay { font-size: 1.1em;} .overlay h2 { font-size: 1.5em;} .overlay button{font-size: 0.7em; padding: 8px 15px;}}
+        @media (max-width: 420px) { :root { --cell-size: 18px; } #theme-toggle { width: 30px; height: 30px; font-size: 0.9em;} #score-display { font-size: 0.7em;} #timer-display { top: 28px; font-size: 0.6em;} #ingame-buttons { top: 48px; } #ingame-buttons button { font-size: 0.45em;} .overlay { font-size: 1.0em;} .overlay h2 { font-size: 1.3em;} .overlay button{font-size: 0.6em;}}
+    </style>
+     <style> /* Duplicated styles from above for brevity in example */
+        #player { --player-diameter: calc(var(--cell-size) * var(--player-diameter-ratio)); position: absolute; top: 0; left: 0; width: var(--player-diameter); height: var(--player-diameter); background-color: var(--player-color); border-radius: 50%; border: 2px solid var(--player-border); box-sizing: border-box; pointer-events: none; z-index: 10; transition: background-color 0.3s ease, border-color 0.3s ease; }
+        .spin-arcs-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center center; pointer-events: none; }
+        .arc { position: absolute; top: 50%; left: 50%; width: 150%; height: 150%; border-radius: 50%; border: 2px solid transparent; border-top: 3px solid var(--arc-color); transform-origin: center center; box-sizing: border-box; transition: border-top-color 0.3s ease; }
+        .arc1 { transform: translate(-50%, -50%) rotate(0deg); opacity: 0.9; } .arc2 { transform: translate(-50%, -50%) rotate(120deg); opacity: 0.7; width: 135%; height: 135%; } .arc3 { transform: translate(-50%, -50%) rotate(240deg); opacity: 0.5; width: 120%; height: 120%; }
+        .bullet { position: absolute; width: 6px; height: 6px; background-color: var(--bullet-color); border-radius: 50%; pointer-events: none; z-index: 5; transition: background-color 0.3s ease; }
     </style>
 </head>
-<body>
+<body class="dark-mode">
     <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
     <div id="score-display">Score: 0</div>
+    <div id="timer-display">Time: 03:00</div>
+    <div id="ingame-buttons">
+        <button id="menu-button">Menu</button>
+        <button id="top-scores-button">Top Scores</button>
+    </div>
 
     <div id="game-container">
         <div id="game-grid">
@@ -163,7 +110,48 @@
              </div>
     </div>
 
+     <div id="start-screen-overlay" class="overlay">
+        <h2>Grid Game</h2>
+        <p>Select Mode:</p>
+        <div>
+            <button id="start-score-button">Score Attack</button>
+            <button id="start-survival-button">Survival (3 min)</button>
+        </div>
+    </div>
+
+    <div id="game-over-overlay" class="overlay">
+        <h2>Game Over!</h2>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <div class="top-scores">
+             <p>Top Score (Score Attack): <span id="top-score-score">0</span></p>
+             <p>Top Score (Survival): <span id="top-score-survival">0</span></p>
+        </div>
+        <button id="play-again-button-lose">Play Again</button>
+    </div>
+
+     <div id="win-overlay" class="overlay">
+        <h2>You Survived!</h2>
+        <p>Final Score: <span id="win-final-score">0</span></p>
+         <div class="top-scores">
+             <p>Top Score (Score Attack): <span id="win-top-score-score">0</span></p>
+             <p>Top Score (Survival): <span id="win-top-score-survival">0</span></p>
+        </div>
+        <button id="play-again-button-win">Play Again</button>
+    </div>
+
+     <div id="top-scores-overlay" class="overlay">
+        <h2>Top Scores</h2>
+         <div class="top-scores">
+             <p>Score Attack: <span id="info-top-score-score">0</span></p>
+             <p>Survival: <span id="info-top-score-survival">0</span></p>
+        </div>
+        <button id="close-top-scores-button">Close</button>
+    </div>
+
+
     <script>
+        console.log("Script loading...");
+
         // --- Game Configuration ---
         const GRID_SIZE = 20; const ZONE_SIZE = 5;
         const MATERIALS = { GRASS: 'grass', WATER: 'water', ICE: 'ice', SAND: 'sand' };
@@ -175,190 +163,184 @@
         const ACCELERATION_THRESHOLD = 2; const ROTATION_FACTOR = 0.8;
 
         // --- Gameplay Configuration ---
-        const SHOOTING_RANGE = 150; // Max distance in pixels to shoot
-        const SHOOTING_INTERVAL = 200; // Milliseconds between shots
-        const BULLET_SPEED = 300; // Pixels per second
-        const MIN_SPEED_TO_SHOOT = 20; // Min player speed to enable shooting
+        const SHOOTING_RANGE = 150; const SHOOTING_INTERVAL = 200; const BULLET_SPEED = 300;
+        const MIN_SPEED_TO_SHOOT = 20;
+        const DANGER_ZONE_SIZE = 3; const DANGER_ZONE_APPEAR_INTERVAL = 10000;
+        const DANGER_ZONE_DURATION = 7000; const DANGER_ZONE_GRACE_PERIOD = 500;
+        const ENEMY_COUNT = 3; const ENEMY_SPEED = 50; const ENEMY_MOVE_INTERVAL = 1500;
+        const SURVIVAL_DURATION = 180000; // 3 minutes in milliseconds
 
         // --- Game State ---
         let gridData = []; let playerPos = { x: 0, y: 0 }; let playerVel = { x: 0, y: 0 };
         let playerRotation = 0; let targetPos = null; let isPointerDown = false; let activePointerId = null;
-        let cellSize = 30; let playerSize = 0; let gridPixelWidth = 0; let gridPixelHeight = 0;
-        let lastTimestamp = 0;
-        let score = 0; // Score counter
-        let targetTile = { x: null, y: null }; // Current target tile grid coords
-        let currentTargetElement = null; // DOM element of the target tile
-        let bullets = []; // Array to hold active bullets { id, x, y, vx, vy, element }
-        let nextBulletId = 0; // Simple ID counter for bullets
-        let lastShotTime = 0; // Timestamp of the last shot
+        let cellSize = 30; let playerSize = 0; let enemySize = 0;
+        let gridPixelWidth = 0; let gridPixelHeight = 0;
+        let lastTimestamp = 0; let score = 0;
+        let targetTile = { x: null, y: null }; let currentTargetElement = null;
+        let bullets = []; let nextBulletId = 0; let lastShotTime = 0;
+        let gameState = 'menu'; // 'menu', 'playing', 'gameover', 'won'
+        let currentGameMode = 'score'; // 'score', 'survival'
+        let dangerZone = { x: null, y: null, size: DANGER_ZONE_SIZE };
+        let dangerZoneCells = []; let isDangerZoneActive = false;
+        let timePlayerInDangerZone = 0; let nextDangerZoneAppearTime = 0; let dangerZoneEndTime = 0;
+        let enemies = []; let nextEnemyId = 0;
+        let gameStartTime = 0; // For survival timer
+        let animationFrameId = null; // To control game loop
 
-        // --- DOM Elements ---
-        const gridElement = document.getElementById('game-grid');
-        const playerElement = document.getElementById('player');
-        const themeToggle = document.getElementById('theme-toggle');
-        const bodyElement = document.body;
-        const scoreDisplay = document.getElementById('score-display'); // Get score display
-        let spinArcsContainer = null;
+        // --- DOM Elements (Declare globally, assign after DOM loaded) ---
+        let gridElement, playerElement, themeToggle, bodyElement, scoreDisplay, timerDisplay,
+            startScreenOverlay, startScoreButton, startSurvivalButton,
+            gameOverOverlay, finalScoreElement, topScoreScoreElement, topScoreSurvivalElement, playAgainButtonLose,
+            winOverlay, winFinalScoreElement, winTopScoreScoreElement, winTopScoreSurvivalElement, playAgainButtonWin,
+            spinArcsContainer, menuButton, topScoresButton, topScoresOverlay, infoTopScoreScoreElement, infoTopScoreSurvivalElement, closeTopScoresButton; // Added new elements
+
+        // --- Constants for localStorage keys ---
+        const TOP_SCORE_SCORE_KEY = 'gridGameTopScoreScore';
+        const TOP_SCORE_SURVIVAL_KEY = 'gridGameTopScoreSurvival';
 
         // --- Functions ---
         function isInBounds(x, y) { return x >= 0 && x < GRID_SIZE && y >= 0 && y < GRID_SIZE; }
         function getMaterialAtPixel(px, py) { const gridX = Math.floor(px / cellSize); const gridY = Math.floor(py / cellSize); if (!isInBounds(gridX, gridY)) return null; if (gridData.length > gridY && gridData[gridY].length > gridX) { return gridData[gridY][gridX]; } console.error(`Grid data error at (${gridX}, ${gridY})`); return MATERIALS.GRASS; }
+        function selectNewTarget() { if (currentTargetElement) { currentTargetElement.classList.remove('blinking-target'); } let newX, newY; const playerGridX = Math.floor((playerPos.x + playerSize / 2) / cellSize); const playerGridY = Math.floor((playerPos.y + playerSize / 2) / cellSize); do { newX = Math.floor(Math.random() * GRID_SIZE); newY = Math.floor(Math.random() * GRID_SIZE); } while (!isInBounds(newX, newY) || (newX === playerGridX && newY === playerGridY) || (newX === targetTile.x && newY === targetTile.y)); targetTile = { x: newX, y: newY }; currentTargetElement = gridElement?.querySelector(`.cell[data-x="${targetTile.x}"][data-y="${targetTile.y}"]`); if (currentTargetElement) { currentTargetElement.classList.add('blinking-target'); } else { console.error("Could not find DOM element for new target tile:", targetTile.x, targetTile.y); } }
+        function activateDangerZone() { if (gameState !== 'playing') return; const zoneSize = DANGER_ZONE_SIZE; const startX = Math.floor(Math.random() * (GRID_SIZE - zoneSize + 1)); const startY = Math.floor(Math.random() * (GRID_SIZE - zoneSize + 1)); dangerZone = { x: startX, y: startY, size: zoneSize }; dangerZoneCells = []; isDangerZoneActive = true; timePlayerInDangerZone = 0; dangerZoneEndTime = performance.now() + DANGER_ZONE_DURATION; nextDangerZoneAppearTime = 0; console.log("Danger Zone Activated at:", startX, startY); for (let y = startY; y < startY + zoneSize; y++) { for (let x = startX; x < startX + zoneSize; x++) { dangerZoneCells.push({x, y}); const cellElement = gridElement?.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`); if (cellElement) { cellElement.classList.add('danger-zone-blinking'); } } } }
+        function deactivateDangerZone() { if (!isDangerZoneActive) return; console.log("Deactivating Danger Zone"); isDangerZoneActive = false; dangerZoneEndTime = 0; nextDangerZoneAppearTime = performance.now() + DANGER_ZONE_APPEAR_INTERVAL; dangerZoneCells.forEach(coord => { const cellElement = gridElement?.querySelector(`.cell[data-x="${coord.x}"][data-y="${coord.y}"]`); if (cellElement) { cellElement.classList.remove('danger-zone-blinking'); } }); dangerZoneCells = []; }
+        function createEnemies() { gridElement?.querySelectorAll('.enemy').forEach(el => el.remove()); enemies = []; const enemySizeRatio = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--enemy-size-ratio') || '0.6'); enemySize = cellSize * enemySizeRatio; for (let i = 0; i < ENEMY_COUNT; i++) { let startX, startY, startGridX, startGridY; const playerGridX = Math.floor((playerPos.x + playerSize / 2) / cellSize); const playerGridY = Math.floor((playerPos.y + playerSize / 2) / cellSize); do { startGridX = Math.floor(Math.random() * GRID_SIZE); startGridY = Math.floor(Math.random() * GRID_SIZE); } while (!isInBounds(startGridX, startGridY) || (Math.abs(startGridX - playerGridX) < 3 && Math.abs(startGridY - playerGridY) < 3)); startX = startGridX * cellSize + (cellSize / 2) - (enemySize / 2); startY = startGridY * cellSize + (cellSize / 2) - (enemySize / 2); enemies.push({ id: nextEnemyId++, x: startX, y: startY, targetPixelX: startX, targetPixelY: startY, element: null, nextMoveTime: performance.now() + Math.random() * ENEMY_MOVE_INTERVAL }); } console.log("Created enemies:", enemies.length); }
+        function resetGame() { console.log("Resetting game state..."); if (!gridElement || !playerElement) { console.error("Cannot reset grid, essential elements not found!"); return; } cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size')); const playerDiameterRatio = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--player-diameter-ratio')); playerSize = cellSize * playerDiameterRatio; gridPixelWidth = GRID_SIZE * cellSize; gridPixelHeight = GRID_SIZE * cellSize; gridElement.querySelectorAll('.cell').forEach(cell => cell.remove()); gridElement.querySelectorAll('.bullet').forEach(b => b.remove()); gridElement.querySelectorAll('.enemy').forEach(e => e.remove()); gridData = []; bullets = []; enemies = []; playerVel = { x: 0, y: 0 }; playerRotation = 0; targetPos = null; isPointerDown = false; activePointerId = null; score = 0; updateScoreDisplay(); targetTile = { x: null, y: null }; currentTargetElement = null; lastShotTime = 0; nextBulletId = 0; nextEnemyId = 0; deactivateDangerZone(); nextDangerZoneAppearTime = performance.now() + DANGER_ZONE_APPEAR_INTERVAL; timePlayerInDangerZone = 0; gameStartTime = performance.now(); if(timerDisplay) timerDisplay.style.display = 'none'; const zoneMaterials = []; for (let zy = 0; zy < Math.ceil(GRID_SIZE/ZONE_SIZE); zy++) { zoneRow = []; for (let zx = 0; zx < Math.ceil(GRID_SIZE/ZONE_SIZE); zx++) { zoneRow.push(MATERIAL_TYPES[Math.floor(Math.random() * MATERIAL_TYPES.length)]); } zoneMaterials.push(zoneRow); } for (let y = GRID_SIZE - 1; y >= 0; y--) { const row = []; for (let x = GRID_SIZE - 1; x >= 0; x--) { const zoneX = Math.floor(x / ZONE_SIZE); const zoneY = Math.floor(y / ZONE_SIZE); const material = zoneMaterials[zoneY]?.[zoneX] || MATERIALS.GRASS; row.unshift(material); const cell = document.createElement('div'); cell.classList.add('cell', material); cell.dataset.x = x; cell.dataset.y = y; gridElement.insertBefore(cell, gridElement.firstChild); } gridData.unshift(row); } let startGridX = -1, startGridY = -1; outerLoop: for (let y = 0; y < GRID_SIZE; y++) { for (let x = 0; x < GRID_SIZE; x++) { if (gridData[y][x] === MATERIALS.GRASS) { startGridX = x; startGridY = y; break outerLoop; } } } if (startGridX === -1) { startGridX = 0; startGridY = 0; } const playerOffset = (cellSize - playerSize) / 2; playerPos.x = startGridX * cellSize + playerOffset; playerPos.y = startGridY * cellSize + playerOffset; selectNewTarget(); createEnemies(); renderPlayer(); console.log("resetGame finished."); }
+        function renderPlayer() { if (!playerElement) return; playerElement.style.transform = `translate(${playerPos.x}px, ${playerPos.y}px)`; if (spinArcsContainer) { spinArcsContainer.style.transform = `rotate(${playerRotation}deg)`; } else { spinArcsContainer = playerElement.querySelector('.spin-arcs-container'); if (spinArcsContainer) { spinArcsContainer.style.transform = `rotate(${playerRotation}deg)`; } else { console.warn("Spin arcs container not found for rotation."); } } }
+        function updateScoreDisplay() { if(scoreDisplay) scoreDisplay.textContent = `Score: ${score}`; }
+        function renderBullets() { if (!gridElement) return; const existingBulletElements = gridElement.querySelectorAll('.bullet'); const activeBulletIds = new Set(bullets.map(b => `bullet-${b.id}`)); existingBulletElements.forEach(el => { if (!activeBulletIds.has(el.id)) { el.remove(); } }); bullets.forEach(bullet => { if (!bullet.element) { bullet.element = document.createElement('div'); bullet.element.classList.add('bullet'); bullet.element.id = `bullet-${bullet.id}`; gridElement.appendChild(bullet.element); } bullet.element.style.left = `${bullet.x - 3}px`; bullet.element.style.top = `${bullet.y - 3}px`; }); }
+        function renderEnemies() { if (!gridElement) return; const existingEnemyElements = gridElement.querySelectorAll('.enemy'); const activeEnemyIds = new Set(enemies.map(e => `enemy-${e.id}`)); existingEnemyElements.forEach(el => { if (!activeEnemyIds.has(el.id)) { el.remove(); } }); enemies.forEach(enemy => { if (!enemy.element) { enemy.element = document.createElement('div'); enemy.element.classList.add('enemy'); enemy.element.id = `enemy-${enemy.id}`; gridElement.appendChild(enemy.element); } enemy.element.style.transform = `translate(${enemy.x}px, ${enemy.y}px)`; }); }
+        function getPointerPosOnGrid(event) { if(!gridElement) return null; const rect = gridElement.getBoundingClientRect(); if (!rect) return null; const pointerX = event.clientX - rect.left; const pointerY = event.clientY - rect.top; return { x: pointerX, y: pointerY }; }
+        function handlePointerDown(event) { if (gameState !== 'playing') return; if (event.pointerType === 'mouse' && event.button !== 0) return; if (isPointerDown) return; const pos = getPointerPosOnGrid(event); if (pos && pos.x >= 0 && pos.x <= gridPixelWidth && pos.y >= 0 && pos.y <= gridPixelHeight) { isPointerDown = true; targetPos = pos; activePointerId = event.pointerId; event.preventDefault(); try { gridElement?.setPointerCapture(event.pointerId); } catch (e) { console.error("Failed to capture pointer:", e); } } else { isPointerDown = false; targetPos = null; activePointerId = null; } }
+        function handlePointerMove(event) { if (!isPointerDown || event.pointerId !== activePointerId || gameState !== 'playing') return; const pos = getPointerPosOnGrid(event); if (pos) { targetPos.x = Math.max(0, Math.min(gridPixelWidth, pos.x)); targetPos.y = Math.max(0, Math.min(gridPixelHeight, pos.y)); } event.preventDefault(); }
+        function handlePointerUpOrCancel(event) { if (!isPointerDown || event.pointerId !== activePointerId) return; isPointerDown = false; targetPos = null; try { gridElement?.releasePointerCapture(event.pointerId); } catch(e) { console.error("Failed to release pointer capture:", e); } activePointerId = null; }
+        function getTopScore(mode) { const key = mode === 'survival' ? TOP_SCORE_SURVIVAL_KEY : TOP_SCORE_SCORE_KEY; return parseInt(localStorage.getItem(key) || '0'); }
+        function updateTopScore(mode, currentScore) { const key = mode === 'survival' ? TOP_SCORE_SURVIVAL_KEY : TOP_SCORE_SCORE_KEY; const topScore = getTopScore(mode); if (currentScore > topScore) { localStorage.setItem(key, currentScore.toString()); return currentScore; } return topScore; }
 
-        /** Selects a new random target tile */
-        function selectNewTarget() {
-            // Clear previous target styling
-            if (currentTargetElement) {
-                currentTargetElement.classList.remove('blinking-target');
-            }
+        /** Displays end screen (Game Over or Win) - FIXED */
+        function showEndScreen(isWin) {
+            const finalScore = score;
+            // 1. Update the top score ONLY for the mode just played
+            updateTopScore(currentGameMode, finalScore);
+            // 2. Get the current top scores for BOTH modes for display
+            const topScoreScore = getTopScore('score');
+            const topScoreSurvival = getTopScore('survival');
 
-            let newX, newY;
-            const playerGridX = Math.floor((playerPos.x + playerSize / 2) / cellSize);
-            const playerGridY = Math.floor((playerPos.y + playerSize / 2) / cellSize);
-
-            // Keep trying until a valid, non-player cell is found
-            do {
-                newX = Math.floor(Math.random() * GRID_SIZE);
-                newY = Math.floor(Math.random() * GRID_SIZE);
-            } while (!isInBounds(newX, newY) || (newX === playerGridX && newY === playerGridY) || (newX === targetTile.x && newY === targetTile.y)); // Avoid same tile or player tile
-
-            targetTile = { x: newX, y: newY };
-
-            // Find and style the new target DOM element
-            currentTargetElement = gridElement.querySelector(`.cell[data-x="${targetTile.x}"][data-y="${targetTile.y}"]`);
-            if (currentTargetElement) {
-                currentTargetElement.classList.add('blinking-target');
-                console.log("New target selected:", targetTile.x, targetTile.y);
+            if (isWin) {
+                // Update Win Screen elements
+                if(winFinalScoreElement) winFinalScoreElement.textContent = finalScore;
+                if(winTopScoreScoreElement) winTopScoreScoreElement.textContent = topScoreScore;
+                if(winTopScoreSurvivalElement) winTopScoreSurvivalElement.textContent = topScoreSurvival;
+                if(winOverlay) winOverlay.style.display = 'flex';
             } else {
-                console.error("Could not find DOM element for new target tile:", targetTile.x, targetTile.y);
+                 // Update Game Over Screen elements
+                if(finalScoreElement) finalScoreElement.textContent = finalScore;
+                if(topScoreScoreElement) topScoreScoreElement.textContent = topScoreScore;
+                if(topScoreSurvivalElement) topScoreSurvivalElement.textContent = topScoreSurvival;
+                if(gameOverOverlay) gameOverOverlay.style.display = 'flex';
             }
         }
 
-        function createGrid() {
-             cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size'));
-             const playerDiameterRatio = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--player-diameter-ratio'));
-             playerSize = cellSize * playerDiameterRatio;
-             gridPixelWidth = GRID_SIZE * cellSize; gridPixelHeight = GRID_SIZE * cellSize; gridData = [];
-             const cells = gridElement.querySelectorAll('.cell'); cells.forEach(cell => cell.remove());
-             const oldBullets = gridElement.querySelectorAll('.bullet'); oldBullets.forEach(b => b.remove());
-             bullets = [];
+        function triggerGameOver() { if (gameState === 'gameover' || gameState === 'won') return; console.log("GAME OVER!"); gameState = 'gameover'; isPointerDown = false; targetPos = null; deactivateDangerZone(); if (currentTargetElement) { currentTargetElement.classList.remove('blinking-target'); currentTargetElement = null; targetTile = { x: null, y: null }; } bullets.forEach(b => b.element?.remove()); bullets = []; showEndScreen(false); }
+        function triggerWin() { if (gameState === 'gameover' || gameState === 'won') return; console.log("YOU WIN!"); gameState = 'won'; isPointerDown = false; targetPos = null; deactivateDangerZone(); if (currentTargetElement) { currentTargetElement.classList.remove('blinking-target'); currentTargetElement = null; targetTile = { x: null, y: null }; } bullets.forEach(b => b.element?.remove()); bullets = []; showEndScreen(true); }
+        function goToStartScreen() { console.log("Returning to start screen..."); if(gameOverOverlay) gameOverOverlay.style.display = 'none'; if(winOverlay) winOverlay.style.display = 'none'; if(startScreenOverlay) startScreenOverlay.style.display = 'flex'; if(topScoresOverlay) topScoresOverlay.style.display = 'none'; gameState = 'menu'; gridElement?.querySelectorAll('.cell').forEach(cell => cell.remove()); gridElement?.querySelectorAll('.bullet').forEach(b => b.remove()); gridElement?.querySelectorAll('.enemy').forEach(e => e.remove()); if(playerElement) playerElement.style.transform = 'translate(-1000px, -1000px)'; }
+        function updateEnemies(deltaTime, now) { enemies.forEach(enemy => { if (now >= enemy.nextMoveTime) { const currentGridX = Math.floor((enemy.x + enemySize / 2) / cellSize); const currentGridY = Math.floor((enemy.y + enemySize / 2) / cellSize); const possibleMoves = [ {dx: 0, dy: 0}, {dx: 1, dy: 0}, {dx: -1, dy: 0}, {dx: 0, dy: 1}, {dx: 0, dy: -1} ]; let nextGridX, nextGridY, moveFound = false; possibleMoves.sort(() => Math.random() - 0.5); for (const move of possibleMoves) { nextGridX = currentGridX + move.dx; nextGridY = currentGridY + move.dy; if (isInBounds(nextGridX, nextGridY)) { moveFound = true; break; } } if (moveFound) { enemy.targetPixelX = nextGridX * cellSize + (cellSize / 2) - (enemySize / 2); enemy.targetPixelY = nextGridY * cellSize + (cellSize / 2) - (enemySize / 2); } else { enemy.targetPixelX = enemy.x; enemy.targetPixelY = enemy.y; } enemy.nextMoveTime = now + ENEMY_MOVE_INTERVAL + (Math.random() * 500 - 250); } const dirX = enemy.targetPixelX - enemy.x; const dirY = enemy.targetPixelY - enemy.y; const distToTarget = Math.sqrt(dirX**2 + dirY**2); const moveAmount = ENEMY_SPEED * deltaTime; if (distToTarget > 1) { if (moveAmount >= distToTarget) { enemy.x = enemy.targetPixelX; enemy.y = enemy.targetPixelY; } else { enemy.x += (dirX / distToTarget) * moveAmount; enemy.y += (dirY / distToTarget) * moveAmount; } } }); }
+        function handleResize() { console.log("Window resized."); if(gameState === 'playing') {resetGame();} else { cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size')); gridPixelWidth = GRID_SIZE * cellSize; gridPixelHeight = GRID_SIZE * cellSize; } lastTimestamp = performance.now(); }
+        function formatTime(ms) { if (ms < 0) ms = 0; const totalSeconds = Math.floor(ms / 1000); const minutes = Math.floor(totalSeconds / 60); const seconds = totalSeconds % 60; return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`; }
+        function showTopScores() { if (!topScoresOverlay) return; const topScoreScore = getTopScore('score'); const topScoreSurvival = getTopScore('survival'); if(infoTopScoreScoreElement) infoTopScoreScoreElement.textContent = topScoreScore; if(infoTopScoreSurvivalElement) infoTopScoreSurvivalElement.textContent = topScoreSurvival; topScoresOverlay.style.display = 'flex'; }
+        function hideTopScores() { if(topScoresOverlay) topScoresOverlay.style.display = 'none'; }
 
-             if (!gridElement.contains(playerElement)) { gridElement.appendChild(playerElement); }
-             spinArcsContainer = playerElement.querySelector('.spin-arcs-container'); if (!spinArcsContainer) { console.error("Spin arcs container element not found!"); }
-             const numZonesX = GRID_SIZE / ZONE_SIZE; const numZonesY = GRID_SIZE / ZONE_SIZE; if (!Number.isInteger(numZonesX) || !Number.isInteger(numZonesY)) { console.error("GRID_SIZE must be divisible by ZONE_SIZE."); return; }
-             const zoneMaterials = []; for (let zy = 0; zy < numZonesY; zy++) { zoneRow = []; for (let zx = 0; zx < numZonesX; zx++) { zoneRow.push(MATERIAL_TYPES[Math.floor(Math.random() * MATERIAL_TYPES.length)]); } zoneMaterials.push(zoneRow); }
-             for (let y = GRID_SIZE - 1; y >= 0; y--) { const row = []; for (let x = GRID_SIZE - 1; x >= 0; x--) { const zoneX = Math.floor(x / ZONE_SIZE); const zoneY = Math.floor(y / ZONE_SIZE); const material = zoneMaterials[zoneY][zoneX]; row.unshift(material); const cell = document.createElement('div'); cell.classList.add('cell', material); cell.dataset.x = x; cell.dataset.y = y; gridElement.insertBefore(cell, gridElement.firstChild); } gridData.unshift(row); }
-             let startGridX = -1, startGridY = -1; outerLoop: for (let y = 0; y < GRID_SIZE; y++) { for (let x = 0; x < GRID_SIZE; x++) { if (gridData[y][x] === MATERIALS.GRASS) { startGridX = x; startGridY = y; break outerLoop; } } } if (startGridX === -1) { startGridX = 0; startGridY = 0; }
-             const playerOffset = (cellSize - playerSize) / 2; playerPos.x = startGridX * cellSize + playerOffset; playerPos.y = startGridY * cellSize + playerOffset;
-             playerVel = { x: 0, y: 0 }; playerRotation = 0; targetPos = null; isPointerDown = false; activePointerId = null;
-             score = 0; updateScoreDisplay();
-             selectNewTarget();
-             renderPlayer();
-        }
-
-        function renderPlayer() { playerElement.style.transform = `translate(${playerPos.x}px, ${playerPos.y}px)`; if (spinArcsContainer) { spinArcsContainer.style.transform = `rotate(${playerRotation}deg)`; } else { spinArcsContainer = playerElement.querySelector('.spin-arcs-container'); if (spinArcsContainer) { spinArcsContainer.style.transform = `rotate(${playerRotation}deg)`; } else { console.warn("Spin arcs container not found for rotation."); } } }
-
-        /** Updates the score display */
-        function updateScoreDisplay() {
-             scoreDisplay.textContent = `Score: ${score}`;
-        }
-
-        /** Renders bullets based on the bullets array */
-        function renderBullets() {
-             const existingBulletElements = gridElement.querySelectorAll('.bullet');
-             const activeBulletIds = new Set(bullets.map(b => `bullet-${b.id}`));
-             existingBulletElements.forEach(el => { if (!activeBulletIds.has(el.id)) { el.remove(); } });
-             bullets.forEach(bullet => { if (!bullet.element) { bullet.element = document.createElement('div'); bullet.element.classList.add('bullet'); bullet.element.id = `bullet-${bullet.id}`; gridElement.appendChild(bullet.element); } bullet.element.style.left = `${bullet.x - 3}px`; bullet.element.style.top = `${bullet.y - 3}px`; });
-        }
-
-        function getPointerPosOnGrid(event) { const rect = gridElement.getBoundingClientRect(); if (!rect) return null; const pointerX = event.clientX - rect.left; const pointerY = event.clientY - rect.top; return { x: pointerX, y: pointerY }; }
-        function handlePointerDown(event) { if (event.pointerType === 'mouse' && event.button !== 0) return; if (isPointerDown) return; const pos = getPointerPosOnGrid(event); if (pos && pos.x >= 0 && pos.x <= gridPixelWidth && pos.y >= 0 && pos.y <= gridPixelHeight) { isPointerDown = true; targetPos = pos; activePointerId = event.pointerId; console.log("Pointer Down - Target set:", targetPos, "ID:", activePointerId); event.preventDefault(); try { gridElement.setPointerCapture(event.pointerId); } catch (e) { console.error("Failed to capture pointer:", e); } } else { isPointerDown = false; targetPos = null; activePointerId = null; } }
-        function handlePointerMove(event) { if (!isPointerDown || event.pointerId !== activePointerId) return; const pos = getPointerPosOnGrid(event); if (pos) { targetPos.x = Math.max(0, Math.min(gridPixelWidth, pos.x)); targetPos.y = Math.max(0, Math.min(gridPixelHeight, pos.y)); } event.preventDefault(); }
-        function handlePointerUpOrCancel(event) { if (!isPointerDown || event.pointerId !== activePointerId) return; isPointerDown = false; targetPos = null; console.log("Pointer Up/Cancel - Target cleared", "ID:", event.pointerId); try { gridElement.releasePointerCapture(event.pointerId); } catch(e) { console.error("Failed to release pointer capture:", e); } activePointerId = null; }
-
-        /** Main game update loop */
         function update(deltaTime) {
-            if (!deltaTime || deltaTime > 0.1) { deltaTime = 0.016; }
+             if (gameState !== 'playing') return;
+             if (!deltaTime || deltaTime > 0.1) { deltaTime = 0.016; }
+             const now = performance.now();
 
-            const playerCenterX = playerPos.x + playerSize / 2;
-            const playerCenterY = playerPos.y + playerSize / 2;
-            const currentMaterial = getMaterialAtPixel(playerCenterX, playerCenterY) || MATERIALS.GRASS;
-            const mods = PHYSICS_MODIFIERS[currentMaterial] || PHYSICS_MODIFIERS[MATERIALS.GRASS];
-            const currentAcceleration = BASE_ACCELERATION * mods.acceleration;
-            const adjustedBaseFriction = Math.pow(BASE_FRICTION / mods.friction, deltaTime);
+             // --- Calculate player radius and center (ensure playerSize is valid) ---
+             const validPlayerSize = (typeof playerSize === 'number' && !isNaN(playerSize) && playerSize > 0) ? playerSize : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--player-diameter-ratio') || '0.7') * cellSize;
+             const playerRadius = validPlayerSize / 2;
+             const playerCenterX = playerPos.x + playerRadius;
+             const playerCenterY = playerPos.y + playerRadius;
 
-            let accX = 0; let accY = 0;
-            if (isPointerDown && targetPos) { const directionX = targetPos.x - playerCenterX; const directionY = targetPos.y - playerCenterY; const distance = Math.sqrt(directionX**2 + directionY**2); if (distance > ACCELERATION_THRESHOLD) { const normX = directionX / distance; const normY = directionY / distance; accX = normX * currentAcceleration; accY = normY * currentAcceleration; } }
+             updateEnemies(deltaTime, now);
 
-            playerVel.x += accX * deltaTime; playerVel.y += accY * deltaTime;
+             const currentMaterial = getMaterialAtPixel(playerCenterX, playerCenterY) || MATERIALS.GRASS;
+             const mods = PHYSICS_MODIFIERS[currentMaterial] || PHYSICS_MODIFIERS[MATERIALS.GRASS];
+             const currentAcceleration = BASE_ACCELERATION * mods.acceleration;
+             const adjustedBaseFriction = Math.pow(BASE_FRICTION / mods.friction, deltaTime);
+             let accX = 0; let accY = 0; if (isPointerDown && targetPos) { const directionX = targetPos.x - playerCenterX; const directionY = targetPos.y - playerCenterY; const distance = Math.sqrt(directionX**2 + directionY**2); if (distance > ACCELERATION_THRESHOLD) { const normX = directionX / distance; const normY = directionY / distance; accX = normX * currentAcceleration; accY = normY * currentAcceleration; } }
+             playerVel.x += accX * deltaTime; playerVel.y += accY * deltaTime; if (accX === 0 && accY === 0) { playerVel.x *= adjustedBaseFriction; playerVel.y *= adjustedBaseFriction; if (Math.abs(playerVel.x) < 1) playerVel.x = 0; if (Math.abs(playerVel.y) < 1) playerVel.y = 0; }
+             let currentSpeed = Math.sqrt(playerVel.x**2 + playerVel.y**2); if (currentSpeed > MAX_SPEED) { const scale = MAX_SPEED / currentSpeed; playerVel.x *= scale; playerVel.y *= scale; currentSpeed = MAX_SPEED; }
+             playerPos.x += playerVel.x * deltaTime; playerPos.y += playerVel.y * deltaTime; let rotationSpeed = 0; if (currentSpeed > 1.0 && (accX !== 0 || accY !== 0)) { const crossProduct = (playerVel.x * accY - playerVel.y * accX); const crossProductThreshold = 1000; if (Math.abs(crossProduct) > crossProductThreshold) { rotationSpeed = Math.sign(crossProduct) * currentSpeed * ROTATION_FACTOR; } } playerRotation += rotationSpeed * deltaTime; playerRotation %= 360;
+             const minX = 0; const minY = 0; const maxX = gridPixelWidth - validPlayerSize; const maxY = gridPixelHeight - validPlayerSize;
+             if (playerPos.x < minX) { playerPos.x = minX; playerVel.x = 0; } if (playerPos.x > maxX) { playerPos.x = maxX; playerVel.x = 0; } if (playerPos.y < minY) { playerPos.y = minY; playerVel.y = 0; } if (playerPos.y > maxY) { playerPos.y = maxY; playerVel.y = 0; }
+             if (targetTile.x !== null && currentSpeed > MIN_SPEED_TO_SHOOT && now > lastShotTime + SHOOTING_INTERVAL) { const targetCenterX = targetTile.x * cellSize + cellSize / 2; const targetCenterY = targetTile.y * cellSize + cellSize / 2; const distToTarget = Math.sqrt((targetCenterX - playerCenterX)**2 + (targetCenterY - playerCenterY)**2); if (distToTarget <= SHOOTING_RANGE) { const velMagnitude = Math.sqrt(playerVel.x**2 + playerVel.y**2); if (velMagnitude > 0) { const bulletVx = (playerVel.x / velMagnitude) * BULLET_SPEED; const bulletVy = (playerVel.y / velMagnitude) * BULLET_SPEED; bullets.push({ id: nextBulletId++, x: playerCenterX, y: playerCenterY, vx: bulletVx, vy: bulletVy, element: null }); lastShotTime = now; } } }
+             const targetLeft = targetTile.x * cellSize; const targetRight = targetLeft + cellSize; const targetTop = targetTile.y * cellSize; const targetBottom = targetTop + cellSize; for (let i = bullets.length - 1; i >= 0; i--) { const bullet = bullets[i]; bullet.x += bullet.vx * deltaTime; bullet.y += bullet.vy * deltaTime; let hit = false; if (targetTile.x !== null && bullet.x >= targetLeft && bullet.x <= targetRight && bullet.y >= targetTop && bullet.y <= targetBottom) { console.log("Bullet hit target!"); hit = true; score++; updateScoreDisplay(); selectNewTarget(); } if (hit || bullet.x < 0 || bullet.x > gridPixelWidth || bullet.y < 0 || bullet.y > gridPixelHeight) { if (bullet.element) { bullet.element.remove(); } bullets.splice(i, 1); } }
+             if (!isDangerZoneActive && now >= nextDangerZoneAppearTime && nextDangerZoneAppearTime !== 0) { activateDangerZone(); } if (isDangerZoneActive && now >= dangerZoneEndTime) { deactivateDangerZone(); } if (isDangerZoneActive) { const playerGridX = Math.floor(playerCenterX / cellSize); const playerGridY = Math.floor(playerCenterY / cellSize); let isInside = false; if (playerGridX >= dangerZone.x && playerGridX < dangerZone.x + dangerZone.size && playerGridY >= dangerZone.y && playerGridY < dangerZone.y + dangerZone.size) { isInside = true; } if (isInside) { timePlayerInDangerZone += deltaTime * 1000; if (timePlayerInDangerZone >= DANGER_ZONE_GRACE_PERIOD) { triggerGameOver(); return; } } else { timePlayerInDangerZone = 0; } } else { timePlayerInDangerZone = 0; }
 
-            if (accX === 0 && accY === 0) { playerVel.x *= adjustedBaseFriction; playerVel.y *= adjustedBaseFriction; if (Math.abs(playerVel.x) < 1) playerVel.x = 0; if (Math.abs(playerVel.y) < 1) playerVel.y = 0; }
+             // --- Player-Enemy Collision Check ---
+             const validEnemySize = (typeof enemySize === 'number' && !isNaN(enemySize) && enemySize > 0) ? enemySize : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--enemy-size-ratio') || '0.6') * cellSize;
+             const enemyRadius = validEnemySize / 2; // Approximation for collision
+             enemies.forEach(enemy => { if (gameState !== 'playing') return; const enemyCenterX = enemy.x + enemyRadius; const enemyCenterY = enemy.y + enemyRadius; const dx = playerCenterX - enemyCenterX; const dy = playerCenterY - enemyCenterY; const distance = Math.sqrt(dx*dx + dy*dy); const collisionDistance = playerRadius + enemyRadius; if (distance < collisionDistance) { console.log("Collision with enemy!"); triggerGameOver(); return; } });
+             if (gameState !== 'playing') return; // Exit update if game over triggered by collision
 
-            let currentSpeed = Math.sqrt(playerVel.x**2 + playerVel.y**2);
-            if (currentSpeed > MAX_SPEED) { const scale = MAX_SPEED / currentSpeed; playerVel.x *= scale; playerVel.y *= scale; currentSpeed = MAX_SPEED; }
-
-            playerPos.x += playerVel.x * deltaTime; playerPos.y += playerVel.y * deltaTime;
-
-            let rotationSpeed = 0;
-            if (currentSpeed > 1.0 && (accX !== 0 || accY !== 0)) { const crossProduct = (playerVel.x * accY - playerVel.y * accX); const crossProductThreshold = 1000; if (Math.abs(crossProduct) > crossProductThreshold) { rotationSpeed = Math.sign(crossProduct) * currentSpeed * ROTATION_FACTOR; } }
-            playerRotation += rotationSpeed * deltaTime; playerRotation %= 360;
-
-            const minX = 0; const minY = 0; const maxX = gridPixelWidth - playerSize; const maxY = gridPixelHeight - playerSize;
-            if (playerPos.x < minX) { playerPos.x = minX; playerVel.x = 0; } if (playerPos.x > maxX) { playerPos.x = maxX; playerVel.x = 0; } if (playerPos.y < minY) { playerPos.y = minY; playerVel.y = 0; } if (playerPos.y > maxY) { playerPos.y = maxY; playerVel.y = 0; }
-
-            // --- Shooting Logic ---
-            const now = performance.now();
-            if (targetTile.x !== null && currentSpeed > MIN_SPEED_TO_SHOOT && now > lastShotTime + SHOOTING_INTERVAL) {
-                const targetCenterX = targetTile.x * cellSize + cellSize / 2;
-                const targetCenterY = targetTile.y * cellSize + cellSize / 2;
-                const distToTarget = Math.sqrt((targetCenterX - playerCenterX)**2 + (targetCenterY - playerCenterY)**2);
-                if (distToTarget <= SHOOTING_RANGE) {
-                    const velMagnitude = Math.sqrt(playerVel.x**2 + playerVel.y**2);
-                    if (velMagnitude > 0) {
-                        const bulletVx = (playerVel.x / velMagnitude) * BULLET_SPEED; const bulletVy = (playerVel.y / velMagnitude) * BULLET_SPEED;
-                        bullets.push({ id: nextBulletId++, x: playerCenterX, y: playerCenterY, vx: bulletVx, vy: bulletVy, element: null });
-                        lastShotTime = now; console.log("Fired bullet!");
-                    }
-                }
-            }
-
-            // --- Update Bullets & Check Collisions ---
-            const targetLeft = targetTile.x * cellSize; const targetRight = targetLeft + cellSize;
-            const targetTop = targetTile.y * cellSize; const targetBottom = targetTop + cellSize;
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                const bullet = bullets[i];
-                bullet.x += bullet.vx * deltaTime; bullet.y += bullet.vy * deltaTime;
-                let hit = false;
-                if (targetTile.x !== null && bullet.x >= targetLeft && bullet.x <= targetRight && bullet.y >= targetTop && bullet.y <= targetBottom) {
-                    console.log("Bullet hit target!"); hit = true; score++; updateScoreDisplay(); selectNewTarget();
-                }
-                 if (hit || bullet.x < 0 || bullet.x > gridPixelWidth || bullet.y < 0 || bullet.y > gridPixelHeight) {
-                     if (bullet.element) { bullet.element.remove(); } bullets.splice(i, 1);
-                 }
-            }
+             // --- Survival Timer Check ---
+             if (currentGameMode === 'survival') { const elapsedTime = now - gameStartTime; const remainingTime = SURVIVAL_DURATION - elapsedTime; if(timerDisplay) timerDisplay.textContent = `Time: ${formatTime(remainingTime)}`; if (remainingTime <= 0) { triggerWin(); return; } }
         }
 
-        function gameLoop(timestamp) { const deltaTime = (timestamp - lastTimestamp) / 1000; lastTimestamp = timestamp; update(deltaTime); renderPlayer(); renderBullets(); requestAnimationFrame(gameLoop); }
-        function handleResize() { createGrid(); lastTimestamp = performance.now(); }
+        function gameLoop(timestamp) { if (!lastTimestamp) lastTimestamp = timestamp; const deltaTime = (timestamp - lastTimestamp) / 1000; lastTimestamp = timestamp; if (gameState === 'playing') { update(deltaTime); renderPlayer(); renderBullets(); renderEnemies(); } animationFrameId = requestAnimationFrame(gameLoop); }
 
         // --- Theme Toggle Logic ---
-        function applyTheme(theme) { if (theme === 'dark') { bodyElement.classList.add('dark-mode'); themeToggle.textContent = '☀️'; } else { bodyElement.classList.remove('dark-mode'); themeToggle.textContent = '🌙'; } }
-        themeToggle.addEventListener('click', () => { const isDarkMode = bodyElement.classList.toggle('dark-mode'); const newTheme = isDarkMode ? 'dark' : 'light'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); });
+        function applyTheme(theme) { if(!bodyElement || !themeToggle) return; if (theme === 'dark') { bodyElement.classList.add('dark-mode'); themeToggle.textContent = '☀️'; } else { bodyElement.classList.remove('dark-mode'); themeToggle.textContent = '🌙'; } }
+
+         /** Starts the selected game mode */
+         function startGame(mode) { console.log(`Starting game mode: ${mode}`); currentGameMode = mode; if(startScreenOverlay) startScreenOverlay.style.display = 'none'; gameState = 'playing'; resetGame(); lastTimestamp = performance.now(); gameStartTime = performance.now(); if(timerDisplay) timerDisplay.style.display = (mode === 'survival' ? 'block' : 'none'); if (!animationFrameId) { console.log("Restarting game loop..."); requestAnimationFrame(gameLoop); } else { console.log("Game loop already running."); } }
 
         // --- Initialization ---
-        gridElement.addEventListener('pointerdown', handlePointerDown);
-        gridElement.addEventListener('pointermove', handlePointerMove);
-        gridElement.addEventListener('pointerup', handlePointerUpOrCancel);
-        gridElement.addEventListener('pointercancel', handlePointerUpOrCancel);
-        gridElement.addEventListener('pointerleave', handlePointerUpOrCancel);
-        window.addEventListener('resize', handleResize);
-        const savedTheme = localStorage.getItem('theme');
-        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-        applyTheme(initialTheme);
-        createGrid();
-        lastTimestamp = performance.now();
-        requestAnimationFrame(gameLoop);
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM Loaded. Initializing game...");
+            // Assign DOM Elements
+            gridElement = document.getElementById('game-grid'); playerElement = document.getElementById('player'); themeToggle = document.getElementById('theme-toggle'); bodyElement = document.body; scoreDisplay = document.getElementById('score-display'); timerDisplay = document.getElementById('timer-display'); startScreenOverlay = document.getElementById('start-screen-overlay'); startScoreButton = document.getElementById('start-score-button'); startSurvivalButton = document.getElementById('start-survival-button'); gameOverOverlay = document.getElementById('game-over-overlay'); finalScoreElement = document.getElementById('final-score'); topScoreScoreElement = document.getElementById('top-score-score'); topScoreSurvivalElement = document.getElementById('top-score-survival'); playAgainButtonLose = document.getElementById('play-again-button-lose'); winOverlay = document.getElementById('win-overlay'); winFinalScoreElement = document.getElementById('win-final-score'); winTopScoreScoreElement = document.getElementById('win-top-score-score'); winTopScoreSurvivalElement = document.getElementById('win-top-score-survival'); playAgainButtonWin = document.getElementById('play-again-button-win');
+            menuButton = document.getElementById('menu-button'); topScoresButton = document.getElementById('top-scores-button'); topScoresOverlay = document.getElementById('top-scores-overlay'); infoTopScoreScoreElement = document.getElementById('info-top-score-score'); infoTopScoreSurvivalElement = document.getElementById('info-top-score-survival'); closeTopScoresButton = document.getElementById('close-top-scores-button');
+
+            // Check if all elements were found
+             if (!gridElement || !playerElement || !themeToggle || !bodyElement || !scoreDisplay || !gameOverOverlay || !startScreenOverlay || !startScoreButton || !startSurvivalButton || !playAgainButtonLose || !winOverlay || !playAgainButtonWin || !timerDisplay || !menuButton || !topScoresButton || !topScoresOverlay || !closeTopScoresButton) { console.error("One or more essential DOM elements could not be found. Aborting initialization."); document.body.innerHTML = '<p style="color: red; font-family: sans-serif; padding: 20px;">Error: Could not initialize game components.</p>'; return; }
+
+            // Add Event Listeners
+            gridElement.addEventListener('pointerdown', handlePointerDown); gridElement.addEventListener('pointermove', handlePointerMove); gridElement.addEventListener('pointerup', handlePointerUpOrCancel); gridElement.addEventListener('pointercancel', handlePointerUpOrCancel); gridElement.addEventListener('pointerleave', handlePointerUpOrCancel); window.addEventListener('resize', handleResize);
+            playAgainButtonLose.addEventListener('click', goToStartScreen); playAgainButtonWin.addEventListener('click', goToStartScreen);
+            themeToggle.addEventListener('click', () => { const isDarkMode = bodyElement.classList.toggle('dark-mode'); const newTheme = isDarkMode ? 'dark' : 'light'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); });
+            startScoreButton.addEventListener('click', () => startGame('score')); startSurvivalButton.addEventListener('click', () => startGame('survival'));
+            menuButton.addEventListener('click', goToStartScreen); // Add listener for menu button
+            topScoresButton.addEventListener('click', showTopScores); // Add listener to show scores
+            closeTopScoresButton.addEventListener('click', hideTopScores); // Add listener to hide scores
+
+
+            // Set initial theme on load (Adjusted logic for dark default)
+            const savedTheme = localStorage.getItem('theme');
+            const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+            // Default to dark unless theme is saved as 'light' or system prefers light
+            if (savedTheme === 'light' || (!savedTheme && prefersLight)) {
+                 bodyElement.classList.remove('dark-mode'); // Remove default dark class
+                 applyTheme('light'); // Update button icon
+            } else {
+                 applyTheme('dark'); // Ensure button icon is correct for default dark
+            }
+
+
+            goToStartScreen(); console.log("Initialization complete. Showing start screen.");
+        });
 
     </script>
-    </body>
+     <script>
+        // Added back missing function definitions (ensure these are defined only once)
+        function applyTheme(theme) { if(!bodyElement || !themeToggle) return; if (theme === 'dark') { bodyElement.classList.add('dark-mode'); themeToggle.textContent = '☀️'; } else { bodyElement.classList.remove('dark-mode'); themeToggle.textContent = '🌙'; } }
+        function getTopScore(mode) { const key = mode === 'survival' ? TOP_SCORE_SURVIVAL_KEY : TOP_SCORE_SCORE_KEY; return parseInt(localStorage.getItem(key) || '0'); }
+        function updateTopScore(mode, currentScore) { const key = mode === 'survival' ? TOP_SCORE_SURVIVAL_KEY : TOP_SCORE_SCORE_KEY; const topScore = getTopScore(mode); if (currentScore > topScore) { localStorage.setItem(key, currentScore.toString()); return currentScore; } return topScore; }
+        function selectNewTarget() { if (currentTargetElement) { currentTargetElement.classList.remove('blinking-target'); } let newX, newY; const playerGridX = Math.floor((playerPos.x + playerSize / 2) / cellSize); const playerGridY = Math.floor((playerPos.y + playerSize / 2) / cellSize); do { newX = Math.floor(Math.random() * GRID_SIZE); newY = Math.floor(Math.random() * GRID_SIZE); } while (!isInBounds(newX, newY) || (newX === playerGridX && newY === playerGridY) || (newX === targetTile.x && newY === targetTile.y)); targetTile = { x: newX, y: newY }; currentTargetElement = gridElement?.querySelector(`.cell[data-x="${targetTile.x}"][data-y="${targetTile.y}"]`); if (currentTargetElement) { currentTargetElement.classList.add('blinking-target'); } else { console.error("Could not find DOM element for new target tile:", targetTile.x, targetTile.y); } }
+        function activateDangerZone() { if (gameState !== 'playing') return; const zoneSize = DANGER_ZONE_SIZE; const startX = Math.floor(Math.random() * (GRID_SIZE - zoneSize + 1)); const startY = Math.floor(Math.random() * (GRID_SIZE - zoneSize + 1)); dangerZone = { x: startX, y: startY, size: zoneSize }; dangerZoneCells = []; isDangerZoneActive = true; timePlayerInDangerZone = 0; dangerZoneEndTime = performance.now() + DANGER_ZONE_DURATION; nextDangerZoneAppearTime = 0; console.log("Danger Zone Activated at:", startX, startY); for (let y = startY; y < startY + zoneSize; y++) { for (let x = startX; x < startX + zoneSize; x++) { dangerZoneCells.push({x, y}); const cellElement = gridElement?.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`); if (cellElement) { cellElement.classList.add('danger-zone-blinking'); } } } }
+        function deactivateDangerZone() { if (!isDangerZoneActive) return; console.log("Deactivating Danger Zone"); isDangerZoneActive = false; dangerZoneEndTime = 0; nextDangerZoneAppearTime = performance.now() + DANGER_ZONE_APPEAR_INTERVAL; dangerZoneCells.forEach(coord => { const cellElement = gridElement?.querySelector(`.cell[data-x="${coord.x}"][data-y="${coord.y}"]`); if (cellElement) { cellElement.classList.remove('danger-zone-blinking'); } }); dangerZoneCells = []; }
+        function handleResize() { console.log("Window resized."); if(gameState === 'playing') {resetGame();} else { cellSize = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cell-size')); gridPixelWidth = GRID_SIZE * cellSize; gridPixelHeight = GRID_SIZE * cellSize; } lastTimestamp = performance.now(); }
+     </script>
+
+</body>
 </html>
