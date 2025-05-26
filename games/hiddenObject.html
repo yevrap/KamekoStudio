@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hidden Object Game - SVG Gem Icon Fix</title>
+    <title>Hidden Object Game - Blinking Emojis</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            overscroll-behavior: none; 
+            overscroll-behavior: none;
         }
         .game-screen, .main-screen {
             /* Shared styles for screen containers if any, managed by show/hide */
         }
         #gameCanvas {
-            touch-action: none; 
-            border-radius: 0.5rem; 
+            touch-action: none;
+            border-radius: 0.5rem;
             background-color: #374151; /* Fallback, slate-700 */
         }
         .custom-modal, .game-over-modal {
@@ -37,31 +37,34 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-        .star-icon-text { /* Class for the star text/emoji itself if needed for specific styling */
-             color: #fbbf24; /* amber-400 */
+        .star-icon-text {
+            color: #fbbf24; /* amber-400 */
         }
-        .gem-icon-svg { /* Class for the SVG gem icon to control its color via fill */
-             color: #34d399; /* emerald-400 */
+        .gem-icon-svg {
+            color: #34d399; /* emerald-400 */
         }
-        
-        .star { /* For star rating in modal */
-            color: #fbbf24; 
-            font-size: 2rem; 
+
+        .star {
+            color: #fbbf24;
+            font-size: 2rem;
             display: inline-block;
         }
         .star.empty { color: #6b7280; }
         .star-container { min-height: 3rem; }
 
-        #roundTimerDisplay {
+        #roundTimerDisplay, #currentRoundDisplay { /* Applied to both */
             position: absolute;
-            top: 10px;
-            right: 10px;
             background-color: rgba(0,0,0,0.5);
             color: white;
             padding: 5px 10px;
             border-radius: 5px;
-            font-size: 1.25rem;
             font-weight: bold;
+            pointer-events: none; /* Allows clicks to pass through */
+        }
+        #roundTimerDisplay {
+            top: 10px;
+            right: 10px;
+            font-size: 1.25rem;
         }
         .currency-display {
             background-color: rgba(0,0,0,0.2);
@@ -69,387 +72,596 @@
             border-radius: 0.5rem;
             margin-bottom: 0.75rem;
         }
+        #currentRoundDisplay {
+            top: 10px;
+            left: 10px;
+            font-size: 1rem;
+        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100 flex flex-col items-center justify-center min-h-screen p-2 sm:p-4 selection:bg-sky-500 selection:text-white">
 
-    <div id="mainScreen" class="main-screen w-full max-w-md bg-slate-800/90 backdrop-blur-md shadow-2xl rounded-xl p-6 sm:p-8 text-center">
-        <h1 class="text-4xl sm:text-5xl font-bold title-gradient mb-6">Emoji Hunter</h1>
-        
-        <div class="mb-6 space-y-3">
-            <div class="currency-display">
-                <p class="text-slate-300 text-lg">Your Stars:</p>
-                <p id="totalStarsDisplayContainer" class="text-4xl font-bold star-icon-text flex items-center justify-center">
-                  <span id="starAmountText">0</span><span class="ml-1">★</span>
-                </p>
-            </div>
-            <div class="currency-display">
-                <p class="text-slate-300 text-lg">Your Gems:</p>
-                <p id="totalGemsDisplayContainer" class="text-4xl font-bold gem-icon-svg flex items-center justify-center">
-                  <span id="gemAmountText">0</span>
-                  <svg class="ml-1 w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 22L22 7L12 2Z M12 4.53L19.19 7L12 19.47L4.81 7L12 4.53Z"/></svg>
-                </p>
-            </div>
-        </div>
+<div id="mainScreen" class="main-screen w-full max-w-md bg-slate-800/90 backdrop-blur-md shadow-2xl rounded-xl p-6 sm:p-8 text-center">
+    <h1 class="text-4xl sm:text-5xl font-bold title-gradient mb-6">Emoji Hunter</h1>
 
-        <div class="mb-8">
-            <h2 class="text-xl text-sky-300 font-semibold mb-3">Redeem Stars</h2>
-            <button id="redeemStarsButton" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md w-full transition-transform transform hover:scale-105">
-                Redeem 5 <span class="star-icon-text">★</span> for 1 <span class="gem-icon-svg">
+    <div class="mb-6 space-y-3">
+        <div class="currency-display">
+            <p class="text-slate-300 text-lg">Your Stars:</p>
+            <p id="totalStarsDisplayContainer" class="text-4xl font-bold star-icon-text flex items-center justify-center">
+                <span id="starAmountText">0</span><span class="ml-1">★</span>
+            </p>
+        </div>
+        <div class="currency-display">
+            <p class="text-slate-300 text-lg">Your Gems:</p>
+            <p id="totalGemsDisplayContainer" class="text-4xl font-bold gem-icon-svg flex items-center justify-center">
+                <span id="gemAmountText">0</span>
+                <svg class="ml-1 w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 22L22 7L12 2Z M12 4.53L19.19 7L12 19.47L4.81 7L12 4.53Z"/></svg>
+            </p>
+        </div>
+    </div>
+
+    <div class="mb-8">
+        <h2 class="text-xl text-sky-300 font-semibold mb-3">Redeem Stars</h2>
+        <button id="redeemStarsButton" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md w-full transition-transform transform hover:scale-105">
+            Redeem 5 <span class="star-icon-text">★</span> for 1 <span class="gem-icon-svg">
                   <svg class="inline-block w-4 h-4 -mt-px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 22L22 7L12 2Z M12 4.53L19.19 7L12 19.47L4.81 7L12 4.53Z"/></svg>
                 </span>
-            </button>
-            <p id="redeemMessage" class="text-sm text-slate-400 mt-2 h-4"></p> 
-        </div>
-        
-        <button id="startGameButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg text-xl w-full transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
-            Start New Game
         </button>
+        <p id="redeemMessage" class="text-sm text-slate-400 mt-2 h-4"></p>
     </div>
 
-    <div id="gameScreenContainer" class="game-screen w-full max-w-3xl bg-slate-800/90 backdrop-blur-md shadow-2xl rounded-xl p-4 sm:p-6 md:p-8 hidden">
-        <header class="text-center mb-4 md:mb-6">
-            <h1 class="text-3xl sm:text-4xl font-bold title-gradient">Find The Hidden Emoji!</h1>
-            <p id="targetMessage" class="mt-2 text-slate-300 text-lg sm:text-xl">Loading your challenge...</p>
-        </header>
+    <button id="startGameButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg text-xl w-full transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
+        Start New Game
+    </button>
+</div>
 
-        <main class="aspect-video sm:aspect-[4/3] w-full relative shadow-lg rounded-lg overflow-hidden">
-            <canvas id="gameCanvas" class="w-full h-full"></canvas>
-            <div id="roundTimerDisplay">Time: 20s</div>
+<div id="gameScreenContainer" class="game-screen w-full max-w-3xl bg-slate-800/90 backdrop-blur-md shadow-2xl rounded-xl p-4 sm:p-6 md:p-8 hidden">
+    <header class="text-center mb-4 md:mb-6">
+        <h1 class="text-3xl sm:text-4xl font-bold title-gradient">Find The Hidden Emoji!</h1>
+        <p id="targetMessage" class="mt-2 text-slate-300 text-lg sm:text-xl">Loading your challenge...</p>
+    </header>
 
-            <div id="successModal" class="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center custom-modal hidden rounded-lg">
-                <div class="bg-slate-800 p-6 sm:p-8 rounded-xl shadow-2xl text-center">
-                    <p id="successMessageText" class="text-2xl sm:text-3xl font-semibold text-green-400 mb-1">🎉 You found it! 🎉</p>
-                    <div id="starRatingContainer" class="my-3 star-container"></div>
-                    <p id="timeTakenText" class="text-sm text-slate-400 mb-2"></p>
-                    <p id="foundObjectName" class="text-lg sm:text-xl text-slate-200 mb-4 sm:mb-6"></p>
-                    <button id="nextRoundButton" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
-                        Next Round
-                    </button>
-                </div>
+    <main class="aspect-video sm:aspect-[4/3] w-full relative shadow-lg rounded-lg overflow-hidden">
+        <canvas id="gameCanvas" class="w-full h-full"></canvas>
+        <div id="roundTimerDisplay">Time: 20s</div>
+        <div id="currentRoundDisplay">Round: 1</div>
+
+        <div id="successModal" class="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center custom-modal hidden rounded-lg">
+            <div class="bg-slate-800 p-6 sm:p-8 rounded-xl shadow-2xl text-center">
+                <p id="successMessageText" class="text-2xl sm:text-3xl font-semibold text-green-400 mb-1">🎉 You found it! 🎉</p>
+                <div id="starRatingContainer" class="my-3 star-container"></div>
+                <p id="timeTakenText" class="text-sm text-slate-400 mb-2"></p>
+                <p id="foundObjectName" class="text-lg sm:text-xl text-slate-200 mb-4 sm:mb-6"></p>
+                <button id="nextRoundButton" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Next Round
+                </button>
             </div>
+        </div>
 
-            <div id="gameOverModal" class="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center game-over-modal hidden rounded-lg">
-                <div class="bg-slate-800 p-8 rounded-xl shadow-2xl text-center">
-                    <p class="text-4xl font-bold text-red-500 mb-4">⏰ Time's Up! ⏰</p>
-                    <p class="text-xl text-slate-200 mb-2">Session Over</p>
-                    <p id="sessionEndedScoreText" class="text-lg text-yellow-400 mb-6"></p>
-                    <button id="backToMainScreenButtonFromGameOver" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
-                        Main Menu
-                    </button>
-                </div>
+        <div id="gameOverModal" class="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center game-over-modal hidden rounded-lg">
+            <div class="bg-slate-800 p-8 rounded-xl shadow-2xl text-center">
+                <p class="text-4xl font-bold text-red-500 mb-4">⏰ Time's Up! ⏰</p>
+                <p class="text-xl text-slate-200 mb-2">Session Over</p>
+                <p id="sessionEndedScoreText" class="text-lg text-yellow-400 mb-6"></p>
+                <button id="backToMainScreenButtonFromGameOver" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+                    Main Menu
+                </button>
             </div>
-        </main>
-        
-        <footer class="text-center mt-4 md:mt-6">
-            <p id="sessionScoreDisplay" class="text-lg text-yellow-400 font-semibold mb-2">Session Score: 0 ★</p>
-            <button id="quitToMenuButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md mb-2 transition-transform transform hover:scale-105">
-                Quit to Main Menu
-            </button>
-            <p class="text-xs sm:text-sm text-slate-500">Tap or click the correct emoji. Beat the clock!</p>
-        </footer>
-    </div>
+        </div>
+    </main>
 
-    <script>
-        // --- DOM Elements ---
-        const mainScreenElement = document.getElementById('mainScreen');
-        const gameScreenContainerElement = document.getElementById('gameScreenContainer');
-        const startGameButton = document.getElementById('startGameButton');
-        
-        // Specific elements for displaying amounts
-        const starAmountTextElement = document.getElementById('starAmountText'); 
-        const gemAmountTextElement = document.getElementById('gemAmountText');   
-        
-        const redeemStarsButton = document.getElementById('redeemStarsButton');
-        const redeemMessageElement = document.getElementById('redeemMessage');
-        
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const targetMessageElement = document.getElementById('targetMessage');
-        const roundTimerDisplayElement = document.getElementById('roundTimerDisplay');
-        const sessionScoreDisplayElement = document.getElementById('sessionScoreDisplay');
-        const quitToMenuButton = document.getElementById('quitToMenuButton');
+    <footer class="text-center mt-4 md:mt-6">
+        <p id="sessionScoreDisplay" class="text-lg text-yellow-400 font-semibold mb-2">Session Score: 0 ★</p>
+        <button id="quitToMenuButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md mb-2 transition-transform transform hover:scale-105">
+            Quit to Main Menu
+        </button>
+        <p class="text-xs sm:text-sm text-slate-500">Tap or click the correct emoji. Beat the clock!</p>
+    </footer>
+</div>
 
-        const successModalElement = document.getElementById('successModal');
-        const successMessageTextElement = document.getElementById('successMessageText');
-        const starRatingContainerElement = document.getElementById('starRatingContainer');
-        const timeTakenTextElement = document.getElementById('timeTakenText');
-        const foundObjectNameElement = document.getElementById('foundObjectName');
-        const nextRoundButton = document.getElementById('nextRoundButton');
+<script>
+    // --- DOM Elements ---
+    const mainScreenElement = document.getElementById('mainScreen');
+    const gameScreenContainerElement = document.getElementById('gameScreenContainer');
+    const startGameButton = document.getElementById('startGameButton');
+    const starAmountTextElement = document.getElementById('starAmountText');
+    const gemAmountTextElement = document.getElementById('gemAmountText');
+    const redeemStarsButton = document.getElementById('redeemStarsButton');
+    const redeemMessageElement = document.getElementById('redeemMessage');
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const targetMessageElement = document.getElementById('targetMessage');
+    const roundTimerDisplayElement = document.getElementById('roundTimerDisplay');
+    const currentRoundDisplayElement = document.getElementById('currentRoundDisplay');
+    const sessionScoreDisplayElement = document.getElementById('sessionScoreDisplay');
+    const quitToMenuButton = document.getElementById('quitToMenuButton');
+    const successModalElement = document.getElementById('successModal');
+    const successMessageTextElement = document.getElementById('successMessageText');
+    const starRatingContainerElement = document.getElementById('starRatingContainer');
+    const timeTakenTextElement = document.getElementById('timeTakenText');
+    const foundObjectNameElement = document.getElementById('foundObjectName');
+    const nextRoundButton = document.getElementById('nextRoundButton');
+    const gameOverModalElement = document.getElementById('gameOverModal');
+    const sessionEndedScoreTextElement = document.getElementById('sessionEndedScoreText');
+    const backToMainScreenButtonFromGameOver = document.getElementById('backToMainScreenButtonFromGameOver');
 
-        const gameOverModalElement = document.getElementById('gameOverModal');
-        const sessionEndedScoreTextElement = document.getElementById('sessionEndedScoreText');
-        const backToMainScreenButtonFromGameOver = document.getElementById('backToMainScreenButtonFromGameOver');
+    // --- Game Configuration ---
+    const ROUND_DURATION = 20000;
+    const STARS_TO_REDEEM = 5;
+    const GEMS_PER_REDEEM = 1;
+    const BASE_SPEED_MULTIPLIER = 0.0001;
+    const SPEED_INCREMENT_PER_ROUND = 0.00005;
+    const INITIAL_SPEED_FACTOR = 1.5;
+    const MIN_SPEED_AFTER_COLLISION = 0.00005;
+    const BLINK_INTERVAL_VISIBLE_BASE = 1500; // ms
+    const BLINK_INTERVAL_INVISIBLE_BASE = 700; // ms (Rounds 10-14)
+    const BLINK_INTERVAL_INVISIBLE_LONG = 1500; // ms (Rounds 15+)
+    let lastFrameTime = 0; // For delta time calculation
 
-        // --- Game Configuration ---
-        const ROUND_DURATION = 20000; 
-        const STARS_TO_REDEEM = 5;
-        const GEMS_PER_REDEEM = 1;
-        const allPossibleItems = [ 
-            { name: "Key", emoji: "🔑" }, { name: "Star", emoji: "⭐" }, { name: "Apple", emoji: "🍎" },
-            { name: "Balloon", emoji: "🎈" }, { name: "Diamond", emoji: "💎" }, { name: "Books", emoji: "📚" },
-            { name: "Clock", emoji: "⏰" }, { name: "Mushroom", emoji: "🍄" }, { name: "Rainbow", emoji: "🌈" },
-            { name: "Lightbulb", emoji: "💡" }, { name: "Soccer Ball", emoji: "⚽" }, { name: "Gift Box", emoji: "🎁" },
-            { name: "Pizza", emoji: "🍕" }, { name: "Rocket", emoji: "🚀" }, { name: "Glasses", emoji: "👓" },
-            { name: "Camera", emoji: "📷" }, { name: "Trophy", emoji: "🏆" }, { name: "Paint Palette", emoji: "🎨" },
-            { name: "Microscope", emoji: "🔬" }, { name: "Anchor", emoji: "⚓" }, { name: "Alien", emoji: "👽" }, 
-            { name: "Robot", emoji: "🤖" }, { name: "Ghost", emoji: "👻" }, { name: "Cactus", emoji: "🌵" }, 
-            { name: "Pineapple", emoji: "🍍" }, { name: "Unicorn", emoji: "🦄" }, { name: "Bicycle", emoji: "🚲" }, 
-            { name: "Tent", emoji: "⛺" }, { name: "Maple Leaf", emoji: "🍁" }, { name: "Fire", emoji: "🔥" }, 
-            { name: "Water Wave", emoji: "🌊" }, { name: "Gem Stone", emoji: "💎" }, { name: "Snail", emoji: "🐌" }, 
-            { name: "Butterfly", emoji: "🦋" }, { name: "Ladybug", emoji: "🐞" }
-        ];
-        const numItemsToDisplay = 25; 
-        const minRelativeSize = 0.03; 
-        const maxRelativeSize = 0.08; 
+    const allPossibleItems = [
+        { name: "Key", emoji: "🔑" }, { name: "Star", emoji: "⭐" }, { name: "Apple", emoji: "🍎" },
+        { name: "Balloon", emoji: "🎈" }, { name: "Diamond", emoji: "💎" }, { name: "Books", emoji: "📚" },
+        { name: "Clock", emoji: "⏰" }, { name: "Mushroom", emoji: "🍄" }, { name: "Rainbow", emoji: "🌈" },
+        { name: "Lightbulb", emoji: "💡" }, { name: "Soccer Ball", emoji: "⚽" }, { name: "Gift Box", emoji: "🎁" },
+        { name: "Pizza", emoji: "🍕" }, { name: "Rocket", emoji: "🚀" }, { name: "Glasses", emoji: "👓" },
+        { name: "Camera", emoji: "📷" }, { name: "Trophy", emoji: "🏆" }, { name: "Paint Palette", emoji: "🎨" },
+        { name: "Microscope", emoji: "🔬" }, { name: "Anchor", emoji: "⚓" }, { name: "Alien", emoji: "👽" },
+        { name: "Robot", emoji: "🤖" }, { name: "Ghost", emoji: "👻" }, { name: "Cactus", emoji: "🌵" },
+        { name: "Pineapple", emoji: "🍍" }, { name: "Unicorn", emoji: "🦄" }, { name: "Bicycle", emoji: "🚲" },
+        { name: "Tent", emoji: "⛺" }, { name: "Maple Leaf", emoji: "🍁" }, { name: "Fire", emoji: "🔥" },
+        { name: "Water Wave", emoji: "🌊" },
+        { name: "Snail", emoji: "🐌" }, { name: "Butterfly", emoji: "🦋" }, { name: "Ladybug", emoji: "🐞" }
+    ];
+    const numItemsToDisplay = 25;
+    const minRelativeSize = 0.03;
+    const maxRelativeSize = 0.08;
 
-        // --- Game State ---
-        let gameObjects = [];
-        let targetItem = null;
-        let isRoundOver = false;
-        let lastClickTime = 0;
-        let animationFrameId; 
-        let objectFindStartTime = 0; 
-        
-        let currentScreen = 'main';
-        let sessionTotalStars = 0; 
-        let totalPersistentStars = 0; 
-        let totalGems = 0; 
+    // --- Game State ---
+    let gameObjects = [];
+    let targetItem = null;
+    let isRoundOver = false;
+    let lastClickTime = 0;
+    let animationFrameId;
+    let objectFindStartTime = 0;
+    let currentScreen = 'main';
+    let sessionTotalStars = 0;
+    let totalPersistentStars = 0;
+    let totalGems = 0;
+    let currentRoundNumber = 0;
+    let roundTimeLeft = ROUND_DURATION;
+    let roundIntervalId = null;
 
-        let roundTimeLeft = ROUND_DURATION;
-        let roundIntervalId = null;
+    // --- Local Storage ---
+    function loadPersistentData() {
+        totalPersistentStars = parseInt(localStorage.getItem('totalPersistentStars_eh')) || 0;
+        totalGems = parseInt(localStorage.getItem('totalGems_eh')) || 0;
+    }
+    function savePersistentData() {
+        localStorage.setItem('totalPersistentStars_eh', totalPersistentStars);
+        localStorage.setItem('totalGems_eh', totalGems);
+    }
 
-        // --- Local Storage ---
-        function loadPersistentData() {
-            totalPersistentStars = parseInt(localStorage.getItem('totalPersistentStars_eh')) || 0;
-            totalGems = parseInt(localStorage.getItem('totalGems_eh')) || 0;
-        }
-        function savePersistentData() {
-            localStorage.setItem('totalPersistentStars_eh', totalPersistentStars);
-            localStorage.setItem('totalGems_eh', totalGems);
-        }
+    // --- Screen Management & UI Updates ---
+    function updateMainScreenDisplays() {
+        if (starAmountTextElement) starAmountTextElement.textContent = totalPersistentStars;
+        if (gemAmountTextElement) gemAmountTextElement.textContent = totalGems;
+    }
 
-        // --- Screen Management & UI Updates ---
-        function updateMainScreenDisplays() {
-            if (starAmountTextElement) starAmountTextElement.textContent = totalPersistentStars;
-            if (gemAmountTextElement) gemAmountTextElement.textContent = totalGems;
-        }
-
-        function showScreen(screenName) {
-            currentScreen = screenName;
-            mainScreenElement.classList.toggle('hidden', screenName !== 'main');
-            gameScreenContainerElement.classList.toggle('hidden', screenName !== 'game');
-
-            if (screenName === 'main') {
-                loadPersistentData(); 
-                updateMainScreenDisplays();
-                if (animationFrameId) cancelAnimationFrame(animationFrameId);
-                if (roundIntervalId) clearInterval(roundIntervalId);
-            }
-        }
-        
-        // --- Star Redemption ---
-        function redeemStars() {
-            if (totalPersistentStars >= STARS_TO_REDEEM) {
-                totalPersistentStars -= STARS_TO_REDEEM;
-                totalGems += GEMS_PER_REDEEM;
-                savePersistentData();
-                updateMainScreenDisplays();
-                redeemMessageElement.textContent = `Redeemed ${STARS_TO_REDEEM} ★ for ${GEMS_PER_REDEEM} gem!`; // Singular gem
-            } else {
-                redeemMessageElement.textContent = `Not enough stars to redeem.`;
-            }
-            setTimeout(() => { redeemMessageElement.textContent = ''; }, 3000);
-        }
-
-
-        // --- Game Logic ---
-        function startNewGameSession() {
-            sessionTotalStars = 0;
-            sessionScoreDisplayElement.textContent = `Session Score: ${sessionTotalStars} ★`;
-            startNextRound();
-        }
-
-        function startNextRound() {
-            isRoundOver = false;
-            successModalElement.classList.add('hidden');
-            gameOverModalElement.classList.add('hidden');
-            targetMessageElement.classList.remove('pulsate');
-            
-            showScreen('game'); 
-            
-            generateObjects();
-            selectTarget();
-            updateTargetMessage();
-            
-            objectFindStartTime = Date.now(); 
-            roundTimeLeft = ROUND_DURATION / 1000; 
-            updateRoundTimerDisplay();
-
-            if (roundIntervalId) clearInterval(roundIntervalId);
-            roundIntervalId = setInterval(handleRoundTick, 1000);
-
+    function showScreen(screenName) {
+        currentScreen = screenName;
+        mainScreenElement.classList.toggle('hidden', screenName !== 'main');
+        gameScreenContainerElement.classList.toggle('hidden', screenName !== 'game');
+        if (screenName === 'main') {
+            loadPersistentData();
+            updateMainScreenDisplays();
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            animateScene(); 
-        }
-        
-        function handleRoundTick() {
-            roundTimeLeft--;
-            updateRoundTimerDisplay();
-            if (roundTimeLeft <= 0) {
-                if (!isRoundOver) { 
-                   handleSessionEnd(false, 0, 0); 
-                }
-            }
-        }
-
-        function updateRoundTimerDisplay() {
-            roundTimerDisplayElement.textContent = `Time: ${roundTimeLeft}s`;
-        }
-
-        function handleSessionEnd(wasFound, starsEarnedThisRound, timeTakenToFind, userQuit = false) {
-            if (isRoundOver && !userQuit) return; 
-            
-            isRoundOver = true; 
             if (roundIntervalId) clearInterval(roundIntervalId);
-            roundIntervalId = null;
+            lastFrameTime = 0; // Reset last frame time when not in game
+        }
+    }
 
-            if (wasFound) { 
-                sessionTotalStars += starsEarnedThisRound;
-                sessionScoreDisplayElement.textContent = `Session Score: ${sessionTotalStars} ★`;
-                
-                displayStarRating(timeTakenToFind, starsEarnedThisRound);
-                successMessageTextElement.textContent = `🎉 You found the ${targetItem.emoji} ${targetItem.name}! 🎉`;
-                foundObjectNameElement.textContent = ``; 
-                successModalElement.classList.remove('hidden');
-            } else { 
-                totalPersistentStars += sessionTotalStars; 
-                savePersistentData(); 
-                
-                if (!userQuit) { 
-                    sessionEndedScoreTextElement.textContent = `You earned ${sessionTotalStars} ★ this session!`;
-                    gameOverModalElement.classList.remove('hidden');
-                } else { 
-                    showScreen('main');
-                }
+    function redeemStars() {
+        if (totalPersistentStars >= STARS_TO_REDEEM) {
+            totalPersistentStars -= STARS_TO_REDEEM;
+            totalGems += GEMS_PER_REDEEM;
+            savePersistentData();
+            updateMainScreenDisplays();
+            redeemMessageElement.textContent = `Redeemed ${STARS_TO_REDEEM} ★ for ${GEMS_PER_REDEEM} gem!`;
+        } else {
+            redeemMessageElement.textContent = `Not enough stars to redeem.`;
+        }
+        setTimeout(() => { redeemMessageElement.textContent = ''; }, 3000);
+    }
+
+    // --- Game Logic ---
+    function startNewGameSession() {
+        sessionTotalStars = 0;
+        currentRoundNumber = 0;
+        sessionScoreDisplayElement.textContent = `Session Score: ${sessionTotalStars} ★`;
+        startNextRound();
+    }
+
+    function startNextRound() {
+        isRoundOver = false;
+        targetItem = null;
+        currentRoundNumber++;
+        currentRoundDisplayElement.textContent = `Round: ${currentRoundNumber}`;
+        successModalElement.classList.add('hidden');
+        gameOverModalElement.classList.add('hidden');
+        targetMessageElement.classList.remove('pulsate');
+        showScreen('game');
+        generateObjectsAndSelectTarget();
+        updateTargetMessage();
+        objectFindStartTime = Date.now();
+        roundTimeLeft = ROUND_DURATION / 1000;
+        updateRoundTimerDisplay();
+        if (roundIntervalId) clearInterval(roundIntervalId);
+        roundIntervalId = setInterval(handleRoundTick, 1000);
+
+        lastFrameTime = performance.now(); // Initialize for delta time
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        animateScene(lastFrameTime);
+    }
+
+    function handleRoundTick() {
+        roundTimeLeft--;
+        updateRoundTimerDisplay();
+        if (roundTimeLeft <= 0) {
+            if (!isRoundOver) {
+                handleSessionEnd(false, 0, 0);
             }
         }
-        
-        function quitGameAndGoToMenu() {
-            handleSessionEnd(false, 0, 0, true); 
-        }
+    }
 
-        function generateObjects() { 
-            gameObjects = [];
-            const shuffledItems = [...allPossibleItems].sort(() => 0.5 - Math.random());
-            const itemsForThisRound = shuffledItems.slice(0, numItemsToDisplay);
-            itemsForThisRound.forEach(itemDetails => {
-                let placed = false; let attempts = 0; let newObj; 
-                while (!placed && attempts < 30) { 
-                    newObj = {...itemDetails, id:Math.random().toString(36).substr(2,9), x:Math.random()*0.92+0.04, y:Math.random()*0.92+0.04, size:minRelativeSize+Math.random()*(maxRelativeSize-minRelativeSize), isTarget:false, found:false, angle:(Math.random()-0.5)*Math.PI*0.6, opacity:(Math.random()<0.3)?(0.7+Math.random()*0.2):1, vx:(Math.random()-0.5)*0.0001, vy:(Math.random()-0.5)*0.0001};
-                    let overlapsSignificantly = false;
-                    for (const obj of gameObjects) { const dist = Math.sqrt(Math.pow(obj.x-newObj.x,2)+Math.pow(obj.y-newObj.y,2)); if (dist < (obj.size+newObj.size)*0.35) { overlapsSignificantly=true; break; }}
-                    if (!overlapsSignificantly) placed=true; attempts++;
-                }
-                gameObjects.push(newObj); 
-            });
-        }
-        function selectTarget() { 
-            if(gameObjects.length > 0){ const targetIndex=Math.floor(Math.random()*gameObjects.length); targetItem=gameObjects[targetIndex]; targetItem.isTarget=true; targetItem.opacity=1; }
-        }
-        function updateTargetMessage() { 
-            if(targetItem){targetMessageElement.innerHTML=`Find the <span class="text-2xl sm:text-3xl font-bold text-yellow-400">${targetItem.emoji}</span> ${targetItem.name}!`; setTimeout(()=>targetMessageElement.classList.add('pulsate'),100);}else{targetMessageElement.textContent="Error: No target item selected.";}
-        }
-        function drawBackgroundPattern() { 
-            const pS=30,nC=Math.ceil(canvas.width/pS),nR=Math.ceil(canvas.height/pS); ctx.save(); ctx.fillStyle='rgba(255,255,255,0.02)';
-            for(let i=0;i<nC;i++){for(let j=0;j<nR;j++){if((i+j)%2===0){ctx.beginPath();ctx.arc(i*pS+pS/2,j*pS+pS/2,2,0,Math.PI*2);ctx.fill();}}} ctx.restore();
-        }
-        function drawScene() { 
-            canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight; ctx.fillStyle='#374151'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            drawBackgroundPattern(); gameObjects.forEach(obj=>drawObject(obj));
-            if(isRoundOver && targetItem && targetItem.found){highlightFoundObject(targetItem);}
-        }
-        function animateScene() { 
-            if(!isRoundOver){gameObjects.forEach(o=>{o.x+=o.vx;o.y+=o.vy;const opS=o.size*Math.min(canvas.width,canvas.height);if(o.x*canvas.width-opS/2<0||o.x*canvas.width+opS/2>canvas.width){o.vx*=-1;o.x=Math.max(opS/(2*canvas.width),Math.min(o.x,1-opS/(2*canvas.width)));}if(o.y*canvas.height-opS/2<0||o.y*canvas.height+opS/2>canvas.height){o.vy*=-1;o.y=Math.max(opS/(2*canvas.height),Math.min(o.y,1-opS/(2*canvas.height)));}});}
-            drawScene();
-            if (!isRoundOver || (isRoundOver && targetItem && targetItem.found)) { 
-                 animationFrameId = requestAnimationFrame(animateScene);
+    function updateRoundTimerDisplay() {
+        roundTimerDisplayElement.textContent = `Time: ${roundTimeLeft}s`;
+    }
+
+    function handleSessionEnd(wasFound, starsEarnedThisRound, timeTakenToFind, userQuit = false) {
+        if (isRoundOver && !userQuit) return;
+        isRoundOver = true;
+        if (roundIntervalId) clearInterval(roundIntervalId);
+        roundIntervalId = null;
+        if (animationFrameId) cancelAnimationFrame(animationFrameId); // Stop animation loop
+        animationFrameId = null;
+
+        if (wasFound) {
+            sessionTotalStars += starsEarnedThisRound;
+            sessionScoreDisplayElement.textContent = `Session Score: ${sessionTotalStars} ★`;
+            displayStarRating(timeTakenToFind, starsEarnedThisRound);
+            successMessageTextElement.textContent = `🎉 You found the ${targetItem.emoji} ${targetItem.name}! 🎉`;
+            foundObjectNameElement.textContent = ``;
+            successModalElement.classList.remove('hidden');
+        } else {
+            totalPersistentStars += sessionTotalStars;
+            savePersistentData();
+            if (!userQuit) {
+                sessionEndedScoreTextElement.textContent = `You earned ${sessionTotalStars} ★ this session! (Round ${currentRoundNumber})`;
+                gameOverModalElement.classList.remove('hidden');
             } else {
-                 if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                showScreen('main');
             }
         }
-        function drawObject(obj) { 
-            const pX=obj.x*canvas.width,pY=obj.y*canvas.height,pS=obj.size*Math.min(canvas.width,canvas.height);ctx.save();ctx.translate(pX,pY);ctx.rotate(obj.angle);ctx.globalAlpha=obj.isTarget?1:obj.opacity;ctx.font=`${pS}px Inter,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor='rgba(0,0,0,0.5)';ctx.shadowBlur=8;ctx.shadowOffsetX=pS*0.05;ctx.shadowOffsetY=pS*0.05;ctx.fillText(obj.emoji,0,0);ctx.restore();
+    }
+
+    function quitGameAndGoToMenu() {
+        handleSessionEnd(false, 0, 0, true);
+    }
+
+    function generateObjectInstance(itemDetail, isThisTheTarget = false) {
+        const effectiveRoundForSpeed = Math.max(1, currentRoundNumber);
+        const currentSpeedMagnitude = BASE_SPEED_MULTIPLIER + (SPEED_INCREMENT_PER_ROUND * (effectiveRoundForSpeed - 1));
+        let newObj = {
+            ...itemDetail,
+            id: Math.random().toString(36).substr(2, 9) + (isThisTheTarget ? "-target" : "-distractor"),
+            x: Math.random() * 0.92 + 0.04,
+            y: Math.random() * 0.92 + 0.04,
+            size: minRelativeSize + Math.random() * (maxRelativeSize - minRelativeSize),
+            isTarget: isThisTheTarget,
+            found: false,
+            angle: (Math.random() - 0.5) * Math.PI * 0.6,
+            opacity: isThisTheTarget ? 1 : ((Math.random() < 0.3) ? (0.7 + Math.random() * 0.2) : 1),
+            vx: 0, vy: 0,
+            // Blinking properties
+            isVisible: true,
+            blinkTimer: BLINK_INTERVAL_VISIBLE_BASE + Math.random() * 500, // Start visible, with some randomness
+            timeVisible: BLINK_INTERVAL_VISIBLE_BASE,
+            timeInvisible: currentRoundNumber >= 15 ? BLINK_INTERVAL_INVISIBLE_LONG : BLINK_INTERVAL_INVISIBLE_BASE
+        };
+
+        if (currentRoundNumber >= 5) {
+            let angle = Math.random() * 2 * Math.PI;
+            newObj.vx = Math.cos(angle) * currentSpeedMagnitude * INITIAL_SPEED_FACTOR;
+            newObj.vy = Math.sin(angle) * currentSpeedMagnitude * INITIAL_SPEED_FACTOR;
+        } else {
+            newObj.vx = (Math.random() - 0.5) * currentSpeedMagnitude * INITIAL_SPEED_FACTOR;
+            newObj.vy = (Math.random() - 0.5) * currentSpeedMagnitude * INITIAL_SPEED_FACTOR;
         }
-        function highlightFoundObject(obj) { 
-            const pX=obj.x*canvas.width,pY=obj.y*canvas.height,pS=obj.size*Math.min(canvas.width,canvas.height);ctx.save();constpF=Math.abs(Math.sin(Date.now()/200))*0.3+0.7;ctx.strokeStyle=`rgba(74,222,128,${0.6*pF})`;ctx.lineWidth=(pS*0.1)*pF;ctx.beginPath();ctx.arc(pX,pY,pS*(0.75*pF),0,Math.PI*2);ctx.stroke();ctx.strokeStyle=`rgba(167,243,208,${0.8*pF})`;ctx.lineWidth=(pS*0.05)*pF;ctx.beginPath();ctx.arc(pX,pY,pS*(0.65*pF),0,Math.PI*2);ctx.stroke();ctx.restore();
-        }
-        function calculateStars(timeTakenMs) { 
-            if(timeTakenMs<2000)return 3; if(timeTakenMs<4000)return 2; if(timeTakenMs<5000)return 1; return 0;
-        }
-        function displayStarRating(timeTakenMs, starsEarned) { 
-            starRatingContainerElement.innerHTML=''; for(let i=0;i<3;i++){const sS=document.createElement('span');sS.classList.add('star');sS.textContent='★';if(i>=starsEarned)sS.classList.add('empty');starRatingContainerElement.appendChild(sS);}
-            timeTakenTextElement.textContent=`Found in: ${(timeTakenMs/1000).toFixed(2)}s`;
+        return newObj;
+    }
+
+
+    function generateObjectsAndSelectTarget() {
+        gameObjects = [];
+        targetItem = null;
+        const targetDetailsIndex = Math.floor(Math.random() * allPossibleItems.length);
+        const currentTargetItemDetails = allPossibleItems[targetDetailsIndex];
+        let attempts = 0;
+        let placedTarget = false;
+        let newTargetObjAttempt;
+
+        while (!placedTarget && attempts < 50) {
+            newTargetObjAttempt = generateObjectInstance(currentTargetItemDetails, true);
+            placedTarget = true;
+            attempts++;
         }
 
-        function handleCanvasInteraction(event) { 
-            event.preventDefault(); 
-            const now = Date.now();
-            if (now - lastClickTime < 100 || isRoundOver) return; 
-            lastClickTime = now;
+        if (placedTarget && newTargetObjAttempt) {
+            gameObjects.push(newTargetObjAttempt);
+            targetItem = newTargetObjAttempt;
+        } else {
+            console.error("CRITICAL: Failed to place the target object.");
+            targetItem = generateObjectInstance(currentTargetItemDetails, true);
+            targetItem.x = 0.5; targetItem.y = 0.5;
+            gameObjects.push(targetItem);
+        }
 
-            const rect = canvas.getBoundingClientRect();
-            const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
-            let cX,cY; if(event.touches&&event.touches.length>0){cX=event.touches[0].clientX;cY=event.touches[0].clientY;}else{cX=event.clientX;cY=event.clientY;}
-            const clX=(cX-rect.left)*scaleX, clY=(cY-rect.top)*scaleY;
+        const distractorPoolDetails = allPossibleItems.filter(item => item.emoji !== currentTargetItemDetails.emoji);
+        let distractorsToPlace = numItemsToDisplay - 1;
+        if (gameObjects.length === 0) distractorsToPlace = numItemsToDisplay;
 
-            for (let i = gameObjects.length - 1; i >= 0; i--) {
-                const obj = gameObjects[i];
-                const oPX=obj.x*canvas.width,oPY=obj.y*canvas.height,oPS=obj.size*Math.min(canvas.width,canvas.height),hS=oPS/2;
-                const dist=Math.sqrt(Math.pow(clX-oPX,2)+Math.pow(clY-oPY,2));
+        for (let i = 0; i < distractorsToPlace; i++) {
+            if (distractorPoolDetails.length === 0 && allPossibleItems.length > 1) {
+                console.warn("Ran out of unique emoji distractors.");
+                break;
+            }
+            if (distractorPoolDetails.length === 0 && allPossibleItems.length <=1) break;
 
-                if (dist < hS * 0.75) { 
-                    if (obj.isTarget) {
-                        obj.found = true; targetItem.found = true; 
-                        const timeTaken = Date.now() - objectFindStartTime;
-                        const stars = calculateStars(timeTaken);
-                        handleSessionEnd(true, stars, timeTaken); 
-                    } else { 
-                        ctx.save();ctx.fillStyle='rgba(255,0,0,0.3)';ctx.beginPath();ctx.arc(clX,clY,15,0,Math.PI*2);ctx.fill();ctx.restore();
+            const distractorDetail = distractorPoolDetails.length > 0
+                ? distractorPoolDetails[Math.floor(Math.random() * distractorPoolDetails.length)]
+                : allPossibleItems[Math.floor(Math.random() * allPossibleItems.length)];
+
+            let chosenDistractorDetail = distractorDetail;
+            if (distractorPoolDetails.length === 0 && chosenDistractorDetail.emoji === currentTargetItemDetails.emoji && allPossibleItems.length > 1) {
+                let attemptsToFindDifferent = 0;
+                do {
+                    chosenDistractorDetail = allPossibleItems[Math.floor(Math.random() * allPossibleItems.length)];
+                    attemptsToFindDifferent++;
+                } while (chosenDistractorDetail.emoji === currentTargetItemDetails.emoji && attemptsToFindDifferent < allPossibleItems.length * 2);
+            }
+
+            let placedDistractor = false;
+            attempts = 0;
+            let newDistractorObjAttempt;
+            while (!placedDistractor && attempts < 30) {
+                newDistractorObjAttempt = generateObjectInstance(chosenDistractorDetail, false);
+                let overlapsSignificantly = false;
+                for (const obj of gameObjects) {
+                    const dist = Math.sqrt(Math.pow(obj.x - newDistractorObjAttempt.x, 2) + Math.pow(obj.y - newDistractorObjAttempt.y, 2));
+                    const collisionRadiusObj = obj.size / 2;
+                    const collisionRadiusNew = newDistractorObjAttempt.size / 2;
+                    if (dist < (collisionRadiusObj + collisionRadiusNew) * 0.7) {
+                        overlapsSignificantly = true;
+                        break;
                     }
-                    return; 
+                }
+                if (!overlapsSignificantly) placedDistractor = true;
+                attempts++;
+            }
+            if (placedDistractor && newDistractorObjAttempt) {
+                gameObjects.push(newDistractorObjAttempt);
+            } else if (newDistractorObjAttempt) {
+                gameObjects.push(newDistractorObjAttempt);
+            }
+        }
+        if (!targetItem && gameObjects.length > 0) {
+            console.error("Fallback: Target item was not set. Assigning first available object matching original target details, or first object.");
+            let potentialTarget = gameObjects.find(obj => obj.name === currentTargetItemDetails.name && obj.emoji === currentTargetItemDetails.emoji && !obj.isTarget);
+            if (potentialTarget) {
+                targetItem = potentialTarget;
+                targetItem.isTarget = true;
+            } else {
+                targetItem = gameObjects[0];
+                targetItem.isTarget = true;
+            }
+            if(targetItem) {
+                targetItem.opacity = 1;
+                currentTargetItemDetails.name = targetItem.name;
+                currentTargetItemDetails.emoji = targetItem.emoji;
+            }
+        }
+    }
+
+    function updateTargetMessage() {
+        if(targetItem){
+            targetMessageElement.innerHTML=`Find the <span class="text-2xl sm:text-3xl font-bold text-yellow-400">${targetItem.emoji}</span> ${targetItem.name}!`;
+            setTimeout(()=>targetMessageElement.classList.add('pulsate'),100);
+        } else {
+            targetMessageElement.textContent="Error: Target item not ready.";
+            console.error("updateTargetMessage called but targetItem is null or undefined.");
+        }
+    }
+
+    function animateScene(currentTime) {
+        if (isRoundOver) { // If round is over, ensure animation stops
+            if(animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+            return;
+        }
+
+        const deltaTime = currentTime - lastFrameTime;
+        lastFrameTime = currentTime;
+
+        if(!isRoundOver){ // This check might be redundant due to the one above, but safe
+            // Update Blinking
+            if (currentRoundNumber >= 10) {
+                gameObjects.forEach(obj => {
+                    obj.blinkTimer -= deltaTime;
+                    if (obj.blinkTimer <= 0) {
+                        obj.isVisible = !obj.isVisible;
+                        if (obj.isVisible) {
+                            obj.blinkTimer = obj.timeVisible + Math.random() * 200 - 100; // Add some variance
+                        } else {
+                            obj.blinkTimer = obj.timeInvisible + Math.random() * 200 - 100;
+                        }
+                    }
+                });
+            }
+
+
+            gameObjects.forEach(obj => {
+                const objRadiusRelX = (obj.size * Math.min(canvas.width, canvas.height) / 2) / canvas.width;
+                const objRadiusRelY = (obj.size * Math.min(canvas.width, canvas.height) / 2) / canvas.height;
+                let nextX = obj.x + obj.vx;
+                let nextY = obj.y + obj.vy;
+                if (nextX - objRadiusRelX < 0 || nextX + objRadiusRelX > 1) {
+                    obj.vx *= -1;
+                    if (nextX - objRadiusRelX < 0) obj.x = objRadiusRelX;
+                    else if (nextX + objRadiusRelX > 1) obj.x = 1 - objRadiusRelX;
+                }
+                if (nextY - objRadiusRelY < 0 || nextY + objRadiusRelY > 1) {
+                    obj.vy *= -1;
+                    if (nextY - objRadiusRelY < 0) obj.y = objRadiusRelY;
+                    else if (nextY + objRadiusRelY > 1) obj.y = 1 - objRadiusRelY;
+                }
+                obj.x += obj.vx;
+                obj.y += obj.vy;
+                obj.x = Math.max(objRadiusRelX, Math.min(obj.x, 1 - objRadiusRelX));
+                obj.y = Math.max(objRadiusRelY, Math.min(obj.y, 1 - objRadiusRelY));
+            });
+
+            if (currentRoundNumber >= 5) {
+                for (let i = 0; i < gameObjects.length; i++) {
+                    for (let j = i + 1; j < gameObjects.length; j++) {
+                        const objA = gameObjects[i];
+                        const objB = gameObjects[j];
+                        const dx = (objB.x * canvas.width) - (objA.x * canvas.width);
+                        const dy = (objB.y * canvas.height) - (objA.y * canvas.height);
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        const radiusA = (objA.size * Math.min(canvas.width, canvas.height)) / 2;
+                        const radiusB = (objB.size * Math.min(canvas.width, canvas.height)) / 2;
+
+                        if (distance < radiusA + radiusB) {
+                            let tempVx = objA.vx; let tempVy = objA.vy;
+                            objA.vx = objB.vx; objA.vy = objB.vy;
+                            objB.vx = tempVx; objB.vy = tempVy;
+                            if (Math.abs(objA.vx) < MIN_SPEED_AFTER_COLLISION) objA.vx = (objA.vx < 0 ? -1:1) * MIN_SPEED_AFTER_COLLISION;
+                            if (Math.abs(objA.vy) < MIN_SPEED_AFTER_COLLISION) objA.vy = (objA.vy < 0 ? -1:1) * MIN_SPEED_AFTER_COLLISION;
+                            if (Math.abs(objB.vx) < MIN_SPEED_AFTER_COLLISION) objB.vx = (objB.vx < 0 ? -1:1) * MIN_SPEED_AFTER_COLLISION;
+                            if (Math.abs(objB.vy) < MIN_SPEED_AFTER_COLLISION) objB.vy = (objB.vy < 0 ? -1:1) * MIN_SPEED_AFTER_COLLISION;
+                            const overlap = (radiusA + radiusB) - distance;
+                            let normalX, normalY;
+                            if (distance < 0.0001) {
+                                normalX = (Math.random() - 0.5) * 2; normalY = (Math.random() - 0.5) * 2;
+                                const mag = Math.sqrt(normalX*normalX + normalY*normalY);
+                                if (mag > 0) { normalX /= mag; normalY /= mag; } else { normalX = 1; normalY = 0;}
+                            } else { normalX = dx / distance; normalY = dy / distance; }
+                            const separationAmount = overlap / 2;
+                            objA.x -= (normalX * separationAmount) / canvas.width;
+                            objA.y -= (normalY * separationAmount) / canvas.height;
+                            objB.x += (normalX * separationAmount) / canvas.width;
+                            objB.y += (normalY * separationAmount) / canvas.height;
+                            const objARelX = (objA.size*Math.min(canvas.width,canvas.height)/2)/canvas.width;
+                            const objARelY = (objA.size*Math.min(canvas.width,canvas.height)/2)/canvas.height;
+                            objA.x = Math.max(objARelX, Math.min(objA.x, 1 - objARelX));
+                            objA.y = Math.max(objARelY, Math.min(objA.y, 1 - objARelY));
+                            const objBRelX = (objB.size*Math.min(canvas.width,canvas.height)/2)/canvas.width;
+                            const objBRelY = (objB.size*Math.min(canvas.width,canvas.height)/2)/canvas.height;
+                            objB.x = Math.max(objBRelX, Math.min(objB.x, 1 - objBRelX));
+                            objB.y = Math.max(objBRelY, Math.min(objB.y, 1 - objBRelY));
+                        }
+                    }
                 }
             }
         }
-
-        // --- Event Listeners ---
-        startGameButton.addEventListener('click', startNewGameSession);
-        redeemStarsButton.addEventListener('click', redeemStars);
-        quitToMenuButton.addEventListener('click', quitGameAndGoToMenu);
-        
-        canvas.addEventListener('click', handleCanvasInteraction);
-        canvas.addEventListener('touchstart', handleCanvasInteraction, { passive: false });
-
-        nextRoundButton.addEventListener('click', startNextRound); 
-        backToMainScreenButtonFromGameOver.addEventListener('click', () => showScreen('main')); 
-        
-
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                if(currentScreen==='game' && (!isRoundOver || (isRoundOver && targetItem && targetItem.found))){drawScene();}
-            }, 100);
-        });
-        
-        // --- Initial Game Load ---
-        loadPersistentData(); 
-        showScreen('main'); 
-        
-        if (document.fonts && typeof document.fonts.ready === 'object') {
-            document.fonts.ready.catch(err => console.warn("Font loading issue.", err));
+        drawScene();
+        // Continue animation if round is not over, OR if round is over but target was found (to show highlight)
+        // This logic was slightly off, it should stop if round is over AND target was NOT found.
+        // Or more simply, only continue if !isRoundOver OR (isRoundOver AND targetItem.found)
+        // The current logic in handleSessionEnd already cancels animationFrameId if round ends.
+        // So, we just need to request the next frame if the round isn't over.
+        if (!isRoundOver) {
+            animationFrameId = requestAnimationFrame(animateScene);
+        } else if (targetItem && targetItem.found) { // If round ended by finding, keep animating highlight
+            animationFrameId = requestAnimationFrame(animateScene);
         }
+    }
 
-    </script>
+    function drawBackgroundPattern() { const pS=30,nC=Math.ceil(canvas.width/pS),nR=Math.ceil(canvas.height/pS); ctx.save(); ctx.fillStyle='rgba(255,255,255,0.02)'; for(let i=0;i<nC;i++){for(let j=0;j<nR;j++){if((i+j)%2===0){ctx.beginPath();ctx.arc(i*pS+pS/2,j*pS+pS/2,2,0,Math.PI*2);ctx.fill();}}} ctx.restore();}
+    function drawScene() { canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight; ctx.fillStyle='#374151'; ctx.fillRect(0,0,canvas.width,canvas.height); drawBackgroundPattern(); gameObjects.forEach(obj=>drawObject(obj)); if(isRoundOver && targetItem && targetItem.found){highlightFoundObject(targetItem);}}
+
+    function drawObject(obj) {
+        if (!obj.isVisible && currentRoundNumber >= 10) return; // Don't draw if invisible and blinking is active
+
+        const pX=obj.x*canvas.width,pY=obj.y*canvas.height,pS=obj.size*Math.min(canvas.width,canvas.height);
+        ctx.save();
+        ctx.translate(pX,pY);
+        ctx.rotate(obj.angle);
+        ctx.globalAlpha=obj.isTarget?1:obj.opacity;
+        ctx.font=`${pS}px Inter,sans-serif`;
+        ctx.textAlign='center';
+        ctx.textBaseline='middle';
+        ctx.shadowColor='rgba(0,0,0,0.5)';
+        ctx.shadowBlur=8;
+        ctx.shadowOffsetX=pS*0.05;
+        ctx.shadowOffsetY=pS*0.05;
+        ctx.fillText(obj.emoji,0,0);
+        ctx.restore();
+    }
+    function highlightFoundObject(obj) { const pX=obj.x*canvas.width,pY=obj.y*canvas.height,pS=obj.size*Math.min(canvas.width,canvas.height);ctx.save();const pF=Math.abs(Math.sin(Date.now()/200))*0.3+0.7;ctx.strokeStyle=`rgba(74,222,128,${0.6*pF})`;ctx.lineWidth=(pS*0.1)*pF;ctx.beginPath();ctx.arc(pX,pY,pS*(0.75*pF),0,Math.PI*2);ctx.stroke();ctx.strokeStyle=`rgba(167,243,208,${0.8*pF})`;ctx.lineWidth=(pS*0.05)*pF;ctx.beginPath();ctx.arc(pX,pY,pS*(0.65*pF),0,Math.PI*2);ctx.stroke();ctx.restore();}
+    function calculateStars(timeTakenMs) { if(timeTakenMs<2000)return 3; if(timeTakenMs<4000)return 2; if(timeTakenMs<5000)return 1; return 0;}
+    function displayStarRating(timeTakenMs, starsEarned) { starRatingContainerElement.innerHTML=''; for(let i=0;i<3;i++){const sS=document.createElement('span');sS.classList.add('star');sS.textContent='★';if(i>=starsEarned)sS.classList.add('empty');starRatingContainerElement.appendChild(sS);} timeTakenTextElement.textContent=`Found in: ${(timeTakenMs/1000).toFixed(2)}s`;}
+
+    function handleCanvasInteraction(event) {
+        event.preventDefault();
+        const now = Date.now();
+        if (now - lastClickTime < 100 || isRoundOver) return;
+        lastClickTime = now;
+        const rect = canvas.getBoundingClientRect();
+        const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+        let cX,cY; if(event.touches&&event.touches.length>0){cX=event.touches[0].clientX;cY=event.touches[0].clientY;}else{cX=event.clientX;cY=event.clientY;}
+        const clX=(cX-rect.left)*scaleX, clY=(cY-rect.top)*scaleY;
+        for (let i = gameObjects.length - 1; i >= 0; i--) {
+            const obj = gameObjects[i];
+            const oPX=obj.x*canvas.width,oPY=obj.y*canvas.height,oPS=obj.size*Math.min(canvas.width,canvas.height),hS=oPS/2;
+            const dist=Math.sqrt(Math.pow(clX-oPX,2)+Math.pow(clY-oPY,2));
+            if (dist < hS * 0.75) {
+                if (obj.isTarget && obj === targetItem) {
+                    obj.found = true;
+                    const timeTaken = Date.now() - objectFindStartTime;
+                    const stars = calculateStars(timeTaken);
+                    handleSessionEnd(true, stars, timeTaken);
+                } else {
+                    ctx.save();ctx.fillStyle='rgba(255,0,0,0.3)';ctx.beginPath();ctx.arc(clX,clY,15,0,Math.PI*2);ctx.fill();ctx.restore();
+                }
+                return;
+            }
+        }
+    }
+
+    // --- Event Listeners ---
+    startGameButton.addEventListener('click', startNewGameSession);
+    redeemStarsButton.addEventListener('click', redeemStars);
+    quitToMenuButton.addEventListener('click', quitGameAndGoToMenu);
+    canvas.addEventListener('click', handleCanvasInteraction);
+    canvas.addEventListener('touchstart', handleCanvasInteraction, { passive: false });
+    nextRoundButton.addEventListener('click', startNextRound);
+    backToMainScreenButtonFromGameOver.addEventListener('click', () => showScreen('main'));
+
+    let resizeTimeout;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+            if(currentScreen==='game' && (!isRoundOver || (isRoundOver && targetItem && targetItem.found))){drawScene();}
+        }, 100);
+    });
+
+    // --- Initial Game Load ---
+    loadPersistentData();
+    showScreen('main');
+    if (document.fonts && typeof document.fonts.ready === 'object') {
+        document.fonts.ready.catch(err => console.warn("Font loading issue.", err));
+    }
+</script>
 </body>
 </html>
