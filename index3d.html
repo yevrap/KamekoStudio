@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Interactive Landing Page - Multi-Portal</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Prevent scrollbars */
+            font-family: 'Inter', Arial, sans-serif;
+            background-color: #111;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #scene-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        canvas {
+            display: block; /* Remove extra space below canvas */
+        }
+        .overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.9); /* Slightly more opaque for readability */
+            border: 1px solid #00aaff; /* Thematic border */
+            border-radius: 10px;
+            text-align: center;
+            z-index: 10;
+            box-shadow: 0 0 20px rgba(0, 170, 255, 0.6); /* Enhanced glow effect */
+            max-height: 90vh; /* Prevent menu from being too tall */
+            overflow-y: auto; /* Add scroll if content overflows */
+        }
+        #menu {
+            display: none; /* Hidden by default */
+            width: 400px; /* Wider for more links */
+        }
+        #menu h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #00aaff;
+            font-size: 2em; /* Slightly larger title */
+            text-shadow: 0 0 8px #00aaff;
+        }
+        #menu p {
+            color: #ddd; /* Brighter text color for description */
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        #menu .portal-links-container {
+            display: flex;
+            flex-direction: column; /* Stack links vertically */
+            gap: 12px; /* Space between links */
+            margin-bottom: 25px;
+        }
+        #menu a.portal-link { /* Specific class for portal links */
+            display: block; /* Make links take full width for easier clicking */
+            padding: 12px 20px;
+            background-color: #0077cc; /* Consistent blue */
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.2s;
+            font-size: 1.05em; /* Slightly adjusted font size */
+            border: 1px solid #0055aa; /* Subtle border */
+        }
+        #menu a.portal-link:hover {
+            background-color: #0055aa;
+            transform: scale(1.03); /* Slightly less aggressive zoom */
+            box-shadow: 0 0 10px rgba(0,170,255,0.5);
+        }
+        #menu .close-button-container {
+            margin-top: 20px; /* Space above the close button */
+        }
+        #menu .close-button {
+            display: inline-block;
+            padding: 12px 25px; /* Consistent padding */
+            background-color: #666; /* Slightly lighter grey */
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            font-size: 1.05em;
+            border: 1px solid #444;
+        }
+        #menu .close-button:hover {
+            background-color: #444;
+            transform: scale(1.03);
+        }
+        #interaction-prompt {
+            display: none; /* Hidden by default */
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 18px;
+            background-color: rgba(0, 85, 170, 0.8); /* More prominent */
+            border-radius: 8px;
+            font-size: 1em;
+            color: #e0e0e0;
+            border: 1px solid #00aaff;
+            box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+        }
+        #controls-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            background-color: rgba(0,0,0,0.65);
+            border-radius: 8px; /* More rounded */
+            font-size: 0.85em; /* Slightly larger */
+            line-height: 1.6;
+            border: 1px solid #333;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Scrollbar styling for webkit browsers */
+        .overlay::-webkit-scrollbar {
+            width: 8px;
+        }
+        .overlay::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+        }
+        .overlay::-webkit-scrollbar-thumb {
+            background-color: #0077cc;
+            border-radius: 10px;
+            border: 2px solid rgba(0,0,0,0.3);
+        }
+        .overlay::-webkit-scrollbar-thumb:hover {
+            background-color: #0055aa;
+        }
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+<div id="scene-container">
+</div>
+
+<div id="menu" class="overlay">
+    <h2>Dimensional Gateway Matrix</h2>
+    <p>The Gateway is active. Select a dimension to explore, or remain in this nexus.</p>
+
+    <div class="portal-links-container">
+        <a href="https://yevrap.github.io/KamekoStudio/" target="_blank" class="portal-link">Kameko Studio (Main Hub)</a>
+        <a href="games/hiddenObject.html" target="_blank" class="portal-link">Hidden Object Realm</a>
+        <a href="games/memoryTower.html" target="_blank" class="portal-link">Memory Tower Citadel</a>
+        <a href="games/riverRun.html" target="_blank" class="portal-link">River Run Rapids</a>
+        <a href="games/blobZapper.html" target="_blank" class="portal-link">Blob Zapper Arena</a>
+        <a href="games/materialsRun.html" target="_blank" class="portal-link">Materials Run Expanse</a>
+    </div>
+
+    <div class="close-button-container">
+        <div class="close-button" onclick="hideMenu()">Remain in Nexus</div>
+    </div>
+</div>
+
+<div id="interaction-prompt">
+    Press 'E' to activate Gateway Matrix
+</div>
+
+<div id="controls-info">
+    <strong>Controls:</strong><br>
+    W/S or Up/Down: Move<br>
+    A/D or Left/Right: Strafe<br>
+    Mouse: Look Around<br>
+    E: Interact with Gateway
+</div>
+
+<script>
+    // --- Global Variables ---
+    let scene, camera, renderer;
+    let player, playerVelocity, playerRotationSpeed;
+    let keysPressed = {};
+    const playerHeight = 1.8;
+    const playerSpeed = 5.0;
+    const playerRadius = 0.4; // For collision
+    let walls = [];
+    let menuActivatorMesh;
+    const interactionDistance = 2.5;
+    let canInteract = false;
+    let menuOpen = false;
+
+    const menuElement = document.getElementById('menu');
+    const interactionPromptElement = document.getElementById('interaction-prompt');
+    const sceneContainer = document.getElementById('scene-container');
+
+    // --- Initialization ---
+    function init() {
+        // Scene
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e); // Deeper space blue
+        scene.fog = new THREE.Fog(0x1a1a2e, 12, 35); // Adjusted fog for new bg
+
+
+        // Camera (First-Person)
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, playerHeight, 0);
+
+        // Renderer
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.shadowMap.enabled = true;
+        sceneContainer.appendChild(renderer.domElement);
+
+        // Player Object
+        player = new THREE.Group();
+        player.position.set(0, 0, 5);
+        player.add(camera);
+        scene.add(player);
+
+        playerVelocity = new THREE.Vector3();
+        playerRotationSpeed = Math.PI / 2;
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x708090, 0.8); // Slate gray ambient
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xe0e0ff, 1.0); // Cooler directional light
+        directionalLight.position.set(10, 18, 12); // Adjusted light position
+        directionalLight.castShadow = true;
+        directionalLight.shadow.mapSize.width = 1024;
+        directionalLight.shadow.mapSize.height = 1024;
+        directionalLight.shadow.camera.near = 0.5;
+        directionalLight.shadow.camera.far = 60; // Increased far plane for shadows
+        scene.add(directionalLight);
+
+        // Create Environment
+        createEnvironment();
+
+        // Event Listeners
+        document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
+        window.addEventListener('resize', onWindowResize);
+        document.addEventListener('pointerlockchange', onPointerLockChange);
+        document.addEventListener('click', () => {
+            if (!document.pointerLockElement && !menuOpen) {
+                renderer.domElement.requestPointerLock();
+            }
+        });
+
+        animate();
+    }
+
+    // --- Environment Creation ---
+    function createEnvironment() {
+        const roomWidth = 18; // Slightly larger room
+        const roomDepth = 24;
+        const roomHeight = 6;
+        const wallThickness = 0.5;
+
+        // Floor
+        const floorTextureLoader = new THREE.TextureLoader();
+        // Using a simple placeholder or a very subtle texture for floor
+        // const floorTexture = floorTextureLoader.load('path/to/your/floor_texture.png', () => { renderer.render(scene, camera); });
+        // floorTexture.wrapS = THREE.RepeatWrapping;
+        // floorTexture.wrapT = THREE.RepeatWrapping;
+        // floorTexture.repeat.set(8, 8);
+        const floorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x455A64, // Dark slate blue
+            // map: floorTexture, // Uncomment if you have a texture
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const floor = new THREE.Mesh(new THREE.PlaneGeometry(roomWidth, roomDepth), floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Wall material
+        const wallMaterial = new THREE.MeshStandardMaterial({
+            color: 0x607D8B, // Blue Grey
+            roughness: 0.7,
+            metalness: 0.1
+        });
+
+        function createWall(width, height, depth, x, y, z) {
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), wallMaterial);
+            wall.position.set(x, y, z);
+            wall.castShadow = true;
+            wall.receiveShadow = true;
+            scene.add(wall);
+            walls.push(new THREE.Box3().setFromObject(wall));
+            return wall;
+        }
+
+        createWall(roomWidth + wallThickness, roomHeight, wallThickness, 0, roomHeight / 2, -roomDepth / 2);
+        createWall(roomWidth + wallThickness, roomHeight, wallThickness, 0, roomHeight / 2, roomDepth / 2);
+        createWall(wallThickness, roomHeight, roomDepth, -roomWidth / 2, roomHeight / 2, 0);
+        createWall(wallThickness, roomHeight, roomDepth, roomWidth / 2, roomHeight / 2, 0);
+
+        // Ceiling
+        const ceilingMaterial = new THREE.MeshStandardMaterial({ color: 0x546E7A, side: THREE.DoubleSide, roughness: 0.9 });
+        const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(roomWidth, roomDepth), ceilingMaterial);
+        ceiling.position.y = roomHeight;
+        ceiling.rotation.x = Math.PI / 2;
+        scene.add(ceiling);
+
+        // Gateway Console
+        const activatorGeometry = new THREE.OctahedronGeometry(0.7, 0); // More crystalline
+        const activatorMaterial = new THREE.MeshStandardMaterial({
+            color: 0x00ccff,
+            emissive: 0x0077aa,
+            metalness: 0.4,
+            roughness: 0.3,
+            transparent: true,
+            opacity: 0.85
+        });
+        menuActivatorMesh = new THREE.Mesh(activatorGeometry, activatorMaterial);
+        menuActivatorMesh.position.set(0, 1.0, -roomDepth / 2 + wallThickness + 1.2);
+        menuActivatorMesh.castShadow = true;
+        scene.add(menuActivatorMesh);
+
+        const activatorLight = new THREE.PointLight(0x00ccff, 1, 7); // Brighter light
+        activatorLight.position.copy(menuActivatorMesh.position);
+        activatorLight.position.y += 0.2;
+        scene.add(activatorLight);
+    }
+
+    // --- Event Handlers ---
+    function onKeyDown(event) {
+        keysPressed[event.key.toLowerCase()] = true;
+        if (event.key.toLowerCase() === 'e' && canInteract && !menuOpen) {
+            showMenu();
+        } else if (event.key.toLowerCase() === 'escape') {
+            if (menuOpen) {
+                hideMenu();
+            } else if (document.pointerLockElement) {
+                document.exitPointerLock();
+            }
+        }
+    }
+
+    function onKeyUp(event) {
+        keysPressed[event.key.toLowerCase()] = false;
+    }
+
+    let isPointerLocked = false;
+    function onPointerLockChange() {
+        if (document.pointerLockElement === renderer.domElement) {
+            document.addEventListener("mousemove", onMouseMove, false);
+            isPointerLocked = true;
+        } else {
+            document.removeEventListener("mousemove", onMouseMove, false);
+            isPointerLocked = false;
+        }
+    }
+
+    function onMouseMove(event) {
+        if (!isPointerLocked || menuOpen) return;
+
+        const movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+        const movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+        player.rotation.y -= movementX * 0.002;
+        camera.rotation.x -= movementY * 0.002;
+        camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camera.rotation.x));
+    }
+
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    // --- Game Logic Update ---
+    const clock = new THREE.Clock();
+    let time = 0; // For animating the activator
+
+    function updatePlayer(deltaTime) {
+        if (menuOpen) {
+            for (let key in keysPressed) { keysPressed[key] = false; }
+            return;
+        }
+
+        const moveSpeed = playerSpeed * deltaTime;
+        let moveDirection = new THREE.Vector3();
+
+        if (keysPressed['w'] || keysPressed['arrowup']) moveDirection.z = -1;
+        if (keysPressed['s'] || keysPressed['arrowdown']) moveDirection.z = 1;
+        if (keysPressed['a'] || keysPressed['arrowleft']) moveDirection.x = -1;
+        if (keysPressed['d'] || keysPressed['arrowright']) moveDirection.x = 1;
+
+        if (moveDirection.lengthSq() > 0) moveDirection.normalize();
+
+        const worldMoveDelta = moveDirection.clone().multiplyScalar(moveSpeed).applyEuler(player.rotation);
+        const nextPosition = player.position.clone().add(worldMoveDelta);
+
+        const playerCollider = new THREE.Box3(
+            new THREE.Vector3(nextPosition.x - playerRadius, nextPosition.y, nextPosition.z - playerRadius),
+            new THREE.Vector3(nextPosition.x + playerRadius, nextPosition.y + playerHeight, nextPosition.z + playerRadius)
+        );
+
+        let collision = false;
+        for (const wallBox of walls) {
+            if (playerCollider.intersectsBox(wallBox)) {
+                collision = true;
+                break;
+            }
+        }
+
+        if (!collision) {
+            player.position.copy(nextPosition);
+        } else {
+            // Simplified sliding: try X then Z
+            let tempPos = player.position.clone();
+            tempPos.x += worldMoveDelta.x;
+            let playerColliderX = new THREE.Box3().setFromCenterAndSize(
+                new THREE.Vector3(tempPos.x, tempPos.y + playerHeight / 2, player.position.z), // Use current Z for X check
+                new THREE.Vector3(playerRadius * 2, playerHeight, playerRadius * 2)
+            );
+            let collisionX = false;
+            for (const wallBox of walls) { if (playerColliderX.intersectsBox(wallBox)) { collisionX = true; break; } }
+            if(!collisionX) player.position.x = tempPos.x;
+
+            tempPos = player.position.clone(); // Reset tempPos to current player position (potentially updated X)
+            tempPos.z += worldMoveDelta.z;
+            let playerColliderZ = new THREE.Box3().setFromCenterAndSize(
+                new THREE.Vector3(player.position.x, tempPos.y + playerHeight / 2, tempPos.z), // Use current X for Z check
+                new THREE.Vector3(playerRadius * 2, playerHeight, playerRadius * 2)
+            );
+            let collisionZ = false;
+            for (const wallBox of walls) { if (playerColliderZ.intersectsBox(wallBox)) { collisionZ = true; break; } }
+            if(!collisionZ) player.position.z = tempPos.z;
+        }
+
+        // Interaction Check
+        const distanceToActivator = player.position.distanceTo(menuActivatorMesh.position);
+        if (distanceToActivator < interactionDistance && !menuOpen) {
+            canInteract = true;
+            interactionPromptElement.style.display = 'block';
+        } else {
+            canInteract = false;
+            interactionPromptElement.style.display = 'none';
+        }
+
+        // Animate activator
+        if (menuActivatorMesh) {
+            time += deltaTime;
+            menuActivatorMesh.rotation.y = time * 0.5; // Slow rotation
+            menuActivatorMesh.position.y = 1.0 + Math.sin(time * 1.5) * 0.1; // Gentle bobbing
+        }
+    }
+
+    // --- Menu Functions ---
+    function showMenu() {
+        menuElement.style.display = 'block';
+        menuOpen = true;
+        interactionPromptElement.style.display = 'none';
+        if (document.pointerLockElement) {
+            document.exitPointerLock();
+        }
+        sceneContainer.style.filter = 'blur(5px)'; // Blur background
+    }
+
+    function hideMenu() {
+        menuElement.style.display = 'none';
+        menuOpen = false;
+        sceneContainer.style.filter = 'none'; // Remove blur
+    }
+
+    // --- Animation Loop ---
+    function animate() {
+        requestAnimationFrame(animate);
+        const deltaTime = clock.getDelta();
+
+        updatePlayer(deltaTime);
+
+        renderer.render(scene, camera);
+    }
+
+    // --- Start everything ---
+    init();
+</script>
+</body>
+</html>
