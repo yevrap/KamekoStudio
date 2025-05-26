@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hidden Object Game - Blinking Emojis</title>
+    <title>Hidden Object Game - Vertical Mobile Layout</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -46,25 +46,28 @@
 
         .star {
             color: #fbbf24;
-            font-size: 2rem;
+            font-size: 1.75rem; /* Slightly smaller stars in modal for mobile */
+            sm:font-size: 2rem;
             display: inline-block;
         }
         .star.empty { color: #6b7280; }
-        .star-container { min-height: 3rem; }
+        .star-container { min-height: 2.5rem; sm:min-height: 3rem; }
 
         #roundTimerDisplay, #currentRoundDisplay { /* Applied to both */
             position: absolute;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0,0,0,0.6); /* Slightly darker for better contrast */
             color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 4px 8px; /* Adjusted padding */
+            border-radius: 0.375rem; /* rounded-md */
             font-weight: bold;
             pointer-events: none; /* Allows clicks to pass through */
+            z-index: 10; /* Ensure they are above canvas */
         }
         #roundTimerDisplay {
-            top: 10px;
-            right: 10px;
-            font-size: 1.25rem;
+            top: 8px; /* Adjusted positioning */
+            right: 8px;
+            font-size: 1rem; /* Adjusted font size */
+            sm:font-size: 1.25rem;
         }
         .currency-display {
             background-color: rgba(0,0,0,0.2);
@@ -73,89 +76,90 @@
             margin-bottom: 0.75rem;
         }
         #currentRoundDisplay {
-            top: 10px;
-            left: 10px;
-            font-size: 1rem;
+            top: 8px; /* Adjusted positioning */
+            left: 8px;
+            font-size: 0.875rem; /* Adjusted font size */
+            sm:font-size: 1rem;
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100 flex flex-col items-center justify-center min-h-screen p-2 sm:p-4 selection:bg-sky-500 selection:text-white">
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100 flex flex-col items-center justify-center min-h-screen p-1 sm:p-2 selection:bg-sky-500 selection:text-white">
 
-<div id="mainScreen" class="main-screen w-full max-w-md bg-slate-800/90 backdrop-blur-md shadow-2xl rounded-xl p-6 sm:p-8 text-center">
-    <h1 class="text-4xl sm:text-5xl font-bold title-gradient mb-6">Emoji Hunter</h1>
+<div id="mainScreen" class="main-screen w-full max-w-md bg-slate-800/90 backdrop-blur-md shadow-2xl rounded-xl p-3 sm:p-4 md:p-6 text-center">
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold title-gradient mb-4 sm:mb-6">Emoji Hunter</h1>
 
-    <div class="mb-6 space-y-3">
+    <div class="mb-4 sm:mb-6 space-y-2 sm:space-y-3">
         <div class="currency-display">
-            <p class="text-slate-300 text-lg">Your Stars:</p>
-            <p id="totalStarsDisplayContainer" class="text-4xl font-bold star-icon-text flex items-center justify-center">
+            <p class="text-slate-300 text-base sm:text-lg">Your Stars:</p>
+            <p id="totalStarsDisplayContainer" class="text-3xl sm:text-4xl font-bold star-icon-text flex items-center justify-center">
                 <span id="starAmountText">0</span><span class="ml-1">★</span>
             </p>
         </div>
         <div class="currency-display">
-            <p class="text-slate-300 text-lg">Your Gems:</p>
-            <p id="totalGemsDisplayContainer" class="text-4xl font-bold gem-icon-svg flex items-center justify-center">
+            <p class="text-slate-300 text-base sm:text-lg">Your Gems:</p>
+            <p id="totalGemsDisplayContainer" class="text-3xl sm:text-4xl font-bold gem-icon-svg flex items-center justify-center">
                 <span id="gemAmountText">0</span>
-                <svg class="ml-1 w-8 h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 22L22 7L12 2Z M12 4.53L19.19 7L12 19.47L4.81 7L12 4.53Z"/></svg>
+                <svg class="ml-1 w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 22L22 7L12 2Z M12 4.53L19.19 7L12 19.47L4.81 7L12 4.53Z"/></svg>
             </p>
         </div>
     </div>
 
-    <div class="mb-8">
-        <h2 class="text-xl text-sky-300 font-semibold mb-3">Redeem Stars</h2>
-        <button id="redeemStarsButton" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md w-full transition-transform transform hover:scale-105">
+    <div class="mb-6 sm:mb-8">
+        <h2 class="text-lg sm:text-xl text-sky-300 font-semibold mb-2 sm:mb-3">Redeem Stars</h2>
+        <button id="redeemStarsButton" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md w-full text-sm sm:text-base transition-transform transform hover:scale-105">
             Redeem 5 <span class="star-icon-text">★</span> for 1 <span class="gem-icon-svg">
                   <svg class="inline-block w-4 h-4 -mt-px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 22L22 7L12 2Z M12 4.53L19.19 7L12 19.47L4.81 7L12 4.53Z"/></svg>
                 </span>
         </button>
-        <p id="redeemMessage" class="text-sm text-slate-400 mt-2 h-4"></p>
+        <p id="redeemMessage" class="text-xs sm:text-sm text-slate-400 mt-2 h-4"></p>
     </div>
 
-    <button id="startGameButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-lg text-xl w-full transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
+    <button id="startGameButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 sm:px-8 rounded-lg shadow-lg text-lg sm:text-xl w-full transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
         Start New Game
     </button>
 </div>
 
-<div id="gameScreenContainer" class="game-screen w-full max-w-3xl bg-slate-800/90 backdrop-blur-md shadow-2xl rounded-xl p-4 sm:p-6 md:p-8 hidden">
-    <header class="text-center mb-4 md:mb-6">
-        <h1 class="text-3xl sm:text-4xl font-bold title-gradient">Find The Hidden Emoji!</h1>
-        <p id="targetMessage" class="mt-2 text-slate-300 text-lg sm:text-xl">Loading your challenge...</p>
+<div id="gameScreenContainer" class="game-screen w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl bg-slate-800/90 backdrop-blur-md shadow-2xl rounded-xl p-1 sm:p-3 md:p-4 hidden">
+    <header class="text-center mb-2 sm:mb-3">
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-bold title-gradient">Find The Hidden Emoji!</h1>
+        <p id="targetMessage" class="mt-1 text-slate-300 text-sm sm:text-base md:text-lg">Loading your challenge...</p>
     </header>
 
-    <main class="aspect-video sm:aspect-[4/3] w-full relative shadow-lg rounded-lg overflow-hidden">
+    <main class="w-full relative shadow-lg rounded-lg overflow-hidden aspect-[3/4] sm:aspect-square md:aspect-[4/3] lg:aspect-video">
         <canvas id="gameCanvas" class="w-full h-full"></canvas>
         <div id="roundTimerDisplay">Time: 20s</div>
         <div id="currentRoundDisplay">Round: 1</div>
 
-        <div id="successModal" class="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center custom-modal hidden rounded-lg">
-            <div class="bg-slate-800 p-6 sm:p-8 rounded-xl shadow-2xl text-center">
-                <p id="successMessageText" class="text-2xl sm:text-3xl font-semibold text-green-400 mb-1">🎉 You found it! 🎉</p>
-                <div id="starRatingContainer" class="my-3 star-container"></div>
-                <p id="timeTakenText" class="text-sm text-slate-400 mb-2"></p>
-                <p id="foundObjectName" class="text-lg sm:text-xl text-slate-200 mb-4 sm:mb-6"></p>
-                <button id="nextRoundButton" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+        <div id="successModal" class="absolute inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center custom-modal hidden rounded-lg p-3 sm:p-4">
+            <div class="bg-slate-800 p-4 sm:p-6 rounded-xl shadow-2xl text-center w-full max-w-xs sm:max-w-sm">
+                <p id="successMessageText" class="text-lg sm:text-xl md:text-2xl font-semibold text-green-400 mb-1">🎉 You found it! 🎉</p>
+                <div id="starRatingContainer" class="my-2 star-container"></div>
+                <p id="timeTakenText" class="text-xs sm:text-sm text-slate-400 mb-1 sm:mb-2"></p>
+                <p id="foundObjectName" class="text-sm sm:text-base md:text-lg text-slate-200 mb-2 sm:mb-3"></p>
+                <button id="nextRoundButton" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md text-xs sm:text-sm transition-transform transform hover:scale-105">
                     Next Round
                 </button>
             </div>
         </div>
 
-        <div id="gameOverModal" class="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center game-over-modal hidden rounded-lg">
-            <div class="bg-slate-800 p-8 rounded-xl shadow-2xl text-center">
-                <p class="text-4xl font-bold text-red-500 mb-4">⏰ Time's Up! ⏰</p>
-                <p class="text-xl text-slate-200 mb-2">Session Over</p>
-                <p id="sessionEndedScoreText" class="text-lg text-yellow-400 mb-6"></p>
-                <button id="backToMainScreenButtonFromGameOver" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-semibold py-3 px-6 rounded-lg shadow-md transition-transform transform hover:scale-105">
+        <div id="gameOverModal" class="absolute inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center game-over-modal hidden rounded-lg p-3 sm:p-4">
+            <div class="bg-slate-800 p-4 sm:p-6 rounded-xl shadow-2xl text-center w-full max-w-xs sm:max-w-sm">
+                <p class="text-xl sm:text-2xl md:text-3xl font-bold text-red-500 mb-2 sm:mb-3">⏰ Time's Up! ⏰</p>
+                <p class="text-base sm:text-lg text-slate-200 mb-1 sm:mb-2">Session Over</p>
+                <p id="sessionEndedScoreText" class="text-sm sm:text-base text-yellow-400 mb-3 sm:mb-4"></p>
+                <button id="backToMainScreenButtonFromGameOver" class="bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-semibold py-2 px-4 rounded-lg shadow-md text-xs sm:text-sm transition-transform transform hover:scale-105">
                     Main Menu
                 </button>
             </div>
         </div>
     </main>
 
-    <footer class="text-center mt-4 md:mt-6">
-        <p id="sessionScoreDisplay" class="text-lg text-yellow-400 font-semibold mb-2">Session Score: 0 ★</p>
-        <button id="quitToMenuButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md mb-2 transition-transform transform hover:scale-105">
+    <footer class="text-center mt-2 sm:mt-3">
+        <p id="sessionScoreDisplay" class="text-sm sm:text-base text-yellow-400 font-semibold mb-1 sm:mb-2">Session Score: 0 ★</p>
+        <button id="quitToMenuButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md mb-1 sm:mb-2 text-xs sm:text-sm transition-transform transform hover:scale-105">
             Quit to Main Menu
         </button>
-        <p class="text-xs sm:text-sm text-slate-500">Tap or click the correct emoji. Beat the clock!</p>
+        <p class="text-xs text-slate-500">Tap or click the correct emoji. Beat the clock!</p>
     </footer>
 </div>
 
@@ -213,8 +217,9 @@
         { name: "Snail", emoji: "🐌" }, { name: "Butterfly", emoji: "🦋" }, { name: "Ladybug", emoji: "🐞" }
     ];
     const numItemsToDisplay = 25;
-    const minRelativeSize = 0.03;
-    const maxRelativeSize = 0.08;
+    // Adjusted for better mobile visibility
+    const minRelativeSize = 0.045;
+    const maxRelativeSize = 0.11;
 
     // --- Game State ---
     let gameObjects = [];
@@ -256,7 +261,7 @@
             updateMainScreenDisplays();
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             if (roundIntervalId) clearInterval(roundIntervalId);
-            lastFrameTime = 0; // Reset last frame time when not in game
+            lastFrameTime = 0;
         }
     }
 
@@ -298,7 +303,7 @@
         if (roundIntervalId) clearInterval(roundIntervalId);
         roundIntervalId = setInterval(handleRoundTick, 1000);
 
-        lastFrameTime = performance.now(); // Initialize for delta time
+        lastFrameTime = performance.now();
         if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animateScene(lastFrameTime);
     }
@@ -322,7 +327,7 @@
         isRoundOver = true;
         if (roundIntervalId) clearInterval(roundIntervalId);
         roundIntervalId = null;
-        if (animationFrameId) cancelAnimationFrame(animationFrameId); // Stop animation loop
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
         animationFrameId = null;
 
         if (wasFound) {
@@ -362,9 +367,8 @@
             angle: (Math.random() - 0.5) * Math.PI * 0.6,
             opacity: isThisTheTarget ? 1 : ((Math.random() < 0.3) ? (0.7 + Math.random() * 0.2) : 1),
             vx: 0, vy: 0,
-            // Blinking properties
             isVisible: true,
-            blinkTimer: BLINK_INTERVAL_VISIBLE_BASE + Math.random() * 500, // Start visible, with some randomness
+            blinkTimer: BLINK_INTERVAL_VISIBLE_BASE + Math.random() * 500,
             timeVisible: BLINK_INTERVAL_VISIBLE_BASE,
             timeInvisible: currentRoundNumber >= 15 ? BLINK_INTERVAL_INVISIBLE_LONG : BLINK_INTERVAL_INVISIBLE_BASE
         };
@@ -483,7 +487,7 @@
     }
 
     function animateScene(currentTime) {
-        if (isRoundOver) { // If round is over, ensure animation stops
+        if (isRoundOver) {
             if(animationFrameId) cancelAnimationFrame(animationFrameId);
             animationFrameId = null;
             return;
@@ -492,22 +496,20 @@
         const deltaTime = currentTime - lastFrameTime;
         lastFrameTime = currentTime;
 
-        if(!isRoundOver){ // This check might be redundant due to the one above, but safe
-            // Update Blinking
+        if(!isRoundOver){
             if (currentRoundNumber >= 10) {
                 gameObjects.forEach(obj => {
                     obj.blinkTimer -= deltaTime;
                     if (obj.blinkTimer <= 0) {
                         obj.isVisible = !obj.isVisible;
                         if (obj.isVisible) {
-                            obj.blinkTimer = obj.timeVisible + Math.random() * 200 - 100; // Add some variance
+                            obj.blinkTimer = obj.timeVisible + Math.random() * 200 - 100;
                         } else {
                             obj.blinkTimer = obj.timeInvisible + Math.random() * 200 - 100;
                         }
                     }
                 });
             }
-
 
             gameObjects.forEach(obj => {
                 const objRadiusRelX = (obj.size * Math.min(canvas.width, canvas.height) / 2) / canvas.width;
@@ -575,14 +577,9 @@
             }
         }
         drawScene();
-        // Continue animation if round is not over, OR if round is over but target was found (to show highlight)
-        // This logic was slightly off, it should stop if round is over AND target was NOT found.
-        // Or more simply, only continue if !isRoundOver OR (isRoundOver AND targetItem.found)
-        // The current logic in handleSessionEnd already cancels animationFrameId if round ends.
-        // So, we just need to request the next frame if the round isn't over.
         if (!isRoundOver) {
             animationFrameId = requestAnimationFrame(animateScene);
-        } else if (targetItem && targetItem.found) { // If round ended by finding, keep animating highlight
+        } else if (targetItem && targetItem.found) {
             animationFrameId = requestAnimationFrame(animateScene);
         }
     }
@@ -591,7 +588,7 @@
     function drawScene() { canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight; ctx.fillStyle='#374151'; ctx.fillRect(0,0,canvas.width,canvas.height); drawBackgroundPattern(); gameObjects.forEach(obj=>drawObject(obj)); if(isRoundOver && targetItem && targetItem.found){highlightFoundObject(targetItem);}}
 
     function drawObject(obj) {
-        if (!obj.isVisible && currentRoundNumber >= 10) return; // Don't draw if invisible and blinking is active
+        if (!obj.isVisible && currentRoundNumber >= 10) return;
 
         const pX=obj.x*canvas.width,pY=obj.y*canvas.height,pS=obj.size*Math.min(canvas.width,canvas.height);
         ctx.save();
