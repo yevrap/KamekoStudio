@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arcade Home</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      background-color: #0077cc;
+      color: white;
+      padding: 20px;
+      width: 100%;
+      text-align: center;
+    }
+    .game-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 1200px;
+    }
+    .game-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      padding: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .game-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    .game-card a {
+      text-decoration: none;
+      color: #0077cc;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Welcome to the Arcade</h1>
+  <p>Select a game to play!</p>
+</header>
+<div class="game-list" id="gameList"></div>
+
+<script>
+  // List of games in the directory
+  const games = [
+    { name: "Hidden Object", file: "../games/hidden-object/index.html" },
+    { name: "Memory Tower Defense", file: "../games/memory-tower/index.html" },
+    { name: "River Run", file: "../games/river-run/index.html" },
+    { name: "Blob Zapper", file: "../games/blob-zapper/index.html" },
+    { name: "Materials Run", file: "../games/materials-run/index.html" }
+  ];
+
+  // Reference to the game list container
+  const gameList = document.getElementById('gameList');
+
+  // Dynamically create game cards
+  games.forEach(game => {
+    const gameCard = document.createElement('div');
+    gameCard.className = 'game-card';
+    gameCard.innerHTML = `
+                <h2>${game.name}</h2>
+                <a href="${game.file}">Play Now</a>
+            `;
+    gameList.appendChild(gameCard);
+  });
+</script>
+</body>
+</html>

@@ -1,1 +1,21 @@
-/.DS_Store
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# JetBrains IDEs (IntelliJ, WebStorm, etc.)
+.idea/
+
+# VS Code
+.vscode/
+
+# Claude Code
+.claude/
+
+# Node (if ever added)
+node_modules/
+npm-debug.log*
+
+# Logs
+*.log
