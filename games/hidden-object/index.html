@@ -659,6 +659,17 @@
     if (document.fonts && typeof document.fonts.ready === 'object') {
         document.fonts.ready.catch(err => console.warn("Font loading issue.", err));
     }
+
+    // --- Settings pause/resume ---
+    window.addEventListener('settingsOpened', () => {
+        if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+        if (roundIntervalId) { clearInterval(roundIntervalId); roundIntervalId = null; }
+    });
+    window.addEventListener('settingsClosed', () => {
+        animationFrameId = requestAnimationFrame(animateScene);
+        if (!isRoundOver) { roundIntervalId = setInterval(handleRoundTick, 1000); }
+    });
 </script>
+<script src="../../shared/settings.js" data-gallery-depth="2"></script>
 </body>
 </html>

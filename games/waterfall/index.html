@@ -477,6 +477,15 @@
         console.log("Calling init()...");
         init();
 
+        // --- Settings pause/resume ---
+        window.addEventListener('settingsOpened', () => {
+            if (renderer) renderer.setAnimationLoop(null);
+        });
+        window.addEventListener('settingsClosed', () => {
+            if (renderer) renderer.setAnimationLoop(animate);
+        });
+
     </script>
+<script src="../../shared/settings.js" data-gallery-depth="2"></script>
 </body>
 </html>

@@ -185,21 +185,20 @@
             gap: 5px; /* Space between buttons */
         }
 
-        /* Dark Mode & Mute Toggle Button Styling */
-        #dark-mode-toggle, #mute-toggle {
+        /* Mute Toggle Button Styling */
+        #mute-toggle {
              font-size: 0.7em;
              padding: 5px 10px;
              background-color: #555;
-             margin: 0; /* Remove default margin */
-             /* position, top, right removed as they are now in the container */
+             margin: 0;
         }
-         body.dark-mode #dark-mode-toggle, body.dark-mode #mute-toggle {
+         body.dark-mode #mute-toggle {
              background-color: #aaa;
              color: #333;
          }
          /* Style for muted state */
          #mute-toggle.muted {
-             background-color: #888; /* Indicate muted state */
+             background-color: #888;
          }
          body.dark-mode #mute-toggle.muted {
               background-color: #666;
@@ -230,7 +229,7 @@
 </head>
 <body>
     <div id="top-controls">
-        <button id="mute-toggle">Mute</button> <button id="dark-mode-toggle">Mode</button>
+        <button id="mute-toggle">Mute</button>
     </div>
 
     <div id="game-container">
@@ -250,7 +249,6 @@
         const messageBox = document.getElementById('message-box');
         const messageText = document.getElementById('message-text');
         const startButton = document.getElementById('start-button');
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
         const muteToggle = document.getElementById('mute-toggle');
         const shootButton = document.getElementById('shoot-button'); // RE-ADDED
 
@@ -731,9 +729,7 @@
                  if (waterParticles) { const colorPalette = needsDark ? waterColorsDark : waterColorsLight; waterParticles.material.color.set(colorPalette[currentWaterColorIndex]); }
                  if (!isGameOver) { obstacles.forEach(obs => { const rockColor = needsDark ? 0x888888 : 0x6b7280; const logColor = needsDark ? 0xab7a3e : 0x854d0e; obs.mesh.material.color.set(obs.mesh.geometry.type === 'SphereGeometry' ? rockColor : logColor); }); }
             }
-             darkModeToggle.textContent = needsDark ? 'Light Mode' : 'Dark Mode';
         }
-        function toggleDarkMode() { isDarkMode = !isDarkMode; localStorage.setItem('darkMode', isDarkMode); applyTheme(); }
 
         // --- Mute Handling ---
         function applyMuteState() {
@@ -832,12 +828,6 @@
              e.currentTarget.blur();
         });
 
-        // Dark Mode Toggle Button Listener
-        darkModeToggle.addEventListener('click', (e) => {
-             toggleDarkMode();
-             e.currentTarget.blur();
-        });
-
         // Mute Toggle Button Listener
         muteToggle.addEventListener('click', (e) => {
              toggleMute();
@@ -847,8 +837,8 @@
 
         // --- Initial Setup ---
         window.onload = () => {
-            const savedTheme = localStorage.getItem('darkMode');
-            if (savedTheme !== null) { isDarkMode = savedTheme === 'true'; } else { isDarkMode = true; }
+            const savedTheme = localStorage.getItem('theme');
+            isDarkMode = savedTheme !== 'light';
             const savedMute = localStorage.getItem('muted');
             if (savedMute !== null) { isMuted = savedMute === 'true'; } else { isMuted = true; }
 
@@ -860,6 +850,16 @@
             renderer.render(scene, camera);
         };
 
+        // --- Settings pause/resume + theme sync ---
+        window.addEventListener('settingsOpened', () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        });
+        window.addEventListener('settingsClosed', () => {
+            isDarkMode = localStorage.getItem('theme') !== 'light';
+            applyTheme();
+            if (!isGameOver) animationFrameId = requestAnimationFrame(gameLoop);
+        });
     </script>
+<script src="../../shared/settings.js" data-gallery-depth="2"></script>
 </body>
 </html>

@@ -55,8 +55,7 @@
 
 
         body { font-family: var(--font-family); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: var(--bg-color); color: var(--text-color); padding: 10px; box-sizing: border-box; overflow: hidden; position: relative; transition: background-color 0.3s ease, color 0.3s ease; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
-        #theme-toggle { position: absolute; top: 15px; right: 15px; background-color: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); border-radius: 50%; width: 40px; height: 40px; font-size: 1.2em; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; transition: background-color 0.3s ease, border-color 0.3s ease; z-index: 100; } #theme-toggle:hover { background-color: var(--button-hover-bg); }
-        #score-display { position: absolute; top: 15px; left: 15px; font-size: 1em; color: var(--score-color); z-index: 100; transition: color 0.3s ease; }
+#score-display { position: absolute; top: 15px; left: 15px; font-size: 1em; color: var(--score-color); z-index: 100; transition: color 0.3s ease; }
         #timer-display { position: absolute; top: 40px; left: 15px; font-size: 0.8em; color: var(--timer-color); z-index: 100; transition: color 0.3s ease; display: none; }
         #ingame-buttons { position: absolute; top: 65px; left: 15px; z-index: 100; display: flex; flex-direction: column; gap: 5px; }
         #ingame-buttons button { font-family: var(--font-family); font-size: 0.6em; padding: 5px 8px; background-color: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: background-color 0.3s ease; opacity: 0.8; }
@@ -84,13 +83,12 @@
         .overlay h2 { margin-bottom: 20px; font-size: 2em; } .overlay p { margin: 5px 0; font-size: 1em;} .overlay .top-scores { margin-top: 15px; font-size: 0.8em; line-height: 1.3; }
         .overlay button { font-family: var(--font-family); font-size: 0.8em; padding: 10px 20px; margin-top: 25px; min-height: 44px; background-color: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; margin-left: 10px; margin-right: 10px; } .overlay button:hover { background-color: var(--button-hover-bg); }
         #close-top-scores-button { font-size: 0.7em; padding: 8px 15px; }
-        @media (max-width: 700px) { :root { --cell-size: 25px; } #theme-toggle { top: 10px; right: 10px; width: 35px; height: 35px; font-size: 1.1em;} #score-display { top: 12px; left: 10px; font-size: 0.9em;} #timer-display { top: 35px; left: 10px; font-size: 0.7em;} #ingame-buttons { top: 60px; left: 10px;} #ingame-buttons button { font-size: 0.55em; } .overlay { font-size: 1.3em;} .overlay h2 { font-size: 1.8em;} }
-        @media (max-width: 550px) { :root { --cell-size: 20px; } body { padding: 5px; } #theme-toggle { top: 8px; right: 8px; width: 32px; height: 32px; font-size: 1.0em;} #score-display { top: 10px; left: 8px; font-size: 0.8em;} #timer-display { top: 30px; left: 8px; font-size: 0.65em;} #ingame-buttons { top: 50px; left: 8px;} #ingame-buttons button { font-size: 0.5em; padding: 4px 6px;} .overlay { font-size: 1.1em;} .overlay h2 { font-size: 1.5em;} .overlay button{font-size: 0.7em; padding: 8px 15px;}}
-        @media (max-width: 420px) { :root { --cell-size: 18px; } #theme-toggle { width: 30px; height: 30px; font-size: 0.9em;} #score-display { font-size: 0.7em;} #timer-display { top: 28px; font-size: 0.6em;} #ingame-buttons { top: 48px; } #ingame-buttons button { font-size: 0.45em;} .overlay { font-size: 1.0em;} .overlay h2 { font-size: 1.3em;} .overlay button{font-size: 0.6em;}}
+        @media (max-width: 700px) { :root { --cell-size: 25px; } #score-display { top: 12px; left: 10px; font-size: 0.9em;} #timer-display { top: 35px; left: 10px; font-size: 0.7em;} #ingame-buttons { top: 60px; left: 10px;} #ingame-buttons button { font-size: 0.55em; } .overlay { font-size: 1.3em;} .overlay h2 { font-size: 1.8em;} }
+        @media (max-width: 550px) { :root { --cell-size: 20px; } body { padding: 5px; } #score-display { top: 10px; left: 8px; font-size: 0.8em;} #timer-display { top: 30px; left: 8px; font-size: 0.65em;} #ingame-buttons { top: 50px; left: 8px;} #ingame-buttons button { font-size: 0.5em; padding: 4px 6px;} .overlay { font-size: 1.1em;} .overlay h2 { font-size: 1.5em;} .overlay button{font-size: 0.7em; padding: 8px 15px;}}
+        @media (max-width: 420px) { :root { --cell-size: 18px; } #score-display { font-size: 0.7em;} #timer-display { top: 28px; font-size: 0.6em;} #ingame-buttons { top: 48px; } #ingame-buttons button { font-size: 0.45em;} .overlay { font-size: 1.0em;} .overlay h2 { font-size: 1.3em;} .overlay button{font-size: 0.6em;}}
     </style>
 </head>
 <body class="dark-mode">
-    <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
     <div id="score-display">Score: 0</div>
     <div id="timer-display">Time: 03:00</div>
     <div id="ingame-buttons">
@@ -192,7 +190,7 @@
         let animationFrameId = null; // To control game loop
 
         // --- DOM Elements (Declare globally, assign after DOM loaded) ---
-        let gridElement, playerElement, themeToggle, bodyElement, scoreDisplay, timerDisplay,
+        let gridElement, playerElement, bodyElement, scoreDisplay, timerDisplay,
             startScreenOverlay, startScoreButton, startSurvivalButton,
             gameOverOverlay, finalScoreElement, topScoreScoreElement, topScoreSurvivalElement, playAgainButtonLose,
             winOverlay, winFinalScoreElement, winTopScoreScoreElement, winTopScoreSurvivalElement, playAgainButtonWin,
@@ -621,9 +619,6 @@
              }
         }
 
-        // --- Theme Toggle Logic ---
-        function applyTheme(theme) { if(!bodyElement || !themeToggle) return; if (theme === 'dark') { bodyElement.classList.add('dark-mode'); themeToggle.textContent = '☀️'; } else { bodyElement.classList.remove('dark-mode'); themeToggle.textContent = '🌙'; } }
-
          /** Starts the selected game mode */
          function startGame(mode) {
              console.log(`Starting game mode: ${mode}`);
@@ -648,38 +643,35 @@
         document.addEventListener('DOMContentLoaded', () => {
             console.log("DOM Loaded. Initializing game...");
             // Assign DOM Elements
-            gridElement = document.getElementById('game-grid'); playerElement = document.getElementById('player'); themeToggle = document.getElementById('theme-toggle'); bodyElement = document.body; scoreDisplay = document.getElementById('score-display'); timerDisplay = document.getElementById('timer-display'); startScreenOverlay = document.getElementById('start-screen-overlay'); startScoreButton = document.getElementById('start-score-button'); startSurvivalButton = document.getElementById('start-survival-button'); gameOverOverlay = document.getElementById('game-over-overlay'); finalScoreElement = document.getElementById('final-score'); topScoreScoreElement = document.getElementById('top-score-score'); topScoreSurvivalElement = document.getElementById('top-score-survival'); playAgainButtonLose = document.getElementById('play-again-button-lose'); winOverlay = document.getElementById('win-overlay'); winFinalScoreElement = document.getElementById('win-final-score'); winTopScoreScoreElement = document.getElementById('win-top-score-score'); winTopScoreSurvivalElement = document.getElementById('win-top-score-survival'); playAgainButtonWin = document.getElementById('play-again-button-win');
+            gridElement = document.getElementById('game-grid'); playerElement = document.getElementById('player'); bodyElement = document.body; scoreDisplay = document.getElementById('score-display'); timerDisplay = document.getElementById('timer-display'); startScreenOverlay = document.getElementById('start-screen-overlay'); startScoreButton = document.getElementById('start-score-button'); startSurvivalButton = document.getElementById('start-survival-button'); gameOverOverlay = document.getElementById('game-over-overlay'); finalScoreElement = document.getElementById('final-score'); topScoreScoreElement = document.getElementById('top-score-score'); topScoreSurvivalElement = document.getElementById('top-score-survival'); playAgainButtonLose = document.getElementById('play-again-button-lose'); winOverlay = document.getElementById('win-overlay'); winFinalScoreElement = document.getElementById('win-final-score'); winTopScoreScoreElement = document.getElementById('win-top-score-score'); winTopScoreSurvivalElement = document.getElementById('win-top-score-survival'); playAgainButtonWin = document.getElementById('play-again-button-win');
             menuButton = document.getElementById('menu-button'); topScoresButton = document.getElementById('top-scores-button'); topScoresOverlay = document.getElementById('top-scores-overlay'); infoTopScoreScoreElement = document.getElementById('info-top-score-score'); infoTopScoreSurvivalElement = document.getElementById('info-top-score-survival'); closeTopScoresButton = document.getElementById('close-top-scores-button');
 
             // Check if all elements were found
-             if (!gridElement || !playerElement || !themeToggle || !bodyElement || !scoreDisplay || !gameOverOverlay || !startScreenOverlay || !startScoreButton || !startSurvivalButton || !playAgainButtonLose || !winOverlay || !playAgainButtonWin || !timerDisplay || !menuButton || !topScoresButton || !topScoresOverlay || !closeTopScoresButton) { console.error("One or more essential DOM elements could not be found. Aborting initialization."); document.body.innerHTML = '<p style="color: red; font-family: sans-serif; padding: 20px;">Error: Could not initialize game components.</p>'; return; }
+             if (!gridElement || !playerElement || !bodyElement || !scoreDisplay || !gameOverOverlay || !startScreenOverlay || !startScoreButton || !startSurvivalButton || !playAgainButtonLose || !winOverlay || !playAgainButtonWin || !timerDisplay || !menuButton || !topScoresButton || !topScoresOverlay || !closeTopScoresButton) { console.error("One or more essential DOM elements could not be found. Aborting initialization."); document.body.innerHTML = '<p style="color: red; font-family: sans-serif; padding: 20px;">Error: Could not initialize game components.</p>'; return; }
 
             // Add Event Listeners
             gridElement.addEventListener('pointerdown', handlePointerDown);
             window.addEventListener('resize', handleResize);
             playAgainButtonLose.addEventListener('click', goToStartScreen);
             playAgainButtonWin.addEventListener('click', goToStartScreen);
-            themeToggle.addEventListener('click', () => { const isDarkMode = bodyElement.classList.toggle('dark-mode'); const newTheme = isDarkMode ? 'dark' : 'light'; localStorage.setItem('theme', newTheme); applyTheme(newTheme); });
             startScoreButton.addEventListener('click', () => startGame('score'));
             startSurvivalButton.addEventListener('click', () => startGame('survival'));
             menuButton.addEventListener('click', goToStartScreen);
             topScoresButton.addEventListener('click', showTopScores);
             closeTopScoresButton.addEventListener('click', hideTopScores);
 
-            // Set initial theme
-            const savedTheme = localStorage.getItem('theme');
-            const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-            if (savedTheme === 'light' || (!savedTheme && prefersLight)) {
-                 bodyElement.classList.remove('dark-mode');
-                 applyTheme('light');
-            } else {
-                 applyTheme('dark');
-            }
-
             goToStartScreen(); // Show the initial menu
             console.log("Initialization complete. Showing start screen.");
         });
 
+        // --- Settings pause/resume ---
+        window.addEventListener('settingsOpened', () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        });
+        window.addEventListener('settingsClosed', () => {
+            if (gameState === 'playing') animationFrameId = requestAnimationFrame(gameLoop);
+        });
     </script>
+<script src="../../shared/settings.js" data-gallery-depth="2"></script>
      </body>
 </html>

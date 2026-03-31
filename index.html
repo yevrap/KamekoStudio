@@ -59,6 +59,20 @@
         .card-description {
             flex-grow: 1; /* Allow description to push button down */
         }
+
+        /* Dark mode */
+        body.dark-mode {
+            background: linear-gradient(to bottom right, #0f1929, #1a2a3a);
+            color: #e0e0e0;
+        }
+        body.dark-mode .game-card {
+            background: #1e2a3a;
+            border-color: #2a3a4a;
+            color: #e0e0e0;
+        }
+        body.dark-mode h1 {
+            color: #e0e0e0;
+        }
     </style>
 </head>
 
@@ -147,6 +161,8 @@
             </div>
         </div>
 
-        </main> </div> </body>
+        </main> </div>
+<script src="shared/settings.js" data-gallery-depth="0"></script>
+</body>
 
 </html>

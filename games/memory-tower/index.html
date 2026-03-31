@@ -465,7 +465,12 @@
         }
         window.onload = init;
 
+        // --- Settings pause/resume ---
+        window.addEventListener('settingsOpened', () => { gamePaused = true; });
+        window.addEventListener('settingsClosed', () => { gamePaused = false; });
+
     </script>
+<script src="../../shared/settings.js" data-gallery-depth="2"></script>
 
 </body>
 

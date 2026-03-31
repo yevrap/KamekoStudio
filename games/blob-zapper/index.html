@@ -490,11 +490,20 @@
             });
 
 
+            // --- Settings pause/resume ---
+            window.addEventListener('settingsOpened', () => {
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            });
+            window.addEventListener('settingsClosed', () => {
+                if (!isGameOver) { lastTime = performance.now(); animationFrameId = requestAnimationFrame(animate); }
+            });
+
             // --- Start ---
             init(); // Initial call
 
         }); // End of DOMContentLoaded listener
 
     </script>
+<script src="../../shared/settings.js" data-gallery-depth="2"></script>
 </body>
 </html>
