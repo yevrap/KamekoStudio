@@ -656,10 +656,12 @@
             playAgainButtonWin.addEventListener('click', goToStartScreen);
             startScoreButton.addEventListener('click', () => {
                 if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+                localStorage.setItem('lastPlayed_materialsRun', Date.now());
                 startGame('score');
             });
             startSurvivalButton.addEventListener('click', () => {
                 if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+                localStorage.setItem('lastPlayed_materialsRun', Date.now());
                 startGame('survival');
             });
             menuButton.addEventListener('click', goToStartScreen);

@@ -710,6 +710,7 @@
             if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null;
             activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
              if (Tone && Tone.Transport.state === "started") { Tone.Transport.stop(); }
+            const _prevRR = parseInt(localStorage.getItem('riverRunHighScore') || '0', 10); if (score > _prevRR) localStorage.setItem('riverRunHighScore', score);
             messageText.innerHTML = `Game Over!<br>Final Score: ${score}`; startButton.textContent = 'Restart Game'; messageBox.style.display = 'block';
         }
 
@@ -824,6 +825,7 @@
         // Start/Restart button
         startButton.addEventListener('click', (e) => {
              if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+             localStorage.setItem('lastPlayed_riverRun', Date.now());
              initGame();
              e.stopPropagation();
              e.currentTarget.blur();

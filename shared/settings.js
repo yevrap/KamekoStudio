@@ -34,8 +34,11 @@
     localStorage.setItem('tokens', Math.max(0, n));
   }
   function updateTokenDisplay() {
+    const count = getTokenCount();
     const el = document.getElementById('settings-token-count');
-    if (el) el.textContent = getTokenCount();
+    if (el) el.textContent = count;
+    const header = document.getElementById('headerTokenCount');
+    if (header) header.textContent = count;
   }
 
   window.KamekoTokens = {
@@ -229,20 +232,24 @@
     tokenLabel.innerHTML = '\uD83E\uDE99 Tokens: <strong id="settings-token-count">' + getTokenCount() + '</strong>';
 
     const getTokenBtn = document.createElement('button');
-    getTokenBtn.textContent = '+ Get Token';
+    getTokenBtn.textContent = '+ 1 \uD83E\uDE99';
     getTokenBtn.style.cssText = [
-      'background:rgba(99,179,237,0.25)', 'color:white',
-      'border:1px solid rgba(99,179,237,0.5)',
-      'border-radius:6px', 'padding:6px 12px',
-      'font-size:0.85em', 'cursor:pointer',
-      'transition:background 0.2s', 'font-family:sans-serif',
-      'white-space:nowrap', 'min-height:36px'
+      'background:#d97706', 'color:#fff',
+      'border:1px solid #f59e0b',
+      'border-radius:8px', 'padding:7px 14px',
+      'font-size:0.85em', 'font-weight:700', 'cursor:pointer',
+      'transition:background 0.15s, box-shadow 0.15s', 'font-family:sans-serif',
+      'white-space:nowrap', 'min-height:36px',
+      'box-shadow:0 0 8px rgba(245,158,11,0.35)',
+      'letter-spacing:0.02em'
     ].join(';');
     getTokenBtn.addEventListener('pointerover', function () {
-      getTokenBtn.style.background = 'rgba(99,179,237,0.45)';
+      getTokenBtn.style.background = '#b45309';
+      getTokenBtn.style.boxShadow = '0 0 14px rgba(245,158,11,0.6)';
     });
     getTokenBtn.addEventListener('pointerout', function () {
-      getTokenBtn.style.background = 'rgba(99,179,237,0.25)';
+      getTokenBtn.style.background = '#d97706';
+      getTokenBtn.style.boxShadow = '0 0 8px rgba(245,158,11,0.35)';
     });
     getTokenBtn.addEventListener('click', function () {
       window.KamekoTokens.add(1);

@@ -4,165 +4,414 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibe Arcade - Modern Edition</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Vibe Arcade</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
-        /* Apply Inter font globally */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:           #0a0a14;
+            --surface:      #12122a;
+            --surface-hover:#1a1a3a;
+            --border:       #2a2a50;
+            --text:         #e0e0ff;
+            --text-muted:   #7777aa;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
-            /* Subtle gradient background */
-            background: linear-gradient(to bottom right, #e0f2fe, #f0f9ff); /* Light blue gradient */
-            padding-bottom: 4rem; /* Add some padding at the bottom */
-            box-sizing: border-box; /* Include padding and border in element's total width and height */
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding-bottom: 5rem;
         }
 
-        /* Custom class for card hover effect */
+        /* Light mode — when settings.js removes dark-mode class */
+        body:not(.dark-mode) {
+            --bg:           #f0f4f8;
+            --surface:      #ffffff;
+            --surface-hover:#f1f5f9;
+            --border:       #e2e8f0;
+            --text:         #1a202c;
+            --text-muted:   #64748b;
+        }
+
+        /* ── Header ──────────────────────────────────── */
+        .site-header {
+            border-bottom: 1px solid var(--border);
+        }
+        .header-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 1.1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .arcade-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+        }
+        .token-badge {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 9999px;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .mode-link {
+            background: #2a1a6622;
+            border: 1px solid #6644ff55;
+            color: #a88aff;
+            border-radius: 8px;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .mode-link:hover { background: #6644ff33; }
+        body:not(.dark-mode) .mode-link { color: #6644ff; border-color: #6644ff88; }
+
+        /* ── Main container ───────────────────────────── */
+        .main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        /* ── Section titles ───────────────────────────── */
+        .section-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.9rem;
+        }
+        section { margin-bottom: 2.5rem; }
+
+        /* ── Recently Played ──────────────────────────── */
+        .recent-row {
+            display: flex;
+            gap: 0.85rem;
+            overflow-x: auto;
+            padding-bottom: 0.4rem;
+            scrollbar-width: none;
+        }
+        .recent-row::-webkit-scrollbar { display: none; }
+
+        .recent-card {
+            flex: 0 0 110px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.9rem 0.6rem 0.75rem;
+            text-align: center;
+            text-decoration: none;
+            color: var(--text);
+            transition: background 0.2s, transform 0.15s;
+        }
+        .recent-card:hover {
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+        }
+        .r-emoji { font-size: 1.7rem; display: block; margin-bottom: 0.3rem; }
+        .r-name  { font-size: 0.7rem; font-weight: 600; display: block; margin-bottom: 0.2rem; line-height: 1.3; }
+        .r-time  { font-size: 0.62rem; color: var(--text-muted); }
+
+        /* ── Scores ───────────────────────────────────── */
+        .scores-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.65rem;
+        }
+        @media (min-width: 640px) {
+            .scores-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        .score-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 0.85rem;
+        }
+        .s-label {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.3rem;
+        }
+        .s-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        /* ── Games grid ───────────────────────────────── */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.85rem;
+        }
+        @media (min-width: 768px) {
+            .games-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
         .game-card {
-            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-            display: flex; /* Ensure cards use flexbox */
-            flex-direction: column; /* Stack elements vertically */
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--card-accent, #6644ff);
+            border-radius: 14px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: background 0.2s, transform 0.15s;
         }
-
         .game-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            background: var(--surface-hover);
+            transform: translateY(-3px);
         }
-
-        /* Custom class for button hover effect */
-        .play-button {
-            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-        }
-        .play-button:hover {
-             transform: scale(1.05);
-             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-        /* Specific transition for the 3D toggle link */
-        .toggle-3d-link {
-             transition: background-color 0.2s ease-in-out;
-        }
-
-
-        /* Ensure content within card grows */
-        .card-content {
-            flex-grow: 1; /* Allow content area to grow */
+        .game-card-body {
+            padding: 0.9rem 1rem;
+            flex: 1;
             display: flex;
             flex-direction: column;
         }
-
-        /* Ensure description takes available space */
-        .card-description {
-            flex-grow: 1; /* Allow description to push button down */
+        .game-emoji {
+            font-size: 1.6rem;
+            margin-bottom: 0.45rem;
         }
-
-        /* Dark mode */
-        body.dark-mode {
-            background: linear-gradient(to bottom right, #0f1929, #1a2a3a);
-            color: #e0e0e0;
+        .game-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.3rem;
         }
-        body.dark-mode .game-card {
-            background: #1e2a3a;
-            border-color: #2a3a4a;
-            color: #e0e0e0;
+        .game-desc {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            flex: 1;
+            line-height: 1.5;
+            margin-bottom: 0.55rem;
         }
-        body.dark-mode h1 {
-            color: #e0e0e0;
+        .game-meta {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            margin-bottom: 0.6rem;
+            min-height: 0.9rem;
         }
+        .play-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: 0.55rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: #fff;
+            min-height: 44px;
+            transition: opacity 0.2s, transform 0.1s;
+        }
+        .play-btn:hover { opacity: 0.85; transform: scale(1.02); }
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col items-center p-6 pt-12">
-    <div class="container mx-auto max-w-4xl text-center w-full">
-        <header class="mb-10">
-            <h1 class="text-4xl font-bold text-gray-800 mb-4">
-                <i class="fas fa-gamepad text-blue-500 mr-2"></i>
-                <span>Vibe Arcade</span>
-            </h1>
-            <a href="3d.html"
-               class="toggle-3d-link inline-block bg-blue-500 text-white text-center font-medium py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300">
-                Enter 3D Mode
-            </a>
-        </header>
-
-        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
-
-            <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden">
-                <div class="h-48 bg-gradient-to-r from-indigo-400 to-purple-500 flex items-center justify-center">
-                    <i class="fas fa-search text-6xl text-white opacity-75"></i>
-                </div>
-                <div class="p-6 card-content">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-2">Hidden Object</h2>
-                    <p class="text-gray-600 text-sm mb-4 card-description">Try this emoji finder challenge game</p>
-                    <a href="games/hidden-object/index.html"
-                       class="play-button mt-auto block w-full bg-indigo-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-300">
-                        Play Now <i class="fas fa-play ml-1 text-xs"></i>
-                    </a>
-                </div>
-            </div>
-
-            <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden">
-                <div class="h-48 bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center">
-                    <i class="fas fa-chess-rook text-6xl text-white opacity-75"></i>
-                </div>
-                <div class="p-6 card-content">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-2">Memory Tower Defense</h2>
-                    <p class="text-gray-600 text-sm mb-4 card-description">Test your memory and strategic skills in this unique tower defense challenge.</p>
-                    <a href="games/memory-tower/index.html"
-                        class="play-button mt-auto block w-full bg-green-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300">
-                        Play Now <i class="fas fa-play ml-1 text-xs"></i>
-                    </a>
-                </div>
-            </div>
-
-            <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden">
-                 <div class="h-48 bg-gradient-to-r from-purple-400 to-pink-500 flex items-center justify-center">
-                    <i class="fas fa-water text-6xl text-white opacity-75"></i>
-                </div>
-                 <div class="p-6 card-content">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-2">River Run</h2>
-                    <p class="text-gray-600 text-sm mb-4 card-description">Navigate the treacherous waters and avoid obstacles in this fast-paced river adventure.</p>
-                    <a href="games/river-run/index.html"
-                        class="play-button mt-auto block w-full bg-purple-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-300">
-                        Play Now <i class="fas fa-play ml-1 text-xs"></i>
-                    </a>
-                </div>
-            </div>
-
-            <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden">
-                <div class="h-48 bg-gradient-to-r from-yellow-400 to-blue-400 flex items-center justify-center">
-                   <i class="fas fa-bolt text-6xl text-white opacity-75"></i>
-               </div>
-                <div class="p-6 card-content">
-                   <h2 class="text-xl font-semibold text-gray-800 mb-2">Blob Zapper</h2>
-                   <p class="text-gray-600 text-sm mb-4 card-description">Push blobs with electricity.</p>
-                   <a href="games/blob-zapper/index.html"
-                       class="play-button mt-auto block w-full bg-yellow-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-300">
-                       Play Now <i class="fas fa-play ml-1 text-xs"></i>
-                   </a>
-               </div>
-           </div>
-
-           <div class="game-card bg-white rounded-xl shadow-lg overflow-hidden">
-            <div class="h-48 bg-gradient-to-r from-red-400 to-orange-500 flex items-center justify-center">
-                <i class="fas fa-bullseye text-6xl text-white opacity-75"></i>
-            </div>
-            <div class="p-6 card-content">
-                <h2 class="text-xl font-semibold text-gray-800 mb-2">Materials Run</h2>
-                <p class="text-gray-600 text-sm mb-4 card-description">Shoot and slide your way through challenging levels in this fast-paced puzzle shooter.</p>
-                <a href="games/materials-run/index.html"
-                    class="play-button mt-auto block w-full bg-red-500 text-white text-center font-medium py-3 px-4 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-300">
-                    Play Now <i class="fas fa-play ml-1 text-xs"></i>
-                </a>
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="arcade-title">🕹️ Vibe Arcade</div>
+            <div class="header-right">
+                <span class="token-badge">🪙 <span id="headerTokenCount">0</span></span>
+                <a href="3d.html" class="mode-link">3D Mode ✦</a>
             </div>
         </div>
+    </header>
 
-        </main> </div>
-<script src="shared/settings.js" data-gallery-depth="0"></script>
+    <main class="main">
+
+        <!-- Recently Played (hidden until JS finds data) -->
+        <section id="recentSection" style="display:none">
+            <div class="section-label">Recently Played</div>
+            <div id="recentRow" class="recent-row"></div>
+        </section>
+
+        <!-- Your Scores (hidden until JS finds data) -->
+        <section id="scoresSection" style="display:none">
+            <div class="section-label">Your Best Scores</div>
+            <div id="scoresGrid" class="scores-grid"></div>
+        </section>
+
+        <!-- All Games -->
+        <section>
+            <div class="section-label">All Games</div>
+            <div class="games-grid">
+
+                <div class="game-card" style="--card-accent:#9c27b0">
+                    <div class="game-card-body">
+                        <div class="game-emoji">🔍</div>
+                        <div class="game-title">Hidden Object</div>
+                        <div class="game-desc">Find the hidden emoji before time runs out</div>
+                        <div class="game-meta" id="meta-hiddenObject"></div>
+                        <a href="games/hidden-object/index.html" class="play-btn" style="background:#9c27b0">▶ Play &nbsp;1🪙</a>
+                    </div>
+                </div>
+
+                <div class="game-card" style="--card-accent:#00c853">
+                    <div class="game-card-body">
+                        <div class="game-emoji">🏰</div>
+                        <div class="game-title">Memory Tower</div>
+                        <div class="game-desc">Wave-based tower defense with roguelike upgrades</div>
+                        <div class="game-meta" id="meta-memoryTower"></div>
+                        <a href="games/memory-tower/index.html" class="play-btn" style="background:#009940">▶ Play &nbsp;1🪙</a>
+                    </div>
+                </div>
+
+                <div class="game-card" style="--card-accent:#2979ff">
+                    <div class="game-card-body">
+                        <div class="game-emoji">🌊</div>
+                        <div class="game-title">River Run</div>
+                        <div class="game-desc">3D obstacle-dodging river runner</div>
+                        <div class="game-meta" id="meta-riverRun"></div>
+                        <a href="games/river-run/index.html" class="play-btn" style="background:#2979ff">▶ Play &nbsp;1🪙</a>
+                    </div>
+                </div>
+
+                <div class="game-card" style="--card-accent:#ff6d00">
+                    <div class="game-card-body">
+                        <div class="game-emoji">⚡</div>
+                        <div class="game-title">Blob Zapper</div>
+                        <div class="game-desc">Push blobs with electricity before they escape</div>
+                        <div class="game-meta" id="meta-blobZapper"></div>
+                        <a href="games/blob-zapper/index.html" class="play-btn" style="background:#ff6d00">▶ Play &nbsp;1🪙</a>
+                    </div>
+                </div>
+
+                <div class="game-card" style="--card-accent:#f44336">
+                    <div class="game-card-body">
+                        <div class="game-emoji">🏃</div>
+                        <div class="game-title">Materials Run</div>
+                        <div class="game-desc">Navigate material types — ice, sand, water, grass</div>
+                        <div class="game-meta" id="meta-materialsRun"></div>
+                        <a href="games/materials-run/index.html" class="play-btn" style="background:#f44336">▶ Play &nbsp;1🪙</a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        const GAMES_META = [
+            { id: 'hiddenObject', name: 'Hidden Object', emoji: '🔍', href: 'games/hidden-object/index.html' },
+            { id: 'materialsRun', name: 'Materials Run', emoji: '🏃', href: 'games/materials-run/index.html' },
+            { id: 'memoryTower',  name: 'Memory Tower',  emoji: '🏰', href: 'games/memory-tower/index.html' },
+            { id: 'riverRun',     name: 'River Run',     emoji: '🌊', href: 'games/river-run/index.html' },
+            { id: 'blobZapper',   name: 'Blob Zapper',   emoji: '⚡', href: 'games/blob-zapper/index.html' },
+        ];
+
+        const SCORES_META = [
+            { label: 'Materials Run (Score)',    key: 'gridGameTopScoreScore',    suffix: '' },
+            { label: 'Materials Run (Survival)', key: 'gridGameTopScoreSurvival', suffix: '' },
+            { label: 'River Run',                key: 'riverRunHighScore',        suffix: ' pts' },
+            { label: 'Memory Tower',             key: 'memoryTowerHighWave',      suffix: ' waves' },
+        ];
+
+        function timeAgo(ts) {
+            const diff = Date.now() - ts;
+            const mins = Math.floor(diff / 60000);
+            if (mins < 2)   return 'Just now';
+            if (mins < 60)  return mins + 'm ago';
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24)   return hrs + 'h ago';
+            const days = Math.floor(hrs / 24);
+            if (days === 1) return 'Yesterday';
+            return days + 'd ago';
+        }
+
+        function buildDashboard() {
+            // Token count in header
+            document.getElementById('headerTokenCount').textContent =
+                localStorage.getItem('tokens') || '0';
+
+            // Recently Played
+            const played = GAMES_META
+                .map(g => ({ ...g, ts: parseInt(localStorage.getItem('lastPlayed_' + g.id) || '0', 10) }))
+                .filter(g => g.ts > 0)
+                .sort((a, b) => b.ts - a.ts);
+
+            if (played.length > 0) {
+                document.getElementById('recentRow').innerHTML = played.map(g =>
+                    '<a href="' + g.href + '" class="recent-card">' +
+                    '<span class="r-emoji">' + g.emoji + '</span>' +
+                    '<span class="r-name">' + g.name + '</span>' +
+                    '<span class="r-time">' + timeAgo(g.ts) + '</span>' +
+                    '</a>'
+                ).join('');
+                document.getElementById('recentSection').style.display = 'block';
+            }
+
+            // Per-card meta (last played + score snippets)
+            GAMES_META.forEach(function(g) {
+                var el = document.getElementById('meta-' + g.id);
+                if (!el) return;
+                var ts = parseInt(localStorage.getItem('lastPlayed_' + g.id) || '0', 10);
+                if (ts > 0) el.textContent = 'Last played ' + timeAgo(ts);
+            });
+
+            var riverScore = parseInt(localStorage.getItem('riverRunHighScore') || '0', 10);
+            if (riverScore > 0) {
+                var el = document.getElementById('meta-riverRun');
+                if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: ' + riverScore + ' pts';
+            }
+
+            var towerWave = parseInt(localStorage.getItem('memoryTowerHighWave') || '0', 10);
+            if (towerWave > 0) {
+                var el = document.getElementById('meta-memoryTower');
+                if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: Wave ' + towerWave;
+            }
+
+            var mrScore = parseInt(localStorage.getItem('gridGameTopScoreScore') || '0', 10);
+            var mrSurv  = parseInt(localStorage.getItem('gridGameTopScoreSurvival') || '0', 10);
+            if (mrScore > 0 || mrSurv > 0) {
+                var el = document.getElementById('meta-materialsRun');
+                var parts = [];
+                if (mrScore > 0) parts.push('Score: ' + mrScore);
+                if (mrSurv  > 0) parts.push('Survival: ' + mrSurv);
+                if (el && parts.length) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + parts.join(' · ');
+            }
+
+            // Your Best Scores section
+            var scoreItems = SCORES_META
+                .map(function(s) { return { label: s.label, suffix: s.suffix, val: parseInt(localStorage.getItem(s.key) || '0', 10) }; })
+                .filter(function(s) { return s.val > 0; });
+
+            if (scoreItems.length > 0) {
+                document.getElementById('scoresGrid').innerHTML = scoreItems.map(function(s) {
+                    return '<div class="score-item"><div class="s-label">' + s.label + '</div><div class="s-value">' + s.val + s.suffix + '</div></div>';
+                }).join('');
+                document.getElementById('scoresSection').style.display = 'block';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', buildDashboard);
+    </script>
+    <script src="shared/settings.js" data-gallery-depth="0"></script>
 </body>
 
 </html>

@@ -437,7 +437,7 @@
             function handlePointerDown(id, clientX, clientY) {
                 if (isGameOver) {
                     if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
-                    init(); return;
+                    localStorage.setItem('lastPlayed_blobZapper', Date.now()); init(); return;
                 }
                  try {
                      const rect = canvas.getBoundingClientRect();
