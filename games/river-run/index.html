@@ -18,8 +18,8 @@
             --button-text-color: #ffffff;
             --button-bg-start: #f97316;
             --button-bg-end: #ea580c;
-            --shoot-button-bg-start: #dc2626; /* Red for shoot */
-            --shoot-button-bg-end: #b91c1c;
+            --fire-btn-bg-start: #dc2626;
+            --fire-btn-bg-end: #b91c1c;
             --message-box-bg: rgba(12, 74, 110, 0.9);
             --message-box-text: #ffffff;
             --score-bg: rgba(0, 0, 0, 0.5);
@@ -38,8 +38,8 @@
             --button-text-color: #ffffff;
             --button-bg-start: #1d4ed8;
             --button-bg-end: #2563eb;
-            --shoot-button-bg-start: #f43f5e; /* Pinkish-red in dark */
-            --shoot-button-bg-end: #e11d48;
+            --fire-btn-bg-start: #f43f5e;
+            --fire-btn-bg-end: #e11d48;
             --message-box-bg: rgba(55, 65, 81, 0.9);
             --message-box-text: #f3f4f6;
             --score-bg: rgba(255, 255, 255, 0.2);
@@ -81,11 +81,11 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
             width: 95%; /* Use slightly more width */
             max-width: 500px;
-            height: calc(100vh - 55px); /* Fill most vertical space, leaving room for top button */
+            height: calc(100vh - 55px - 80px); /* Fill vertical space above controls bar */
             max-height: 900px; /* Optional: prevent extreme height on very tall/narrow screens */
             cursor: grab;
             transition: border-color 0.3s ease;
-            margin-bottom: 5px; /* Add small bottom margin if needed */
+            margin-bottom: 0;
             touch-action: none; /* Prevent ALL default touch actions (zoom, scroll) on container */
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -204,26 +204,51 @@
               background-color: #666;
          }
 
-        /* --- Shoot Button Styling RE-ADDED --- */
-        #shoot-button {
-            position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 0.8em; /* Slightly smaller text */
-            padding: 0; /* Remove padding for circle */
-            border-radius: 50%; /* Make it round */
-            background: linear-gradient(180deg, var(--shoot-button-bg-start), var(--shoot-button-bg-end));
-            z-index: 15; /* Above canvas, below message box */
-            width: 60px; /* Fixed size for circle */
-            height: 60px;
+        /* --- Controls Bar (below canvas) --- */
+        #controls-bar {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0; /* Override default margin */
-            line-height: 1; /* Adjust line height */
-            -webkit-tap-highlight-color: transparent; /* Remove tap highlight */
+            width: 95%;
+            max-width: 500px;
+            height: 80px;
+            gap: 8px;
+            padding: 8px;
+            box-sizing: border-box;
+            flex-shrink: 0;
         }
+        #btn-left, #btn-right {
+            flex: 1;
+            background: rgba(20, 60, 130, 0.85);
+            color: white;
+            border: 2px solid rgba(100, 160, 255, 0.5);
+            border-radius: 12px;
+            font-size: 0.65em;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+            min-height: 44px;
+            margin: 0;
+            padding: 0;
+            transition: background 0.1s;
+        }
+        #btn-left:active, #btn-right:active {
+            background: rgba(40, 100, 200, 0.9);
+        }
+        #btn-fire {
+            flex: 1.4;
+            background: linear-gradient(180deg, var(--fire-btn-bg-start), var(--fire-btn-bg-end));
+            color: white;
+            border: 2px solid rgba(255, 100, 100, 0.5);
+            border-radius: 12px;
+            font-size: 0.75em;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+            min-height: 44px;
+            margin: 0;
+            padding: 0;
+            transition: opacity 0.1s;
+        }
+        #btn-fire:active { opacity: 0.8; }
 
     </style>
 </head>
@@ -238,8 +263,13 @@
             <p id="message-text">River Runner 3D!</p>
             <button id="start-button">Start Game</button>
         </div>
-         <button id="shoot-button">SHOOT</button>
         </div>
+
+    <div id="controls-bar">
+        <button id="btn-left">◄ LEFT</button>
+        <button id="btn-fire">FIRE</button>
+        <button id="btn-right">RIGHT ►</button>
+    </div>
 
 
     <script>
@@ -250,7 +280,9 @@
         const messageText = document.getElementById('message-text');
         const startButton = document.getElementById('start-button');
         const muteToggle = document.getElementById('mute-toggle');
-        const shootButton = document.getElementById('shoot-button'); // RE-ADDED
+        const btnLeftEl  = document.getElementById('btn-left');
+        const btnRightEl = document.getElementById('btn-right');
+        const btnFireEl  = document.getElementById('btn-fire');
 
         // --- Three.js Variables ---
         let scene, camera, renderer;
@@ -311,13 +343,20 @@
         let dragStartX = 0;
         let boatStartX = 0;
 
-        // --- Tap Detection Variables REMOVED ---
-        // let pointerDownTime = 0;
-        // let pointerDownX = 0;
-        // let pointerDownY = 0;
-        // let potentialTap = false;
-        // const MAX_TAP_DURATION = 250;
-        // const MAX_TAP_MOVEMENT = 10;
+        // --- Tap-to-shoot detection ---
+        let hasMoved = false;
+        let pointerTapStartX = 0;
+        let pointerTapStartY = 0;
+
+        // --- Controls bar button state ---
+        let btnLeft = false;
+        let btnRight = false;
+
+        // --- Per-game options ---
+        let autoShoot = false;
+        let autoShootCooldown = 0;
+        let autoAvoid = false;
+        let invertControls = false;
 
         // --- Theme Variable ---
         let isDarkMode = true;
@@ -560,7 +599,8 @@
              }
              isGameOver = false; score = 0; gameSpeed = 0.1;
              obstacleSpawnInterval = 100; obstacleSpawnTimer = 0; keys = {}; isDragging = false;
-             dragStartX = 0; boatStartX = 0; // lastShootTime removed
+             dragStartX = 0; boatStartX = 0; hasMoved = false;
+             autoShootCooldown = 0; btnLeft = false; btnRight = false;
              scoreElement.textContent = `Score: ${score}`; messageBox.style.display = 'none';
              currentWaterColorIndex = 0; nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
 
@@ -584,14 +624,33 @@
 
             // Update Boat Position
             if (!isDragging) {
+                const keyLeft  = keys['arrowleft'] || keys['a'];
+                const keyRight = keys['arrowright'] || keys['d'];
+                const effLeft  = (invertControls ? keyRight : keyLeft) || btnLeft;
+                const effRight = (invertControls ? keyLeft  : keyRight) || btnRight;
                 let keyboardDeltaX = 0;
-                if (keys['arrowleft'] || keys['a']) keyboardDeltaX -= BOAT_SPEED_X;
-                if (keys['arrowright'] || keys['d']) keyboardDeltaX += BOAT_SPEED_X;
+                if (effLeft)  keyboardDeltaX -= BOAT_SPEED_X;
+                if (effRight) keyboardDeltaX += BOAT_SPEED_X;
                 if (keyboardDeltaX !== 0) {
                     let targetX = boat.position.x + keyboardDeltaX;
                     const halfBoatWidth = BOAT_WIDTH / 2; const halfRiver = riverWidth / 2;
                     const minX = -halfRiver + halfBoatWidth; const maxX = halfRiver - halfBoatWidth;
                     boat.position.x = THREE.MathUtils.clamp(targetX, minX, maxX);
+                }
+            }
+            // Auto-Avoid: steer away from closest obstacle directly ahead
+            if (autoAvoid) {
+                const halfBW = BOAT_WIDTH / 2; const halfR = riverWidth / 2;
+                let closestThreat = null; let closestDZ = Infinity;
+                obstacles.forEach(obs => {
+                    const dz = obs.position.z - boat.position.z;
+                    if (dz > 0 && dz < 10 && Math.abs(obs.position.x - boat.position.x) < BOAT_WIDTH * 2.5 && dz < closestDZ) {
+                        closestDZ = dz; closestThreat = obs;
+                    }
+                });
+                if (closestThreat) {
+                    const dir = boat.position.x <= closestThreat.position.x ? -1 : 1;
+                    boat.position.x = THREE.MathUtils.clamp(boat.position.x + dir * BOAT_SPEED_X * 1.5, -halfR + halfBW, halfR - halfBW);
                 }
             }
             boatBox.setFromObject(boat);
@@ -692,6 +751,14 @@
                 }
             }
 
+            // Auto-Shoot
+            if (autoShoot) {
+                if (autoShootCooldown > 0) { autoShootCooldown--; } else {
+                    const target = findNearestObstacleAhead();
+                    if (target) { shootProjectile(target); autoShootCooldown = 20; }
+                }
+            }
+
             // Update Camera
             updateCamera();
         }
@@ -765,60 +832,57 @@
         });
         window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
 
-        // --- Drag Controls (No Tap Logic) ---
+        // --- Drag Controls + Tap-to-Shoot ---
         gameContainer.addEventListener('pointerdown', (e) => {
             if (isGameOver || messageBox.style.display === 'block' || e.target !== renderer.domElement) return;
-             e.preventDefault();
-            // Removed tap detection variables setup
+            e.preventDefault();
+            pointerTapStartX = e.clientX; pointerTapStartY = e.clientY; hasMoved = false;
             isDragging = true;
             dragStartX = e.clientX;
             boatStartX = boat.position.x;
-            keys = {}; // Still clear keys on drag start
+            keys = {};
             gameContainer.style.cursor = 'grabbing';
         });
 
         gameContainer.addEventListener('pointermove', (e) => {
             if (!isDragging || isGameOver) return;
-             e.preventDefault();
-            // Removed tap detection check
-            // Apply drag movement directly
+            e.preventDefault();
+            if (Math.abs(e.clientX - pointerTapStartX) > 10 || Math.abs(e.clientY - pointerTapStartY) > 10) hasMoved = true;
             const currentX = e.clientX;
             const deltaScreenX_from_drag_start = currentX - dragStartX;
             const currentContainerWidth = gameContainer.clientWidth; if (currentContainerWidth === 0) return;
             const worldUnitsPerPixel = riverWidth / currentContainerWidth;
-            const deltaWorldX = deltaScreenX_from_drag_start * worldUnitsPerPixel;
+            const deltaWorldX = deltaScreenX_from_drag_start * worldUnitsPerPixel * (invertControls ? -1 : 1);
             let targetWorldX = boatStartX + deltaWorldX;
             const halfBoatWidth = BOAT_WIDTH / 2; const halfRiver = riverWidth / 2;
             const minX = -halfRiver + halfBoatWidth; const maxX = halfRiver - halfBoatWidth;
             boat.position.x = THREE.MathUtils.clamp(targetWorldX, minX, maxX);
         });
 
-        function stopDragging(e) { // Renamed back from stopDraggingAndCheckTap
-             if (isDragging) {
-                  e.preventDefault();
-                 // Removed tap check logic
-                 isDragging = false;
-                 // Removed tap detection variable reset
-                 dragStartX = 0; boatStartX = 0; gameContainer.style.cursor = 'grab';
-             }
+        function stopDragging(e) {
+            if (isDragging) {
+                e.preventDefault();
+                if (!hasMoved && !isGameOver) {
+                    shootProjectile(findNearestObstacleAhead());
+                }
+                isDragging = false;
+                dragStartX = 0; boatStartX = 0; gameContainer.style.cursor = 'grab';
+            }
         }
         gameContainer.addEventListener('pointerup', stopDragging);
         gameContainer.addEventListener('pointerleave', stopDragging);
 
 
-        // --- Shoot Button Listener RE-ADDED ---
-        shootButton.addEventListener('click', (e) => {
-             if (isGameOver) return;
-             const target = findNearestObstacleAhead();
-             shootProjectile(target);
-             e.preventDefault();
-             e.stopPropagation();
-             e.currentTarget.blur(); // Remove focus
+        // --- Controls Bar Listeners ---
+        [btnLeftEl, btnRightEl].forEach(btn => {
+            btn.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); if (btn === btnLeftEl) btnLeft = true; else btnRight = true; });
+            btn.addEventListener('pointerup',    (e) => { if (btn === btnLeftEl) btnLeft = false; else btnRight = false; });
+            btn.addEventListener('pointerleave', (e) => { if (btn === btnLeftEl) btnLeft = false; else btnRight = false; });
+            btn.addEventListener('pointercancel',(e) => { if (btn === btnLeftEl) btnLeft = false; else btnRight = false; });
         });
-        // Prevent drag start if clicking shoot button
-        shootButton.addEventListener('pointerdown', (e) => {
-            e.stopPropagation();
-            e.preventDefault(); // Also prevent default here
+        btnFireEl.addEventListener('pointerdown', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            if (!isGameOver) shootProjectile(findNearestObstacleAhead());
         });
 
 
@@ -838,12 +902,76 @@
         });
 
 
+        // --- Per-Game Settings UI ---
+        function updateToggleAppearance(toggle, knob, isOn) {
+            toggle.style.background = isOn ? '#22c55e' : 'rgba(255,255,255,0.2)';
+            knob.style.left = isOn ? '27px' : '3px';
+        }
+
+        function buildRiverRunSettingsSection() {
+            const sec = document.createElement('div');
+            sec.id = 'riverrun-settings-section';
+            sec.style.cssText = 'border-top:1px solid rgba(255,255,255,0.15);padding-top:12px;display:flex;flex-direction:column;gap:10px;';
+
+            const heading = document.createElement('div');
+            heading.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin-bottom:2px;';
+            heading.textContent = 'River Run';
+            sec.appendChild(heading);
+
+            const options = [
+                { key: 'riverRun_autoShoot',      label: '\uD83C\uDFF9 Auto-Shoot',  get: () => autoShoot,      set: (v) => { autoShoot = v; } },
+                { key: 'riverRun_autoAvoid',       label: '\uD83D\uDEA4 Auto-Avoid',  get: () => autoAvoid,       set: (v) => { autoAvoid = v; } },
+                { key: 'riverRun_invertControls',  label: '\uD83D\uDD04 Invert Drag', get: () => invertControls,  set: (v) => { invertControls = v; } },
+            ];
+
+            options.forEach(opt => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;font-family:sans-serif;font-size:0.9em;';
+
+                const label = document.createElement('span');
+                label.textContent = opt.label;
+
+                const toggle = document.createElement('button');
+                toggle.dataset.rrKey = opt.key;
+                toggle.style.cssText = 'width:52px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background 0.2s;font-size:0;flex-shrink:0;';
+                const knob = document.createElement('span');
+                knob.style.cssText = 'position:absolute;top:3px;width:22px;height:22px;border-radius:50%;background:white;transition:left 0.2s;';
+                toggle.appendChild(knob);
+                updateToggleAppearance(toggle, knob, opt.get());
+
+                toggle.addEventListener('click', () => {
+                    const newVal = !opt.get();
+                    opt.set(newVal);
+                    localStorage.setItem(opt.key, newVal);
+                    updateToggleAppearance(toggle, knob, newVal);
+                });
+
+                row.appendChild(label);
+                row.appendChild(toggle);
+                sec.appendChild(row);
+            });
+            return sec;
+        }
+
+        function refreshRiverRunToggles() {
+            const sec = document.getElementById('riverrun-settings-section');
+            if (!sec) return;
+            const vals = [autoShoot, autoAvoid, invertControls];
+            sec.querySelectorAll('button[data-rr-key]').forEach((toggle, i) => {
+                const knob = toggle.querySelector('span');
+                if (knob) updateToggleAppearance(toggle, knob, vals[i]);
+            });
+        }
+
         // --- Initial Setup ---
         window.onload = () => {
             const savedTheme = localStorage.getItem('theme');
             isDarkMode = savedTheme !== 'light';
             const savedMute = localStorage.getItem('muted');
             if (savedMute !== null) { isMuted = savedMute === 'true'; } else { isMuted = true; }
+            autoShoot      = localStorage.getItem('riverRun_autoShoot')      === 'true';
+            autoAvoid      = localStorage.getItem('riverRun_autoAvoid')      === 'true';
+            invertControls = localStorage.getItem('riverRun_invertControls') === 'true';
 
             initThree();
             messageText.textContent = 'River Runner 3D!';
@@ -856,6 +984,11 @@
         // --- Settings pause/resume + theme sync ---
         window.addEventListener('settingsOpened', () => {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            if (!document.getElementById('riverrun-settings-section')) {
+                const panel = document.getElementById('settings-panel');
+                if (panel) panel.appendChild(buildRiverRunSettingsSection());
+            }
+            refreshRiverRunToggles();
         });
         window.addEventListener('settingsClosed', () => {
             isDarkMode = localStorage.getItem('theme') !== 'light';
