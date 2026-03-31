@@ -524,7 +524,13 @@
     }
 
     function drawBackgroundPattern() { const pS=30,nC=Math.ceil(canvas.width/pS),nR=Math.ceil(canvas.height/pS); ctx.save(); ctx.fillStyle='rgba(255,255,255,0.02)'; for(let i=0;i<nC;i++){for(let j=0;j<nR;j++){if((i+j)%2===0){ctx.beginPath();ctx.arc(i*pS+pS/2,j*pS+pS/2,2,0,Math.PI*2);ctx.fill();}}} ctx.restore();}
-    function drawScene() { canvas.width=canvas.clientWidth; canvas.height=canvas.clientHeight; ctx.fillStyle='#374151'; ctx.fillRect(0,0,canvas.width,canvas.height); drawBackgroundPattern(); gameObjects.forEach(obj=>drawObject(obj)); if(isRoundOver && targetItem && targetItem.found){highlightFoundObject(targetItem);}}
+    function drawScene() {
+        const cw = canvas.clientWidth;
+        const ch = canvas.clientHeight;
+        if (cw > 0 && ch > 0) { canvas.width = cw; canvas.height = ch; }
+        if (canvas.width === 0 || canvas.height === 0) return;
+        ctx.fillStyle='#374151'; ctx.fillRect(0,0,canvas.width,canvas.height); drawBackgroundPattern(); gameObjects.forEach(obj=>drawObject(obj)); if(isRoundOver && targetItem && targetItem.found){highlightFoundObject(targetItem);}
+    }
 
     function drawObject(obj) {
         if (!obj.isVisible && currentRoundNumber >= 10) return;
