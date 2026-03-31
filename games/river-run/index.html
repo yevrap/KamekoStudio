@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>River Runner 3D</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -54,8 +54,10 @@
             flex-direction: column;
             justify-content: center; /* Center vertically */
             align-items: center; /* Center horizontally */
-            min-height: 100vh; /* Ensure body takes full viewport height */
-            height: 100vh; /* Fix body height to viewport */
+            min-height: 100vh;
+            min-height: 100dvh;
+            height: 100vh; /* fallback */
+            height: 100dvh; /* dynamic: excludes browser toolbar on iOS Safari */
             margin: 0;
             padding: 0; /* Remove default padding */
             background-color: var(--body-bg-color);
@@ -81,7 +83,8 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
             width: 95%; /* Use slightly more width */
             max-width: 500px;
-            height: calc(100vh - 55px - 80px); /* Fill vertical space above controls bar */
+            height: calc(100vh - 55px - 80px); /* fallback */
+            height: calc(100dvh - 55px - 80px - env(safe-area-inset-bottom));
             max-height: 900px; /* Optional: prevent extreme height on very tall/narrow screens */
             cursor: grab;
             transition: border-color 0.3s ease;
@@ -210,8 +213,10 @@
             width: 95%;
             max-width: 500px;
             height: 80px;
+            height: calc(80px + env(safe-area-inset-bottom));
             gap: 8px;
             padding: 8px;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
             box-sizing: border-box;
             flex-shrink: 0;
         }
