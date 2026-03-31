@@ -654,8 +654,14 @@
             window.addEventListener('resize', handleResize);
             playAgainButtonLose.addEventListener('click', goToStartScreen);
             playAgainButtonWin.addEventListener('click', goToStartScreen);
-            startScoreButton.addEventListener('click', () => startGame('score'));
-            startSurvivalButton.addEventListener('click', () => startGame('survival'));
+            startScoreButton.addEventListener('click', () => {
+                if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+                startGame('score');
+            });
+            startSurvivalButton.addEventListener('click', () => {
+                if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+                startGame('survival');
+            });
             menuButton.addEventListener('click', goToStartScreen);
             topScoresButton.addEventListener('click', showTopScores);
             closeTopScoresButton.addEventListener('click', hideTopScores);

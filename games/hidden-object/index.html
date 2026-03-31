@@ -88,34 +88,16 @@
 <div id="mainScreen" class="main-screen w-full max-w-md bg-slate-800/90 backdrop-blur-md shadow-2xl rounded-xl p-3 sm:p-4 md:p-6 text-center">
     <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold title-gradient mb-4 sm:mb-6">Emoji Hunter</h1>
 
-    <div class="mb-4 sm:mb-6 space-y-2 sm:space-y-3">
-        <div class="currency-display">
-            <p class="text-slate-300 text-base sm:text-lg">Your Stars:</p>
-            <p id="totalStarsDisplayContainer" class="text-3xl sm:text-4xl font-bold star-icon-text flex items-center justify-center">
-                <span id="starAmountText">0</span><span class="ml-1">★</span>
-            </p>
-        </div>
-        <div class="currency-display">
-            <p class="text-slate-300 text-base sm:text-lg">Your Gems:</p>
-            <p id="totalGemsDisplayContainer" class="text-3xl sm:text-4xl font-bold gem-icon-svg flex items-center justify-center">
-                <span id="gemAmountText">0</span>
-                <svg class="ml-1 w-7 h-7 sm:w-8 sm:h-8" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 22L22 7L12 2Z M12 4.53L19.19 7L12 19.47L4.81 7L12 4.53Z"/></svg>
-            </p>
-        </div>
-    </div>
-
     <div class="mb-6 sm:mb-8">
-        <h2 class="text-lg sm:text-xl text-sky-300 font-semibold mb-2 sm:mb-3">Redeem Stars</h2>
-        <button id="redeemStarsButton" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md w-full text-sm sm:text-base transition-transform transform hover:scale-105">
-            Redeem 5 <span class="star-icon-text">★</span> for 1 <span class="gem-icon-svg">
-                  <svg class="inline-block w-4 h-4 -mt-px" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7L12 22L22 7L12 2Z M12 4.53L19.19 7L12 19.47L4.81 7L12 4.53Z"/></svg>
-                </span>
-        </button>
-        <p id="redeemMessage" class="text-xs sm:text-sm text-slate-400 mt-2 h-4"></p>
+        <div class="currency-display">
+            <p class="text-slate-300 text-base sm:text-lg">Tokens</p>
+            <p id="tokenDisplayMain" class="text-3xl sm:text-4xl font-bold text-sky-400">0</p>
+        </div>
+        <p class="text-slate-400 text-xs sm:text-sm mt-2">Each game costs 1 token. Get tokens in ⚙️ Settings.</p>
     </div>
 
     <button id="startGameButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 sm:px-8 rounded-lg shadow-lg text-lg sm:text-xl w-full transition-transform transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">
-        Start New Game
+        Start New Game (1 🪙)
     </button>
 </div>
 
@@ -133,7 +115,6 @@
         <div id="successModal" class="absolute inset-0 bg-black bg-opacity-75 flex flex-col items-center justify-center custom-modal hidden rounded-lg p-3 sm:p-4">
             <div class="bg-slate-800 p-4 sm:p-6 rounded-xl shadow-2xl text-center w-full max-w-xs sm:max-w-sm">
                 <p id="successMessageText" class="text-lg sm:text-xl md:text-2xl font-semibold text-green-400 mb-1">🎉 You found it! 🎉</p>
-                <div id="starRatingContainer" class="my-2 star-container"></div>
                 <p id="timeTakenText" class="text-xs sm:text-sm text-slate-400 mb-1 sm:mb-2"></p>
                 <p id="foundObjectName" class="text-sm sm:text-base md:text-lg text-slate-200 mb-2 sm:mb-3"></p>
                 <button id="nextRoundButton" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md text-xs sm:text-sm transition-transform transform hover:scale-105">
@@ -155,7 +136,6 @@
     </main>
 
     <footer class="text-center mt-2 sm:mt-3">
-        <p id="sessionScoreDisplay" class="text-sm sm:text-base text-yellow-400 font-semibold mb-1 sm:mb-2">Session Score: 0 ★</p>
         <button id="quitToMenuButton" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg shadow-md mb-1 sm:mb-2 text-xs sm:text-sm transition-transform transform hover:scale-105">
             Quit to Main Menu
         </button>
@@ -168,20 +148,15 @@
     const mainScreenElement = document.getElementById('mainScreen');
     const gameScreenContainerElement = document.getElementById('gameScreenContainer');
     const startGameButton = document.getElementById('startGameButton');
-    const starAmountTextElement = document.getElementById('starAmountText');
-    const gemAmountTextElement = document.getElementById('gemAmountText');
-    const redeemStarsButton = document.getElementById('redeemStarsButton');
-    const redeemMessageElement = document.getElementById('redeemMessage');
+    const tokenDisplayMain = document.getElementById('tokenDisplayMain');
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     const targetMessageElement = document.getElementById('targetMessage');
     const roundTimerDisplayElement = document.getElementById('roundTimerDisplay');
     const currentRoundDisplayElement = document.getElementById('currentRoundDisplay');
-    const sessionScoreDisplayElement = document.getElementById('sessionScoreDisplay');
     const quitToMenuButton = document.getElementById('quitToMenuButton');
     const successModalElement = document.getElementById('successModal');
     const successMessageTextElement = document.getElementById('successMessageText');
-    const starRatingContainerElement = document.getElementById('starRatingContainer');
     const timeTakenTextElement = document.getElementById('timeTakenText');
     const foundObjectNameElement = document.getElementById('foundObjectName');
     const nextRoundButton = document.getElementById('nextRoundButton');
@@ -191,8 +166,6 @@
 
     // --- Game Configuration ---
     const ROUND_DURATION = 20000;
-    const STARS_TO_REDEEM = 5;
-    const GEMS_PER_REDEEM = 1;
     const BASE_SPEED_MULTIPLIER = 0.0001;
     const SPEED_INCREMENT_PER_ROUND = 0.00005;
     const INITIAL_SPEED_FACTOR = 1.5;
@@ -229,27 +202,13 @@
     let animationFrameId;
     let objectFindStartTime = 0;
     let currentScreen = 'main';
-    let sessionTotalStars = 0;
-    let totalPersistentStars = 0;
-    let totalGems = 0;
     let currentRoundNumber = 0;
     let roundTimeLeft = ROUND_DURATION;
     let roundIntervalId = null;
 
-    // --- Local Storage ---
-    function loadPersistentData() {
-        totalPersistentStars = parseInt(localStorage.getItem('totalPersistentStars_eh')) || 0;
-        totalGems = parseInt(localStorage.getItem('totalGems_eh')) || 0;
-    }
-    function savePersistentData() {
-        localStorage.setItem('totalPersistentStars_eh', totalPersistentStars);
-        localStorage.setItem('totalGems_eh', totalGems);
-    }
-
     // --- Screen Management & UI Updates ---
-    function updateMainScreenDisplays() {
-        if (starAmountTextElement) starAmountTextElement.textContent = totalPersistentStars;
-        if (gemAmountTextElement) gemAmountTextElement.textContent = totalGems;
+    function updateTokenDisplay() {
+        if (tokenDisplayMain) tokenDisplayMain.textContent = window.KamekoTokens ? window.KamekoTokens.get() : 0;
     }
 
     function showScreen(screenName) {
@@ -257,32 +216,16 @@
         mainScreenElement.classList.toggle('hidden', screenName !== 'main');
         gameScreenContainerElement.classList.toggle('hidden', screenName !== 'game');
         if (screenName === 'main') {
-            loadPersistentData();
-            updateMainScreenDisplays();
+            updateTokenDisplay();
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             if (roundIntervalId) clearInterval(roundIntervalId);
             lastFrameTime = 0;
         }
     }
 
-    function redeemStars() {
-        if (totalPersistentStars >= STARS_TO_REDEEM) {
-            totalPersistentStars -= STARS_TO_REDEEM;
-            totalGems += GEMS_PER_REDEEM;
-            savePersistentData();
-            updateMainScreenDisplays();
-            redeemMessageElement.textContent = `Redeemed ${STARS_TO_REDEEM} ★ for ${GEMS_PER_REDEEM} gem!`;
-        } else {
-            redeemMessageElement.textContent = `Not enough stars to redeem.`;
-        }
-        setTimeout(() => { redeemMessageElement.textContent = ''; }, 3000);
-    }
-
     // --- Game Logic ---
     function startNewGameSession() {
-        sessionTotalStars = 0;
         currentRoundNumber = 0;
-        sessionScoreDisplayElement.textContent = `Session Score: ${sessionTotalStars} ★`;
         startNextRound();
     }
 
@@ -313,7 +256,7 @@
         updateRoundTimerDisplay();
         if (roundTimeLeft <= 0) {
             if (!isRoundOver) {
-                handleSessionEnd(false, 0, 0);
+                handleSessionEnd(false, 0);
             }
         }
     }
@@ -322,7 +265,7 @@
         roundTimerDisplayElement.textContent = `Time: ${roundTimeLeft}s`;
     }
 
-    function handleSessionEnd(wasFound, starsEarnedThisRound, timeTakenToFind, userQuit = false) {
+    function handleSessionEnd(wasFound, timeTakenToFind, userQuit = false) {
         if (isRoundOver && !userQuit) return;
         isRoundOver = true;
         if (roundIntervalId) clearInterval(roundIntervalId);
@@ -331,17 +274,13 @@
         animationFrameId = null;
 
         if (wasFound) {
-            sessionTotalStars += starsEarnedThisRound;
-            sessionScoreDisplayElement.textContent = `Session Score: ${sessionTotalStars} ★`;
-            displayStarRating(timeTakenToFind, starsEarnedThisRound);
+            timeTakenTextElement.textContent = `Found in: ${(timeTakenToFind / 1000).toFixed(2)}s`;
             successMessageTextElement.textContent = `🎉 You found the ${targetItem.emoji} ${targetItem.name}! 🎉`;
-            foundObjectNameElement.textContent = ``;
+            foundObjectNameElement.textContent = '';
             successModalElement.classList.remove('hidden');
         } else {
-            totalPersistentStars += sessionTotalStars;
-            savePersistentData();
             if (!userQuit) {
-                sessionEndedScoreTextElement.textContent = `You earned ${sessionTotalStars} ★ this session! (Round ${currentRoundNumber})`;
+                sessionEndedScoreTextElement.textContent = `Session over! Reached round ${currentRoundNumber}.`;
                 gameOverModalElement.classList.remove('hidden');
             } else {
                 showScreen('main');
@@ -350,7 +289,7 @@
     }
 
     function quitGameAndGoToMenu() {
-        handleSessionEnd(false, 0, 0, true);
+        handleSessionEnd(false, 0, true);
     }
 
     function generateObjectInstance(itemDetail, isThisTheTarget = false) {
@@ -606,9 +545,6 @@
         ctx.restore();
     }
     function highlightFoundObject(obj) { const pX=obj.x*canvas.width,pY=obj.y*canvas.height,pS=obj.size*Math.min(canvas.width,canvas.height);ctx.save();const pF=Math.abs(Math.sin(Date.now()/200))*0.3+0.7;ctx.strokeStyle=`rgba(74,222,128,${0.6*pF})`;ctx.lineWidth=(pS*0.1)*pF;ctx.beginPath();ctx.arc(pX,pY,pS*(0.75*pF),0,Math.PI*2);ctx.stroke();ctx.strokeStyle=`rgba(167,243,208,${0.8*pF})`;ctx.lineWidth=(pS*0.05)*pF;ctx.beginPath();ctx.arc(pX,pY,pS*(0.65*pF),0,Math.PI*2);ctx.stroke();ctx.restore();}
-    function calculateStars(timeTakenMs) { if(timeTakenMs<2000)return 3; if(timeTakenMs<4000)return 2; if(timeTakenMs<5000)return 1; return 0;}
-    function displayStarRating(timeTakenMs, starsEarned) { starRatingContainerElement.innerHTML=''; for(let i=0;i<3;i++){const sS=document.createElement('span');sS.classList.add('star');sS.textContent='★';if(i>=starsEarned)sS.classList.add('empty');starRatingContainerElement.appendChild(sS);} timeTakenTextElement.textContent=`Found in: ${(timeTakenMs/1000).toFixed(2)}s`;}
-
     function handleCanvasInteraction(event) {
         event.preventDefault();
         const now = Date.now();
@@ -626,8 +562,7 @@
                 if (obj.isTarget && obj === targetItem) {
                     obj.found = true;
                     const timeTaken = Date.now() - objectFindStartTime;
-                    const stars = calculateStars(timeTaken);
-                    handleSessionEnd(true, stars, timeTaken);
+                    handleSessionEnd(true, timeTaken);
                 } else {
                     ctx.save();ctx.fillStyle='rgba(255,0,0,0.3)';ctx.beginPath();ctx.arc(clX,clY,15,0,Math.PI*2);ctx.fill();ctx.restore();
                 }
@@ -637,8 +572,13 @@
     }
 
     // --- Event Listeners ---
-    startGameButton.addEventListener('click', startNewGameSession);
-    redeemStarsButton.addEventListener('click', redeemStars);
+    startGameButton.addEventListener('click', () => {
+        if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
+            if (window.KamekoTokens) window.KamekoTokens.toast();
+            return;
+        }
+        startNewGameSession();
+    });
     quitToMenuButton.addEventListener('click', quitGameAndGoToMenu);
     canvas.addEventListener('click', handleCanvasInteraction);
     canvas.addEventListener('touchstart', handleCanvasInteraction, { passive: false });
@@ -654,7 +594,6 @@
     });
 
     // --- Initial Game Load ---
-    loadPersistentData();
     showScreen('main');
     if (document.fonts && typeof document.fonts.ready === 'object') {
         document.fonts.ready.catch(err => console.warn("Font loading issue.", err));

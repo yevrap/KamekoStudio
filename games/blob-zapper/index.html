@@ -435,7 +435,10 @@
              function handlePointerUp(id) { /* ... */ }
              // --- Input Handling Implementation (Collapsed) ---
             function handlePointerDown(id, clientX, clientY) {
-                 if (isGameOver) { init(); return; }
+                if (isGameOver) {
+                    if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+                    init(); return;
+                }
                  try {
                      const rect = canvas.getBoundingClientRect();
                      if (!rect) { console.error("Canvas rect not found in handlePointerDown"); return; }

@@ -823,6 +823,7 @@
 
         // Start/Restart button
         startButton.addEventListener('click', (e) => {
+             if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
              initGame();
              e.stopPropagation();
              e.currentTarget.blur();

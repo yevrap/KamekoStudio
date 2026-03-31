@@ -15,10 +15,72 @@
  * Manages dark mode via:
  *   localStorage key: 'theme' = 'dark' | 'light'
  *   CSS class: body.dark-mode
+ *
+ * Token system (window.KamekoTokens):
+ *   localStorage key: 'tokens' = integer
+ *   KamekoTokens.get()     — returns current count
+ *   KamekoTokens.add(n=1)  — adds n tokens
+ *   KamekoTokens.spend()   — deducts 1; returns true on success, false if none
+ *   KamekoTokens.toast(msg)— shows a brief no-tokens notice
  */
 
 (function () {
-  // --- Theme helpers (run immediately so class is applied before paint) ---
+  // ─── Token system ───────────────────────────────────────────────────────────
+
+  function getTokenCount() {
+    return parseInt(localStorage.getItem('tokens') || '0', 10);
+  }
+  function saveTokenCount(n) {
+    localStorage.setItem('tokens', Math.max(0, n));
+  }
+  function updateTokenDisplay() {
+    const el = document.getElementById('settings-token-count');
+    if (el) el.textContent = getTokenCount();
+  }
+
+  window.KamekoTokens = {
+    get: getTokenCount,
+    add: function (n) {
+      if (n === undefined) n = 1;
+      saveTokenCount(getTokenCount() + n);
+      updateTokenDisplay();
+    },
+    spend: function () {
+      const t = getTokenCount();
+      if (t <= 0) return false;
+      saveTokenCount(t - 1);
+      updateTokenDisplay();
+      return true;
+    },
+    toast: function (msg) {
+      msg = msg || 'No tokens! Open \u2699\uFE0F Settings to get one.';
+      let toast = document.getElementById('kameko-toast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'kameko-toast';
+        toast.style.cssText = [
+          'position:fixed', 'bottom:24px', 'left:50%',
+          'transform:translateX(-50%)',
+          'background:rgba(20,20,40,0.95)', 'color:white',
+          'padding:12px 22px', 'border-radius:10px',
+          'font-family:sans-serif', 'font-size:0.95em',
+          'z-index:20000', 'pointer-events:none',
+          'transition:opacity 0.4s ease',
+          'box-shadow:0 4px 16px rgba(0,0,0,0.5)',
+          'text-align:center', 'max-width:80vw'
+        ].join(';');
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.style.opacity = '1';
+      clearTimeout(toast._hideTimeout);
+      toast._hideTimeout = setTimeout(function () {
+        toast.style.opacity = '0';
+      }, 2500);
+    }
+  };
+
+  // ─── Theme helpers ───────────────────────────────────────────────────────────
 
   function getSavedTheme() {
     return localStorage.getItem('theme') || 'dark';
@@ -41,7 +103,7 @@
   // Apply saved theme immediately (body is available since script is before </body>)
   applyTheme(getSavedTheme());
 
-  // --- Gallery path resolution ---
+  // ─── Gallery path resolution ─────────────────────────────────────────────────
 
   function getGalleryPath() {
     const scripts = document.querySelectorAll('script[src*="settings.js"]');
@@ -51,13 +113,14 @@
     return '../'.repeat(depth) + 'index.html';
   }
 
-  // --- Panel open/close ---
+  // ─── Panel open/close ────────────────────────────────────────────────────────
 
   function openSettings() {
     const overlay = document.getElementById('settings-overlay');
     if (overlay) {
       overlay.style.display = 'flex';
       updateDarkModeButton();
+      updateTokenDisplay();
     }
     window.dispatchEvent(new CustomEvent('settingsOpened'));
   }
@@ -75,7 +138,7 @@
     btn.textContent = isDark ? '\u2600\uFE0F Light Mode' : '\uD83C\uDF19 Dark Mode';
   }
 
-  // --- Inject UI after DOM is ready ---
+  // ─── Inject UI ───────────────────────────────────────────────────────────────
 
   function injectUI() {
     // Gear button
@@ -94,10 +157,10 @@
       'transition:background 0.2s ease',
       'padding:0', 'line-height:1'
     ].join(';');
-    gearBtn.addEventListener('pointerover', () => {
+    gearBtn.addEventListener('pointerover', function () {
       gearBtn.style.background = 'rgba(0,0,0,0.7)';
     });
-    gearBtn.addEventListener('pointerout', () => {
+    gearBtn.addEventListener('pointerout', function () {
       gearBtn.style.background = 'rgba(0,0,0,0.45)';
     });
     gearBtn.addEventListener('click', openSettings);
@@ -120,7 +183,7 @@
     panel.id = 'settings-panel';
     panel.style.cssText = [
       'background:#1a1a2e', 'color:white', 'border-radius:14px',
-      'padding:28px 28px 24px', 'min-width:270px', 'max-width:90vw',
+      'padding:28px 28px 24px', 'min-width:280px', 'max-width:90vw',
       'box-shadow:0 8px 32px rgba(0,0,0,0.6)',
       'display:flex', 'flex-direction:column', 'gap:14px',
       'position:relative', 'box-sizing:border-box'
@@ -139,10 +202,10 @@
       'display:flex', 'align-items:center', 'justify-content:center',
       'border-radius:50%', 'transition:background 0.2s', 'padding:0'
     ].join(';');
-    closeBtn.addEventListener('pointerover', () => {
+    closeBtn.addEventListener('pointerover', function () {
       closeBtn.style.background = 'rgba(255,255,255,0.15)';
     });
-    closeBtn.addEventListener('pointerout', () => {
+    closeBtn.addEventListener('pointerout', function () {
       closeBtn.style.background = 'none';
     });
     closeBtn.addEventListener('click', closeSettings);
@@ -150,7 +213,43 @@
     // Heading
     const heading = document.createElement('h2');
     heading.textContent = 'Settings';
-    heading.style.cssText = 'margin:0 0 4px 0; font-size:1.25em; font-family:sans-serif;';
+    heading.style.cssText = 'margin:0 0 2px 0; font-size:1.25em; font-family:sans-serif;';
+
+    // Token row: count + Get Token button
+    const tokenRow = document.createElement('div');
+    tokenRow.style.cssText = [
+      'display:flex', 'align-items:center', 'justify-content:space-between',
+      'background:rgba(255,255,255,0.07)',
+      'border:1px solid rgba(255,255,255,0.18)',
+      'border-radius:8px', 'padding:10px 14px',
+      'font-family:sans-serif', 'font-size:1em', 'min-height:44px'
+    ].join(';');
+
+    const tokenLabel = document.createElement('span');
+    tokenLabel.innerHTML = '\uD83E\uDE99 Tokens: <strong id="settings-token-count">' + getTokenCount() + '</strong>';
+
+    const getTokenBtn = document.createElement('button');
+    getTokenBtn.textContent = '+ Get Token';
+    getTokenBtn.style.cssText = [
+      'background:rgba(99,179,237,0.25)', 'color:white',
+      'border:1px solid rgba(99,179,237,0.5)',
+      'border-radius:6px', 'padding:6px 12px',
+      'font-size:0.85em', 'cursor:pointer',
+      'transition:background 0.2s', 'font-family:sans-serif',
+      'white-space:nowrap', 'min-height:36px'
+    ].join(';');
+    getTokenBtn.addEventListener('pointerover', function () {
+      getTokenBtn.style.background = 'rgba(99,179,237,0.45)';
+    });
+    getTokenBtn.addEventListener('pointerout', function () {
+      getTokenBtn.style.background = 'rgba(99,179,237,0.25)';
+    });
+    getTokenBtn.addEventListener('click', function () {
+      window.KamekoTokens.add(1);
+    });
+
+    tokenRow.appendChild(tokenLabel);
+    tokenRow.appendChild(getTokenBtn);
 
     // Dark mode toggle button
     const darkModeBtn = document.createElement('button');
@@ -163,13 +262,13 @@
       'text-align:left', 'transition:background 0.2s',
       'min-height:44px', 'font-family:sans-serif', 'width:100%'
     ].join(';');
-    darkModeBtn.addEventListener('pointerover', () => {
+    darkModeBtn.addEventListener('pointerover', function () {
       darkModeBtn.style.background = 'rgba(255,255,255,0.2)';
     });
-    darkModeBtn.addEventListener('pointerout', () => {
+    darkModeBtn.addEventListener('pointerout', function () {
       darkModeBtn.style.background = 'rgba(255,255,255,0.1)';
     });
-    darkModeBtn.addEventListener('click', () => {
+    darkModeBtn.addEventListener('click', function () {
       setTheme(getSavedTheme() === 'dark' ? 'light' : 'dark');
     });
 
@@ -187,21 +286,22 @@
       'transition:background 0.2s',
       'min-height:44px', 'font-family:sans-serif', 'box-sizing:border-box'
     ].join(';');
-    galleryLink.addEventListener('pointerover', () => {
+    galleryLink.addEventListener('pointerover', function () {
       galleryLink.style.background = 'rgba(255,255,255,0.2)';
     });
-    galleryLink.addEventListener('pointerout', () => {
+    galleryLink.addEventListener('pointerout', function () {
       galleryLink.style.background = 'rgba(255,255,255,0.1)';
     });
 
     panel.appendChild(closeBtn);
     panel.appendChild(heading);
+    panel.appendChild(tokenRow);
     panel.appendChild(darkModeBtn);
     panel.appendChild(galleryLink);
     overlay.appendChild(panel);
 
     // Close on backdrop click
-    overlay.addEventListener('click', (e) => {
+    overlay.addEventListener('click', function (e) {
       if (e.target === overlay) closeSettings();
     });
 

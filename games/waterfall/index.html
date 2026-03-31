@@ -212,7 +212,10 @@
                 window.addEventListener('resize', onWindowResize);
                 document.addEventListener('keydown', handleKeyDown); // For Space bar
                 container.addEventListener('touchstart', handleTouchStart, { passive: false }); // For touch shooting
-                resetButton.addEventListener('click', resetGame);
+                resetButton.addEventListener('click', () => {
+                    if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+                    resetGame();
+                });
 
                 // Initial resize call to set correct aspect ratio
                 onWindowResize();
