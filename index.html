@@ -410,6 +410,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', buildDashboard);
+        // On iOS PWA, navigating back restores from bfcache — DOMContentLoaded won't fire again.
+        // pageshow with persisted=true covers that case.
+        window.addEventListener('pageshow', function(e) { if (e.persisted) buildDashboard(); });
     </script>
     <script src="shared/settings.js" data-gallery-depth="0"></script>
 </body>

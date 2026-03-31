@@ -643,13 +643,13 @@
                 const halfBW = BOAT_WIDTH / 2; const halfR = riverWidth / 2;
                 let closestThreat = null; let closestDZ = Infinity;
                 obstacles.forEach(obs => {
-                    const dz = obs.position.z - boat.position.z;
-                    if (dz > 0 && dz < 10 && Math.abs(obs.position.x - boat.position.x) < BOAT_WIDTH * 2.5 && dz < closestDZ) {
+                    const dz = obs.mesh.position.z - boat.position.z;
+                    if (dz > 0 && dz < 10 && Math.abs(obs.mesh.position.x - boat.position.x) < BOAT_WIDTH * 2.5 && dz < closestDZ) {
                         closestDZ = dz; closestThreat = obs;
                     }
                 });
                 if (closestThreat) {
-                    const dir = boat.position.x <= closestThreat.position.x ? -1 : 1;
+                    const dir = boat.position.x <= closestThreat.mesh.position.x ? -1 : 1;
                     boat.position.x = THREE.MathUtils.clamp(boat.position.x + dir * BOAT_SPEED_X * 1.5, -halfR + halfBW, halfR - halfBW);
                 }
             }
