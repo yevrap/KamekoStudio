@@ -103,6 +103,73 @@
     updateDarkModeButton();
   }
 
+  // ─── Dev Mode helpers ───────────────────────────────────────────────────────
+
+  function isDevMode() {
+    return localStorage.getItem('devMode') === 'true';
+  }
+
+  function setDevMode(enabled) {
+    localStorage.setItem('devMode', String(enabled));
+    updateDevModeUI();
+  }
+
+  function updateDevModeUI() {
+    const devContainer = document.getElementById('developer-tools-container');
+    const devToggle = document.getElementById('dev-mode-checkbox');
+    const gearBtn = document.getElementById('settings-gear-btn');
+
+    // Always set checkbox state based on isDevMode()
+    if (devToggle) {
+      devToggle.checked = isDevMode();
+    }
+    
+    // Toggle visibility of the container for extra dev tools
+    if (devContainer) {
+      devContainer.style.display = isDevMode() ? 'flex' : 'none';
+    }
+
+    // Toggle a class on the gear icon for visual feedback
+    if (gearBtn) {
+      if (isDevMode()) {
+        gearBtn.classList.add('dev-mode-active');
+      } else {
+        gearBtn.classList.remove('dev-mode-active');
+      }
+    }
+  }
+
+  function clearAllGameData() {
+    if (!confirm('Are you sure you want to clear ALL game data? This cannot be undone.')) {
+      return;
+    }
+
+    const keysToRemove = [
+      'theme', 'tokens', 'devMode',
+      // Game progress
+      'gridGameTopScoreScore', 'gridGameTopScoreSurvival',
+      'riverRunHighScore', 'memoryTowerHighWave',
+      // Last played timestamps
+      'lastPlayed_hiddenObject', 'lastPlayed_materialsRun',
+      'lastPlayed_memoryTower', 'lastPlayed_riverRun',
+      'lastPlayed_blobZapper',
+      // Game-specific settings
+      'riverRun_autoShoot', 'riverRun_autoAvoid',
+      'riverRun_invertControls', 'muted'
+    ];
+
+    let clearedCount = 0;
+    keysToRemove.forEach(key => {
+      if (localStorage.getItem(key) !== null) {
+        localStorage.removeItem(key);
+        clearedCount++;
+      }
+    });
+
+    window.KamekoTokens.toast(`Cleared ${clearedCount} item(s). Page will reload.`);
+    setTimeout(() => location.reload(), 1500);
+  }
+
   // Apply saved theme immediately (body is available since script is before </body>)
   applyTheme(getSavedTheme());
 
@@ -124,6 +191,7 @@
       overlay.style.display = 'flex';
       updateDarkModeButton();
       updateTokenDisplay();
+      updateDevModeUI();
     }
     window.dispatchEvent(new CustomEvent('settingsOpened'));
   }
@@ -157,7 +225,7 @@
       'font-size:1.25em', 'cursor:pointer',
       'display:flex', 'align-items:center', 'justify-content:center',
       'box-shadow:0 2px 8px rgba(0,0,0,0.4)',
-      'transition:background 0.2s ease',
+      'transition:all 0.2s ease', // Animate all properties
       'padding:0', 'line-height:1'
     ].join(';');
     gearBtn.addEventListener('pointerover', function () {
@@ -305,6 +373,85 @@
     panel.appendChild(tokenRow);
     panel.appendChild(darkModeBtn);
     panel.appendChild(galleryLink);
+
+    // ─── Developer Tools ──────────────────────────────────────────────────
+    const devToolsSeparator = document.createElement('div');
+    devToolsSeparator.style.cssText = 'border-top: 1px solid rgba(255,255,255,0.15); margin-top: 14px;';
+    panel.appendChild(devToolsSeparator);
+
+    // --- Developer Mode Toggle ---
+    const devModeRow = document.createElement('div');
+    devModeRow.style.cssText = 'display:flex; align-items:center; justify-content:space-between; font-family:sans-serif; min-height:44px; padding: 14px 4px 0;';
+    
+    const devModeLabel = document.createElement('label');
+    devModeLabel.textContent = '\uD83D\uDCBB Developer Mode';
+    devModeLabel.setAttribute('for', 'dev-mode-checkbox');
+    devModeLabel.style.cursor = 'pointer';
+
+    const devModeToggleSwitch = document.createElement('label');
+    devModeToggleSwitch.className = 'switch';
+    devModeToggleSwitch.style.cssText = 'position: relative; display: inline-block; width: 48px; height: 28px;';
+
+    const devModeInput = document.createElement('input');
+    devModeInput.type = 'checkbox';
+    devModeInput.id = 'dev-mode-checkbox';
+    devModeInput.style.cssText = 'opacity: 0; width: 0; height: 0;';
+    devModeInput.addEventListener('change', (e) => {
+        setDevMode(e.target.checked);
+    });
+    
+    const devModeSlider = document.createElement('span');
+    devModeSlider.className = 'slider';
+    devModeSlider.style.cssText = [
+      'position: absolute;', 'cursor: pointer;', 'top: 0;', 'left: 0;', 'right: 0;', 'bottom: 0;',
+      'background-color: rgba(255,255,255,0.25);', 'transition: .4s;', 'border-radius: 28px;'
+    ].join('');
+
+    const sliderBefore = document.createElement('span');
+    sliderBefore.style.cssText = [
+      'position: absolute;', 'content: "";', 'height: 20px;', 'width: 20px;', 'left: 4px;', 'bottom: 4px;',
+      'background-color: white;', 'transition: .4s;', 'border-radius: 50%;'
+    ].join('');
+    devModeSlider.appendChild(sliderBefore);
+
+    devModeToggleSwitch.appendChild(devModeInput);
+    devModeToggleSwitch.appendChild(devModeSlider);
+
+    devModeRow.appendChild(devModeLabel);
+    devModeRow.appendChild(devModeToggleSwitch);
+    panel.appendChild(devModeRow);
+
+    // --- Clear Data Button (in its own container) ---
+    const devToolsContainer = document.createElement('div');
+    devToolsContainer.id = 'developer-tools-container';
+    devToolsContainer.style.cssText = [
+        'display:none', // Initially hidden
+        'flex-direction:column', 'gap:10px',
+        'padding-top: 14px'
+    ].join(';');
+    
+    const clearDataBtn = document.createElement('button');
+    clearDataBtn.id = 'clear-data-btn';
+    clearDataBtn.textContent = '\uD83D\uDDD1\uFE0F Clear All Game Data';
+    clearDataBtn.style.cssText = [
+        'background:rgba(220, 38, 38, 0.8)', 'color:white',
+        'border:1px solid rgba(239, 68, 68, 1)',
+        'border-radius:8px', 'padding:12px 16px',
+        'font-size:1em', 'cursor:pointer', 'text-align:left',
+        'transition:background 0.2s', 'min-height:44px',
+        'font-family:sans-serif', 'width:100%'
+    ].join(';');
+    clearDataBtn.addEventListener('pointerover', function() {
+        clearDataBtn.style.background = 'rgba(185, 28, 28, 1)';
+    });
+    clearDataBtn.addEventListener('pointerout', function() {
+        clearDataBtn.style.background = 'rgba(220, 38, 38, 0.8)';
+    });
+    clearDataBtn.addEventListener('click', clearAllGameData);
+
+    devToolsContainer.appendChild(clearDataBtn);
+    panel.appendChild(devToolsContainer);
+
     overlay.appendChild(panel);
 
     // Close on backdrop click
@@ -314,7 +461,20 @@
 
     document.body.appendChild(overlay);
 
+    // --- Final UI setup ---
+    const finalStyle = document.createElement('style');
+    finalStyle.textContent = `
+        #settings-gear-btn.dev-mode-active {
+            box-shadow: 0 0 12px #2196F3, 0 0 4px #2196F3;
+            border-color: #2196F3;
+        }
+        #dev-mode-checkbox:checked + .slider { background-color: #2196F3; }
+        #dev-mode-checkbox:checked + .slider > span { transform: translateX(20px); }
+    `;
+    document.head.appendChild(finalStyle);
+    
     updateDarkModeButton();
+    updateDevModeUI();
   }
 
   if (document.readyState === 'loading') {

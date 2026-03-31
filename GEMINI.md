@@ -70,6 +70,11 @@ Every page includes this script before `</body>`:
 - Dark mode: `localStorage` key `theme` = `'dark'` | `'light'`, applied as `body.dark-mode` class
 - Token count: `localStorage` key `tokens` = integer
 
+**Developer Mode:**
+The settings panel includes a "Developer Mode" toggle. When enabled, this mode does two things:
+- It adds a blue glow to the settings gear icon as a visual indicator.
+- It shows a "Clear All Game Data" button in the panel. This button removes all known `localStorage` keys related to game progress, settings, and tokens, which is useful for testing from a clean state.
+
 **Per-game settings injection:** Games can append their own settings rows to `#settings-panel` on `settingsOpened`:
 ```js
 window.addEventListener('settingsOpened', () => {
@@ -101,6 +106,7 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 |-----|-------|------|-------|
 | `theme` | settings.js | `'dark'`\|`'light'` | Default `'dark'` |
 | `tokens` | settings.js | integer string | Token balance |
+| `devMode` | settings.js | `'true'`\|`'false'` | Enables developer tools in settings panel |
 | `lastPlayed_hiddenObject` | hidden-object | timestamp (ms) | Set on session start |
 | `lastPlayed_materialsRun` | materials-run | timestamp (ms) | Set on session start |
 | `lastPlayed_memoryTower` | memory-tower | timestamp (ms) | Set on session start |
