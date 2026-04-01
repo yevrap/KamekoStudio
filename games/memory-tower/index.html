@@ -1,485 +1,1197 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tower Defense Rogue-like</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Apply the game font to the body */
-        body {
-            font-family: 'Press Start 2P', cursive;
-            background-color: #1a1a1a;
-            /* Dark background */
-            color: #e0e0e0;
-            /* Light text */
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            /* Ensure full height */
-            padding: 1rem;
-            /* Add padding */
-            /* overflow: hidden; */
-            /* REMOVED to allow scrolling on mobile */
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Keypad Quest</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Style the canvas */
-        canvas {
-            background-color: #333;
-            display: block;
-            border: 4px solid #555;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
-            width: 100%;
-            /* Make canvas take full width of its container */
-            max-width: 100%;
-            aspect-ratio: 16 / 9;
-            cursor: default;
-        }
+    html, body {
+      height: 100%;
+      height: 100dvh;
+      background: #050510;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
 
-        /* Style buttons */
-        button {
-            font-family: 'Press Start 2P', cursive;
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: 2px solid #0056b3;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px #003d80;
-            margin: 5px;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            position: relative;
-            overflow: hidden;
-        }
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      height: 100dvh;
+      max-width: 480px;
+      margin: 0 auto;
+    }
 
-        button:hover {
-            background-color: #0056b3;
-        }
+    #header {
+      height: 55px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      background: rgba(5, 5, 16, 0.9);
+      border-bottom: 1px solid rgba(0,255,238,0.15);
+      flex-shrink: 0;
+    }
 
-        button:active {
-            background-color: #003d80;
-            box-shadow: 0 2px #002a59;
-            transform: translateY(2px);
-        }
+    #wave-display { font-size: 0.85em; color: #00ffee; text-shadow: 0 0 8px #00ffee; }
+    #streak-display { font-size: 0.8em; color: #ff44aa; text-shadow: 0 0 8px #ff44aa; min-width: 60px; text-align: center; }
+    #token-display { font-size: 0.8em; color: #ffcc44; }
 
-        button:disabled {
-            background-color: #555;
-            color: #aaa;
-            cursor: not-allowed;
-            border-color: #444;
-            box-shadow: 0 4px #333;
-        }
+    #game-canvas {
+      display: block;
+      width: 100%;
+      flex: 0 0 40%;
+      min-height: 0;
+    }
 
-        /* Specific style for AoE button */
-        button#aoe-btn.cooldown {
-            background-color: #6c757d;
-            border-color: #5a6268;
-            box-shadow: 0 4px #495057;
-        }
+    #prompt-bar {
+      flex-shrink: 0;
+      height: 58px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 16px;
+      background: rgba(0,0,0,0.55);
+      border-top: 1px solid rgba(0,255,238,0.1);
+      border-bottom: 1px solid rgba(0,255,238,0.08);
+    }
 
-        button#aoe-btn.armed {
-            background-color: #28a745;
-            border-color: #218838;
-            box-shadow: 0 4px #1e7e34;
-        }
+    #question-text { font-size: 0.75em; color: rgba(255,255,255,0.55); letter-spacing: 0.05em; }
+    #input-display {
+      font-size: 1.25em; color: #fff;
+      text-shadow: 0 0 12px #4488ff;
+      letter-spacing: 0.08em; min-height: 1.4em;
+    }
 
-        button#aoe-btn.armed:hover {
-            background-color: #218838;
-        }
+    #input-area {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
 
-        /* Style the game info panel */
-        #game-info {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            padding: 15px;
-            margin-bottom: 15px;
-            background-color: #2a2a2a;
-            border-radius: 8px;
-            border: 2px solid #444;
-            font-size: 0.9rem;
-        }
+    #mode-toggle-row {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      padding: 5px 8px;
+      flex-shrink: 0;
+    }
 
-        /* Style the message overlay */
-        #message-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            z-index: 100;
-            padding: 20px;
-            cursor: default;
-        }
+    .mode-btn {
+      padding: 4px 11px;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      background: transparent;
+      color: rgba(255,255,255,0.45);
+      font-size: 0.68em;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+      min-height: 28px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mode-btn.active { border-color: #00ffee; color: #00ffee; text-shadow: 0 0 6px #00ffee; }
 
-        #message-box {
-            background-color: #333;
-            padding: 30px;
-            border-radius: 10px;
-            border: 3px solid #555;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
-        }
+    #t9-pad {
+      flex: 1;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(4, 1fr);
+      gap: 3px;
+      padding: 3px 4px;
+    }
 
-        #message-box h2 {
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            color: #00ffff;
-        }
+    .t9-key {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 10px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      line-height: 1.15;
+      transition: background 0.08s;
+    }
+    .t9-key.pressed, .t9-key:active { background: rgba(0,255,238,0.18); border-color: rgba(0,255,238,0.4); }
+    .t9-key .kn { font-size: 1.15em; font-weight: bold; color: #fff; }
+    .t9-key .kl { font-size: 0.52em; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; }
+    .t9-key.ak .kn { font-size: 0.95em; }
 
-        #message-box p {
-            margin-bottom: 20px;
-            font-size: 1rem;
-        }
+    #keyboard-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      padding: 16px;
+    }
 
-        #rogue-choices button {
-            margin: 10px;
-        }
+    #keyboard-input {
+      width: 100%;
+      max-width: 320px;
+      padding: 14px 16px;
+      font-size: 1.15em;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(0,255,238,0.3);
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      text-align: center;
+      outline: none;
+      touch-action: auto;
+    }
+    #keyboard-input:focus { border-color: rgba(0,255,238,0.7); box-shadow: 0 0 12px rgba(0,255,238,0.2); }
 
-        /* --- Memory Game Styles --- */
-        #memory-game-panel {
-            width: 100%;
-            background-color: #2a2a2a;
-            border-radius: 8px;
-            border: 2px solid #444;
-            padding: 10px;
-            /* Slightly reduced padding */
-            font-size: 0.8rem;
-        }
+    #keyboard-submit {
+      padding: 12px 36px;
+      background: rgba(0,255,238,0.13);
+      border: 1px solid rgba(0,255,238,0.4);
+      border-radius: 10px;
+      color: #00ffee;
+      font-size: 1em;
+      font-family: 'Courier New', monospace;
+      cursor: pointer;
+      min-height: 44px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #keyboard-submit:active { background: rgba(0,255,238,0.28); }
 
-        .tab-buttons button {
-            background-color: #444;
-            border-color: #333;
-            box-shadow: 0 4px #222;
-            padding: 8px 15px;
-            font-size: 0.7rem;
-        }
+    /* Overlays */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5,5,16,0.96);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 24px 20px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .overlay.hidden { display: none; }
 
-        .tab-buttons button.active {
-            background-color: #555;
-            border-color: #444;
-            box-shadow: 0 2px #333;
-            transform: translateY(2px);
-            color: #0ff;
-        }
+    .g-title {
+      font-size: 1.9em;
+      font-weight: bold;
+      color: #00ffee;
+      text-shadow: 0 0 20px #00ffee, 0 0 40px #00ffee55;
+      letter-spacing: 0.1em;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+    .g-sub {
+      color: rgba(255,255,255,0.45);
+      font-size: 0.8em;
+      margin-bottom: 6px;
+      text-align: center;
+    }
 
-        .tab-content {
-            display: none;
-            margin-top: 10px;
-            /* Reduced margin */
-        }
+    .mbtn {
+      width: 100%;
+      max-width: 300px;
+      padding: 13px 18px;
+      margin: 4px 0;
+      border-radius: 12px;
+      font-size: 0.92em;
+      font-family: 'Courier New', monospace;
+      cursor: pointer;
+      border: 1px solid;
+      text-align: left;
+      min-height: 50px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .mbtn.teal { background: rgba(0,255,238,0.1); border-color: rgba(0,255,238,0.45); color: #00ffee; }
+    .mbtn.teal:active { background: rgba(0,255,238,0.22); }
+    .mbtn.dim { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); color: rgba(255,255,255,0.75); }
+    .mbtn.dim:active { background: rgba(255,255,255,0.1); }
+    .mbtn.pink { background: rgba(255,68,170,0.09); border-color: rgba(255,68,170,0.38); color: #ff88cc; }
+    .mbtn.center { text-align: center; }
 
-        .tab-content.active {
-            display: block;
-        }
+    .srow {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 300px;
+      padding: 9px 14px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      margin: 3px 0;
+      font-size: 0.85em;
+    }
+    .slabel { color: rgba(255,255,255,0.5); }
+    .sval { color: #fff; font-weight: bold; }
+    .sval.teal { color: #00ffee; text-shadow: 0 0 8px #00ffee; }
+    .sval.gold { color: #ffcc44; }
 
-        /* Ensure input font size is >= 16px to prevent iOS zoom */
-        #memory-game-panel textarea,
-        #memory-game-panel input[type="text"] {
-            font-family: 'Press Start 2P', cursive;
-            background-color: #111;
-            border: 1px solid #555;
-            border-radius: 4px;
-            padding: 8px;
-            color: #e0e0e0;
-            width: 100%;
-            margin-bottom: 10px;
-            font-size: 1rem;
-            /* Increased font size to 1rem (16px) */
-            box-sizing: border-box;
-            line-height: 1.4;
-            /* Improve readability for multi-line */
-        }
-
-        #memory-game-panel textarea {
-            min-height: 80px;
-            /* Adjusted height */
-        }
-
-        #memory-game-panel button {
-            padding: 8px 15px;
-            font-size: 0.7rem;
-        }
-
-        #quiz-key {
-            display: block;
-            margin-bottom: 10px;
-            font-size: 0.9rem;
-            color: #0ff;
-            word-wrap: break-word;
-        }
-
-        #quiz-feedback {
-            margin-top: 10px;
-            min-height: 1.2em;
-            font-size: 0.8rem;
-        }
-
-        #quiz-feedback.correct {
-            color: #28a745;
-        }
-
-        #quiz-feedback.incorrect {
-            color: #dc3545;
-        }
-    </style>
+    #feedback-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 500;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+  </style>
 </head>
-
 <body>
-    <div id="layout-container"
-        class="w-full max-w-screen-xl mx-auto space-y-4 md:flex md:flex-row md:items-start md:space-y-0 md:gap-6 lg:gap-8">
 
-        <div class="w-full md:w-2/3 space-y-4">
-            <h1 class="text-3xl font-bold text-cyan-400 text-center md:text-left">Pixel Path Defense</h1>
-            <div id="game-info">
-                <span>Wave: <span id="wave-number">0</span> / <span id="final-wave">--</span></span>
-                <span>Lives: <span id="lives-count">20</span></span>
-                <span>Cash: $<span id="cash-count">100</span></span>
-            </div>
-            <div id="canvas-container" class="w-full">
-                <canvas id="gameCanvas" width="800" height="450"></canvas>
-            </div>
-            <div class="flex justify-center items-center flex-wrap">
-                <button id="build-turret-btn">Build Turret ($50)</button>
-                <button id="aoe-btn">Arm Zap ($5)</button>
-                <button id="start-wave-btn">Start Next Wave</button>
-                <button id="upgrade-turret-btn" disabled>Upgrade Turret</button>
-            </div>
-        </div>
+<div id="app">
+  <div id="header">
+    <span id="wave-display">Wave 1</span>
+    <span id="streak-display"></span>
+    <span id="token-display">🪙 <span id="headerTokenCount">0</span></span>
+  </div>
 
-        <div class="w-full md:w-1/3 mt-4 md:mt-0">
-            <div id="memory-game-panel">
-                <div class="tab-buttons border-b border-gray-600 pb-2 mb-4">
-                    <button id="input-tab-btn" class="active">Input Pairs</button>
-                    <button id="quiz-tab-btn">Memory Quiz</button>
-                </div>
-                <div id="input-tab-content" class="tab-content active">
-                    <p class="text-xs mb-2">Enter pairs (one per line): Key:Value</p>
-                    <textarea id="pairs-input"></textarea>
-                    <button id="save-pairs-btn">Save & Start Quiz</button>
-                    <p id="input-feedback" class="text-xs mt-2"></p>
-                </div>
-                <div id="quiz-tab-content" class="tab-content">
-                    <label for="quiz-answer-input" class="block mb-2">What is the value for:</label>
-                    <span id="quiz-key" class="text-lg">...</span>
-                    <input type="text" id="quiz-answer-input" placeholder="Enter value...">
-                    <button id="submit-answer-btn">Submit Answer</button>
-                    <p id="quiz-feedback"></p>
-                </div>
-            </div>
-        </div>
+  <canvas id="game-canvas"></canvas>
 
+  <div id="prompt-bar">
+    <div id="question-text">Select a mode to begin</div>
+    <div id="input-display">▶</div>
+  </div>
+
+  <div id="input-area">
+    <div id="mode-toggle-row">
+      <button class="mode-btn" data-mode="scroll">T9 Scroll</button>
+      <button class="mode-btn" data-mode="predict">T9 Predict</button>
+      <button class="mode-btn" data-mode="keyboard">Keyboard</button>
     </div>
-    <div id="message-overlay">
-        <div id="message-box">
-            <h2 id="message-title">Message</h2>
-            <p id="message-text">Text goes here.</p>
-            <div id="rogue-choices" class="flex flex-wrap justify-center"></div>
-            <button id="message-close-btn">OK</button>
-        </div>
+    <div id="t9-pad"></div>
+    <div id="keyboard-wrap" style="display:none">
+      <input id="keyboard-input" type="text" placeholder="type your answer"
+        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <button id="keyboard-submit">Submit ↵</button>
     </div>
+  </div>
+</div>
 
-    <script>
-        // --- Game Setup ---
-        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
-        const gameInfo = { waveNumber: document.getElementById('wave-number'), finalWave: document.getElementById('final-wave'), livesCount: document.getElementById('lives-count'), cashCount: document.getElementById('cash-count'), };
-        const buttons = { buildTurret: document.getElementById('build-turret-btn'), startWave: document.getElementById('start-wave-btn'), upgradeTurret: document.getElementById('upgrade-turret-btn'), aoe: document.getElementById('aoe-btn'), };
-        const messageOverlay = document.getElementById('message-overlay'); const messageBox = document.getElementById('message-box'); const messageTitle = document.getElementById('message-title'); const messageText = document.getElementById('message-text'); const messageCloseBtn = document.getElementById('message-close-btn'); const rogueChoicesContainer = document.getElementById('rogue-choices');
+<!-- Menu overlay -->
+<div id="menu-overlay" class="overlay">
+  <div class="g-title">KEYPAD QUEST</div>
+  <div class="g-sub">Build your defense by answering questions</div>
+  <div id="menu-best" class="g-sub" style="color:#00ffee;margin-bottom:16px;"></div>
+  <div id="continue-wrap" style="display:none;width:100%;max-width:300px;margin-bottom:4px;">
+    <button class="mbtn teal" id="continue-btn">▶ Continue — Wave <span id="continue-wave-num">1</span></button>
+  </div>
+  <button class="mbtn teal" id="btn-arcade">🎮 Arcade — Built-in Decks</button>
+  <button class="mbtn dim" id="btn-classic">📚 Classic — My Decks</button>
+  <button class="mbtn pink" id="btn-chill">😌 Chill / Practice</button>
+</div>
 
-        // --- Memory Game Elements ---
-        const memoryPanel = document.getElementById('memory-game-panel');
-        const inputTabBtn = document.getElementById('input-tab-btn');
-        const quizTabBtn = document.getElementById('quiz-tab-btn');
-        const inputTabContent = document.getElementById('input-tab-content');
-        const quizTabContent = document.getElementById('quiz-tab-content');
-        const pairsInput = document.getElementById('pairs-input');
-        const savePairsBtn = document.getElementById('save-pairs-btn');
-        const inputFeedback = document.getElementById('input-feedback');
-        const quizKeyDisplay = document.getElementById('quiz-key');
-        const quizAnswerInput = document.getElementById('quiz-answer-input');
-        const submitAnswerBtn = document.getElementById('submit-answer-btn');
-        const quizFeedback = document.getElementById('quiz-feedback');
+<!-- Summary overlay -->
+<div id="summary-overlay" class="overlay hidden">
+  <div class="g-title" id="sum-title">Wave 1 Complete!</div>
+  <div class="g-sub" id="sum-subtitle"></div>
+  <div id="sum-stats" style="width:100%;max-width:300px;margin:10px 0;"></div>
+  <button class="mbtn teal center" id="btn-next-wave" style="margin-top:10px;">Next Wave ▶</button>
+  <button class="mbtn dim center" id="btn-quit" style="margin-top:6px;">← Quit to Menu</button>
+</div>
 
-        // --- Game State ---
-        let lives = 20; let cash = 100; let wave = 0; let enemies = []; let towers = []; let projectiles = []; let selectedTower = null; let buildMode = false; let waveInProgress = false; let currentWaveEnemies = []; let enemiesSpawnedThisWave = 0; let spawnInterval = 1000; let lastSpawnTime = 0; let gameOver = false; let gamePaused = false; let mouseX = 0; let mouseY = 0; let mouseInCanvas = false; let aoeEffects = []; let aoeArmed = false;
+<div id="feedback-flash"></div>
 
-        // --- Memory Game State ---
-        let memoryPairs = {}; let quizKeys = []; let currentQuizIndex = 0; let currentQuizKey = null;
-        const REWARD_AMOUNT = 10;
+<script>
+(function () {
+'use strict';
 
-        // --- Temporary Effects / Rogue Choices State ---
-        let buildDiscount = 0; let upgradeDiscount = 0; let globalDamageMultiplier = 1.0; let globalRangeMultiplier = 1.0;
+// ─── Arcade Decks ─────────────────────────────────────────────────────────────
 
-        // --- Game Constants ---
-        const TILE_SIZE = 50; const TURRET_COST = 50; const UPGRADE_COST_BASE = 75; const ENEMY_START_HP = 50; const ENEMY_HP_SCALING = 1.2; const ENEMY_SPEED = 30; const ENEMY_SPEED_SCALING = 1.03; const TURRET_RANGE = 100; const TURRET_DAMAGE = 10; const TURRET_FIRE_RATE = 1000; const FINAL_WAVE = 20;
+const ARCADE_PAIRS = [
+  {k:'France',v:'Paris'},{k:'Japan',v:'Tokyo'},{k:'Germany',v:'Berlin'},
+  {k:'Brazil',v:'Brasilia'},{k:'Australia',v:'Canberra'},{k:'Canada',v:'Ottawa'},
+  {k:'Italy',v:'Rome'},{k:'Spain',v:'Madrid'},{k:'China',v:'Beijing'},
+  {k:'India',v:'New Delhi'},{k:'Mexico',v:'Mexico City'},{k:'Egypt',v:'Cairo'},
+  {k:'Russia',v:'Moscow'},{k:'UK',v:'London'},{k:'Greece',v:'Athens'},
+  {k:'Norway',v:'Oslo'},{k:'Poland',v:'Warsaw'},{k:'Thailand',v:'Bangkok'},
+  {k:'Kenya',v:'Nairobi'},{k:'Argentina',v:'Buenos Aires'},
+  {k:'3 × 3',v:'9'},{k:'3 × 4',v:'12'},{k:'4 × 4',v:'16'},{k:'4 × 6',v:'24'},
+  {k:'6 × 6',v:'36'},{k:'6 × 7',v:'42'},{k:'7 × 7',v:'49'},{k:'7 × 8',v:'56'},
+  {k:'8 × 8',v:'64'},{k:'8 × 9',v:'72'},{k:'9 × 9',v:'81'},{k:'6 × 8',v:'48'},
+  {k:'H',v:'Hydrogen'},{k:'He',v:'Helium'},{k:'Li',v:'Lithium'},{k:'C',v:'Carbon'},
+  {k:'N',v:'Nitrogen'},{k:'O',v:'Oxygen'},{k:'Na',v:'Sodium'},{k:'Fe',v:'Iron'},
+  {k:'Au',v:'Gold'},{k:'Ag',v:'Silver'},{k:'Cu',v:'Copper'},{k:'K',v:'Potassium'},
+  {k:'Ca',v:'Calcium'},{k:'Mg',v:'Magnesium'},{k:'Al',v:'Aluminium'},{k:'Zn',v:'Zinc'}
+];
 
-        // --- AoE Ability Constants ---
-        const AOE_COST = 5; const AOE_DAMAGE = 25; const AOE_RADIUS = TILE_SIZE * 1.2; const AOE_COOLDOWN = 2000; const AOE_EFFECT_DURATION = 300; let lastAoeTime = -Infinity;
+// ─── T9 ───────────────────────────────────────────────────────────────────────
 
-        // --- Circular Path Definition ---
-        const PATH_CENTER_X = canvas.width / 2; const PATH_CENTER_Y = canvas.height / 2; const PATH_RADIUS = Math.min(canvas.width, canvas.height) * 0.35; const PATH_START_ANGLE = Math.PI;
+const T9_MAP = {
+  '2':['a','b','c'],'3':['d','e','f'],'4':['g','h','i'],
+  '5':['j','k','l'],'6':['m','n','o'],'7':['p','q','r','s'],
+  '8':['t','u','v'],'9':['w','x','y','z'],'0':[' ']
+};
 
-        // --- Game Objects (Minimized) ---
-        class Enemy { constructor(a, hp, s) { this.angle = a; this.hp = hp; this.maxHp = hp; this.speed = s; this.width = TILE_SIZE * 0.6; this.height = TILE_SIZE * 0.6; this.x = PATH_CENTER_X + PATH_RADIUS * Math.cos(a); this.y = PATH_CENTER_Y + PATH_RADIUS * Math.sin(a); this.dead = false; } move(dt) { if (this.dead) return; const as = this.speed / PATH_RADIUS; this.angle += as * (dt / 1000); this.x = PATH_CENTER_X + PATH_RADIUS * Math.cos(this.angle); this.y = PATH_CENTER_Y + PATH_RADIUS * Math.sin(this.angle); } takeDamage(amt) { if (this.dead) return; this.hp -= amt; if (this.hp <= 0) { this.dead = true; cash += 5 + Math.floor(wave / 5); updateUI(); } } draw(ctx) { if (this.dead) return; ctx.fillStyle = 'hsl(' + (wave * 10) + ', 70%, 50%)'; ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height); const hbw = this.width; const hbh = 5; const chw = Math.max(0, (this.hp / this.maxHp) * hbw); ctx.fillStyle = 'darkred'; ctx.fillRect(this.x - hbw / 2, this.y - this.height / 2 - hbh - 2, hbw, hbh); ctx.fillStyle = 'lime'; ctx.fillRect(this.x - hbw / 2, this.y - this.height / 2 - hbh - 2, chw, hbh); } }
-        class Tower { constructor(x, y) { this.x = x; this.y = y; this.width = TILE_SIZE * 0.8; this.height = TILE_SIZE * 0.8; this.baseRange = TURRET_RANGE; this.baseDamage = TURRET_DAMAGE; this.baseFireRate = TURRET_FIRE_RATE; this.lastShotTime = 0; this.target = null; this.level = 1; this.baseUpgradeCost = UPGRADE_COST_BASE; } get range() { return this.baseRange * Math.pow(1.1, this.level - 1) * globalRangeMultiplier; } get damage() { return this.baseDamage * Math.pow(1.5, this.level - 1) * globalDamageMultiplier; } get fireRate() { return this.baseFireRate * Math.pow(0.9, this.level - 1); } get upgradeCost() { return Math.floor(this.baseUpgradeCost * Math.pow(1.8, this.level - 1)); } findTarget(es) { const cr = this.range; if (this.target && (this.target.dead || this.distanceTo(this.target) > cr)) { this.target = null; } if (!this.target) { let ce = null; let md = cr; for (const e of es) { if (!e.dead) { const d = this.distanceTo(e); if (d < md) { md = d; ce = e; } } } this.target = ce; } } distanceTo(e) { const dx = e.x - this.x; const dy = e.y - this.y; return Math.sqrt(dx * dx + dy * dy); } shoot(ct) { if (this.target && ct - this.lastShotTime >= this.fireRate) { projectiles.push(new Projectile(this.x, this.y, this.target, this.damage)); this.lastShotTime = ct; } } upgrade(cp) { cash -= cp; this.level++; updateUI(); deselectTower(); return true; } draw(ctx) { const lc = `hsl(${200 + this.level * 20}, 60%, 50%)`; ctx.fillStyle = lc; ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height); ctx.fillStyle = 'white'; ctx.font = '12px "Press Start 2P"'; ctx.textAlign = 'center'; ctx.fillText(this.level, this.x, this.y + 5); if (selectedTower === this) { ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(this.x, this.y, this.range, 0, Math.PI * 2); ctx.stroke(); } } }
-        class Projectile { constructor(sx, sy, t, d) { this.x = sx; this.y = sy; this.target = t; this.damage = d; this.speed = 5; this.dead = false; this.width = 5; this.height = 5; } move() { if (this.dead || !this.target || this.target.dead) { this.dead = true; return; } const dx = this.target.x - this.x; const dy = this.target.y - this.y; const dist = Math.sqrt(dx * dx + dy * dy); if (dist < this.speed) { if (!this.target.dead) { this.target.takeDamage(this.damage); } this.dead = true; } else { this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed; } } draw(ctx) { if (this.dead) return; ctx.fillStyle = 'yellow'; ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height); } }
+const T9_KEYS = [
+  {n:'1',l:''},{n:'2',l:'ABC'},{n:'3',l:'DEF'},
+  {n:'4',l:'GHI'},{n:'5',l:'JKL'},{n:'6',l:'MNO'},
+  {n:'7',l:'PQRS'},{n:'8',l:'TUV'},{n:'9',l:'WXYZ'},
+  {n:'⌫',l:'',a:'back'},{n:'0',l:'SPC'},{n:'✓',l:'',a:'ok'}
+];
 
-        // --- Game Logic ---
-        let lastTimestamp = 0;
-        function spawnWave() { /* ... */ globalDamageMultiplier = 1.0; globalRangeMultiplier = 1.0; wave++; enemiesSpawnedThisWave = 0; waveInProgress = true; buttons.startWave.disabled = true; deselectTower(); const ne = 5 + wave * 3; const ehp = ENEMY_START_HP * Math.pow(ENEMY_HP_SCALING, wave - 1); const es = ENEMY_SPEED * Math.pow(ENEMY_SPEED_SCALING, wave - 1); currentWaveEnemies = []; for (let i = 0; i < ne; i++) { currentWaveEnemies.push(new Enemy(PATH_START_ANGLE, ehp, es)); } spawnInterval = Math.max(150, 1000 - wave * 40); lastSpawnTime = performance.now(); updateUI(); }
-        function handleEnemySpawning(ct) { /* ... */ if (waveInProgress && enemiesSpawnedThisWave < currentWaveEnemies.length) { if (ct - lastSpawnTime >= spawnInterval) { enemies.push(currentWaveEnemies[enemiesSpawnedThisWave]); enemiesSpawnedThisWave++; lastSpawnTime = ct; } } }
-        function updateGame(currentTime, deltaTime) { /* ... */ handleEnemySpawning(currentTime); projectiles.forEach(p => p.move()); enemies.forEach(e => e.move(deltaTime)); towers.forEach(t => { t.findTarget(enemies); t.shoot(currentTime); }); aoeEffects = aoeEffects.filter(ef => currentTime < ef.startTime + ef.duration); enemies = enemies.filter(e => !e.dead); projectiles = projectiles.filter(p => !p.dead); if (waveInProgress && enemies.length === 0 && enemiesSpawnedThisWave === currentWaveEnemies.length) { waveInProgress = false; if (wave === FINAL_WAVE) { handleGameWin(); return; } buttons.startWave.disabled = false; let wb = 25 + wave * 5; cash += wb; updateUI(); offerRogueChoice(wb); } updateAoeButton(currentTime); updateCursor(); }
-        function drawGame() { /* ... */ ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = '#555'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(PATH_CENTER_X, PATH_CENTER_Y, PATH_RADIUS, 0, Math.PI * 2); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.lineWidth = 1; for (let x = 0; x < canvas.width; x += TILE_SIZE) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); } for (let y = 0; y < canvas.height; y += TILE_SIZE) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); } towers.forEach(t => t.draw(ctx)); enemies.forEach(e => e.draw(ctx)); projectiles.forEach(p => p.draw(ctx)); const ct = performance.now(); aoeEffects.forEach(ef => { const el = ct - ef.startTime; const p = el / ef.duration; if (p < 1) { const cr = ef.radius * p; const a = 1 - p; ctx.fillStyle = `rgba(255,255,0,${a * 0.5})`; ctx.beginPath(); ctx.arc(ef.x, ef.y, cr, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = `rgba(255,200,0,${a})`; ctx.lineWidth = 2; ctx.stroke(); } }); if (buildMode && mouseInCanvas) { const gx = Math.floor(mouseX / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; const gy = Math.floor(mouseY / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; const cp = canPlaceTower(gx, gy); ctx.fillStyle = cp ? 'rgba(0,0,255,0.5)' : 'rgba(255,0,0,0.5)'; ctx.fillRect(gx - TILE_SIZE * 0.4, gy - TILE_SIZE * 0.4, TILE_SIZE * 0.8, TILE_SIZE * 0.8); ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(gx, gy, TURRET_RANGE * globalRangeMultiplier, 0, Math.PI * 2); ctx.stroke(); } else if (selectedTower) { ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(selectedTower.x, selectedTower.y, selectedTower.range, 0, Math.PI * 2); ctx.stroke(); } }
-        function gameLoop(timestamp) { /* ... */ if (gameOver) return; const dt = timestamp - lastTimestamp; lastTimestamp = timestamp; if (!gamePaused) { updateGame(timestamp, dt); } drawGame(); requestAnimationFrame(gameLoop); }
-        function updateAoeButton(currentTime) { /* ... */ const cr = lastAoeTime + AOE_COOLDOWN - currentTime; buttons.aoe.classList.remove('cooldown', 'armed'); if (aoeArmed) { buttons.aoe.disabled = false; buttons.aoe.textContent = `Cancel Zap`; buttons.aoe.classList.add('armed'); } else if (cr > 0) { buttons.aoe.disabled = true; buttons.aoe.textContent = `Zap (${(cr / 1000).toFixed(1)}s)`; buttons.aoe.classList.add('cooldown'); } else if (cash < AOE_COST) { buttons.aoe.disabled = true; buttons.aoe.textContent = `Arm Zap ($${AOE_COST})`; } else { buttons.aoe.disabled = false; buttons.aoe.textContent = `Arm Zap ($${AOE_COST})`; } }
-        function updateCursor() { /* ... */ if (aoeArmed) { canvas.style.cursor = 'crosshair'; } else if (buildMode) { canvas.style.cursor = 'copy'; } else { canvas.style.cursor = 'default'; } }
-        function updateUI() { /* ... */ gameInfo.waveNumber.textContent = wave; gameInfo.finalWave.textContent = FINAL_WAVE; gameInfo.livesCount.textContent = lives; gameInfo.cashCount.textContent = cash; const ctCost = Math.ceil(TURRET_COST * (1 - buildDiscount)); buttons.buildTurret.disabled = cash < ctCost || buildMode; buttons.buildTurret.textContent = buildMode ? 'Cancel Build' : `Build Turret ($${ctCost})`; if (selectedTower) { const cuCost = Math.ceil(selectedTower.upgradeCost * (1 - upgradeDiscount)); buttons.upgradeTurret.disabled = cash < cuCost; buttons.upgradeTurret.textContent = `Upgrade ($${cuCost})`; } else { buttons.upgradeTurret.disabled = true; buttons.upgradeTurret.textContent = "Upgrade Turret"; } }
+// ─── Tower type definitions ────────────────────────────────────────────────────
 
-        // --- Input Handling ---
-        function getMousePos(c, e) { /* ... */ const r = c.getBoundingClientRect(); const sx = c.width / r.width; const sy = c.height / r.height; return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy }; }
-        function canPlaceTower(gx, gy) { /* ... */ if (gx < TILE_SIZE / 2 || gx > canvas.width - TILE_SIZE / 2 || gy < TILE_SIZE / 2 || gy > canvas.height - TILE_SIZE / 2) return false; for (const t of towers) { const dx = t.x - gx; const dy = t.y - gy; if (Math.sqrt(dx * dx + dy * dy) < TILE_SIZE * 0.8) return false; } const dfc = Math.sqrt((gx - PATH_CENTER_X) ** 2 + (gy - PATH_CENTER_Y) ** 2); const pt = TILE_SIZE * 0.6; if (Math.abs(dfc - PATH_RADIUS) < pt) return false; return true; }
-        function selectTower(t) { /* ... */ selectedTower = t; buildMode = false; aoeArmed = false; updateUI(); updateCursor(); }
-        function deselectTower() { /* ... */ selectedTower = null; updateUI(); }
-        canvas.addEventListener('mousemove', (e) => { /* ... */ const p = getMousePos(canvas, e); mouseX = p.x; mouseY = p.y; mouseInCanvas = true; });
-        canvas.addEventListener('mouseleave', () => { /* ... */ mouseInCanvas = false; });
-        canvas.addEventListener('mouseenter', () => { /* ... */ mouseInCanvas = true; });
-        canvas.addEventListener('click', (e) => { /* ... */ if (gamePaused || !mouseInCanvas) return; const pos = getMousePos(canvas, e); const currentTime = performance.now(); if (aoeArmed) { aoeArmed = false; lastAoeTime = currentTime; const blastX = pos.x; const blastY = pos.y; enemies.forEach(enemy => { if (!enemy.dead) { const dx = enemy.x - blastX; const dy = enemy.y - blastY; const dSq = dx * dx + dy * dy; if (dSq < AOE_RADIUS * AOE_RADIUS) { enemy.takeDamage(AOE_DAMAGE); } } }); aoeEffects.push({ x: blastX, y: blastY, radius: AOE_RADIUS, startTime: currentTime, duration: AOE_EFFECT_DURATION }); updateUI(); updateCursor(); return; } const gridX = Math.floor(pos.x / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; const gridY = Math.floor(pos.y / TILE_SIZE) * TILE_SIZE + TILE_SIZE / 2; if (buildMode) { const ctCost = TURRET_COST * (1 - buildDiscount); if (cash >= ctCost && canPlaceTower(gridX, gridY)) { towers.push(new Tower(gridX, gridY)); cash -= ctCost; buildMode = false; buildDiscount = 0; updateUI(); updateCursor(); } else if (cash < ctCost) { showMessage("Not Enough Cash!", `Need $${Math.ceil(ctCost)}`); buildMode = false; updateUI(); updateCursor(); } else if (!canPlaceTower(gridX, gridY)) { showMessage("Invalid Placement!", "Cannot build here."); } } else { let clickedOnTower = false; for (const t of towers) { if (pos.x >= t.x - t.width / 2 && pos.x <= t.x + t.width / 2 && pos.y >= t.y - t.height / 2 && pos.y <= t.y + t.height / 2) { selectTower(t); clickedOnTower = true; break; } } if (!clickedOnTower) deselectTower(); } });
-        buttons.buildTurret.addEventListener('click', () => { /* ... */ if (gamePaused) return; const ctCost = Math.ceil(TURRET_COST * (1 - buildDiscount)); if (buildMode) { buildMode = false; deselectTower(); } else if (cash >= ctCost) { buildMode = true; deselectTower(); aoeArmed = false; } else { showMessage("Not Enough Cash!", `Need $${ctCost}`); } updateUI(); updateCursor(); });
-        buttons.startWave.addEventListener('click', () => {
-            if (!waveInProgress && !gameOver && !gamePaused) {
-                if (wave === 0) {
-                    if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
-                    localStorage.setItem('lastPlayed_memoryTower', Date.now());
-                }
-                spawnWave();
-            }
-        });
-        buttons.upgradeTurret.addEventListener('click', () => { /* ... */ if (selectedTower && !gamePaused) { const cuCost = Math.ceil(selectedTower.upgradeCost * (1 - upgradeDiscount)); if (cash >= cuCost) { selectedTower.upgrade(cuCost); upgradeDiscount = 0; } else { showMessage("Not Enough Cash!", `Need $${cuCost}`); } } });
-        buttons.aoe.addEventListener('click', () => { /* ... */ if (gamePaused) return; const currentTime = performance.now(); if (aoeArmed) { aoeArmed = false; cash += AOE_COST; console.log("AoE Disarmed, refunded."); updateUI(); updateCursor(); } else { const isReady = currentTime - lastAoeTime >= AOE_COOLDOWN; const hasCash = cash >= AOE_COST; if (isReady && hasCash) { cash -= AOE_COST; aoeArmed = true; buildMode = false; deselectTower(); console.log("AoE Armed!"); updateUI(); updateCursor(); } else if (!isReady) { console.log("AoE on cooldown!"); } else if (!hasCash) { console.log("Not enough cash to arm AoE!"); } } });
+const TTYPES = [
+  {name:'Basic', color:'#4488ff',glow:'#4488ff',range:95, dmg:14,rate:1.4, streak:0},
+  {name:'Rapid', color:'#ff44aa',glow:'#ff44aa',range:62, dmg:7, rate:0.45,streak:3},
+  {name:'Sniper',color:'#ffaa00',glow:'#ffaa00',range:165,dmg:38,rate:2.4, streak:5},
+  {name:'Splash',color:'#44ffaa',glow:'#44ffaa',range:82, dmg:18,rate:1.6, streak:8, splash:true}
+];
 
-        // --- Message/Overlay Logic ---
-        function showMessage(t, txt, cs = [], cbt = "OK") {/* ... */ gamePaused = true; canvas.style.cursor = 'default'; messageTitle.textContent = t; messageText.textContent = txt; messageCloseBtn.textContent = cbt; rogueChoicesContainer.innerHTML = ''; if (cs.length > 0) { cs.forEach(c => { const b = document.createElement('button'); b.textContent = c.text; b.onclick = () => { c.action(); hideMessage(); }; rogueChoicesContainer.appendChild(b); }); messageCloseBtn.style.display = 'none'; } else { messageCloseBtn.style.display = 'inline-block'; messageCloseBtn.onclick = hideMessage; } messageOverlay.style.display = 'flex'; }
-        function hideMessage() {/* ... */ messageOverlay.style.display = 'none'; gamePaused = false; updateUI(); buttons.startWave.disabled = waveInProgress || gameOver; updateCursor(); }
-        function handleGameOver(r) {/* ... */ if (gameOver) return; gameOver = true; const _prev = parseInt(localStorage.getItem('memoryTowerHighWave') || '0', 10); if (wave > _prev) localStorage.setItem('memoryTowerHighWave', wave); showMessage("Game Over!", r, [], "Restart"); messageCloseBtn.style.display = 'inline-block'; messageCloseBtn.onclick = () => window.location.reload(); canvas.style.cursor = 'default'; }
-        function handleGameWin() {/* ... */ if (gameOver) return; gameOver = true; const _prevW = parseInt(localStorage.getItem('memoryTowerHighWave') || '0', 10); if (wave > _prevW) localStorage.setItem('memoryTowerHighWave', wave); const s = Math.floor(cash + lives * 50 + (FINAL_WAVE - wave) * 100); showMessage("Victory!", `Survived ${FINAL_WAVE} waves! Score: ${s}`, [], "Play Again"); messageCloseBtn.style.display = 'inline-block'; messageCloseBtn.onclick = () => window.location.reload(); canvas.style.cursor = 'default'; }
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-        // --- Rogue-like Element ---
-        function offerRogueChoice(wb) {/* ... */ const cs = []; const cc = 3; const pc = [{ type: 'cash', text: `+ $${Math.floor(wb * 1.5)} Cash`, action: () => { cash += Math.floor(wb * 1.5); updateUI(); } }, { type: 'lives', text: `+ ${Math.min(5, Math.ceil(wave / 2))} Lives`, action: () => { lives = Math.min(20, lives + Math.min(5, Math.ceil(wave / 2))); updateUI(); } }, { type: 'build_discount', text: `15% Off Next Turret`, action: () => applyTemporaryBuildDiscount(0.15) }, { type: 'upgrade_discount', text: `20% Off Next Upgrade`, action: () => applyTemporaryUpgradeDiscount(0.20) }, { type: 'global_damage', text: `+10% Damage (Next Wave)`, action: () => applyGlobalDamageBoost(0.1) }, { type: 'global_range', text: `+10% Range (Next Wave)`, action: () => applyGlobalRangeBoost(0.1) },]; let fc = pc.filter(c => { if (c.type === 'lives' && lives >= 20) return false; if (c.type === 'build_discount' && buildDiscount > 0) return false; if (c.type === 'upgrade_discount' && upgradeDiscount > 0) return false; return true; }); const ac = [...fc]; for (let i = 0; i < cc && ac.length > 0; i++) { const ri = Math.floor(Math.random() * ac.length); cs.push(ac.splice(ri, 1)[0]); } if (cs.length > 0) { showMessage(`Wave ${wave} Cleared!`, `Bonus: $${wb}. Choose bonus for Wave ${wave + 1}:`, cs); } else { showMessage(`Wave ${wave} Cleared!`, `Bonus: $${wb}.`, [], "Continue"); } }
+const HEADER_H = 55;
+const TR = 14;   // tower radius
+const ER_X = 11; // enemy half-width
+const ER_Y = 8;  // enemy half-height
+const PR = 4;    // projectile radius
+const PATH_Y_RATIO = 0.45;
+const SLOT_COLS = 5;
+const ROWS_ABOVE = 2;
+const ROWS_BELOW = 2;
+const ROW_SPACING = 28;
+const SLOT_MARGIN = 28;
 
-        // --- Temporary Effects Implementation ---
-        function applyTemporaryBuildDiscount(d) { buildDiscount = d; updateUI(); } function applyTemporaryUpgradeDiscount(d) { upgradeDiscount = d; updateUI(); } function applyGlobalDamageBoost(b) { globalDamageMultiplier += b; } function applyGlobalRangeBoost(b) { globalRangeMultiplier += b; }
+// ─── State ────────────────────────────────────────────────────────────────────
 
-        // --- Memory Game Logic ---
-        function switchTab(activeTab) {/* ... */ if (activeTab === 'input') { inputTabBtn.classList.add('active'); quizTabBtn.classList.remove('active'); inputTabContent.classList.add('active'); quizTabContent.classList.remove('active'); } else { inputTabBtn.classList.remove('active'); quizTabBtn.classList.add('active'); inputTabContent.classList.remove('active'); quizTabContent.classList.add('active'); if (!currentQuizKey && quizKeys.length > 0) { loadNextQuestion(); } else if (quizKeys.length === 0) { quizKeyDisplay.textContent = 'No pairs saved yet.'; quizAnswerInput.value = ''; quizFeedback.textContent = ''; } } }
+let gameState = 'menu';
+let chillMode = false;
+let deck = [];
+let deckIdx = 0;
+let currentPair = null;
+let wave = 0;
+let score = 0;
+let waveScore = 0;
+let multiplier = 1.0;
+let streak = 0;
+let correctW = 0, wrongW = 0;
+let waveStartTime = 0;
+let totalSpawned = 0, totalThisWave = 0;
+let spawnTimer = 0, spawnInterval = 1.0;
+let answerCount = 0;
 
-        function parseAndSavePairs() { // MODIFIED for new line-based format
-            const inputText = pairsInput.value.trim();
-            const newPairs = {};
-            let count = 0;
-            let errors = []; // Store multiple errors
-            inputFeedback.classList.remove('correct', 'incorrect');
+let enemies = [], towers = [], projs = [], particles = [], ripples = [], floats = [], stars = [];
+let slots = [];
+let selectedTower = null;
+let waveOver = false;
 
-            if (!inputText) {
-                inputFeedback.textContent = "Input is empty.";
-                inputFeedback.classList.add('incorrect');
-                return;
-            }
+let inputMode = localStorage.getItem('keypadQuest_inputMode') || 'scroll';
+let t9buf = '', t9pend = '', t9pendKey = '', t9pendIdx = 0, t9timer = null;
+let t9keys = [], t9cands = [], t9ci = 0;
 
-            const lines = inputText.split('\n'); // Split by newline
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+let W = 0, H = 0, pathY = 0, rafId = null, lastTs = 0;
 
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                if (!line) continue; // Skip empty lines
+// ─── Persistence ──────────────────────────────────────────────────────────────
 
-                const delimiterIndex = line.indexOf(':');
+function getHW() { return parseInt(localStorage.getItem('keypadQuestHighWave') || '0', 10); }
+function saveHW(w) { if (w > getHW()) localStorage.setItem('keypadQuestHighWave', w); }
+function getBT(n) { return parseInt(localStorage.getItem('keypadQuestBestTime_' + n) || '0', 10); }
+function saveBT(n, ms) {
+  const p = getBT(n);
+  if (p === 0 || ms < p) { localStorage.setItem('keypadQuestBestTime_' + n, ms); return true; }
+  return false;
+}
+function saveCP() {
+  if (wave % 5 !== 0) return;
+  const data = {
+    wave, score,
+    towers: towers.map(t => ({ si: slots.indexOf(t.slot), ti: t.ti, lv: t.lv })),
+    ts: Date.now()
+  };
+  localStorage.setItem('keypadQuestCheckpoint', JSON.stringify(data));
+}
+function loadCP() {
+  try { return JSON.parse(localStorage.getItem('keypadQuestCheckpoint')); } catch(e) { return null; }
+}
+function clearCP() { localStorage.removeItem('keypadQuestCheckpoint'); }
 
-                // Validation for each line
-                if (delimiterIndex === -1) {
-                    errors.push(`Line ${i + 1}: Missing colon ':' separator.`);
-                    continue; // Skip this line
-                }
-                if (delimiterIndex === 0) {
-                    errors.push(`Line ${i + 1}: Key cannot be empty.`);
-                    continue; // Skip this line
-                }
-                if (delimiterIndex === line.length - 1) {
-                    errors.push(`Line ${i + 1}: Value cannot be empty.`);
-                    continue; // Skip this line
-                }
+// ─── Util ─────────────────────────────────────────────────────────────────────
 
-                const key = line.substring(0, delimiterIndex).trim();
-                const value = line.substring(delimiterIndex + 1).trim();
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
-                if (!key || !value) { // Double check key/value not empty after potential inner trim
-                    errors.push(`Line ${i + 1}: Key or value is empty after trimming.`);
-                    continue; // Skip this line
-                }
+function lerpHex(a, b, t) {
+  const ah = parseInt(a.slice(1), 16), bh = parseInt(b.slice(1), 16);
+  const r = Math.round(((ah>>16)&0xff) + (((bh>>16)&0xff)-((ah>>16)&0xff))*t);
+  const g = Math.round(((ah>>8)&0xff)  + (((bh>>8)&0xff) -((ah>>8)&0xff))*t);
+  const bl= Math.round((ah&0xff)       + ((bh&0xff)      -(ah&0xff))*t);
+  return '#'+(((r<<16)|(g<<8)|bl)>>>0).toString(16).padStart(6,'0');
+}
 
-                newPairs[key] = value;
-                count++;
-            }
+// ─── Canvas / Slots setup ─────────────────────────────────────────────────────
 
-            // Report results
-            if (count > 0) {
-                memoryPairs = newPairs;
-                quizKeys = Object.keys(memoryPairs);
-                currentQuizIndex = 0;
-                currentQuizKey = null;
-                inputFeedback.textContent = `Saved ${count} pairs successfully!`;
-                if (errors.length > 0) {
-                    inputFeedback.textContent += ` Skipped ${errors.length} invalid line(s).`;
-                }
-                inputFeedback.classList.add('correct');
-                pairsInput.value = ''; // Clear input area
-                loadNextQuestion(); // Load the first question
-                switchTab('quiz'); // Switch to quiz tab automatically
-            } else {
-                inputFeedback.textContent = "No valid pairs found. Ensure format is 'Key:Value' on each line.";
-                if (errors.length > 0) {
-                    inputFeedback.textContent += ` Errors: ${errors.join(' ')}`; // Show first few errors?
-                }
-                inputFeedback.classList.add('incorrect');
-            }
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return;
+  canvas.width  = Math.floor(rect.width);
+  canvas.height = Math.floor(rect.height);
+  W = canvas.width; H = canvas.height;
+  pathY = Math.floor(H * PATH_Y_RATIO);
+  buildSlots();
+  buildStars();
+}
+
+function buildSlots() {
+  slots = [];
+  const colW = (W - SLOT_MARGIN * 2) / (SLOT_COLS - 1);
+  for (let row = 0; row < ROWS_ABOVE; row++) {
+    for (let col = 0; col < SLOT_COLS; col++) {
+      slots.push({ x: SLOT_MARGIN + col * colW, y: pathY - 30 - row * ROW_SPACING, occupied: false, tower: null });
+    }
+  }
+  for (let row = 0; row < ROWS_BELOW; row++) {
+    for (let col = 0; col < SLOT_COLS; col++) {
+      slots.push({ x: SLOT_MARGIN + col * colW, y: pathY + 30 + row * ROW_SPACING, occupied: false, tower: null });
+    }
+  }
+}
+
+// ─── Stars ────────────────────────────────────────────────────────────────────
+
+function buildStars() {
+  stars = Array.from({length:60}, () => ({
+    x: Math.random()*W, y: Math.random()*H,
+    r: Math.random()*1.2+0.3,
+    a: Math.random()*0.35+0.05,
+    vx: (Math.random()-0.5)*0.08, vy: (Math.random()-0.5)*0.08
+  }));
+}
+
+function drawStars() {
+  ctx.save();
+  for (const s of stars) {
+    s.x = (s.x + s.vx + W) % W;
+    s.y = (s.y + s.vy + H) % H;
+    ctx.globalAlpha = s.a;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+// ─── Particles ────────────────────────────────────────────────────────────────
+
+function burst(x, y, color, n) {
+  for (let i = 0; i < n; i++) {
+    const a = (Math.PI*2/n)*i + Math.random()*0.4;
+    const spd = 1.5 + Math.random()*3;
+    particles.push({ x, y, vx: Math.cos(a)*spd, vy: Math.sin(a)*spd,
+      a: 1, r: 1.5+Math.random()*2, color, decay: 0.03+Math.random()*0.02 });
+  }
+}
+
+function ripple(x, y, color) {
+  ripples.push({ x, y, r: TR, maxR: 65, color, a: 0.85 });
+}
+
+function floatText(x, y, text, color) {
+  floats.push({ x, y: y-8, text, color, a: 1, vy: -0.75 });
+}
+
+function updateFX(dt) {
+  for (const p of particles) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.a-=p.decay; }
+  particles = particles.filter(p => p.a > 0);
+  for (const r of ripples) { r.r += 2.2; r.a -= 0.042; }
+  ripples = ripples.filter(r => r.a > 0 && r.r < r.maxR);
+  for (const f of floats) { f.y += f.vy; f.a -= 0.018; }
+  floats = floats.filter(f => f.a > 0);
+}
+
+// ─── Enemies ──────────────────────────────────────────────────────────────────
+
+function makeEnemy() {
+  const hp = Math.round(10 * Math.pow(1.2, wave - 1));
+  let spd = 55 * Math.pow(1.03, wave - 1);
+  if (chillMode) spd *= 0.5;
+  return { x: -ER_X, y: pathY, hp, maxHp: hp, spd, trail: [], dead: false, escaped: false };
+}
+
+function updateEnemies(dt) {
+  for (const e of enemies) {
+    if (e.dead || e.escaped) continue;
+    e.trail.unshift({x:e.x, y:e.y});
+    if (e.trail.length > 9) e.trail.pop();
+    e.x += e.spd * dt;
+    if (e.x > W + ER_X) {
+      e.escaped = true;
+      multiplier = Math.max(0.5, +(multiplier - 0.1).toFixed(1));
+      flashEl('rgba(255,200,0,0.1)');
+    }
+  }
+  enemies = enemies.filter(e => !e.dead);
+}
+
+function killEnemy(e) {
+  if (e.dead) return;
+  e.dead = true;
+  const color = lerpHex('#4488ff','#ff4422', 1 - e.hp/e.maxHp);
+  burst(e.x, e.y, color, 12);
+  waveScore += 10;
+}
+
+// ─── Towers ───────────────────────────────────────────────────────────────────
+
+function makeTower(slot, ti) {
+  return { slot, ti, type: TTYPES[ti], lv: 1, cd: 0, pulse: Math.random()*Math.PI*2 };
+}
+
+function placeTower(ti) {
+  const slot = bestSlot();
+  if (!slot) return;
+  slot.occupied = true;
+  const t = makeTower(slot, ti);
+  slot.tower = t;
+  towers.push(t);
+  ripple(slot.x, slot.y, TTYPES[ti].color);
+  burst(slot.x, slot.y, TTYPES[ti].color, 10);
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function bestSlot() {
+  const free = slots.filter(s => !s.occupied);
+  if (free.length === 0) return null;
+  if (towers.length === 0) {
+    // pick leftmost slot closest to path center x
+    return free.reduce((a, b) => a.x < b.x ? a : b);
+  }
+  let best = null, bestScore = -1;
+  for (const s of free) {
+    let minD = Infinity;
+    for (const t of towers) {
+      const d = Math.hypot(s.x - t.slot.x, s.y - t.slot.y);
+      if (d < minD) minD = d;
+    }
+    if (minD > bestScore) { bestScore = minD; best = s; }
+  }
+  return best;
+}
+
+function upgradeRandom() {
+  if (towers.length === 0) return;
+  const t = towers[Math.floor(Math.random()*towers.length)];
+  t.lv++;
+  floatText(t.slot.x, t.slot.y, '▲ Lv'+t.lv, t.type.color);
+  ripple(t.slot.x, t.slot.y, t.type.color);
+}
+
+function updateTowers(dt) {
+  for (const t of towers) {
+    t.pulse += dt * 1.8;
+    if (t.cd > 0) { t.cd -= dt; continue; }
+    let target = null, minD = Infinity;
+    for (const e of enemies) {
+      if (e.dead || e.escaped) continue;
+      const d = Math.hypot(e.x - t.slot.x, e.y - t.slot.y);
+      if (d <= t.type.range && d < minD) { minD = d; target = e; }
+    }
+    if (!target) continue;
+    t.cd = t.type.rate;
+    const dx = target.x - t.slot.x, dy = target.y - t.slot.y;
+    const len = Math.hypot(dx, dy) || 1;
+    projs.push({
+      x: t.slot.x, y: t.slot.y,
+      vx: (dx/len)*210, vy: (dy/len)*210,
+      dmg: t.type.dmg * t.lv,
+      color: t.type.color,
+      splash: !!t.type.splash,
+      trail: [], dead: false
+    });
+  }
+}
+
+// ─── Projectiles ──────────────────────────────────────────────────────────────
+
+function updateProjs(dt) {
+  for (const p of projs) {
+    if (p.dead) continue;
+    p.trail.unshift({x:p.x, y:p.y});
+    if (p.trail.length > 4) p.trail.pop();
+    p.x += p.vx*dt; p.y += p.vy*dt;
+    for (const e of enemies) {
+      if (e.dead || e.escaped) continue;
+      if (Math.abs(p.x-e.x) < ER_X && Math.abs(p.y-e.y) < ER_Y) {
+        if (p.splash) {
+          for (const e2 of enemies) {
+            if (e2.dead || e2.escaped) continue;
+            if (Math.hypot(e2.x-p.x, e2.y-p.y) < 42) { e2.hp -= p.dmg; if (e2.hp<=0) killEnemy(e2); }
+          }
+          burst(p.x, p.y, p.color, 15);
+        } else {
+          e.hp -= p.dmg;
+          if (e.hp <= 0) killEnemy(e);
         }
+        p.dead = true; break;
+      }
+    }
+    if (p.x < -20 || p.x > W+20 || p.y < -20 || p.y > H+20) p.dead = true;
+  }
+  projs = projs.filter(p => !p.dead);
+}
 
-        function loadNextQuestion() { /* ... */ quizFeedback.textContent = ''; if (quizKeys.length > 0) { quizAnswerInput.disabled = false; submitAnswerBtn.disabled = false; } else { quizKeyDisplay.textContent = 'No pairs saved yet.'; currentQuizKey = null; quizAnswerInput.disabled = true; submitAnswerBtn.disabled = true; return; } currentQuizKey = quizKeys[currentQuizIndex]; quizKeyDisplay.textContent = currentQuizKey; currentQuizIndex = (currentQuizIndex + 1) % quizKeys.length; }
-        function checkAnswer() { /* ... */ if (!currentQuizKey || quizKeys.length === 0) return; const sa = quizAnswerInput.value.trim(); const ca = memoryPairs[currentQuizKey]; quizFeedback.classList.remove('correct', 'incorrect'); if (sa.toLowerCase() === ca.toLowerCase()) { quizFeedback.textContent = `Correct! +$${REWARD_AMOUNT}`; quizFeedback.classList.add('correct'); cash += REWARD_AMOUNT; updateUI(); } else { quizFeedback.textContent = `Incorrect. The answer was: ${ca}`; quizFeedback.classList.add('incorrect'); } quizAnswerInput.value = ''; setTimeout(() => { if (quizTabContent.classList.contains('active')) { loadNextQuestion(); } }, 1500); }
+// ─── Wave management ──────────────────────────────────────────────────────────
 
-        // --- Initialization ---
-        function init() {
-            gameInfo.finalWave.textContent = FINAL_WAVE;
-            updateUI(); updateAoeButton(performance.now()); updateCursor();
-            lastTimestamp = performance.now();
-            requestAnimationFrame(gameLoop);
-            // Memory Game Init
-            inputTabBtn.addEventListener('click', () => switchTab('input'));
-            quizTabBtn.addEventListener('click', () => switchTab('quiz'));
-            savePairsBtn.addEventListener('click', parseAndSavePairs);
-            submitAnswerBtn.addEventListener('click', checkAnswer);
-            quizAnswerInput.addEventListener('keypress', (e) => { if (e.key === 'Enter' && !submitAnswerBtn.disabled) { checkAnswer(); } });
-            quizAnswerInput.addEventListener('focus', () => { setTimeout(() => { quizAnswerInput.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100); });
-            loadNextQuestion(); // Load initial state
+function startWave(n) {
+  wave = n; waveScore = 0; multiplier = 1.0; correctW = 0; wrongW = 0;
+  waveStartTime = performance.now();
+  totalThisWave = 5 + wave * 2;
+  totalSpawned = 0;
+  spawnInterval = Math.max(0.2, 1.0 - (wave-1)*0.03);
+  spawnTimer = 0;
+  enemies = []; projs = []; particles = []; ripples = []; floats = [];
+  selectedTower = null;
+  waveOver = false;
+  document.getElementById('wave-display').textContent = 'Wave ' + wave;
+  showNextPrompt();
+}
+
+function updateWave(dt) {
+  if (totalSpawned < totalThisWave) {
+    spawnTimer -= dt;
+    if (spawnTimer <= 0) { enemies.push(makeEnemy()); totalSpawned++; spawnTimer = spawnInterval; }
+  }
+  if (!waveOver && totalSpawned >= totalThisWave) {
+    const alive = enemies.filter(e => !e.dead && !e.escaped);
+    if (alive.length === 0) { waveOver = true; endWave(); }
+  }
+}
+
+function endWave() {
+  const elapsed = performance.now() - waveStartTime;
+  const fs = Math.round(waveScore * multiplier);
+  score += fs;
+  saveHW(wave);
+  const newBest = !chillMode && saveBT(wave, elapsed);
+  if (!chillMode && wave % 5 === 0) saveCP();
+  gameState = 'summary';
+  showSummary(elapsed, fs, newBest);
+}
+
+// ─── Drawing ──────────────────────────────────────────────────────────────────
+
+function drawPath() {
+  ctx.save();
+  // Glow line
+  ctx.shadowBlur = 20; ctx.shadowColor = '#00ffee';
+  ctx.strokeStyle = '#00ffee44'; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(0, pathY); ctx.lineTo(W, pathY); ctx.stroke();
+  // Bright center
+  ctx.shadowBlur = 6; ctx.strokeStyle = '#00ffeeaa'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, pathY); ctx.lineTo(W, pathY); ctx.stroke();
+  // End marker
+  ctx.shadowBlur = 22; ctx.shadowColor = '#ff4444'; ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(W-5, pathY-22); ctx.lineTo(W-5, pathY+22); ctx.stroke();
+  ctx.restore();
+}
+
+function drawSlots() {
+  ctx.save();
+  for (const s of slots) {
+    if (s.occupied) continue;
+    ctx.globalAlpha = 0.22; ctx.strokeStyle = '#4488ff';
+    ctx.shadowBlur = 5; ctx.shadowColor = '#4488ff'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(s.x, s.y, TR-1, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.globalAlpha = 1; ctx.restore();
+}
+
+function drawTowers() {
+  ctx.save();
+  for (const t of towers) {
+    const sx = t.slot.x, sy = t.slot.y;
+    const p = Math.sin(t.pulse)*0.3+0.7;
+    ctx.shadowBlur = 14 + p*10; ctx.shadowColor = t.type.glow;
+    ctx.fillStyle = t.type.color; ctx.globalAlpha = 0.88;
+    ctx.beginPath(); ctx.arc(sx, sy, TR, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1; ctx.fillStyle = '#fff'; ctx.shadowBlur = 3; ctx.shadowColor = '#fff';
+    ctx.font = 'bold 9px Courier New'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(t.lv > 1 ? t.lv : t.type.name[0], sx, sy);
+    if (selectedTower === t) {
+      ctx.globalAlpha = 0.55; ctx.strokeStyle = '#fff'; ctx.shadowBlur = 8; ctx.shadowColor = '#fff';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(sx, sy, TR+5, 0, Math.PI*2); ctx.stroke();
+      ctx.globalAlpha = 0.1; ctx.strokeStyle = t.type.color; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(sx, sy, t.type.range, 0, Math.PI*2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+  ctx.restore();
+}
+
+function drawEnemies() {
+  ctx.save();
+  for (const e of enemies) {
+    if (e.dead || e.escaped) continue;
+    const hp = e.hp/e.maxHp;
+    const color = lerpHex('#4488ff','#ff4422', 1-hp);
+    // Trail
+    for (let i = 0; i < e.trail.length; i++) {
+      ctx.globalAlpha = (1-i/e.trail.length)*0.22;
+      const tr2 = ER_X*(1-i/e.trail.length)*0.65;
+      ctx.fillStyle = '#4488ff'; ctx.shadowBlur = 0;
+      ctx.beginPath(); ctx.ellipse(e.trail[i].x, e.trail[i].y, tr2, tr2*0.7, 0, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha = 0.92;
+    ctx.shadowBlur = 12; ctx.shadowColor = color; ctx.fillStyle = color;
+    ctx.beginPath(); ctx.ellipse(e.x, e.y, ER_X, ER_Y, 0, 0, Math.PI*2); ctx.fill();
+    // HP bar
+    ctx.globalAlpha = 0.75; ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(e.x-ER_X, e.y-ER_Y-7, ER_X*2, 3);
+    ctx.fillStyle = color;
+    ctx.fillRect(e.x-ER_X, e.y-ER_Y-7, ER_X*2*hp, 3);
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+}
+
+function drawProjs() {
+  ctx.save();
+  for (const p of projs) {
+    for (let i = 0; i < p.trail.length; i++) {
+      ctx.globalAlpha = (1-i/p.trail.length)*0.45;
+      ctx.fillStyle = p.color;
+      ctx.beginPath(); ctx.arc(p.trail[i].x, p.trail[i].y, PR*(1-i/p.trail.length), 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, PR, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawFX() {
+  ctx.save();
+  for (const p of particles) {
+    ctx.globalAlpha = Math.max(0,p.a); ctx.shadowBlur = 5; ctx.shadowColor = p.color; ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+  }
+  for (const r of ripples) {
+    ctx.globalAlpha = Math.max(0,r.a); ctx.strokeStyle = r.color;
+    ctx.shadowBlur = 8; ctx.shadowColor = r.color; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
+  }
+  ctx.font = 'bold 10px Courier New'; ctx.textAlign = 'center';
+  for (const f of floats) {
+    ctx.globalAlpha = Math.max(0,f.a); ctx.fillStyle = f.color;
+    ctx.shadowBlur = 7; ctx.shadowColor = f.color;
+    ctx.fillText(f.text, f.x, f.y);
+  }
+  ctx.globalAlpha = 1; ctx.restore();
+}
+
+function drawFrame() {
+  ctx.fillStyle = 'rgba(5,5,16,0.84)';
+  ctx.fillRect(0, 0, W, H);
+  drawStars();
+  drawPath();
+  drawSlots();
+  drawFX();
+  drawEnemies();
+  drawTowers();
+  drawProjs();
+}
+
+// ─── Game loop ────────────────────────────────────────────────────────────────
+
+function loop(ts) {
+  const dt = Math.min((ts - lastTs)/1000, 0.1);
+  lastTs = ts;
+  if (gameState === 'playing') {
+    updateWave(dt);
+    updateEnemies(dt);
+    updateTowers(dt);
+    updateProjs(dt);
+    updateFX(dt);
+  } else {
+    updateFX(dt);
+  }
+  drawFrame();
+  rafId = requestAnimationFrame(loop);
+}
+
+function startLoop() {
+  if (rafId) cancelAnimationFrame(rafId);
+  lastTs = performance.now();
+  rafId = requestAnimationFrame(loop);
+}
+
+// ─── T9 input ────────────────────────────────────────────────────────────────
+
+function confirmScrollChar() {
+  if (!t9pend) return;
+  t9buf += t9pend; t9pend = ''; t9pendKey = ''; t9pendIdx = 0;
+  updateInputDisplay();
+}
+
+function handleT9(key) {
+  if (gameState !== 'playing') return;
+  if (key === 'back') {
+    clearTimeout(t9timer);
+    if (inputMode === 'scroll') {
+      if (t9pend) { t9pend = ''; t9pendKey = ''; t9pendIdx = 0; }
+      else if (t9buf.length > 0) t9buf = t9buf.slice(0,-1);
+    } else {
+      if (t9keys.length > 0) t9keys.pop();
+      updatePredict();
+    }
+    updateInputDisplay(); return;
+  }
+  if (key === 'ok') {
+    if (inputMode === 'scroll') {
+      clearTimeout(t9timer); confirmScrollChar();
+      submitAnswer(t9buf); t9buf = '';
+    } else {
+      submitAnswer(t9cands[t9ci] || '');
+      t9keys = []; t9cands = [];
+    }
+    updateInputDisplay(); return;
+  }
+  if (inputMode === 'scroll') {
+    const letters = T9_MAP[key];
+    if (!letters || letters.length === 0) return;
+    clearTimeout(t9timer);
+    if (t9pendKey === key) {
+      t9pendIdx = (t9pendIdx + 1) % (letters.length + 1);
+      t9pend = t9pendIdx === letters.length ? key : letters[t9pendIdx].toUpperCase();
+    } else {
+      confirmScrollChar();
+      t9pendKey = key; t9pendIdx = 0;
+      t9pend = letters[0].toUpperCase();
+    }
+    t9timer = setTimeout(confirmScrollChar, 820);
+  } else {
+    t9keys.push(key);
+    updatePredict(); t9ci = 0;
+  }
+  updateInputDisplay();
+}
+
+function updatePredict() {
+  if (t9keys.length === 0) { t9cands = []; return; }
+  const vals = deck.map(p => p.v.toLowerCase());
+  t9cands = [...new Set(vals.filter(v => {
+    if (v.length < t9keys.length) return false;
+    for (let i = 0; i < t9keys.length; i++) {
+      const al = T9_MAP[t9keys[i]];
+      if (!al || al.length === 0) continue;
+      if (!al.includes(v[i])) return false;
+    }
+    return true;
+  }))];
+}
+
+function updateInputDisplay() {
+  const el = document.getElementById('input-display');
+  if (inputMode === 'scroll') {
+    const txt = t9buf + (t9pend ? '['+t9pend+']' : '');
+    el.textContent = txt || '▶';
+  } else if (inputMode === 'predict') {
+    el.textContent = t9cands.length > 0 ? t9cands[t9ci] : (t9keys.length > 0 ? '?' : '▶');
+  } else {
+    const ki = document.getElementById('keyboard-input');
+    el.textContent = ki.value || '▶';
+  }
+}
+
+// ─── Answer handling ──────────────────────────────────────────────────────────
+
+function showNextPrompt() {
+  if (!deck.length) return;
+  currentPair = deck[deckIdx % deck.length]; deckIdx++;
+  document.getElementById('question-text').textContent = currentPair.k;
+  t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = [];
+  updateInputDisplay();
+  if (inputMode === 'keyboard') setTimeout(() => document.getElementById('keyboard-input').focus(), 50);
+}
+
+function typeForStreak(s) {
+  if (s >= 8) return 3;
+  if (s >= 5) return 2;
+  if (s >= 3) return 1;
+  return 0;
+}
+
+function submitAnswer(raw) {
+  if (!currentPair) return;
+  const ans = raw.trim().toLowerCase();
+  const correct = ans === currentPair.v.toLowerCase();
+  if (correct) {
+    streak++; correctW++; answerCount++;
+    placeTower(typeForStreak(streak));
+    floatText(W/2, pathY - 45, '✓ '+currentPair.v, '#44ffaa');
+    if (answerCount % 10 === 0) upgradeRandom();
+    updateStreakDisplay();
+    t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = [];
+    showNextPrompt();
+  } else {
+    streak = 0; wrongW++;
+    updateStreakDisplay();
+    flashEl('rgba(255,50,50,0.14)');
+    t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = [];
+    updateInputDisplay();
+    if (navigator.vibrate) navigator.vibrate([50,30,50]);
+  }
+}
+
+function flashEl(bg) {
+  const el = document.getElementById('feedback-flash');
+  el.style.background = bg;
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 280);
+}
+
+function updateStreakDisplay() {
+  const el = document.getElementById('streak-display');
+  el.textContent = streak >= 3 ? '⚡ ×'+streak : '';
+}
+
+// ─── Screens ──────────────────────────────────────────────────────────────────
+
+function showMenu() {
+  gameState = 'menu';
+  document.getElementById('menu-overlay').classList.remove('hidden');
+  document.getElementById('summary-overlay').classList.add('hidden');
+  const hw = getHW();
+  document.getElementById('menu-best').textContent = hw > 0 ? 'Best: Wave '+hw : '';
+  const cp = loadCP();
+  if (cp) {
+    document.getElementById('continue-wrap').style.display = '';
+    document.getElementById('continue-wave-num').textContent = cp.wave + 1;
+  } else {
+    document.getElementById('continue-wrap').style.display = 'none';
+  }
+}
+
+function showSummary(elapsed, fs, newBest) {
+  document.getElementById('summary-overlay').classList.remove('hidden');
+  document.getElementById('sum-title').textContent = 'Wave '+wave+' Complete!';
+  document.getElementById('sum-subtitle').textContent = newBest ? '🏆 New Wave Record!' : '';
+  const acc = correctW+wrongW > 0 ? Math.round(correctW/(correctW+wrongW)*100) : 100;
+  const secs = (elapsed/1000).toFixed(1);
+  const bms = getBestTime(wave);
+  const bestStr = bms > 0 ? (bms/1000).toFixed(1)+'s' : '—';
+  const rows = [
+    ['Wave Time', secs+'s', newBest ? 'gold' : ''],
+    ['Best Time', newBest ? '★ NEW!' : bestStr, newBest ? 'teal' : ''],
+    ['Accuracy', acc+'%', acc>=80?'teal':''],
+    ['Score Earned', '+'+fs, 'teal'],
+    ['Total Score', score, ''],
+    ['Towers', towers.length+'/'+slots.length, '']
+  ];
+  const container = document.getElementById('sum-stats');
+  container.innerHTML = '';
+  for (const [label, val, cls] of rows) {
+    const row = document.createElement('div');
+    row.className = 'srow';
+    row.innerHTML = '<span class="slabel">'+label+'</span><span class="sval '+cls+'">'+val+'</span>';
+    container.appendChild(row);
+  }
+}
+
+// ─── Game start / continue ────────────────────────────────────────────────────
+
+function startGame(mode, fromCP) {
+  if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
+    if (window.KamekoTokens) window.KamekoTokens.toast();
+    return;
+  }
+  localStorage.setItem('lastPlayed_memoryTower', Date.now());
+  chillMode = (mode === 'chill');
+  deck = shuffle(ARCADE_PAIRS.slice());
+  deckIdx = 0; answerCount = 0; streak = 0; score = 0;
+  document.getElementById('menu-overlay').classList.add('hidden');
+  for (const s of slots) { s.occupied = false; s.tower = null; }
+  towers = [];
+
+  if (fromCP) {
+    const cp = loadCP();
+    if (cp) {
+      score = cp.score || 0;
+      if (cp.towers) {
+        for (const td of cp.towers) {
+          if (td.si >= 0 && td.si < slots.length) {
+            const s = slots[td.si]; s.occupied = true;
+            const t = makeTower(s, td.ti); t.lv = td.lv;
+            s.tower = t; towers.push(t);
+          }
         }
-        window.onload = init;
+      }
+      startWave(cp.wave + 1);
+      gameState = 'playing';
+      updateStreakDisplay(); updateInputDisplay(); return;
+    }
+  }
+  clearCP();
+  startWave(1);
+  gameState = 'playing';
+  updateStreakDisplay(); updateInputDisplay();
+}
 
-        // --- Settings pause/resume ---
-        window.addEventListener('settingsOpened', () => { gamePaused = true; });
-        window.addEventListener('settingsClosed', () => { gamePaused = false; });
+// ─── Input mode switching ─────────────────────────────────────────────────────
 
-    </script>
+function setInputMode(mode) {
+  inputMode = mode;
+  localStorage.setItem('keypadQuest_inputMode', mode);
+  t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = [];
+  const pad = document.getElementById('t9-pad');
+  const kw = document.getElementById('keyboard-wrap');
+  if (mode === 'keyboard') {
+    pad.style.display = 'none'; kw.style.display = '';
+    if (gameState === 'playing') setTimeout(() => document.getElementById('keyboard-input').focus(), 50);
+  } else {
+    pad.style.display = ''; kw.style.display = 'none';
+  }
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  updateInputDisplay();
+}
+
+function buildT9Pad() {
+  const pad = document.getElementById('t9-pad');
+  pad.innerHTML = '';
+  for (const key of T9_KEYS) {
+    const btn = document.createElement('button');
+    btn.className = 't9-key' + (key.a ? ' ak' : '');
+    btn.innerHTML = '<span class="kn">'+key.n+'</span>' + (key.l ? '<span class="kl">'+key.l+'</span>' : '');
+    const k = key.a || key.n;
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      btn.classList.add('pressed');
+      handleT9(k);
+    });
+    btn.addEventListener('pointerup',    () => btn.classList.remove('pressed'));
+    btn.addEventListener('pointerleave', () => btn.classList.remove('pressed'));
+    pad.appendChild(btn);
+  }
+}
+
+// ─── Canvas click — tower selection & move ────────────────────────────────────
+
+canvas.addEventListener('pointerdown', e => {
+  if (gameState !== 'playing') return;
+  const rect = canvas.getBoundingClientRect();
+  const cx = (e.clientX - rect.left) * (W / rect.width);
+  const cy = (e.clientY - rect.top) * (H / rect.height);
+
+  for (const t of towers) {
+    if (Math.hypot(cx - t.slot.x, cy - t.slot.y) < TR + 8) {
+      selectedTower = (selectedTower === t) ? null : t;
+      return;
+    }
+  }
+  if (selectedTower) {
+    for (const s of slots) {
+      if (s.occupied) continue;
+      if (Math.hypot(cx - s.x, cy - s.y) < TR + 10) {
+        selectedTower.slot.occupied = false; selectedTower.slot.tower = null;
+        s.occupied = true; s.tower = selectedTower;
+        selectedTower.slot = s; selectedTower = null;
+        return;
+      }
+    }
+    selectedTower = null;
+  }
+});
+
+// ─── Keyboard shortcuts for T9 ────────────────────────────────────────────────
+
+window.addEventListener('keydown', e => {
+  if (gameState !== 'playing' || inputMode === 'keyboard') return;
+  if (e.key === 'Backspace') { handleT9('back'); e.preventDefault(); return; }
+  if (e.key === 'Enter' || e.key === ' ') { handleT9('ok'); e.preventDefault(); return; }
+  if (/^[0-9]$/.test(e.key)) { handleT9(e.key); e.preventDefault(); }
+});
+
+// ─── Keyboard mode submit ─────────────────────────────────────────────────────
+
+document.getElementById('keyboard-submit').addEventListener('click', () => {
+  const ki = document.getElementById('keyboard-input');
+  submitAnswer(ki.value); ki.value = ''; ki.focus();
+});
+
+document.getElementById('keyboard-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { submitAnswer(e.target.value); e.target.value = ''; updateInputDisplay(); }
+  else setTimeout(updateInputDisplay, 0);
+});
+
+// ─── Mode buttons ─────────────────────────────────────────────────────────────
+
+document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => setInputMode(b.dataset.mode)));
+
+// ─── Menu buttons ─────────────────────────────────────────────────────────────
+
+document.getElementById('btn-arcade').addEventListener('click',   () => startGame('arcade', false));
+document.getElementById('btn-classic').addEventListener('click',  () => startGame('arcade', false));
+document.getElementById('btn-chill').addEventListener('click',    () => startGame('chill', false));
+document.getElementById('continue-btn').addEventListener('click', () => startGame('arcade', true));
+
+document.getElementById('btn-next-wave').addEventListener('click', () => {
+  document.getElementById('summary-overlay').classList.add('hidden');
+  startWave(wave + 1);
+  gameState = 'playing';
+});
+
+document.getElementById('btn-quit').addEventListener('click', () => {
+  document.getElementById('summary-overlay').classList.add('hidden');
+  towers = []; enemies = []; projs = [];
+  for (const s of slots) { s.occupied = false; s.tower = null; }
+  showMenu();
+});
+
+// ─── Settings integration ─────────────────────────────────────────────────────
+
+window.addEventListener('settingsOpened', () => {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (gameState === 'playing') gameState = 'paused';
+});
+
+window.addEventListener('settingsClosed', () => {
+  if (gameState === 'paused') gameState = 'playing';
+  startLoop();
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+function init() {
+  resizeCanvas();
+  buildT9Pad();
+  setInputMode(inputMode);
+  showMenu();
+  startLoop();
+}
+
+window.addEventListener('resize', resizeCanvas);
+
+window.addEventListener('pageshow', e => {
+  if (e.persisted && gameState === 'menu') showMenu();
+});
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+})();
+</script>
+
 <script src="../../shared/settings.js" data-gallery-depth="2"></script>
-
 </body>
-
 </html>

@@ -273,9 +273,9 @@
 
                 <div class="game-card" style="--card-accent:#00c853">
                     <div class="game-card-body">
-                        <div class="game-emoji">🏰</div>
-                        <div class="game-title">Memory Tower</div>
-                        <div class="game-desc">Wave-based tower defense with roguelike upgrades</div>
+                        <div class="game-emoji">⌨️</div>
+                        <div class="game-title">Keypad Quest</div>
+                        <div class="game-desc">Answer questions to build your tower defense — T9 or keyboard</div>
                         <div class="game-meta" id="meta-memoryTower"></div>
                         <a href="games/memory-tower/index.html" class="play-btn" style="background:#009940">▶ Play &nbsp;1🪙</a>
                     </div>
@@ -320,7 +320,7 @@
         const GAMES_META = [
             { id: 'hiddenObject', name: 'Hidden Object', emoji: '🔍', href: 'games/hidden-object/index.html' },
             { id: 'materialsRun', name: 'Materials Run', emoji: '🏃', href: 'games/materials-run/index.html' },
-            { id: 'memoryTower',  name: 'Memory Tower',  emoji: '🏰', href: 'games/memory-tower/index.html' },
+            { id: 'memoryTower',  name: 'Keypad Quest',  emoji: '⌨️', href: 'games/memory-tower/index.html' },
             { id: 'riverRun',     name: 'River Run',     emoji: '🌊', href: 'games/river-run/index.html' },
             { id: 'blobZapper',   name: 'Blob Zapper',   emoji: '⚡', href: 'games/blob-zapper/index.html' },
         ];
@@ -329,7 +329,7 @@
             { label: 'Materials Run (Score)',    key: 'gridGameTopScoreScore',    suffix: '' },
             { label: 'Materials Run (Survival)', key: 'gridGameTopScoreSurvival', suffix: '' },
             { label: 'River Run',                key: 'riverRunHighScore',        suffix: ' pts' },
-            { label: 'Memory Tower',             key: 'memoryTowerHighWave',      suffix: ' waves' },
+            { label: 'Keypad Quest',              key: 'keypadQuestHighWave',      suffix: ' waves' },
         ];
 
         function timeAgo(ts) {
@@ -380,7 +380,7 @@
                 if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: ' + riverScore + ' pts';
             }
 
-            var towerWave = parseInt(localStorage.getItem('memoryTowerHighWave') || '0', 10);
+            var towerWave = parseInt(localStorage.getItem('keypadQuestHighWave') || '0', 10);
             if (towerWave > 0) {
                 var el = document.getElementById('meta-memoryTower');
                 if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: Wave ' + towerWave;
