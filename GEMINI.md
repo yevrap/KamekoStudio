@@ -48,7 +48,7 @@ Each game is a single self-contained `index.html` with all CSS and JS inline.
 |-----------|-------|----------|-------|
 | `games/materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Tap to place movement pins; physics with material types. Score and survival modes. |
 | `games/hidden-object/` | Hidden Object Game | DOM | Emoji-finding challenge. Mobile-vertical layout. |
-| `games/memory-tower/` | Tower Defense Rogue-like | Canvas 2D | Wave-based tower defense with upgrade system. Saves `memoryTowerHighWave`. |
+| `games/memory-tower/` | Keypad Quest | Canvas 2D | T9 tower defense: answer flashcard questions to place towers. Circular enemy path, multiple named decks, deck import/export. Saves `keypadQuestHighWave`. |
 | `games/river-run/` | River Runner 3D | Three.js | 3D obstacle-dodging river runner. Has per-game settings (auto-shoot, auto-avoid, invert drag). Saves `riverRunHighScore`. |
 | `games/waterfall/` | 3D Auto-Aim Endless Shooter | Three.js | 3D shooter, mobile-friendly. Not listed in gallery (intentional). |
 | `games/blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Push blobs with electricity. |
@@ -75,15 +75,29 @@ The settings panel includes a "Developer Mode" toggle. When enabled, this mode d
 - It adds a blue glow to the settings gear icon as a visual indicator.
 - It shows a "Clear All Game Data" button in the panel. This button removes all known `localStorage` keys related to game progress, settings, and tokens, which is useful for testing from a clean state.
 
-**Per-game settings injection:** Games can append their own settings rows to `#settings-panel` on `settingsOpened`:
+**Per-game settings injection:** Games can append their own sections to `#settings-panel` on `settingsOpened`:
 ```js
 window.addEventListener('settingsOpened', () => {
-    if (!document.getElementById('my-game-settings')) {
-        document.getElementById('settings-panel')?.appendChild(buildMyGameSettings());
+    if (!document.getElementById('my-game-stats')) {
+        document.getElementById('settings-panel')?.appendChild(buildMyStatsSection());
     }
 });
+window.addEventListener('settingsClosed', () => {
+    document.getElementById('my-game-stats')?.remove();
+});
 ```
-See `games/river-run/index.html` for a complete example with pill toggles.
+See `games/river-run/index.html` for a pill-toggle example; see `games/memory-tower/index.html` for a stats + "Back to Menu" button example.
+
+**Settings gear positioning:** The gear is injected as `position:fixed; top:15px; right:15px`. Games with a top header bar should override this in their CSS to align it within the header and add right padding to the header so content doesn't slide under it:
+```css
+#settings-gear-btn {
+  position: fixed !important;
+  top: 6px !important; right: 8px !important;
+  width: 42px !important; height: 42px !important;
+  border-radius: 10px !important;
+}
+#header { padding-right: 58px; } /* clear the gear */
+```
 
 ## Token System
 
@@ -115,7 +129,12 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `gridGameTopScoreScore` | materials-run | integer string | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | integer string | Survival mode high score |
 | `riverRunHighScore` | river-run | integer string | Points high score |
-| `memoryTowerHighWave` | memory-tower | integer string | Highest wave reached (max 20) |
+| `keypadQuestHighWave` | memory-tower | integer string | Highest wave reached |
+| `keypadQuestBestTime_N` | memory-tower | integer string | Best clear time in ms for wave N |
+| `keypadQuestCheckpoint` | memory-tower | JSON string | Wave/tower state at last 5-wave checkpoint |
+| `keypadQuest_decks` | memory-tower | JSON string | Array of user custom decks `[{id,name,pairs}]` |
+| `keypadQuest_activeDeckIds` | memory-tower | JSON string | Array of selected deck IDs (built-in + custom) |
+| `keypadQuest_inputMode` | memory-tower | `'scroll'`\|`'predict'`\|`'keyboard'` | Last used T9 input mode |
 | `riverRun_autoShoot` | river-run | `'true'`\|`'false'` | Per-game option |
 | `riverRun_autoAvoid` | river-run | `'true'`\|`'false'` | Per-game option |
 | `riverRun_invertControls` | river-run | `'true'`\|`'false'` | Per-game option |
@@ -135,18 +154,20 @@ All games must work on phone, tablet, and desktop. Key patterns used across the 
 - **iOS PWA bfcache** — when users navigate back on iOS (browser or home-screen app), `DOMContentLoaded` does not re-fire; listen to `pageshow` with `event.persisted === true` to refresh dynamic content
 - **Canvas size zero bug** — on mobile, `canvas.clientWidth/Height` can be 0 during the first few frames before layout completes; always guard dimension updates with `if (cw > 0 && ch > 0)` and skip rendering if dimensions are still 0
 
-## Upcoming Project: T9 Memory Game
+## Keypad Quest — Architecture Notes
 
-The next game is a flashcard memory game where all input happens via a T9 phone keypad. Key design decisions:
+Keypad Quest (`games/memory-tower/`) is the most complex game in the studio. Key patterns to know:
 
-- Input is T9 only: Scroll-Select mode (tap to cycle letters) and Predictive mode (scoped to deck values, not a general dictionary)
-- Decks are user-created key-value pairs stored in IndexedDB
-- Import/export via file (JSON/CSV), possibly a `.kameko` file extension
-- Spaced repetition lite for surfacing weak pairs
-- PWA with offline support and optional home-screen install
-- Haptic feedback via Vibration API on mobile
-
-Full design spec: `docs/memory-game-design.md`
+- **Three input modes:** Tap to Spell (T9 scroll-select, 820ms auto-confirm), T9 Smart (predictive, scoped to deck values), Keyboard. Mode persisted in `keypadQuest_inputMode`.
+- **Numeric mode:** When the current answer is all digits, T9 keypresses build a digit string directly (key `1` = digit `1`, not cycle). `numericMode` is set in `showNextPrompt()`.
+- **Typewriter display:** In T9 Smart, the matched candidate is revealed one character at a time as keys are pressed (`_` placeholders for untyped letters). Key `1` cycles through multiple candidates.
+- **Circular enemy path:** Enemies travel an ellipse (`pathCX/CY/RX/RY`) using `e.angle` in radians/sec. World position is `e.ex/e.ey`, computed each frame. Slots are arranged in two rings around the ellipse. `pathRX/RY` derived from outer ring scale + margin so slots never clip on any screen size.
+- **Built-in decks:** Defined as `BUILTIN_DECKS` array with ids `b-capitals`, `b-math`, `b-elements`. Not stored in localStorage.
+- **User decks:** `keypadQuest_decks` — array of `{id, name, pairs:[{k,v}]}`. IDs prefixed `u-`. Old `keypadQuest_customDeck` key is migrated on first load.
+- **Active deck selection:** `keypadQuest_activeDeckIds` — array of IDs from both built-in and user decks.
+- **Deck share/import:** Plain text format (`# Name\nkey: value`) for copy/paste. Share links use `?import=<base64-json>` — parsed on `init()`, URL cleaned with `history.replaceState`, import prompt shown over menu.
+- **Wave flow:** Continuous — `endWave()` calls `startWave(wave+1)` immediately with a floating toast. No summary screen.
+- **Stats in settings:** On `settingsOpened` during a run, a "Current Run" section is injected into the settings panel with wave, score, accuracy, and a "Back to Game Menu" button. Removed on `settingsClosed`.
 
 ## Development Notes
 

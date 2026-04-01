@@ -23,23 +23,29 @@
 
     #header {
       height: 55px; display: flex; align-items: center;
-      justify-content: space-between; padding: 0 12px;
+      justify-content: space-between; padding: 0 58px 0 12px;
       background: rgba(5,5,16,0.9);
       border-bottom: 1px solid rgba(0,255,238,0.15); flex-shrink: 0; gap: 8px;
     }
 
-    #btn-quit-game {
-      background: none; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
-      color: rgba(255,255,255,0.55); font-size: 1em; cursor: pointer;
-      width: 36px; height: 36px; padding: 0; flex-shrink: 0;
-      font-family: 'Courier New', monospace; -webkit-tap-highlight-color: transparent;
-      display: none;
-    }
-    #btn-quit-game:active { background: rgba(255,255,255,0.1); }
 
     #wave-display { font-size: 0.85em; color: #00ffee; text-shadow: 0 0 8px #00ffee; flex: 1; }
     #streak-display { font-size: 0.8em; color: #ff44aa; text-shadow: 0 0 8px #ff44aa; min-width: 55px; text-align: center; }
-    #token-display { font-size: 0.8em; color: #ffcc44; flex-shrink: 0; }
+    #token-display { font-size: 0.8em; color: #ffcc44; flex-shrink: 0; margin-right: 6px; }
+
+    /* Pin the shared settings gear inside the header row, right-aligned */
+    #settings-gear-btn {
+      position: fixed !important;
+      top: 6px !important;
+      right: 8px !important;
+      width: 42px !important;
+      height: 42px !important;
+      border-radius: 10px !important;
+      background: rgba(255,255,255,0.07) !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      box-shadow: none !important;
+      font-size: 1.1em !important;
+    }
 
     #game-canvas { display: block; width: 100%; flex: 0 0 40%; min-height: 0; }
 
@@ -109,9 +115,9 @@
       line-height: 1.15; transition: background 0.08s;
     }
     .t9-key.pressed, .t9-key:active { background: rgba(0,255,238,0.18); border-color: rgba(0,255,238,0.4); }
-    .t9-key .kn { font-size: 1.15em; font-weight: bold; color: #fff; }
-    .t9-key .kl { font-size: 0.52em; color: rgba(255,255,255,0.45); letter-spacing: 0.1em; }
-    .t9-key.ak .kn { font-size: 0.95em; }
+    .t9-key .kn { font-size: 1.45em; font-weight: bold; color: #fff; }
+    .t9-key .kl { font-size: 0.62em; color: rgba(255,255,255,0.55); letter-spacing: 0.08em; }
+    .t9-key.ak .kn { font-size: 1.15em; }
 
     #keyboard-wrap {
       flex: 1; display: flex; flex-direction: column;
@@ -184,9 +190,6 @@
     #deck-back:active { background: rgba(255,255,255,0.1); }
     #deck-title { flex: 1; font-size: 1em; color: #00ffee; font-weight: bold; }
 
-    #btn-add-pair { width: 100%; max-width: 340px; margin-bottom: 6px; }
-
-    #deck-form-wrap { width: 100%; max-width: 340px; margin-bottom: 6px; }
     .deck-form {
       background: rgba(0,255,238,0.05); border: 1px solid rgba(0,255,238,0.2);
       border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
@@ -207,7 +210,6 @@
     .deck-form-btns .save { background: rgba(0,255,238,0.13); border-color: rgba(0,255,238,0.45); color: #00ffee; }
     .deck-form-btns .cancel { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); color: rgba(255,255,255,0.6); }
 
-    #deck-list { width: 100%; max-width: 340px; overflow-y: auto; max-height: 55vh; }
     .deck-row {
       display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 10px;
       background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
@@ -227,18 +229,41 @@
     .dact.edit { border-color: rgba(0,255,238,0.2); color: rgba(0,255,238,0.5); }
     #deck-empty { color: rgba(255,255,255,0.35); font-size: 0.85em; text-align: center; padding: 20px 0; }
 
-    /* Quit confirm */
-    #quit-confirm-overlay {
-      position: fixed; inset: 0; background: rgba(5,5,16,0.85);
-      display: none; align-items: center; justify-content: center; z-index: 2000;
+    /* Deck selector rows */
+    .ds-row {
+      display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 10px; margin: 3px 0; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: background 0.1s;
     }
-    #quit-confirm-overlay.visible { display: flex; }
-    #quit-panel {
-      background: rgba(10,10,30,0.98); border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 16px; padding: 24px 20px; max-width: 300px; width: 90%;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    .ds-row:active, .ds-row.sel { background: rgba(0,255,238,0.07); border-color: rgba(0,255,238,0.25); }
+    .ds-check {
+      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-radius: 4px;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      font-size: 0.75em; color: #00ffee; transition: border-color 0.15s, background 0.15s;
     }
-    #quit-panel .qmsg { font-size: 0.82em; color: rgba(255,255,255,0.55); text-align: center; margin-bottom: 4px; line-height: 1.5; }
+    .ds-row.sel .ds-check { border-color: #00ffee; background: rgba(0,255,238,0.15); }
+    .ds-info { flex: 1; min-width: 0; }
+    .ds-name { font-size: 0.88em; color: #fff; }
+    .ds-meta { font-size: 0.6em; color: rgba(255,255,255,0.35); margin-top: 1px; }
+    .ds-badge { font-size: 0.55em; color: rgba(255,200,0,0.7); border: 1px solid rgba(255,200,0,0.25); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; }
+    .ds-edit { background: none; border: 1px solid rgba(0,255,238,0.2); border-radius: 6px; color: rgba(0,255,238,0.5); font-size: 0.7em; cursor: pointer; padding: 3px 8px; min-height: 26px; font-family: 'Courier New',monospace; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
+
+    /* Deck manager cards */
+    .dm-card {
+      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px; margin: 5px 0; overflow: hidden;
+    }
+    .dm-card-header {
+      display: flex; align-items: center; padding: 9px 12px; gap: 8px; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dm-card-name { flex: 1; font-size: 0.88em; color: #fff; }
+    .dm-card-name input { background: none; border: none; border-bottom: 1px solid rgba(0,255,238,0.3); color: #fff; font-family: 'Courier New',monospace; font-size: 1em; width: 100%; outline: none; padding-bottom: 2px; touch-action: auto; -webkit-user-select: auto; user-select: auto; }
+    .dm-card-toggle { color: rgba(255,255,255,0.35); font-size: 0.8em; flex-shrink: 0; }
+    .dm-card-body { display: none; padding: 0 10px 10px; border-top: 1px solid rgba(255,255,255,0.07); }
+    .dm-card-body.open { display: block; }
+    .dm-del-deck { background: none; border: 1px solid rgba(255,80,80,0.2); border-radius: 6px; color: rgba(255,80,80,0.5); font-size: 0.7em; cursor: pointer; padding: 3px 8px; min-height: 26px; font-family: 'Courier New',monospace; flex-shrink: 0; -webkit-tap-highlight-color: transparent; }
 
     #feedback-flash { position: fixed; inset: 0; pointer-events: none; z-index: 500; opacity: 0; transition: opacity 0.15s; }
 
@@ -277,7 +302,6 @@
 
 <div id="app">
   <div id="header">
-    <button id="btn-quit-game">←</button>
     <span id="wave-display">Wave 1</span>
     <span id="streak-display"></span>
     <span id="token-display">🪙 <span id="headerTokenCount">0</span></span>
@@ -320,38 +344,45 @@
   <div id="continue-wrap" style="display:none;width:100%;max-width:300px;margin-bottom:4px;">
     <button class="mbtn teal" id="continue-btn">▶ Continue — Wave <span id="continue-wave-num">1</span></button>
   </div>
-  <button class="mbtn teal" id="btn-arcade">🎮 Arcade — Built-in Decks</button>
-  <button class="mbtn dim" id="btn-classic">📚 Classic — My Deck (<span id="custom-deck-count">0</span> pairs)</button>
-  <button class="mbtn pink" id="btn-chill">😌 Chill / Practice</button>
-  <button class="mbtn dim" id="btn-deck-mgr" style="margin-top:8px;border-color:rgba(0,255,238,0.2);color:rgba(0,255,238,0.6);">✏️ Edit My Deck</button>
+  <button class="mbtn teal" id="btn-play" style="text-align:center;">▶ Play</button>
+  <button class="mbtn pink" id="btn-chill" style="text-align:center;">😌 Chill / Practice</button>
+  <button class="mbtn dim" id="btn-choose-decks" style="margin-top:4px;border-color:rgba(0,255,238,0.2);color:rgba(0,255,238,0.6);text-align:center;">📚 Choose Decks</button>
+  <button class="mbtn dim" id="btn-deck-mgr" style="border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);text-align:center;">✏️ Manage My Decks</button>
+</div>
+
+<!-- Deck selector overlay -->
+<div id="deck-selector-overlay" class="overlay hidden" style="justify-content:flex-start;padding-top:18px;">
+  <div id="deck-selector-header" style="display:flex;align-items:center;gap:10px;width:100%;max-width:340px;margin-bottom:8px;">
+    <button id="deck-selector-back" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.6);font-size:0.9em;cursor:pointer;padding:6px 12px;min-height:36px;font-family:'Courier New',monospace;-webkit-tap-highlight-color:transparent;flex-shrink:0;">← Back</button>
+    <span style="flex:1;font-size:1em;color:#00ffee;font-weight:bold;">CHOOSE DECKS</span>
+  </div>
+  <div id="deck-selector-list" style="width:100%;max-width:340px;overflow-y:auto;max-height:60vh;"></div>
+  <button class="mbtn teal center" id="btn-play-selected" style="margin-top:10px;max-width:340px;">▶ Play Selected</button>
 </div>
 
 <!-- Deck manager overlay -->
-<div id="deck-overlay" class="overlay hidden">
+<div id="deck-overlay" class="overlay hidden" style="justify-content:flex-start;padding-top:18px;">
   <div id="deck-header">
     <button id="deck-back">← Back</button>
-    <span id="deck-title">MY DECK</span>
+    <span id="deck-title">MY DECKS</span>
   </div>
-  <button class="mbtn teal" id="btn-add-pair">+ Add New Pair</button>
-  <div id="deck-form-wrap" style="display:none"></div>
-  <div id="deck-list"></div>
+  <div style="display:flex;gap:8px;width:100%;max-width:340px;">
+    <button class="mbtn teal" id="btn-new-deck" style="flex:1;text-align:center;padding-left:8px;padding-right:8px;">+ New Deck</button>
+    <button class="mbtn dim" id="btn-import-deck" style="flex:1;text-align:center;border-color:rgba(0,255,238,0.2);color:rgba(0,255,238,0.6);padding-left:8px;padding-right:8px;">📥 Import</button>
+  </div>
+  <div id="deck-new-form-wrap" style="display:none;width:100%;max-width:340px;margin-bottom:6px;"></div>
+  <div id="deck-import-wrap" style="display:none;width:100%;max-width:340px;margin-bottom:6px;"></div>
+  <div id="deck-manager-list" style="width:100%;max-width:340px;overflow-y:auto;max-height:65vh;"></div>
 </div>
 
-<!-- Summary overlay -->
-<div id="summary-overlay" class="overlay hidden">
-  <div class="g-title" id="sum-title">Wave 1 Complete!</div>
-  <div class="g-sub" id="sum-subtitle"></div>
-  <div id="sum-stats" style="width:100%;max-width:300px;margin:10px 0;"></div>
-  <button class="mbtn teal center" id="btn-next-wave" style="margin-top:10px;">Next Wave ▶</button>
-  <button class="mbtn dim center" id="btn-quit" style="margin-top:6px;">← Quit to Menu</button>
-</div>
-
-<!-- Quit confirm overlay -->
-<div id="quit-confirm-overlay">
-  <div id="quit-panel">
-    <div class="qmsg">Quit this run?<br>Progress since the last checkpoint will be lost.</div>
-    <button class="mbtn pink center" id="btn-confirm-quit" style="max-width:260px;">Quit Run</button>
-    <button class="mbtn dim center" id="btn-keep-playing" style="max-width:260px;">Keep Playing</button>
+<!-- Import prompt overlay (URL-based share link) -->
+<div id="import-prompt-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,5,16,0.88);align-items:center;justify-content:center;z-index:2000;">
+  <div id="import-panel" style="background:rgba(10,10,30,0.98);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:24px 20px;max-width:300px;width:90%;display:flex;flex-direction:column;align-items:center;gap:10px;">
+    <div style="font-size:0.72em;color:rgba(255,255,255,0.4);letter-spacing:0.1em;">IMPORT DECK</div>
+    <div id="import-deck-name" style="font-size:1.1em;color:#00ffee;text-align:center;font-weight:bold;text-shadow:0 0 10px #00ffee55;"></div>
+    <div id="import-deck-meta" style="font-size:0.75em;color:rgba(255,255,255,0.4);"></div>
+    <button class="mbtn teal center" id="btn-import-confirm" style="max-width:260px;margin-top:4px;">Import as New Deck</button>
+    <button class="mbtn dim center" id="btn-import-cancel" style="max-width:260px;">Cancel</button>
   </div>
 </div>
 
@@ -363,21 +394,27 @@
 
 // ─── Arcade Decks ─────────────────────────────────────────────────────────────
 
-const ARCADE_PAIRS = [
-  {k:'France',v:'Paris'},{k:'Japan',v:'Tokyo'},{k:'Germany',v:'Berlin'},
-  {k:'Brazil',v:'Brasilia'},{k:'Australia',v:'Canberra'},{k:'Canada',v:'Ottawa'},
-  {k:'Italy',v:'Rome'},{k:'Spain',v:'Madrid'},{k:'China',v:'Beijing'},
-  {k:'India',v:'New Delhi'},{k:'Mexico',v:'Mexico City'},{k:'Egypt',v:'Cairo'},
-  {k:'Russia',v:'Moscow'},{k:'UK',v:'London'},{k:'Greece',v:'Athens'},
-  {k:'Norway',v:'Oslo'},{k:'Poland',v:'Warsaw'},{k:'Thailand',v:'Bangkok'},
-  {k:'Kenya',v:'Nairobi'},{k:'Argentina',v:'Buenos Aires'},
-  {k:'3 × 3',v:'9'},{k:'3 × 4',v:'12'},{k:'4 × 4',v:'16'},{k:'4 × 6',v:'24'},
-  {k:'6 × 6',v:'36'},{k:'6 × 7',v:'42'},{k:'7 × 7',v:'49'},{k:'7 × 8',v:'56'},
-  {k:'8 × 8',v:'64'},{k:'8 × 9',v:'72'},{k:'9 × 9',v:'81'},{k:'6 × 8',v:'48'},
-  {k:'H',v:'Hydrogen'},{k:'He',v:'Helium'},{k:'Li',v:'Lithium'},{k:'C',v:'Carbon'},
-  {k:'N',v:'Nitrogen'},{k:'O',v:'Oxygen'},{k:'Na',v:'Sodium'},{k:'Fe',v:'Iron'},
-  {k:'Au',v:'Gold'},{k:'Ag',v:'Silver'},{k:'Cu',v:'Copper'},{k:'K',v:'Potassium'},
-  {k:'Ca',v:'Calcium'},{k:'Mg',v:'Magnesium'},{k:'Al',v:'Aluminium'},{k:'Zn',v:'Zinc'}
+const BUILTIN_DECKS = [
+  { id: 'b-capitals', name: 'World Capitals', pairs: [
+    {k:'France',v:'Paris'},{k:'Japan',v:'Tokyo'},{k:'Germany',v:'Berlin'},
+    {k:'Brazil',v:'Brasilia'},{k:'Australia',v:'Canberra'},{k:'Canada',v:'Ottawa'},
+    {k:'Italy',v:'Rome'},{k:'Spain',v:'Madrid'},{k:'China',v:'Beijing'},
+    {k:'India',v:'New Delhi'},{k:'Mexico',v:'Mexico City'},{k:'Egypt',v:'Cairo'},
+    {k:'Russia',v:'Moscow'},{k:'UK',v:'London'},{k:'Greece',v:'Athens'},
+    {k:'Norway',v:'Oslo'},{k:'Poland',v:'Warsaw'},{k:'Thailand',v:'Bangkok'},
+    {k:'Kenya',v:'Nairobi'},{k:'Argentina',v:'Buenos Aires'}
+  ]},
+  { id: 'b-math', name: 'Multiplication', pairs: [
+    {k:'3 × 3',v:'9'},{k:'3 × 4',v:'12'},{k:'4 × 4',v:'16'},{k:'4 × 6',v:'24'},
+    {k:'6 × 6',v:'36'},{k:'6 × 7',v:'42'},{k:'7 × 7',v:'49'},{k:'7 × 8',v:'56'},
+    {k:'8 × 8',v:'64'},{k:'8 × 9',v:'72'},{k:'9 × 9',v:'81'},{k:'6 × 8',v:'48'}
+  ]},
+  { id: 'b-elements', name: 'Elements', pairs: [
+    {k:'H',v:'Hydrogen'},{k:'He',v:'Helium'},{k:'Li',v:'Lithium'},{k:'C',v:'Carbon'},
+    {k:'N',v:'Nitrogen'},{k:'O',v:'Oxygen'},{k:'Na',v:'Sodium'},{k:'Fe',v:'Iron'},
+    {k:'Au',v:'Gold'},{k:'Ag',v:'Silver'},{k:'Cu',v:'Copper'},{k:'K',v:'Potassium'},
+    {k:'Ca',v:'Calcium'},{k:'Mg',v:'Magnesium'},{k:'Al',v:'Aluminium'},{k:'Zn',v:'Zinc'}
+  ]}
 ];
 
 // ─── T9 ───────────────────────────────────────────────────────────────────────
@@ -408,9 +445,8 @@ const TTYPES = [
 
 const TR = 14;
 const ER_X = 11, ER_Y = 8, PR = 4;
-const PATH_Y_RATIO = 0.45;
-const SLOT_COLS = 5, ROWS_ABOVE = 2, ROWS_BELOW = 2;
-const ROW_SPACING = 28, SLOT_MARGIN = 28;
+const RING_ANGLES = 12;
+const RINGS = [1.22, 1.46];
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -419,7 +455,8 @@ let chillMode = false;
 let deck = [];
 let deckIdx = 0;
 let currentPair = null;
-let wave = 0, score = 0, waveScore = 0, multiplier = 1.0;
+let numericMode = false;
+let wave = 0, score = 0, waveScore = 0;
 let streak = 0, correctW = 0, wrongW = 0;
 let waveStartTime = 0;
 let totalSpawned = 0, totalThisWave = 0;
@@ -436,25 +473,104 @@ let t9keys = [], t9cands = [], t9ci = 0;
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
-let W = 0, H = 0, pathY = 0, rafId = null, lastTs = 0;
+let W = 0, H = 0, pathCX = 0, pathCY = 0, pathRX = 0, pathRY = 0, rafId = null, lastTs = 0;
 
-// ─── Custom deck ──────────────────────────────────────────────────────────────
+// ─── Multi-deck storage ───────────────────────────────────────────────────────
 
-let customDeck = [];
+let userDecks = [];      // [{ id, name, pairs }]
+let activeDeckIds = [];  // IDs of selected decks (built-in + user)
+let pendingImport = null; // deck data from ?import= URL param
 
-function loadCustomDeck() {
-  try { customDeck = JSON.parse(localStorage.getItem('keypadQuest_customDeck') || '[]'); } catch(e) { customDeck = []; }
-  updateCustomDeckCount();
+function loadDecks() {
+  // Migrate old single custom deck if present
+  const old = localStorage.getItem('keypadQuest_customDeck');
+  if (old) {
+    try {
+      const pairs = JSON.parse(old);
+      if (pairs.length > 0) {
+        const id = 'u-' + Date.now();
+        const migrated = JSON.parse(localStorage.getItem('keypadQuest_decks') || '[]');
+        if (!migrated.find(d => d.name === 'My Deck')) {
+          migrated.unshift({ id, name: 'My Deck', pairs });
+          localStorage.setItem('keypadQuest_decks', JSON.stringify(migrated));
+        }
+      }
+    } catch(e) {}
+    localStorage.removeItem('keypadQuest_customDeck');
+  }
+  try { userDecks = JSON.parse(localStorage.getItem('keypadQuest_decks') || '[]'); } catch(e) { userDecks = []; }
+  try { activeDeckIds = JSON.parse(localStorage.getItem('keypadQuest_activeDeckIds') || 'null'); } catch(e) { activeDeckIds = null; }
+  if (!activeDeckIds) activeDeckIds = BUILTIN_DECKS.map(d => d.id); // default: all built-in
+  updateMenuPlayBtn();
 }
 
-function saveCustomDeck() {
-  localStorage.setItem('keypadQuest_customDeck', JSON.stringify(customDeck));
-  updateCustomDeckCount();
+function saveDecks() {
+  localStorage.setItem('keypadQuest_decks', JSON.stringify(userDecks));
 }
 
-function updateCustomDeckCount() {
-  const el = document.getElementById('custom-deck-count');
-  if (el) el.textContent = customDeck.length;
+// ─── Deck text format helpers ─────────────────────────────────────────────────
+
+function deckToPlainText(deck) {
+  return '# ' + deck.name + '\n' +
+    deck.pairs.map(p => p.k + ': ' + p.v).join('\n');
+}
+
+function parsePlainText(str) {
+  const lines = str.split('\n');
+  let name = 'Imported Deck';
+  const pairs = [];
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) continue;
+    if (line.startsWith('#')) { name = line.slice(1).trim() || name; continue; }
+    const ci = line.indexOf(':');
+    if (ci < 1) continue;
+    const k = line.slice(0, ci).trim();
+    const v = line.slice(ci + 1).trim();
+    if (k && v) pairs.push({ k, v });
+  }
+  return pairs.length > 0 ? { name, pairs } : null;
+}
+
+function deckToShareUrl(deck) {
+  const payload = btoa(JSON.stringify({ name: deck.name, pairs: deck.pairs }));
+  return location.origin + location.pathname + '?import=' + payload;
+}
+
+function saveActiveDeckIds() {
+  localStorage.setItem('keypadQuest_activeDeckIds', JSON.stringify(activeDeckIds));
+  updateMenuPlayBtn();
+}
+
+function getAllDecks() {
+  return [...BUILTIN_DECKS, ...userDecks];
+}
+
+function buildActiveDeck() {
+  const all = getAllDecks();
+  const pairs = [];
+  for (const id of activeDeckIds) {
+    const d = all.find(x => x.id === id);
+    if (d) pairs.push(...d.pairs);
+  }
+  return pairs;
+}
+
+function activePairCount() { return buildActiveDeck().length; }
+function activeDeckCount() { return activeDeckIds.length; }
+
+function updateMenuPlayBtn() {
+  const count = activePairCount();
+  const deckCount = activeDeckCount();
+  const btn = document.getElementById('btn-play');
+  if (!btn) return;
+  if (count === 0) {
+    btn.textContent = '▶ Play — select a deck first';
+    btn.disabled = true; btn.style.opacity = '0.4';
+  } else {
+    btn.textContent = '▶ Play — ' + count + ' pairs from ' + deckCount + ' deck' + (deckCount > 1 ? 's' : '');
+    btn.disabled = false; btn.style.opacity = '';
+  }
 }
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
@@ -500,21 +616,24 @@ function resizeCanvas() {
   if (rect.width <= 0 || rect.height <= 0) return;
   canvas.width = Math.floor(rect.width); canvas.height = Math.floor(rect.height);
   W = canvas.width; H = canvas.height;
-  pathY = Math.floor(H * PATH_Y_RATIO);
+  const outerScale = Math.max(...RINGS);
+  const slotMarginX = 32, slotMarginY = 26;
+  pathCX = W * 0.5; pathCY = H * 0.42;
+  pathRX = (W / 2 - slotMarginX) / outerScale;
+  pathRY = Math.min((H / 2 - slotMarginY) / outerScale, pathRX * 0.68);
   buildSlots(); buildStars();
 }
 
 function buildSlots() {
   slots = [];
-  const colW = (W - SLOT_MARGIN * 2) / (SLOT_COLS - 1);
-  for (let row = 0; row < ROWS_ABOVE; row++) {
-    for (let col = 0; col < SLOT_COLS; col++) {
-      slots.push({ x: SLOT_MARGIN + col * colW, y: pathY - 30 - row * ROW_SPACING, occupied: false, tower: null });
-    }
-  }
-  for (let row = 0; row < ROWS_BELOW; row++) {
-    for (let col = 0; col < SLOT_COLS; col++) {
-      slots.push({ x: SLOT_MARGIN + col * colW, y: pathY + 30 + row * ROW_SPACING, occupied: false, tower: null });
+  for (const scale of RINGS) {
+    for (let i = 0; i < RING_ANGLES; i++) {
+      const ang = (i / RING_ANGLES) * Math.PI * 2;
+      slots.push({
+        x: pathCX + Math.cos(ang) * pathRX * scale,
+        y: pathCY + Math.sin(ang) * pathRY * scale,
+        occupied: false, tower: null
+      });
     }
   }
 }
@@ -564,22 +683,24 @@ function updateFX() {
 
 function makeEnemy() {
   const hp = Math.round(10 * Math.pow(1.2, wave - 1));
-  let spd = 55 * Math.pow(1.03, wave - 1);
-  if (chillMode) spd *= 0.5;
-  return { x: -ER_X, y: pathY, hp, maxHp: hp, spd, trail: [], dead: false, escaped: false };
+  let pixelSpd = 55 * Math.pow(1.03, wave - 1);
+  if (chillMode) pixelSpd *= 0.5;
+  const avgR = (pathRX + pathRY) / 2;
+  const spd = pixelSpd / avgR; // radians per second
+  const angle = -Math.PI + (totalSpawned / Math.max(totalThisWave, 1)) * Math.PI * 0.4;
+  const ex = pathCX + Math.cos(angle) * pathRX;
+  const ey = pathCY + Math.sin(angle) * pathRY;
+  return { angle, spd, hp, maxHp: hp, ex, ey, trail: [], dead: false };
 }
 
 function updateEnemies(dt) {
   for (const e of enemies) {
-    if (e.dead || e.escaped) continue;
-    e.trail.unshift({x:e.x, y:e.y});
+    if (e.dead) continue;
+    e.trail.unshift({x: e.ex, y: e.ey});
     if (e.trail.length > 9) e.trail.pop();
-    e.x += e.spd * dt;
-    if (e.x > W + ER_X) {
-      e.escaped = true;
-      multiplier = Math.max(0.5, +(multiplier - 0.1).toFixed(1));
-      flashEl('rgba(255,200,0,0.1)');
-    }
+    e.angle += e.spd * dt;
+    e.ex = pathCX + Math.cos(e.angle) * pathRX;
+    e.ey = pathCY + Math.sin(e.angle) * pathRY;
   }
   enemies = enemies.filter(e => !e.dead);
 }
@@ -587,7 +708,7 @@ function updateEnemies(dt) {
 function killEnemy(e) {
   if (e.dead) return;
   e.dead = true;
-  burst(e.x, e.y, lerpHex('#4488ff','#ff4422', 1 - e.hp/e.maxHp), 12);
+  burst(e.ex, e.ey, lerpHex('#4488ff','#ff4422', 1 - e.hp/e.maxHp), 12);
   waveScore += 10;
 }
 
@@ -638,13 +759,13 @@ function updateTowers(dt) {
     if (t.cd > 0) { t.cd -= dt; continue; }
     let target = null, minD = Infinity;
     for (const e of enemies) {
-      if (e.dead || e.escaped) continue;
-      const d = Math.hypot(e.x - t.slot.x, e.y - t.slot.y);
+      if (e.dead) continue;
+      const d = Math.hypot(e.ex - t.slot.x, e.ey - t.slot.y);
       if (d <= t.type.range && d < minD) { minD = d; target = e; }
     }
     if (!target) continue;
     t.cd = t.type.rate;
-    const dx = target.x - t.slot.x, dy = target.y - t.slot.y, len = Math.hypot(dx, dy) || 1;
+    const dx = target.ex - t.slot.x, dy = target.ey - t.slot.y, len = Math.hypot(dx, dy) || 1;
     projs.push({ x: t.slot.x, y: t.slot.y, vx: (dx/len)*210, vy: (dy/len)*210,
       dmg: t.type.dmg * t.lv, color: t.type.color, splash: !!t.type.splash, trail: [], dead: false });
   }
@@ -659,11 +780,11 @@ function updateProjs(dt) {
     if (p.trail.length > 4) p.trail.pop();
     p.x += p.vx*dt; p.y += p.vy*dt;
     for (const e of enemies) {
-      if (e.dead || e.escaped) continue;
-      if (Math.abs(p.x-e.x) < ER_X && Math.abs(p.y-e.y) < ER_Y) {
+      if (e.dead) continue;
+      if (Math.abs(p.x-e.ex) < ER_X && Math.abs(p.y-e.ey) < ER_Y) {
         if (p.splash) {
           for (const e2 of enemies) {
-            if (!e2.dead && !e2.escaped && Math.hypot(e2.x-p.x, e2.y-p.y) < 42) {
+            if (!e2.dead && Math.hypot(e2.ex-p.x, e2.ey-p.y) < 42) {
               e2.hp -= p.dmg; if (e2.hp<=0) killEnemy(e2);
             }
           }
@@ -682,7 +803,7 @@ function updateProjs(dt) {
 // ─── Wave management ──────────────────────────────────────────────────────────
 
 function startWave(n) {
-  wave = n; waveScore = 0; multiplier = 1.0; correctW = 0; wrongW = 0;
+  wave = n; waveScore = 0; correctW = 0; wrongW = 0;
   waveStartTime = performance.now();
   totalThisWave = 5 + wave * 2; totalSpawned = 0;
   spawnInterval = Math.max(0.2, 1.0 - (wave-1)*0.03); spawnTimer = 0;
@@ -698,32 +819,30 @@ function updateWave(dt) {
     if (spawnTimer <= 0) { enemies.push(makeEnemy()); totalSpawned++; spawnTimer = spawnInterval; }
   }
   if (!waveOver && totalSpawned >= totalThisWave) {
-    const alive = enemies.filter(e => !e.dead && !e.escaped);
+    const alive = enemies.filter(e => !e.dead);
     if (alive.length === 0) { waveOver = true; endWave(); }
   }
 }
 
 function endWave() {
   const elapsed = performance.now() - waveStartTime;
-  const fs = Math.round(waveScore * multiplier);
-  score += fs;
+  score += waveScore;
   saveHW(wave);
   const newBest = !chillMode && saveBT(wave, elapsed);
   if (!chillMode && wave % 5 === 0) saveCP();
-  gameState = 'summary';
-  showSummary(elapsed, fs, newBest);
+  const msg = newBest ? 'Wave ' + wave + ' — new best!' : 'Wave ' + wave + ' clear!';
+  floatText(pathCX, pathCY - pathRY * 0.5, msg, '#00ffee');
+  startWave(wave + 1);
 }
 
 // ─── Drawing ──────────────────────────────────────────────────────────────────
 
 function drawPath() {
   ctx.save();
-  ctx.shadowBlur = 20; ctx.shadowColor = '#00ffee'; ctx.strokeStyle = '#00ffee44'; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(0, pathY); ctx.lineTo(W, pathY); ctx.stroke();
-  ctx.shadowBlur = 6; ctx.strokeStyle = '#00ffeeaa'; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(0, pathY); ctx.lineTo(W, pathY); ctx.stroke();
-  ctx.shadowBlur = 22; ctx.shadowColor = '#ff4444'; ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(W-5, pathY-22); ctx.lineTo(W-5, pathY+22); ctx.stroke();
+  ctx.shadowBlur = 24; ctx.shadowColor = '#00ffee'; ctx.strokeStyle = '#00ffee33'; ctx.lineWidth = 6;
+  ctx.beginPath(); ctx.ellipse(pathCX, pathCY, pathRX, pathRY, 0, 0, Math.PI*2); ctx.stroke();
+  ctx.shadowBlur = 8; ctx.strokeStyle = '#00ffee88'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(pathCX, pathCY, pathRX, pathRY, 0, 0, Math.PI*2); ctx.stroke();
   ctx.restore();
 }
 
@@ -761,7 +880,7 @@ function drawTowers() {
 function drawEnemies() {
   ctx.save();
   for (const e of enemies) {
-    if (e.dead || e.escaped) continue;
+    if (e.dead) continue;
     const hp = e.hp/e.maxHp, color = lerpHex('#4488ff','#ff4422', 1-hp);
     for (let i = 0; i < e.trail.length; i++) {
       ctx.globalAlpha = (1-i/e.trail.length)*0.22;
@@ -770,11 +889,11 @@ function drawEnemies() {
       ctx.beginPath(); ctx.ellipse(e.trail[i].x, e.trail[i].y, tr2, tr2*0.7, 0, 0, Math.PI*2); ctx.fill();
     }
     ctx.globalAlpha = 0.92; ctx.shadowBlur = 12; ctx.shadowColor = color; ctx.fillStyle = color;
-    ctx.beginPath(); ctx.ellipse(e.x, e.y, ER_X, ER_Y, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(e.ex, e.ey, ER_X, ER_Y, 0, 0, Math.PI*2); ctx.fill();
     ctx.globalAlpha = 0.75; ctx.shadowBlur = 0;
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(e.x-ER_X, e.y-ER_Y-7, ER_X*2, 3);
-    ctx.fillStyle = color; ctx.fillRect(e.x-ER_X, e.y-ER_Y-7, ER_X*2*hp, 3);
+    ctx.fillRect(e.ex-ER_X, e.ey-ER_Y-7, ER_X*2, 3);
+    ctx.fillStyle = color; ctx.fillRect(e.ex-ER_X, e.ey-ER_Y-7, ER_X*2*hp, 3);
     ctx.globalAlpha = 1;
   }
   ctx.restore();
@@ -843,9 +962,18 @@ function confirmScrollChar() {
 
 function handleT9(key) {
   if (gameState !== 'playing') return;
+
+  // Numeric mode: answer is a number — digits typed directly
+  if (numericMode && /^[0-9]$/.test(key)) {
+    t9buf += key;
+    updateInputDisplay(); return;
+  }
+
   if (key === 'back') {
     clearTimeout(t9timer);
-    if (inputMode === 'scroll') {
+    if (numericMode) {
+      if (t9buf.length > 0) t9buf = t9buf.slice(0,-1);
+    } else if (inputMode === 'scroll') {
       if (t9pend) { t9pend = ''; t9pendKey = ''; t9pendIdx = 0; }
       else if (t9buf.length > 0) t9buf = t9buf.slice(0,-1);
     } else {
@@ -855,7 +983,10 @@ function handleT9(key) {
     updateInputDisplay(); return;
   }
   if (key === 'ok') {
-    if (inputMode === 'scroll') {
+    if (numericMode) {
+      if (t9buf.length > 0) submitAnswer(t9buf);
+      else flashEl('rgba(255,50,50,0.14)');
+    } else if (inputMode === 'scroll') {
       clearTimeout(t9timer); confirmScrollChar();
       submitAnswer(t9buf); t9buf = '';
     } else {
@@ -868,6 +999,7 @@ function handleT9(key) {
     }
     updateInputDisplay(); return;
   }
+  if (numericMode) { updateInputDisplay(); return; } // ignore non-digit, non-back, non-ok in numeric
   if (inputMode === 'scroll') {
     const letters = T9_MAP[key];
     if (!letters || letters.length === 0) return;
@@ -908,6 +1040,15 @@ function updatePredict() {
 function updateInputDisplay() {
   const el = document.getElementById('input-display');
   const meta = document.getElementById('predict-meta');
+  if (numericMode) {
+    const expected = currentPair ? currentPair.v.length : 1;
+    const typed = t9buf;
+    let display = typed;
+    for (let i = typed.length; i < expected; i++) display += '_';
+    el.textContent = display || '_';
+    if (meta) meta.textContent = '[123]';
+    return;
+  }
   if (inputMode === 'scroll') {
     el.textContent = (t9buf + (t9pend ? '['+t9pend+']' : '')) || '▶';
     if (meta) meta.textContent = '';
@@ -916,11 +1057,17 @@ function updateInputDisplay() {
       el.textContent = '▶';
       if (meta) meta.textContent = '';
     } else if (t9cands.length > 0) {
-      el.textContent = t9cands[t9ci];
+      // Typewriter: reveal letters as keys are pressed
+      const word = t9cands[t9ci].toUpperCase();
+      let display = '';
+      for (let i = 0; i < word.length; i++) {
+        display += i < t9keys.length ? word[i] : '_';
+      }
+      el.textContent = display;
       if (meta) {
         meta.textContent = t9cands.length > 1
           ? (t9ci + 1) + ' / ' + t9cands.length + '  —  tap 1 to cycle'
-          : '1 match';
+          : '✓ to submit';
       }
     } else {
       el.textContent = t9keys.join('-') + '  ✗';
@@ -951,6 +1098,7 @@ function showHint() {
 function showNextPrompt() {
   if (!deck.length) return;
   currentPair = deck[deckIdx % deck.length]; deckIdx++;
+  numericMode = /^\d+$/.test(currentPair.v);
   document.getElementById('question-text').textContent = currentPair.k;
   t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
   hintUsed = false;
@@ -972,7 +1120,7 @@ function submitAnswer(raw) {
   if (correct) {
     streak++; correctW++; answerCount++;
     placeTower(typeForStreak(streak));
-    floatText(W/2, pathY - 45, '✓ '+currentPair.v, '#44ffaa');
+    floatText(W/2, pathCY - pathRY - 20, '✓ '+currentPair.v, '#44ffaa');
     if (answerCount % 10 === 0) upgradeRandom();
     updateStreakDisplay();
     t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
@@ -1044,9 +1192,9 @@ function updateTowerStrip() {
 
 function showMenu() {
   gameState = 'menu';
+  towers = []; enemies = []; projs = [];
+  for (const s of slots) { s.occupied = false; s.tower = null; }
   document.getElementById('menu-overlay').classList.remove('hidden');
-  document.getElementById('summary-overlay').classList.add('hidden');
-  document.getElementById('btn-quit-game').style.display = 'none';
   const hw = getHW();
   document.getElementById('menu-best').textContent = hw > 0 ? 'Best: Wave '+hw : '';
   const cp = loadCP();
@@ -1056,47 +1204,9 @@ function showMenu() {
   } else {
     document.getElementById('continue-wrap').style.display = 'none';
   }
-  updateCustomDeckCount();
+  updateMenuPlayBtn();
 }
 
-function showSummary(elapsed, fs, newBest) {
-  document.getElementById('summary-overlay').classList.remove('hidden');
-  document.getElementById('btn-quit-game').style.display = 'none';
-  document.getElementById('sum-title').textContent = 'Wave '+wave+' Complete!';
-  document.getElementById('sum-subtitle').textContent = newBest ? '🏆 New Wave Record!' : '';
-  const acc = correctW+wrongW > 0 ? Math.round(correctW/(correctW+wrongW)*100) : 100;
-  const secs = (elapsed/1000).toFixed(1);
-  const bms = getBT(wave);
-  const bestStr = bms > 0 ? (bms/1000).toFixed(1)+'s' : '—';
-  const rows = [
-    ['Wave Time', secs+'s', newBest ? 'gold' : ''],
-    ['Best Time', newBest ? '★ NEW!' : bestStr, newBest ? 'teal' : ''],
-    ['Accuracy', acc+'%', acc>=80?'teal':''],
-    ['Score Earned', '+'+fs, 'teal'],
-    ['Total Score', score, ''],
-    ['Towers', towers.length+'/'+slots.length, '']
-  ];
-  const container = document.getElementById('sum-stats');
-  container.innerHTML = '';
-  for (const [label, val, cls] of rows) {
-    const row = document.createElement('div');
-    row.className = 'srow';
-    row.innerHTML = '<span class="slabel">'+label+'</span><span class="sval '+cls+'">'+val+'</span>';
-    container.appendChild(row);
-  }
-}
-
-// ─── Quit confirm ─────────────────────────────────────────────────────────────
-
-function showQuitConfirm() {
-  if (gameState === 'playing') gameState = 'paused';
-  document.getElementById('quit-confirm-overlay').classList.add('visible');
-}
-
-function hideQuitConfirm(resume) {
-  document.getElementById('quit-confirm-overlay').classList.remove('visible');
-  if (resume && gameState === 'paused') gameState = 'playing';
-}
 
 // ─── Game start / continue ────────────────────────────────────────────────────
 
@@ -1108,20 +1218,16 @@ function startGame(mode, fromCP) {
   localStorage.setItem('lastPlayed_memoryTower', Date.now());
   chillMode = (mode === 'chill');
 
-  if (mode === 'classic') {
-    if (customDeck.length === 0) {
-      window.KamekoTokens && window.KamekoTokens.add(1); // refund token
-      alert('Your deck is empty! Add some pairs first via "Edit My Deck".');
-      return;
-    }
-    deck = shuffle(customDeck.slice());
-  } else {
-    deck = shuffle(ARCADE_PAIRS.slice());
+  const activePairs = buildActiveDeck();
+  if (activePairs.length === 0) {
+    window.KamekoTokens && window.KamekoTokens.add(1);
+    alert('No pairs selected! Choose at least one deck from "Choose Decks".');
+    return;
   }
+  deck = shuffle(activePairs.slice());
 
   deckIdx = 0; answerCount = 0; streak = 0; score = 0;
   document.getElementById('menu-overlay').classList.add('hidden');
-  document.getElementById('btn-quit-game').style.display = '';
   for (const s of slots) { s.occupied = false; s.tower = null; }
   towers = [];
 
@@ -1201,29 +1307,253 @@ function updateNextKeyAppearance() {
   }
 }
 
+// ─── Deck selector ────────────────────────────────────────────────────────────
+
+function showDeckSelector() {
+  document.getElementById('deck-selector-overlay').classList.remove('hidden');
+  renderDeckSelector();
+}
+
+function hideDeckSelector() {
+  document.getElementById('deck-selector-overlay').classList.add('hidden');
+  updateMenuPlayBtn();
+}
+
+function renderDeckSelector() {
+  const list = document.getElementById('deck-selector-list');
+  list.innerHTML = '';
+  const allDecks = getAllDecks();
+  allDecks.forEach(d => {
+    const isBuiltin = d.id.startsWith('b-');
+    const isSel = activeDeckIds.includes(d.id);
+    const row = document.createElement('div');
+    row.className = 'ds-row' + (isSel ? ' sel' : '');
+    const check = document.createElement('div');
+    check.className = 'ds-check'; check.textContent = isSel ? '✓' : '';
+    const info = document.createElement('div');
+    info.className = 'ds-info';
+    const name = document.createElement('div');
+    name.className = 'ds-name'; name.textContent = d.name;
+    const meta = document.createElement('div');
+    meta.className = 'ds-meta'; meta.textContent = d.pairs.length + ' pairs';
+    info.appendChild(name); info.appendChild(meta);
+    row.appendChild(check); row.appendChild(info);
+    if (isBuiltin) {
+      const badge = document.createElement('div');
+      badge.className = 'ds-badge'; badge.textContent = '★ Built-in';
+      row.appendChild(badge);
+    } else {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'ds-edit'; editBtn.textContent = '✏';
+      editBtn.addEventListener('click', e => { e.stopPropagation(); hideDeckSelector(); showDeckManager(d.id); });
+      row.appendChild(editBtn);
+    }
+    row.addEventListener('click', () => {
+      const idx = activeDeckIds.indexOf(d.id);
+      if (idx >= 0) activeDeckIds.splice(idx, 1);
+      else activeDeckIds.push(d.id);
+      saveActiveDeckIds(); renderDeckSelector();
+    });
+    list.appendChild(row);
+  });
+  const btn = document.getElementById('btn-play-selected');
+  if (btn) {
+    const count = activePairCount();
+    btn.textContent = count > 0 ? '▶ Play Selected (' + count + ' pairs)' : 'Select at least one deck';
+    btn.disabled = count === 0; btn.style.opacity = count === 0 ? '0.4' : '';
+  }
+}
+
 // ─── Deck manager ─────────────────────────────────────────────────────────────
 
-let editingIdx = -1;
-
-function showDeckManager() {
+function showDeckManager(focusDeckId) {
   document.getElementById('deck-overlay').classList.remove('hidden');
-  hideDeckForm();
-  renderDeckList();
+  document.getElementById('deck-new-form-wrap').style.display = 'none';
+  document.getElementById('deck-new-form-wrap').innerHTML = '';
+  document.getElementById('deck-import-wrap').style.display = 'none';
+  document.getElementById('deck-import-wrap').innerHTML = '';
+  renderDeckManagerList(focusDeckId);
 }
 
 function hideDeckManager() {
   document.getElementById('deck-overlay').classList.add('hidden');
-  hideDeckForm();
 }
 
-function renderDeckList() {
-  const list = document.getElementById('deck-list');
-  if (customDeck.length === 0) {
-    list.innerHTML = '<div id="deck-empty">No pairs yet. Tap "+ Add New Pair" to start.</div>';
+// ─── Import prompt (URL share link) ──────────────────────────────────────────
+
+function showImportPrompt(data) {
+  pendingImport = data;
+  const overlay = document.getElementById('import-prompt-overlay');
+  document.getElementById('import-deck-name').textContent = '"' + data.name + '"';
+  document.getElementById('import-deck-meta').textContent = data.pairs.length + ' pairs';
+  const existing = userDecks.find(d => d.name === data.name);
+  const btn = document.getElementById('btn-import-confirm');
+  btn.textContent = existing ? 'Replace "' + data.name + '"?' : 'Import as New Deck';
+  overlay.style.display = 'flex';
+}
+
+function hideImportPrompt() {
+  document.getElementById('import-prompt-overlay').style.display = 'none';
+  pendingImport = null;
+}
+
+function doImport(data) {
+  if (!data) return;
+  const existingIdx = userDecks.findIndex(d => d.name === data.name);
+  if (existingIdx >= 0) {
+    userDecks[existingIdx].pairs = data.pairs;
+  } else {
+    userDecks.push({ id: 'u-' + Date.now(), name: data.name, pairs: data.pairs });
+  }
+  saveDecks();
+  updateMenuPlayBtn();
+}
+
+document.getElementById('btn-import-confirm').addEventListener('click', () => {
+  doImport(pendingImport);
+  hideImportPrompt();
+  // If deck manager is open, refresh it
+  if (!document.getElementById('deck-overlay').classList.contains('hidden')) {
+    renderDeckManagerList(null);
+  }
+});
+document.getElementById('btn-import-cancel').addEventListener('click', hideImportPrompt);
+
+// ─── Paste import textarea ────────────────────────────────────────────────────
+
+function showImportTextarea() {
+  const wrap = document.getElementById('deck-import-wrap');
+  if (wrap.style.display !== 'none') { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  // Also hide new deck form if open
+  document.getElementById('deck-new-form-wrap').style.display = 'none';
+  document.getElementById('deck-new-form-wrap').innerHTML = '';
+  const form = document.createElement('div');
+  form.className = 'deck-form';
+  const ta = document.createElement('textarea');
+  ta.rows = 7;
+  ta.placeholder = '# Deck Name\nquestion: answer\nquestion: answer';
+  ta.style.cssText = 'width:100%;padding:10px 12px;font-size:0.82em;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:#fff;font-family:"Courier New",monospace;outline:none;resize:vertical;touch-action:auto;-webkit-user-select:auto;user-select:auto;';
+  ta.addEventListener('focus', () => { ta.style.borderColor = 'rgba(0,255,238,0.5)'; });
+  ta.addEventListener('blur',  () => { ta.style.borderColor = 'rgba(255,255,255,0.2)'; });
+  const btns = document.createElement('div');
+  btns.className = 'deck-form-btns';
+  const importBtn = document.createElement('button');
+  importBtn.className = 'save'; importBtn.textContent = 'Import Deck';
+  importBtn.addEventListener('click', () => {
+    const parsed = parsePlainText(ta.value);
+    if (!parsed) { ta.style.borderColor = 'rgba(255,80,80,0.6)'; return; }
+    doImport(parsed);
+    wrap.style.display = 'none'; wrap.innerHTML = '';
+    renderDeckManagerList(null);
+  });
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'cancel'; cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => { wrap.style.display = 'none'; wrap.innerHTML = ''; });
+  btns.appendChild(importBtn); btns.appendChild(cancelBtn);
+  form.appendChild(ta); form.appendChild(btns);
+  wrap.appendChild(form); wrap.style.display = '';
+  setTimeout(() => ta.focus(), 80);
+}
+
+function renderDeckManagerList(openId) {
+  const list = document.getElementById('deck-manager-list');
+  list.innerHTML = '';
+  if (userDecks.length === 0) {
+    list.innerHTML = '<div style="color:rgba(255,255,255,0.35);font-size:0.85em;text-align:center;padding:20px 0;">No custom decks yet. Tap "+ New Deck" to create one.</div>';
     return;
   }
-  list.innerHTML = '';
-  customDeck.forEach((pair, i) => {
+  userDecks.forEach((d, di) => {
+    const card = document.createElement('div');
+    card.className = 'dm-card';
+    const header = document.createElement('div');
+    header.className = 'dm-card-header';
+    const nameWrap = document.createElement('div');
+    nameWrap.className = 'dm-card-name';
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.value = d.name;
+    nameInput.addEventListener('change', () => { d.name = nameInput.value.trim() || d.name; saveDecks(); });
+    nameInput.addEventListener('click', e => e.stopPropagation());
+    nameWrap.appendChild(nameInput);
+    const toggle = document.createElement('div');
+    toggle.className = 'dm-card-toggle'; toggle.textContent = '▾';
+    let delDeckPending = false;
+    const delDeck = document.createElement('button');
+    delDeck.className = 'dm-del-deck'; delDeck.textContent = '🗑 Deck';
+    delDeck.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!delDeckPending) {
+        delDeckPending = true; delDeck.textContent = '✓ sure?'; delDeck.style.borderColor = 'rgba(255,80,80,0.5)'; delDeck.style.color = '#ff6666';
+        setTimeout(() => { delDeckPending = false; delDeck.textContent = '🗑 Deck'; delDeck.style.borderColor = ''; delDeck.style.color = ''; }, 2500);
+      } else {
+        activeDeckIds = activeDeckIds.filter(id => id !== d.id);
+        saveActiveDeckIds();
+        userDecks.splice(di, 1); saveDecks(); renderDeckManagerList();
+      }
+    });
+    // Copy plain text button
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'dm-del-deck'; copyBtn.textContent = '📋';
+    copyBtn.title = 'Copy as text';
+    copyBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      navigator.clipboard.writeText(deckToPlainText(d)).then(() => {
+        copyBtn.textContent = '✓ Copied!'; copyBtn.style.color = '#44ffaa';
+        setTimeout(() => { copyBtn.textContent = '📋'; copyBtn.style.color = ''; }, 1500);
+      }).catch(() => {
+        copyBtn.textContent = '✗ Error';
+        setTimeout(() => { copyBtn.textContent = '📋'; }, 1500);
+      });
+    });
+
+    // Share link button
+    const shareBtn = document.createElement('button');
+    shareBtn.className = 'dm-del-deck'; shareBtn.textContent = '🔗';
+    shareBtn.title = 'Share link';
+    shareBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      const url = deckToShareUrl(d);
+      if (navigator.share) {
+        navigator.share({ title: 'Keypad Quest — ' + d.name, url }).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(url).then(() => {
+          shareBtn.textContent = '✓ Copied!'; shareBtn.style.color = '#00ffee';
+          setTimeout(() => { shareBtn.textContent = '🔗'; shareBtn.style.color = ''; }, 1500);
+        });
+      }
+    });
+
+    header.appendChild(nameWrap); header.appendChild(copyBtn); header.appendChild(shareBtn); header.appendChild(delDeck); header.appendChild(toggle);
+    const body = document.createElement('div');
+    body.className = 'dm-card-body' + (d.id === openId ? ' open' : '');
+    if (d.id === openId) toggle.textContent = '▴';
+    header.addEventListener('click', () => {
+      const isOpen = body.classList.toggle('open');
+      toggle.textContent = isOpen ? '▴' : '▾';
+    });
+    // Pair list
+    const pairList = document.createElement('div');
+    pairList.style.cssText = 'margin-top:6px;';
+    const addBtn = document.createElement('button');
+    addBtn.className = 'dact edit'; addBtn.textContent = '+ Add Pair'; addBtn.style.cssText = 'width:100%;margin-bottom:6px;min-height:34px;font-size:0.75em;';
+    addBtn.addEventListener('click', () => showPairForm(d, -1, pairList, addBtn));
+    body.appendChild(addBtn); body.appendChild(pairList);
+    renderPairList(d, pairList, addBtn);
+    card.appendChild(header); card.appendChild(body);
+    list.appendChild(card);
+  });
+}
+
+function renderPairList(d, container, addBtn) {
+  // Remove old pair rows (not the addBtn)
+  Array.from(container.children).forEach(c => container.removeChild(c));
+  if (d.pairs.length === 0) {
+    const empty = document.createElement('div');
+    empty.style.cssText = 'color:rgba(255,255,255,0.3);font-size:0.78em;text-align:center;padding:10px 0;';
+    empty.textContent = 'No pairs yet.';
+    container.appendChild(empty);
+    return;
+  }
+  d.pairs.forEach((pair, pi) => {
     const row = document.createElement('div');
     row.className = 'deck-row';
     const keyEl = document.createElement('span');
@@ -1234,31 +1564,30 @@ function renderDeckList() {
     acts.className = 'deck-row-acts';
     const editBtn = document.createElement('button');
     editBtn.className = 'dact edit'; editBtn.textContent = '✏';
-    editBtn.addEventListener('click', () => { showDeckForm(i); });
+    editBtn.addEventListener('click', () => showPairForm(d, pi, container, addBtn));
     const delBtn = document.createElement('button');
     delBtn.className = 'dact del'; delBtn.textContent = '🗑';
     let delPending = false;
     delBtn.addEventListener('click', () => {
       if (!delPending) {
-        delPending = true; delBtn.classList.add('confirm'); delBtn.textContent = '✓ Delete?';
+        delPending = true; delBtn.classList.add('confirm'); delBtn.textContent = '✓?';
         setTimeout(() => { delPending = false; delBtn.classList.remove('confirm'); delBtn.textContent = '🗑'; }, 2500);
       } else {
-        customDeck.splice(i, 1); saveCustomDeck(); renderDeckList();
+        d.pairs.splice(pi, 1); saveDecks(); renderPairList(d, container, addBtn);
       }
     });
     acts.appendChild(editBtn); acts.appendChild(delBtn);
     row.appendChild(keyEl); row.appendChild(valEl); row.appendChild(acts);
-    list.appendChild(row);
+    container.appendChild(row);
   });
 }
 
-function showDeckForm(idx) {
-  editingIdx = idx;
-  const wrap = document.getElementById('deck-form-wrap');
-  const pair = idx >= 0 ? customDeck[idx] : {k:'', v:''};
-  wrap.innerHTML = '';
+function showPairForm(d, pi, pairListEl, addBtn) {
+  const existing = pairListEl.parentNode.querySelector('.deck-form');
+  if (existing) existing.remove();
+  const pair = pi >= 0 ? d.pairs[pi] : {k:'', v:''};
   const form = document.createElement('div');
-  form.className = 'deck-form';
+  form.className = 'deck-form'; form.style.marginBottom = '6px';
   const kInput = document.createElement('input');
   kInput.type = 'text'; kInput.placeholder = 'Prompt (e.g. France)'; kInput.value = pair.k;
   const vInput = document.createElement('input');
@@ -1266,32 +1595,58 @@ function showDeckForm(idx) {
   const btns = document.createElement('div');
   btns.className = 'deck-form-btns';
   const saveBtn = document.createElement('button');
-  saveBtn.className = 'save'; saveBtn.textContent = idx >= 0 ? 'Save Changes' : 'Add Pair';
+  saveBtn.className = 'save'; saveBtn.textContent = pi >= 0 ? 'Save' : 'Add Pair';
   saveBtn.addEventListener('click', () => {
     const k = kInput.value.trim(), v = vInput.value.trim();
     if (!k || !v) { kInput.style.borderColor = k ? '' : 'rgba(255,80,80,0.6)'; vInput.style.borderColor = v ? '' : 'rgba(255,80,80,0.6)'; return; }
-    if (editingIdx >= 0) { customDeck[editingIdx] = {k, v}; }
-    else { customDeck.push({k, v}); }
-    saveCustomDeck(); hideDeckForm(); renderDeckList();
+    if (pi >= 0) d.pairs[pi] = {k, v};
+    else d.pairs.push({k, v});
+    saveDecks(); form.remove(); renderPairList(d, pairListEl, addBtn);
   });
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'cancel'; cancelBtn.textContent = 'Cancel';
-  cancelBtn.addEventListener('click', hideDeckForm);
+  cancelBtn.addEventListener('click', () => form.remove());
   btns.appendChild(saveBtn); btns.appendChild(cancelBtn);
   form.appendChild(kInput); form.appendChild(vInput); form.appendChild(btns);
-  wrap.appendChild(form); wrap.style.display = '';
+  addBtn.insertAdjacentElement('afterend', form);
   setTimeout(() => kInput.focus(), 80);
 }
 
-function hideDeckForm() {
-  const wrap = document.getElementById('deck-form-wrap');
-  wrap.style.display = 'none'; wrap.innerHTML = ''; editingIdx = -1;
+function showNewDeckForm() {
+  // Close import textarea if open
+  const iw = document.getElementById('deck-import-wrap');
+  iw.style.display = 'none'; iw.innerHTML = '';
+  const wrap = document.getElementById('deck-new-form-wrap');
+  if (wrap.style.display !== 'none') { wrap.style.display = 'none'; wrap.innerHTML = ''; return; }
+  const form = document.createElement('div');
+  form.className = 'deck-form';
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text'; nameInput.placeholder = 'Deck name (e.g. Spanish Words)';
+  const btns = document.createElement('div');
+  btns.className = 'deck-form-btns';
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'save'; saveBtn.textContent = 'Create Deck';
+  saveBtn.addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    if (!name) { nameInput.style.borderColor = 'rgba(255,80,80,0.6)'; return; }
+    const id = 'u-' + Date.now();
+    userDecks.push({ id, name, pairs: [] });
+    saveDecks(); wrap.style.display = 'none'; wrap.innerHTML = '';
+    renderDeckManagerList(id);
+  });
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'cancel'; cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => { wrap.style.display = 'none'; wrap.innerHTML = ''; });
+  btns.appendChild(saveBtn); btns.appendChild(cancelBtn);
+  form.appendChild(nameInput); form.appendChild(btns);
+  wrap.appendChild(form); wrap.style.display = '';
+  setTimeout(() => nameInput.focus(), 80);
 }
 
 // ─── Canvas click — tower selection & move ────────────────────────────────────
 
 canvas.addEventListener('pointerdown', e => {
-  if (gameState !== 'playing') return;
+  if (gameState !== 'playing' && gameState !== 'paused') return;
   const rect = canvas.getBoundingClientRect();
   const cx = (e.clientX - rect.left) * (W / rect.width);
   const cy = (e.clientY - rect.top) * (H / rect.height);
@@ -1337,48 +1692,87 @@ document.getElementById('keyboard-input').addEventListener('keydown', e => {
 
 document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => setInputMode(b.dataset.mode)));
 
-document.getElementById('btn-arcade').addEventListener('click',   () => startGame('arcade', false));
-document.getElementById('btn-classic').addEventListener('click',  () => startGame('classic', false));
-document.getElementById('btn-chill').addEventListener('click',    () => startGame('chill', false));
-document.getElementById('continue-btn').addEventListener('click', () => startGame('arcade', true));
-document.getElementById('btn-deck-mgr').addEventListener('click', showDeckManager);
+document.getElementById('btn-play').addEventListener('click',        () => startGame('play', false));
+document.getElementById('btn-chill').addEventListener('click',       () => startGame('chill', false));
+document.getElementById('continue-btn').addEventListener('click',    () => startGame('play', true));
+document.getElementById('btn-choose-decks').addEventListener('click', showDeckSelector);
+document.getElementById('btn-deck-mgr').addEventListener('click',    () => showDeckManager(null));
+
+document.getElementById('deck-selector-back').addEventListener('click', hideDeckSelector);
+document.getElementById('btn-play-selected').addEventListener('click', () => { hideDeckSelector(); startGame('play', false); });
 
 document.getElementById('deck-back').addEventListener('click', hideDeckManager);
-document.getElementById('btn-add-pair').addEventListener('click', () => showDeckForm(-1));
+document.getElementById('btn-new-deck').addEventListener('click', showNewDeckForm);
+document.getElementById('btn-import-deck').addEventListener('click', showImportTextarea);
 
 document.getElementById('btn-hint').addEventListener('click', showHint);
 
-document.getElementById('btn-quit-game').addEventListener('click', showQuitConfirm);
-document.getElementById('btn-confirm-quit').addEventListener('click', () => {
-  hideQuitConfirm(false);
-  document.getElementById('summary-overlay').classList.add('hidden');
-  towers = []; enemies = []; projs = [];
-  for (const s of slots) { s.occupied = false; s.tower = null; }
-  showMenu();
-});
-document.getElementById('btn-keep-playing').addEventListener('click', () => hideQuitConfirm(true));
-
-document.getElementById('btn-next-wave').addEventListener('click', () => {
-  document.getElementById('summary-overlay').classList.add('hidden');
-  document.getElementById('btn-quit-game').style.display = '';
-  startWave(wave + 1); gameState = 'playing';
-});
-
-document.getElementById('btn-quit').addEventListener('click', () => {
-  document.getElementById('summary-overlay').classList.add('hidden');
-  towers = []; enemies = []; projs = [];
-  for (const s of slots) { s.occupied = false; s.tower = null; }
-  showMenu();
-});
-
 // ─── Settings integration ─────────────────────────────────────────────────────
+
+function injectGameStatsSection() {
+  if (document.getElementById('kq-game-stats')) {
+    updateGameStatsSection(); return;
+  }
+  const panel = document.getElementById('settings-panel');
+  if (!panel) return;
+  const sec = document.createElement('div');
+  sec.id = 'kq-game-stats';
+  sec.style.cssText = 'width:100%;max-width:300px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);';
+
+  const title = document.createElement('div');
+  title.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.35);letter-spacing:0.1em;margin-bottom:6px;';
+  title.textContent = 'CURRENT RUN';
+  sec.appendChild(title);
+
+  const statsWrap = document.createElement('div');
+  statsWrap.id = 'kq-stats-rows';
+  sec.appendChild(statsWrap);
+
+  const quitBtn = document.createElement('button');
+  quitBtn.className = 'mbtn dim center';
+  quitBtn.style.cssText = 'margin-top:8px;max-width:300px;font-size:0.82em;';
+  quitBtn.textContent = '← Back to Game Menu';
+  quitBtn.addEventListener('click', () => {
+    document.getElementById('kq-game-stats')?.remove();
+    // Close settings panel (simulate close by dispatching event or calling shared function)
+    const closeBtn = document.querySelector('#settings-panel .settings-close, #settings-overlay .close-btn, button[aria-label="Close settings"]');
+    if (closeBtn) closeBtn.click();
+    showMenu();
+  });
+  sec.appendChild(quitBtn);
+  panel.appendChild(sec);
+  updateGameStatsSection();
+}
+
+function updateGameStatsSection() {
+  const rows = document.getElementById('kq-stats-rows');
+  if (!rows) return;
+  const acc = correctW + wrongW > 0 ? Math.round(correctW / (correctW + wrongW) * 100) : 100;
+  const bms = getBT(wave);
+  const data = [
+    ['Wave', wave],
+    ['Score', score],
+    ['Accuracy', acc + '%'],
+    ['Towers', towers.length + '/' + slots.length],
+    ['Best time W' + wave, bms > 0 ? (bms / 1000).toFixed(1) + 's' : '—']
+  ];
+  rows.innerHTML = '';
+  for (const [label, val] of data) {
+    const r = document.createElement('div');
+    r.className = 'srow';
+    r.innerHTML = '<span class="slabel">' + label + '</span><span class="sval">' + val + '</span>';
+    rows.appendChild(r);
+  }
+}
 
 window.addEventListener('settingsOpened', () => {
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   if (gameState === 'playing') gameState = 'paused';
+  if (gameState === 'paused') injectGameStatsSection();
 });
 
 window.addEventListener('settingsClosed', () => {
+  document.getElementById('kq-game-stats')?.remove();
   if (gameState === 'paused') gameState = 'playing';
   startLoop();
 });
@@ -1386,9 +1780,21 @@ window.addEventListener('settingsClosed', () => {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 function init() {
-  loadCustomDeck();
+  loadDecks();
+  // Check for ?import= share link
+  const raw = new URLSearchParams(location.search).get('import');
+  if (raw) {
+    try {
+      const data = JSON.parse(atob(raw));
+      if (data.name && Array.isArray(data.pairs) && data.pairs.length > 0) {
+        pendingImport = data;
+      }
+    } catch(e) {}
+    history.replaceState(null, '', location.pathname);
+  }
   resizeCanvas(); buildT9Pad(); buildTowerStrip(); setInputMode(inputMode);
   showMenu(); startLoop();
+  if (pendingImport) showImportPrompt(pendingImport);
 }
 
 window.addEventListener('resize', resizeCanvas);
