@@ -241,6 +241,36 @@
     #quit-panel .qmsg { font-size: 0.82em; color: rgba(255,255,255,0.55); text-align: center; margin-bottom: 4px; line-height: 1.5; }
 
     #feedback-flash { position: fixed; inset: 0; pointer-events: none; z-index: 500; opacity: 0; transition: opacity 0.15s; }
+
+    /* Tower progress strip */
+    #tower-strip {
+      display: flex; gap: 4px; padding: 4px 8px; flex-shrink: 0;
+      align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .tc {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 3px 4px; border-radius: 7px; border: 1px solid transparent;
+      transition: all 0.25s; cursor: default; position: relative;
+    }
+    .tc.active { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.07); }
+    .tc .tc-dot { width: 8px; height: 8px; border-radius: 50%; margin-bottom: 2px; opacity: 0.3; transition: opacity 0.25s, box-shadow 0.25s; }
+    .tc.active .tc-dot { opacity: 1; box-shadow: 0 0 8px; }
+    .tc .tc-name { font-size: 0.5em; color: rgba(255,255,255,0.35); letter-spacing: 0.05em; transition: color 0.25s; white-space: nowrap; }
+    .tc.active .tc-name { color: rgba(255,255,255,0.85); }
+    .tc .tc-req { font-size: 0.45em; color: rgba(255,255,255,0.25); margin-top: 1px; }
+    .tc.active .tc-req { color: rgba(255,255,255,0.5); }
+    .tc.next-up { border-color: rgba(255,255,255,0.12); }
+    .tc.next-up .tc-dot { opacity: 0.5; }
+    .tc.next-up .tc-name { color: rgba(255,255,255,0.5); }
+
+    /* Next-key style in predict mode */
+    #t9-key-next.predict-active .kn { color: #00ffee; text-shadow: 0 0 6px #00ffee; font-size: 0.7em; }
+    #t9-key-next.predict-active .kl { color: rgba(0,255,238,0.5); font-size: 0.48em; }
+    #t9-key-next.predict-active { border-color: rgba(0,255,238,0.25); }
+
+    /* Predict candidate display */
+    #predict-meta { font-size: 0.6em; color: rgba(255,255,255,0.35); letter-spacing: 0.05em; min-height: 0.9em; }
   </style>
 </head>
 <body>
@@ -261,13 +291,16 @@
       <button id="btn-hint">💡 Hint</button>
     </div>
     <div id="input-display">▶</div>
+    <div id="predict-meta"></div>
     <span id="hint-text"></span>
   </div>
 
+  <div id="tower-strip"></div>
+
   <div id="input-area">
     <div id="mode-toggle-row">
-      <button class="mode-btn" data-mode="scroll">T9 Scroll</button>
-      <button class="mode-btn" data-mode="predict">T9 Predict</button>
+      <button class="mode-btn" data-mode="scroll">Tap to Spell</button>
+      <button class="mode-btn" data-mode="predict">T9 Smart</button>
       <button class="mode-btn" data-mode="keyboard">Keyboard</button>
     </div>
     <div id="t9-pad"></div>
@@ -356,7 +389,7 @@ const T9_MAP = {
 };
 
 const T9_KEYS = [
-  {n:'1',l:''},{n:'2',l:'ABC'},{n:'3',l:'DEF'},
+  {n:'1',l:'',id:'t9-key-next'},{n:'2',l:'ABC'},{n:'3',l:'DEF'},
   {n:'4',l:'GHI'},{n:'5',l:'JKL'},{n:'6',l:'MNO'},
   {n:'7',l:'PQRS'},{n:'8',l:'TUV'},{n:'9',l:'WXYZ'},
   {n:'⌫',l:'',a:'back'},{n:'0',l:'SPC'},{n:'✓',l:'',a:'ok'}
@@ -399,7 +432,7 @@ let slots = [], selectedTower = null, waveOver = false;
 
 let inputMode = localStorage.getItem('keypadQuest_inputMode') || 'scroll';
 let t9buf = '', t9pend = '', t9pendKey = '', t9pendIdx = 0, t9timer = null;
-let t9keys = [], t9cands = [];
+let t9keys = [], t9cands = [], t9ci = 0;
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -827,8 +860,8 @@ function handleT9(key) {
       submitAnswer(t9buf); t9buf = '';
     } else {
       if (t9cands.length > 0) {
-        submitAnswer(t9cands[0]);
-        t9keys = []; t9cands = [];
+        submitAnswer(t9cands[t9ci]);
+        t9keys = []; t9cands = []; t9ci = 0;
       } else if (t9keys.length > 0) {
         flashEl('rgba(255,50,50,0.14)');
       }
@@ -847,14 +880,19 @@ function handleT9(key) {
     }
     t9timer = setTimeout(confirmScrollChar, 820);
   } else {
-    if (!T9_MAP[key] && key !== '1') return;
-    t9keys.push(key); updatePredict();
+    // '1' is the cycle key in predict mode
+    if (key === '1') {
+      if (t9cands.length > 1) { t9ci = (t9ci + 1) % t9cands.length; }
+      updateInputDisplay(); return;
+    }
+    if (!T9_MAP[key]) return;
+    t9keys.push(key); t9ci = 0; updatePredict();
   }
   updateInputDisplay();
 }
 
 function updatePredict() {
-  if (t9keys.length === 0) { t9cands = []; return; }
+  if (t9keys.length === 0) { t9cands = []; t9ci = 0; return; }
   const vals = deck.map(p => p.v.toLowerCase());
   t9cands = [...new Set(vals.filter(v => {
     if (v.length < t9keys.length) return false;
@@ -869,18 +907,29 @@ function updatePredict() {
 
 function updateInputDisplay() {
   const el = document.getElementById('input-display');
+  const meta = document.getElementById('predict-meta');
   if (inputMode === 'scroll') {
     el.textContent = (t9buf + (t9pend ? '['+t9pend+']' : '')) || '▶';
+    if (meta) meta.textContent = '';
   } else if (inputMode === 'predict') {
     if (t9keys.length === 0) {
       el.textContent = '▶';
+      if (meta) meta.textContent = '';
+    } else if (t9cands.length > 0) {
+      el.textContent = t9cands[t9ci];
+      if (meta) {
+        meta.textContent = t9cands.length > 1
+          ? (t9ci + 1) + ' / ' + t9cands.length + '  —  tap 1 to cycle'
+          : '1 match';
+      }
     } else {
-      const keyStr = t9keys.join('-');
-      el.textContent = t9cands.length > 0 ? keyStr + '  (' + t9cands.length + ' match' + (t9cands.length > 1 ? 'es' : '') + ')' : keyStr + '  ✗';
+      el.textContent = t9keys.join('-') + '  ✗';
+      if (meta) meta.textContent = 'no match — try ⌫';
     }
   } else {
     const ki = document.getElementById('keyboard-input');
     el.textContent = ki.value || '▶';
+    if (meta) meta.textContent = '';
   }
 }
 
@@ -903,7 +952,7 @@ function showNextPrompt() {
   if (!deck.length) return;
   currentPair = deck[deckIdx % deck.length]; deckIdx++;
   document.getElementById('question-text').textContent = currentPair.k;
-  t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = [];
+  t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
   hintUsed = false;
   document.getElementById('btn-hint').classList.remove('used');
   const ht = document.getElementById('hint-text');
@@ -926,13 +975,13 @@ function submitAnswer(raw) {
     floatText(W/2, pathY - 45, '✓ '+currentPair.v, '#44ffaa');
     if (answerCount % 10 === 0) upgradeRandom();
     updateStreakDisplay();
-    t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = [];
+    t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
     showNextPrompt();
   } else {
     streak = 0; wrongW++;
     updateStreakDisplay();
     flashEl('rgba(255,50,50,0.14)');
-    t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = [];
+    t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
     updateInputDisplay();
     if (navigator.vibrate) navigator.vibrate([50,30,50]);
   }
@@ -946,6 +995,49 @@ function flashEl(bg) {
 
 function updateStreakDisplay() {
   document.getElementById('streak-display').textContent = streak >= 3 ? '⚡ ×'+streak : '';
+  updateTowerStrip();
+}
+
+function buildTowerStrip() {
+  const strip = document.getElementById('tower-strip');
+  strip.innerHTML = '';
+  TTYPES.forEach((tt, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'tc'; chip.id = 'tc-' + i;
+    const dot = document.createElement('div');
+    dot.className = 'tc-dot'; dot.style.background = tt.color; dot.style.boxShadowColor = tt.color;
+    const name = document.createElement('div');
+    name.className = 'tc-name'; name.textContent = tt.name;
+    const req = document.createElement('div');
+    req.className = 'tc-req'; req.id = 'tc-req-' + i;
+    req.textContent = tt.streak > 0 ? '×'+tt.streak+' streak' : 'default';
+    chip.appendChild(dot); chip.appendChild(name); chip.appendChild(req);
+    strip.appendChild(chip);
+  });
+  updateTowerStrip();
+}
+
+function updateTowerStrip() {
+  const ti = typeForStreak(streak);
+  TTYPES.forEach((tt, i) => {
+    const chip = document.getElementById('tc-' + i);
+    if (!chip) return;
+    chip.classList.toggle('active', i === ti);
+    const isNext = i === ti + 1;
+    chip.classList.toggle('next-up', isNext && i < TTYPES.length);
+    const req = document.getElementById('tc-req-' + i);
+    if (!req) return;
+    if (i === ti) {
+      req.textContent = ti === TTYPES.length - 1 ? 'max!' : 'active';
+    } else if (i < ti) {
+      req.textContent = '✓ done';
+    } else if (isNext) {
+      const need = tt.streak - streak;
+      req.textContent = need + ' more';
+    } else {
+      req.textContent = '×'+tt.streak+' streak';
+    }
+  });
 }
 
 // ─── Screens ──────────────────────────────────────────────────────────────────
@@ -1062,7 +1154,7 @@ function startGame(mode, fromCP) {
 function setInputMode(mode) {
   inputMode = mode;
   localStorage.setItem('keypadQuest_inputMode', mode);
-  t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = [];
+  t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
   const pad = document.getElementById('t9-pad');
   const kw = document.getElementById('keyboard-wrap');
   if (mode === 'keyboard') {
@@ -1072,6 +1164,7 @@ function setInputMode(mode) {
     pad.style.display = ''; kw.style.display = 'none';
   }
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  updateNextKeyAppearance();
   updateInputDisplay();
 }
 
@@ -1081,12 +1174,30 @@ function buildT9Pad() {
   for (const key of T9_KEYS) {
     const btn = document.createElement('button');
     btn.className = 't9-key' + (key.a ? ' ak' : '');
+    if (key.id) btn.id = key.id;
     btn.innerHTML = '<span class="kn">'+key.n+'</span>' + (key.l ? '<span class="kl">'+key.l+'</span>' : '');
     const k = key.a || key.n;
     btn.addEventListener('pointerdown', e => { e.preventDefault(); btn.classList.add('pressed'); handleT9(k); });
     btn.addEventListener('pointerup',    () => btn.classList.remove('pressed'));
     btn.addEventListener('pointerleave', () => btn.classList.remove('pressed'));
     pad.appendChild(btn);
+  }
+  updateNextKeyAppearance();
+}
+
+function updateNextKeyAppearance() {
+  const btn = document.getElementById('t9-key-next');
+  if (!btn) return;
+  if (inputMode === 'predict') {
+    btn.classList.add('predict-active');
+    btn.querySelector('.kn').textContent = '▶ Next';
+    const kl = btn.querySelector('.kl');
+    if (kl) kl.textContent = 'cycle';
+  } else {
+    btn.classList.remove('predict-active');
+    btn.querySelector('.kn').textContent = '1';
+    const kl = btn.querySelector('.kl');
+    if (kl) kl.textContent = '';
   }
 }
 
@@ -1276,7 +1387,7 @@ window.addEventListener('settingsClosed', () => {
 
 function init() {
   loadCustomDeck();
-  resizeCanvas(); buildT9Pad(); setInputMode(inputMode);
+  resizeCanvas(); buildT9Pad(); buildTowerStrip(); setInputMode(inputMode);
   showMenu(); startLoop();
 }
 
