@@ -8,119 +8,105 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
-      height: 100%;
-      height: 100dvh;
-      background: #050510;
-      color: #fff;
+      height: 100%; height: 100dvh;
+      background: #050510; color: #fff;
       font-family: 'Courier New', monospace;
-      overflow: hidden;
-      touch-action: none;
-      user-select: none;
-      -webkit-user-select: none;
+      overflow: hidden; touch-action: none;
+      user-select: none; -webkit-user-select: none;
     }
 
     #app {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      height: 100dvh;
-      max-width: 480px;
-      margin: 0 auto;
+      display: flex; flex-direction: column;
+      height: 100%; height: 100dvh;
+      max-width: 480px; margin: 0 auto;
     }
 
     #header {
-      height: 55px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      background: rgba(5, 5, 16, 0.9);
-      border-bottom: 1px solid rgba(0,255,238,0.15);
-      flex-shrink: 0;
+      height: 55px; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 12px;
+      background: rgba(5,5,16,0.9);
+      border-bottom: 1px solid rgba(0,255,238,0.15); flex-shrink: 0; gap: 8px;
     }
 
-    #wave-display { font-size: 0.85em; color: #00ffee; text-shadow: 0 0 8px #00ffee; }
-    #streak-display { font-size: 0.8em; color: #ff44aa; text-shadow: 0 0 8px #ff44aa; min-width: 60px; text-align: center; }
-    #token-display { font-size: 0.8em; color: #ffcc44; }
-
-    #game-canvas {
-      display: block;
-      width: 100%;
-      flex: 0 0 40%;
-      min-height: 0;
+    #btn-quit-game {
+      background: none; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+      color: rgba(255,255,255,0.55); font-size: 1em; cursor: pointer;
+      width: 36px; height: 36px; padding: 0; flex-shrink: 0;
+      font-family: 'Courier New', monospace; -webkit-tap-highlight-color: transparent;
+      display: none;
     }
+    #btn-quit-game:active { background: rgba(255,255,255,0.1); }
+
+    #wave-display { font-size: 0.85em; color: #00ffee; text-shadow: 0 0 8px #00ffee; flex: 1; }
+    #streak-display { font-size: 0.8em; color: #ff44aa; text-shadow: 0 0 8px #ff44aa; min-width: 55px; text-align: center; }
+    #token-display { font-size: 0.8em; color: #ffcc44; flex-shrink: 0; }
+
+    #game-canvas { display: block; width: 100%; flex: 0 0 40%; min-height: 0; }
 
     #prompt-bar {
-      flex-shrink: 0;
-      height: 58px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 16px;
+      flex-shrink: 0; height: 64px;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 5px 12px; position: relative;
       background: rgba(0,0,0,0.55);
       border-top: 1px solid rgba(0,255,238,0.1);
       border-bottom: 1px solid rgba(0,255,238,0.08);
     }
 
-    #question-text { font-size: 0.75em; color: rgba(255,255,255,0.55); letter-spacing: 0.05em; }
+    #prompt-top {
+      display: flex; align-items: center; justify-content: space-between; width: 100%;
+    }
+
+    #question-text { font-size: 0.75em; color: rgba(255,255,255,0.55); letter-spacing: 0.05em; flex: 1; }
+
+    #btn-hint {
+      background: none; border: 1px solid rgba(255,200,0,0.3); border-radius: 8px;
+      color: rgba(255,200,0,0.7); font-size: 0.68em; padding: 3px 8px; cursor: pointer;
+      min-height: 26px; font-family: 'Courier New', monospace;
+      -webkit-tap-highlight-color: transparent; flex-shrink: 0; margin-left: 8px;
+    }
+    #btn-hint:active { background: rgba(255,200,0,0.1); }
+    #btn-hint.used { opacity: 0.3; pointer-events: none; }
+
     #input-display {
-      font-size: 1.25em; color: #fff;
-      text-shadow: 0 0 12px #4488ff;
+      font-size: 1.2em; color: #fff; text-shadow: 0 0 12px #4488ff;
       letter-spacing: 0.08em; min-height: 1.4em;
     }
 
+    #hint-text {
+      position: absolute; bottom: 4px; right: 12px;
+      font-size: 0.72em; color: #ffcc44; opacity: 0;
+      transition: opacity 0.35s ease; text-shadow: 0 0 8px #ffcc44;
+      pointer-events: none; font-style: italic;
+    }
+    #hint-text.visible { opacity: 1; }
+
     #input-area {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
+      flex: 1; min-height: 0; display: flex; flex-direction: column;
       padding-bottom: env(safe-area-inset-bottom);
     }
 
     #mode-toggle-row {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      padding: 5px 8px;
-      flex-shrink: 0;
+      display: flex; justify-content: center; gap: 6px; padding: 5px 8px; flex-shrink: 0;
     }
 
     .mode-btn {
-      padding: 4px 11px;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 20px;
-      background: transparent;
-      color: rgba(255,255,255,0.45);
-      font-size: 0.68em;
-      cursor: pointer;
-      font-family: 'Courier New', monospace;
-      min-height: 28px;
+      padding: 4px 11px; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
+      background: transparent; color: rgba(255,255,255,0.45); font-size: 0.68em;
+      cursor: pointer; font-family: 'Courier New', monospace; min-height: 28px;
       -webkit-tap-highlight-color: transparent;
     }
     .mode-btn.active { border-color: #00ffee; color: #00ffee; text-shadow: 0 0 6px #00ffee; }
 
     #t9-pad {
-      flex: 1;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(4, 1fr);
-      gap: 3px;
-      padding: 3px 4px;
+      flex: 1; display: grid; grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(4, 1fr); gap: 3px; padding: 3px 4px;
     }
 
     .t9-key {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.11);
-      border-radius: 10px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      line-height: 1.15;
-      transition: background 0.08s;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.11);
+      border-radius: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      line-height: 1.15; transition: background 0.08s;
     }
     .t9-key.pressed, .t9-key:active { background: rgba(0,255,238,0.18); border-color: rgba(0,255,238,0.4); }
     .t9-key .kn { font-size: 1.15em; font-weight: bold; color: #fff; }
@@ -128,89 +114,45 @@
     .t9-key.ak .kn { font-size: 0.95em; }
 
     #keyboard-wrap {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      padding: 16px;
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px; padding: 16px;
     }
 
     #keyboard-input {
-      width: 100%;
-      max-width: 320px;
-      padding: 14px 16px;
-      font-size: 1.15em;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(0,255,238,0.3);
-      border-radius: 10px;
-      color: #fff;
-      font-family: 'Courier New', monospace;
-      text-align: center;
-      outline: none;
-      touch-action: auto;
+      width: 100%; max-width: 320px; padding: 14px 16px; font-size: 1.15em;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(0,255,238,0.3);
+      border-radius: 10px; color: #fff; font-family: 'Courier New', monospace;
+      text-align: center; outline: none; touch-action: auto;
     }
     #keyboard-input:focus { border-color: rgba(0,255,238,0.7); box-shadow: 0 0 12px rgba(0,255,238,0.2); }
 
     #keyboard-submit {
-      padding: 12px 36px;
-      background: rgba(0,255,238,0.13);
-      border: 1px solid rgba(0,255,238,0.4);
-      border-radius: 10px;
-      color: #00ffee;
-      font-size: 1em;
-      font-family: 'Courier New', monospace;
-      cursor: pointer;
-      min-height: 44px;
-      -webkit-tap-highlight-color: transparent;
+      padding: 12px 36px; background: rgba(0,255,238,0.13);
+      border: 1px solid rgba(0,255,238,0.4); border-radius: 10px; color: #00ffee;
+      font-size: 1em; font-family: 'Courier New', monospace; cursor: pointer;
+      min-height: 44px; -webkit-tap-highlight-color: transparent;
     }
     #keyboard-submit:active { background: rgba(0,255,238,0.28); }
 
     /* Overlays */
     .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(5,5,16,0.96);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      padding: 24px 20px;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
+      position: fixed; inset: 0; background: rgba(5,5,16,0.96);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 1000; padding: 24px 20px; overflow-y: auto; -webkit-overflow-scrolling: touch;
     }
     .overlay.hidden { display: none; }
 
     .g-title {
-      font-size: 1.9em;
-      font-weight: bold;
-      color: #00ffee;
+      font-size: 1.9em; font-weight: bold; color: #00ffee;
       text-shadow: 0 0 20px #00ffee, 0 0 40px #00ffee55;
-      letter-spacing: 0.1em;
-      text-align: center;
-      margin-bottom: 6px;
+      letter-spacing: 0.1em; text-align: center; margin-bottom: 6px;
     }
-    .g-sub {
-      color: rgba(255,255,255,0.45);
-      font-size: 0.8em;
-      margin-bottom: 6px;
-      text-align: center;
-    }
+    .g-sub { color: rgba(255,255,255,0.45); font-size: 0.8em; margin-bottom: 6px; text-align: center; }
 
     .mbtn {
-      width: 100%;
-      max-width: 300px;
-      padding: 13px 18px;
-      margin: 4px 0;
-      border-radius: 12px;
-      font-size: 0.92em;
-      font-family: 'Courier New', monospace;
-      cursor: pointer;
-      border: 1px solid;
-      text-align: left;
-      min-height: 50px;
+      width: 100%; max-width: 300px; padding: 13px 18px; margin: 4px 0;
+      border-radius: 12px; font-size: 0.92em; font-family: 'Courier New', monospace;
+      cursor: pointer; border: 1px solid; text-align: left; min-height: 50px;
       -webkit-tap-highlight-color: transparent;
     }
     .mbtn.teal { background: rgba(0,255,238,0.1); border-color: rgba(0,255,238,0.45); color: #00ffee; }
@@ -221,36 +163,91 @@
     .mbtn.center { text-align: center; }
 
     .srow {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      max-width: 300px;
-      padding: 9px 14px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 10px;
-      margin: 3px 0;
-      font-size: 0.85em;
+      display: flex; justify-content: space-between; align-items: center;
+      width: 100%; max-width: 300px; padding: 9px 14px;
+      background: rgba(255,255,255,0.05); border-radius: 10px; margin: 3px 0; font-size: 0.85em;
     }
     .slabel { color: rgba(255,255,255,0.5); }
     .sval { color: #fff; font-weight: bold; }
     .sval.teal { color: #00ffee; text-shadow: 0 0 8px #00ffee; }
     .sval.gold { color: #ffcc44; }
 
-    #feedback-flash {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 500;
-      opacity: 0;
-      transition: opacity 0.15s;
+    /* Deck manager */
+    #deck-overlay { justify-content: flex-start; padding-top: 18px; }
+    #deck-header { display: flex; align-items: center; gap: 10px; width: 100%; max-width: 340px; margin-bottom: 8px; }
+    #deck-back {
+      background: none; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px;
+      color: rgba(255,255,255,0.6); font-size: 0.9em; cursor: pointer; padding: 6px 12px;
+      min-height: 36px; font-family: 'Courier New', monospace; -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
     }
+    #deck-back:active { background: rgba(255,255,255,0.1); }
+    #deck-title { flex: 1; font-size: 1em; color: #00ffee; font-weight: bold; }
+
+    #btn-add-pair { width: 100%; max-width: 340px; margin-bottom: 6px; }
+
+    #deck-form-wrap { width: 100%; max-width: 340px; margin-bottom: 6px; }
+    .deck-form {
+      background: rgba(0,255,238,0.05); border: 1px solid rgba(0,255,238,0.2);
+      border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .deck-form input {
+      width: 100%; padding: 10px 12px; font-size: 0.9em;
+      background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px; color: #fff; font-family: 'Courier New', monospace;
+      outline: none; touch-action: auto; -webkit-user-select: auto; user-select: auto;
+    }
+    .deck-form input:focus { border-color: rgba(0,255,238,0.5); }
+    .deck-form-btns { display: flex; gap: 8px; }
+    .deck-form-btns button {
+      flex: 1; padding: 9px; border-radius: 8px; cursor: pointer;
+      font-size: 0.85em; font-family: 'Courier New', monospace; min-height: 40px;
+      -webkit-tap-highlight-color: transparent; border: 1px solid;
+    }
+    .deck-form-btns .save { background: rgba(0,255,238,0.13); border-color: rgba(0,255,238,0.45); color: #00ffee; }
+    .deck-form-btns .cancel { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.18); color: rgba(255,255,255,0.6); }
+
+    #deck-list { width: 100%; max-width: 340px; overflow-y: auto; max-height: 55vh; }
+    .deck-row {
+      display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 10px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px; margin: 3px 0; font-size: 0.8em;
+    }
+    .deck-row-key { color: rgba(255,255,255,0.55); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .deck-row-val { color: #fff; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .deck-row-acts { display: flex; gap: 4px; flex-shrink: 0; }
+    .dact {
+      background: none; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
+      color: rgba(255,255,255,0.5); font-size: 0.78em; cursor: pointer; padding: 3px 7px;
+      min-height: 28px; font-family: 'Courier New', monospace; -webkit-tap-highlight-color: transparent;
+    }
+    .dact:active { background: rgba(255,255,255,0.1); }
+    .dact.del { border-color: rgba(255,80,80,0.3); color: rgba(255,100,100,0.65); }
+    .dact.del.confirm { background: rgba(255,50,50,0.2); border-color: rgba(255,80,80,0.6); color: #ff6666; }
+    .dact.edit { border-color: rgba(0,255,238,0.2); color: rgba(0,255,238,0.5); }
+    #deck-empty { color: rgba(255,255,255,0.35); font-size: 0.85em; text-align: center; padding: 20px 0; }
+
+    /* Quit confirm */
+    #quit-confirm-overlay {
+      position: fixed; inset: 0; background: rgba(5,5,16,0.85);
+      display: none; align-items: center; justify-content: center; z-index: 2000;
+    }
+    #quit-confirm-overlay.visible { display: flex; }
+    #quit-panel {
+      background: rgba(10,10,30,0.98); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px; padding: 24px 20px; max-width: 300px; width: 90%;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    }
+    #quit-panel .qmsg { font-size: 0.82em; color: rgba(255,255,255,0.55); text-align: center; margin-bottom: 4px; line-height: 1.5; }
+
+    #feedback-flash { position: fixed; inset: 0; pointer-events: none; z-index: 500; opacity: 0; transition: opacity 0.15s; }
   </style>
 </head>
 <body>
 
 <div id="app">
   <div id="header">
+    <button id="btn-quit-game">←</button>
     <span id="wave-display">Wave 1</span>
     <span id="streak-display"></span>
     <span id="token-display">🪙 <span id="headerTokenCount">0</span></span>
@@ -259,8 +256,12 @@
   <canvas id="game-canvas"></canvas>
 
   <div id="prompt-bar">
-    <div id="question-text">Select a mode to begin</div>
+    <div id="prompt-top">
+      <div id="question-text">Select a mode to begin</div>
+      <button id="btn-hint">💡 Hint</button>
+    </div>
     <div id="input-display">▶</div>
+    <span id="hint-text"></span>
   </div>
 
   <div id="input-area">
@@ -287,8 +288,20 @@
     <button class="mbtn teal" id="continue-btn">▶ Continue — Wave <span id="continue-wave-num">1</span></button>
   </div>
   <button class="mbtn teal" id="btn-arcade">🎮 Arcade — Built-in Decks</button>
-  <button class="mbtn dim" id="btn-classic">📚 Classic — My Decks</button>
+  <button class="mbtn dim" id="btn-classic">📚 Classic — My Deck (<span id="custom-deck-count">0</span> pairs)</button>
   <button class="mbtn pink" id="btn-chill">😌 Chill / Practice</button>
+  <button class="mbtn dim" id="btn-deck-mgr" style="margin-top:8px;border-color:rgba(0,255,238,0.2);color:rgba(0,255,238,0.6);">✏️ Edit My Deck</button>
+</div>
+
+<!-- Deck manager overlay -->
+<div id="deck-overlay" class="overlay hidden">
+  <div id="deck-header">
+    <button id="deck-back">← Back</button>
+    <span id="deck-title">MY DECK</span>
+  </div>
+  <button class="mbtn teal" id="btn-add-pair">+ Add New Pair</button>
+  <div id="deck-form-wrap" style="display:none"></div>
+  <div id="deck-list"></div>
 </div>
 
 <!-- Summary overlay -->
@@ -298,6 +311,15 @@
   <div id="sum-stats" style="width:100%;max-width:300px;margin:10px 0;"></div>
   <button class="mbtn teal center" id="btn-next-wave" style="margin-top:10px;">Next Wave ▶</button>
   <button class="mbtn dim center" id="btn-quit" style="margin-top:6px;">← Quit to Menu</button>
+</div>
+
+<!-- Quit confirm overlay -->
+<div id="quit-confirm-overlay">
+  <div id="quit-panel">
+    <div class="qmsg">Quit this run?<br>Progress since the last checkpoint will be lost.</div>
+    <button class="mbtn pink center" id="btn-confirm-quit" style="max-width:260px;">Quit Run</button>
+    <button class="mbtn dim center" id="btn-keep-playing" style="max-width:260px;">Keep Playing</button>
+  </div>
 </div>
 
 <div id="feedback-flash"></div>
@@ -351,17 +373,11 @@ const TTYPES = [
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const HEADER_H = 55;
-const TR = 14;   // tower radius
-const ER_X = 11; // enemy half-width
-const ER_Y = 8;  // enemy half-height
-const PR = 4;    // projectile radius
+const TR = 14;
+const ER_X = 11, ER_Y = 8, PR = 4;
 const PATH_Y_RATIO = 0.45;
-const SLOT_COLS = 5;
-const ROWS_ABOVE = 2;
-const ROWS_BELOW = 2;
-const ROW_SPACING = 28;
-const SLOT_MARGIN = 28;
+const SLOT_COLS = 5, ROWS_ABOVE = 2, ROWS_BELOW = 2;
+const ROW_SPACING = 28, SLOT_MARGIN = 28;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -370,29 +386,43 @@ let chillMode = false;
 let deck = [];
 let deckIdx = 0;
 let currentPair = null;
-let wave = 0;
-let score = 0;
-let waveScore = 0;
-let multiplier = 1.0;
-let streak = 0;
-let correctW = 0, wrongW = 0;
+let wave = 0, score = 0, waveScore = 0, multiplier = 1.0;
+let streak = 0, correctW = 0, wrongW = 0;
 let waveStartTime = 0;
 let totalSpawned = 0, totalThisWave = 0;
 let spawnTimer = 0, spawnInterval = 1.0;
 let answerCount = 0;
+let hintUsed = false;
 
 let enemies = [], towers = [], projs = [], particles = [], ripples = [], floats = [], stars = [];
-let slots = [];
-let selectedTower = null;
-let waveOver = false;
+let slots = [], selectedTower = null, waveOver = false;
 
 let inputMode = localStorage.getItem('keypadQuest_inputMode') || 'scroll';
 let t9buf = '', t9pend = '', t9pendKey = '', t9pendIdx = 0, t9timer = null;
-let t9keys = [], t9cands = [], t9ci = 0;
+let t9keys = [], t9cands = [];
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
 let W = 0, H = 0, pathY = 0, rafId = null, lastTs = 0;
+
+// ─── Custom deck ──────────────────────────────────────────────────────────────
+
+let customDeck = [];
+
+function loadCustomDeck() {
+  try { customDeck = JSON.parse(localStorage.getItem('keypadQuest_customDeck') || '[]'); } catch(e) { customDeck = []; }
+  updateCustomDeckCount();
+}
+
+function saveCustomDeck() {
+  localStorage.setItem('keypadQuest_customDeck', JSON.stringify(customDeck));
+  updateCustomDeckCount();
+}
+
+function updateCustomDeckCount() {
+  const el = document.getElementById('custom-deck-count');
+  if (el) el.textContent = customDeck.length;
+}
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
 
@@ -406,16 +436,10 @@ function saveBT(n, ms) {
 }
 function saveCP() {
   if (wave % 5 !== 0) return;
-  const data = {
-    wave, score,
-    towers: towers.map(t => ({ si: slots.indexOf(t.slot), ti: t.ti, lv: t.lv })),
-    ts: Date.now()
-  };
+  const data = { wave, score, towers: towers.map(t => ({ si: slots.indexOf(t.slot), ti: t.ti, lv: t.lv })), ts: Date.now() };
   localStorage.setItem('keypadQuestCheckpoint', JSON.stringify(data));
 }
-function loadCP() {
-  try { return JSON.parse(localStorage.getItem('keypadQuestCheckpoint')); } catch(e) { return null; }
-}
+function loadCP() { try { return JSON.parse(localStorage.getItem('keypadQuestCheckpoint')); } catch(e) { return null; } }
 function clearCP() { localStorage.removeItem('keypadQuestCheckpoint'); }
 
 // ─── Util ─────────────────────────────────────────────────────────────────────
@@ -436,17 +460,15 @@ function lerpHex(a, b, t) {
   return '#'+(((r<<16)|(g<<8)|bl)>>>0).toString(16).padStart(6,'0');
 }
 
-// ─── Canvas / Slots setup ─────────────────────────────────────────────────────
+// ─── Canvas / Slots ───────────────────────────────────────────────────────────
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return;
-  canvas.width  = Math.floor(rect.width);
-  canvas.height = Math.floor(rect.height);
+  canvas.width = Math.floor(rect.width); canvas.height = Math.floor(rect.height);
   W = canvas.width; H = canvas.height;
   pathY = Math.floor(H * PATH_Y_RATIO);
-  buildSlots();
-  buildStars();
+  buildSlots(); buildStars();
 }
 
 function buildSlots() {
@@ -468,46 +490,35 @@ function buildSlots() {
 
 function buildStars() {
   stars = Array.from({length:60}, () => ({
-    x: Math.random()*W, y: Math.random()*H,
-    r: Math.random()*1.2+0.3,
-    a: Math.random()*0.35+0.05,
-    vx: (Math.random()-0.5)*0.08, vy: (Math.random()-0.5)*0.08
+    x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.2+0.3,
+    a: Math.random()*0.35+0.05, vx: (Math.random()-0.5)*0.08, vy: (Math.random()-0.5)*0.08
   }));
 }
 
 function drawStars() {
   ctx.save();
   for (const s of stars) {
-    s.x = (s.x + s.vx + W) % W;
-    s.y = (s.y + s.vy + H) % H;
-    ctx.globalAlpha = s.a;
-    ctx.fillStyle = '#ffffff';
+    s.x = (s.x + s.vx + W) % W; s.y = (s.y + s.vy + H) % H;
+    ctx.globalAlpha = s.a; ctx.fillStyle = '#ffffff';
     ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
   }
-  ctx.globalAlpha = 1;
-  ctx.restore();
+  ctx.globalAlpha = 1; ctx.restore();
 }
 
 // ─── Particles ────────────────────────────────────────────────────────────────
 
 function burst(x, y, color, n) {
   for (let i = 0; i < n; i++) {
-    const a = (Math.PI*2/n)*i + Math.random()*0.4;
-    const spd = 1.5 + Math.random()*3;
+    const a = (Math.PI*2/n)*i + Math.random()*0.4, spd = 1.5 + Math.random()*3;
     particles.push({ x, y, vx: Math.cos(a)*spd, vy: Math.sin(a)*spd,
       a: 1, r: 1.5+Math.random()*2, color, decay: 0.03+Math.random()*0.02 });
   }
 }
 
-function ripple(x, y, color) {
-  ripples.push({ x, y, r: TR, maxR: 65, color, a: 0.85 });
-}
+function ripple(x, y, color) { ripples.push({ x, y, r: TR, maxR: 65, color, a: 0.85 }); }
+function floatText(x, y, text, color) { floats.push({ x, y: y-8, text, color, a: 1, vy: -0.75 }); }
 
-function floatText(x, y, text, color) {
-  floats.push({ x, y: y-8, text, color, a: 1, vy: -0.75 });
-}
-
-function updateFX(dt) {
+function updateFX() {
   for (const p of particles) { p.x+=p.vx; p.y+=p.vy; p.vy+=0.05; p.a-=p.decay; }
   particles = particles.filter(p => p.a > 0);
   for (const r of ripples) { r.r += 2.2; r.a -= 0.042; }
@@ -543,8 +554,7 @@ function updateEnemies(dt) {
 function killEnemy(e) {
   if (e.dead) return;
   e.dead = true;
-  const color = lerpHex('#4488ff','#ff4422', 1 - e.hp/e.maxHp);
-  burst(e.x, e.y, color, 12);
+  burst(e.x, e.y, lerpHex('#4488ff','#ff4422', 1 - e.hp/e.maxHp), 12);
   waveScore += 10;
 }
 
@@ -559,8 +569,7 @@ function placeTower(ti) {
   if (!slot) return;
   slot.occupied = true;
   const t = makeTower(slot, ti);
-  slot.tower = t;
-  towers.push(t);
+  slot.tower = t; towers.push(t);
   ripple(slot.x, slot.y, TTYPES[ti].color);
   burst(slot.x, slot.y, TTYPES[ti].color, 10);
   if (navigator.vibrate) navigator.vibrate(30);
@@ -569,10 +578,7 @@ function placeTower(ti) {
 function bestSlot() {
   const free = slots.filter(s => !s.occupied);
   if (free.length === 0) return null;
-  if (towers.length === 0) {
-    // pick leftmost slot closest to path center x
-    return free.reduce((a, b) => a.x < b.x ? a : b);
-  }
+  if (towers.length === 0) return free.reduce((a, b) => a.x < b.x ? a : b);
   let best = null, bestScore = -1;
   for (const s of free) {
     let minD = Infinity;
@@ -605,16 +611,9 @@ function updateTowers(dt) {
     }
     if (!target) continue;
     t.cd = t.type.rate;
-    const dx = target.x - t.slot.x, dy = target.y - t.slot.y;
-    const len = Math.hypot(dx, dy) || 1;
-    projs.push({
-      x: t.slot.x, y: t.slot.y,
-      vx: (dx/len)*210, vy: (dy/len)*210,
-      dmg: t.type.dmg * t.lv,
-      color: t.type.color,
-      splash: !!t.type.splash,
-      trail: [], dead: false
-    });
+    const dx = target.x - t.slot.x, dy = target.y - t.slot.y, len = Math.hypot(dx, dy) || 1;
+    projs.push({ x: t.slot.x, y: t.slot.y, vx: (dx/len)*210, vy: (dy/len)*210,
+      dmg: t.type.dmg * t.lv, color: t.type.color, splash: !!t.type.splash, trail: [], dead: false });
   }
 }
 
@@ -631,13 +630,13 @@ function updateProjs(dt) {
       if (Math.abs(p.x-e.x) < ER_X && Math.abs(p.y-e.y) < ER_Y) {
         if (p.splash) {
           for (const e2 of enemies) {
-            if (e2.dead || e2.escaped) continue;
-            if (Math.hypot(e2.x-p.x, e2.y-p.y) < 42) { e2.hp -= p.dmg; if (e2.hp<=0) killEnemy(e2); }
+            if (!e2.dead && !e2.escaped && Math.hypot(e2.x-p.x, e2.y-p.y) < 42) {
+              e2.hp -= p.dmg; if (e2.hp<=0) killEnemy(e2);
+            }
           }
           burst(p.x, p.y, p.color, 15);
         } else {
-          e.hp -= p.dmg;
-          if (e.hp <= 0) killEnemy(e);
+          e.hp -= p.dmg; if (e.hp <= 0) killEnemy(e);
         }
         p.dead = true; break;
       }
@@ -652,13 +651,10 @@ function updateProjs(dt) {
 function startWave(n) {
   wave = n; waveScore = 0; multiplier = 1.0; correctW = 0; wrongW = 0;
   waveStartTime = performance.now();
-  totalThisWave = 5 + wave * 2;
-  totalSpawned = 0;
-  spawnInterval = Math.max(0.2, 1.0 - (wave-1)*0.03);
-  spawnTimer = 0;
+  totalThisWave = 5 + wave * 2; totalSpawned = 0;
+  spawnInterval = Math.max(0.2, 1.0 - (wave-1)*0.03); spawnTimer = 0;
   enemies = []; projs = []; particles = []; ripples = []; floats = [];
-  selectedTower = null;
-  waveOver = false;
+  selectedTower = null; waveOver = false;
   document.getElementById('wave-display').textContent = 'Wave ' + wave;
   showNextPrompt();
 }
@@ -689,14 +685,10 @@ function endWave() {
 
 function drawPath() {
   ctx.save();
-  // Glow line
-  ctx.shadowBlur = 20; ctx.shadowColor = '#00ffee';
-  ctx.strokeStyle = '#00ffee44'; ctx.lineWidth = 4;
+  ctx.shadowBlur = 20; ctx.shadowColor = '#00ffee'; ctx.strokeStyle = '#00ffee44'; ctx.lineWidth = 4;
   ctx.beginPath(); ctx.moveTo(0, pathY); ctx.lineTo(W, pathY); ctx.stroke();
-  // Bright center
   ctx.shadowBlur = 6; ctx.strokeStyle = '#00ffeeaa'; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(0, pathY); ctx.lineTo(W, pathY); ctx.stroke();
-  // End marker
   ctx.shadowBlur = 22; ctx.shadowColor = '#ff4444'; ctx.strokeStyle = '#ff4444'; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(W-5, pathY-22); ctx.lineTo(W-5, pathY+22); ctx.stroke();
   ctx.restore();
@@ -716,17 +708,14 @@ function drawSlots() {
 function drawTowers() {
   ctx.save();
   for (const t of towers) {
-    const sx = t.slot.x, sy = t.slot.y;
-    const p = Math.sin(t.pulse)*0.3+0.7;
-    ctx.shadowBlur = 14 + p*10; ctx.shadowColor = t.type.glow;
-    ctx.fillStyle = t.type.color; ctx.globalAlpha = 0.88;
+    const sx = t.slot.x, sy = t.slot.y, p = Math.sin(t.pulse)*0.3+0.7;
+    ctx.shadowBlur = 14 + p*10; ctx.shadowColor = t.type.glow; ctx.fillStyle = t.type.color; ctx.globalAlpha = 0.88;
     ctx.beginPath(); ctx.arc(sx, sy, TR, 0, Math.PI*2); ctx.fill();
     ctx.globalAlpha = 1; ctx.fillStyle = '#fff'; ctx.shadowBlur = 3; ctx.shadowColor = '#fff';
     ctx.font = 'bold 9px Courier New'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText(t.lv > 1 ? t.lv : t.type.name[0], sx, sy);
     if (selectedTower === t) {
-      ctx.globalAlpha = 0.55; ctx.strokeStyle = '#fff'; ctx.shadowBlur = 8; ctx.shadowColor = '#fff';
-      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = 0.55; ctx.strokeStyle = '#fff'; ctx.shadowBlur = 8; ctx.shadowColor = '#fff'; ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.arc(sx, sy, TR+5, 0, Math.PI*2); ctx.stroke();
       ctx.globalAlpha = 0.1; ctx.strokeStyle = t.type.color; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.arc(sx, sy, t.type.range, 0, Math.PI*2); ctx.stroke();
@@ -740,24 +729,19 @@ function drawEnemies() {
   ctx.save();
   for (const e of enemies) {
     if (e.dead || e.escaped) continue;
-    const hp = e.hp/e.maxHp;
-    const color = lerpHex('#4488ff','#ff4422', 1-hp);
-    // Trail
+    const hp = e.hp/e.maxHp, color = lerpHex('#4488ff','#ff4422', 1-hp);
     for (let i = 0; i < e.trail.length; i++) {
       ctx.globalAlpha = (1-i/e.trail.length)*0.22;
       const tr2 = ER_X*(1-i/e.trail.length)*0.65;
       ctx.fillStyle = '#4488ff'; ctx.shadowBlur = 0;
       ctx.beginPath(); ctx.ellipse(e.trail[i].x, e.trail[i].y, tr2, tr2*0.7, 0, 0, Math.PI*2); ctx.fill();
     }
-    ctx.globalAlpha = 0.92;
-    ctx.shadowBlur = 12; ctx.shadowColor = color; ctx.fillStyle = color;
+    ctx.globalAlpha = 0.92; ctx.shadowBlur = 12; ctx.shadowColor = color; ctx.fillStyle = color;
     ctx.beginPath(); ctx.ellipse(e.x, e.y, ER_X, ER_Y, 0, 0, Math.PI*2); ctx.fill();
-    // HP bar
     ctx.globalAlpha = 0.75; ctx.shadowBlur = 0;
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.fillRect(e.x-ER_X, e.y-ER_Y-7, ER_X*2, 3);
-    ctx.fillStyle = color;
-    ctx.fillRect(e.x-ER_X, e.y-ER_Y-7, ER_X*2*hp, 3);
+    ctx.fillStyle = color; ctx.fillRect(e.x-ER_X, e.y-ER_Y-7, ER_X*2*hp, 3);
     ctx.globalAlpha = 1;
   }
   ctx.restore();
@@ -767,8 +751,7 @@ function drawProjs() {
   ctx.save();
   for (const p of projs) {
     for (let i = 0; i < p.trail.length; i++) {
-      ctx.globalAlpha = (1-i/p.trail.length)*0.45;
-      ctx.fillStyle = p.color;
+      ctx.globalAlpha = (1-i/p.trail.length)*0.45; ctx.fillStyle = p.color;
       ctx.beginPath(); ctx.arc(p.trail[i].x, p.trail[i].y, PR*(1-i/p.trail.length), 0, Math.PI*2); ctx.fill();
     }
     ctx.globalAlpha = 1; ctx.shadowBlur = 10; ctx.shadowColor = p.color; ctx.fillStyle = p.color;
@@ -791,46 +774,30 @@ function drawFX() {
   ctx.font = 'bold 10px Courier New'; ctx.textAlign = 'center';
   for (const f of floats) {
     ctx.globalAlpha = Math.max(0,f.a); ctx.fillStyle = f.color;
-    ctx.shadowBlur = 7; ctx.shadowColor = f.color;
-    ctx.fillText(f.text, f.x, f.y);
+    ctx.shadowBlur = 7; ctx.shadowColor = f.color; ctx.fillText(f.text, f.x, f.y);
   }
   ctx.globalAlpha = 1; ctx.restore();
 }
 
 function drawFrame() {
-  ctx.fillStyle = 'rgba(5,5,16,0.84)';
-  ctx.fillRect(0, 0, W, H);
-  drawStars();
-  drawPath();
-  drawSlots();
-  drawFX();
-  drawEnemies();
-  drawTowers();
-  drawProjs();
+  ctx.fillStyle = 'rgba(5,5,16,0.84)'; ctx.fillRect(0, 0, W, H);
+  drawStars(); drawPath(); drawSlots(); drawFX(); drawEnemies(); drawTowers(); drawProjs();
 }
 
 // ─── Game loop ────────────────────────────────────────────────────────────────
 
 function loop(ts) {
-  const dt = Math.min((ts - lastTs)/1000, 0.1);
-  lastTs = ts;
+  const dt = Math.min((ts - lastTs)/1000, 0.1); lastTs = ts;
   if (gameState === 'playing') {
-    updateWave(dt);
-    updateEnemies(dt);
-    updateTowers(dt);
-    updateProjs(dt);
-    updateFX(dt);
-  } else {
-    updateFX(dt);
-  }
+    updateWave(dt); updateEnemies(dt); updateTowers(dt); updateProjs(dt); updateFX();
+  } else { updateFX(); }
   drawFrame();
   rafId = requestAnimationFrame(loop);
 }
 
 function startLoop() {
   if (rafId) cancelAnimationFrame(rafId);
-  lastTs = performance.now();
-  rafId = requestAnimationFrame(loop);
+  lastTs = performance.now(); rafId = requestAnimationFrame(loop);
 }
 
 // ─── T9 input ────────────────────────────────────────────────────────────────
@@ -859,8 +826,12 @@ function handleT9(key) {
       clearTimeout(t9timer); confirmScrollChar();
       submitAnswer(t9buf); t9buf = '';
     } else {
-      submitAnswer(t9cands[t9ci] || '');
-      t9keys = []; t9cands = [];
+      if (t9cands.length > 0) {
+        submitAnswer(t9cands[0]);
+        t9keys = []; t9cands = [];
+      } else if (t9keys.length > 0) {
+        flashEl('rgba(255,50,50,0.14)');
+      }
     }
     updateInputDisplay(); return;
   }
@@ -872,14 +843,12 @@ function handleT9(key) {
       t9pendIdx = (t9pendIdx + 1) % (letters.length + 1);
       t9pend = t9pendIdx === letters.length ? key : letters[t9pendIdx].toUpperCase();
     } else {
-      confirmScrollChar();
-      t9pendKey = key; t9pendIdx = 0;
-      t9pend = letters[0].toUpperCase();
+      confirmScrollChar(); t9pendKey = key; t9pendIdx = 0; t9pend = letters[0].toUpperCase();
     }
     t9timer = setTimeout(confirmScrollChar, 820);
   } else {
-    t9keys.push(key);
-    updatePredict(); t9ci = 0;
+    if (!T9_MAP[key] && key !== '1') return;
+    t9keys.push(key); updatePredict();
   }
   updateInputDisplay();
 }
@@ -901,14 +870,31 @@ function updatePredict() {
 function updateInputDisplay() {
   const el = document.getElementById('input-display');
   if (inputMode === 'scroll') {
-    const txt = t9buf + (t9pend ? '['+t9pend+']' : '');
-    el.textContent = txt || '▶';
+    el.textContent = (t9buf + (t9pend ? '['+t9pend+']' : '')) || '▶';
   } else if (inputMode === 'predict') {
-    el.textContent = t9cands.length > 0 ? t9cands[t9ci] : (t9keys.length > 0 ? '?' : '▶');
+    if (t9keys.length === 0) {
+      el.textContent = '▶';
+    } else {
+      const keyStr = t9keys.join('-');
+      el.textContent = t9cands.length > 0 ? keyStr + '  (' + t9cands.length + ' match' + (t9cands.length > 1 ? 'es' : '') + ')' : keyStr + '  ✗';
+    }
   } else {
     const ki = document.getElementById('keyboard-input');
     el.textContent = ki.value || '▶';
   }
+}
+
+// ─── Hint ─────────────────────────────────────────────────────────────────────
+
+function showHint() {
+  if (!currentPair || hintUsed) return;
+  hintUsed = true;
+  if (!chillMode) { streak = 0; updateStreakDisplay(); }
+  const el = document.getElementById('hint-text');
+  el.textContent = '→ ' + currentPair.v;
+  el.classList.add('visible');
+  document.getElementById('btn-hint').classList.add('used');
+  setTimeout(() => { el.classList.remove('visible'); }, 2500);
 }
 
 // ─── Answer handling ──────────────────────────────────────────────────────────
@@ -918,15 +904,16 @@ function showNextPrompt() {
   currentPair = deck[deckIdx % deck.length]; deckIdx++;
   document.getElementById('question-text').textContent = currentPair.k;
   t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = [];
+  hintUsed = false;
+  document.getElementById('btn-hint').classList.remove('used');
+  const ht = document.getElementById('hint-text');
+  ht.classList.remove('visible'); ht.textContent = '';
   updateInputDisplay();
   if (inputMode === 'keyboard') setTimeout(() => document.getElementById('keyboard-input').focus(), 50);
 }
 
 function typeForStreak(s) {
-  if (s >= 8) return 3;
-  if (s >= 5) return 2;
-  if (s >= 3) return 1;
-  return 0;
+  if (s >= 8) return 3; if (s >= 5) return 2; if (s >= 3) return 1; return 0;
 }
 
 function submitAnswer(raw) {
@@ -953,14 +940,12 @@ function submitAnswer(raw) {
 
 function flashEl(bg) {
   const el = document.getElementById('feedback-flash');
-  el.style.background = bg;
-  el.style.opacity = '1';
+  el.style.background = bg; el.style.opacity = '1';
   setTimeout(() => { el.style.opacity = '0'; }, 280);
 }
 
 function updateStreakDisplay() {
-  const el = document.getElementById('streak-display');
-  el.textContent = streak >= 3 ? '⚡ ×'+streak : '';
+  document.getElementById('streak-display').textContent = streak >= 3 ? '⚡ ×'+streak : '';
 }
 
 // ─── Screens ──────────────────────────────────────────────────────────────────
@@ -969,6 +954,7 @@ function showMenu() {
   gameState = 'menu';
   document.getElementById('menu-overlay').classList.remove('hidden');
   document.getElementById('summary-overlay').classList.add('hidden');
+  document.getElementById('btn-quit-game').style.display = 'none';
   const hw = getHW();
   document.getElementById('menu-best').textContent = hw > 0 ? 'Best: Wave '+hw : '';
   const cp = loadCP();
@@ -978,15 +964,17 @@ function showMenu() {
   } else {
     document.getElementById('continue-wrap').style.display = 'none';
   }
+  updateCustomDeckCount();
 }
 
 function showSummary(elapsed, fs, newBest) {
   document.getElementById('summary-overlay').classList.remove('hidden');
+  document.getElementById('btn-quit-game').style.display = 'none';
   document.getElementById('sum-title').textContent = 'Wave '+wave+' Complete!';
   document.getElementById('sum-subtitle').textContent = newBest ? '🏆 New Wave Record!' : '';
   const acc = correctW+wrongW > 0 ? Math.round(correctW/(correctW+wrongW)*100) : 100;
   const secs = (elapsed/1000).toFixed(1);
-  const bms = getBestTime(wave);
+  const bms = getBT(wave);
   const bestStr = bms > 0 ? (bms/1000).toFixed(1)+'s' : '—';
   const rows = [
     ['Wave Time', secs+'s', newBest ? 'gold' : ''],
@@ -1006,6 +994,18 @@ function showSummary(elapsed, fs, newBest) {
   }
 }
 
+// ─── Quit confirm ─────────────────────────────────────────────────────────────
+
+function showQuitConfirm() {
+  if (gameState === 'playing') gameState = 'paused';
+  document.getElementById('quit-confirm-overlay').classList.add('visible');
+}
+
+function hideQuitConfirm(resume) {
+  document.getElementById('quit-confirm-overlay').classList.remove('visible');
+  if (resume && gameState === 'paused') gameState = 'playing';
+}
+
 // ─── Game start / continue ────────────────────────────────────────────────────
 
 function startGame(mode, fromCP) {
@@ -1015,9 +1015,21 @@ function startGame(mode, fromCP) {
   }
   localStorage.setItem('lastPlayed_memoryTower', Date.now());
   chillMode = (mode === 'chill');
-  deck = shuffle(ARCADE_PAIRS.slice());
+
+  if (mode === 'classic') {
+    if (customDeck.length === 0) {
+      window.KamekoTokens && window.KamekoTokens.add(1); // refund token
+      alert('Your deck is empty! Add some pairs first via "Edit My Deck".');
+      return;
+    }
+    deck = shuffle(customDeck.slice());
+  } else {
+    deck = shuffle(ARCADE_PAIRS.slice());
+  }
+
   deckIdx = 0; answerCount = 0; streak = 0; score = 0;
   document.getElementById('menu-overlay').classList.add('hidden');
+  document.getElementById('btn-quit-game').style.display = '';
   for (const s of slots) { s.occupied = false; s.tower = null; }
   towers = [];
 
@@ -1071,15 +1083,98 @@ function buildT9Pad() {
     btn.className = 't9-key' + (key.a ? ' ak' : '');
     btn.innerHTML = '<span class="kn">'+key.n+'</span>' + (key.l ? '<span class="kl">'+key.l+'</span>' : '');
     const k = key.a || key.n;
-    btn.addEventListener('pointerdown', e => {
-      e.preventDefault();
-      btn.classList.add('pressed');
-      handleT9(k);
-    });
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); btn.classList.add('pressed'); handleT9(k); });
     btn.addEventListener('pointerup',    () => btn.classList.remove('pressed'));
     btn.addEventListener('pointerleave', () => btn.classList.remove('pressed'));
     pad.appendChild(btn);
   }
+}
+
+// ─── Deck manager ─────────────────────────────────────────────────────────────
+
+let editingIdx = -1;
+
+function showDeckManager() {
+  document.getElementById('deck-overlay').classList.remove('hidden');
+  hideDeckForm();
+  renderDeckList();
+}
+
+function hideDeckManager() {
+  document.getElementById('deck-overlay').classList.add('hidden');
+  hideDeckForm();
+}
+
+function renderDeckList() {
+  const list = document.getElementById('deck-list');
+  if (customDeck.length === 0) {
+    list.innerHTML = '<div id="deck-empty">No pairs yet. Tap "+ Add New Pair" to start.</div>';
+    return;
+  }
+  list.innerHTML = '';
+  customDeck.forEach((pair, i) => {
+    const row = document.createElement('div');
+    row.className = 'deck-row';
+    const keyEl = document.createElement('span');
+    keyEl.className = 'deck-row-key'; keyEl.textContent = pair.k;
+    const valEl = document.createElement('span');
+    valEl.className = 'deck-row-val'; valEl.textContent = pair.v;
+    const acts = document.createElement('div');
+    acts.className = 'deck-row-acts';
+    const editBtn = document.createElement('button');
+    editBtn.className = 'dact edit'; editBtn.textContent = '✏';
+    editBtn.addEventListener('click', () => { showDeckForm(i); });
+    const delBtn = document.createElement('button');
+    delBtn.className = 'dact del'; delBtn.textContent = '🗑';
+    let delPending = false;
+    delBtn.addEventListener('click', () => {
+      if (!delPending) {
+        delPending = true; delBtn.classList.add('confirm'); delBtn.textContent = '✓ Delete?';
+        setTimeout(() => { delPending = false; delBtn.classList.remove('confirm'); delBtn.textContent = '🗑'; }, 2500);
+      } else {
+        customDeck.splice(i, 1); saveCustomDeck(); renderDeckList();
+      }
+    });
+    acts.appendChild(editBtn); acts.appendChild(delBtn);
+    row.appendChild(keyEl); row.appendChild(valEl); row.appendChild(acts);
+    list.appendChild(row);
+  });
+}
+
+function showDeckForm(idx) {
+  editingIdx = idx;
+  const wrap = document.getElementById('deck-form-wrap');
+  const pair = idx >= 0 ? customDeck[idx] : {k:'', v:''};
+  wrap.innerHTML = '';
+  const form = document.createElement('div');
+  form.className = 'deck-form';
+  const kInput = document.createElement('input');
+  kInput.type = 'text'; kInput.placeholder = 'Prompt (e.g. France)'; kInput.value = pair.k;
+  const vInput = document.createElement('input');
+  vInput.type = 'text'; vInput.placeholder = 'Answer (e.g. Paris)'; vInput.value = pair.v;
+  const btns = document.createElement('div');
+  btns.className = 'deck-form-btns';
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'save'; saveBtn.textContent = idx >= 0 ? 'Save Changes' : 'Add Pair';
+  saveBtn.addEventListener('click', () => {
+    const k = kInput.value.trim(), v = vInput.value.trim();
+    if (!k || !v) { kInput.style.borderColor = k ? '' : 'rgba(255,80,80,0.6)'; vInput.style.borderColor = v ? '' : 'rgba(255,80,80,0.6)'; return; }
+    if (editingIdx >= 0) { customDeck[editingIdx] = {k, v}; }
+    else { customDeck.push({k, v}); }
+    saveCustomDeck(); hideDeckForm(); renderDeckList();
+  });
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'cancel'; cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', hideDeckForm);
+  btns.appendChild(saveBtn); btns.appendChild(cancelBtn);
+  form.appendChild(kInput); form.appendChild(vInput); form.appendChild(btns);
+  wrap.appendChild(form); wrap.style.display = '';
+  setTimeout(() => kInput.focus(), 80);
+}
+
+function hideDeckForm() {
+  const wrap = document.getElementById('deck-form-wrap');
+  wrap.style.display = 'none'; wrap.innerHTML = ''; editingIdx = -1;
 }
 
 // ─── Canvas click — tower selection & move ────────────────────────────────────
@@ -1089,11 +1184,9 @@ canvas.addEventListener('pointerdown', e => {
   const rect = canvas.getBoundingClientRect();
   const cx = (e.clientX - rect.left) * (W / rect.width);
   const cy = (e.clientY - rect.top) * (H / rect.height);
-
   for (const t of towers) {
     if (Math.hypot(cx - t.slot.x, cy - t.slot.y) < TR + 8) {
-      selectedTower = (selectedTower === t) ? null : t;
-      return;
+      selectedTower = (selectedTower === t) ? null : t; return;
     }
   }
   if (selectedTower) {
@@ -1101,16 +1194,14 @@ canvas.addEventListener('pointerdown', e => {
       if (s.occupied) continue;
       if (Math.hypot(cx - s.x, cy - s.y) < TR + 10) {
         selectedTower.slot.occupied = false; selectedTower.slot.tower = null;
-        s.occupied = true; s.tower = selectedTower;
-        selectedTower.slot = s; selectedTower = null;
-        return;
+        s.occupied = true; s.tower = selectedTower; selectedTower.slot = s; selectedTower = null; return;
       }
     }
     selectedTower = null;
   }
 });
 
-// ─── Keyboard shortcuts for T9 ────────────────────────────────────────────────
+// ─── Keyboard shortcuts ───────────────────────────────────────────────────────
 
 window.addEventListener('keydown', e => {
   if (gameState !== 'playing' || inputMode === 'keyboard') return;
@@ -1131,21 +1222,35 @@ document.getElementById('keyboard-input').addEventListener('keydown', e => {
   else setTimeout(updateInputDisplay, 0);
 });
 
-// ─── Mode buttons ─────────────────────────────────────────────────────────────
+// ─── Button wiring ────────────────────────────────────────────────────────────
 
 document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => setInputMode(b.dataset.mode)));
 
-// ─── Menu buttons ─────────────────────────────────────────────────────────────
-
 document.getElementById('btn-arcade').addEventListener('click',   () => startGame('arcade', false));
-document.getElementById('btn-classic').addEventListener('click',  () => startGame('arcade', false));
+document.getElementById('btn-classic').addEventListener('click',  () => startGame('classic', false));
 document.getElementById('btn-chill').addEventListener('click',    () => startGame('chill', false));
 document.getElementById('continue-btn').addEventListener('click', () => startGame('arcade', true));
+document.getElementById('btn-deck-mgr').addEventListener('click', showDeckManager);
+
+document.getElementById('deck-back').addEventListener('click', hideDeckManager);
+document.getElementById('btn-add-pair').addEventListener('click', () => showDeckForm(-1));
+
+document.getElementById('btn-hint').addEventListener('click', showHint);
+
+document.getElementById('btn-quit-game').addEventListener('click', showQuitConfirm);
+document.getElementById('btn-confirm-quit').addEventListener('click', () => {
+  hideQuitConfirm(false);
+  document.getElementById('summary-overlay').classList.add('hidden');
+  towers = []; enemies = []; projs = [];
+  for (const s of slots) { s.occupied = false; s.tower = null; }
+  showMenu();
+});
+document.getElementById('btn-keep-playing').addEventListener('click', () => hideQuitConfirm(true));
 
 document.getElementById('btn-next-wave').addEventListener('click', () => {
   document.getElementById('summary-overlay').classList.add('hidden');
-  startWave(wave + 1);
-  gameState = 'playing';
+  document.getElementById('btn-quit-game').style.display = '';
+  startWave(wave + 1); gameState = 'playing';
 });
 
 document.getElementById('btn-quit').addEventListener('click', () => {
@@ -1170,18 +1275,13 @@ window.addEventListener('settingsClosed', () => {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
 function init() {
-  resizeCanvas();
-  buildT9Pad();
-  setInputMode(inputMode);
-  showMenu();
-  startLoop();
+  loadCustomDeck();
+  resizeCanvas(); buildT9Pad(); setInputMode(inputMode);
+  showMenu(); startLoop();
 }
 
 window.addEventListener('resize', resizeCanvas);
-
-window.addEventListener('pageshow', e => {
-  if (e.persisted && gameState === 'menu') showMenu();
-});
+window.addEventListener('pageshow', e => { if (e.persisted && gameState === 'menu') showMenu(); });
 
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
