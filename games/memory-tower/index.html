@@ -140,10 +140,17 @@
       border: none; outline: none; color: transparent; z-index: -1;
     }
     #keyboard-input:focus { border-color: transparent; box-shadow: none; }
-    #keyboard-tap-hint {
-      font-size: 0.7em; color: rgba(255,255,255,0.3);
-      text-align: center; padding: 4px 0 8px;
+    #keyboard-focus-btn {
+      width: 100%; max-width: 260px;
+      padding: 14px 20px; font-size: 1.1em;
+      background: rgba(255,255,255,0.05);
+      border: 1px dashed rgba(255,255,255,0.25);
+      border-radius: 10px; color: rgba(255,255,255,0.55);
+      font-family: 'Courier New', monospace; cursor: pointer;
+      min-height: 52px; -webkit-tap-highlight-color: transparent;
+      letter-spacing: 0.05em;
     }
+    #keyboard-focus-btn:active { background: rgba(255,255,255,0.1); }
 
     #keyboard-submit {
       padding: 12px 36px; background: rgba(0,255,238,0.13);
@@ -339,7 +346,7 @@
     </div>
     <div id="t9-pad"></div>
     <div id="keyboard-wrap" style="display:none">
-      <div id="keyboard-tap-hint">tap to type</div>
+      <button id="keyboard-focus-btn">Tap to type ▸</button>
       <button id="keyboard-submit">Submit ↵</button>
     </div>
   </div>
@@ -435,14 +442,14 @@ const BUILTIN_DECKS = [
 const T9_MAP = {
   '2':['a','b','c'],'3':['d','e','f'],'4':['g','h','i'],
   '5':['j','k','l'],'6':['m','n','o'],'7':['p','q','r','s'],
-  '8':['t','u','v'],'9':['w','x','y','z'],'0':[' ',"'",'.','-','!','?']
+  '8':['t','u','v'],'9':['w','x','y','z']
 };
 
 const T9_KEYS = [
   {n:'1',l:'',id:'t9-key-next'},{n:'2',l:'ABC'},{n:'3',l:'DEF'},
   {n:'4',l:'GHI'},{n:'5',l:'JKL'},{n:'6',l:'MNO'},
   {n:'7',l:'PQRS'},{n:'8',l:'TUV'},{n:'9',l:'WXYZ'},
-  {n:'⌫',l:'',a:'back'},{n:'0',l:'SPC'},{n:'✓',l:'',a:'ok'}
+  {n:'⌫',l:'',a:'back'},{n:'0',l:''},{n:'✓',l:'',a:'ok'}
 ];
 
 // ─── Tower type definitions ────────────────────────────────────────────────────
@@ -969,10 +976,24 @@ function startLoop() {
 
 // ─── T9 input ────────────────────────────────────────────────────────────────
 
+function autoFillScrollSpecials() {
+  if (!currentPair) return;
+  const v = currentPair.v;
+  while (t9buf.length < v.length && !/[a-z0-9]/i.test(v[t9buf.length])) {
+    t9buf += v[t9buf.length];
+  }
+  updateInputDisplay();
+  if (t9buf.length === v.length) {
+    const answer = t9buf;
+    t9buf = '';
+    setTimeout(() => submitAnswer(answer), 0);
+  }
+}
+
 function confirmScrollChar() {
   if (!t9pend) return;
   t9buf += t9pend; t9pend = ''; t9pendKey = ''; t9pendIdx = 0;
-  updateInputDisplay();
+  autoFillScrollSpecials();
 }
 
 function flashInputError() {
@@ -995,7 +1016,12 @@ function handleT9(key) {
     clearTimeout(t9timer);
     if (inputMode === 'scroll') {
       if (t9pend) { t9pend = ''; t9pendKey = ''; t9pendIdx = 0; }
-      else if (t9buf.length > 0) t9buf = t9buf.slice(0, -1);
+      else if (t9buf.length > 0) {
+        t9buf = t9buf.slice(0, -1);
+        while (t9buf.length > 0 && !/[a-z0-9]/i.test(t9buf[t9buf.length - 1])) {
+          t9buf = t9buf.slice(0, -1);
+        }
+      }
     } else if (inputMode === 'predict' && currentPair && t9pos > 0) {
       const v = currentPair.v;
       let pos = t9pos;
@@ -1026,7 +1052,7 @@ function handleT9(key) {
       const expectedAtPos = currentPair?.v[currentPos];
       if (numericMode || !T9_MAP[key] || /^[0-9]$/.test(expectedAtPos)) {
         clearTimeout(t9timer); confirmScrollChar();
-        t9buf += key; updateInputDisplay(); return;
+        t9buf += key; autoFillScrollSpecials(); return;
       }
     }
     const letters = T9_MAP[key];
@@ -1071,7 +1097,22 @@ function updateInputDisplay() {
       el.textContent = display || '_';
       if (meta) meta.textContent = '[123]';
     } else {
-      el.textContent = (t9buf + (t9pend ? '['+t9pend+']' : '')) || '▶';
+      if (currentPair) {
+        const v = currentPair.v.toUpperCase();
+        let display = '';
+        for (let i = 0; i < v.length; i++) {
+          if (i < t9buf.length) {
+            display += v[i];
+          } else if (t9pend && i === t9buf.length) {
+            display += '[' + t9pend + ']';
+          } else {
+            display += /[A-Z0-9]/.test(v[i]) ? '_' : v[i];
+          }
+        }
+        el.textContent = display;
+      } else {
+        el.textContent = (t9buf + (t9pend ? '['+t9pend+']' : '')) || '▶';
+      }
       if (meta) meta.textContent = '';
     }
   } else if (inputMode === 'predict') {
@@ -1091,7 +1132,10 @@ function updateInputDisplay() {
     if (meta) meta.textContent = '';
   } else {
     const ki = document.getElementById('keyboard-input');
-    el.textContent = ki.value || '▶';
+    const val = ki.value;
+    el.textContent = val || '▶';
+    const fb = document.getElementById('keyboard-focus-btn');
+    if (fb) fb.textContent = val ? 'typing... ▸' : 'Tap to type ▸';
     if (meta) meta.textContent = '';
   }
 }
@@ -1693,16 +1737,27 @@ document.getElementById('keyboard-submit').addEventListener('click', () => {
 });
 
 document.getElementById('keyboard-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { submitAnswer(e.target.value); e.target.value = ''; updateInputDisplay(); }
+  if (e.key === 'Enter') {
+    submitAnswer(e.target.value); e.target.value = ''; updateInputDisplay(); e.target.focus();
+  }
 });
 document.getElementById('keyboard-input').addEventListener('input', () => {
   updateInputDisplay();
 });
 
-['input-display', 'keyboard-wrap'].forEach(id => {
-  document.getElementById(id).addEventListener('pointerdown', () => {
-    if (inputMode === 'keyboard') document.getElementById('keyboard-input').focus();
-  });
+document.getElementById('keyboard-focus-btn').addEventListener('pointerdown', e => {
+  e.preventDefault();
+  document.getElementById('keyboard-input').focus();
+});
+
+document.getElementById('input-area').addEventListener('pointerdown', () => {
+  if (inputMode === 'keyboard') document.getElementById('keyboard-input').focus();
+});
+
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && inputMode === 'keyboard' && gameState === 'playing') {
+    setTimeout(() => document.getElementById('keyboard-input').focus(), 100);
+  }
 });
 
 // ─── Button wiring ────────────────────────────────────────────────────────────
