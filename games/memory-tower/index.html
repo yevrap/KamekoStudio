@@ -132,12 +132,18 @@
     }
 
     #keyboard-input {
-      width: 100%; max-width: 320px; padding: 14px 16px; font-size: 1.15em;
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(0,255,238,0.3);
-      border-radius: 10px; color: #fff; font-family: 'Courier New', monospace;
-      text-align: center; outline: none; touch-action: auto;
+      position: fixed; top: 50%; left: 50%;
+      width: 1px; height: 1px;
+      transform: translate(-50%, -50%);
+      opacity: 0.01; font-size: 16px;
+      caret-color: transparent; background: transparent;
+      border: none; outline: none; color: transparent; z-index: -1;
     }
-    #keyboard-input:focus { border-color: rgba(0,255,238,0.7); box-shadow: 0 0 12px rgba(0,255,238,0.2); }
+    #keyboard-input:focus { border-color: transparent; box-shadow: none; }
+    #keyboard-tap-hint {
+      font-size: 0.7em; color: rgba(255,255,255,0.3);
+      text-align: center; padding: 4px 0 8px;
+    }
 
     #keyboard-submit {
       padding: 12px 36px; background: rgba(0,255,238,0.13);
@@ -333,8 +339,7 @@
     </div>
     <div id="t9-pad"></div>
     <div id="keyboard-wrap" style="display:none">
-      <input id="keyboard-input" type="text" placeholder="type your answer"
-        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+      <div id="keyboard-tap-hint">tap to type</div>
       <button id="keyboard-submit">Submit ↵</button>
     </div>
   </div>
@@ -1011,8 +1016,14 @@ function handleT9(key) {
   }
 
   if (inputMode === 'scroll') {
-    if (numericMode && /^[0-9]$/.test(key)) {
-      t9buf += key; updateInputDisplay(); return;
+    if (/^[0-9]$/.test(key)) {
+      // Direct digit entry: always for all-digit answers, or when expected char at current position is a digit
+      const currentPos = t9buf.length + (t9pend ? 1 : 0);
+      const expectedAtPos = currentPair?.v[currentPos];
+      if (numericMode || !T9_MAP[key] || /^[0-9]$/.test(expectedAtPos)) {
+        clearTimeout(t9timer); confirmScrollChar();
+        t9buf += key; updateInputDisplay(); return;
+      }
     }
     const letters = T9_MAP[key];
     if (!letters || letters.length === 0) return;
@@ -1030,8 +1041,9 @@ function handleT9(key) {
     const v = currentPair.v;
     if (t9pos >= v.length) return;
     const expected = v[t9pos].toLowerCase();
-    const correct = numericMode
-      ? (/^[0-9]$/.test(key) && key === expected)
+    const isDigit = /^[0-9]$/.test(expected);
+    const correct = isDigit
+      ? (key === expected)
       : (T9_MAP[key] || []).includes(expected);
     if (correct) {
       t9pos++;
@@ -1101,6 +1113,10 @@ function showNextPrompt() {
   numericMode = /^\d+$/.test(currentPair.v);
   document.getElementById('question-text').textContent = currentPair.k;
   t9buf = ''; t9pend = ''; t9pendKey = ''; t9pendIdx = 0; t9pos = 0;
+  if (inputMode === 'predict' && currentPair) {
+    const v = currentPair.v;
+    while (t9pos < v.length && !/[a-z0-9]/i.test(v[t9pos])) t9pos++;
+  }
   hintUsed = false;
   document.getElementById('btn-hint').classList.remove('used');
   const ht = document.getElementById('hint-text');
@@ -1261,6 +1277,10 @@ function setInputMode(mode) {
   inputMode = mode;
   localStorage.setItem('keypadQuest_inputMode', mode);
   t9buf = ''; t9pend = ''; t9pendKey = ''; t9pendIdx = 0; t9pos = 0;
+  if (mode === 'predict' && currentPair) {
+    const v = currentPair.v;
+    while (t9pos < v.length && !/[a-z0-9]/i.test(v[t9pos])) t9pos++;
+  }
   const pad = document.getElementById('t9-pad');
   const kw = document.getElementById('keyboard-wrap');
   if (mode === 'keyboard') {
@@ -1670,7 +1690,15 @@ document.getElementById('keyboard-submit').addEventListener('click', () => {
 
 document.getElementById('keyboard-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') { submitAnswer(e.target.value); e.target.value = ''; updateInputDisplay(); }
-  else setTimeout(updateInputDisplay, 0);
+});
+document.getElementById('keyboard-input').addEventListener('input', () => {
+  updateInputDisplay();
+});
+
+['input-display', 'keyboard-wrap'].forEach(id => {
+  document.getElementById(id).addEventListener('pointerdown', () => {
+    if (inputMode === 'keyboard') document.getElementById('keyboard-input').focus();
+  });
 });
 
 // ─── Button wiring ────────────────────────────────────────────────────────────
@@ -1800,6 +1828,9 @@ if (document.readyState === 'loading') {
 })();
 </script>
 
+<input id="keyboard-input" type="text"
+  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+  inputmode="text">
 <script src="../../shared/settings.js" data-gallery-depth="2"></script>
 </body>
 </html>
