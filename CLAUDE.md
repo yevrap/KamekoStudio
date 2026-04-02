@@ -158,10 +158,11 @@ All games must work on phone, tablet, and desktop. Key patterns used across the 
 
 Keypad Quest (`games/memory-tower/`) is the most complex game in the studio. Key patterns to know:
 
-- **Three input modes:** Tap to Spell (T9 scroll-select, 820ms auto-confirm), T9 Smart (predictive, scoped to deck values), Keyboard. Mode persisted in `keypadQuest_inputMode`.
-- **Numeric mode:** When the current answer is all digits, T9 keypresses build a digit string directly (key `1` = digit `1`, not cycle). `numericMode` is set in `showNextPrompt()`.
-- **Typewriter display:** In T9 Smart, the matched candidate is revealed one character at a time as keys are pressed (`_` placeholders for untyped letters). Key `1` cycles through multiple candidates.
-- **Circular enemy path:** Enemies travel an ellipse (`pathCX/CY/RX/RY`) using `e.angle` in radians/sec. World position is `e.ex/e.ey`, computed each frame. Slots are arranged in two rings around the ellipse. `pathRX/RY` derived from outer ring scale + margin so slots never clip on any screen size.
+- **Three input modes:** Tap to Spell (T9 scroll-select, 820ms auto-confirm), T9 Smart (guided typing), Keyboard. Mode persisted in `keypadQuest_inputMode`.
+- **T9 Smart — guided typing:** Each key press is validated against the next expected character of the answer. Correct key → character reveals. Wrong key → input display flashes red with "wrong key" for 350ms. Special characters (spaces, apostrophes, hyphens, etc.) are auto-inserted and shown in the display structure from the start — the player never types them. Answer auto-submits when complete. State is a single integer `t9pos` (position in `currentPair.v`).
+- **Numeric mode:** When the answer is all digits, each digit key press is validated directly against the expected digit (same guided-typing model as T9 Smart). `numericMode` is set in `showNextPrompt()`.
+- **Skip button:** In the prompt bar next to Hint. Skips the current question and resets streak (no other penalty). Fires `showNextPrompt()`.
+- **Circular enemy path:** Enemies travel an ellipse (`pathCX/CY/RX/RY`) using `e.angle` in radians/sec. World position is `e.ex/e.ey`, computed each frame. Slots are arranged in two rings around the ellipse. `pathRX/RY` derived from actual room above/below `pathCY` (not `H/2`) divided by outer ring scale, so top slots never clip regardless of canvas aspect ratio.
 - **Built-in decks:** Defined as `BUILTIN_DECKS` array with ids `b-capitals`, `b-math`, `b-elements`. Not stored in localStorage.
 - **User decks:** `keypadQuest_decks` — array of `{id, name, pairs:[{k,v}]}`. IDs prefixed `u-`. Old `keypadQuest_customDeck` key is migrated on first load.
 - **Active deck selection:** `keypadQuest_activeDeckIds` — array of IDs from both built-in and user decks.

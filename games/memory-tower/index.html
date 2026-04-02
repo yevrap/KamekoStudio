@@ -50,9 +50,9 @@
     #game-canvas { display: block; width: 100%; flex: 0 0 40%; min-height: 0; }
 
     #prompt-bar {
-      flex-shrink: 0; height: 64px;
+      flex-shrink: 0; min-height: 80px;
       display: flex; flex-direction: column; justify-content: center;
-      padding: 5px 12px; position: relative;
+      padding: 7px 12px 9px; position: relative;
       background: rgba(0,0,0,0.55);
       border-top: 1px solid rgba(0,255,238,0.1);
       border-bottom: 1px solid rgba(0,255,238,0.08);
@@ -62,11 +62,18 @@
       display: flex; align-items: center; justify-content: space-between; width: 100%;
     }
 
-    #question-text { font-size: 0.75em; color: rgba(255,255,255,0.55); letter-spacing: 0.05em; flex: 1; }
+    #question-text { font-size: 1.0em; color: rgba(255,255,255,0.65); letter-spacing: 0.05em; flex: 1; }
 
+    #btn-skip {
+      background: none; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px;
+      color: rgba(255,255,255,0.45); font-size: 0.8em; padding: 4px 10px; cursor: pointer;
+      min-height: 26px; font-family: 'Courier New', monospace;
+      -webkit-tap-highlight-color: transparent; flex-shrink: 0; margin-left: 8px;
+    }
+    #btn-skip:active { background: rgba(255,255,255,0.07); }
     #btn-hint {
       background: none; border: 1px solid rgba(255,200,0,0.3); border-radius: 8px;
-      color: rgba(255,200,0,0.7); font-size: 0.68em; padding: 3px 8px; cursor: pointer;
+      color: rgba(255,200,0,0.7); font-size: 0.8em; padding: 4px 10px; cursor: pointer;
       min-height: 26px; font-family: 'Courier New', monospace;
       -webkit-tap-highlight-color: transparent; flex-shrink: 0; margin-left: 8px;
     }
@@ -74,8 +81,8 @@
     #btn-hint.used { opacity: 0.3; pointer-events: none; }
 
     #input-display {
-      font-size: 1.2em; color: #fff; text-shadow: 0 0 12px #4488ff;
-      letter-spacing: 0.08em; min-height: 1.4em;
+      font-size: 2.0em; color: #fff; text-shadow: 0 0 12px #4488ff;
+      letter-spacing: 0.08em; min-height: 1.3em;
     }
 
     #hint-text {
@@ -115,9 +122,9 @@
       line-height: 1.15; transition: background 0.08s;
     }
     .t9-key.pressed, .t9-key:active { background: rgba(0,255,238,0.18); border-color: rgba(0,255,238,0.4); }
-    .t9-key .kn { font-size: 1.45em; font-weight: bold; color: #fff; }
-    .t9-key .kl { font-size: 0.62em; color: rgba(255,255,255,0.55); letter-spacing: 0.08em; }
-    .t9-key.ak .kn { font-size: 1.15em; }
+    .t9-key .kn { font-size: 1.55em; font-weight: bold; color: #fff; }
+    .t9-key .kl { font-size: 0.78em; color: rgba(255,255,255,0.55); letter-spacing: 0.08em; }
+    .t9-key.ak .kn { font-size: 1.2em; }
 
     #keyboard-wrap {
       flex: 1; display: flex; flex-direction: column;
@@ -279,23 +286,19 @@
       transition: all 0.25s; cursor: default; position: relative;
     }
     .tc.active { border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.07); }
-    .tc .tc-dot { width: 8px; height: 8px; border-radius: 50%; margin-bottom: 2px; opacity: 0.3; transition: opacity 0.25s, box-shadow 0.25s; }
+    .tc .tc-dot { width: 10px; height: 10px; border-radius: 50%; margin-bottom: 2px; opacity: 0.3; transition: opacity 0.25s, box-shadow 0.25s; }
     .tc.active .tc-dot { opacity: 1; box-shadow: 0 0 8px; }
-    .tc .tc-name { font-size: 0.5em; color: rgba(255,255,255,0.35); letter-spacing: 0.05em; transition: color 0.25s; white-space: nowrap; }
+    .tc .tc-name { font-size: 0.62em; color: rgba(255,255,255,0.35); letter-spacing: 0.05em; transition: color 0.25s; white-space: nowrap; }
     .tc.active .tc-name { color: rgba(255,255,255,0.85); }
-    .tc .tc-req { font-size: 0.45em; color: rgba(255,255,255,0.25); margin-top: 1px; }
+    .tc .tc-req { font-size: 0.55em; color: rgba(255,255,255,0.25); margin-top: 1px; }
     .tc.active .tc-req { color: rgba(255,255,255,0.5); }
     .tc.next-up { border-color: rgba(255,255,255,0.12); }
     .tc.next-up .tc-dot { opacity: 0.5; }
     .tc.next-up .tc-name { color: rgba(255,255,255,0.5); }
 
-    /* Next-key style in predict mode */
-    #t9-key-next.predict-active .kn { color: #00ffee; text-shadow: 0 0 6px #00ffee; font-size: 0.7em; }
-    #t9-key-next.predict-active .kl { color: rgba(0,255,238,0.5); font-size: 0.48em; }
-    #t9-key-next.predict-active { border-color: rgba(0,255,238,0.25); }
 
     /* Predict candidate display */
-    #predict-meta { font-size: 0.6em; color: rgba(255,255,255,0.35); letter-spacing: 0.05em; min-height: 0.9em; }
+    #predict-meta { font-size: 0.75em; color: rgba(255,255,255,0.35); letter-spacing: 0.05em; min-height: 0.9em; }
   </style>
 </head>
 <body>
@@ -312,6 +315,7 @@
   <div id="prompt-bar">
     <div id="prompt-top">
       <div id="question-text">Select a mode to begin</div>
+      <button id="btn-skip">Skip</button>
       <button id="btn-hint">💡 Hint</button>
     </div>
     <div id="input-display">▶</div>
@@ -422,7 +426,7 @@ const BUILTIN_DECKS = [
 const T9_MAP = {
   '2':['a','b','c'],'3':['d','e','f'],'4':['g','h','i'],
   '5':['j','k','l'],'6':['m','n','o'],'7':['p','q','r','s'],
-  '8':['t','u','v'],'9':['w','x','y','z'],'0':[' ']
+  '8':['t','u','v'],'9':['w','x','y','z'],'0':[' ',"'",'.','-','!','?']
 };
 
 const T9_KEYS = [
@@ -469,7 +473,7 @@ let slots = [], selectedTower = null, waveOver = false;
 
 let inputMode = localStorage.getItem('keypadQuest_inputMode') || 'scroll';
 let t9buf = '', t9pend = '', t9pendKey = '', t9pendIdx = 0, t9timer = null;
-let t9keys = [], t9cands = [], t9ci = 0;
+let t9pos = 0; // predict mode: position in currentPair.v
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -617,10 +621,12 @@ function resizeCanvas() {
   canvas.width = Math.floor(rect.width); canvas.height = Math.floor(rect.height);
   W = canvas.width; H = canvas.height;
   const outerScale = Math.max(...RINGS);
-  const slotMarginX = 32, slotMarginY = 26;
-  pathCX = W * 0.5; pathCY = H * 0.42;
+  const slotMarginX = 32, slotMarginY = 38;
+  pathCX = W * 0.5; pathCY = H * 0.44;
   pathRX = (W / 2 - slotMarginX) / outerScale;
-  pathRY = Math.min((H / 2 - slotMarginY) / outerScale, pathRX * 0.68);
+  const topRoom = pathCY - slotMarginY;
+  const botRoom = (H - pathCY) - slotMarginY;
+  pathRY = Math.min(Math.min(topRoom, botRoom) / outerScale, pathRX * 0.68);
   buildSlots(); buildStars();
 }
 
@@ -960,47 +966,54 @@ function confirmScrollChar() {
   updateInputDisplay();
 }
 
+function flashInputError() {
+  const el = document.getElementById('input-display');
+  const meta = document.getElementById('predict-meta');
+  el.style.color = '#ff4466';
+  el.style.textShadow = '0 0 14px #ff4466';
+  if (meta) { meta.textContent = 'wrong key'; meta.style.color = '#ff4466'; }
+  setTimeout(() => {
+    el.style.color = '';
+    el.style.textShadow = '';
+    if (meta) { meta.textContent = ''; meta.style.color = ''; }
+  }, 350);
+}
+
 function handleT9(key) {
   if (gameState !== 'playing') return;
 
-  // Numeric mode: answer is a number — digits typed directly
-  if (numericMode && /^[0-9]$/.test(key)) {
-    t9buf += key;
+  if (key === 'back') {
+    clearTimeout(t9timer);
+    if (inputMode === 'scroll') {
+      if (t9pend) { t9pend = ''; t9pendKey = ''; t9pendIdx = 0; }
+      else if (t9buf.length > 0) t9buf = t9buf.slice(0, -1);
+    } else if (inputMode === 'predict' && currentPair && t9pos > 0) {
+      const v = currentPair.v;
+      let pos = t9pos;
+      // Step back past any auto-inserted special chars, then one typeable char
+      while (pos > 0 && !/[a-z0-9]/i.test(v[pos - 1])) pos--;
+      if (pos > 0) pos--;
+      t9pos = pos;
+    }
     updateInputDisplay(); return;
   }
 
-  if (key === 'back') {
-    clearTimeout(t9timer);
-    if (numericMode) {
-      if (t9buf.length > 0) t9buf = t9buf.slice(0,-1);
-    } else if (inputMode === 'scroll') {
-      if (t9pend) { t9pend = ''; t9pendKey = ''; t9pendIdx = 0; }
-      else if (t9buf.length > 0) t9buf = t9buf.slice(0,-1);
-    } else {
-      if (t9keys.length > 0) t9keys.pop();
-      updatePredict();
-    }
-    updateInputDisplay(); return;
-  }
   if (key === 'ok') {
-    if (numericMode) {
-      if (t9buf.length > 0) submitAnswer(t9buf);
-      else flashEl('rgba(255,50,50,0.14)');
-    } else if (inputMode === 'scroll') {
+    if (inputMode === 'scroll') {
       clearTimeout(t9timer); confirmScrollChar();
-      submitAnswer(t9buf); t9buf = '';
-    } else {
-      if (t9cands.length > 0) {
-        submitAnswer(t9cands[t9ci]);
-        t9keys = []; t9cands = []; t9ci = 0;
-      } else if (t9keys.length > 0) {
-        flashEl('rgba(255,50,50,0.14)');
-      }
+      if (t9buf.length > 0) { submitAnswer(t9buf); t9buf = ''; }
+      else flashInputError();
+    } else if (inputMode === 'predict') {
+      if (currentPair && t9pos >= currentPair.v.length) submitAnswer(currentPair.v);
+      else flashInputError();
     }
     updateInputDisplay(); return;
   }
-  if (numericMode) { updateInputDisplay(); return; } // ignore non-digit, non-back, non-ok in numeric
+
   if (inputMode === 'scroll') {
+    if (numericMode && /^[0-9]$/.test(key)) {
+      t9buf += key; updateInputDisplay(); return;
+    }
     const letters = T9_MAP[key];
     if (!letters || letters.length === 0) return;
     clearTimeout(t9timer);
@@ -1011,68 +1024,55 @@ function handleT9(key) {
       confirmScrollChar(); t9pendKey = key; t9pendIdx = 0; t9pend = letters[0].toUpperCase();
     }
     t9timer = setTimeout(confirmScrollChar, 820);
-  } else {
-    // '1' is the cycle key in predict mode
-    if (key === '1') {
-      if (t9cands.length > 1) { t9ci = (t9ci + 1) % t9cands.length; }
-      updateInputDisplay(); return;
+    updateInputDisplay();
+  } else if (inputMode === 'predict') {
+    if (!currentPair) return;
+    const v = currentPair.v;
+    if (t9pos >= v.length) return;
+    const expected = v[t9pos].toLowerCase();
+    const correct = numericMode
+      ? (/^[0-9]$/.test(key) && key === expected)
+      : (T9_MAP[key] || []).includes(expected);
+    if (correct) {
+      t9pos++;
+      while (t9pos < v.length && !/[a-z0-9]/i.test(v[t9pos])) t9pos++;
+      updateInputDisplay();
+      if (t9pos >= v.length) submitAnswer(v);
+    } else {
+      flashInputError();
     }
-    if (!T9_MAP[key]) return;
-    t9keys.push(key); t9ci = 0; updatePredict();
   }
-  updateInputDisplay();
-}
-
-function updatePredict() {
-  if (t9keys.length === 0) { t9cands = []; t9ci = 0; return; }
-  const vals = deck.map(p => p.v.toLowerCase());
-  t9cands = [...new Set(vals.filter(v => {
-    if (v.length < t9keys.length) return false;
-    for (let i = 0; i < t9keys.length; i++) {
-      const al = T9_MAP[t9keys[i]];
-      if (!al || al.length === 0) continue;
-      if (!al.includes(v[i])) return false;
-    }
-    return true;
-  }))];
 }
 
 function updateInputDisplay() {
   const el = document.getElementById('input-display');
   const meta = document.getElementById('predict-meta');
-  if (numericMode) {
-    const expected = currentPair ? currentPair.v.length : 1;
-    const typed = t9buf;
-    let display = typed;
-    for (let i = typed.length; i < expected; i++) display += '_';
-    el.textContent = display || '_';
-    if (meta) meta.textContent = '[123]';
-    return;
-  }
   if (inputMode === 'scroll') {
-    el.textContent = (t9buf + (t9pend ? '['+t9pend+']' : '')) || '▶';
-    if (meta) meta.textContent = '';
-  } else if (inputMode === 'predict') {
-    if (t9keys.length === 0) {
-      el.textContent = '▶';
-      if (meta) meta.textContent = '';
-    } else if (t9cands.length > 0) {
-      // Typewriter: reveal letters as keys are pressed
-      const word = t9cands[t9ci].toUpperCase();
-      let display = '';
-      for (let i = 0; i < word.length; i++) {
-        display += i < t9keys.length ? word[i] : '_';
-      }
-      el.textContent = display;
-      if (meta) {
-        meta.textContent = t9cands.length > 1
-          ? (t9ci + 1) + ' / ' + t9cands.length + '  —  tap 1 to cycle'
-          : '✓ to submit';
-      }
+    if (numericMode) {
+      const expected = currentPair ? currentPair.v.length : 1;
+      let display = t9buf;
+      for (let i = t9buf.length; i < expected; i++) display += '_';
+      el.textContent = display || '_';
+      if (meta) meta.textContent = '[123]';
     } else {
-      el.textContent = t9keys.join('-') + '  ✗';
-      if (meta) meta.textContent = 'no match — try ⌫';
+      el.textContent = (t9buf + (t9pend ? '['+t9pend+']' : '')) || '▶';
+      if (meta) meta.textContent = '';
     }
+  } else if (inputMode === 'predict') {
+    if (!currentPair) {
+      el.textContent = '▶'; if (meta) meta.textContent = ''; return;
+    }
+    const v = currentPair.v.toUpperCase();
+    let display = '';
+    for (let i = 0; i < v.length; i++) {
+      if (i < t9pos) {
+        display += v[i]; // revealed (including auto-inserted specials)
+      } else {
+        display += /[A-Z0-9]/.test(v[i]) ? '_' : v[i]; // show structure of specials
+      }
+    }
+    el.textContent = display;
+    if (meta) meta.textContent = '';
   } else {
     const ki = document.getElementById('keyboard-input');
     el.textContent = ki.value || '▶';
@@ -1100,7 +1100,7 @@ function showNextPrompt() {
   currentPair = deck[deckIdx % deck.length]; deckIdx++;
   numericMode = /^\d+$/.test(currentPair.v);
   document.getElementById('question-text').textContent = currentPair.k;
-  t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
+  t9buf = ''; t9pend = ''; t9pendKey = ''; t9pendIdx = 0; t9pos = 0;
   hintUsed = false;
   document.getElementById('btn-hint').classList.remove('used');
   const ht = document.getElementById('hint-text');
@@ -1123,13 +1123,13 @@ function submitAnswer(raw) {
     floatText(W/2, pathCY - pathRY - 20, '✓ '+currentPair.v, '#44ffaa');
     if (answerCount % 10 === 0) upgradeRandom();
     updateStreakDisplay();
-    t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
+    t9buf = ''; t9pend = ''; t9pendKey = ''; t9pendIdx = 0; t9pos = 0;
     showNextPrompt();
   } else {
     streak = 0; wrongW++;
     updateStreakDisplay();
     flashEl('rgba(255,50,50,0.14)');
-    t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
+    t9buf = ''; t9pend = ''; t9pendKey = ''; t9pendIdx = 0; t9pos = 0;
     updateInputDisplay();
     if (navigator.vibrate) navigator.vibrate([50,30,50]);
   }
@@ -1260,7 +1260,7 @@ function startGame(mode, fromCP) {
 function setInputMode(mode) {
   inputMode = mode;
   localStorage.setItem('keypadQuest_inputMode', mode);
-  t9buf = ''; t9pend = ''; t9pendKey = ''; t9keys = []; t9cands = []; t9ci = 0;
+  t9buf = ''; t9pend = ''; t9pendKey = ''; t9pendIdx = 0; t9pos = 0;
   const pad = document.getElementById('t9-pad');
   const kw = document.getElementById('keyboard-wrap');
   if (mode === 'keyboard') {
@@ -1270,7 +1270,7 @@ function setInputMode(mode) {
     pad.style.display = ''; kw.style.display = 'none';
   }
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
-  updateNextKeyAppearance();
+
   updateInputDisplay();
 }
 
@@ -1288,24 +1288,9 @@ function buildT9Pad() {
     btn.addEventListener('pointerleave', () => btn.classList.remove('pressed'));
     pad.appendChild(btn);
   }
-  updateNextKeyAppearance();
+
 }
 
-function updateNextKeyAppearance() {
-  const btn = document.getElementById('t9-key-next');
-  if (!btn) return;
-  if (inputMode === 'predict') {
-    btn.classList.add('predict-active');
-    btn.querySelector('.kn').textContent = '▶ Next';
-    const kl = btn.querySelector('.kl');
-    if (kl) kl.textContent = 'cycle';
-  } else {
-    btn.classList.remove('predict-active');
-    btn.querySelector('.kn').textContent = '1';
-    const kl = btn.querySelector('.kl');
-    if (kl) kl.textContent = '';
-  }
-}
 
 // ─── Deck selector ────────────────────────────────────────────────────────────
 
@@ -1706,6 +1691,12 @@ document.getElementById('btn-new-deck').addEventListener('click', showNewDeckFor
 document.getElementById('btn-import-deck').addEventListener('click', showImportTextarea);
 
 document.getElementById('btn-hint').addEventListener('click', showHint);
+document.getElementById('btn-skip').addEventListener('click', () => {
+  if (gameState !== 'playing' || !currentPair) return;
+  if (!chillMode) { streak = 0; updateStreakDisplay(); }
+  floatText(pathCX, pathCY, 'skipped', 'rgba(255,255,255,0.45)');
+  showNextPrompt();
+});
 
 // ─── Settings integration ─────────────────────────────────────────────────────
 
