@@ -490,6 +490,7 @@ let slots = [], selectedTower = null, waveOver = false;
 let inputMode = localStorage.getItem('keypadQuest_inputMode') || 'scroll';
 let t9buf = '', t9pend = '', t9pendKey = '', t9pendIdx = 0, t9timer = null;
 let t9pos = 0; // predict mode: position in currentPair.v
+let autoSubmitTimer = null;
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -986,7 +987,8 @@ function autoFillScrollSpecials() {
   if (t9buf.length === v.length) {
     const answer = t9buf;
     t9buf = '';
-    setTimeout(() => submitAnswer(answer), 0);
+    clearTimeout(autoSubmitTimer);
+    autoSubmitTimer = setTimeout(() => { autoSubmitTimer = null; submitAnswer(answer); }, 300);
   }
 }
 
@@ -1034,6 +1036,7 @@ function handleT9(key) {
   }
 
   if (key === 'ok') {
+    clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
     if (inputMode === 'scroll') {
       clearTimeout(t9timer); confirmScrollChar();
       if (t9buf.length > 0) { submitAnswer(t9buf); t9buf = ''; }
@@ -1079,7 +1082,10 @@ function handleT9(key) {
       t9pos++;
       while (t9pos < v.length && !/[a-z0-9]/i.test(v[t9pos])) t9pos++;
       updateInputDisplay();
-      if (t9pos >= v.length) submitAnswer(v);
+      if (t9pos >= v.length) {
+        clearTimeout(autoSubmitTimer);
+        autoSubmitTimer = setTimeout(() => { autoSubmitTimer = null; submitAnswer(v); }, 300);
+      }
     } else {
       flashInputError();
     }
@@ -1156,6 +1162,7 @@ function showHint() {
 // ─── Answer handling ──────────────────────────────────────────────────────────
 
 function showNextPrompt() {
+  clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
   if (!deck.length) return;
   currentPair = deck[deckIdx % deck.length]; deckIdx++;
   numericMode = /^\d+$/.test(currentPair.v);
@@ -1322,6 +1329,7 @@ function startGame(mode, fromCP) {
 // ─── Input mode switching ─────────────────────────────────────────────────────
 
 function setInputMode(mode) {
+  clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
   inputMode = mode;
   localStorage.setItem('keypadQuest_inputMode', mode);
   t9buf = ''; t9pend = ''; t9pendKey = ''; t9pendIdx = 0; t9pos = 0;
