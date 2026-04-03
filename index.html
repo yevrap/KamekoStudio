@@ -276,8 +276,8 @@
                         <div class="game-emoji">⌨️</div>
                         <div class="game-title">Keypad Quest</div>
                         <div class="game-desc">Answer questions to build your tower defense — T9 or keyboard</div>
-                        <div class="game-meta" id="meta-memoryTower"></div>
-                        <a href="games/memory-tower/index.html" class="play-btn" style="background:#009940">▶ Play &nbsp;1🪙</a>
+                        <div class="game-meta" id="meta-keypadQuest"></div>
+                        <a href="games/keypad-quest/index.html" class="play-btn" style="background:#009940">▶ Play &nbsp;1🪙</a>
                     </div>
                 </div>
 
@@ -320,7 +320,7 @@
         const GAMES_META = [
             { id: 'hiddenObject', name: 'Hidden Object', emoji: '🔍', href: 'games/hidden-object/index.html' },
             { id: 'materialsRun', name: 'Materials Run', emoji: '🏃', href: 'games/materials-run/index.html' },
-            { id: 'memoryTower',  name: 'Keypad Quest',  emoji: '⌨️', href: 'games/memory-tower/index.html' },
+            { id: 'keypadQuest',  name: 'Keypad Quest',  emoji: '⌨️', href: 'games/keypad-quest/index.html' },
             { id: 'riverRun',     name: 'River Run',     emoji: '🌊', href: 'games/river-run/index.html' },
             { id: 'blobZapper',   name: 'Blob Zapper',   emoji: '⚡', href: 'games/blob-zapper/index.html' },
         ];
@@ -382,7 +382,7 @@
 
             var towerWave = parseInt(localStorage.getItem('keypadQuestHighWave') || '0', 10);
             if (towerWave > 0) {
-                var el = document.getElementById('meta-memoryTower');
+                var el = document.getElementById('meta-keypadQuest');
                 if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: Wave ' + towerWave;
             }
 

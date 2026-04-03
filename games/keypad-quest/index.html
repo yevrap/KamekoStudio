@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Keypad Quest</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+  <div id="header">
+    <span id="wave-display">Wave 1</span>
+    <span id="streak-display"></span>
+    <span id="token-display">🪙 <span id="headerTokenCount">0</span></span>
+  </div>
+
+  <canvas id="game-canvas"></canvas>
+
+  <div id="prompt-bar">
+    <div id="prompt-top">
+      <div id="question-text">Select a mode to begin</div>
+      <button id="btn-skip">Skip</button>
+      <button id="btn-hint">💡 Hint</button>
+    </div>
+    <div id="input-display">▶</div>
+    <div id="predict-meta"></div>
+    <span id="hint-text"></span>
+  </div>
+
+  <div id="tower-strip"></div>
+
+  <div id="input-area">
+    <div id="t9-pad"></div>
+    <div id="keyboard-wrap" style="display:none">
+      <button id="keyboard-focus-btn">Tap to type ▸</button>
+      <button id="keyboard-submit">Submit ↵</button>
+    </div>
+  </div>
+</div>
+
+<!-- Menu overlay -->
+<div id="menu-overlay" class="overlay">
+  <div class="g-title">KEYPAD QUEST</div>
+  <div class="g-sub">Build your defense by answering questions</div>
+  <div id="menu-best" class="g-sub" style="color:#00ffee;margin-bottom:16px;"></div>
+  <div id="continue-wrap" style="display:none;width:100%;max-width:300px;margin-bottom:4px;">
+    <button class="mbtn teal" id="continue-btn">▶ Continue — Wave <span id="continue-wave-num">1</span></button>
+  </div>
+  <button class="mbtn teal" id="btn-play" style="text-align:center;">▶ Play</button>
+  <button class="mbtn pink" id="btn-chill" style="text-align:center;">😌 Chill / Practice</button>
+  <button class="mbtn dim" id="btn-choose-decks" style="margin-top:4px;border-color:rgba(0,255,238,0.2);color:rgba(0,255,238,0.6);text-align:center;">📚 Choose Decks</button>
+  <button class="mbtn dim" id="btn-deck-mgr" style="border-color:rgba(255,255,255,0.12);color:rgba(255,255,255,0.4);text-align:center;">✏️ Manage My Decks</button>
+</div>
+
+<!-- Deck selector overlay -->
+<div id="deck-selector-overlay" class="overlay hidden" style="justify-content:flex-start;padding-top:18px;">
+  <div id="deck-selector-header" style="display:flex;align-items:center;gap:10px;width:100%;max-width:340px;margin-bottom:8px;">
+    <button id="deck-selector-back" style="background:none;border:1px solid rgba(255,255,255,0.2);border-radius:8px;color:rgba(255,255,255,0.6);font-size:0.9em;cursor:pointer;padding:6px 12px;min-height:36px;font-family:'Courier New',monospace;-webkit-tap-highlight-color:transparent;flex-shrink:0;">← Back</button>
+    <span style="flex:1;font-size:1em;color:#00ffee;font-weight:bold;">CHOOSE DECKS</span>
+  </div>
+  <div id="deck-selector-list" style="width:100%;max-width:340px;overflow-y:auto;max-height:60vh;"></div>
+  <button class="mbtn teal center" id="btn-play-selected" style="margin-top:10px;max-width:340px;">▶ Play Selected</button>
+</div>
+
+<!-- Deck manager overlay -->
+<div id="deck-overlay" class="overlay hidden" style="justify-content:flex-start;padding-top:18px;">
+  <div id="deck-header">
+    <button id="deck-back">← Back</button>
+    <span id="deck-title">MY DECKS</span>
+  </div>
+  <div style="display:flex;gap:8px;width:100%;max-width:340px;">
+    <button class="mbtn teal" id="btn-new-deck" style="flex:1;text-align:center;padding-left:8px;padding-right:8px;">+ New Deck</button>
+    <button class="mbtn dim" id="btn-import-deck" style="flex:1;text-align:center;border-color:rgba(0,255,238,0.2);color:rgba(0,255,238,0.6);padding-left:8px;padding-right:8px;">📥 Import</button>
+  </div>
+  <div id="deck-new-form-wrap" style="display:none;width:100%;max-width:340px;margin-bottom:6px;"></div>
+  <div id="deck-import-wrap" style="display:none;width:100%;max-width:340px;margin-bottom:6px;"></div>
+  <div id="deck-manager-list" style="width:100%;max-width:340px;overflow-y:auto;max-height:65vh;"></div>
+</div>
+
+<!-- Import prompt overlay (URL-based share link) -->
+<div id="import-prompt-overlay" style="display:none;position:fixed;inset:0;background:rgba(5,5,16,0.88);align-items:center;justify-content:center;z-index:2000;">
+  <div id="import-panel" style="background:rgba(10,10,30,0.98);border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:24px 20px;max-width:300px;width:90%;display:flex;flex-direction:column;align-items:center;gap:10px;">
+    <div style="font-size:0.72em;color:rgba(255,255,255,0.4);letter-spacing:0.1em;">IMPORT DECK</div>
+    <div id="import-deck-name" style="font-size:1.1em;color:#00ffee;text-align:center;font-weight:bold;text-shadow:0 0 10px #00ffee55;"></div>
+    <div id="import-deck-meta" style="font-size:0.75em;color:rgba(255,255,255,0.4);"></div>
+    <button class="mbtn teal center" id="btn-import-confirm" style="max-width:260px;margin-top:4px;">Import as New Deck</button>
+    <button class="mbtn dim center" id="btn-import-cancel" style="max-width:260px;">Cancel</button>
+  </div>
+</div>
+
+<div id="feedback-flash"></div>
+
+<input id="keyboard-input" type="text"
+  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+  inputmode="text">
+
+<script src="../../shared/utils.js"></script>
+<script src="game.js"></script>
+<script src="../../shared/settings.js" data-gallery-depth="2"></script>
+</body>
+</html>

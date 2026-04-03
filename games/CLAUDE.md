@@ -1,6 +1,6 @@
 # games/ — Kameko Studio Games
 
-Each game lives in its own subdirectory with an `index.html` as the entry point. Every game is a fully self-contained single HTML file with all CSS and JS inline — no external assets, no imports from sibling directories.
+Each game lives in its own subdirectory. `games/keypad-quest/` is split into `index.html`, `style.css`, and `game.js`. Other games use a single self-contained `index.html`. New games should follow the three-file convention.
 
 ## Games
 
@@ -8,8 +8,8 @@ Each game lives in its own subdirectory with an `index.html` as the entry point.
 |-----------|-------|----------|--------|
 | `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Stable |
 | `hidden-object/` | Hidden Object Game | DOM | Stable |
-| `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Active development |
-| `memory-tower/` | Tower Defense Rogue-like | Canvas 2D | Stable |
+| `keypad-quest/` | Keypad Quest | Canvas 2D | Active |
+| `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
 | `river-run/` | River Runner 3D | Three.js r128 | Stable |
 | `waterfall/` | 3D Auto-Aim Endless Shooter | Three.js r128 | Stable (not in gallery) |
 
@@ -37,12 +37,14 @@ startButton.addEventListener('click', () => {
 });
 ```
 
-The `lastPlayed_*` key feeds the "Recently Played" section on the arcade dashboard.
+The `lastPlayed_*` key feeds the "Recently Played" section on the arcade dashboard. The dashboard derives the key from the game's `id` in `GAMES_META` in `index.html` — keep them consistent.
 
 ## Settings Panel Integration (required in every game)
 
-Include `settings.js` before `</body>`:
+Include `settings.js` (and `utils.js` if the game uses shared utilities) before `</body>`:
 ```html
+<script src="../../shared/utils.js"></script>
+<script src="game.js"></script>
 <script src="../../shared/settings.js" data-gallery-depth="2"></script>
 ```
 
@@ -52,7 +54,21 @@ window.addEventListener('settingsOpened', () => { /* pause */ });
 window.addEventListener('settingsClosed', () => { /* resume */ });
 ```
 
-**Per-game settings rows:** Inject custom toggle rows into `#settings-panel` lazily on first `settingsOpened` — the panel doesn't exist before `settings.js` runs. See `river-run/index.html` for a full example (auto-shoot, auto-avoid, invert drag, with pill toggle UI).
+**Per-game settings rows:** Inject custom content into `#settings-panel` using `insertBefore(section, document.getElementById('dev-mode-section'))` so it appears above the developer tools. See `games/keypad-quest/game.js` for a full example (input mode selector + stats section).
+
+## localStorage Keys
+
+| Key | Game | Notes |
+|-----|------|-------|
+| `lastPlayed_hiddenObject` | hidden-object | Set on session start |
+| `lastPlayed_materialsRun` | materials-run | Set on session start |
+| `lastPlayed_keypadQuest` | keypad-quest | Set on session start |
+| `lastPlayed_riverRun` | river-run | Set on session start |
+| `lastPlayed_blobZapper` | blob-zapper | Set on session start |
+| `gridGameTopScoreScore` | materials-run | Score mode high score |
+| `gridGameTopScoreSurvival` | materials-run | Survival mode high score |
+| `riverRunHighScore` | river-run | Points high score |
+| `keypadQuestHighWave` | keypad-quest | Highest wave reached |
 
 ## Three.js Obstacle Arrays
 
@@ -60,11 +76,10 @@ In Three.js games, obstacle arrays store objects of shape `{ mesh, boundingBox }
 
 ## Adding a New Game
 
-1. Create `games/<game-name>/index.html`
-2. Add all CSS and JS inline in that file
-3. Add a card to root `index.html` (sets `lastPlayed_*` key for the dashboard)
-4. Add a portal link to root `3d.html`
-5. Include `shared/settings.js` with `data-gallery-depth="2"`
-6. Add token gate + `lastPlayed_<gameName>` write at session start
-7. Add `settingsOpened` / `settingsClosed` pause/resume listeners
-8. Add a `lastPlayed_<gameName>` entry to the localStorage keys table in `CLAUDE.md` (root)
+1. Create `games/<game-name>/` with `index.html`, `style.css`, `game.js`
+2. Add a card to root `index.html` with the game's `id` matching `lastPlayed_<id>` key
+3. Add a portal link to root `3d.html`
+4. Include `shared/utils.js` (if needed) and `shared/settings.js` with `data-gallery-depth="2"`
+5. Add token gate + `localStorage.setItem('lastPlayed_<id>', Date.now())` at session start
+6. Add `settingsOpened` / `settingsClosed` pause/resume listeners
+7. Add the `lastPlayed_<id>` entry to the localStorage key tables in root `CLAUDE.md` and `GEMINI.md`

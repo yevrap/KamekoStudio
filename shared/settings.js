@@ -148,10 +148,10 @@
       'theme', 'tokens', 'devMode',
       // Game progress
       'gridGameTopScoreScore', 'gridGameTopScoreSurvival',
-      'riverRunHighScore', 'memoryTowerHighWave',
+      'riverRunHighScore', 'keypadQuestHighWave',
       // Last played timestamps
       'lastPlayed_hiddenObject', 'lastPlayed_materialsRun',
-      'lastPlayed_memoryTower', 'lastPlayed_riverRun',
+      'lastPlayed_keypadQuest', 'lastPlayed_riverRun',
       'lastPlayed_blobZapper',
       // Game-specific settings
       'riverRun_autoShoot', 'riverRun_autoAvoid',
