@@ -98,10 +98,6 @@
       padding-bottom: env(safe-area-inset-bottom);
     }
 
-    #mode-toggle-row {
-      display: flex; justify-content: center; gap: 6px; padding: 5px 8px; flex-shrink: 0;
-    }
-
     .mode-btn {
       padding: 4px 11px; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px;
       background: transparent; color: rgba(255,255,255,0.45); font-size: 0.68em;
@@ -339,11 +335,6 @@
   <div id="tower-strip"></div>
 
   <div id="input-area">
-    <div id="mode-toggle-row">
-      <button class="mode-btn" data-mode="scroll">Tap to Spell</button>
-      <button class="mode-btn" data-mode="predict">T9 Smart</button>
-      <button class="mode-btn" data-mode="keyboard">Keyboard</button>
-    </div>
     <div id="t9-pad"></div>
     <div id="keyboard-wrap" style="display:none">
       <button id="keyboard-focus-btn">Tap to type ▸</button>
@@ -1807,7 +1798,7 @@ document.addEventListener('visibilitychange', () => {
 
 // ─── Button wiring ────────────────────────────────────────────────────────────
 
-document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => setInputMode(b.dataset.mode)));
+document.addEventListener('click', e => { const btn = e.target.closest('.mode-btn'); if (btn) setInputMode(btn.dataset.mode); });
 
 document.getElementById('btn-play').addEventListener('click',        () => startGame('play', false));
 document.getElementById('btn-chill').addEventListener('click',       () => startGame('chill', false));
@@ -1831,6 +1822,33 @@ document.getElementById('btn-skip').addEventListener('click', () => {
 });
 
 // ─── Settings integration ─────────────────────────────────────────────────────
+
+function injectInputModeSection() {
+  if (document.getElementById('kq-input-mode')) return;
+  const panel = document.getElementById('settings-panel');
+  if (!panel) return;
+  const sec = document.createElement('div');
+  sec.id = 'kq-input-mode';
+  sec.style.cssText = 'padding:14px 4px 0; font-family:sans-serif;';
+  const lbl = document.createElement('div');
+  lbl.textContent = 'Input Mode';
+  lbl.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.35);letter-spacing:0.1em;margin-bottom:8px;';
+  const row = document.createElement('div');
+  row.style.cssText = 'display:flex; gap:6px; flex-wrap:wrap;';
+  [['scroll','Tap to Spell'],['predict','T9 Smart'],['keyboard','Keyboard']].forEach(([mode, name]) => {
+    const btn = document.createElement('button');
+    btn.className = 'mode-btn';
+    btn.dataset.mode = mode;
+    btn.textContent = name;
+    btn.classList.toggle('active', mode === inputMode);
+    row.appendChild(btn);
+  });
+  sec.appendChild(lbl);
+  sec.appendChild(row);
+  const devSection = document.getElementById('dev-mode-section');
+  if (devSection) panel.insertBefore(sec, devSection);
+  else panel.appendChild(sec);
+}
 
 function injectGameStatsSection() {
   if (document.getElementById('kq-game-stats')) {
@@ -1863,7 +1881,9 @@ function injectGameStatsSection() {
     showMenu();
   });
   sec.appendChild(quitBtn);
-  panel.appendChild(sec);
+  const devSection = document.getElementById('dev-mode-section');
+  if (devSection) panel.insertBefore(sec, devSection);
+  else panel.appendChild(sec);
   updateGameStatsSection();
 }
 
@@ -1891,10 +1911,12 @@ function updateGameStatsSection() {
 window.addEventListener('settingsOpened', () => {
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   if (gameState === 'playing') gameState = 'paused';
+  injectInputModeSection();
   if (gameState === 'paused') injectGameStatsSection();
 });
 
 window.addEventListener('settingsClosed', () => {
+  document.getElementById('kq-input-mode')?.remove();
   document.getElementById('kq-game-stats')?.remove();
   if (gameState === 'paused') gameState = 'playing';
   startLoop();

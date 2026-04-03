@@ -419,7 +419,6 @@
 
     devModeRow.appendChild(devModeLabel);
     devModeRow.appendChild(devModeToggleSwitch);
-    panel.appendChild(devModeRow);
 
     // --- Clear Data Button (in its own container) ---
     const devToolsContainer = document.createElement('div');
@@ -429,7 +428,7 @@
         'flex-direction:column', 'gap:10px',
         'padding-top: 14px'
     ].join(';');
-    
+
     const clearDataBtn = document.createElement('button');
     clearDataBtn.id = 'clear-data-btn';
     clearDataBtn.textContent = '\uD83D\uDDD1\uFE0F Clear All Game Data';
@@ -450,7 +449,14 @@
     clearDataBtn.addEventListener('click', clearAllGameData);
 
     devToolsContainer.appendChild(clearDataBtn);
-    panel.appendChild(devToolsContainer);
+
+    // Wrap separator + dev mode toggle + dev tools in a named section so games can insert before it
+    const devSection = document.createElement('div');
+    devSection.id = 'dev-mode-section';
+    devSection.appendChild(devToolsSeparator);
+    devSection.appendChild(devModeRow);
+    devSection.appendChild(devToolsContainer);
+    panel.appendChild(devSection);
 
     overlay.appendChild(panel);
 
