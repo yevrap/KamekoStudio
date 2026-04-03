@@ -1333,23 +1333,56 @@ function startGame(mode, fromCP) {
 // ─── Input mode switching ─────────────────────────────────────────────────────
 
 function setInputMode(mode) {
-  clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
+  clearTimeout(t9timer); t9timer = null;
+  // Do NOT cancel autoSubmitTimer — pending auto-submit should still fire
+
+  // Capture current progress as a character index into currentPair.v
+  let progress = 0;
+  const ki = document.getElementById('keyboard-input');
+  if (currentPair) {
+    if (inputMode === 'scroll')        progress = t9buf.length;
+    else if (inputMode === 'predict')  progress = t9pos;
+    else if (inputMode === 'keyboard') {
+      const typed = ki.value.toLowerCase();
+      const ans   = currentPair.v.toLowerCase();
+      progress = (ans.startsWith(typed) && typed.length > 0) ? typed.length : 0;
+    }
+  }
+
+  // Clear pending scroll char state (never carries across modes)
+  t9pend = ''; t9pendKey = ''; t9pendIdx = 0;
+
+  // Convert progress to new mode's state representation
+  if (mode === 'scroll') {
+    t9buf = currentPair ? currentPair.v.slice(0, progress) : '';
+    t9pos = 0;
+    ki.value = '';
+  } else if (mode === 'predict') {
+    t9buf = '';
+    t9pos = progress;
+    if (t9pos === 0 && currentPair) {
+      const v = currentPair.v;
+      while (t9pos < v.length && !/[a-z0-9]/i.test(v[t9pos])) t9pos++;
+    }
+    ki.value = '';
+  } else if (mode === 'keyboard') {
+    ki.value = currentPair ? currentPair.v.slice(0, progress) : '';
+    t9buf = ''; t9pos = 0;
+  }
+
   inputMode = mode;
   localStorage.setItem('keypadQuest_inputMode', mode);
-  t9buf = ''; t9pend = ''; t9pendKey = ''; t9pendIdx = 0; t9pos = 0;
-  if (mode === 'predict' && currentPair) {
-    const v = currentPair.v;
-    while (t9pos < v.length && !/[a-z0-9]/i.test(v[t9pos])) t9pos++;
-  }
+
   const pad = document.getElementById('t9-pad');
-  const kw = document.getElementById('keyboard-wrap');
+  const kw  = document.getElementById('keyboard-wrap');
   if (mode === 'keyboard') {
     pad.style.display = 'none'; kw.style.display = '';
-    if (gameState === 'playing') setTimeout(() => document.getElementById('keyboard-input').focus(), 50);
+    if (gameState === 'playing') setTimeout(() => ki.focus(), 50);
   } else {
     pad.style.display = ''; kw.style.display = 'none';
   }
-  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  document.querySelectorAll('.mode-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === mode));
 
   updateInputDisplay();
 }
