@@ -985,10 +985,12 @@ function autoFillScrollSpecials() {
   }
   updateInputDisplay();
   if (t9buf.length === v.length) {
-    const answer = t9buf;
-    t9buf = '';
     clearTimeout(autoSubmitTimer);
-    autoSubmitTimer = setTimeout(() => { autoSubmitTimer = null; submitAnswer(answer); }, 300);
+    autoSubmitTimer = setTimeout(() => {
+      autoSubmitTimer = null;
+      const ans = t9buf; t9buf = '';
+      submitAnswer(ans);
+    }, 300);
   }
 }
 
@@ -1016,6 +1018,7 @@ function handleT9(key) {
 
   if (key === 'back') {
     clearTimeout(t9timer);
+    clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
     if (inputMode === 'scroll') {
       if (t9pend) { t9pend = ''; t9pendKey = ''; t9pendIdx = 0; }
       else if (t9buf.length > 0) {
@@ -1036,12 +1039,13 @@ function handleT9(key) {
   }
 
   if (key === 'ok') {
-    clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
     if (inputMode === 'scroll') {
       clearTimeout(t9timer); confirmScrollChar();
+      clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
       if (t9buf.length > 0) { submitAnswer(t9buf); t9buf = ''; }
       else flashInputError();
     } else if (inputMode === 'predict') {
+      clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
       if (currentPair && t9pos >= currentPair.v.length) submitAnswer(currentPair.v);
       else flashInputError();
     }
