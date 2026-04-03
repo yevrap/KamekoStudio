@@ -1167,6 +1167,7 @@ function showNextPrompt() {
     const v = currentPair.v;
     while (t9pos < v.length && !/[a-z0-9]/i.test(v[t9pos])) t9pos++;
   }
+  if (inputMode === 'keyboard') { const ki = document.getElementById('keyboard-input'); if (ki) ki.value = ''; }
   hintUsed = false;
   document.getElementById('btn-hint').classList.remove('used');
   const ht = document.getElementById('hint-text');
@@ -1769,12 +1770,14 @@ window.addEventListener('keydown', e => {
 
 document.getElementById('keyboard-submit').addEventListener('click', () => {
   const ki = document.getElementById('keyboard-input');
-  submitAnswer(ki.value); ki.value = ''; ki.focus();
+  const val = ki.value; ki.value = '';
+  submitAnswer(val); updateInputDisplay(); ki.focus();
 });
 
 document.getElementById('keyboard-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
-    submitAnswer(e.target.value); e.target.value = ''; updateInputDisplay(); e.target.focus();
+    const val = e.target.value; e.target.value = '';
+    submitAnswer(val); updateInputDisplay(); e.target.focus();
   }
 });
 document.getElementById('keyboard-input').addEventListener('input', () => {
