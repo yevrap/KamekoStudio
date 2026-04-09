@@ -79,7 +79,6 @@ let slots = [], selectedTower = null, waveOver = false;
 let inputMode = localStorage.getItem('keypadQuest_inputMode') || 'scroll';
 let t9buf = '', t9pend = '', t9pendKey = '', t9pendIdx = 0, t9timer = null;
 let t9pos = 0; // predict mode: position in currentPair.v
-let autoSubmitTimer = null;
 
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
@@ -533,14 +532,6 @@ function autoFillScrollSpecials() {
     t9buf += v[t9buf.length];
   }
   updateInputDisplay();
-  if (t9buf.length === v.length) {
-    clearTimeout(autoSubmitTimer);
-    autoSubmitTimer = setTimeout(() => {
-      autoSubmitTimer = null;
-      const ans = t9buf; t9buf = '';
-      submitAnswer(ans);
-    }, 300);
-  }
 }
 
 function confirmScrollChar() {
@@ -567,15 +558,16 @@ function handleT9(key) {
 
   if (key === 'back') {
     clearTimeout(t9timer);
-    clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
     if (inputMode === 'scroll') {
       if (t9pend) { t9pend = ''; t9pendKey = ''; t9pendIdx = 0; }
       else if (t9buf.length > 0) {
-        t9buf = t9buf.slice(0, -1);
+        // Strip any trailing auto-filled special chars first, then remove the last typed char
         while (t9buf.length > 0 && !/[a-z0-9]/i.test(t9buf[t9buf.length - 1])) {
           t9buf = t9buf.slice(0, -1);
         }
+        if (t9buf.length > 0) t9buf = t9buf.slice(0, -1);
       }
+      autoFillScrollSpecials();
     } else if (inputMode === 'predict' && currentPair && t9pos > 0) {
       const v = currentPair.v;
       let pos = t9pos;
@@ -590,11 +582,9 @@ function handleT9(key) {
   if (key === 'ok') {
     if (inputMode === 'scroll') {
       clearTimeout(t9timer); confirmScrollChar();
-      clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
-      if (t9buf.length > 0) { submitAnswer(t9buf); t9buf = ''; }
+      if (t9buf.length > 0) { submitAnswer(t9buf); }
       else flashInputError();
     } else if (inputMode === 'predict') {
-      clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
       if (currentPair && t9pos >= currentPair.v.length) submitAnswer(currentPair.v);
       else flashInputError();
     }
@@ -635,10 +625,6 @@ function handleT9(key) {
       t9pos++;
       while (t9pos < v.length && !/[a-z0-9]/i.test(v[t9pos])) t9pos++;
       updateInputDisplay();
-      if (t9pos >= v.length) {
-        clearTimeout(autoSubmitTimer);
-        autoSubmitTimer = setTimeout(() => { autoSubmitTimer = null; submitAnswer(v); }, 300);
-      }
     } else {
       flashInputError();
     }
@@ -661,7 +647,7 @@ function updateInputDisplay() {
         let display = '';
         for (let i = 0; i < v.length; i++) {
           if (i < t9buf.length) {
-            display += v[i];
+            display += t9buf[i];
           } else if (t9pend && i === t9buf.length) {
             display += '[' + t9pend + ']';
           } else {
@@ -691,8 +677,21 @@ function updateInputDisplay() {
     if (meta) meta.textContent = '';
   } else {
     const ki = document.getElementById('keyboard-input');
-    const val = ki.value;
-    el.textContent = val || '▶';
+    const val = ki.value; // alphanumeric only
+    if (!currentPair) {
+      el.textContent = val || '▶'; if (meta) meta.textContent = ''; return;
+    }
+    const v = currentPair.v.toUpperCase();
+    let display = '';
+    let ci = 0;
+    for (let i = 0; i < v.length; i++) {
+      if (/[A-Z0-9]/.test(v[i])) {
+        display += ci < val.length ? val[ci++].toUpperCase() : '_';
+      } else {
+        display += v[i];
+      }
+    }
+    el.textContent = display || '▶';
     const fb = document.getElementById('keyboard-focus-btn');
     if (fb) fb.textContent = val ? 'typing... ▸' : 'Tap to type ▸';
     if (meta) meta.textContent = '';
@@ -715,7 +714,6 @@ function showHint() {
 // ─── Answer handling ──────────────────────────────────────────────────────────
 
 function showNextPrompt() {
-  clearTimeout(autoSubmitTimer); autoSubmitTimer = null;
   if (!deck.length) return;
   currentPair = deck[deckIdx % deck.length]; deckIdx++;
   numericMode = /^\d+$/.test(currentPair.v);
@@ -725,6 +723,7 @@ function showNextPrompt() {
     const v = currentPair.v;
     while (t9pos < v.length && !/[a-z0-9]/i.test(v[t9pos])) t9pos++;
   }
+  if (inputMode === 'scroll') autoFillScrollSpecials();
   if (inputMode === 'keyboard') { const ki = document.getElementById('keyboard-input'); if (ki) ki.value = ''; }
   hintUsed = false;
   document.getElementById('btn-hint').classList.remove('used');
@@ -735,6 +734,24 @@ function showNextPrompt() {
 }
 
 // typeForStreak: see shared/utils.js
+
+// Reconstructs the full answer by inserting typed alphanumeric chars into the
+// special-char positions of the answer template. This lets keyboard mode accept
+// only letters/digits while the game auto-inserts parens, spaces, hyphens, etc.
+function buildKeyboardAnswer(typed) {
+  if (!currentPair) return typed;
+  const v = currentPair.v;
+  let result = '';
+  let ti = 0;
+  for (let i = 0; i < v.length; i++) {
+    if (/[a-z0-9]/i.test(v[i])) {
+      result += ti < typed.length ? typed[ti++] : '\x00';
+    } else {
+      result += v[i];
+    }
+  }
+  return result;
+}
 
 function submitAnswer(raw) {
   if (!currentPair) return;
@@ -752,7 +769,7 @@ function submitAnswer(raw) {
     streak = 0; wrongW++;
     updateStreakDisplay();
     flashEl('rgba(255,50,50,0.14)');
-    t9buf = ''; t9pend = ''; t9pendKey = ''; t9pendIdx = 0; t9pos = 0;
+    t9pend = ''; t9pendKey = ''; t9pendIdx = 0;
     updateInputDisplay();
     if (navigator.vibrate) navigator.vibrate([50,30,50]);
   }
@@ -882,13 +899,16 @@ function startGame(mode, fromCP) {
 
 function setInputMode(mode) {
   clearTimeout(t9timer); t9timer = null;
-  // Do NOT cancel autoSubmitTimer — pending auto-submit should still fire
 
   // Capture current progress as a character index into currentPair.v
   let progress = 0;
   const ki = document.getElementById('keyboard-input');
   if (currentPair) {
-    if (inputMode === 'scroll')        progress = t9buf.length;
+    if (inputMode === 'scroll') {
+      const matchesPrefix = currentPair &&
+        currentPair.v.toLowerCase().startsWith(t9buf.toLowerCase());
+      progress = matchesPrefix ? t9buf.length : 0;
+    }
     else if (inputMode === 'predict')  progress = t9pos;
     else if (inputMode === 'keyboard') {
       const typed = ki.value.toLowerCase();
@@ -905,6 +925,7 @@ function setInputMode(mode) {
     t9buf = currentPair ? currentPair.v.slice(0, progress) : '';
     t9pos = 0;
     ki.value = '';
+    autoFillScrollSpecials();
   } else if (mode === 'predict') {
     t9buf = '';
     t9pos = progress;
@@ -914,7 +935,8 @@ function setInputMode(mode) {
     }
     ki.value = '';
   } else if (mode === 'keyboard') {
-    ki.value = currentPair ? currentPair.v.slice(0, progress) : '';
+    const prefix = currentPair ? currentPair.v.slice(0, progress) : '';
+    ki.value = prefix.replace(/[^a-z0-9]/gi, '');
     t9buf = ''; t9pos = 0;
   }
 
@@ -1326,17 +1348,21 @@ window.addEventListener('keydown', e => {
 
 document.getElementById('keyboard-submit').addEventListener('click', () => {
   const ki = document.getElementById('keyboard-input');
-  const val = ki.value; ki.value = '';
-  submitAnswer(val); updateInputDisplay(); ki.focus();
+  const typed = ki.value; ki.value = '';
+  submitAnswer(buildKeyboardAnswer(typed)); updateInputDisplay(); ki.focus();
 });
 
 document.getElementById('keyboard-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
-    const val = e.target.value; e.target.value = '';
-    submitAnswer(val); updateInputDisplay(); e.target.focus();
+    e.preventDefault();
+    const typed = e.target.value; e.target.value = '';
+    submitAnswer(buildKeyboardAnswer(typed)); updateInputDisplay(); e.target.focus();
   }
 });
 document.getElementById('keyboard-input').addEventListener('input', () => {
+  const ki = document.getElementById('keyboard-input');
+  const filtered = ki.value.replace(/[^a-z0-9]/gi, '');
+  if (ki.value !== filtered) ki.value = filtered;
   updateInputDisplay();
 });
 
