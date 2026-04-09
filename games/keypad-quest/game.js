@@ -381,7 +381,7 @@ function startWave(n) {
   enemies = []; projs = []; particles = []; ripples = []; floats = [];
   selectedTower = null; waveOver = false;
   document.getElementById('wave-display').textContent = 'Wave ' + wave;
-  showNextPrompt();
+  if (!currentPair) showNextPrompt();
 }
 
 function updateWave(dt) {
@@ -866,7 +866,7 @@ function startGame(mode, fromCP) {
   }
   deck = shuffle(activePairs.slice());
 
-  deckIdx = 0; answerCount = 0; streak = 0; score = 0;
+  deckIdx = 0; answerCount = 0; streak = 0; score = 0; currentPair = null;
   document.getElementById('menu-overlay').classList.add('hidden');
   for (const s of slots) { s.occupied = false; s.tower = null; }
   towers = [];

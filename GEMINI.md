@@ -176,7 +176,7 @@ Keypad Quest (`games/keypad-quest/`) is the most complex game in the studio. Key
 - **User decks:** `keypadQuest_decks` — `[{id, name, pairs:[{k,v}]}]`. IDs prefixed `u-`.
 - **Active deck selection:** `keypadQuest_activeDeckIds` — array of IDs from built-in + user decks.
 - **Deck share/import:** Plain text format (`# Name\nkey: value`). Share links use `?import=<base64-json>` — parsed on `init()`, URL cleaned with `history.replaceState`.
-- **Wave flow:** Continuous — `endWave()` calls `startWave(wave+1)` immediately. No summary screen.
+- **Wave flow:** Continuous — `endWave()` calls `startWave(wave+1)` immediately. No summary screen. `startWave` only calls `showNextPrompt()` if `currentPair === null` (i.e. game start / checkpoint resume) — wave transitions never disturb the active question.
 - **Settings panel:** On `settingsOpened` during a run, injects input mode selector + "Current Run" stats section above `#dev-mode-section`. Both removed on `settingsClosed`.
 
 ## Testing
