@@ -102,7 +102,7 @@
     btn.dataset.value  = card.value;
     btn.dataset.suit   = card.suit;
     btn.dataset.owner  = owner;
-    btn.textContent = displayValue(card.value) + ' ' + suitEmoji(card.suit);
+    btn.innerHTML = '<span class="c-val">' + displayValue(card.value) + '</span><span class="c-suit">' + suitEmoji(card.suit) + '</span>';
     return btn;
   }
 
