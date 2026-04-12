@@ -333,12 +333,12 @@
     while (topBoardArray.length > 0) discardArray.push(topBoardArray.pop());
     while (bottomBoardArray.length > 0) discardArray.push(bottomBoardArray.pop());
 
-    // Swap attacker
+    // Auto-draw both players (Original attacker draws first)
+    autoDrawBoth();
+
+    // Swap attacker for the next bout
     attacker = (attacker === 'top') ? 'bottom' : 'top';
     priority = attacker;
-
-    // Auto-draw both players
-    autoDrawBoth();
 
     renderAll();
     if (!checkGameOver()) maybeAiTurn();
