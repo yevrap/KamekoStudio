@@ -249,15 +249,6 @@
   }
 
   // --- Actions ---
-  function drawCard(who) {
-    if (gameState !== 'playing') return;
-    var handArr = (who === 'top') ? topHandArray : bottomHandArray;
-    if (handArr.length >= 6 || deckArray.length === 0) return;
-
-    var card = deckArray.pop();
-    handArr.push(card);
-    renderAll();
-  }
 
   function canPlayCard(card, who) {
     var cardVal  = parseInt(card.value);
@@ -372,19 +363,6 @@
     if (gameState !== 'playing' || !aiMode || priority !== 'top') return;
     clearAiTimeout();
 
-    // Auto-draw first
-    if (topHandArray.length < 6 && deckArray.length > 0) {
-      aiTimeout = setTimeout(function () {
-        if (gameState !== 'playing' || priority !== 'top') return;
-        while (topHandArray.length < 6 && deckArray.length > 0) {
-          topHandArray.push(deckArray.pop());
-        }
-        renderAll();
-        aiDecide();
-      }, 300);
-      return;
-    }
-
     aiDecide();
   }
 
@@ -485,8 +463,7 @@
       var who = actionBtn.dataset.player;
       if (aiMode && who === 'top') return;
       var action = actionBtn.dataset.action;
-      if (action === 'draw') drawCard(who);
-      else if (action === 'take') takeCards(who);
+      if (action === 'take') takeCards(who);
       else if (action === 'pass') passRound(who);
       return;
     }
