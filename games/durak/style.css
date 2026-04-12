@@ -1,0 +1,483 @@
+/* === Durak — Responsive Card Game Styles === */
+
+/* --- CSS Custom Properties (dark mode default) --- */
+:root {
+  --bg: #0a0a14;
+  --surface: #1a1a2e;
+  --text: #e0e0ff;
+  --text-muted: #7777aa;
+  --card-bg: #2a2a44;
+  --card-border: #444466;
+  --card-red: #ff5555;
+  --card-black: #ccccee;
+  --btn-bg: rgba(255,255,255,0.07);
+  --btn-border: rgba(255,255,255,0.18);
+  --btn-text: rgba(255,255,255,0.7);
+  --btn-disabled-bg: rgba(255,255,255,0.03);
+  --btn-disabled-text: rgba(255,255,255,0.2);
+  --field-bg: rgba(255,255,255,0.03);
+  --active-glow: rgba(100, 180, 255, 0.25);
+  --overlay-bg: rgba(5,5,16,0.96);
+  --header-bg: rgba(10,10,20,0.85);
+}
+
+body:not(.dark-mode) {
+  --bg: #f0f4f8;
+  --surface: #ffffff;
+  --text: #1a202c;
+  --text-muted: #64748b;
+  --card-bg: #ffffff;
+  --card-border: #d0d0d0;
+  --card-red: #cc0000;
+  --card-black: #222222;
+  --btn-bg: #eef0f4;
+  --btn-border: #ccd0d8;
+  --btn-text: #333;
+  --btn-disabled-bg: #f4f4f4;
+  --btn-disabled-text: #bbb;
+  --field-bg: rgba(0,0,0,0.04);
+  --active-glow: rgba(60, 130, 255, 0.18);
+  --overlay-bg: rgba(240,244,248,0.97);
+  --header-bg: rgba(240,244,248,0.9);
+}
+
+/* --- Reset & base --- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --- App layout --- */
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 4px;
+}
+
+/* --- Header --- */
+#header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 0 12px;
+  padding-right: 58px;
+  background: var(--header-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--card-border);
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+#game-title { color: var(--text); font-size: 0.9rem; }
+#deck-count { font-variant-numeric: tabular-nums; }
+
+#trump-display {
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+#trump-display.suit-red { color: var(--card-red); }
+#trump-display.suit-black { color: var(--card-black); }
+
+/* --- Settings gear override --- */
+#settings-gear-btn {
+  position: fixed !important;
+  top: 6px !important;
+  right: 8px !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 10px !important;
+}
+
+/* --- Player zones --- */
+#top-zone, #bottom-zone {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 4px 0;
+  transition: box-shadow 0.3s ease;
+}
+
+#bottom-zone {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+#top-zone.active-turn, #bottom-zone.active-turn {
+  box-shadow: inset 0 0 20px var(--active-glow);
+  border-radius: 8px;
+}
+
+/* --- Action buttons row --- */
+.options-row {
+  display: flex;
+  gap: 6px;
+  padding: 4px 8px;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  min-height: 40px;
+  min-width: 44px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.action-btn:active:not(:disabled) {
+  background: rgba(255,255,255,0.15);
+}
+
+body:not(.dark-mode) .action-btn:active:not(:disabled) {
+  background: #dde0e6;
+}
+
+.action-btn:disabled {
+  background: var(--btn-disabled-bg);
+  color: var(--btn-disabled-text);
+  cursor: default;
+  border-color: transparent;
+}
+
+/* --- Hand containers --- */
+.hand-row {
+  display: flex;
+  gap: 5px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  align-items: center;
+  align-content: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hand-row::-webkit-scrollbar { display: none; }
+
+/* --- Card buttons --- */
+.card-btn {
+  min-width: 52px;
+  min-height: 60px;
+  padding: 6px 8px;
+  border: 2px solid var(--card-border);
+  border-radius: 10px;
+  background: var(--card-bg);
+  font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s, box-shadow 0.15s;
+  flex-shrink: 0;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.card-btn:active {
+  transform: scale(0.95);
+}
+
+.card-btn.suit-hearts,
+.card-btn.suit-diamonds {
+  color: var(--card-red);
+}
+
+.card-btn.suit-spades,
+.card-btn.suit-clubs {
+  color: var(--card-black);
+}
+
+/* Trump suit glow */
+.card-btn.trump-card {
+  border-color: rgba(255, 200, 50, 0.5);
+  box-shadow: 0 0 4px rgba(255, 200, 50, 0.15);
+}
+
+/* Field cards are non-interactive */
+.card-btn.field-card {
+  cursor: default;
+  opacity: 0.85;
+  min-width: 46px;
+  min-height: 54px;
+  font-size: clamp(0.75rem, 2vw, 0.95rem);
+}
+
+/* --- Field (board) area --- */
+#field {
+  flex: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 4px 8px;
+  min-height: 0;
+  background: var(--field-bg);
+  border-radius: 8px;
+  margin: 2px 4px;
+  flex-wrap: wrap;
+}
+
+.field-pair {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.field-pair > * + * {
+  margin-top: -16px;
+}
+
+.card-placeholder {
+  min-width: 46px;
+  min-height: 54px;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* --- Overlays --- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px 20px;
+  gap: 16px;
+}
+
+.overlay.hidden { display: none; }
+
+.g-title {
+  font-size: clamp(2rem, 8vw, 3.5rem);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.g-sub {
+  font-size: clamp(0.85rem, 3vw, 1.1rem);
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 300px;
+  line-height: 1.4;
+}
+
+.g-rules {
+  font-size: clamp(0.72rem, 2.5vw, 0.88rem);
+  color: var(--text-muted);
+  text-align: center;
+  max-width: 320px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.mbtn {
+  min-height: 48px;
+  padding: 12px 36px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  color: #fff;
+  transition: transform 0.1s, opacity 0.15s;
+}
+
+.mbtn:active { transform: scale(0.96); }
+
+.mbtn.red {
+  background: #e53935;
+}
+
+.mbtn.red:active {
+  background: #c62828;
+}
+
+/* --- Card backs (AI opponent hidden hand) --- */
+.card-back {
+  min-width: 52px;
+  min-height: 60px;
+  border: 2px solid var(--card-border);
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(255,255,255,0.04) 4px,
+      rgba(255,255,255,0.04) 8px
+    ),
+    var(--surface);
+  flex-shrink: 0;
+}
+
+body:not(.dark-mode) .card-back {
+  background:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(0,0,0,0.04) 4px,
+      rgba(0,0,0,0.04) 8px
+    ),
+    #e8e8f0;
+}
+
+/* --- AI mode: hide top controls --- */
+#app.ai-mode #top-options { display: none; }
+
+/* --- Status thinking animation --- */
+.status-thinking {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* --- Mode toggle (start screen + settings) --- */
+.mode-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--btn-border);
+}
+
+.mode-toggle .mode-btn {
+  padding: 8px 20px;
+  background: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.mode-toggle .mode-btn.active {
+  background: #e53935;
+  color: #fff;
+}
+
+/* Settings panel mode toggle */
+#durak-settings {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+body:not(.dark-mode) #durak-settings {
+  border-bottom-color: rgba(0,0,0,0.08);
+}
+
+#durak-settings .settings-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+/* --- Responsive breakpoints --- */
+@media (max-width: 380px) {
+  .card-btn {
+    min-width: 46px;
+    min-height: 54px;
+    padding: 4px 5px;
+    font-size: 0.8rem;
+  }
+  .card-back {
+    min-width: 46px;
+    min-height: 54px;
+  }
+  .hand-row {
+    gap: 3px;
+    padding: 3px 4px;
+  }
+  .action-btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (min-width: 500px) {
+  .card-btn {
+    min-width: 60px;
+    min-height: 68px;
+    font-size: 1rem;
+  }
+  .card-back {
+    min-width: 60px;
+    min-height: 68px;
+  }
+  .card-btn.field-card {
+    min-width: 54px;
+    min-height: 62px;
+  }
+  .card-placeholder {
+    min-width: 54px;
+    min-height: 62px;
+  }
+  #field {
+    flex: 2;
+  }
+}
+
+@media (min-width: 768px) {
+  .card-btn {
+    min-width: 68px;
+    min-height: 80px;
+    font-size: 1.1rem;
+    border-radius: 12px;
+  }
+  .card-back {
+    min-width: 68px;
+    min-height: 80px;
+    border-radius: 12px;
+  }
+  .action-btn {
+    padding: 8px 24px;
+    font-size: 0.9rem;
+  }
+}
