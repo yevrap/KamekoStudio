@@ -152,10 +152,11 @@
       // Last played timestamps
       'lastPlayed_hiddenObject', 'lastPlayed_materialsRun',
       'lastPlayed_keypadQuest', 'lastPlayed_riverRun',
-      'lastPlayed_blobZapper',
+      'lastPlayed_blobZapper', 'lastPlayed_durak',
       // Game-specific settings
       'riverRun_autoShoot', 'riverRun_autoAvoid',
-      'riverRun_invertControls', 'muted'
+      'riverRun_invertControls', 'muted',
+      'durak_mode'
     ];
 
     let clearedCount = 0;

@@ -7,6 +7,7 @@ Each game lives in its own subdirectory with an `index.html` as the entry point.
 | Directory | Title | Renderer | Status |
 |-----------|-------|----------|--------|
 | `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Stable |
+| `durak/` | Durak | DOM | Stable |
 | `hidden-object/` | Hidden Object Game | DOM | Stable |
 | `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Active development |
 | `memory-tower/` | Tower Defense Rogue-like | Canvas 2D | Stable |

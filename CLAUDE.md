@@ -36,6 +36,7 @@ drafts/             — WIP files not yet in production (see drafts/CLAUDE.md)
   arcadeHome.html   — Alternate arcade home, not yet linked
 games/              — One subdirectory per game (see games/CLAUDE.md)
   blob-zapper/
+  durak/            — index.html + style.css + game.js (split game)
   hidden-object/
   keypad-quest/     — index.html + style.css + game.js (split game)
   materials-run/
@@ -55,6 +56,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/river-run/` | River Runner 3D | Three.js | 3D obstacle-dodging river runner. Has per-game settings (auto-shoot, auto-avoid, invert drag). Saves `riverRunHighScore`. |
 | `games/waterfall/` | 3D Auto-Aim Endless Shooter | Three.js | 3D shooter, mobile-friendly. Not listed in gallery (intentional). |
 | `games/blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Push blobs with electricity. |
+| `games/durak/` | Durak | DOM | Classic Russian card game — two-player hot-seat. Attack, defend, trump with hearts. |
 
 ## Shared Infrastructure: `shared/settings.js`
 
@@ -133,6 +135,8 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `lastPlayed_keypadQuest` | keypad-quest | timestamp (ms) | Set on session start |
 | `lastPlayed_riverRun` | river-run | timestamp (ms) | Set on session start |
 | `lastPlayed_blobZapper` | blob-zapper | timestamp (ms) | Set on session start |
+| `lastPlayed_durak` | durak | timestamp (ms) | Set on session start |
+| `durak_mode` | durak | `'ai'`\|`'pvp'` | Game mode: vs Computer or vs Player |
 | `gridGameTopScoreScore` | materials-run | integer string | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | integer string | Survival mode high score |
 | `riverRunHighScore` | river-run | integer string | Points high score |
