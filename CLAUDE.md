@@ -56,7 +56,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/river-run/` | River Runner 3D | Three.js | 3D obstacle-dodging river runner. Has per-game settings (auto-shoot, auto-avoid, invert drag). Saves `riverRunHighScore`. |
 | `games/waterfall/` | 3D Auto-Aim Endless Shooter | Three.js | 3D shooter, mobile-friendly. Not listed in gallery (intentional). |
 | `games/blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Push blobs with electricity. |
-| `games/durak/` | Durak | DOM | Classic Russian card game — two-player hot-seat. Attack, defend, trump with hearts. |
+| `games/durak/` | Durak | DOM | Classic Russian card game. Play vs Computer or PvP. Attack and defend with pairs grouped visually. Trump suit chosen randomly from deck bottom. Cards feature a minimalist readability-focused layout (large rank, smaller suit) optimized for mobile iOS PWAs. Manual drawing is disabled; hands restock automatically at the end of bouts. |
 
 ## Shared Infrastructure: `shared/settings.js`
 

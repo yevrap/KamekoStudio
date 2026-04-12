@@ -1,6 +1,6 @@
 # games/ — Kameko Studio Games
 
-Each game lives in its own subdirectory with an `index.html` as the entry point. Every game is a fully self-contained single HTML file with all CSS and JS inline — no external assets, no imports from sibling directories.
+Each game lives in its own subdirectory with an `index.html` as the entry point. Modern games like `keypad-quest` and `durak` use a three-file split convention (`index.html`, `style.css`, `game.js`). Older games may still be single self-contained HTML files with all CSS/JS inline.
 
 ## Games
 
@@ -9,8 +9,8 @@ Each game lives in its own subdirectory with an `index.html` as the entry point.
 | `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Stable |
 | `durak/` | Durak | DOM | Stable |
 | `hidden-object/` | Hidden Object Game | DOM | Stable |
-| `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Active development |
-| `memory-tower/` | Tower Defense Rogue-like | Canvas 2D | Stable |
+| `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
+| `keypad-quest/` | Keypad Quest | Canvas 2D | Stable |
 | `river-run/` | River Runner 3D | Three.js r128 | Stable |
 | `waterfall/` | 3D Auto-Aim Endless Shooter | Three.js r128 | Stable (not in gallery) |
 
