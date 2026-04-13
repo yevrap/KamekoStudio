@@ -114,7 +114,8 @@ html, body {
   display: flex;
   flex-direction: column;
   flex: 1;
-  min-height: 0;
+  min-height: min-content;
+  flex-shrink: 0;
   padding: 4px 0;
   transition: box-shadow 0.3s ease;
 }
@@ -138,27 +139,52 @@ html, body {
 }
 
 .action-btn {
-  min-height: 40px;
-  min-width: 44px;
-  padding: 6px 16px;
-  border-radius: 8px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  min-height: 56px;
+  min-width: 60px;
+  padding: 8px 24px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 800;
   border: 1px solid var(--btn-border);
   background: var(--btn-bg);
   color: var(--btn-text);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, opacity 0.15s;
+  transition: background 0.15s, opacity 0.15s, transform 0.1s;
+}
+
+.action-btn[data-action="take"] {
+  background: rgba(255,100,100,0.15);
+  border-color: rgba(255,100,100,0.3);
+  color: #ff8888;
+}
+
+.action-btn[data-action="pass"] {
+  background: rgba(100,200,255,0.15);
+  border-color: rgba(100,200,255,0.3);
+  color: #88ccff;
+}
+
+body:not(.dark-mode) .action-btn[data-action="take"] {
+  background: rgba(211,47,47,0.1);
+  border-color: rgba(211,47,47,0.3);
+  color: #d32f2f;
+}
+
+body:not(.dark-mode) .action-btn[data-action="pass"] {
+  background: rgba(30,136,229,0.1);
+  border-color: rgba(30,136,229,0.3);
+  color: #1e88e5;
 }
 
 .action-btn:active:not(:disabled) {
-  background: rgba(255,255,255,0.15);
+  transform: scale(0.96);
+  background: rgba(255,255,255,0.25);
 }
 
 body:not(.dark-mode) .action-btn:active:not(:disabled) {
-  background: #dde0e6;
+  background: rgba(0,0,0,0.1);
 }
 
 .action-btn:disabled {
@@ -171,55 +197,78 @@ body:not(.dark-mode) .action-btn:active:not(:disabled) {
 /* --- Hand containers --- */
 .hand-row {
   display: flex;
-  gap: 5px;
-  padding: 4px 8px;
+  gap: 0;
+  padding: 16px 8px;
   overflow-x: auto;
   overflow-y: hidden;
   flex: 1;
   align-items: center;
   align-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+}
+
+.hand-row > * + * {
+  margin-left: -24px;
 }
 
 .hand-row::-webkit-scrollbar { display: none; }
 
 /* --- Card buttons --- */
 .card-btn {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 2px;
-  min-width: 52px;
-  min-height: 60px;
-  padding: 4px;
+  min-width: 68px;
+  min-height: 86px;
   border: 2px solid var(--card-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--card-bg);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s, box-shadow 0.15s;
+  transition: transform 0.1s, box-shadow 0.15s, z-index 0s;
   flex-shrink: 0;
   user-select: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.card-btn .card-corner {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: normal;
 }
 
 .card-btn .c-val {
-  font-size: 1.25rem;
+  font-size: 1.4rem;
   font-weight: 800;
-  line-height: 1;
+  letter-spacing: -1px;
+  margin-top: 2px;
 }
 
-.card-btn .c-suit {
+.card-btn .c-corner-suit {
   font-size: 1rem;
-  line-height: 1;
+}
+
+.card-btn .card-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 3rem;
+  opacity: 0.15;
+  pointer-events: none;
 }
 
 .card-btn:active {
   transform: scale(0.95);
+  z-index: 10;
 }
 
 .card-btn.suit-hearts,
@@ -234,16 +283,16 @@ body:not(.dark-mode) .action-btn:active:not(:disabled) {
 
 /* Trump suit glow */
 .card-btn.trump-card {
-  border-color: rgba(255, 200, 50, 0.8);
-  box-shadow: 0 0 6px rgba(255, 200, 50, 0.3), inset 0 0 4px rgba(255, 200, 50, 0.15);
+  border-color: rgba(255, 200, 50, 0.9);
+  box-shadow: 0 0 8px rgba(255, 200, 50, 0.4), inset 0 0 6px rgba(255, 200, 50, 0.2);
 }
 
 /* Field cards are non-interactive */
 .card-btn.field-card {
   cursor: default;
-  opacity: 0.85;
-  min-width: 48px;
-  min-height: 56px;
+  opacity: 0.95;
+  min-width: 64px;
+  min-height: 80px;
 }
 
 /* --- Field (board) area --- */
@@ -268,12 +317,12 @@ body:not(.dark-mode) .action-btn:active:not(:disabled) {
 }
 
 .field-pair > * + * {
-  margin-top: -16px;
+  margin-top: -30px;
 }
 
 .card-placeholder {
-  min-width: 46px;
-  min-height: 54px;
+  min-width: 64px;
+  min-height: 80px;
   pointer-events: none;
   visibility: hidden;
 }
@@ -344,10 +393,10 @@ body:not(.dark-mode) .action-btn:active:not(:disabled) {
 
 /* --- Card backs (AI opponent hidden hand) --- */
 .card-back {
-  min-width: 52px;
-  min-height: 60px;
+  min-width: 68px;
+  min-height: 86px;
   border: 2px solid var(--card-border);
-  border-radius: 10px;
+  border-radius: 12px;
   background:
     repeating-linear-gradient(
       45deg,
@@ -434,44 +483,47 @@ body:not(.dark-mode) #durak-settings {
 /* --- Responsive breakpoints --- */
 @media (max-width: 380px) {
   .card-btn {
-    min-width: 46px;
-    min-height: 54px;
+    min-width: 58px;
+    min-height: 74px;
     padding: 3px;
   }
-  .card-btn .c-val { font-size: 1.1rem; }
-  .card-btn .c-suit { font-size: 0.85rem; }
+  .card-btn .c-val { font-size: 1.2rem; }
+  .card-btn .c-corner-suit { font-size: 0.9rem; }
+  .card-btn .card-center { font-size: 2.3rem; }
+  .card-btn.field-card {
+    min-width: 52px;
+    min-height: 66px;
+  }
   .card-back {
-    min-width: 46px;
-    min-height: 54px;
+    min-width: 58px;
+    min-height: 74px;
   }
-  .hand-row {
-    gap: 3px;
-    padding: 3px 4px;
-  }
+  .hand-row > * + * { margin-left: -20px; }
   .action-btn {
-    padding: 6px 10px;
-    font-size: 0.75rem;
+    padding: 8px 16px;
+    font-size: 0.9rem;
   }
 }
 
 @media (min-width: 500px) {
   .card-btn {
-    min-width: 60px;
-    min-height: 68px;
+    min-width: 76px;
+    min-height: 96px;
   }
-  .card-btn .c-val { font-size: 1.4rem; }
-  .card-btn .c-suit { font-size: 1.1rem; }
+  .card-btn .c-val { font-size: 1.6rem; }
+  .card-btn .c-corner-suit { font-size: 1.1rem; }
+  .card-btn .card-center { font-size: 3.5rem; }
   .card-back {
-    min-width: 60px;
-    min-height: 68px;
+    min-width: 76px;
+    min-height: 96px;
   }
   .card-btn.field-card {
-    min-width: 54px;
-    min-height: 62px;
+    min-width: 68px;
+    min-height: 86px;
   }
   .card-placeholder {
-    min-width: 54px;
-    min-height: 62px;
+    min-width: 68px;
+    min-height: 86px;
   }
   #field {
     flex: 2;
@@ -480,19 +532,28 @@ body:not(.dark-mode) #durak-settings {
 
 @media (min-width: 768px) {
   .card-btn {
-    min-width: 68px;
-    min-height: 80px;
-    border-radius: 12px;
+    min-width: 86px;
+    min-height: 108px;
+    border-radius: 14px;
   }
-  .card-btn .c-val { font-size: 1.6rem; }
-  .card-btn .c-suit { font-size: 1.3rem; }
+  .card-btn .c-val { font-size: 1.8rem; }
+  .card-btn .c-corner-suit { font-size: 1.3rem; }
+  .card-btn .card-center { font-size: 4rem; }
   .card-back {
-    min-width: 68px;
-    min-height: 80px;
-    border-radius: 12px;
+    min-width: 86px;
+    min-height: 108px;
+    border-radius: 14px;
+  }
+  .card-btn.field-card {
+    min-width: 76px;
+    min-height: 96px;
+  }
+  .card-placeholder {
+    min-width: 76px;
+    min-height: 96px;
   }
   .action-btn {
-    padding: 8px 24px;
-    font-size: 0.9rem;
+    padding: 10px 28px;
+    font-size: 1.2rem;
   }
 }

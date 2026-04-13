@@ -102,7 +102,11 @@
     btn.dataset.value  = card.value;
     btn.dataset.suit   = card.suit;
     btn.dataset.owner  = owner;
-    btn.innerHTML = '<span class="c-val">' + displayValue(card.value) + '</span><span class="c-suit">' + suitEmoji(card.suit) + '</span>';
+    var dVal = displayValue(card.value);
+    var sEmoji = suitEmoji(card.suit);
+    btn.innerHTML =
+      '<div class="card-corner"><div class="c-val">' + dVal + '</div><div class="c-corner-suit">' + sEmoji + '</div></div>' +
+      '<div class="card-center">' + sEmoji + '</div>';
     return btn;
   }
 
