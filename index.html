@@ -321,6 +321,16 @@
                     </div>
                 </div>
 
+                <div class="game-card" style="--card-accent:#7b1fa2">
+                    <div class="game-card-body">
+                        <div class="game-emoji">🏰</div>
+                        <div class="game-title">Durak Dungeon</div>
+                        <div class="game-desc">Roguelike dungeon crawler — defend and attack with Durak card mechanics</div>
+                        <div class="game-meta" id="meta-durakDungeon"></div>
+                        <a href="games/durak-dungeon/index.html" class="play-btn" style="background:#7b1fa2">▶ Play &nbsp;1🪙</a>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -334,6 +344,7 @@
             { id: 'riverRun',     name: 'River Run',     emoji: '🌊', href: 'games/river-run/index.html' },
             { id: 'blobZapper',   name: 'Blob Zapper',   emoji: '⚡', href: 'games/blob-zapper/index.html' },
             { id: 'durak',        name: 'Durak',         emoji: '🃏', href: 'games/durak/index.html' },
+            { id: 'durakDungeon', name: 'Durak Dungeon', emoji: '🏰', href: 'games/durak-dungeon/index.html' },
         ];
 
         const SCORES_META = [
@@ -341,6 +352,7 @@
             { label: 'Materials Run (Survival)', key: 'gridGameTopScoreSurvival', suffix: '' },
             { label: 'River Run',                key: 'riverRunHighScore',        suffix: ' pts' },
             { label: 'Keypad Quest',              key: 'keypadQuestHighWave',      suffix: ' waves' },
+            { label: 'Durak Dungeon',              key: 'durakDungeon_bestFloor',   suffix: ' floors' },
         ];
 
         function timeAgo(ts) {
@@ -405,6 +417,12 @@
                 if (mrScore > 0) parts.push('Score: ' + mrScore);
                 if (mrSurv  > 0) parts.push('Survival: ' + mrSurv);
                 if (el && parts.length) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + parts.join(' · ');
+            }
+
+            var ddFloor = parseInt(localStorage.getItem('durakDungeon_bestFloor') || '0', 10);
+            if (ddFloor > 0) {
+                var el = document.getElementById('meta-durakDungeon');
+                if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: Floor ' + ddFloor;
             }
 
             // Your Best Scores section

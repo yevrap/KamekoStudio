@@ -153,10 +153,13 @@
       'lastPlayed_hiddenObject', 'lastPlayed_materialsRun',
       'lastPlayed_keypadQuest', 'lastPlayed_riverRun',
       'lastPlayed_blobZapper', 'lastPlayed_durak',
+      'lastPlayed_durakDungeon',
       // Game-specific settings
       'riverRun_autoShoot', 'riverRun_autoAvoid',
       'riverRun_invertControls', 'muted',
-      'durak_mode'
+      'durak_mode',
+      'durakDungeon_bestFloor', 'durakDungeon_victories',
+      'durakDungeon_lastSeed'
     ];
 
     let clearedCount = 0;

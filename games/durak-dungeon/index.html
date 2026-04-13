@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>Durak Dungeon</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+
+  <div id="app">
+    <div id="header">
+      <span id="game-title">DURAK DUNGEON</span>
+      <span id="trump-display"></span>
+      <span id="floor-display"></span>
+    </div>
+
+    <div id="relic-bar"></div>
+
+    <div id="player-stats">
+      <div id="hp-bar-container">
+        <div id="hp-bar"></div>
+        <span id="hp-text">50 / 50</span>
+      </div>
+      <span id="gold-display">Gold: 0</span>
+      <span id="seed-display"></span>
+    </div>
+
+    <div id="enemy-zone">
+      <div id="enemy-name"></div>
+      <div id="enemy-cards" class="hand-row"></div>
+      <div id="enemy-hp-container">
+        <div id="enemy-hp-bar"></div>
+        <span id="enemy-hp-text"></span>
+      </div>
+    </div>
+
+    <div id="status-display"></div>
+
+    <div id="player-zone">
+      <div id="player-hand" class="hand-row"></div>
+      <div id="action-buttons">
+        <button class="action-btn" type="button" id="btn-take-hit">Take Hit</button>
+        <button class="action-btn" type="button" id="btn-end-attack">End Attack</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Title Screen -->
+  <div id="title-overlay" class="overlay">
+    <div class="g-title">DURAK DUNGEON</div>
+    <div class="g-sub">Roguelike dungeon crawler meets classic card combat</div>
+    <div class="g-rules">Defend against enemies using Durak rules. Counter-attack to deal damage. Collect relics and thin your deck across 20 floors.</div>
+    <div class="seed-input-row">
+      <label for="seed-input">Seed:</label>
+      <input type="text" id="seed-input" maxlength="8" placeholder="random" autocomplete="off">
+    </div>
+    <button class="mbtn red" id="btn-play" type="button">&#9654; Descend</button>
+  </div>
+
+  <!-- Reward Screen -->
+  <div id="reward-overlay" class="overlay hidden">
+    <div class="g-title" id="reward-title">FLOOR CLEARED!</div>
+    <div class="g-sub" id="reward-sub">Choose a reward</div>
+    <div id="reward-choices" class="reward-row"></div>
+  </div>
+
+  <!-- Shop Screen -->
+  <div id="shop-overlay" class="overlay hidden">
+    <div class="g-title">THE SHOP</div>
+    <div class="g-sub" id="shop-gold">Gold: 0</div>
+    <div id="shop-items"></div>
+    <div id="shop-deck" class="hand-row"></div>
+    <div id="shop-deck-label" class="hidden">Tap a card to select</div>
+    <button class="mbtn red" id="btn-shop-continue" type="button">Continue</button>
+  </div>
+
+  <!-- Boss Entrance -->
+  <div id="boss-overlay" class="overlay hidden">
+    <div class="g-title" id="boss-name"></div>
+    <div class="g-sub">BOSS FLOOR</div>
+    <div id="boss-mutations"></div>
+    <button class="mbtn red" id="btn-boss-start" type="button">&#9654; Fight</button>
+  </div>
+
+  <!-- Game Over -->
+  <div id="gameover-overlay" class="overlay hidden">
+    <div class="g-title" id="gameover-title">DEFEAT</div>
+    <div id="gameover-stats"></div>
+    <div id="gameover-seed"></div>
+    <button class="mbtn red" id="btn-replay" type="button">&#9654; New Run</button>
+  </div>
+
+  <!-- Floor Transition -->
+  <div id="floor-transition" class="overlay hidden">
+    <div class="g-title" id="floor-transition-text"></div>
+  </div>
+
+  <!-- Relic Tooltip -->
+  <div id="relic-tooltip" class="hidden">
+    <div id="relic-tooltip-name"></div>
+    <div id="relic-tooltip-desc"></div>
+  </div>
+
+  <!-- Damage Floater Container -->
+  <div id="damage-floaters"></div>
+
+  <script src="game.js"></script>
+  <script src="../../shared/settings.js" data-gallery-depth="2"></script>
+</body>
+</html>

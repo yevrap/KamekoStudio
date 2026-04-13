@@ -37,6 +37,7 @@ drafts/             — WIP files not yet in production (see drafts/CLAUDE.md)
 games/              — One subdirectory per game (see games/CLAUDE.md)
   blob-zapper/
   durak/            — index.html + style.css + game.js (split game)
+  durak-dungeon/    — index.html + style.css + game.js (split game)
   hidden-object/
   keypad-quest/     — index.html + style.css + game.js (split game)
   materials-run/
@@ -57,6 +58,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/waterfall/` | 3D Auto-Aim Endless Shooter | Three.js | 3D shooter, mobile-friendly. Not listed in gallery (intentional). |
 | `games/blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Push blobs with electricity. |
 | `games/durak/` | Durak | DOM | Classic Russian card game. Play vs Computer or PvP. Attack and defend with pairs grouped visually. Trump suit chosen randomly from deck bottom. Cards feature a high-visibility casino-style layout (corner indicators, giant center watermark) optimized for mobile accessibility. Manual drawing is disabled; hands restock automatically at the end of bouts. |
+| `games/durak-dungeon/` | Durak Dungeon | DOM | Roguelike dungeon crawler using Durak card mechanics. Defend against enemy attacks using Durak rules, then counter-attack to deal damage. 20-floor run with relics (15 types), shops, enhanced cards (burning/armored/vampiric/lucky), boss mutations. Seeded runs for async multiplayer via URL. |
 
 ## Shared Infrastructure: `shared/settings.js`
 
@@ -137,6 +139,10 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `lastPlayed_blobZapper` | blob-zapper | timestamp (ms) | Set on session start |
 | `lastPlayed_durak` | durak | timestamp (ms) | Set on session start |
 | `durak_mode` | durak | `'ai'`\|`'pvp'` | Game mode: vs Computer or vs Player |
+| `lastPlayed_durakDungeon` | durak-dungeon | timestamp (ms) | Set on run start |
+| `durakDungeon_bestFloor` | durak-dungeon | integer string | Highest floor reached |
+| `durakDungeon_victories` | durak-dungeon | integer string | Number of complete runs (floor 20) |
+| `durakDungeon_lastSeed` | durak-dungeon | string | Seed of last run played |
 | `gridGameTopScoreScore` | materials-run | integer string | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | integer string | Survival mode high score |
 | `riverRunHighScore` | river-run | integer string | Points high score |

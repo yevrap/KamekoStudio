@@ -8,6 +8,7 @@ Each game lives in its own subdirectory. Modern games like `games/keypad-quest/`
 |-----------|-------|----------|--------|
 | `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Stable |
 | `durak/` | Durak | DOM | Stable |
+| `durak-dungeon/` | Durak Dungeon | DOM | Stable |
 | `hidden-object/` | Hidden Object Game | DOM | Stable |
 | `keypad-quest/` | Keypad Quest | Canvas 2D | Stable |
 | `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
@@ -67,6 +68,10 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `lastPlayed_riverRun` | river-run | Set on session start |
 | `lastPlayed_blobZapper` | blob-zapper | Set on session start |
 | `lastPlayed_durak` | durak | Set on session start |
+| `lastPlayed_durakDungeon` | durak-dungeon | Set on run start |
+| `durakDungeon_bestFloor` | durak-dungeon | Highest floor reached |
+| `durakDungeon_victories` | durak-dungeon | Complete run count |
+| `durakDungeon_lastSeed` | durak-dungeon | Seed of last run |
 | `gridGameTopScoreScore` | materials-run | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | Survival mode high score |
 | `riverRunHighScore` | river-run | Points high score |
