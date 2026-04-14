@@ -275,7 +275,11 @@ function init() {
     history.replaceState(null, '', location.pathname);
   }
 
-  resizeCanvas(); buildT9Pad(); buildTowerStrip(); setInputMode(state.inputMode);
+  resizeCanvas();
+  // Guard: if layout hasn't completed yet (canvas 0×0 on fast local servers),
+  // retry once after the first paint so getBoundingClientRect returns real values.
+  if (state.W === 0) requestAnimationFrame(() => resizeCanvas());
+  buildT9Pad(); buildTowerStrip(); setInputMode(state.inputMode);
   showMenu(); startLoop();
   if (state.pendingImport) showImportPrompt(state.pendingImport);
 }
