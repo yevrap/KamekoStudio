@@ -1,6 +1,26 @@
 # games/ — Kameko Studio Games
 
-Each game lives in its own subdirectory with an `index.html` as the entry point. Modern games like `keypad-quest` and `durak` use a three-file split convention (`index.html`, `style.css`, `game.js`). Older games may still be single self-contained HTML files with all CSS/JS inline.
+Each game lives in its own subdirectory. Modern games are split across multiple files (see "File Convention" below). Older games use a single self-contained `index.html` and are candidates for future splitting.
+
+## File Convention
+
+New games and major refactors use **Native ES Modules** (`type="module"`) with logic split by concern:
+
+| File | Purpose |
+|------|---------|
+| `index.html` | DOM structure, loads `<script type="module" src="main.js">` |
+| `style.css` | All styles |
+| `constants.js` | Static data: card/suit/face constants, RNG helpers, entity definitions |
+| `state.js` | Shared mutable game state (`export const state = { run: null }`), state query helpers |
+| `ui.js` | All render functions and DOM manipulation |
+| `gameplay.js` | Game logic: combat phases, floor progression, rewards, shop, enemy generation |
+| `main.js` | Event wiring, start/restart, settings integration, URL parsing |
+
+Classic `<script>` tags (no `type="module"`) remain correct for `shared/settings.js` and `shared/utils.js` — they inject globals and don't need to import game code.
+
+**Local testing note:** `type="module"` scripts require HTTP, not `file://`. Use `npx serve .` from the project root or VS Code Live Server.
+
+Single-file older games (`game.js`) are acceptable until they grow unwieldy. `games/durak-dungeon/` is the reference implementation of the module split pattern.
 
 ## Games
 
@@ -8,9 +28,10 @@ Each game lives in its own subdirectory with an `index.html` as the entry point.
 |-----------|-------|----------|--------|
 | `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Stable |
 | `durak/` | Durak | DOM | Stable |
+| `durak-dungeon/` | Durak Dungeon | DOM | Stable |
 | `hidden-object/` | Hidden Object Game | DOM | Stable |
-| `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
 | `keypad-quest/` | Keypad Quest | Canvas 2D | Stable |
+| `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
 | `river-run/` | River Runner 3D | Three.js r128 | Stable |
 | `waterfall/` | 3D Auto-Aim Endless Shooter | Three.js r128 | Stable (not in gallery) |
 
@@ -38,12 +59,14 @@ startButton.addEventListener('click', () => {
 });
 ```
 
-The `lastPlayed_*` key feeds the "Recently Played" section on the arcade dashboard.
+The `lastPlayed_*` key feeds the "Recently Played" section on the arcade dashboard. The dashboard derives the key from the game's `id` in `GAMES_META` in `index.html` — keep them consistent.
 
 ## Settings Panel Integration (required in every game)
 
-Include `settings.js` before `</body>`:
+Include `settings.js` (and `utils.js` if the game uses shared utilities) before `</body>`:
 ```html
+<script src="../../shared/utils.js"></script>
+<script src="game.js"></script>
 <script src="../../shared/settings.js" data-gallery-depth="2"></script>
 ```
 
@@ -53,7 +76,26 @@ window.addEventListener('settingsOpened', () => { /* pause */ });
 window.addEventListener('settingsClosed', () => { /* resume */ });
 ```
 
-**Per-game settings rows:** Inject custom toggle rows into `#settings-panel` lazily on first `settingsOpened` — the panel doesn't exist before `settings.js` runs. See `river-run/index.html` for a full example (auto-shoot, auto-avoid, invert drag, with pill toggle UI).
+**Per-game settings rows:** Inject custom content into `#settings-panel` using `insertBefore(section, document.getElementById('dev-mode-section'))` so it appears above the developer tools. See `games/keypad-quest/main.js` for a full example (input mode selector + stats section).
+
+## localStorage Keys
+
+| Key | Game | Notes |
+|-----|------|-------|
+| `lastPlayed_hiddenObject` | hidden-object | Set on session start |
+| `lastPlayed_materialsRun` | materials-run | Set on session start |
+| `lastPlayed_keypadQuest` | keypad-quest | Set on session start |
+| `lastPlayed_riverRun` | river-run | Set on session start |
+| `lastPlayed_blobZapper` | blob-zapper | Set on session start |
+| `lastPlayed_durak` | durak | Set on session start |
+| `lastPlayed_durakDungeon` | durak-dungeon | Set on run start |
+| `durakDungeon_bestFloor` | durak-dungeon | Highest floor reached |
+| `durakDungeon_victories` | durak-dungeon | Complete run count |
+| `durakDungeon_lastSeed` | durak-dungeon | Seed of last run |
+| `gridGameTopScoreScore` | materials-run | Score mode high score |
+| `gridGameTopScoreSurvival` | materials-run | Survival mode high score |
+| `riverRunHighScore` | river-run | Points high score |
+| `keypadQuestHighWave` | keypad-quest | Highest wave reached |
 
 ## Three.js Obstacle Arrays
 
@@ -61,11 +103,10 @@ In Three.js games, obstacle arrays store objects of shape `{ mesh, boundingBox }
 
 ## Adding a New Game
 
-1. Create `games/<game-name>/index.html`
-2. Add all CSS and JS inline in that file
-3. Add a card to root `index.html` (sets `lastPlayed_*` key for the dashboard)
-4. Add a portal link to root `3d.html`
-5. Include `shared/settings.js` with `data-gallery-depth="2"`
-6. Add token gate + `lastPlayed_<gameName>` write at session start
-7. Add `settingsOpened` / `settingsClosed` pause/resume listeners
-8. Add a `lastPlayed_<gameName>` entry to the localStorage keys table in `CLAUDE.md` (root)
+1. Create `games/<game-name>/` with `index.html`, `style.css`, and either `game.js` (simple) or ES module files (`main.js` + supporting modules)
+2. Add a card to root `index.html` with the game's `id` matching `lastPlayed_<id>` key
+3. Add a portal link to root `3d.html`
+4. Include `shared/utils.js` (if needed) and `shared/settings.js` with `data-gallery-depth="2"`
+5. Add token gate + `localStorage.setItem('lastPlayed_<id>', Date.now())` at session start
+6. Add `settingsOpened` / `settingsClosed` pause/resume listeners
+7. Add the `lastPlayed_<id>` entry to the localStorage key tables in root `CLAUDE.md` and `GEMINI.md`

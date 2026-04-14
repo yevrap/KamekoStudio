@@ -1,6 +1,26 @@
 # games/ — Kameko Studio Games
 
-Each game lives in its own subdirectory. Modern games like `games/keypad-quest/` and `games/durak/` are split into `index.html`, `style.css`, and `game.js`. Other older games use a single self-contained `index.html`. New games should exclusively follow the three-file split convention.
+Each game lives in its own subdirectory. Modern games are split across multiple files (see "File Convention" below). Older games use a single self-contained `index.html` and are candidates for future splitting.
+
+## File Convention
+
+New games and major refactors use **Native ES Modules** (`type="module"`) with logic split by concern:
+
+| File | Purpose |
+|------|---------|
+| `index.html` | DOM structure, loads `<script type="module" src="main.js">` |
+| `style.css` | All styles |
+| `constants.js` | Static data: card/suit/face constants, RNG helpers, entity definitions |
+| `state.js` | Shared mutable game state (`export const state = { run: null }`), state query helpers |
+| `ui.js` | All render functions and DOM manipulation |
+| `gameplay.js` | Game logic: combat phases, floor progression, rewards, shop, enemy generation |
+| `main.js` | Event wiring, start/restart, settings integration, URL parsing |
+
+Classic `<script>` tags (no `type="module"`) remain correct for `shared/settings.js` and `shared/utils.js` — they inject globals and don't need to import game code.
+
+**Local testing note:** `type="module"` scripts require HTTP, not `file://`. Use `npx serve .` from the project root or VS Code Live Server.
+
+Single-file older games (`game.js`) are acceptable until they grow unwieldy. `games/durak-dungeon/` is the reference implementation of the module split pattern.
 
 ## Games
 

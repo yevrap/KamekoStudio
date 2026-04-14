@@ -36,16 +36,18 @@ drafts/             — WIP files not yet in production (see drafts/CLAUDE.md)
   arcadeHome.html   — Alternate arcade home, not yet linked
 games/              — One subdirectory per game (see games/CLAUDE.md)
   blob-zapper/
-  durak/            — index.html + style.css + game.js (split game)
-  durak-dungeon/    — index.html + style.css + game.js (split game)
+  durak/            — index.html + style.css + game.js (single game.js)
+  durak-dungeon/    — index.html + style.css + ES modules (constants/state/ui/gameplay/main.js)
   hidden-object/
-  keypad-quest/     — index.html + style.css + game.js (split game)
+  keypad-quest/     — index.html + style.css + ES modules (constants/state/fx/deck-manager/rendering/gameplay/input/main.js)
   materials-run/
   river-run/
   waterfall/
 ```
 
-**Per-game file convention:** `games/keypad-quest/` is split into `index.html` (DOM structure only), `style.css`, and `game.js`. New games should follow this three-file convention; older single-file games are candidates for future splitting.
+**Per-game file convention:** Modern games use **Native ES Modules** (`type="module"`) split by concern — `constants.js`, `state.js`, `ui.js` (or equivalent), `gameplay.js`, `main.js`. See `games/CLAUDE.md` for the full file table and rationale. `games/durak-dungeon/` is the reference implementation. Older single-file `game.js` games are acceptable until they grow unwieldy; they are candidates for the module split when they exceed ~800 lines. Classic `<script>` tags (no `type="module"`) remain correct for `shared/settings.js` and `shared/utils.js`.
+
+**Local testing note:** `type="module"` requires HTTP, not `file://`. Use `npx serve .` from the project root or VS Code Live Server.
 
 ## Games
 
