@@ -24,6 +24,24 @@ Classic `<script>` tags (no `type="module"`) remain correct for `shared/settings
 
 Single-file older games (`game.js`) are acceptable until they grow unwieldy. `games/durak-dungeon/` is the reference implementation of the module split pattern.
 
+## ES Module Refactor Status
+
+| Directory | Lines (approx) | Status | Notes |
+|-----------|---------------|--------|-------|
+| `durak-dungeon/` | — | ✅ Done | Reference implementation: constants/state/ui/gameplay/main.js |
+| `keypad-quest/` | — | ✅ Done | constants/state/fx/deck-manager/rendering/gameplay/input/main.js |
+| `durak-tactics/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; rendering merged into gameplay.js) |
+| `durak/` | ~606 | 🔜 Candidate | Classic Russian card game, single game.js |
+| `hidden-object/` | ~621 | 🔜 Candidate | Emoji-finding game, single game.js |
+| `materials-run/` | ~685 | 🔜 Candidate | Grid physics game, single game.js |
+| `blob-zapper/` | ~512 | 🔜 Candidate | Canvas 2D game, single game.js |
+| `river-run/` | — | ⏸ Lower priority | Three.js; complex event + audio setup; different architecture |
+| `waterfall/` | — | ⏸ Lower priority | Three.js; not in gallery |
+
+**When refactoring a game:** start with `durak-dungeon/` as the reference. Use `durak-tactics/` as the example for games where rendering and game logic are too tightly coupled to split into a separate `ui.js` — put both in `gameplay.js`.
+
+**Key gotcha for Canvas games:** `resizeCanvas()` may run before CSS layout is complete on fast local servers. After calling `resizeCanvas()`, check `if (state.W === 0) requestAnimationFrame(() => resizeCanvas());` to retry on the next paint. See `games/keypad-quest/main.js` init function for the pattern.
+
 ## Games
 
 | Directory | Title | Renderer | Status |
@@ -108,10 +126,12 @@ In Three.js games, obstacle arrays store objects of shape `{ mesh, boundingBox }
 
 ## Adding a New Game
 
-1. Create `games/<game-name>/` with `index.html`, `style.css`, and either `game.js` (simple) or ES module files (`main.js` + supporting modules)
-2. Add a card to root `index.html` with the game's `id` matching `lastPlayed_<id>` key
-3. Add a portal link to root `3d.html`
+1. Create `games/<game-name>/` with `index.html`, `style.css`, and ES module files (`main.js` + supporting modules)
+2. Add a card to root `index.html` with `href="games/<game-name>/"` (**trailing slash, not** `index.html`) and `id` matching `lastPlayed_<id>` key
+3. Add a portal link to root `3d.html` — same trailing slash rule
 4. Include `shared/utils.js` (if needed) and `shared/settings.js` with `data-gallery-depth="2"`
 5. Add token gate + `localStorage.setItem('lastPlayed_<id>', Date.now())` at session start
 6. Add `settingsOpened` / `settingsClosed` pause/resume listeners
 7. Add the `lastPlayed_<id>` entry to the localStorage key tables in root `CLAUDE.md` and `GEMINI.md`
+
+**Why trailing slash?** `npx serve` redirects `foo/index.html` → `foo/index` → `foo` (no trailing slash). At a URL without a trailing slash the browser treats the last segment as a filename, so relative assets (`style.css`, `main.js`) resolve from the parent directory and 404. Using `href="games/foo/"` serves directly as 200. GitHub Pages handles directory URLs the same way.

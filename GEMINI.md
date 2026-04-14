@@ -101,7 +101,7 @@ window.addEventListener('settingsClosed', () => {
     document.getElementById('my-section')?.remove();
 });
 ```
-See `games/river-run/index.html` for a pill-toggle example; see `games/keypad-quest/game.js` for a stats + "Back to Menu" button example.
+See `games/river-run/index.html` for a pill-toggle example; see `games/keypad-quest/main.js` for a stats + "Back to Menu" button example.
 
 **Settings gear positioning:** The gear is injected as `position:fixed; top:15px; right:15px`. Games with a top header bar should override this in their CSS to align it within the header and add right padding to the header so content doesn't slide under it:
 ```css
@@ -175,7 +175,7 @@ All games must work on phone, tablet, and desktop. Key patterns used across the 
 - **Dark mode** via `body.dark-mode` class + CSS custom properties; `settings.js` owns the toggle and the localStorage key
 - **iOS Safari viewport fix** — use `height: 100dvh` (dynamic viewport) with `height: 100vh` as fallback; add `viewport-fit=cover` to the meta viewport tag to enable `env(safe-area-inset-bottom)`; subtract the safe area from heights that need to stay above the home indicator
 - **iOS PWA bfcache** — when users navigate back on iOS (browser or home-screen app), `DOMContentLoaded` does not re-fire; listen to `pageshow` with `event.persisted === true` to refresh dynamic content
-- **Canvas size zero bug** — on mobile, `canvas.clientWidth/Height` can be 0 during the first few frames before layout completes; always guard dimension updates with `if (cw > 0 && ch > 0)` and skip rendering if dimensions are still 0
+- **Canvas size zero bug** — `canvas.clientWidth/Height` can be 0 before CSS layout completes. This happens on mobile AND on fast local dev servers (JS modules load near-instantly, before the browser finishes layout; GitHub Pages network latency hides the issue). Pattern: guard with `if (rect.width <= 0 || rect.height <= 0) return;`, then in `init()` retry once via `requestAnimationFrame` if `state.W === 0` after the first call — e.g. `resizeCanvas(); if (state.W === 0) requestAnimationFrame(() => resizeCanvas());`
 
 ## Keypad Quest — Architecture Notes
 
@@ -207,7 +207,8 @@ Browser-side logic (game loops, DOM state, T9 input state machine) is not unit-t
 ## Development Notes
 
 - Each game is self-contained in its own directory — editing one never affects others
-- When adding a new game: create `games/<name>/` with `index.html` + `style.css` + `game.js`, add a card to `index.html`, add a portal link to `3d.html`, include `shared/utils.js` + `settings.js`, add token gate + `lastPlayed` write, and add `settingsOpened`/`settingsClosed` pause/resume listeners
+- When adding a new game: create `games/<name>/` with `index.html`, `style.css`, and ES module files (`main.js` + supporting modules per `games/GEMINI.md`); add a card to `index.html` and a portal link to `3d.html`; use `href="games/<name>/"` (trailing slash — see below); include `shared/utils.js` (if needed) + `settings.js`; add token gate + `lastPlayed` write; add `settingsOpened`/`settingsClosed` pause/resume listeners
+- **Game link trailing slash** — links to games in `index.html` and `3d.html` must use `href="games/<name>/"` with a trailing slash, **not** `href="games/<name>/index.html"`. `npx serve` redirects `foo/index.html` → `foo/index` → `foo` (strips extension then `index`), landing without a trailing slash. At that URL the browser treats `<name>` as a filename, so relative assets (`style.css`, `main.js`) resolve from the wrong directory and 404. Trailing slash avoids the redirect entirely.
 - Inline `//` comments inside single-line JS functions comment out everything after them including closing braces — avoid this pattern; it causes silent syntax errors
 - Game state in materials-run uses a `gameState` string: `'menu'`, `'playing'`, `'gameover'`, `'won'`
 - All scores stored in localStorage; no server-side persistence anywhere
