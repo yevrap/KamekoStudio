@@ -18,7 +18,9 @@ New games and major refactors use **Native ES Modules** (`type="module"`) with l
 
 Classic `<script>` tags (no `type="module"`) remain correct for `shared/settings.js` and `shared/utils.js` — they inject globals and don't need to import game code.
 
-**Local testing note:** `type="module"` scripts require HTTP, not `file://`. Use `npx serve .` from the project root or VS Code Live Server.
+**`ui.js` is optional:** When rendering code is tightly coupled to game logic (e.g. DOM elements are built with inline event handlers that call gameplay functions directly), merge them into `gameplay.js`. `games/durak-tactics/` uses this pattern. `games/durak-dungeon/` is the reference implementation when a clean ui/gameplay split is possible.
+
+**Local testing note:** `type="module"` scripts require HTTP, not `file://`. Use `npx serve .` from the project root or VS Code Live Server. Opening via `file://` will silently fail to load ES modules — the start screen may appear styled but the game won't initialize.
 
 Single-file older games (`game.js`) are acceptable until they grow unwieldy. `games/durak-dungeon/` is the reference implementation of the module split pattern.
 
@@ -29,6 +31,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Stable |
 | `durak/` | Durak | DOM | Stable |
 | `durak-dungeon/` | Durak Dungeon | DOM | Stable |
+| `durak-tactics/` | Durak Tactics | DOM | Stable |
 | `hidden-object/` | Hidden Object Game | DOM | Stable |
 | `keypad-quest/` | Keypad Quest | Canvas 2D | Stable |
 | `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
@@ -92,6 +95,8 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `durakDungeon_bestFloor` | durak-dungeon | Highest floor reached |
 | `durakDungeon_victories` | durak-dungeon | Complete run count |
 | `durakDungeon_lastSeed` | durak-dungeon | Seed of last run |
+| `lastPlayed_durakTactics` | durak-tactics | Set on session start |
+| `durakTactics_victories` | durak-tactics | Number of campaign victories |
 | `gridGameTopScoreScore` | materials-run | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | Survival mode high score |
 | `riverRunHighScore` | river-run | Points high score |
