@@ -1,37 +1,37 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-    --bg-color: #f0f2f5;
-    --surface-color: #ffffff;
-    --text-color: #1a1a2e;
-    --text-muted: #666688;
-    --border-color: #d0d4dc;
-    --primary-color: #007aff;
-    
-    --card-bg: #ffffff;
-    --card-red: #ff3b30;
-    --card-black: #1c1c1e;
-    --cell-empty: #e5e5ea;
-    --cell-player: rgba(0, 122, 255, 0.1);
-    --cell-enemy: rgba(255, 59, 48, 0.05);
-
-    --gold-glow: 0 0 8px 2px rgba(255, 215, 0, 0.8);
-}
-
-body.dark-mode {
     --bg-color: #0a0a14;
     --surface-color: #1a1a2e;
     --text-color: #e0e0ff;
     --text-muted: #8888aa;
     --border-color: #333355;
     --primary-color: #0a84ff;
-    
+
     --card-bg: #2a2a40;
     --card-red: #ff453a;
     --card-black: #e0e0ff;
     --cell-empty: #1a1a2e;
     --cell-player: rgba(10, 132, 255, 0.15);
     --cell-enemy: rgba(255, 69, 58, 0.1);
+
+    --gold-glow: 0 0 8px 2px rgba(255, 215, 0, 0.8);
+}
+
+body:not(.dark-mode) {
+    --bg-color: #f0f2f5;
+    --surface-color: #ffffff;
+    --text-color: #1a1a2e;
+    --text-muted: #666688;
+    --border-color: #d0d4dc;
+    --primary-color: #007aff;
+
+    --card-bg: #ffffff;
+    --card-red: #ff3b30;
+    --card-black: #1c1c1e;
+    --cell-empty: #e5e5ea;
+    --cell-player: rgba(0, 122, 255, 0.1);
+    --cell-enemy: rgba(255, 59, 48, 0.05);
 }
 
 body {
