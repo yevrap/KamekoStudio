@@ -25,6 +25,58 @@ export function cacheDom() {
   $winnerText      = document.getElementById('winner-text');
   $topZone         = document.getElementById('top-zone');
   $bottomZone      = document.getElementById('bottom-zone');
+
+  wireHandScroll($topHand);
+  wireHandScroll($bottomHand);
+}
+
+function wireHandScroll(el) {
+  if (!el) return;
+
+  // Vertical wheel → horizontal scroll (mouse-wheel users on laptop)
+  el.addEventListener('wheel', function (e) {
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Pointer drag-to-scroll (mouse / pen). Touch uses native pan-x.
+  var start = null;
+  var dragging = false;
+  var THRESHOLD = 6;
+
+  el.addEventListener('pointerdown', function (e) {
+    if (e.pointerType === 'touch') return;
+    start = { x: e.clientX, scrollLeft: el.scrollLeft, id: e.pointerId };
+    dragging = false;
+  });
+
+  el.addEventListener('pointermove', function (e) {
+    if (!start || e.pointerId !== start.id) return;
+    var dx = e.clientX - start.x;
+    if (!dragging && Math.abs(dx) > THRESHOLD) {
+      dragging = true;
+      try { el.setPointerCapture(start.id); } catch (_) {}
+      el.classList.add('dragging');
+    }
+    if (dragging) {
+      el.scrollLeft = start.scrollLeft - dx;
+      e.preventDefault();
+    }
+  });
+
+  function end(e) {
+    if (!start || e.pointerId !== start.id) return;
+    if (dragging) {
+      try { el.releasePointerCapture(start.id); } catch (_) {}
+    }
+    start = null;
+    dragging = false;
+    el.classList.remove('dragging');
+  }
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
 }
 
 // ── Card elements ──────────────────────────────────────────────────────────

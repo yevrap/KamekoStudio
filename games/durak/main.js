@@ -62,6 +62,9 @@ $modeToggle.addEventListener('pointerdown', function (e) {
 
 // ── Game-area pointer handling ─────────────────────────────────────────────
 
+var tapStart = null;
+var TAP_MAX_DIST_SQ = 64; // 8px threshold; anything larger = drag, not tap
+
 $app.addEventListener('pointerdown', function (e) {
   if (state.phase !== 'playing') return;
 
@@ -79,10 +82,30 @@ $app.addEventListener('pointerdown', function (e) {
 
   var cardBtn = e.target.closest('.card-btn');
   if (cardBtn && cardBtn.dataset.owner !== 'field') {
-    var owner = cardBtn.dataset.owner;
-    if (state.aiMode && owner === 'top') return;
-    if (playCard(cardBtn.dataset.cardId, owner)) tick();
+    tapStart = {
+      x: e.clientX,
+      y: e.clientY,
+      id: e.pointerId,
+      cardId: cardBtn.dataset.cardId,
+      owner: cardBtn.dataset.owner
+    };
   }
+});
+
+$app.addEventListener('pointerup', function (e) {
+  if (!tapStart || e.pointerId !== tapStart.id) return;
+  var start = tapStart;
+  tapStart = null;
+  if (state.phase !== 'playing') return;
+  var dx = e.clientX - start.x;
+  var dy = e.clientY - start.y;
+  if (dx * dx + dy * dy > TAP_MAX_DIST_SQ) return;
+  if (state.aiMode && start.owner === 'top') return;
+  if (playCard(start.cardId, start.owner)) tick();
+});
+
+$app.addEventListener('pointercancel', function () {
+  tapStart = null;
 });
 
 // ── Start / restart ────────────────────────────────────────────────────────

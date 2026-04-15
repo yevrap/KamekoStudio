@@ -201,13 +201,25 @@ body:not(.dark-mode) .action-btn:active:not(:disabled) {
   padding: 16px 8px;
   overflow-x: auto;
   overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  cursor: grab;
   flex: 1;
   align-items: center;
   align-content: center;
   flex-wrap: nowrap;
-  justify-content: center;
+  justify-content: safe center;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+}
+
+.hand-row.dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+
+.hand-row.dragging .card-btn {
+  pointer-events: none;
 }
 
 .hand-row > * + * {

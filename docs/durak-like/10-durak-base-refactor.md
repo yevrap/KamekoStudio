@@ -63,12 +63,16 @@ Reference: `games/durak-dungeon/` is the studio's clean ES-module exemplar. Fina
 
 - State: `players[]` arbitrary length, each `{ id, name, hand, isHuman, isOut, seat }`
 - Rules per classic Durak:
-  - Attacker = current; defender = next clockwise active; throw-in attackers = all other active players clockwise from attacker
-  - Throw-on cap = `min(defender.hand.length, 6)` and only ranks already on the field
-  - Defender defends all → defender becomes next attacker; takes → defender's attack turn skipped, next-clockwise attacker plays
-  - Player eliminated when hand empty AND deck empty; last player with cards = "Durak"
+  - Attacker = current; defender = next clockwise active
+  - **Throw-in eligibility:** only the two players *adjacent to the defender* (the primary attacker on one side, and the next-clockwise-after-defender player on the other side) may contribute cards to the attack. More distant seats never throw on in a bout.
+  - **Attack priority:** the primary attacker always has first priority to play/throw an additional attack. If the primary attacker passes, the other adjacent contributor may add or pass — but priority returns to the primary attacker after each defense. Priority cycles back every time the defender beats a card.
+  - **Attack cap:** a bout may contain at most **6 attack cards total**, also capped by `defender.hand.length` and the constraint that throw-ons must match a rank already on the field.
+  - **Piling on the taker:** when the defender declares "take" (cannot or will not beat the current attack), the bout is not immediately over. Eligible attackers may continue throwing on additional matching-rank cards (respecting the 6-card cap and the same adjacency/priority rules) before the defender scoops the pile. Attackers may also pass to end the pile-on and hand the cards over. All cards added during this window go to the defender's hand along with the rest.
+  - **Draw order at end of bout:** primary attacker draws back to 6 first, then any adjacent contributor who played into the attack (in the order they contributed), then the defender last. Draws are capped by remaining deck size.
+  - Defender defends all → defender becomes next attacker; takes → defender's attack turn skipped, next-clockwise active player attacks.
+  - Player eliminated when hand empty AND deck empty; last player still holding cards = "Durak"
 - Player-count selector on start screen (2–6); persisted to `durak_playerCount` localStorage key
-- UI: opponents fanned across top with name + card-back count; human's hand at bottom; turn indicator highlights current attacker/defender
+- UI: opponents fanned across top with name + card-back count; human's hand at bottom; turn indicator highlights current attacker/defender; adjacent contributors visually flagged when it's their window to throw on
 - AI plays sequentially with a small delay between bot decisions for readability
 
 **Verification:** Play 3, 4, and 6-player games to completion; verify rotation, throw-ins from non-attackers, eliminations, last-player-loses logic. Mobile layout with 5 opponents stays readable.
