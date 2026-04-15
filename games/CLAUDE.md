@@ -31,7 +31,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `durak-dungeon/` | — | ✅ Done | Reference implementation: constants/state/ui/gameplay/main.js |
 | `keypad-quest/` | — | ✅ Done | constants/state/fx/deck-manager/rendering/gameplay/input/main.js |
 | `durak-tactics/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; rendering merged into gameplay.js) |
-| `durak/` | — | ✅ Done | constants/state/gameplay/ai/cards/ui/main.js. AI extracted to its own module supporting Easy, Normal, and Hard difficulty levels. `cards.js` provides procedural vector SVG graphics. `ui.js` utilizes a DOM pool and FLIP animations for hardware-accelerated movement. Includes a tiny `package.json` (`"type": "module"`) so Node can test modules. |
+| `durak/` | — | ✅ Done | constants/state/gameplay/ai/cards/ui/main.js. AI extracted to its own module supporting Easy, Normal, and Hard difficulty levels. `cards.js` provides procedural vector SVG graphics. `ui.js` utilizes a DOM pool and FLIP animations for hardware-accelerated movement. Includes a tiny `package.json` (`"type": "module"`) so Node can test modules. iOS PWA standalone mode: `html` background tracks the `body.dark-mode` class via `:has()`, PWA meta tags request a translucent status bar, and `env(safe-area-inset-*)` padding on `#app` keeps content clear of the notch/home indicator. |
 | `hidden-object/` | ~621 | 🔜 Candidate | Emoji-finding game, single game.js |
 | `materials-run/` | ~685 | 🔜 Candidate | Grid physics game, single game.js |
 | `blob-zapper/` | ~512 | 🔜 Candidate | Canvas 2D game, single game.js |

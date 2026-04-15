@@ -25,6 +25,22 @@ var setupCount = savedCount;
 
 cacheDom();
 
+// Keep iOS PWA status-bar / Android theme-color in sync with the in-game
+// light/dark toggle (settings.js mutates body.dark-mode without firing an event).
+(function syncThemeColor() {
+  var meta = document.querySelector('meta[name="theme-color"]:not([media])');
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute('name', 'theme-color');
+    document.head.appendChild(meta);
+  }
+  function apply() {
+    meta.setAttribute('content', document.body.classList.contains('dark-mode') ? '#070b08' : '#8ba994');
+  }
+  apply();
+  new MutationObserver(apply).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+})();
+
 var $modeToggle   = document.getElementById('mode-toggle');
 var $countToggle  = document.getElementById('count-toggle');
 var $btnPlay      = document.getElementById('btn-play');
