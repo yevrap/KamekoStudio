@@ -26,7 +26,8 @@ shared/
   settings.js       — Global settings panel + token system (included in every page)
   utils.js          — Pure utility functions (tested; loaded by keypad-quest)
 tests/
-  keypad-quest.test.js  — Unit tests (node --test tests/)
+  keypad-quest.test.js  — Unit tests for shared/utils.js (node --test tests/)
+  durak.test.mjs        — Unit tests for games/durak/ pure rules (constants, state, gameplay)
   README.md             — How to run tests
 CLAUDE.md           — This file
 README.md           — GitHub Pages URL
@@ -36,7 +37,7 @@ drafts/             — WIP files not yet in production (see drafts/CLAUDE.md)
   arcadeHome.html   — Alternate arcade home, not yet linked
 games/              — One subdirectory per game (see games/CLAUDE.md)
   blob-zapper/
-  durak/            — index.html + style.css + game.js (single game.js)
+  durak/            — index.html + style.css + ES modules (constants/state/gameplay/ai/ui/main.js)
   durak-dungeon/    — index.html + style.css + ES modules (constants/state/ui/gameplay/main.js)
   durak-tactics/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   hidden-object/
@@ -149,6 +150,8 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `durakDungeon_lastSeed` | durak-dungeon | string | Seed of last run played |
 | `lastPlayed_durakTactics` | durak-tactics | timestamp (ms) | Set on session start |
 | `durakTactics_victories` | durak-tactics | integer string | Number of campaign victories |
+| `lastPlayed_durakAlchemist` | durak-alchemist | timestamp (ms) | Set on session start |
+| `alchemistHighScore` | durak-alchemist | integer string | Highest score achieved |
 | `gridGameTopScoreScore` | materials-run | integer string | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | integer string | Survival mode high score |
 | `riverRunHighScore` | river-run | integer string | Points high score |
