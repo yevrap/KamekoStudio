@@ -1,0 +1,271 @@
+:root {
+    --bg: #121212;
+    --surface: #1e1e24;
+    --text: #ffffff;
+    --accent: #e91e63;
+    --grid-bg: #2a2a35;
+    --cell-bg: #1e1e24;
+    
+    --spades: #90caf9;
+    --clubs: #a5d6a7;
+    --hearts: #ef9a9a;
+    --diamonds: #ce93d8;
+
+    --card-w: 60px;
+    --card-h: 84px;
+}
+
+body:not(.dark-mode) {
+    --bg: #f5f5f5;
+    --surface: #ffffff;
+    --text: #121212;
+    --grid-bg: #e0e0e0;
+    --cell-bg: #cccccc;
+    
+    --spades: #1565c0;
+    --clubs: #2e7d32;
+    --hearts: #c62828;
+    --diamonds: #6a1b9a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    touch-action: none;
+}
+
+#game-container {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh; /* fallback is vh if d-units not supported, but CSS assumes modern */
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── Header ── */
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    height: 60px;
+    background: var(--surface);
+    font-weight: bold;
+    padding-right: 60px; /* clear the settings gear */
+}
+
+#trump-display {
+    font-size: 1.5rem;
+}
+
+/* ── Start Screen ── */
+#start-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    z-index: 100;
+}
+#start-screen h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--accent); }
+#start-screen p { margin-bottom: 30px; color: #aaa; }
+#start-btn {
+    background: var(--accent); color: #fff;
+    border: none; padding: 15px 30px; font-size: 1.2rem;
+    border-radius: 8px; cursor: pointer;
+    font-weight: bold;
+}
+#start-btn:active { opacity: 0.8; }
+
+/* ── Game Over Screen ── */
+#game-over-screen {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: none; flex-direction: column;
+    justify-content: center; align-items: center;
+    z-index: 100;
+}
+#game-over-screen h2 { font-size: 2rem; margin-bottom: 20px; color: #ff5252; }
+#restart-btn {
+    background: var(--accent); color: #fff;
+    border: none; padding: 15px 30px; font-size: 1.2rem;
+    border-radius: 8px; cursor: pointer;
+    font-weight: bold;
+}
+
+/* ── Grid Area ── */
+#grid-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+#grid {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    background: var(--grid-bg);
+    border-radius: 8px;
+    padding: 8px;
+}
+
+.grid-cell {
+    position: absolute;
+    width: 65px;
+    height: 65px;
+    background: var(--cell-bg);
+    border-radius: 6px;
+}
+
+/* ── Cards ── */
+.card {
+    position: absolute;
+    width: 65px;
+    height: 65px;
+    background: #fff;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 4px;
+    color: #000;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    transition: transform 0.15s ease-in-out;
+    z-index: 10;
+}
+
+.card.merged {
+    animation: pop 0.2s ease-out;
+}
+
+@keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.card.suit-S, .card.suit-C { color: #212121; }
+.card.suit-H, .card.suit-D { color: #d32f2f; }
+
+.card-tl { font-size: 0.9rem; line-height: 1; }
+.card-center { font-size: 1.8rem; text-align: center; align-self: center; flex: 1; display: flex; align-items: center; justify-content: center; opacity: 0.2; position: absolute; inset: 0; }
+.card-br { font-size: 0.9rem; line-height: 1; text-align: right; align-self: flex-end; transform: rotate(180deg); }
+
+/* ── Action Bar ── */
+#action-bar {
+    height: 60px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: bold;
+    padding: 0 20px;
+}
+
+#end-turn-btn {
+    background: var(--accent); color: #fff;
+    border: none; padding: 10px 20px; font-size: 1rem;
+    border-radius: 8px; cursor: pointer;
+    font-weight: bold;
+}
+#end-turn-btn:active { opacity: 0.8; }
+
+/* ── Combat Area ── */
+#combat-area {
+    flex-direction: column;
+    padding: 10px;
+    flex: 1; /* take up remaining space above grid */
+}
+
+#enemy-area {
+    text-align: center;
+    padding: 10px;
+    font-weight: bold;
+    color: #ff5252;
+}
+
+#bout-area {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 10px;
+    min-height: 120px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.bout-pair {
+    position: relative;
+    width: 65px;
+    height: 80px; /* enough space for overlapping cards */
+}
+
+/* Dragging styling */
+.card.dragging {
+    z-index: 1000;
+    pointer-events: none;
+    transform: scale(1.1) !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+}
+
+.card.combative {
+    cursor: grab;
+}
+.card.combative:active {
+    cursor: grabbing;
+}
+
+@keyframes slam {
+    0% { transform: scale(1.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.bout-pair .card {
+    animation: slam 0.2s ease-out;
+}
+
+/* Visual Feedback Enhancements */
+.card.trump-card {
+    box-shadow: 0 0 5px 2px #ffd700, 0 2px 4px rgba(0,0,0,0.2);
+    border: 2px solid #ffd700;
+}
+
+@keyframes pulse-chain {
+    0% { box-shadow: 0 0 5px 2px var(--accent), 0 2px 4px rgba(0,0,0,0.2); }
+    50% { box-shadow: 0 0 15px 5px var(--accent), 0 2px 4px rgba(0,0,0,0.2); }
+    100% { box-shadow: 0 0 5px 2px var(--accent), 0 2px 4px rgba(0,0,0,0.2); }
+}
+
+.card.valid-chain {
+    animation: pulse-chain 1.5s infinite;
+    border: 2px solid var(--accent);
+}
+
+.card.trump-card.valid-chain {
+    animation: pulse-chain 1.5s infinite;
+    border: 2px solid #ffd700;
+}
+
+.btn-danger {
+    background: #f44336 !important;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); }
+    40%, 80% { transform: translateX(5px); }
+}
+
+.shake {
+    animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+}
