@@ -6,12 +6,16 @@
 
 import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
 import { suitEmoji, suitName, displayValue } from './constants.js';
+import { buildCardFaceSvg, buildCardBackSvg } from './cards.js';
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
     $statusDisplay, $trumpDisplay, $deckCount,
     $startOverlay, $gameoverOverlay, $winnerText,
     $passDeviceOverlay, $passDeviceName, $pileBanner,
-    $btnTake, $btnPass, $btnDone;
+    $btnTake, $btnPass, $btnDone,
+    $deckStack, $trumpSlot;
+
+var cardPool = {};
 
 export function cacheDom() {
   $app               = document.getElementById('app');
@@ -31,6 +35,8 @@ export function cacheDom() {
   $btnTake           = document.getElementById('btn-take');
   $btnPass           = document.getElementById('btn-pass');
   $btnDone           = document.getElementById('btn-done');
+  $deckStack         = document.getElementById('deck-stack');
+  $trumpSlot         = document.getElementById('trump-slot');
 
   wireHandScroll($humanHand);
 }
@@ -95,23 +101,31 @@ export function currentViewerSeat() {
 // ── Card elements ──────────────────────────────────────────────────────────
 
 export function createCardEl(card, ownerTag) {
-  var btn = document.createElement('button');
-  btn.type = 'button';
+  if (!cardPool[card.id]) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.dataset.cardId = card.id;
+    btn.innerHTML = buildCardFaceSvg(card.suit, card.value);
+    cardPool[card.id] = btn;
+  }
+  var btn = cardPool[card.id];
   btn.className = 'card-btn suit-' + suitName(card.suit) + ' ' + ownerTag;
   if (isTrump(card.suit)) btn.classList.add('trump-card');
-  btn.dataset.cardId = card.id;
   btn.dataset.owner  = ownerTag;
-  var dVal = displayValue(card.value);
-  var sEmoji = suitEmoji(card.suit);
-  btn.innerHTML =
-    '<div class="card-corner"><div class="c-val">' + dVal + '</div><div class="c-corner-suit">' + sEmoji + '</div></div>' +
-    '<div class="card-center">' + sEmoji + '</div>';
   return btn;
 }
 
-function createCardBackEl() {
-  var el = document.createElement('div');
-  el.className = 'card-back';
+export function createCardBackEl(keyId) {
+  var id = keyId || 'generic_back';
+  if (!cardPool[id]) {
+    var el = document.createElement('div');
+    el.className = 'card-btn card-back';
+    el.innerHTML = buildCardBackSvg();
+    cardPool[id] = el;
+  }
+  var el = cardPool[id];
+  el.className = 'card-btn card-back';
+  el.style.top = ''; el.style.left = '';
   return el;
 }
 
@@ -306,13 +320,93 @@ function updatePileBanner() {
   $pileBanner.classList.toggle('hidden', state.phase !== 'pileOn');
 }
 
+function renderDeckZone() {
+  if (!$deckStack || !$trumpSlot) return;
+  $deckStack.innerHTML = '';
+  $trumpSlot.innerHTML = '';
+
+  if (state.deck.length > 0 && state.trumpCard) {
+    var tEl = createCardEl(state.trumpCard, 'trump');
+    $trumpSlot.appendChild(tEl);
+  }
+
+  var stackSize = Math.min(state.deck.length, 5);
+  for (var i = 0; i < stackSize; i++) {
+    var b = createCardBackEl('deck_back_' + i);
+    b.style.top = '-' + (i * 2) + 'px';
+    b.style.left = '-' + (i * 1.5) + 'px';
+    $deckStack.appendChild(b);
+  }
+}
+
 export function renderAll() {
+  // FLIP First
+  var flippedEls = [];
+  var keys = Object.keys(cardPool);
+  for (var i = 0; i < keys.length; i++) {
+    var el = cardPool[keys[i]];
+    if (el.parentElement) {
+      el._flipRect = el.getBoundingClientRect();
+      flippedEls.push(el);
+    } else {
+      el._flipRect = null;
+    }
+  }
+
+  // Update State DOM
   updateHeader();
   renderOpponents();
+  renderDeckZone();
   renderField();
   renderHumanHand();
   updateActionButtons();
   updatePileBanner();
+
+  // FLIP Last & Invert
+  for (var i = 0; i < flippedEls.length; i++) {
+    var el = flippedEls[i];
+    if (!el.parentElement) continue;
+    var newRect = el.getBoundingClientRect();
+    var oldRect = el._flipRect;
+    if (oldRect && newRect) {
+      var dx = oldRect.left - newRect.left;
+      var dy = oldRect.top - newRect.top;
+      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+        el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+        el.style.transition = 'none';
+        el._flipNeedsPlay = true;
+      }
+    }
+  }
+
+  // Force reflow
+  document.body.offsetHeight;
+
+  // FLIP Play
+  for (var i = 0; i < flippedEls.length; i++) {
+    var el = flippedEls[i];
+    if (el._flipNeedsPlay) {
+      el._flipNeedsPlay = false;
+      el.classList.add('flip-animating');
+      el.style.transform = '';
+      el.style.transition = '';
+      
+      (function(animEl) {
+        animEl.addEventListener('transitionend', function cleanup(e) {
+          if (e.propertyName === 'transform') {
+            animEl.classList.remove('flip-animating');
+            animEl.removeEventListener('transitionend', cleanup);
+          }
+        });
+        
+        // Safety timeout
+        setTimeout(function() {
+          animEl.classList.remove('flip-animating');
+          animEl.removeEventListener('transitionend', cleanup);
+        }, 350);
+      })(el);
+    }
+  }
 }
 
 // ── Overlays ───────────────────────────────────────────────────────────────
