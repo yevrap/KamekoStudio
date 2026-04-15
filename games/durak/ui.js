@@ -1,39 +1,43 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// UI — render functions and DOM manipulation. All read from `state`; no
-// gameplay mutations live here.
+// UI — renders the N-player table. The "local viewer" is seat 0 in vs-Computer
+// mode; in Hot-seat mode it rotates to whichever human currently has priority.
+// All gameplay mutations live in gameplay.js.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { state, getPlayer, isAIControlled, isTrump } from './state.js';
+import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
 import { suitEmoji, suitName, displayValue } from './constants.js';
 
-var $app, $topHand, $bottomHand, $field, $topOptions, $bottomOptions,
-    $statusDisplay, $trumpDisplay, $deckCount, $startOverlay,
-    $gameoverOverlay, $winnerText, $topZone, $bottomZone;
+var $app, $opponents, $field, $humanHand, $humanOptions,
+    $statusDisplay, $trumpDisplay, $deckCount,
+    $startOverlay, $gameoverOverlay, $winnerText,
+    $passDeviceOverlay, $passDeviceName, $pileBanner,
+    $btnTake, $btnPass, $btnDone;
 
 export function cacheDom() {
-  $app             = document.getElementById('app');
-  $topHand         = document.getElementById('top-hand');
-  $bottomHand      = document.getElementById('bottom-hand');
-  $field           = document.getElementById('field');
-  $topOptions      = document.getElementById('top-options');
-  $bottomOptions   = document.getElementById('bottom-options');
-  $statusDisplay   = document.getElementById('status-display');
-  $trumpDisplay    = document.getElementById('trump-display');
-  $deckCount       = document.getElementById('deck-count');
-  $startOverlay    = document.getElementById('start-overlay');
-  $gameoverOverlay = document.getElementById('gameover-overlay');
-  $winnerText      = document.getElementById('winner-text');
-  $topZone         = document.getElementById('top-zone');
-  $bottomZone      = document.getElementById('bottom-zone');
+  $app               = document.getElementById('app');
+  $opponents         = document.getElementById('opponents');
+  $field             = document.getElementById('field');
+  $humanHand         = document.getElementById('human-hand');
+  $humanOptions      = document.getElementById('human-options');
+  $statusDisplay     = document.getElementById('status-display');
+  $trumpDisplay      = document.getElementById('trump-display');
+  $deckCount         = document.getElementById('deck-count');
+  $startOverlay      = document.getElementById('start-overlay');
+  $gameoverOverlay   = document.getElementById('gameover-overlay');
+  $winnerText        = document.getElementById('winner-text');
+  $passDeviceOverlay = document.getElementById('pass-device-overlay');
+  $passDeviceName    = document.getElementById('pass-device-name');
+  $pileBanner        = document.getElementById('pile-banner');
+  $btnTake           = document.getElementById('btn-take');
+  $btnPass           = document.getElementById('btn-pass');
+  $btnDone           = document.getElementById('btn-done');
 
-  wireHandScroll($topHand);
-  wireHandScroll($bottomHand);
+  wireHandScroll($humanHand);
 }
 
 function wireHandScroll(el) {
   if (!el) return;
 
-  // Vertical wheel → horizontal scroll (mouse-wheel users on laptop)
   el.addEventListener('wheel', function (e) {
     if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
       el.scrollLeft += e.deltaY;
@@ -41,7 +45,6 @@ function wireHandScroll(el) {
     }
   }, { passive: false });
 
-  // Pointer drag-to-scroll (mouse / pen). Touch uses native pan-x.
   var start = null;
   var dragging = false;
   var THRESHOLD = 6;
@@ -68,9 +71,7 @@ function wireHandScroll(el) {
 
   function end(e) {
     if (!start || e.pointerId !== start.id) return;
-    if (dragging) {
-      try { el.releasePointerCapture(start.id); } catch (_) {}
-    }
+    if (dragging) { try { el.releasePointerCapture(start.id); } catch (_) {} }
     start = null;
     dragging = false;
     el.classList.remove('dragging');
@@ -79,17 +80,27 @@ function wireHandScroll(el) {
   el.addEventListener('pointercancel', end);
 }
 
+// ── Local viewer seat ──────────────────────────────────────────────────────
+
+// In vs-Computer mode the viewer is always seat 0. In Hot-seat mode it is
+// whichever human seat currently has priority (or seat 0 when no one does,
+// e.g. during game-over / paused).
+export function currentViewerSeat() {
+  if (state.mode !== 'hotseat') return 0;
+  var p = state.players[state.prioritySeat];
+  if (p && p.isHuman) return state.prioritySeat;
+  return 0;
+}
+
 // ── Card elements ──────────────────────────────────────────────────────────
 
-export function createCardEl(card, owner) {
+export function createCardEl(card, ownerTag) {
   var btn = document.createElement('button');
   btn.type = 'button';
-  btn.className = 'card-btn suit-' + suitName(card.suit) + ' ' + owner;
+  btn.className = 'card-btn suit-' + suitName(card.suit) + ' ' + ownerTag;
   if (isTrump(card.suit)) btn.classList.add('trump-card');
   btn.dataset.cardId = card.id;
-  btn.dataset.value  = card.value;
-  btn.dataset.suit   = card.suit;
-  btn.dataset.owner  = owner;
+  btn.dataset.owner  = ownerTag;
   var dVal = displayValue(card.value);
   var sEmoji = suitEmoji(card.suit);
   btn.innerHTML =
@@ -98,122 +109,210 @@ export function createCardEl(card, owner) {
   return btn;
 }
 
-export function createCardBackEl() {
+function createCardBackEl() {
   var el = document.createElement('div');
   el.className = 'card-back';
   return el;
 }
 
+// ── Role chips ─────────────────────────────────────────────────────────────
+
+function roleFor(seat) {
+  var p = state.players[seat];
+  if (!p) return '';
+  if (p.isOut) return 'Out';
+  if (seat === state.attackerSeat) return 'Attacker';
+  if (seat === state.defenderSeat) return 'Defender';
+  if (adjacentContributors().indexOf(seat) !== -1) return 'Thrower';
+  return '';
+}
+
+// ── Opponent tiles ─────────────────────────────────────────────────────────
+
+function renderOpponents() {
+  $opponents.innerHTML = '';
+  var viewer = currentViewerSeat();
+  var n = state.players.length;
+  for (var step = 1; step < n; step++) {
+    var seat = (viewer + step) % n;
+    $opponents.appendChild(buildOpponentTile(seat));
+  }
+}
+
+function buildOpponentTile(seat) {
+  var p = state.players[seat];
+  var tile = document.createElement('div');
+  tile.className = 'opponent-tile';
+  if (p.isOut) tile.classList.add('is-out');
+  if (state.prioritySeat === seat && (state.phase === 'playing' || state.phase === 'pileOn')) {
+    tile.classList.add('has-priority');
+  }
+
+  var nameRow = document.createElement('div');
+  nameRow.className = 'opp-name';
+  nameRow.textContent = p.name;
+  tile.appendChild(nameRow);
+
+  var backs = document.createElement('div');
+  backs.className = 'opp-backs';
+  var showCount = Math.min(p.hand.length, 5);
+  for (var i = 0; i < showCount; i++) {
+    var b = document.createElement('div');
+    b.className = 'mini-back';
+    backs.appendChild(b);
+  }
+  var countBadge = document.createElement('span');
+  countBadge.className = 'opp-count';
+  countBadge.textContent = p.hand.length;
+  backs.appendChild(countBadge);
+  tile.appendChild(backs);
+
+  var role = roleFor(seat);
+  if (role) {
+    var chip = document.createElement('div');
+    chip.className = 'opp-role role-' + role.toLowerCase();
+    chip.textContent = role;
+    tile.appendChild(chip);
+  }
+  return tile;
+}
+
+// ── Field ──────────────────────────────────────────────────────────────────
+
+function renderField() {
+  $field.innerHTML = '';
+  var attacks = state.field.attacks;
+  var defenses = state.field.defenses;
+  var n = attacks.length;
+  for (var i = 0; i < n; i++) {
+    var pair = document.createElement('div');
+    pair.className = 'field-pair';
+    var atkEl = createCardEl(attacks[i], 'field');
+    atkEl.classList.add('field-card');
+    pair.appendChild(atkEl);
+    if (defenses[i]) {
+      var defEl = createCardEl(defenses[i], 'field');
+      defEl.classList.add('field-card', 'defense');
+      pair.appendChild(defEl);
+    } else {
+      var ph = document.createElement('div');
+      ph.className = 'card-placeholder';
+      pair.appendChild(ph);
+    }
+    $field.appendChild(pair);
+  }
+}
+
+// ── Human hand ─────────────────────────────────────────────────────────────
+
+function renderHumanHand() {
+  $humanHand.innerHTML = '';
+  if (state.phase === 'passDevice') return;
+  var viewer = currentViewerSeat();
+  var p = state.players[viewer];
+  if (!p) return;
+  for (var i = 0; i < p.hand.length; i++) {
+    var el = createCardEl(p.hand[i], 'hand');
+    el.dataset.seat = viewer;
+    $humanHand.appendChild(el);
+  }
+}
+
+// ── Action buttons ─────────────────────────────────────────────────────────
+
+function updateActionButtons() {
+  var viewer = currentViewerSeat();
+  var hasPriority = state.prioritySeat === viewer &&
+                    (state.phase === 'playing' || state.phase === 'pileOn');
+
+  var fullyDefended = state.field.attacks.length > 0 &&
+                      state.field.defenses.every(function (d) { return d !== null; });
+
+  var canTake = hasPriority && state.phase === 'playing'
+                && viewer === state.defenderSeat
+                && state.field.attacks.length > 0;
+
+  var canPass = hasPriority && state.phase === 'playing'
+                && viewer !== state.defenderSeat
+                && fullyDefended;
+
+  var canDone = hasPriority && state.phase === 'pileOn';
+
+  $btnTake.dataset.seat = viewer;
+  $btnPass.dataset.seat = viewer;
+  $btnDone.dataset.seat = viewer;
+
+  $btnTake.classList.toggle('hidden', !canTake);
+  $btnPass.classList.toggle('hidden', !canPass);
+  $btnDone.classList.toggle('hidden', !canDone);
+}
+
 // ── Status text ────────────────────────────────────────────────────────────
 
 function getStatusText() {
-  if (state.phase !== 'playing') return '';
+  if (state.phase === 'start' || state.phase === 'gameover') return '';
+  if (state.phase === 'paused') return 'Paused';
+  if (state.phase === 'passDevice') return 'Pass device';
 
-  var topBoard = getPlayer('top').board;
-  var botBoard = getPlayer('bottom').board;
+  var viewer = currentViewerSeat();
+  var priorityP = state.players[state.prioritySeat];
+  var pName = priorityP ? priorityP.name : '';
 
-  if (state.aiMode) {
-    if (state.priority === 'top') return 'Opponent thinking\u2026';
-    if (state.attacker === 'bottom') {
-      if (topBoard.length === 0 && botBoard.length === 0) return 'Your attack \u2014 play a card';
-      if (topBoard.length === botBoard.length) return 'Throw on or pass';
-      return 'Your attack \u2014 play a card';
-    }
-    return 'Defend \u2014 play a higher card or take';
+  if (state.phase === 'pileOn') {
+    if (state.prioritySeat === viewer) return 'Pile on or tap Done';
+    return pName + ' may throw on';
   }
 
-  if (state.priority === 'bottom') {
-    return state.attacker === 'bottom' ? 'Bottom attacks' : 'Bottom defends';
+  // 'playing'
+  if (state.prioritySeat === viewer) {
+    if (viewer === state.defenderSeat) return 'Defend \u2014 play a higher card or Take';
+    if (state.field.attacks.length === 0) return 'Your attack \u2014 play a card';
+    return 'Throw on or Pass';
   }
-  return state.attacker === 'top' ? 'Top attacks' : 'Top defends';
+  if (!priorityP) return '';
+  if (state.prioritySeat === state.defenderSeat) return pName + ' defending\u2026';
+  return pName + ' attacking\u2026';
 }
 
 // ── Main render ────────────────────────────────────────────────────────────
 
-function renderHand(playerId, container) {
-  container.innerHTML = '';
-  var hand = getPlayer(playerId).hand;
-  if (isAIControlled(playerId)) {
-    for (var i = 0; i < hand.length; i++) container.appendChild(createCardBackEl());
-  } else {
-    for (var j = 0; j < hand.length; j++) container.appendChild(createCardEl(hand[j], playerId));
-  }
-}
-
-function renderField() {
-  $field.innerHTML = '';
-  var topBoard = getPlayer('top').board;
-  var botBoard = getPlayer('bottom').board;
-  var maxCards = Math.max(topBoard.length, botBoard.length);
-  for (var i = 0; i < maxCards; i++) {
-    var pairEl = document.createElement('div');
-    pairEl.className = 'field-pair';
-
-    if (topBoard[i]) {
-      var topEl = createCardEl(topBoard[i], 'field');
-      topEl.classList.add('field-card');
-      pairEl.appendChild(topEl);
-    } else {
-      var ph1 = document.createElement('div');
-      ph1.className = 'card-placeholder';
-      pairEl.appendChild(ph1);
-    }
-
-    if (botBoard[i]) {
-      var botEl = createCardEl(botBoard[i], 'field');
-      botEl.classList.add('field-card');
-      pairEl.appendChild(botEl);
-    } else {
-      var ph2 = document.createElement('div');
-      ph2.className = 'card-placeholder';
-      pairEl.appendChild(ph2);
-    }
-
-    $field.appendChild(pairEl);
-  }
-}
-
-function updateStatus() {
+function updateHeader() {
   $statusDisplay.textContent = getStatusText();
+  var thinking = state.phase === 'playing' || state.phase === 'pileOn';
   $statusDisplay.classList.toggle(
     'status-thinking',
-    state.aiMode && state.priority === 'top' && state.phase === 'playing'
+    thinking && state.players[state.prioritySeat] && !state.players[state.prioritySeat].isHuman
   );
 
-  if (state.phase === 'playing' || state.phase === 'paused') {
+  if (state.phase !== 'start') {
     var isRed = (state.trumpSuit === 3 || state.trumpSuit === 4);
     $trumpDisplay.className = isRed ? 'suit-red' : 'suit-black';
     if (state.deck.length > 0 && state.trumpCard) {
       $trumpDisplay.textContent = displayValue(state.trumpCard.value) + suitEmoji(state.trumpSuit);
-    } else {
+    } else if (state.trumpCard) {
       $trumpDisplay.textContent = suitEmoji(state.trumpSuit);
+    } else {
+      $trumpDisplay.textContent = '';
     }
   } else {
     $trumpDisplay.textContent = '';
     $trumpDisplay.className = '';
   }
-
   $deckCount.textContent = state.deck.length > 0 ? 'Deck: ' + state.deck.length : '';
+}
 
-  $topZone.classList.toggle('active-turn', state.priority === 'top' && state.phase === 'playing');
-  $bottomZone.classList.toggle('active-turn', state.priority === 'bottom' && state.phase === 'playing');
-  $app.classList.toggle('ai-mode', state.aiMode);
-
-  var topBtns = $topOptions.querySelectorAll('.action-btn');
-  var bottomBtns = $bottomOptions.querySelectorAll('.action-btn');
-  for (var i = 0; i < topBtns.length; i++) {
-    topBtns[i].disabled = (state.priority !== 'top' || state.phase !== 'playing');
-  }
-  for (var k = 0; k < bottomBtns.length; k++) {
-    bottomBtns[k].disabled = (state.priority !== 'bottom' || state.phase !== 'playing');
-  }
+function updatePileBanner() {
+  if (!$pileBanner) return;
+  $pileBanner.classList.toggle('hidden', state.phase !== 'pileOn');
 }
 
 export function renderAll() {
-  renderHand('top', $topHand);
-  renderHand('bottom', $bottomHand);
+  updateHeader();
+  renderOpponents();
   renderField();
-  updateStatus();
+  renderHumanHand();
+  updateActionButtons();
+  updatePileBanner();
 }
 
 // ── Overlays ───────────────────────────────────────────────────────────────
@@ -221,9 +320,24 @@ export function renderAll() {
 export function hideOverlays() {
   $startOverlay.classList.add('hidden');
   $gameoverOverlay.classList.add('hidden');
+  if ($passDeviceOverlay) $passDeviceOverlay.classList.add('hidden');
 }
 
 export function showGameOver(msg) {
   $winnerText.textContent = msg;
   $gameoverOverlay.classList.remove('hidden');
+}
+
+export function showPassDevice(name) {
+  if (!$passDeviceOverlay) return;
+  $passDeviceName.textContent = name;
+  $passDeviceOverlay.classList.remove('hidden');
+}
+
+export function hidePassDevice() {
+  if ($passDeviceOverlay) $passDeviceOverlay.classList.add('hidden');
+}
+
+export function showStart() {
+  $startOverlay.classList.remove('hidden');
 }

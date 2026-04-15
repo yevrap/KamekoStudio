@@ -1,6 +1,5 @@
-/* === Durak — Responsive Card Game Styles === */
+/* === Durak — N-player responsive styles === */
 
-/* --- CSS Custom Properties (dark mode default) --- */
 :root {
   --bg: #0a0a14;
   --surface: #1a1a2e;
@@ -19,6 +18,8 @@
   --active-glow: rgba(100, 180, 255, 0.25);
   --overlay-bg: rgba(5,5,16,0.96);
   --header-bg: rgba(10,10,20,0.85);
+  --opp-bg: rgba(255,255,255,0.04);
+  --opp-border: rgba(255,255,255,0.1);
 }
 
 body:not(.dark-mode) {
@@ -39,9 +40,10 @@ body:not(.dark-mode) {
   --active-glow: rgba(60, 130, 255, 0.18);
   --overlay-bg: rgba(240,244,248,0.97);
   --header-bg: rgba(240,244,248,0.9);
+  --opp-bg: rgba(0,0,0,0.03);
+  --opp-border: rgba(0,0,0,0.08);
 }
 
-/* --- Reset & base --- */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -57,13 +59,12 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* --- App layout --- */
 #app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   height: 100dvh;
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
   padding: 0 4px;
 }
@@ -73,6 +74,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   height: 44px;
   padding: 0 12px;
   padding-right: 58px;
@@ -81,55 +83,154 @@ html, body {
   -webkit-backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--card-border);
   flex-shrink: 0;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: var(--text-muted);
 }
-
 #game-title { color: var(--text); font-size: 0.9rem; }
+#status-display { flex: 1; text-transform: none; letter-spacing: 0; font-weight: 500; }
 #deck-count { font-variant-numeric: tabular-nums; }
-
-#trump-display {
-  font-weight: 700;
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
-}
-#trump-display.suit-red { color: var(--card-red); }
+#trump-display { font-weight: 700; font-size: 0.85rem; }
+#trump-display.suit-red   { color: var(--card-red); }
 #trump-display.suit-black { color: var(--card-black); }
 
-/* --- Settings gear override --- */
 #settings-gear-btn {
   position: fixed !important;
-  top: 6px !important;
-  right: 8px !important;
-  width: 42px !important;
-  height: 42px !important;
+  top: 6px !important; right: 8px !important;
+  width: 42px !important; height: 42px !important;
   border-radius: 10px !important;
 }
 
-/* --- Player zones --- */
-#top-zone, #bottom-zone {
+/* --- Opponents row --- */
+#opponents {
+  display: flex;
+  gap: 6px;
+  padding: 6px 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.opponent-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 70px;
+  padding: 6px 8px 4px;
+  background: var(--opp-bg);
+  border: 1px solid var(--opp-border);
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+}
+.opponent-tile.has-priority {
+  box-shadow: 0 0 0 2px var(--active-glow), 0 0 14px var(--active-glow);
+  border-color: rgba(100, 180, 255, 0.5);
+}
+.opponent-tile.is-out { opacity: 0.35; filter: grayscale(0.6); }
+
+.opp-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.opp-backs {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 28px;
+}
+.mini-back {
+  width: 18px;
+  height: 26px;
+  border-radius: 4px;
+  border: 1px solid var(--card-border);
+  background:
+    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.06) 2px, rgba(255,255,255,0.06) 4px),
+    var(--surface);
+  margin-left: -8px;
+}
+.mini-back:first-child { margin-left: 0; }
+body:not(.dark-mode) .mini-back {
+  background:
+    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px),
+    #e8e8f0;
+}
+.opp-count {
+  position: absolute;
+  right: -12px;
+  top: -4px;
+  min-width: 18px;
+  padding: 1px 4px;
+  background: #e53935;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  border-radius: 9px;
+  text-align: center;
+}
+
+.opp-role {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 1px 6px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.05);
+}
+body:not(.dark-mode) .opp-role { background: rgba(0,0,0,0.05); }
+.opp-role.role-attacker { color: #ffb347; }
+.opp-role.role-defender { color: #88ccff; }
+.opp-role.role-thrower  { color: #c2a0ff; }
+.opp-role.role-out      { color: var(--text-muted); }
+
+/* --- Pile-on banner --- */
+#pile-banner {
+  margin: 4px 8px;
+  padding: 6px 10px;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffb347;
+  background: rgba(255, 179, 71, 0.12);
+  border: 1px solid rgba(255, 179, 71, 0.3);
+  border-radius: 8px;
+}
+#pile-banner.hidden { display: none; }
+
+/* --- Field --- */
+#field {
+  flex: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+  min-height: 0;
+  background: var(--field-bg);
+  border-radius: 8px;
+  margin: 2px 4px;
+  flex-wrap: wrap;
+}
+.field-pair { display: flex; flex-direction: column; align-items: center; }
+.field-pair > * + * { margin-top: -30px; }
+
+/* --- Human zone (bottom) --- */
+#human-zone {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: min-content;
-  flex-shrink: 0;
-  padding: 4px 0;
-  transition: box-shadow 0.3s ease;
+  padding: 4px 0 env(safe-area-inset-bottom, 0px);
 }
 
-#bottom-zone {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-#top-zone.active-turn, #bottom-zone.active-turn {
-  box-shadow: inset 0 0 20px var(--active-glow);
-  border-radius: 8px;
-}
-
-/* --- Action buttons row --- */
 .options-row {
   display: flex;
   gap: 6px;
@@ -137,10 +238,9 @@ html, body {
   justify-content: center;
   flex-shrink: 0;
 }
-
 .action-btn {
   min-height: 56px;
-  min-width: 60px;
+  min-width: 80px;
   padding: 8px 24px;
   border-radius: 12px;
   font-size: 1.1rem;
@@ -150,51 +250,31 @@ html, body {
   color: var(--btn-text);
   cursor: pointer;
   touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: background 0.15s, opacity 0.15s, transform 0.1s;
+  transition: background 0.15s, transform 0.1s;
 }
-
+.action-btn.hidden { display: none; }
 .action-btn[data-action="take"] {
   background: rgba(255,100,100,0.15);
   border-color: rgba(255,100,100,0.3);
   color: #ff8888;
 }
-
 .action-btn[data-action="pass"] {
   background: rgba(100,200,255,0.15);
   border-color: rgba(100,200,255,0.3);
   color: #88ccff;
 }
-
-body:not(.dark-mode) .action-btn[data-action="take"] {
-  background: rgba(211,47,47,0.1);
-  border-color: rgba(211,47,47,0.3);
-  color: #d32f2f;
+.action-btn[data-action="done"] {
+  background: rgba(195,160,255,0.15);
+  border-color: rgba(195,160,255,0.3);
+  color: #c2a0ff;
 }
+body:not(.dark-mode) .action-btn[data-action="take"] { background: rgba(211,47,47,0.1); border-color: rgba(211,47,47,0.3); color: #d32f2f; }
+body:not(.dark-mode) .action-btn[data-action="pass"] { background: rgba(30,136,229,0.1); border-color: rgba(30,136,229,0.3); color: #1e88e5; }
+body:not(.dark-mode) .action-btn[data-action="done"] { background: rgba(120,80,200,0.1); border-color: rgba(120,80,200,0.3); color: #5e35b1; }
+.action-btn:active { transform: scale(0.96); background: rgba(255,255,255,0.25); }
+body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
 
-body:not(.dark-mode) .action-btn[data-action="pass"] {
-  background: rgba(30,136,229,0.1);
-  border-color: rgba(30,136,229,0.3);
-  color: #1e88e5;
-}
-
-.action-btn:active:not(:disabled) {
-  transform: scale(0.96);
-  background: rgba(255,255,255,0.25);
-}
-
-body:not(.dark-mode) .action-btn:active:not(:disabled) {
-  background: rgba(0,0,0,0.1);
-}
-
-.action-btn:disabled {
-  background: var(--btn-disabled-bg);
-  color: var(--btn-disabled-text);
-  cursor: default;
-  border-color: transparent;
-}
-
-/* --- Hand containers --- */
+/* --- Hand container --- */
 .hand-row {
   display: flex;
   gap: 0;
@@ -206,29 +286,17 @@ body:not(.dark-mode) .action-btn:active:not(:disabled) {
   cursor: grab;
   flex: 1;
   align-items: center;
-  align-content: center;
   flex-wrap: nowrap;
   justify-content: safe center;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
-
-.hand-row.dragging {
-  cursor: grabbing;
-  scroll-behavior: auto;
-}
-
-.hand-row.dragging .card-btn {
-  pointer-events: none;
-}
-
-.hand-row > * + * {
-  margin-left: -24px;
-}
-
+.hand-row.dragging { cursor: grabbing; scroll-behavior: auto; }
+.hand-row.dragging .card-btn { pointer-events: none; }
+.hand-row > * + * { margin-left: -24px; }
 .hand-row::-webkit-scrollbar { display: none; }
 
-/* --- Card buttons --- */
+/* --- Cards --- */
 .card-btn {
   position: relative;
   display: flex;
@@ -239,98 +307,31 @@ body:not(.dark-mode) .action-btn:active:not(:disabled) {
   background: var(--card-bg);
   cursor: pointer;
   touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s, box-shadow 0.15s, z-index 0s;
+  transition: transform 0.1s, box-shadow 0.15s;
   flex-shrink: 0;
   user-select: none;
   overflow: hidden;
   z-index: 1;
 }
-
 .card-btn .card-corner {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  line-height: normal;
+  position: absolute; top: 6px; left: 6px;
+  display: flex; flex-direction: column; align-items: center;
 }
-
-.card-btn .c-val {
-  font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-  margin-top: 2px;
-}
-
-.card-btn .c-corner-suit {
-  font-size: 1rem;
-}
-
+.card-btn .c-val { font-size: 1.4rem; font-weight: 800; letter-spacing: -1px; margin-top: 2px; }
+.card-btn .c-corner-suit { font-size: 1rem; }
 .card-btn .card-center {
-  position: absolute;
-  top: 50%;
-  left: 50%;
+  position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 3rem;
-  opacity: 0.15;
-  pointer-events: none;
+  font-size: 3rem; opacity: 0.15; pointer-events: none;
 }
-
-.card-btn:active {
-  transform: scale(0.95);
-  z-index: 10;
-}
-
-.card-btn.suit-hearts,
-.card-btn.suit-diamonds {
-  color: var(--card-red);
-}
-
-.card-btn.suit-spades,
-.card-btn.suit-clubs {
-  color: var(--card-black);
-}
-
-/* Trump suit glow */
+.card-btn:active { transform: scale(0.95); z-index: 10; }
+.card-btn.suit-hearts, .card-btn.suit-diamonds { color: var(--card-red); }
+.card-btn.suit-spades, .card-btn.suit-clubs { color: var(--card-black); }
 .card-btn.trump-card {
   border-color: rgba(255, 200, 50, 0.9);
   box-shadow: 0 0 8px rgba(255, 200, 50, 0.4), inset 0 0 6px rgba(255, 200, 50, 0.2);
 }
-
-/* Field cards are non-interactive */
-.card-btn.field-card {
-  cursor: default;
-  opacity: 0.95;
-  min-width: 64px;
-  min-height: 80px;
-}
-
-/* --- Field (board) area --- */
-#field {
-  flex: 1.5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 4px 8px;
-  min-height: 0;
-  background: var(--field-bg);
-  border-radius: 8px;
-  margin: 2px 4px;
-  flex-wrap: wrap;
-}
-
-.field-pair {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.field-pair > * + * {
-  margin-top: -30px;
-}
+.card-btn.field-card { cursor: default; opacity: 0.95; min-width: 64px; min-height: 80px; }
 
 .card-placeholder {
   min-width: 64px;
@@ -350,33 +351,19 @@ body:not(.dark-mode) .action-btn:active:not(:disabled) {
   justify-content: center;
   z-index: 1000;
   padding: 24px 20px;
-  gap: 16px;
+  gap: 12px;
 }
-
 .overlay.hidden { display: none; }
+.g-title { font-size: clamp(2rem, 8vw, 3.5rem); font-weight: 800; letter-spacing: 0.06em; color: var(--text); }
+.g-sub   { font-size: clamp(0.85rem, 3vw, 1.1rem); color: var(--text-muted); text-align: center; max-width: 300px; line-height: 1.4; }
+.g-rules { font-size: clamp(0.72rem, 2.5vw, 0.88rem); color: var(--text-muted); text-align: center; max-width: 320px; line-height: 1.5; }
 
-.g-title {
-  font-size: clamp(2rem, 8vw, 3.5rem);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  color: var(--text);
-}
-
-.g-sub {
-  font-size: clamp(0.85rem, 3vw, 1.1rem);
+.setup-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
-  text-align: center;
-  max-width: 300px;
-  line-height: 1.4;
-}
-
-.g-rules {
-  font-size: clamp(0.72rem, 2.5vw, 0.88rem);
-  color: var(--text-muted);
-  text-align: center;
-  max-width: 320px;
-  line-height: 1.5;
-  margin-top: 4px;
+  margin-top: 8px;
 }
 
 .mbtn {
@@ -388,75 +375,23 @@ body:not(.dark-mode) .action-btn:active:not(:disabled) {
   font-weight: 700;
   cursor: pointer;
   touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
   color: #fff;
-  transition: transform 0.1s, opacity 0.15s;
+  transition: transform 0.1s;
 }
-
 .mbtn:active { transform: scale(0.96); }
+.mbtn.red { background: #e53935; }
+.mbtn.red:active { background: #c62828; }
 
-.mbtn.red {
-  background: #e53935;
-}
-
-.mbtn.red:active {
-  background: #c62828;
-}
-
-/* --- Card backs (AI opponent hidden hand) --- */
-.card-back {
-  min-width: 68px;
-  min-height: 86px;
-  border: 2px solid var(--card-border);
-  border-radius: 12px;
-  background:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 4px,
-      rgba(255,255,255,0.04) 4px,
-      rgba(255,255,255,0.04) 8px
-    ),
-    var(--surface);
-  flex-shrink: 0;
-}
-
-body:not(.dark-mode) .card-back {
-  background:
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 4px,
-      rgba(0,0,0,0.04) 4px,
-      rgba(0,0,0,0.04) 8px
-    ),
-    #e8e8f0;
-}
-
-/* --- AI mode: hide top controls --- */
-#app.ai-mode #top-options { display: none; }
-
-/* --- Status thinking animation --- */
-.status-thinking {
-  animation: pulse 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-/* --- Mode toggle (start screen + settings) --- */
-.mode-toggle {
+/* --- Mode + count toggles --- */
+.mode-toggle, .count-toggle {
   display: flex;
   gap: 0;
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--btn-border);
 }
-
-.mode-toggle .mode-btn {
-  padding: 8px 20px;
+.mode-btn, .count-btn {
+  padding: 8px 18px;
   background: var(--btn-bg);
   color: var(--btn-text);
   border: none;
@@ -464,25 +399,17 @@ body:not(.dark-mode) .card-back {
   font-weight: 600;
   cursor: pointer;
   touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
   transition: background 0.15s, color 0.15s;
 }
+.count-btn { min-width: 44px; padding: 8px 0; }
+.mode-btn.active, .count-btn.active { background: #e53935; color: #fff; }
 
-.mode-toggle .mode-btn.active {
-  background: #e53935;
-  color: #fff;
-}
-
-/* Settings panel mode toggle */
+/* --- Settings panel section --- */
 #durak-settings {
   padding: 12px 16px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
-
-body:not(.dark-mode) #durak-settings {
-  border-bottom-color: rgba(0,0,0,0.08);
-}
-
+body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
 #durak-settings .settings-label {
   font-size: 0.75rem;
   font-weight: 600;
@@ -491,81 +418,46 @@ body:not(.dark-mode) #durak-settings {
   color: var(--text-muted);
   margin-bottom: 8px;
 }
+#durak-settings .settings-info { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+#durak-settings .settings-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
 
-/* --- Responsive breakpoints --- */
+/* --- Thinking pulse --- */
+.status-thinking { animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* --- Responsive --- */
 @media (max-width: 380px) {
-  .card-btn {
-    min-width: 58px;
-    min-height: 74px;
-    padding: 3px;
-  }
+  .card-btn { min-width: 58px; min-height: 74px; padding: 3px; }
   .card-btn .c-val { font-size: 1.2rem; }
   .card-btn .c-corner-suit { font-size: 0.9rem; }
   .card-btn .card-center { font-size: 2.3rem; }
-  .card-btn.field-card {
-    min-width: 52px;
-    min-height: 66px;
-  }
-  .card-back {
-    min-width: 58px;
-    min-height: 74px;
-  }
+  .card-btn.field-card { min-width: 52px; min-height: 66px; }
+  .card-placeholder { min-width: 52px; min-height: 66px; }
   .hand-row > * + * { margin-left: -20px; }
-  .action-btn {
-    padding: 8px 16px;
-    font-size: 0.9rem;
-  }
+  .action-btn { padding: 8px 14px; font-size: 0.9rem; min-width: 64px; }
+  .opponent-tile { min-width: 56px; padding: 4px 6px 3px; }
+  .opp-name { font-size: 0.62rem; }
+  .mini-back { width: 14px; height: 20px; margin-left: -6px; }
+  .opp-backs { height: 22px; }
+  .count-btn { min-width: 36px; padding: 6px 0; font-size: 0.82rem; }
+  .mode-btn { padding: 6px 12px; font-size: 0.82rem; }
 }
 
 @media (min-width: 500px) {
-  .card-btn {
-    min-width: 76px;
-    min-height: 96px;
-  }
+  .card-btn { min-width: 76px; min-height: 96px; }
   .card-btn .c-val { font-size: 1.6rem; }
   .card-btn .c-corner-suit { font-size: 1.1rem; }
   .card-btn .card-center { font-size: 3.5rem; }
-  .card-back {
-    min-width: 76px;
-    min-height: 96px;
-  }
-  .card-btn.field-card {
-    min-width: 68px;
-    min-height: 86px;
-  }
-  .card-placeholder {
-    min-width: 68px;
-    min-height: 86px;
-  }
-  #field {
-    flex: 2;
-  }
+  .card-btn.field-card { min-width: 68px; min-height: 86px; }
+  .card-placeholder { min-width: 68px; min-height: 86px; }
 }
 
 @media (min-width: 768px) {
-  .card-btn {
-    min-width: 86px;
-    min-height: 108px;
-    border-radius: 14px;
-  }
+  .card-btn { min-width: 86px; min-height: 108px; border-radius: 14px; }
   .card-btn .c-val { font-size: 1.8rem; }
   .card-btn .c-corner-suit { font-size: 1.3rem; }
   .card-btn .card-center { font-size: 4rem; }
-  .card-back {
-    min-width: 86px;
-    min-height: 108px;
-    border-radius: 14px;
-  }
-  .card-btn.field-card {
-    min-width: 76px;
-    min-height: 96px;
-  }
-  .card-placeholder {
-    min-width: 76px;
-    min-height: 96px;
-  }
-  .action-btn {
-    padding: 10px 28px;
-    font-size: 1.2rem;
-  }
+  .card-btn.field-card { min-width: 76px; min-height: 96px; }
+  .card-placeholder { min-width: 76px; min-height: 96px; }
+  .action-btn { padding: 10px 28px; font-size: 1.2rem; }
 }

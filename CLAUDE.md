@@ -61,7 +61,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/river-run/` | River Runner 3D | Three.js | 3D obstacle-dodging river runner. Has per-game settings (auto-shoot, auto-avoid, invert drag). Saves `riverRunHighScore`. |
 | `games/waterfall/` | 3D Auto-Aim Endless Shooter | Three.js | 3D shooter, mobile-friendly. Not listed in gallery (intentional). |
 | `games/blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Push blobs with electricity. |
-| `games/durak/` | Durak | DOM | Classic Russian card game. Play vs Computer or PvP. Attack and defend with pairs grouped visually. Trump suit chosen randomly from deck bottom. Cards feature a high-visibility casino-style layout (corner indicators, giant center watermark) optimized for mobile accessibility. Manual drawing is disabled; hands restock automatically at the end of bouts. |
+| `games/durak/` | Durak | DOM | Classic Russian card game for 2–6 players. Modes: vs Computer (1 human + 2–5 AI) or Hot-seat (2–6 humans sharing a device, with a pass-device cover at 3+ players). Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap, pile-on during the defender's take, ordered end-of-bout draws (attacker → contributors → defender), elimination when hand and deck are both empty. Last player holding cards is the Durak. |
 | `games/durak-dungeon/` | Durak Dungeon | DOM | Roguelike dungeon crawler using Durak card mechanics. Defend against enemy attacks using Durak rules, then counter-attack to deal damage. 20-floor run with relics (15 types), shops, enhanced cards (burning/armored/vampiric/lucky), boss mutations. Seeded runs for async multiplayer via URL. |
 | `games/durak-tactics/` | Durak Tactics | DOM | Turn-based grid tactics using Durak card mechanics. Place cards as units on a 5×4 grid to battle enemy units. Campaign map with battles, shops, events, and bosses. Draft cards and spend gold between encounters. |
 
@@ -143,7 +143,8 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `lastPlayed_riverRun` | river-run | timestamp (ms) | Set on session start |
 | `lastPlayed_blobZapper` | blob-zapper | timestamp (ms) | Set on session start |
 | `lastPlayed_durak` | durak | timestamp (ms) | Set on session start |
-| `durak_mode` | durak | `'ai'`\|`'pvp'` | Game mode: vs Computer or vs Player |
+| `durak_mode` | durak | `'ai'`\|`'hotseat'` | Game mode: vs Computer or Hot-seat (shared device) |
+| `durak_playerCount` | durak | integer string (2–6) | Table size for the next new game |
 | `lastPlayed_durakDungeon` | durak-dungeon | timestamp (ms) | Set on run start |
 | `durakDungeon_bestFloor` | durak-dungeon | integer string | Highest floor reached |
 | `durakDungeon_victories` | durak-dungeon | integer string | Number of complete runs (floor 20) |

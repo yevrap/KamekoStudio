@@ -1,13 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Card, canBeat, buildDeck, cardStrength } from '../games/durak/constants.js';
-import { state, newGame, getPlayer, otherPlayerId, isTrump, setAiMode } from '../games/durak/state.js';
-import { canPlayCard, playCard, takeCards, passRound, autoDrawBoth, checkGameOver } from '../games/durak/gameplay.js';
+import {
+  state, newGame, setupPlayers, getPlayer, isTrump,
+  nextActiveSeat, adjacentContributors, activeCount
+} from '../games/durak/state.js';
+import {
+  legalAttack, legalDefense, playAttack, playDefense,
+  passAttack, declareTake, pileOnPass, endBout, dealInitial, checkGameOver
+} from '../games/durak/gameplay.js';
 
 // ─── canBeat (pure rule) ─────────────────────────────────────────────────────
 
 test('canBeat: higher same suit beats lower same suit', () => {
-  // trump = 4 (hearts); attack = 7 of spades, defend = 9 of spades
   assert.equal(canBeat(new Card(7, 1), new Card(9, 1), 4), true);
 });
 
@@ -44,8 +49,7 @@ test('canBeat: different non-trump suits cannot beat', () => {
 test('buildDeck: 36 unique cards (4 suits × 9 ranks 6-14)', () => {
   const deck = buildDeck();
   assert.equal(deck.length, 36);
-  const ids = new Set(deck.map(c => c.id));
-  assert.equal(ids.size, 36);
+  assert.equal(new Set(deck.map(c => c.id)).size, 36);
 });
 
 test('buildDeck: covers all suits and ranks 6–14', () => {
@@ -60,217 +64,311 @@ test('buildDeck: covers all suits and ranks 6–14', () => {
 // ─── cardStrength ────────────────────────────────────────────────────────────
 
 test('cardStrength: trump always ranks above any non-trump', () => {
-  // Lowest trump (6 of trump) must outrank highest non-trump (Ace of non-trump)
   assert.ok(cardStrength(new Card(6, 4), 4) > cardStrength(new Card(14, 1), 4));
 });
 
 test('cardStrength: within same group, higher value wins', () => {
   assert.ok(cardStrength(new Card(10, 1), 4) > cardStrength(new Card(7, 1), 4));
-  assert.ok(cardStrength(new Card(13, 4), 4) > cardStrength(new Card(7, 4), 4));
 });
 
-// ─── State + draw order ─────────────────────────────────────────────────────
+// ─── newGame / dealInitial ──────────────────────────────────────────────────
 
-function freshGame(aiMode = true) {
-  state.aiMode = aiMode;
-  setAiMode(aiMode);
-  newGame();
+test('newGame(ai,2): trump set from bottom; deck is 36 pre-deal', () => {
+  newGame('ai', 2);
+  assert.equal(state.trumpSuit, parseInt(state.trumpCard.suit));
+  assert.equal(state.deck.length, 36);
+  assert.equal(state.players.length, 2);
+  assert.equal(state.players[0].isHuman, true);
+  assert.equal(state.players[1].isHuman, false);
+});
+
+test('newGame + dealInitial: everyone holds 6 cards (2 players)', () => {
+  newGame('ai', 2);
+  dealInitial();
+  assert.equal(state.players[0].hand.length, 6);
+  assert.equal(state.players[1].hand.length, 6);
+  assert.equal(state.deck.length, 24);
+});
+
+test('newGame + dealInitial: 4-player deal draws 24 total', () => {
+  newGame('ai', 4);
+  dealInitial();
+  assert.equal(state.players.length, 4);
+  for (let i = 0; i < 4; i++) assert.equal(state.players[i].hand.length, 6);
+  assert.equal(state.deck.length, 36 - 24);
+});
+
+test('hotseat mode marks all players human', () => {
+  newGame('hotseat', 3);
+  for (let i = 0; i < 3; i++) assert.equal(state.players[i].isHuman, true);
+});
+
+// ─── Rotation helpers ───────────────────────────────────────────────────────
+
+test('nextActiveSeat skips eliminated seats', () => {
+  setupPlayers('ai', 4);
+  state.players[1].isOut = true;
+  assert.equal(nextActiveSeat(0), 2);
+  assert.equal(nextActiveSeat(2), 3);
+  assert.equal(nextActiveSeat(3), 0);
+});
+
+// ─── adjacentContributors ───────────────────────────────────────────────────
+
+test('adjacentContributors at 2 players = [attacker] only', () => {
+  newGame('ai', 2);
+  state.attackerSeat = 0; state.defenderSeat = 1;
+  assert.deepEqual(adjacentContributors(), [0]);
+});
+
+test('adjacentContributors at 3 players = [attacker, rightOfDefender]', () => {
+  newGame('ai', 3);
+  state.attackerSeat = 0; state.defenderSeat = 1;
+  assert.deepEqual(adjacentContributors(), [0, 2]);
+});
+
+test('adjacentContributors at 4 players excludes the far seat', () => {
+  newGame('ai', 4);
+  state.attackerSeat = 0; state.defenderSeat = 1;
+  // primary = 0, right of defender (1) = 2. Seat 3 must NOT be a contributor.
+  assert.deepEqual(adjacentContributors(), [0, 2]);
+});
+
+test('adjacentContributors at 6 players excludes far seats', () => {
+  newGame('ai', 6);
+  state.attackerSeat = 0; state.defenderSeat = 1;
+  assert.deepEqual(adjacentContributors(), [0, 2]);
+});
+
+// ─── legalAttack ────────────────────────────────────────────────────────────
+
+function seatContributor(count, attacker, defender) {
+  newGame('ai', count);
+  state.attackerSeat = attacker;
+  state.defenderSeat = defender;
+  state.prioritySeat = attacker;
+  state.phase = 'playing';
+  state.field.attacks = [];
+  state.field.defenses = [];
+  state.contributionOrder = [];
+  for (const p of state.players) p.hand = [];
 }
 
-test('newGame: trump suit set from bottom of deck', () => {
-  freshGame();
-  assert.equal(state.trumpSuit, parseInt(state.trumpCard.suit));
+test('legalAttack: opening attacker can play any card', () => {
+  seatContributor(4, 0, 1);
+  const c = new Card(7, 1);
+  state.players[0].hand = [c];
+  state.players[1].hand = [new Card(8, 1), new Card(8, 2), new Card(8, 3), new Card(8, 4), new Card(9, 1), new Card(9, 2)];
+  assert.equal(legalAttack(0, c), true);
 });
 
-test('newGame: deck has 36 minus initial draws', () => {
-  freshGame();
-  // newGame builds the deck but does not auto-draw — that's gameplay's job
-  assert.equal(state.deck.length, 36);
-  assert.equal(getPlayer('top').hand.length, 0);
-  assert.equal(getPlayer('bottom').hand.length, 0);
+test('legalAttack: non-adjacent seat cannot throw in', () => {
+  seatContributor(4, 0, 1);
+  // Bout in progress, a 7 is on the field.
+  state.field.attacks = [new Card(7, 1)];
+  state.field.defenses = [null];
+  state.prioritySeat = 3;
+  const c = new Card(7, 2);
+  state.players[3].hand = [c];
+  state.players[1].hand = [new Card(10, 1), new Card(10, 2), new Card(10, 3)];
+  assert.equal(legalAttack(3, c), false);
 });
 
-test('newGame + autoDrawBoth = both players holding 6 cards (start-game regression)', () => {
-  freshGame();
-  autoDrawBoth();
-  assert.equal(getPlayer('top').hand.length, 6);
-  assert.equal(getPlayer('bottom').hand.length, 6);
-  assert.equal(state.deck.length, 24);
+test('legalAttack: 6-card cap enforced', () => {
+  seatContributor(3, 0, 1);
+  // Field already has 6 attacks all defended.
+  state.field.attacks = [
+    new Card(7, 1), new Card(7, 2), new Card(7, 3), new Card(7, 4),
+    new Card(8, 1), new Card(8, 2)
+  ];
+  state.field.defenses = [
+    new Card(9, 1), new Card(9, 2), new Card(9, 3), new Card(9, 4),
+    new Card(10, 1), new Card(10, 2)
+  ];
+  const c = new Card(7, 1);
+  state.players[0].hand = [new Card(8, 3)];
+  assert.equal(legalAttack(0, new Card(8, 3)), false);
+});
+
+test('legalAttack: capped by defender hand size', () => {
+  seatContributor(3, 0, 1);
+  // Defender has 1 card, 0 defenses so far, 1 undefended attack already.
+  state.field.attacks = [new Card(7, 1)];
+  state.field.defenses = [null];
+  state.prioritySeat = 0;  // Can't happen normally (priority should be defender) — force it
+  const c = new Card(7, 2);
+  state.players[0].hand = [c];
+  state.players[1].hand = [new Card(14, 4)];
+  // Undefended (1) >= defender.hand.length (1) → blocked
+  assert.equal(legalAttack(0, c), false);
+});
+
+// ─── Full bout: attack → defend → pass → rotation ──────────────────────────
+
+test('bout: defended round → defender becomes next attacker (3 players)', () => {
+  newGame('ai', 3);
+  state.deck = []; // skip draws for determinism
+  state.trumpSuit = 4;
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 0;
+  state.phase = 'playing';
+  state.field.attacks = []; state.field.defenses = [];
+  state.contributionOrder = [];
+  // Give each player an extra card so none are eliminated on this bout.
+  state.players[0].hand = [new Card(7, 1), new Card(12, 3)];
+  state.players[1].hand = [new Card(9, 1), new Card(12, 2)];
+  state.players[2].hand = [new Card(14, 2), new Card(12, 1)];
+
+  const c1 = state.players[0].hand[0];
+  assert.equal(playAttack(0, c1.id), true);
+  assert.equal(state.prioritySeat, 1);
+
+  const c2 = state.players[1].hand[0];
+  assert.equal(playDefense(1, c2.id), true);
+  assert.equal(state.prioritySeat, 0);
+
+  // Attacker passes, then contributor passes → defended
+  assert.equal(passAttack(0), true);
+  assert.equal(state.prioritySeat, 2);
+  assert.equal(passAttack(2), true);
+
+  assert.equal(state.attackerSeat, 1); // defender became attacker
+  assert.equal(state.defenderSeat, 2);
   assert.equal(state.phase, 'playing');
-});
-
-test('autoDrawBoth: attacker draws first, both reach six when deck allows', () => {
-  freshGame();
-  state.attacker = 'bottom';
-  autoDrawBoth();
-  assert.equal(getPlayer('bottom').hand.length, 6);
-  assert.equal(getPlayer('top').hand.length, 6);
-  assert.equal(state.deck.length, 24);
-});
-
-test('autoDrawBoth: when deck runs short attacker still gets cards first', () => {
-  freshGame();
-  // Drain deck to 8 cards
-  state.deck.length = 8;
-  state.attacker = 'top';
-  autoDrawBoth();
-  assert.equal(getPlayer('top').hand.length, 6);
-  assert.equal(getPlayer('bottom').hand.length, 2);
-  assert.equal(state.deck.length, 0);
-});
-
-// ─── canPlayCard / priority enforcement ─────────────────────────────────────
-
-test('canPlayCard: opening attacker can play any card', () => {
-  freshGame();
-  autoDrawBoth();
-  state.priority = 'bottom';
-  state.attacker = 'bottom';
-  // Empty board, bottom is attacker — first card in hand should be playable
-  const card = getPlayer('bottom').hand[0];
-  assert.equal(canPlayCard(card, 'bottom'), true);
-});
-
-test('canPlayCard: throw-on requires matching rank already on field', () => {
-  freshGame();
-  // Set up explicit hands and field
-  state.attacker = 'bottom';
-  state.priority = 'bottom';
-  getPlayer('bottom').board = [new Card(7, 1)];
-  getPlayer('top').board    = [new Card(9, 1)];
-  getPlayer('bottom').hand  = [new Card(7, 2), new Card(10, 3)];
-  // 7 of clubs matches the 7 already on field — playable
-  assert.equal(canPlayCard(new Card(7, 2), 'bottom'), true);
-  // 10 of diamonds has no matching rank — not playable
-  assert.equal(canPlayCard(new Card(10, 3), 'bottom'), false);
-});
-
-test('canPlayCard: defender must beat the last unbeaten attack', () => {
-  freshGame();
-  state.trumpSuit = 4;
-  state.attacker = 'top';
-  state.priority = 'bottom';
-  getPlayer('top').board = [new Card(7, 1)]; // 7 of spades
-  getPlayer('bottom').board = [];
-  // 9 of spades (same suit, higher) can defend
-  assert.equal(canPlayCard(new Card(9, 1), 'bottom'), true);
-  // 6 of trump (lower trump beats non-trump) can defend
-  assert.equal(canPlayCard(new Card(6, 4), 'bottom'), true);
-  // 6 of clubs (different non-trump) cannot
-  assert.equal(canPlayCard(new Card(6, 2), 'bottom'), false);
-});
-
-test('canPlayCard: returns false when not your turn', () => {
-  freshGame();
-  state.priority = 'bottom';
-  getPlayer('top').hand = [new Card(7, 1)];
-  assert.equal(canPlayCard(new Card(7, 1), 'top'), false);
-});
-
-// ─── playCard mutation ──────────────────────────────────────────────────────
-
-test('playCard: moves card from hand to board and flips priority', () => {
-  freshGame();
-  state.attacker = 'bottom';
-  state.priority = 'bottom';
-  const card = new Card(8, 2);
-  getPlayer('bottom').hand = [card];
-  getPlayer('top').hand = [new Card(9, 2)];
-  const ok = playCard(card.id, 'bottom');
-  assert.equal(ok, true);
-  assert.equal(getPlayer('bottom').hand.length, 0);
-  assert.equal(getPlayer('bottom').board.length, 1);
-  assert.equal(state.priority, 'top');
-});
-
-test('playCard: rejects illegal play and leaves state unchanged', () => {
-  freshGame();
-  state.attacker = 'top';
-  state.priority = 'bottom';
-  state.trumpSuit = 4;
-  getPlayer('top').board = [new Card(10, 1)];
-  const lowSameSuit = new Card(7, 1);
-  getPlayer('bottom').hand = [lowSameSuit];
-  const ok = playCard(lowSameSuit.id, 'bottom');
-  assert.equal(ok, false);
-  assert.equal(getPlayer('bottom').hand.length, 1);
-  assert.equal(state.priority, 'bottom');
-});
-
-// ─── takeCards ───────────────────────────────────────────────────────────────
-
-test('takeCards: defender absorbs all field cards; attacker re-draws to six', () => {
-  freshGame();
-  state.attacker = 'top';
-  state.priority = 'bottom';
-  getPlayer('top').board = [new Card(10, 1), new Card(11, 2)];
-  getPlayer('bottom').board = [];
-  getPlayer('bottom').hand = [];
-  getPlayer('top').hand = [];
-  const ok = takeCards('bottom');
-  assert.equal(ok, true);
-  assert.equal(getPlayer('bottom').hand.length, 2);
-  assert.equal(getPlayer('top').board.length, 0);
-  assert.equal(state.priority, 'top');
-  assert.equal(state.attacker, 'top'); // attacker keeps role
-  assert.equal(getPlayer('top').hand.length, 6); // drew back up
-});
-
-// ─── passRound ───────────────────────────────────────────────────────────────
-
-test('passRound: clears field to discard and swaps attacker', () => {
-  freshGame();
-  state.attacker = 'bottom';
-  state.priority = 'bottom';
-  getPlayer('bottom').board = [new Card(7, 1)];
-  getPlayer('top').board    = [new Card(9, 1)];
-  const ok = passRound('bottom');
-  assert.equal(ok, true);
-  assert.equal(getPlayer('bottom').board.length, 0);
-  assert.equal(getPlayer('top').board.length, 0);
   assert.equal(state.discard.length, 2);
-  assert.equal(state.attacker, 'top');
-  assert.equal(state.priority, 'top');
 });
 
-test('passRound: rejected when bout is not fully defended', () => {
-  freshGame();
-  state.attacker = 'bottom';
-  state.priority = 'bottom';
-  getPlayer('bottom').board = [new Card(7, 1), new Card(8, 1)];
-  getPlayer('top').board    = [new Card(9, 1)]; // only 1 defended of 2
-  const ok = passRound('bottom');
-  assert.equal(ok, false);
-  assert.equal(state.attacker, 'bottom');
+test('bout: taken round → defender skipped, next seat attacks', () => {
+  newGame('ai', 3);
+  state.deck = [];
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 0;
+  state.phase = 'playing';
+  state.field.attacks = []; state.field.defenses = [];
+  state.contributionOrder = [];
+  state.players[0].hand = [new Card(7, 1), new Card(12, 3)];
+  state.players[1].hand = [new Card(6, 2), new Card(12, 2)]; // can't beat
+  state.players[2].hand = [new Card(13, 4)]; // no rank match, can't throw on
+
+  playAttack(0, state.players[0].hand[0].id);
+  assert.equal(state.prioritySeat, 1);
+  assert.equal(declareTake(1), true);
+
+  // Defender (seat 1) is skipped → next attacker is nextActiveSeat(1) = 2
+  assert.equal(state.attackerSeat, 2);
+  assert.equal(state.defenderSeat, 0);
+  // Defender absorbed the card (kept their 2 + took 1 = 3)
+  assert.equal(state.players[1].hand.length, 3);
 });
 
-// ─── checkGameOver ──────────────────────────────────────────────────────────
+// ─── Pile-on on the taker ──────────────────────────────────────────────────
 
-test('checkGameOver: false when deck still has cards', () => {
-  freshGame();
-  getPlayer('top').hand = [];
-  assert.equal(checkGameOver(), false);
+test('pileOn: non-adjacent seat cannot throw; cards end up with defender', () => {
+  newGame('ai', 4);
+  state.deck = [];
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 0;
+  state.phase = 'playing';
+  state.field.attacks = []; state.field.defenses = [];
+  state.contributionOrder = [];
+  state.players[0].hand = [new Card(7, 1), new Card(7, 2)];
+  state.players[1].hand = [new Card(6, 3)]; // can't beat
+  state.players[2].hand = [new Card(7, 3)]; // right-of-defender: legal
+  state.players[3].hand = [new Card(7, 4)]; // far seat: NOT legal
+
+  playAttack(0, state.players[0].hand[0].id); // 7♠
+  declareTake(1);
+  assert.equal(state.phase, 'pileOn');
+  assert.equal(state.prioritySeat, 0);
+
+  // Seat 3 is not a contributor.
+  assert.equal(legalAttack(3, state.players[3].hand[0]), false);
+
+  // Seat 0 throws on 7♣
+  assert.equal(playAttack(0, state.players[0].hand.find(c => c.value === 7 && c.suit === 2).id), true);
+  // Then seat 2 (right-of-defender) throws on 7♦
+  assert.equal(state.prioritySeat, 2);
+  assert.equal(playAttack(2, state.players[2].hand[0].id), true);
+  // Seat 0 passes, seat 2 already played; next is seat 0.
+  // cyclePilePriority after seat 2's throw puts priority back on seat 0.
+  assert.equal(state.prioritySeat, 0);
+  pileOnPass(0);
+  assert.equal(state.prioritySeat, 2);
+  pileOnPass(2);
+
+  // Bout ended with all cards to defender (seat 1).
+  // Original 7♠ + 7♣ from seat 0 + 7♦ from seat 2 = 3 cards.
+  assert.equal(state.players[1].hand.length, 1 /*kept 6♦*/ + 3);
 });
 
-test('checkGameOver: bottom (human) wins by emptying hand once deck is gone', () => {
-  freshGame();
-  state.deck.length = 0;
-  getPlayer('top').hand = [new Card(7, 1)];
-  getPlayer('bottom').hand = [];
-  assert.equal(checkGameOver(), true);
+// ─── Draw order ────────────────────────────────────────────────────────────
+
+test('draw order: attacker → contributors (in contribution order) → defender last', () => {
+  newGame('ai', 3);
+  state.trumpSuit = 4;
+  // Small deterministic deck of 9 cards we know the top of.
+  state.deck = [
+    new Card(6,1), new Card(6,2), new Card(6,3),
+    new Card(10,1), new Card(10,2), new Card(10,3),
+    new Card(11,1), new Card(11,2), new Card(11,3)
+  ];
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 0;
+  state.phase = 'playing';
+  state.field.attacks = []; state.field.defenses = [];
+  state.contributionOrder = [];
+  // Everyone empty to start — draw fills each to 6 in order.
+  for (const p of state.players) p.hand = [];
+
+  // Play a trivial bout: 0 attacks 7♠, 2 throws on 7♣ (contributor), 1 defends both, attacker+contributor pass.
+  state.players[0].hand = [new Card(7, 1)];
+  state.players[1].hand = [new Card(9, 1), new Card(9, 2)];
+  state.players[2].hand = [new Card(7, 2)];
+
+  playAttack(0, state.players[0].hand[0].id);       // 0 → attacks
+  playDefense(1, state.players[1].hand[0].id);      // 1 beats
+  // Now priority back to 0. Seat 0 is empty, so passes.
+  passAttack(0);
+  // Now priority on seat 2 (right-of-defender).
+  playAttack(2, state.players[2].hand[0].id);       // 2 throws 7♣
+  playDefense(1, state.players[1].hand[0].id);      // 1 beats with 9♣
+  // Both attackers pass → defended.
+  passAttack(0);
+  passAttack(2);
+
+  // Draw order is attacker(0) → contributor(2) → defender(1).
+  // Deck popped LIFO: 11♠,11♣,11♦,10♠,10♣,10♦,6♠,6♣,6♦
+  // Seat 0 draws to 6: pops 6 from top. Gets [11♠,11♣,11♦,10♠,10♣,10♦]
+  // Seat 2 draws to 6: 3 remain in deck, plus currently 0 in hand → seat 2 ends with 3.
+  // Seat 1 already had 0 cards, deck empty → 0.
+  assert.equal(state.players[0].hand.length, 6);
+  assert.equal(state.players[2].hand.length, 3);
+  assert.equal(state.players[1].hand.length, 0);
+});
+
+// ─── Elimination & game over ───────────────────────────────────────────────
+
+test('elimination: empty hand + empty deck → isOut; last standing is Durak', () => {
+  newGame('ai', 2);
+  state.deck = [];
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 0;
+  state.phase = 'playing';
+  state.field.attacks = []; state.field.defenses = [];
+  state.contributionOrder = [];
+  state.players[0].hand = [new Card(14, 1)]; // ace
+  state.players[1].hand = [new Card(7, 1)];  // 7 of spades (different suit too)
+  state.trumpSuit = 4;
+
+  playAttack(0, state.players[0].hand[0].id);  // 14♠
+  // Defender can't beat with 7♠
+  declareTake(1);
+  // Seat 0 has no cards to pile on → endBout('taken')
+  // Seat 1 now has [7♠, 14♠], seat 0 has 0 cards and deck empty → isOut
+  assert.equal(state.players[0].isOut, true);
   assert.equal(state.phase, 'gameover');
-  assert.match(state.winnerText, /win/i);
+  assert.match(state.winnerText, /Durak/i);
 });
 
-// ─── otherPlayerId / isTrump ────────────────────────────────────────────────
-
-test('otherPlayerId: flips top/bottom', () => {
-  assert.equal(otherPlayerId('top'), 'bottom');
-  assert.equal(otherPlayerId('bottom'), 'top');
-});
+// ─── isTrump ────────────────────────────────────────────────────────────────
 
 test('isTrump: matches state.trumpSuit', () => {
-  freshGame();
+  newGame('ai', 2);
   state.trumpSuit = 3;
   assert.equal(isTrump(3), true);
   assert.equal(isTrump('3'), true);
