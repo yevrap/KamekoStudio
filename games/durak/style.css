@@ -427,6 +427,7 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
   border: 1px solid var(--btn-border);
 }
 .mode-btn, .count-btn {
+  flex: 1;
   padding: 8px 18px;
   background: var(--btn-bg);
   color: var(--btn-text);

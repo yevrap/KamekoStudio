@@ -232,20 +232,76 @@ function injectDurakSettings() {
   sec.id = 'durak-settings';
 
   var label = document.createElement('div');
-  label.className = 'settings-label';
-  label.textContent = 'Current Game';
+  label.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin-bottom:2px;';
+  label.textContent = 'Current Match';
   sec.appendChild(label);
 
   var info = document.createElement('div');
-  info.className = 'settings-info';
+  info.style.cssText = 'font-family:sans-serif;font-size:0.9em;';
   var modeName = state.mode === 'hotseat' ? 'Hot-seat' : 'vs Computer';
   info.textContent = modeName + ' \u2014 ' + state.playerCount + ' players';
   sec.appendChild(info);
 
-  var hint = document.createElement('div');
-  hint.className = 'settings-hint';
-  hint.textContent = 'Change mode / player count on the start screen.';
-  sec.appendChild(hint);
+  if (state.mode === 'ai') {
+    var diffLabel = document.createElement('div');
+    diffLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin-bottom:6px;margin-top:14px;';
+    diffLabel.textContent = 'AI Difficulty (takes effect immediately)';
+    sec.appendChild(diffLabel);
+
+    var diffToggle = document.createElement('div');
+    diffToggle.className = 'mode-toggle';
+    
+    var diffs = ['easy', 'normal', 'hard'];
+    var diffNames = ['Easy', 'Normal', 'Hard'];
+    var currentDiff = localStorage.getItem('durak_difficulty') || 'normal';
+    
+    for (var i = 0; i < diffs.length; i++) {
+      (function(d, name) {
+        var btn = document.createElement('button');
+        btn.className = 'mode-btn' + (currentDiff === d ? ' active' : '');
+        btn.type = 'button';
+        btn.dataset.diff = d;
+        btn.textContent = name;
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          localStorage.setItem('durak_difficulty', d);
+          var btns = diffToggle.querySelectorAll('.mode-btn');
+          for (var j = 0; j < btns.length; j++) {
+            btns[j].classList.toggle('active', btns[j].dataset.diff === d);
+          }
+        });
+        diffToggle.appendChild(btn);
+      })(diffs[i], diffNames[i]);
+    }
+    sec.appendChild(diffToggle);
+  }
+
+  var endRow = document.createElement('div');
+  endRow.style.cssText = 'margin-top:24px;margin-bottom:8px;';
+  var btnEnd = document.createElement('button');
+  btnEnd.style.cssText = 'width:100%;height:44px;background:#e53935;color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:bold;cursor:pointer;font-family:sans-serif;transition:transform 0.1s;';
+  btnEnd.textContent = 'End round & back to menu';
+  btnEnd.addEventListener('pointerdown', function(e) {
+    e.preventDefault();
+    btnEnd.style.transform = 'scale(0.96)';
+  });
+  btnEnd.addEventListener('click', function(e) {
+    e.preventDefault();
+    btnEnd.style.transform = 'none';
+    var closeBtn = document.getElementById('settings-close-btn');
+    if (closeBtn) closeBtn.click();
+
+    clearAiTimeout();
+    state.phase = 'gameover'; // prevent background actions
+
+    var startOverlay = document.getElementById('start-overlay');
+    if (startOverlay) startOverlay.classList.remove('hidden');
+
+    var gameoverOverlay = document.getElementById('gameover-overlay');
+    if (gameoverOverlay) gameoverOverlay.classList.add('hidden');
+  });
+  endRow.appendChild(btnEnd);
+  sec.appendChild(endRow);
 
   if (devSection) panel.insertBefore(sec, devSection);
   else panel.appendChild(sec);

@@ -9,6 +9,13 @@ import {
   legalAttack, legalDefense, playAttack, playDefense,
   passAttack, declareTake, pileOnPass, endBout, dealInitial, checkGameOver
 } from '../games/durak/gameplay.js';
+import { _test_aiTurn } from '../games/durak/ai.js';
+
+global.localStorage = {
+  _store: {},
+  getItem: function(k) { return this._store[k] || null; },
+  setItem: function(k, v) { this._store[k] = String(v); }
+};
 
 // ─── canBeat (pure rule) ─────────────────────────────────────────────────────
 
@@ -373,4 +380,57 @@ test('isTrump: matches state.trumpSuit', () => {
   assert.equal(isTrump(3), true);
   assert.equal(isTrump('3'), true);
   assert.equal(isTrump(1), false);
+});
+
+// ─── AI Difficulty Logic (`_test_aiTurn`) ───────────────────────────────────
+
+function setupAiBoard() {
+  newGame('ai', 2);
+  state.deck = []; // Endgame
+  state.trumpSuit = 4;
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 1;
+  state.phase = 'playing';
+  state.field.attacks = [new Card(6, 1)]; // 6 of Spades
+  state.field.defenses = [null];
+  state.contributionOrder = [];
+}
+
+test('AI Normal: Greedily uses a high trump if it is the only legal defense (endgame)', () => {
+  setupAiBoard();
+  global.localStorage.setItem('durak_difficulty', 'normal');
+  // AI is defender. Hand has no spades. Has a low trump (10♥) and high trump (14♥).
+  state.players[1].hand = [new Card(10, 4), new Card(14, 4)];
+  _test_aiTurn(1);
+  
+  // Normal AI picks the CHEAPEST trump (10♥).
+  // Verify field defense.
+  assert.equal(state.field.defenses[0].value, 10);
+});
+
+test('AI Hard: Takes instead of spending a high trump on a low attack when hand is comfortable', () => {
+  setupAiBoard();
+  global.localStorage.setItem('durak_difficulty', 'hard');
+  // AI is defender. Hand has no spades. Hand has high trump (11♥).
+  // The attack is a weak 6♠. The AI has 5 cards total, very comfortable.
+  state.players[1].hand = [new Card(11, 4), new Card(7, 2), new Card(8, 2), new Card(9, 2), new Card(10, 2)];
+  _test_aiTurn(1);
+  
+  // Hard AI should declare 'Take' rather than wasting an 11-Trump on a 6-Attack.
+  // When 'declareTake' happens, the phase changes to 'pileOn'.
+  assert.equal(state.phase, 'pileOn');
+  assert.equal(state.field.defenses[0], null);
+});
+
+test('AI Hard: Protects self in endgame by defending with highest trump if forced', () => {
+  setupAiBoard();
+  global.localStorage.setItem('durak_difficulty', 'hard');
+  // Provide NO cards to draw. AI has NO other cards except a trump.
+  // Attack is 6♠. AI has 11♥.
+  // Because deck is empty, AI must defend to drop cards and avoid being Durak.
+  state.players[1].hand = [new Card(11, 4)];
+  _test_aiTurn(1);
+  
+  // Hard AI should defend because survival depends on it.
+  assert.equal(state.phase, 'playing'); // Did not take
+  assert.equal(state.field.defenses[0].value, 11);
 });

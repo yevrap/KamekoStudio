@@ -145,6 +145,7 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `lastPlayed_durak` | durak | timestamp (ms) | Set on session start |
 | `durak_mode` | durak | `'ai'`\|`'hotseat'` | Game mode: vs Computer or Hot-seat (shared device) |
 | `durak_playerCount` | durak | integer string (2–6) | Table size for the next new game |
+| `durak_difficulty` | durak | `'easy'`\|`'normal'`\|`'hard'` | AI decision logic variance |
 | `lastPlayed_durakDungeon` | durak-dungeon | timestamp (ms) | Set on run start |
 | `durakDungeon_bestFloor` | durak-dungeon | integer string | Highest floor reached |
 | `durakDungeon_victories` | durak-dungeon | integer string | Number of complete runs (floor 20) |
