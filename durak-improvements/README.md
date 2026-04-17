@@ -28,7 +28,7 @@ Either **Claude** or **Gemini** agents can pick up any phase. The docs are plain
 | # | Status | File | Goal |
 |---|--------|------|------|
 | 1 | ✅ | [PHASE_1_table_surface.md](PHASE_1_table_surface.md) | Add felt table surface + new theme tokens. The center stops looking like a grey box. |
-| 2 | ⬜ | [PHASE_2_dock_deck.md](PHASE_2_dock_deck.md) | Dock the deck + trump card into the top-left corner of the felt. |
+| 2 | ✅ | [PHASE_2_dock_deck.md](PHASE_2_dock_deck.md) | Dock the deck + trump card into the top-left corner of the felt. |
 | 3 | ⬜ | [PHASE_3_seat_tiles.md](PHASE_3_seat_tiles.md) | Turn opponent badges into seated-player tiles (one card back + count badge + name + role). |
 | 4 | ⬜ | [PHASE_4_action_prompt.md](PHASE_4_action_prompt.md) | Slim the header. Add a large, clear action-prompt pill above the field. |
 | 5 | ⬜ | [PHASE_5_bigger_cards.md](PHASE_5_bigger_cards.md) | Increase card sizes across breakpoints. Add the hand fan. Refactor the transform composition. |

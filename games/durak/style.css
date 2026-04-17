@@ -127,7 +127,6 @@ body {
 }
 #game-title { color: var(--text); font-size: 0.9rem; }
 #status-display { flex: 1; text-transform: none; letter-spacing: 0; font-weight: 500; }
-#deck-count { font-variant-numeric: tabular-nums; }
 #trump-display { font-weight: 700; font-size: 0.85rem; }
 #trump-display.suit-red   { color: var(--card-red); }
 #trump-display.suit-black { color: var(--card-black); }
@@ -285,18 +284,34 @@ body:not(.dark-mode) .opp-role { background: rgba(0,0,0,0.05); }
 }
 
 #deck-zone {
-  position: relative;
-  z-index: 1;
-  width: 60px; /* sync with card min-width */
-  height: 84px;
-  flex-shrink: 0;
-  margin-right: 28px; /* space for the rotated trump card sticking out to the right */
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 50px;
+  height: 70px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#deck-count {
+  position: absolute;
+  top: 82px;
+  left: 10px;
+  width: 50px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  z-index: 2;
+  pointer-events: none;
 }
 
 #trump-slot {
   position: absolute;
   top: 50%; left: 50%;
-  width: 60px; height: 84px;
+  width: 50px; height: 70px;
   transform: translate(-50%, -50%) rotate(90deg) translate(0, -28px);
   z-index: 1;
 }
@@ -324,7 +339,8 @@ body:not(.dark-mode) .opp-role { background: rgba(0,0,0,0.05); }
   height: 100%;
   background: transparent;
   flex-wrap: wrap;
-  padding: 6px;
+  padding: 6px 6px 6px 72px;
+  box-sizing: border-box;
 }
 .field-pair { display: flex; flex-direction: column; align-items: center; position: relative; }
 .field-pair > * + * { margin-top: -30px; }
@@ -542,16 +558,20 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .opp-backs { height: 22px; }
   .count-btn { min-width: 36px; padding: 6px 0; font-size: 0.82rem; }
   .mode-btn { padding: 6px 12px; font-size: 0.82rem; }
-  #deck-zone { width: 50px; height: 70px; margin-right: 24px; }
-  #trump-slot { width: 50px; height: 70px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -22px); }
+  #deck-zone { width: 44px; height: 62px; top: 8px; left: 8px; }
+  #trump-slot { width: 44px; height: 62px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -22px); }
+  #deck-count { top: 72px; left: 8px; width: 44px; font-size: 0.6rem; }
+  #field { padding-left: 66px; }
 }
 
 @media (min-width: 500px) {
   .card-btn { width: 68px; height: 95px; }
   .card-btn.field-card { width: 64px; height: 90px; }
   .card-placeholder { width: 64px; height: 90px; }
-  #deck-zone { width: 68px; height: 95px; margin-right: 30px; }
-  #trump-slot { width: 68px; height: 95px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -32px); }
+  #deck-zone { width: 56px; height: 78px; top: 12px; left: 12px; }
+  #trump-slot { width: 56px; height: 78px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -32px); }
+  #deck-count { top: 92px; left: 12px; width: 56px; font-size: 0.72rem; }
+  #field { padding-left: 78px; }
 }
 
 @media (min-width: 768px) {
@@ -559,6 +579,8 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .card-btn.field-card { width: 72px; height: 100px; }
   .card-placeholder { width: 72px; height: 100px; }
   .action-btn { padding: 10px 28px; font-size: 1.2rem; }
-  #deck-zone { width: 76px; height: 106px; margin-right: 36px; }
-  #trump-slot { width: 76px; height: 106px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -38px); }
+  #deck-zone { width: 62px; height: 87px; top: 14px; left: 14px; }
+  #trump-slot { width: 62px; height: 87px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -38px); }
+  #deck-count { top: 103px; left: 14px; width: 62px; font-size: 0.75rem; }
+  #field { padding-left: 84px; }
 }
