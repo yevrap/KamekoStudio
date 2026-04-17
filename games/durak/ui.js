@@ -210,10 +210,14 @@ function renderField() {
     pair.className = 'field-pair';
     var atkEl = createCardEl(attacks[i], 'field');
     atkEl.classList.add('field-card');
+    atkEl.style.removeProperty('--fan-angle');
+    atkEl.style.removeProperty('--fan-lift');
     pair.appendChild(atkEl);
     if (defenses[i]) {
       var defEl = createCardEl(defenses[i], 'field');
       defEl.classList.add('field-card', 'defense');
+      defEl.style.removeProperty('--fan-angle');
+      defEl.style.removeProperty('--fan-lift');
       pair.appendChild(defEl);
     } else {
       var ph = document.createElement('div');
@@ -236,6 +240,16 @@ function renderHumanHand() {
     var el = createCardEl(p.hand[i], 'hand');
     el.dataset.seat = viewer;
     $humanHand.appendChild(el);
+  }
+  var cards = $humanHand.querySelectorAll('.card-btn');
+  var N = cards.length;
+  for (var j = 0; j < N; j++) {
+    var offset = j - (N - 1) / 2;
+    var spread = 6 / Math.max(N, 1);
+    var angle = offset * spread;
+    var lift = -Math.abs(offset) * spread;
+    cards[j].style.setProperty('--fan-angle', angle.toFixed(2) + 'deg');
+    cards[j].style.setProperty('--fan-lift', lift.toFixed(2) + 'px');
   }
 }
 
@@ -339,6 +353,8 @@ function renderDeckZone() {
 
   if (state.deck.length > 0 && state.trumpCard) {
     var tEl = createCardEl(state.trumpCard, 'trump');
+    tEl.style.removeProperty('--fan-angle');
+    tEl.style.removeProperty('--fan-lift');
     $trumpSlot.appendChild(tEl);
   }
 
@@ -347,6 +363,8 @@ function renderDeckZone() {
     var b = createCardBackEl('deck_back_' + i);
     b.style.top = '-' + (i * 2) + 'px';
     b.style.left = '-' + (i * 1.5) + 'px';
+    b.style.removeProperty('--fan-angle');
+    b.style.removeProperty('--fan-lift');
     $deckStack.appendChild(b);
   }
 }
@@ -374,7 +392,7 @@ export function renderAll() {
   updateActionButtons();
   updatePileBanner();
 
-  // FLIP Last & Invert
+  // FLIP Last & Invert — write delta to CSS vars so it composes with fan + scale
   for (var i = 0; i < flippedEls.length; i++) {
     var el = flippedEls[i];
     if (!el.parentElement) continue;
@@ -383,9 +401,10 @@ export function renderAll() {
     if (oldRect && newRect) {
       var dx = oldRect.left - newRect.left;
       var dy = oldRect.top - newRect.top;
-      if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
-        el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
         el.style.transition = 'none';
+        el.style.setProperty('--flip-dx', dx + 'px');
+        el.style.setProperty('--flip-dy', dy + 'px');
         el._flipNeedsPlay = true;
       }
     }
@@ -394,26 +413,30 @@ export function renderAll() {
   // Force reflow
   document.body.offsetHeight;
 
-  // FLIP Play
+  // FLIP Play — clear delta vars, let the transition animate back to 0
   for (var i = 0; i < flippedEls.length; i++) {
     var el = flippedEls[i];
     if (el._flipNeedsPlay) {
       el._flipNeedsPlay = false;
       el.classList.add('flip-animating');
-      el.style.transform = '';
       el.style.transition = '';
-      
+      el.style.setProperty('--flip-dx', '0px');
+      el.style.setProperty('--flip-dy', '0px');
+
       (function(animEl) {
         animEl.addEventListener('transitionend', function cleanup(e) {
           if (e.propertyName === 'transform') {
             animEl.classList.remove('flip-animating');
+            animEl.style.removeProperty('--flip-dx');
+            animEl.style.removeProperty('--flip-dy');
             animEl.removeEventListener('transitionend', cleanup);
           }
         });
-        
-        // Safety timeout
+
         setTimeout(function() {
           animEl.classList.remove('flip-animating');
+          animEl.style.removeProperty('--flip-dx');
+          animEl.style.removeProperty('--flip-dy');
           animEl.removeEventListener('transitionend', cleanup);
         }, 350);
       })(el);

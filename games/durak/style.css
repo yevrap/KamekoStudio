@@ -15,14 +15,10 @@
   --btn-text: rgba(255,255,255,0.7);
   --btn-disabled-bg: rgba(255,255,255,0.03);
   --btn-disabled-text: rgba(255,255,255,0.2);
-  --field-bg: rgba(255,255,255,0.03);
-  --active-glow: rgba(100, 180, 255, 0.25);
   --overlay-bg: rgba(5,5,16,0.96);
   --header-bg: rgba(10,10,20,0.85);
-  --opp-bg: rgba(255,255,255,0.04);
-  --opp-border: rgba(255,255,255,0.1);
 
-  /* Phase 1 — felt table + seat/prompt/watermark tokens */
+  /* Felt table + seat/prompt/watermark tokens */
   --felt: radial-gradient(ellipse at center, #1f5740 0%, #0f2e22 70%, #081812 100%);
   --table-border: rgba(255, 215, 100, 0.12);
   --table-inner-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.4);
@@ -49,14 +45,10 @@ body:not(.dark-mode) {
   --btn-text: #333;
   --btn-disabled-bg: #f4f4f4;
   --btn-disabled-text: #bbb;
-  --field-bg: rgba(0,0,0,0.04);
-  --active-glow: rgba(60, 130, 255, 0.18);
   --overlay-bg: rgba(240,244,248,0.97);
   --header-bg: rgba(240,244,248,0.9);
-  --opp-bg: rgba(0,0,0,0.03);
-  --opp-border: rgba(0,0,0,0.08);
 
-  /* Phase 1 — felt table + seat/prompt/watermark tokens (light) */
+  /* Felt table + seat/prompt/watermark tokens (light) */
   --felt: radial-gradient(ellipse at center, #4a7a5c 0%, #355a44 70%, #264030 100%);
   --table-border: rgba(0, 0, 0, 0.15);
   --table-inner-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.2);
@@ -237,7 +229,6 @@ body:not(.dark-mode) .seat-role.role-thrower  { color: #6a3fb5; }
   filter: grayscale(0.6);
 }
 
-/* --- Pile-on banner --- */
 /* --- Action Prompt (on the table) --- */
 .action-prompt {
   position: absolute;
@@ -443,9 +434,10 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
 
 /* --- Hand container --- */
 .hand-row {
+  --hand-card-w: 68px;
   display: flex;
   gap: 0;
-  padding: 16px 8px;
+  padding: 20px 8px 12px;
   overflow-x: auto;
   overflow-y: hidden;
   overscroll-behavior-x: contain;
@@ -460,15 +452,15 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
 }
 .hand-row.dragging { cursor: grabbing; scroll-behavior: auto; }
 .hand-row.dragging .card-btn { pointer-events: none; }
-.hand-row > * + * { margin-left: -24px; }
+.hand-row > * + * { margin-left: calc(var(--hand-card-w) * -0.55); }
 .hand-row::-webkit-scrollbar { display: none; }
 
 /* --- Cards --- */
 .card-btn {
   position: relative;
   display: flex;
-  width: 60px;
-  height: 84px;
+  width: 68px;
+  height: 95px;
   border: 1px solid var(--card-border);
   border-radius: 6px;
   background: var(--card-bg);
@@ -476,6 +468,10 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
   padding: 0;
   cursor: pointer;
   touch-action: manipulation;
+  transform: translate(var(--flip-dx, 0px), var(--flip-dy, 0px))
+             rotate(var(--fan-angle, 0deg))
+             translateY(var(--fan-lift, 0px))
+             scale(var(--card-scale, 1));
   transition: transform 0.1s, box-shadow 0.15s, opacity 0.15s ease;
   flex-shrink: 0;
   user-select: none;
@@ -487,18 +483,18 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
   transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   z-index: 100;
 }
-.card-btn:active { transform: scale(0.95); z-index: 10; }
+.card-btn:active { --card-scale: 0.95; z-index: 10; }
 .card-btn.suit-hearts, .card-btn.suit-diamonds { color: var(--card-red); }
 .card-btn.suit-spades, .card-btn.suit-clubs { color: var(--card-black); }
 .card-btn.trump-card {
   border-color: rgba(255, 200, 50, 0.9);
   box-shadow: 0 0 8px rgba(255, 200, 50, 0.4), inset 0 0 6px rgba(255, 200, 50, 0.2);
 }
-.card-btn.field-card { cursor: default; opacity: 0.95; width: 58px; height: 81px; }
+.card-btn.field-card { cursor: default; opacity: 0.95; width: 64px; height: 90px; }
 
 .card-placeholder {
-  width: 60px;
-  height: 84px;
+  width: 64px;
+  height: 90px;
   pointer-events: none;
   visibility: hidden;
 }
@@ -591,10 +587,11 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
 
 /* --- Responsive --- */
 @media (max-width: 380px) {
-  .card-btn { width: 50px; height: 70px; }
-  .card-btn.field-card { width: 48px; height: 67px; }
-  .card-placeholder { width: 48px; height: 67px; }
-  .hand-row > * + * { margin-left: -20px; }
+  .card-btn { width: 58px; height: 82px; }
+  .card-btn.field-card { width: 56px; height: 78px; }
+  .card-placeholder { width: 56px; height: 78px; }
+  .hand-row { --hand-card-w: 58px; }
+  .hand-row > * + * { margin-left: calc(var(--hand-card-w) * -0.60); }
   .action-btn { padding: 8px 14px; font-size: 0.9rem; min-width: 64px; }
   .seat-tile .seat-card { width: 44px; height: 62px; }
   .seat-count { min-width: 18px; height: 18px; font-size: 0.62rem; line-height: 18px; top: -5px; right: -5px; }
@@ -611,9 +608,10 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
 }
 
 @media (min-width: 500px) {
-  .card-btn { width: 68px; height: 95px; }
-  .card-btn.field-card { width: 64px; height: 90px; }
-  .card-placeholder { width: 64px; height: 90px; }
+  .card-btn { width: 78px; height: 109px; }
+  .card-btn.field-card { width: 72px; height: 101px; }
+  .card-placeholder { width: 72px; height: 101px; }
+  .hand-row { --hand-card-w: 78px; }
   .seat-tile .seat-card { width: 56px; height: 78px; }
   #deck-zone { width: 56px; height: 78px; top: 12px; left: 12px; }
   #trump-slot { width: 56px; height: 78px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -32px); }
@@ -623,9 +621,10 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
 }
 
 @media (min-width: 768px) {
-  .card-btn { width: 76px; height: 106px; border-radius: 8px; }
-  .card-btn.field-card { width: 72px; height: 100px; }
-  .card-placeholder { width: 72px; height: 100px; }
+  .card-btn { width: 88px; height: 123px; border-radius: 8px; }
+  .card-btn.field-card { width: 82px; height: 115px; }
+  .card-placeholder { width: 82px; height: 115px; }
+  .hand-row { --hand-card-w: 88px; }
   .action-btn { padding: 10px 28px; font-size: 1.2rem; }
   .seat-tile .seat-card { width: 62px; height: 87px; }
   #deck-zone { width: 62px; height: 87px; top: 14px; left: 14px; }
