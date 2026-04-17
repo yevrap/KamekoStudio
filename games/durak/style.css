@@ -109,9 +109,9 @@ body {
 #header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
-  height: 44px;
+  height: 40px;
   padding: 0 12px;
   padding-right: 58px;
   background: var(--header-bg);
@@ -126,10 +126,6 @@ body {
   color: var(--text-muted);
 }
 #game-title { color: var(--text); font-size: 0.9rem; }
-#status-display { flex: 1; text-transform: none; letter-spacing: 0; font-weight: 500; }
-#trump-display { font-weight: 700; font-size: 0.85rem; }
-#trump-display.suit-red   { color: var(--card-red); }
-#trump-display.suit-black { color: var(--card-black); }
 
 #settings-gear-btn {
   position: fixed !important;
@@ -242,18 +238,52 @@ body:not(.dark-mode) .seat-role.role-thrower  { color: #6a3fb5; }
 }
 
 /* --- Pile-on banner --- */
-#pile-banner {
-  margin: 4px 8px;
-  padding: 6px 10px;
-  text-align: center;
-  font-size: 0.82rem;
+/* --- Action Prompt (on the table) --- */
+.action-prompt {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 140px);
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--prompt-bg);
+  color: var(--prompt-text);
+  font-size: 0.95rem;
   font-weight: 700;
-  color: #ffb347;
-  background: rgba(255, 179, 71, 0.12);
-  border: 1px solid rgba(255, 179, 71, 0.3);
-  border-radius: 8px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  border: 1px solid transparent;
+  z-index: 3;
+  transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
-#pile-banner.hidden { display: none; }
+
+.action-prompt.hidden { display: none; }
+
+.action-prompt.is-attack   { border-left: 3px solid #ffb347; padding-left: 15px; }
+.action-prompt.is-defend   { border-left: 3px solid #88ccff; padding-left: 15px; }
+.action-prompt.is-pile-on  { border-left: 3px solid #c2a0ff; padding-left: 15px; }
+.action-prompt.is-wait     { opacity: 0.8; }
+
+body:not(.dark-mode) .action-prompt.is-attack  { border-left-color: #e07a1a; }
+body:not(.dark-mode) .action-prompt.is-defend  { border-left-color: #1976d2; }
+body:not(.dark-mode) .action-prompt.is-pile-on { border-left-color: #6a3fb5; }
+
+.action-prompt.status-thinking { animation: pulse 1s ease-in-out infinite; }
+
+#pile-banner {
+  color: #ffb347;
+  background: rgba(255, 179, 71, 0.18);
+}
+body:not(.dark-mode) #pile-banner {
+  color: #e07a1a;
+  background: rgba(224, 122, 26, 0.15);
+}
 
 /* --- Table Center — felt surface --- */
 #table-center {
@@ -353,7 +383,7 @@ body:not(.dark-mode) .seat-role.role-thrower  { color: #6a3fb5; }
   height: 100%;
   background: transparent;
   flex-wrap: wrap;
-  padding: 6px 6px 6px 72px;
+  padding: 48px 6px 6px 72px;
   box-sizing: border-box;
 }
 .field-pair { display: flex; flex-direction: column; align-items: center; position: relative; }
@@ -576,7 +606,8 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   #deck-zone { width: 44px; height: 62px; top: 8px; left: 8px; }
   #trump-slot { width: 44px; height: 62px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -22px); }
   #deck-count { top: 72px; left: 8px; width: 44px; font-size: 0.6rem; }
-  #field { padding-left: 66px; }
+  #field { padding: 40px 6px 6px 66px; }
+  .action-prompt { font-size: 0.82rem; padding: 6px 12px; top: 8px; max-width: calc(100% - 100px); }
 }
 
 @media (min-width: 500px) {
@@ -587,7 +618,8 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   #deck-zone { width: 56px; height: 78px; top: 12px; left: 12px; }
   #trump-slot { width: 56px; height: 78px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -32px); }
   #deck-count { top: 92px; left: 12px; width: 56px; font-size: 0.72rem; }
-  #field { padding-left: 78px; }
+  #field { padding: 54px 6px 6px 78px; }
+  .action-prompt { font-size: 1.1rem; padding: 10px 22px; top: 14px; }
 }
 
 @media (min-width: 768px) {
@@ -599,7 +631,7 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   #deck-zone { width: 62px; height: 87px; top: 14px; left: 14px; }
   #trump-slot { width: 62px; height: 87px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -38px); }
   #deck-count { top: 103px; left: 14px; width: 62px; font-size: 0.75rem; }
-  #field { padding-left: 84px; }
+  #field { padding: 60px 6px 6px 84px; }
 }
 
 @media (max-width: 420px) {

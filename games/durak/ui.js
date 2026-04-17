@@ -5,11 +5,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
-import { suitEmoji, suitName, displayValue } from './constants.js';
+import { suitName } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
-    $statusDisplay, $trumpDisplay, $deckCount,
+    $statusDisplay, $deckCount,
     $startOverlay, $gameoverOverlay, $winnerText,
     $passDeviceOverlay, $passDeviceName, $pileBanner,
     $btnTake, $btnPass, $btnDone,
@@ -25,7 +25,6 @@ export function cacheDom() {
   $humanHand         = document.getElementById('human-hand');
   $humanOptions      = document.getElementById('human-options');
   $statusDisplay     = document.getElementById('status-display');
-  $trumpDisplay      = document.getElementById('trump-display');
   $deckCount         = document.getElementById('deck-count');
   $startOverlay      = document.getElementById('start-overlay');
   $gameoverOverlay   = document.getElementById('gameover-overlay');
@@ -301,31 +300,36 @@ function getStatusText() {
 function updateHeader() {
   $statusDisplay.textContent = getStatusText();
   var thinking = state.phase === 'playing' || state.phase === 'pileOn';
+  var priorityPlayer = state.players[state.prioritySeat];
   $statusDisplay.classList.toggle(
     'status-thinking',
-    thinking && state.players[state.prioritySeat] && !state.players[state.prioritySeat].isHuman
+    thinking && priorityPlayer && !priorityPlayer.isHuman
   );
 
-  if (state.phase !== 'start') {
-    var isRed = (state.trumpSuit === 3 || state.trumpSuit === 4);
-    $trumpDisplay.className = isRed ? 'suit-red' : 'suit-black';
-    if (state.deck.length > 0 && state.trumpCard) {
-      $trumpDisplay.textContent = displayValue(state.trumpCard.value) + suitEmoji(state.trumpSuit);
-    } else if (state.trumpCard) {
-      $trumpDisplay.textContent = suitEmoji(state.trumpSuit);
+  var viewer = currentViewerSeat();
+  $statusDisplay.classList.remove('is-attack', 'is-defend', 'is-pile-on', 'is-wait');
+  if (state.phase === 'pileOn') {
+    $statusDisplay.classList.add('is-pile-on');
+  } else if (state.phase === 'playing' && state.prioritySeat === viewer) {
+    if (viewer === state.defenderSeat) {
+      $statusDisplay.classList.add('is-defend');
     } else {
-      $trumpDisplay.textContent = '';
+      $statusDisplay.classList.add('is-attack');
     }
-  } else {
-    $trumpDisplay.textContent = '';
-    $trumpDisplay.className = '';
+  } else if (state.phase === 'playing') {
+    $statusDisplay.classList.add('is-wait');
   }
-  $deckCount.textContent = state.deck.length > 0 ? 'Deck: ' + state.deck.length : '';
+
+  if ($deckCount) {
+    $deckCount.textContent = state.deck.length > 0 ? 'Deck: ' + state.deck.length : '';
+  }
 }
 
 function updatePileBanner() {
   if (!$pileBanner) return;
-  $pileBanner.classList.toggle('hidden', state.phase !== 'pileOn');
+  var pileActive = state.phase === 'pileOn';
+  $pileBanner.classList.toggle('hidden', !pileActive);
+  if ($statusDisplay) $statusDisplay.classList.toggle('hidden', pileActive);
 }
 
 function renderDeckZone() {
