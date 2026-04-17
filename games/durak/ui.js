@@ -159,36 +159,33 @@ function renderOpponents() {
 function buildOpponentTile(seat) {
   var p = state.players[seat];
   var tile = document.createElement('div');
-  tile.className = 'opponent-tile';
+  tile.className = 'seat-tile';
   if (p.isOut) tile.classList.add('is-out');
   if (state.prioritySeat === seat && (state.phase === 'playing' || state.phase === 'pileOn')) {
-    tile.classList.add('has-priority');
+    tile.classList.add('is-priority');
   }
 
-  var nameRow = document.createElement('div');
-  nameRow.className = 'opp-name';
-  nameRow.textContent = p.name;
-  tile.appendChild(nameRow);
+  var cardWrap = document.createElement('div');
+  cardWrap.className = 'seat-card';
 
-  var backs = document.createElement('div');
-  backs.className = 'opp-backs';
-  var showCount = Math.min(p.hand.length, 5);
-  for (var i = 0; i < showCount; i++) {
-    var b = document.createElement('div');
-    b.className = 'mini-back';
-    backs.appendChild(b);
-  }
   var countBadge = document.createElement('span');
-  countBadge.className = 'opp-count';
+  countBadge.className = 'seat-count';
   countBadge.textContent = p.hand.length;
-  backs.appendChild(countBadge);
-  tile.appendChild(backs);
+  cardWrap.appendChild(countBadge);
+
+  tile.appendChild(cardWrap);
+
+  var nameEl = document.createElement('div');
+  nameEl.className = 'seat-name';
+  nameEl.textContent = p.name;
+  tile.appendChild(nameEl);
 
   var role = roleFor(seat);
   if (role) {
     var chip = document.createElement('div');
-    chip.className = 'opp-role role-' + role.toLowerCase();
-    chip.textContent = role;
+    chip.className = 'seat-role role-' + role.toLowerCase();
+    var abbreviate = state.players.length >= 5 && window.innerWidth < 420;
+    chip.textContent = abbreviate ? role.slice(0, 3).toUpperCase() : role;
     tile.appendChild(chip);
   }
   return tile;

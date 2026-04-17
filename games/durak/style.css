@@ -142,76 +142,70 @@ body {
 /* --- Opponents row --- */
 #opponents {
   display: flex;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 8px;
+  padding: 8px 12px 4px;
   justify-content: center;
   flex-wrap: wrap;
   flex-shrink: 0;
 }
 
-.opponent-tile {
+/* --- Seat tiles (opponents) --- */
+.seat-tile {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  min-width: 70px;
-  padding: 6px 8px 4px;
-  background: var(--opp-bg);
-  border: 1px solid var(--opp-border);
-  border-radius: 10px;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
+  gap: 4px;
+  padding: 0;
+  background: transparent;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
 }
-.opponent-tile.has-priority {
-  box-shadow: 0 0 0 2px var(--active-glow), 0 0 14px var(--active-glow);
-  border-color: rgba(100, 180, 255, 0.5);
-}
-.opponent-tile.is-out { opacity: 0.35; filter: grayscale(0.6); }
 
-.opp-name {
+.seat-tile .seat-card {
+  position: relative;
+  width: 50px;
+  height: 70px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  background:
+    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.06) 2px, rgba(255,255,255,0.06) 4px),
+    var(--surface);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+body:not(.dark-mode) .seat-tile .seat-card {
+  background:
+    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px),
+    #e8e8f0;
+}
+
+.seat-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: #e53935;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 22px;
+  text-align: center;
+  border-radius: 11px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+  font-variant-numeric: tabular-nums;
+}
+
+.seat-name {
   font-size: 0.72rem;
   font-weight: 700;
   color: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
-.opp-backs {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 28px;
-}
-.mini-back {
-  width: 18px;
-  height: 26px;
-  border-radius: 4px;
-  border: 1px solid var(--card-border);
-  background:
-    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(255,255,255,0.06) 2px, rgba(255,255,255,0.06) 4px),
-    var(--surface);
-  margin-left: -8px;
-}
-.mini-back:first-child { margin-left: 0; }
-body:not(.dark-mode) .mini-back {
-  background:
-    repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px),
-    #e8e8f0;
-}
-.opp-count {
-  position: absolute;
-  right: -12px;
-  top: -4px;
-  min-width: 18px;
-  padding: 1px 4px;
-  background: #e53935;
-  color: #fff;
-  font-size: 0.65rem;
-  font-weight: 800;
-  border-radius: 9px;
-  text-align: center;
-}
-
-.opp-role {
+.seat-role {
   font-size: 0.6rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -219,13 +213,33 @@ body:not(.dark-mode) .mini-back {
   padding: 1px 6px;
   border-radius: 6px;
   color: var(--text-muted);
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.06);
 }
-body:not(.dark-mode) .opp-role { background: rgba(0,0,0,0.05); }
-.opp-role.role-attacker { color: #ffb347; }
-.opp-role.role-defender { color: #88ccff; }
-.opp-role.role-thrower  { color: #c2a0ff; }
-.opp-role.role-out      { color: var(--text-muted); }
+body:not(.dark-mode) .seat-role { background: rgba(0, 0, 0, 0.06); }
+
+.seat-role.role-attacker { color: #ffb347; }
+.seat-role.role-defender { color: #88ccff; }
+.seat-role.role-thrower  { color: #c2a0ff; }
+.seat-role.role-out      { color: var(--text-muted); }
+
+body:not(.dark-mode) .seat-role.role-attacker { color: #e07a1a; }
+body:not(.dark-mode) .seat-role.role-defender { color: #1976d2; }
+body:not(.dark-mode) .seat-role.role-thrower  { color: #6a3fb5; }
+
+.seat-tile.is-priority {
+  transform: translateY(-3px);
+}
+.seat-tile.is-priority .seat-card {
+  box-shadow:
+    0 0 0 2px var(--active-seat-glow),
+    0 6px 24px var(--active-seat-glow),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.seat-tile.is-out {
+  opacity: 0.35;
+  filter: grayscale(0.6);
+}
 
 /* --- Pile-on banner --- */
 #pile-banner {
@@ -552,10 +566,11 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .card-placeholder { width: 48px; height: 67px; }
   .hand-row > * + * { margin-left: -20px; }
   .action-btn { padding: 8px 14px; font-size: 0.9rem; min-width: 64px; }
-  .opponent-tile { min-width: 56px; padding: 4px 6px 3px; }
-  .opp-name { font-size: 0.62rem; }
-  .mini-back { width: 14px; height: 20px; margin-left: -6px; }
-  .opp-backs { height: 22px; }
+  .seat-tile .seat-card { width: 44px; height: 62px; }
+  .seat-count { min-width: 18px; height: 18px; font-size: 0.62rem; line-height: 18px; top: -5px; right: -5px; }
+  .seat-name { font-size: 0.62rem; }
+  .seat-role { font-size: 0.54rem; padding: 1px 4px; }
+  #opponents { gap: 4px; padding: 6px 6px 3px; }
   .count-btn { min-width: 36px; padding: 6px 0; font-size: 0.82rem; }
   .mode-btn { padding: 6px 12px; font-size: 0.82rem; }
   #deck-zone { width: 44px; height: 62px; top: 8px; left: 8px; }
@@ -568,6 +583,7 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .card-btn { width: 68px; height: 95px; }
   .card-btn.field-card { width: 64px; height: 90px; }
   .card-placeholder { width: 64px; height: 90px; }
+  .seat-tile .seat-card { width: 56px; height: 78px; }
   #deck-zone { width: 56px; height: 78px; top: 12px; left: 12px; }
   #trump-slot { width: 56px; height: 78px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -32px); }
   #deck-count { top: 92px; left: 12px; width: 56px; font-size: 0.72rem; }
@@ -579,8 +595,13 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .card-btn.field-card { width: 72px; height: 100px; }
   .card-placeholder { width: 72px; height: 100px; }
   .action-btn { padding: 10px 28px; font-size: 1.2rem; }
+  .seat-tile .seat-card { width: 62px; height: 87px; }
   #deck-zone { width: 62px; height: 87px; top: 14px; left: 14px; }
   #trump-slot { width: 62px; height: 87px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -38px); }
   #deck-count { top: 103px; left: 14px; width: 62px; font-size: 0.75rem; }
   #field { padding-left: 84px; }
+}
+
+@media (max-width: 420px) {
+  .seat-tile .seat-role { font-size: 0.5rem; padding: 1px 3px; letter-spacing: 0.02em; }
 }
