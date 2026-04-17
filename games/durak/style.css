@@ -21,6 +21,17 @@
   --header-bg: rgba(10,10,20,0.85);
   --opp-bg: rgba(255,255,255,0.04);
   --opp-border: rgba(255,255,255,0.1);
+
+  /* Phase 1 — felt table + seat/prompt/watermark tokens */
+  --felt: radial-gradient(ellipse at center, #1f5740 0%, #0f2e22 70%, #081812 100%);
+  --table-border: rgba(255, 215, 100, 0.12);
+  --table-inner-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.4);
+  --seat-bg: rgba(16, 36, 28, 0.85);
+  --seat-border: rgba(255, 255, 255, 0.08);
+  --active-seat-glow: rgba(255, 215, 100, 0.45);
+  --prompt-bg: rgba(20, 40, 30, 0.85);
+  --prompt-text: #f0f4f0;
+  --watermark-color: rgba(255, 255, 255, 0.06);
 }
 
 body:not(.dark-mode) {
@@ -44,6 +55,17 @@ body:not(.dark-mode) {
   --header-bg: rgba(240,244,248,0.9);
   --opp-bg: rgba(0,0,0,0.03);
   --opp-border: rgba(0,0,0,0.08);
+
+  /* Phase 1 — felt table + seat/prompt/watermark tokens (light) */
+  --felt: radial-gradient(ellipse at center, #4a7a5c 0%, #355a44 70%, #264030 100%);
+  --table-border: rgba(0, 0, 0, 0.15);
+  --table-inner-shadow: inset 0 2px 20px rgba(0, 0, 0, 0.2);
+  --seat-bg: rgba(245, 245, 240, 0.9);
+  --seat-border: rgba(0, 0, 0, 0.08);
+  --active-seat-glow: rgba(40, 100, 60, 0.4);
+  --prompt-bg: rgba(255, 255, 255, 0.9);
+  --prompt-text: #1a2a20;
+  --watermark-color: rgba(255, 255, 255, 0.18);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -220,20 +242,51 @@ body:not(.dark-mode) .opp-role { background: rgba(0,0,0,0.05); }
 }
 #pile-banner.hidden { display: none; }
 
-/* --- Table Center --- */
+/* --- Table Center — felt surface --- */
 #table-center {
   flex: 1.5;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   padding: 6px;
   min-height: 0;
-  margin: 2px 4px;
+  margin: 2px 8px;
+  background: var(--felt);
+  border: 1px solid var(--table-border);
+  border-radius: 16px;
+  box-shadow: var(--table-inner-shadow);
+  overflow: hidden;
+}
+
+/* Empty-state trump watermark — sits behind deck + field */
+#field-watermark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+#table-center.field-empty #field-watermark {
+  opacity: 1;
+}
+#field-watermark svg {
+  width: 40%;
+  max-width: 280px;
+  height: auto;
+}
+#field-watermark svg path {
+  fill: var(--watermark-color);
 }
 
 #deck-zone {
   position: relative;
+  z-index: 1;
   width: 60px; /* sync with card min-width */
   height: 84px;
   flex-shrink: 0;
@@ -261,14 +314,15 @@ body:not(.dark-mode) .opp-role { background: rgba(0,0,0,0.05); }
 }
 
 #field {
+  position: relative;
+  z-index: 1;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   height: 100%;
-  background: var(--field-bg);
-  border-radius: 8px;
+  background: transparent;
   flex-wrap: wrap;
   padding: 6px;
 }

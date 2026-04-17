@@ -6,14 +6,15 @@
 
 import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
 import { suitEmoji, suitName, displayValue } from './constants.js';
-import { buildCardFaceSvg, buildCardBackSvg } from './cards.js';
+import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
     $statusDisplay, $trumpDisplay, $deckCount,
     $startOverlay, $gameoverOverlay, $winnerText,
     $passDeviceOverlay, $passDeviceName, $pileBanner,
     $btnTake, $btnPass, $btnDone,
-    $deckStack, $trumpSlot;
+    $deckStack, $trumpSlot,
+    $tableCenter, $fieldWatermark;
 
 var cardPool = {};
 
@@ -37,6 +38,8 @@ export function cacheDom() {
   $btnDone           = document.getElementById('btn-done');
   $deckStack         = document.getElementById('deck-stack');
   $trumpSlot         = document.getElementById('trump-slot');
+  $tableCenter       = document.getElementById('table-center');
+  $fieldWatermark    = document.getElementById('field-watermark');
 
   wireHandScroll($humanHand);
 }
@@ -198,6 +201,14 @@ function renderField() {
   var attacks = state.field.attacks;
   var defenses = state.field.defenses;
   var n = attacks.length;
+  if ($tableCenter) $tableCenter.classList.toggle('field-empty', n === 0);
+  if ($fieldWatermark) {
+    if (n === 0 && state.trumpSuit) {
+      $fieldWatermark.innerHTML = suitSvgForWatermark(state.trumpSuit);
+    } else {
+      $fieldWatermark.innerHTML = '';
+    }
+  }
   for (var i = 0; i < n; i++) {
     var pair = document.createElement('div');
     pair.className = 'field-pair';

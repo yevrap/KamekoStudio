@@ -107,6 +107,12 @@ export function buildCardFaceSvg(suitId, rank) {
   </svg>`;
 }
 
+export function suitSvgForWatermark(suitId) {
+  const path = PIPS[suitId];
+  if (!path) return '';
+  return `<svg viewBox="-10 -5 120 115" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"><path d="${path}"/></svg>`;
+}
+
 export function buildCardBackSvg() {
   // Russian-folk-art inspired geometric motif
   // Using generic custom properties so it colors cleanly. We'll use currentColor as the stroke/primary, 
