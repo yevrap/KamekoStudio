@@ -117,7 +117,33 @@ body {
   letter-spacing: 0.04em;
   color: var(--text-muted);
 }
-#game-title { color: var(--text); font-size: 0.9rem; }
+#game-title { color: var(--text); font-size: 0.9rem; flex-shrink: 0; }
+
+#trump-display {
+  font-weight: 700;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+}
+#trump-display.suit-red   { color: var(--card-red); }
+#trump-display.suit-black { color: var(--card-black); }
+
+#status-display {
+  flex: 1;
+  text-align: right;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#status-display.is-attack   { color: #ffb347; }
+#status-display.is-defend   { color: #88ccff; }
+#status-display.is-pile-on  { color: #c2a0ff; }
+#status-display.status-thinking { animation: pulse 1s ease-in-out infinite; }
+body:not(.dark-mode) #status-display.is-attack  { color: #e07a1a; }
+body:not(.dark-mode) #status-display.is-defend  { color: #1976d2; }
+body:not(.dark-mode) #status-display.is-pile-on { color: #6a3fb5; }
 
 #settings-gear-btn {
   position: fixed !important;
@@ -328,18 +354,23 @@ body:not(.dark-mode) #pile-banner {
   pointer-events: none;
 }
 
-#deck-count {
+#deck-count, #discard-count {
   position: absolute;
-  top: 82px;
-  left: 10px;
-  width: 50px;
+  top: -6px;
+  right: -6px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: #e53935;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 22px;
   text-align: center;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
+  border-radius: 11px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
   font-variant-numeric: tabular-nums;
-  z-index: 2;
+  z-index: 5;
   pointer-events: none;
 }
 
@@ -358,26 +389,11 @@ body:not(.dark-mode) #pile-banner {
   pointer-events: none;
 }
 
-#discard-count {
-  position: absolute;
-  top: 172px;
-  left: 10px;
-  width: 50px;
-  text-align: center;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
-  font-variant-numeric: tabular-nums;
-  z-index: 2;
-  pointer-events: none;
-}
-
 #trump-slot {
   position: absolute;
   top: 50%; left: 50%;
   width: 50px; height: 70px;
-  transform: translate(-50%, -50%) rotate(90deg) translate(0, -42px);
+  transform: translate(-50%, -50%) rotate(90deg) translate(0, -62px);
   z-index: 1;
 }
 
@@ -399,7 +415,7 @@ body:not(.dark-mode) #pile-banner {
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: safe center;
+  justify-content: flex-start;
   gap: 6px;
   height: 100%;
   background: transparent;
@@ -409,7 +425,7 @@ body:not(.dark-mode) #pile-banner {
   overscroll-behavior-x: contain;
   touch-action: pan-x;
   scrollbar-width: none;
-  padding: 48px 6px 6px 72px;
+  padding: 6px 6px 6px 72px;
   box-sizing: border-box;
 }
 #field::-webkit-scrollbar { display: none; }
@@ -637,11 +653,9 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .count-btn { min-width: 36px; padding: 6px 0; font-size: 0.82rem; }
   .mode-btn { padding: 6px 12px; font-size: 0.82rem; }
   #deck-zone { width: 44px; height: 62px; top: 8px; left: 8px; }
-  #trump-slot { width: 44px; height: 62px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -34px); }
-  #deck-count { top: 72px; left: 8px; width: 44px; font-size: 0.6rem; }
+  #trump-slot { width: 44px; height: 62px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -54px); }
   #discard-zone { top: 90px; left: 8px; width: 44px; height: 62px; }
-  #discard-count { top: 154px; left: 8px; width: 44px; font-size: 0.6rem; }
-  #field { padding: 40px 6px 6px 66px; }
+  #field { padding: 6px 6px 6px 66px; }
   .action-prompt { font-size: 0.82rem; padding: 6px 12px; top: 8px; max-width: calc(100% - 100px); }
 }
 
@@ -652,11 +666,9 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .hand-row { --hand-card-w: 78px; }
   .seat-tile .seat-card { width: 56px; height: 78px; }
   #deck-zone { width: 56px; height: 78px; top: 12px; left: 12px; }
-  #trump-slot { width: 56px; height: 78px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -46px); }
-  #deck-count { top: 92px; left: 12px; width: 56px; font-size: 0.72rem; }
+  #trump-slot { width: 56px; height: 78px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -66px); }
   #discard-zone { top: 112px; left: 12px; width: 56px; height: 78px; }
-  #discard-count { top: 192px; left: 12px; width: 56px; font-size: 0.72rem; }
-  #field { padding: 54px 6px 6px 78px; }
+  #field { padding: 6px 6px 6px 78px; }
   .action-prompt { font-size: 1.1rem; padding: 10px 22px; top: 14px; }
 }
 
@@ -668,11 +680,9 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .action-btn { padding: 10px 28px; font-size: 1.2rem; }
   .seat-tile .seat-card { width: 62px; height: 87px; }
   #deck-zone { width: 62px; height: 87px; top: 14px; left: 14px; }
-  #trump-slot { width: 62px; height: 87px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -54px); }
-  #deck-count { top: 103px; left: 14px; width: 62px; font-size: 0.75rem; }
+  #trump-slot { width: 62px; height: 87px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -74px); }
   #discard-zone { top: 125px; left: 14px; width: 62px; height: 87px; }
-  #discard-count { top: 214px; left: 14px; width: 62px; font-size: 0.75rem; }
-  #field { padding: 60px 6px 6px 84px; }
+  #field { padding: 6px 6px 6px 84px; }
 }
 
 @media (max-width: 420px) {

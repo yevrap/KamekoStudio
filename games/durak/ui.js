@@ -5,11 +5,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
-import { suitName } from './constants.js';
+import { suitEmoji, suitName, displayValue } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
-    $statusDisplay, $deckCount, $discardZone, $discardCount,
+    $statusDisplay, $trumpDisplay, $deckCount, $discardZone, $discardCount,
     $startOverlay, $gameoverOverlay, $winnerText,
     $passDeviceOverlay, $passDeviceName, $pileBanner,
     $btnTake, $btnPass, $btnDone,
@@ -25,6 +25,7 @@ export function cacheDom() {
   $humanHand         = document.getElementById('human-hand');
   $humanOptions      = document.getElementById('human-options');
   $statusDisplay     = document.getElementById('status-display');
+  $trumpDisplay      = document.getElementById('trump-display');
   $deckCount         = document.getElementById('deck-count');
   $startOverlay      = document.getElementById('start-overlay');
   $gameoverOverlay   = document.getElementById('gameover-overlay');
@@ -203,24 +204,29 @@ function renderDiscard() {
   $discardCount.textContent = n > 0 ? n : '';
   $discardZone.innerHTML = '';
   if (n === 0) return;
-  // Show up to 5 cards as a visual stack; the topmost (last) card is on top.
+  // Face cards at z-index:1 (beneath card backs) so FLIP can animate them
+  // flying from the field. The flip-animating class raises z-index:100 during
+  // flight so they're visible in transit; card backs cover them on arrival.
   var show = Math.min(n, 5);
   for (var i = n - show; i < n; i++) {
-    var el = createCardBackEl('discard_back_' + (n - 1 - i));
+    var el = createCardEl(state.discard[i], 'discard');
     var offset = n - 1 - i;
     el.style.position = 'absolute';
     el.style.top  = '-' + (offset * 2) + 'px';
     el.style.left = '-' + (offset * 1.5) + 'px';
+    el.style.zIndex = '1';
     $discardZone.appendChild(el);
   }
-  // Place the actual top card (face card from pool) on top so FLIP
-  // can animate it flying from the field on the bout that just ended.
-  var topCard = state.discard[n - 1];
-  var topEl = createCardEl(topCard, 'discard');
-  topEl.style.position = 'absolute';
-  topEl.style.top  = '0px';
-  topEl.style.left = '0px';
-  $discardZone.appendChild(topEl);
+  // Card backs at z-index:2 on top — pile looks face-down at rest.
+  for (var j = 0; j < show; j++) {
+    var back = createCardBackEl('discard_back_' + j);
+    var boffset = show - 1 - j;
+    back.style.position = 'absolute';
+    back.style.top  = '-' + (boffset * 2) + 'px';
+    back.style.left = '-' + (boffset * 1.5) + 'px';
+    back.style.zIndex = '2';
+    $discardZone.appendChild(back);
+  }
 }
 
 // ── Field ──────────────────────────────────────────────────────────────────
@@ -367,8 +373,24 @@ function updateHeader() {
     $statusDisplay.classList.add('is-wait');
   }
 
+  // Trump suit in header
+  if ($trumpDisplay) {
+    if (state.phase !== 'start' && state.trumpSuit) {
+      var isRed = (state.trumpSuit === 3 || state.trumpSuit === 4);
+      $trumpDisplay.className = isRed ? 'suit-red' : 'suit-black';
+      if (state.deck.length > 0 && state.trumpCard) {
+        $trumpDisplay.textContent = displayValue(state.trumpCard.value) + suitEmoji(state.trumpSuit);
+      } else {
+        $trumpDisplay.textContent = suitEmoji(state.trumpSuit);
+      }
+    } else {
+      $trumpDisplay.textContent = '';
+      $trumpDisplay.className = '';
+    }
+  }
+
   if ($deckCount) {
-    $deckCount.textContent = state.deck.length > 0 ? 'Deck: ' + state.deck.length : '';
+    $deckCount.textContent = state.deck.length > 0 ? state.deck.length : '';
   }
 }
 
@@ -376,7 +398,6 @@ function updatePileBanner() {
   if (!$pileBanner) return;
   var pileActive = state.phase === 'pileOn';
   $pileBanner.classList.toggle('hidden', !pileActive);
-  if ($statusDisplay) $statusDisplay.classList.toggle('hidden', pileActive);
 }
 
 function renderDeckZone() {
