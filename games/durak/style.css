@@ -291,7 +291,7 @@ body:not(.dark-mode) #pile-banner {
   border: 1px solid var(--table-border);
   border-radius: 16px;
   box-shadow: var(--table-inner-shadow);
-  overflow: hidden;
+  overflow: clip;
 }
 
 /* Empty-state trump watermark — sits behind deck + field */
@@ -343,11 +343,41 @@ body:not(.dark-mode) #pile-banner {
   pointer-events: none;
 }
 
+#discard-zone {
+  position: absolute;
+  top: 100px;
+  left: 10px;
+  width: 50px;
+  height: 70px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+#discard-zone .card-btn {
+  position: absolute;
+  pointer-events: none;
+}
+
+#discard-count {
+  position: absolute;
+  top: 172px;
+  left: 10px;
+  width: 50px;
+  text-align: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  z-index: 2;
+  pointer-events: none;
+}
+
 #trump-slot {
   position: absolute;
   top: 50%; left: 50%;
   width: 50px; height: 70px;
-  transform: translate(-50%, -50%) rotate(90deg) translate(0, -28px);
+  transform: translate(-50%, -50%) rotate(90deg) translate(0, -42px);
   z-index: 1;
 }
 
@@ -369,14 +399,20 @@ body:not(.dark-mode) #pile-banner {
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
   gap: 6px;
   height: 100%;
   background: transparent;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: visible;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  scrollbar-width: none;
   padding: 48px 6px 6px 72px;
   box-sizing: border-box;
 }
+#field::-webkit-scrollbar { display: none; }
 .field-pair { display: flex; flex-direction: column; align-items: center; position: relative; }
 .field-pair > * + * { margin-top: -30px; }
 
@@ -601,8 +637,10 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .count-btn { min-width: 36px; padding: 6px 0; font-size: 0.82rem; }
   .mode-btn { padding: 6px 12px; font-size: 0.82rem; }
   #deck-zone { width: 44px; height: 62px; top: 8px; left: 8px; }
-  #trump-slot { width: 44px; height: 62px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -22px); }
+  #trump-slot { width: 44px; height: 62px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -34px); }
   #deck-count { top: 72px; left: 8px; width: 44px; font-size: 0.6rem; }
+  #discard-zone { top: 90px; left: 8px; width: 44px; height: 62px; }
+  #discard-count { top: 154px; left: 8px; width: 44px; font-size: 0.6rem; }
   #field { padding: 40px 6px 6px 66px; }
   .action-prompt { font-size: 0.82rem; padding: 6px 12px; top: 8px; max-width: calc(100% - 100px); }
 }
@@ -614,8 +652,10 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .hand-row { --hand-card-w: 78px; }
   .seat-tile .seat-card { width: 56px; height: 78px; }
   #deck-zone { width: 56px; height: 78px; top: 12px; left: 12px; }
-  #trump-slot { width: 56px; height: 78px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -32px); }
+  #trump-slot { width: 56px; height: 78px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -46px); }
   #deck-count { top: 92px; left: 12px; width: 56px; font-size: 0.72rem; }
+  #discard-zone { top: 112px; left: 12px; width: 56px; height: 78px; }
+  #discard-count { top: 192px; left: 12px; width: 56px; font-size: 0.72rem; }
   #field { padding: 54px 6px 6px 78px; }
   .action-prompt { font-size: 1.1rem; padding: 10px 22px; top: 14px; }
 }
@@ -628,8 +668,10 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   .action-btn { padding: 10px 28px; font-size: 1.2rem; }
   .seat-tile .seat-card { width: 62px; height: 87px; }
   #deck-zone { width: 62px; height: 87px; top: 14px; left: 14px; }
-  #trump-slot { width: 62px; height: 87px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -38px); }
+  #trump-slot { width: 62px; height: 87px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -54px); }
   #deck-count { top: 103px; left: 14px; width: 62px; font-size: 0.75rem; }
+  #discard-zone { top: 125px; left: 14px; width: 62px; height: 87px; }
+  #discard-count { top: 214px; left: 14px; width: 62px; font-size: 0.75rem; }
   #field { padding: 60px 6px 6px 84px; }
 }
 

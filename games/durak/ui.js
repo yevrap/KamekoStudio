@@ -9,7 +9,7 @@ import { suitName } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
-    $statusDisplay, $deckCount,
+    $statusDisplay, $deckCount, $discardZone, $discardCount,
     $startOverlay, $gameoverOverlay, $winnerText,
     $passDeviceOverlay, $passDeviceName, $pileBanner,
     $btnTake, $btnPass, $btnDone,
@@ -39,6 +39,8 @@ export function cacheDom() {
   $trumpSlot         = document.getElementById('trump-slot');
   $tableCenter       = document.getElementById('table-center');
   $fieldWatermark    = document.getElementById('field-watermark');
+  $discardZone       = document.getElementById('discard-zone');
+  $discardCount      = document.getElementById('discard-count');
 
   wireHandScroll($humanHand);
 }
@@ -114,6 +116,9 @@ export function createCardEl(card, ownerTag) {
   btn.className = 'card-btn suit-' + suitName(card.suit) + ' ' + ownerTag;
   if (isTrump(card.suit)) btn.classList.add('trump-card');
   btn.dataset.owner  = ownerTag;
+  btn.style.position = '';
+  btn.style.top      = '';
+  btn.style.left     = '';
   return btn;
 }
 
@@ -188,6 +193,34 @@ function buildOpponentTile(seat) {
     tile.appendChild(chip);
   }
   return tile;
+}
+
+// ── Discard pile ───────────────────────────────────────────────────────────
+
+function renderDiscard() {
+  if (!$discardZone || !$discardCount) return;
+  var n = state.discard.length;
+  $discardCount.textContent = n > 0 ? n : '';
+  $discardZone.innerHTML = '';
+  if (n === 0) return;
+  // Show up to 5 cards as a visual stack; the topmost (last) card is on top.
+  var show = Math.min(n, 5);
+  for (var i = n - show; i < n; i++) {
+    var el = createCardBackEl('discard_back_' + (n - 1 - i));
+    var offset = n - 1 - i;
+    el.style.position = 'absolute';
+    el.style.top  = '-' + (offset * 2) + 'px';
+    el.style.left = '-' + (offset * 1.5) + 'px';
+    $discardZone.appendChild(el);
+  }
+  // Place the actual top card (face card from pool) on top so FLIP
+  // can animate it flying from the field on the bout that just ended.
+  var topCard = state.discard[n - 1];
+  var topEl = createCardEl(topCard, 'discard');
+  topEl.style.position = 'absolute';
+  topEl.style.top  = '0px';
+  topEl.style.left = '0px';
+  $discardZone.appendChild(topEl);
 }
 
 // ── Field ──────────────────────────────────────────────────────────────────
@@ -387,6 +420,7 @@ export function renderAll() {
   updateHeader();
   renderOpponents();
   renderDeckZone();
+  renderDiscard();
   renderField();
   renderHumanHand();
   updateActionButtons();
