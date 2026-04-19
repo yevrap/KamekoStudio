@@ -211,9 +211,11 @@ function renderDiscard() {
   for (var i = n - show; i < n; i++) {
     var el = createCardEl(state.discard[i], 'discard');
     var offset = n - 1 - i;
+    var centeredY = (offset - (show - 1) / 2) * -2;
+    var centeredX = (offset - (show - 1) / 2) * -1.5;
     el.style.position = 'absolute';
-    el.style.top  = '-' + (offset * 2) + 'px';
-    el.style.left = '-' + (offset * 1.5) + 'px';
+    el.style.top  = centeredY + 'px';
+    el.style.left = centeredX + 'px';
     el.style.zIndex = '1';
     $discardZone.appendChild(el);
   }
@@ -221,9 +223,11 @@ function renderDiscard() {
   for (var j = 0; j < show; j++) {
     var back = createCardBackEl('discard_back_' + j);
     var boffset = show - 1 - j;
+    var centeredY = (boffset - (show - 1) / 2) * -2;
+    var centeredX = (boffset - (show - 1) / 2) * -1.5;
     back.style.position = 'absolute';
-    back.style.top  = '-' + (boffset * 2) + 'px';
-    back.style.left = '-' + (boffset * 1.5) + 'px';
+    back.style.top  = centeredY + 'px';
+    back.style.left = centeredX + 'px';
     back.style.zIndex = '2';
     $discardZone.appendChild(back);
   }
@@ -415,8 +419,10 @@ function renderDeckZone() {
   var stackSize = Math.min(state.deck.length, 5);
   for (var i = 0; i < stackSize; i++) {
     var b = createCardBackEl('deck_back_' + i);
-    b.style.top = '-' + (i * 2) + 'px';
-    b.style.left = '-' + (i * 1.5) + 'px';
+    var centeredY = (i - (stackSize - 1) / 2) * -2;
+    var centeredX = (i - (stackSize - 1) / 2) * -1.5;
+    b.style.top = centeredY + 'px';
+    b.style.left = centeredX + 'px';
     b.style.removeProperty('--fan-angle');
     b.style.removeProperty('--fan-lift');
     $deckStack.appendChild(b);
