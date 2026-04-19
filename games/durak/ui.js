@@ -9,7 +9,7 @@ import { suitEmoji, suitName, displayValue } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
-    $statusDisplay, $trumpDisplay, $deckCount, $discardZone, $discardCount,
+    $statusDisplay, $trumpDisplay, $deckCount, $discardZone, $discardStack, $discardCount,
     $startOverlay, $gameoverOverlay, $winnerText,
     $passDeviceOverlay, $passDeviceName, $pileBanner,
     $btnTake, $btnPass, $btnDone,
@@ -41,6 +41,7 @@ export function cacheDom() {
   $tableCenter       = document.getElementById('table-center');
   $fieldWatermark    = document.getElementById('field-watermark');
   $discardZone       = document.getElementById('discard-zone');
+  $discardStack      = document.getElementById('discard-stack');
   $discardCount      = document.getElementById('discard-count');
 
   wireHandScroll($humanHand);
@@ -199,10 +200,18 @@ function buildOpponentTile(seat) {
 // ── Discard pile ───────────────────────────────────────────────────────────
 
 function renderDiscard() {
-  if (!$discardZone || !$discardCount) return;
+  if (!$discardZone || !$discardStack || !$discardCount) return;
   var n = state.discard.length;
-  $discardCount.textContent = n > 0 ? n : '';
-  $discardZone.innerHTML = '';
+  
+  if (n > 0) {
+    $discardCount.textContent = n;
+    $discardCount.style.display = '';
+  } else {
+    $discardCount.textContent = '';
+    $discardCount.style.display = 'none';
+  }
+  
+  $discardStack.innerHTML = '';
   if (n === 0) return;
   // Face cards at z-index:1 (beneath card backs) so FLIP can animate them
   // flying from the field. The flip-animating class raises z-index:100 during
@@ -217,7 +226,7 @@ function renderDiscard() {
     el.style.top  = centeredY + 'px';
     el.style.left = centeredX + 'px';
     el.style.zIndex = '1';
-    $discardZone.appendChild(el);
+    $discardStack.appendChild(el);
   }
   // Card backs at z-index:2 on top — pile looks face-down at rest.
   for (var j = 0; j < show; j++) {
@@ -229,7 +238,7 @@ function renderDiscard() {
     back.style.top  = centeredY + 'px';
     back.style.left = centeredX + 'px';
     back.style.zIndex = '2';
-    $discardZone.appendChild(back);
+    $discardStack.appendChild(back);
   }
 }
 
@@ -394,7 +403,13 @@ function updateHeader() {
   }
 
   if ($deckCount) {
-    $deckCount.textContent = state.deck.length > 0 ? state.deck.length : '';
+    if (state.deck.length > 0) {
+      $deckCount.textContent = state.deck.length;
+      $deckCount.style.display = '';
+    } else {
+      $deckCount.textContent = '';
+      $deckCount.style.display = 'none';
+    }
   }
 }
 
@@ -416,7 +431,9 @@ function renderDeckZone() {
     $trumpSlot.appendChild(tEl);
   }
 
-  var stackSize = Math.min(state.deck.length, 5);
+  // The trump card is already visually rendered separately. Subtract 1 to determine hidden cards.
+  var hiddenCount = Math.max(0, state.deck.length - 1);
+  var stackSize = Math.min(hiddenCount, 4);
   for (var i = 0; i < stackSize; i++) {
     var b = createCardBackEl('deck_back_' + i);
     var centeredY = (i - (stackSize - 1) / 2) * -2;

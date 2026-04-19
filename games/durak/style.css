@@ -374,7 +374,6 @@ body:not(.dark-mode) #pile-banner {
   pointer-events: none;
 }
 
-#discard-count { right: auto; left: -6px; }
 
 #deck-zone .card-btn,
 #discard-zone .card-btn {
@@ -408,14 +407,14 @@ body:not(.dark-mode) #pile-banner {
   z-index: 1;
 }
 
-#deck-stack {
+#deck-stack, #discard-stack {
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
   z-index: 2;
 }
 
-#deck-stack .card-btn {
+#deck-stack .card-btn, #discard-stack .card-btn {
   position: absolute;
   pointer-events: none;
 }
