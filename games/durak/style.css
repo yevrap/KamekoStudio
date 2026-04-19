@@ -346,10 +346,10 @@ body:not(.dark-mode) #pile-banner {
 
 #deck-zone {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 50px;
-  height: 70px;
+  top: 6px;
+  left: 6px;
+  width: 36px;
+  height: 50px;
   z-index: 2;
   pointer-events: none;
 }
@@ -374,12 +374,21 @@ body:not(.dark-mode) #pile-banner {
   pointer-events: none;
 }
 
+#discard-count { right: auto; left: -6px; }
+
+#deck-zone .card-btn,
+#discard-zone .card-btn {
+  width: 36px;
+  height: 50px;
+}
+
 #discard-zone {
   position: absolute;
-  top: 100px;
-  left: 10px;
-  width: 50px;
-  height: 70px;
+  top: 6px;
+  right: 6px;
+  left: auto;
+  width: 36px;
+  height: 50px;
   z-index: 2;
   pointer-events: none;
 }
@@ -391,9 +400,11 @@ body:not(.dark-mode) #pile-banner {
 
 #trump-slot {
   position: absolute;
-  top: 50%; left: 50%;
-  width: 50px; height: 70px;
-  transform: translate(-50%, -50%) rotate(90deg) translate(0, -62px);
+  top: 6px;
+  left: 29px;
+  width: 36px;
+  height: 50px;
+  transform: rotate(90deg);
   z-index: 1;
 }
 
@@ -414,8 +425,8 @@ body:not(.dark-mode) #pile-banner {
   z-index: 1;
   flex: 1;
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
+  align-items: flex-end;
+  justify-content: safe center;
   gap: 6px;
   height: 100%;
   background: transparent;
@@ -425,12 +436,12 @@ body:not(.dark-mode) #pile-banner {
   overscroll-behavior-x: contain;
   touch-action: pan-x;
   scrollbar-width: none;
-  padding: 6px 6px 6px 72px;
+  padding: 6px 52px 20px 52px;
   box-sizing: border-box;
 }
 #field::-webkit-scrollbar { display: none; }
 .field-pair { display: flex; flex-direction: column; align-items: center; position: relative; }
-.field-pair > * + * { margin-top: -30px; }
+.field-pair > * + * { margin-top: -38px; }
 
 /* --- Human zone (bottom) --- */
 #human-zone {
@@ -542,11 +553,11 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
   border-color: rgba(255, 200, 50, 0.9);
   box-shadow: 0 0 8px rgba(255, 200, 50, 0.4), inset 0 0 6px rgba(255, 200, 50, 0.2);
 }
-.card-btn.field-card { cursor: default; opacity: 0.95; width: 64px; height: 90px; }
+.card-btn.field-card { cursor: default; opacity: 0.95; width: 56px; height: 78px; }
 
 .card-placeholder {
-  width: 64px;
-  height: 90px;
+  width: 56px;
+  height: 78px;
   pointer-events: none;
   visibility: hidden;
 }
@@ -640,8 +651,8 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
 /* --- Responsive --- */
 @media (max-width: 380px) {
   .card-btn { width: 58px; height: 82px; }
-  .card-btn.field-card { width: 56px; height: 78px; }
-  .card-placeholder { width: 56px; height: 78px; }
+  .card-btn.field-card { width: 50px; height: 70px; }
+  .card-placeholder { width: 50px; height: 70px; }
   .hand-row { --hand-card-w: 58px; }
   .hand-row > * + * { margin-left: calc(var(--hand-card-w) * -0.60); }
   .action-btn { padding: 8px 14px; font-size: 0.9rem; min-width: 64px; }
@@ -652,37 +663,40 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   #opponents { gap: 4px; padding: 6px 6px 3px; }
   .count-btn { min-width: 36px; padding: 6px 0; font-size: 0.82rem; }
   .mode-btn { padding: 6px 12px; font-size: 0.82rem; }
-  #deck-zone { width: 44px; height: 62px; top: 8px; left: 8px; }
-  #trump-slot { width: 44px; height: 62px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -54px); }
-  #discard-zone { top: 90px; left: 8px; width: 44px; height: 62px; }
-  #field { padding: 6px 6px 6px 66px; }
+  #deck-zone { width: 30px; height: 42px; top: 6px; left: 6px; }
+  #trump-slot { width: 30px; height: 42px; top: 6px; left: 25px; transform: rotate(90deg); }
+  #discard-zone { top: 6px; right: 6px; left: auto; width: 30px; height: 42px; }
+  #deck-zone .card-btn, #discard-zone .card-btn { width: 30px; height: 42px; }
+  #field { padding: 6px 46px 20px 46px; }
   .action-prompt { font-size: 0.82rem; padding: 6px 12px; top: 8px; max-width: calc(100% - 100px); }
 }
 
 @media (min-width: 500px) {
   .card-btn { width: 78px; height: 109px; }
-  .card-btn.field-card { width: 72px; height: 101px; }
-  .card-placeholder { width: 72px; height: 101px; }
+  .card-btn.field-card { width: 62px; height: 87px; }
+  .card-placeholder { width: 62px; height: 87px; }
   .hand-row { --hand-card-w: 78px; }
   .seat-tile .seat-card { width: 56px; height: 78px; }
-  #deck-zone { width: 56px; height: 78px; top: 12px; left: 12px; }
-  #trump-slot { width: 56px; height: 78px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -66px); }
-  #discard-zone { top: 112px; left: 12px; width: 56px; height: 78px; }
-  #field { padding: 6px 6px 6px 78px; }
+  #deck-zone { width: 42px; height: 58px; top: 12px; left: 12px; }
+  #trump-slot { width: 42px; height: 58px; top: 12px; left: 39px; transform: rotate(90deg); }
+  #discard-zone { top: 12px; right: 12px; left: auto; width: 42px; height: 58px; }
+  #deck-zone .card-btn, #discard-zone .card-btn { width: 42px; height: 58px; }
+  #field { padding: 6px 64px 20px 64px; }
   .action-prompt { font-size: 1.1rem; padding: 10px 22px; top: 14px; }
 }
 
 @media (min-width: 768px) {
   .card-btn { width: 88px; height: 123px; border-radius: 8px; }
-  .card-btn.field-card { width: 82px; height: 115px; }
-  .card-placeholder { width: 82px; height: 115px; }
+  .card-btn.field-card { width: 70px; height: 98px; }
+  .card-placeholder { width: 70px; height: 98px; }
   .hand-row { --hand-card-w: 88px; }
   .action-btn { padding: 10px 28px; font-size: 1.2rem; }
   .seat-tile .seat-card { width: 62px; height: 87px; }
-  #deck-zone { width: 62px; height: 87px; top: 14px; left: 14px; }
-  #trump-slot { width: 62px; height: 87px; transform: translate(-50%, -50%) rotate(90deg) translate(0, -74px); }
-  #discard-zone { top: 125px; left: 14px; width: 62px; height: 87px; }
-  #field { padding: 6px 6px 6px 84px; }
+  #deck-zone { width: 46px; height: 64px; top: 14px; left: 14px; }
+  #trump-slot { width: 46px; height: 64px; top: 14px; left: 43px; transform: rotate(90deg); }
+  #discard-zone { top: 14px; right: 14px; left: auto; width: 46px; height: 64px; }
+  #deck-zone .card-btn, #discard-zone .card-btn { width: 46px; height: 64px; }
+  #field { padding: 6px 74px 20px 74px; }
 }
 
 @media (max-width: 420px) {
