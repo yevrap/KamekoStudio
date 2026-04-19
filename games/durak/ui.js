@@ -12,7 +12,7 @@ var $app, $opponents, $field, $humanHand, $humanOptions,
     $statusDisplay, $trumpDisplay, $deckCount, $discardZone, $discardStack, $discardCount,
     $startOverlay, $gameoverOverlay, $winnerText,
     $passDeviceOverlay, $passDeviceName, $pileBanner,
-    $btnTake, $btnPass, $btnDone,
+    $btnTake, $btnPass, $btnDone, $waitSpinner,
     $deckStack, $trumpSlot,
     $tableCenter, $fieldWatermark;
 
@@ -36,6 +36,7 @@ export function cacheDom() {
   $btnTake           = document.getElementById('btn-take');
   $btnPass           = document.getElementById('btn-pass');
   $btnDone           = document.getElementById('btn-done');
+  $waitSpinner       = document.getElementById('wait-spinner');
   $deckStack         = document.getElementById('deck-stack');
   $trumpSlot         = document.getElementById('trump-slot');
   $tableCenter       = document.getElementById('table-center');
@@ -332,6 +333,11 @@ function updateActionButtons() {
   $btnTake.classList.toggle('hidden', !canTake);
   $btnPass.classList.toggle('hidden', !canPass);
   $btnDone.classList.toggle('hidden', !canDone);
+
+  if ($waitSpinner) {
+    var waiting = !canTake && !canPass && !canDone && (state.phase === 'playing' || state.phase === 'pileOn');
+    $waitSpinner.classList.toggle('hidden', !waiting);
+  }
 }
 
 // ── Status text ────────────────────────────────────────────────────────────
