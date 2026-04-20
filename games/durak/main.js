@@ -106,12 +106,12 @@ var prevStatePhase = 'playing';
 function handleAfterAction(actorSeat) {
   if (checkGameOver()) { tick(); return; }
   var canCover = state.mode === 'hotseat'
-                && state.playerCount >= 3
                 && (state.phase === 'playing' || state.phase === 'pileOn');
   if (!canCover) { tick(); return; }
   var next = getPlayer(state.prioritySeat);
   if (!next || !next.isHuman || state.prioritySeat === actorSeat) { tick(); return; }
   var resumePhase = state.phase;
+  state.passDeviceSender = actorSeat;
   state.phase = 'passDevice';
   state.pendingReveal = { seat: state.prioritySeat, resumePhase: resumePhase };
   showPassDevice(next.name);
@@ -125,6 +125,7 @@ $passOverlay.addEventListener('pointerdown', function (e) {
   if (state.phase !== 'passDevice') return;
   var resumePhase = (state.pendingReveal && state.pendingReveal.resumePhase) || 'playing';
   state.phase = resumePhase;
+  state.passDeviceSender = null;
   state.pendingReveal = null;
   hidePassDevice();
   tick();
@@ -204,10 +205,10 @@ function startGame() {
   newGame(setupMode, setupCount);
   dealInitial();
   hideOverlays();
-  // Hot-seat with 3+ players: show pass-device for the first human actor so no
-  // one sees the others' hands during the opening tap. At 2-player hot-seat
-  // this is skipped (matches the pre-Phase-2 UX).
-  if (state.mode === 'hotseat' && state.playerCount >= 3) {
+  // Hot-seat: show pass-device for the first human actor so no
+  // one sees the others' hands during the opening tap.
+  if (state.mode === 'hotseat') {
+    state.passDeviceSender = state.prioritySeat;
     state.phase = 'passDevice';
     state.pendingReveal = { seat: state.prioritySeat, resumePhase: 'playing' };
     showPassDevice(getPlayer(state.prioritySeat).name);

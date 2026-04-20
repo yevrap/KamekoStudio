@@ -100,6 +100,12 @@ function wireHandScroll(el) {
 // e.g. during game-over / paused).
 export function currentViewerSeat() {
   if (state.mode !== 'hotseat') return 0;
+  
+  // Lock perspective to the sender while the device is in transit.
+  if (state.phase === 'passDevice' && state.passDeviceSender !== undefined && state.passDeviceSender !== null) {
+    return state.passDeviceSender;
+  }
+  
   var p = state.players[state.prioritySeat];
   if (p && p.isHuman) return state.prioritySeat;
   return 0;
