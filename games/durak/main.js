@@ -77,6 +77,83 @@ $countToggle.addEventListener('pointerdown', function (e) {
   applyActive($countToggle, 'data-count', setupCount);
 });
 
+// ── Names Modal ────────────────────────────────────────────────────────────
+
+var $btnEditNames = document.getElementById('btn-edit-names');
+var $namesOverlay = document.getElementById('names-overlay');
+var $namesGrid = document.getElementById('names-grid');
+var $namesSubtitle = document.getElementById('names-subtitle');
+var $btnNamesDone = document.getElementById('btn-names-done');
+var $btnNamesReset = document.getElementById('btn-names-reset');
+
+function populateNamesModal() {
+  if (!$namesGrid) return;
+  $namesGrid.innerHTML = '';
+  var modeStr = setupMode === 'hotseat' ? 'Hot-seat' : 'vs Computer';
+  $namesSubtitle.textContent = modeStr + ' — ' + setupCount + ' players';
+
+  for (var i = 0; i < setupCount; i++) {
+    var defName;
+    if (i === 0) defName = (setupMode === 'hotseat') ? 'Player 1' : 'You';
+    else defName = (setupMode === 'hotseat') ? ('Player ' + (i + 1)) : ('CPU ' + i);
+
+    var custom = localStorage.getItem('durak_name_' + setupMode + '_' + i) || '';
+    
+    var group = document.createElement('div');
+    group.className = 'name-input-group';
+    
+    var lbl = document.createElement('label');
+    lbl.textContent = 'Seat ' + (i + 1);
+    
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.maxLength = 15;
+    inp.dataset.seat = i;
+    inp.dataset.mode = setupMode;
+    inp.placeholder = defName;
+    inp.value = custom;
+    
+    inp.addEventListener('input', function(e) {
+      var val = e.target.value.trim();
+      var key = 'durak_name_' + e.target.dataset.mode + '_' + e.target.dataset.seat;
+      if (val === '') {
+        localStorage.removeItem(key);
+      } else {
+        localStorage.setItem(key, val);
+      }
+    });
+    
+    group.appendChild(lbl);
+    group.appendChild(inp);
+    $namesGrid.appendChild(group);
+  }
+}
+
+if ($btnEditNames) {
+  $btnEditNames.addEventListener('click', function(e) {
+    e.preventDefault();
+    populateNamesModal();
+    $namesOverlay.classList.remove('hidden');
+  });
+}
+
+if ($btnNamesDone) {
+  $btnNamesDone.addEventListener('click', function(e) {
+    e.preventDefault();
+    $namesOverlay.classList.add('hidden');
+  });
+}
+
+if ($btnNamesReset) {
+  $btnNamesReset.addEventListener('click', function(e) {
+    e.preventDefault();
+    for (var i = 0; i < setupCount; i++) {
+      localStorage.removeItem('durak_name_' + setupMode + '_' + i);
+    }
+    populateNamesModal();
+  });
+}
+
 // ── Tick ───────────────────────────────────────────────────────────────────
 
 function tick() {

@@ -683,6 +683,74 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
 .status-thinking { animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
+/* --- Names Modal --- */
+.scrollable-modal {
+  justify-content: flex-start;
+  padding-top: max(40px, 10vh);
+  padding-bottom: 40px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.names-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+  margin: 16px 0;
+}
+.name-input-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.name-input-group label {
+  width: 70px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: right;
+  text-transform: uppercase;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.name-input-group input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--text);
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 0;
+}
+.name-input-group input:focus {
+  border-color: #88ccff;
+  box-shadow: 0 0 0 2px rgba(136, 204, 255, 0.2);
+}
+body:not(.dark-mode) .name-input-group input:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+.names-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.mbtn.outline {
+  background: transparent;
+  border: 1px solid var(--btn-border);
+  color: var(--text);
+}
+.mbtn.outline:active {
+  background: rgba(255,255,255,0.05);
+}
+body:not(.dark-mode) .mbtn.outline:active {
+  background: rgba(0,0,0,0.05);
+}
+
 /* --- Responsive --- */
 @media (max-width: 380px) {
   .card-btn { width: 74px; height: 104px; }

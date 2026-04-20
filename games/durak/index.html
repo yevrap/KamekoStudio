@@ -73,6 +73,7 @@
       <button class="count-btn" type="button" data-count="5">5</button>
       <button class="count-btn" type="button" data-count="6">6</button>
     </div>
+    <button class="mbtn outline" id="btn-edit-names" type="button" style="padding: 8px 16px; min-height: 38px; font-size: 0.8rem; margin-top: -4px; border-radius: 8px;">&#9998; Edit Names</button>
 
     <button class="mbtn red" id="btn-play" type="button">&#9654; Play</button>
   </div>
@@ -88,6 +89,17 @@
   <div id="gameover-overlay" class="overlay hidden">
     <div class="g-title" id="winner-text"></div>
     <button class="mbtn red" id="btn-replay" type="button">&#9654; Play Again</button>
+  </div>
+
+  <!-- Edit Names screen -->
+  <div id="names-overlay" class="overlay hidden scrollable-modal">
+    <div class="g-title" style="font-size: clamp(1.5rem, 6vw, 2.5rem);">PLAYER NAMES</div>
+    <div class="g-sub" id="names-subtitle"></div>
+    <div id="names-grid" class="names-grid"></div>
+    <div class="names-actions">
+      <button class="mbtn red" id="btn-names-done" type="button">Done</button>
+      <button class="mbtn outline" id="btn-names-reset" type="button">Reset Defaults</button>
+    </div>
   </div>
 
   <script type="module" src="main.js"></script>

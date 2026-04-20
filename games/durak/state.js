@@ -102,6 +102,10 @@ export function setupPlayers(mode, count) {
     var name;
     if (i === 0) name = (mode === 'hotseat') ? 'Player 1' : 'You';
     else name = (mode === 'hotseat') ? ('Player ' + (i + 1)) : ('CPU ' + i);
+    
+    var custom = localStorage.getItem('durak_name_' + mode + '_' + i);
+    if (custom && custom.trim() !== '') name = custom.trim().substring(0, 15);
+
     state.players.push({
       seat: i,
       name: name,

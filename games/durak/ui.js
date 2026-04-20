@@ -540,6 +540,8 @@ export function hideOverlays() {
   $startOverlay.classList.add('hidden');
   $gameoverOverlay.classList.add('hidden');
   if ($passDeviceOverlay) $passDeviceOverlay.classList.add('hidden');
+  var namesOverlay = document.getElementById('names-overlay');
+  if (namesOverlay) namesOverlay.classList.add('hidden');
 }
 
 export function showGameOver(msg) {
