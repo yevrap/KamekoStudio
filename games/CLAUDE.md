@@ -31,6 +31,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `durak-dungeon/` | — | ✅ Done | Reference implementation: constants/state/ui/gameplay/main.js |
 | `keypad-quest/` | — | ✅ Done | constants/state/fx/deck-manager/rendering/gameplay/input/main.js |
 | `durak-tactics/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; rendering merged into gameplay.js) |
+| `durak-alchemist/` | — | ✅ Done | constants/state/gridLogic/combatLogic/ui/main.js (no separate gameplay.js; game logic split across gridLogic.js and combatLogic.js) |
 | `durak/` | — | ✅ Done | constants/state/gameplay/ai/cards/ui/main.js. AI extracted to its own module supporting Easy, Normal, and Hard difficulty levels. `cards.js` provides procedural vector SVG graphics. `ui.js` uses a DOM pool and FLIP animations for hardware-accelerated movement. Includes a tiny `package.json` (`"type": "module"`) so Node can run unit tests against the modules. iOS PWA standalone mode: `html` background tracks the `body.dark-mode` class via `:has()`, PWA meta tags request a translucent status bar, and `env(safe-area-inset-*)` padding on `#app` keeps content clear of the notch/home indicator. UI: felt-green table surface containing the docked deck+trump, opponent seat tiles, field, and empty-state trump watermark; hand cards are gently fanned (±3°). Card transforms compose via CSS variables (`--flip-dx/dy`, `--fan-angle`, `--fan-lift`, `--card-scale`) so FLIP animation, fan, and press-scale don't clobber each other. Header bar shows trump value+suit and current status message (attack/defend/pile-on context); status replaces the old on-table action-prompt pill. Discard pile (`#discard-zone` + `#discard-count`) sits below the deck; renders face-down (card-backs at z-index:2 cover face cards at z-index:1); FLIP animates the top discarded card flying from field to pile — `flip-animating` raises z-index to 100 so it's visible in transit, then drops below the card-back at rest. Field is left-aligned (`justify-content: flex-start`, left padding 72px to clear the deck zone), `flex-wrap: nowrap` + `overflow-x: auto` so 5–6 pairs scroll horizontally instead of jumping to a second row; `#table-center` uses `overflow: clip` (not `hidden`) so the child scroll container can work while border-radius still clips. Deck and discard counts are red badge chips (matching seat-count style) positioned at top-right of their respective zones. |
 | `hidden-object/` | ~621 | 🔜 Candidate | Emoji-finding game, single game.js |
 | `materials-run/` | ~685 | 🔜 Candidate | Grid physics game, single game.js |
@@ -48,6 +49,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 |-----------|-------|----------|--------|
 | `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Stable |
 | `durak/` | Durak | DOM | Stable |
+| `durak-alchemist/` | Durak Alchemist | DOM/CSS grid | Stable |
 | `durak-dungeon/` | Durak Dungeon | DOM | Stable |
 | `durak-tactics/` | Durak Tactics | DOM | Stable |
 | `hidden-object/` | Hidden Object Game | DOM | Stable |
@@ -115,6 +117,8 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `durakDungeon_lastSeed` | durak-dungeon | Seed of last run |
 | `lastPlayed_durakTactics` | durak-tactics | Set on session start |
 | `durakTactics_victories` | durak-tactics | Number of campaign victories |
+| `lastPlayed_durakAlchemist` | durak-alchemist | Set on session start |
+| `alchemistHighScore` | durak-alchemist | Highest score achieved |
 | `gridGameTopScoreScore` | materials-run | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | Survival mode high score |
 | `riverRunHighScore` | river-run | Points high score |
