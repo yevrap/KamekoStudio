@@ -336,7 +336,11 @@ export function updatePlayer(deltaTime) {
         portal.children[1].rotation.y -= deltaTime * 2.0;
         portal.children[1].rotation.x += deltaTime * 1.0;
 
-        const distance = engineState.player.position.distanceTo(portal.position);
+        // Calculate 2D distance (ignore Y axis)
+        const dx = engineState.player.position.x - portal.position.x;
+        const dz = engineState.player.position.z - portal.position.z;
+        const distance = Math.hypot(dx, dz);
+        
         if (distance < minDistance) {
             minDistance = distance;
             closestPortal = portal;
@@ -347,7 +351,11 @@ export function updatePlayer(deltaTime) {
         trophy.rotation.y += deltaTime;
         trophy.position.y = 2.5 + Math.sin(engineState.time * 2 + i) * 0.1;
         
-        const distance = engineState.player.position.distanceTo(trophy.position);
+        // Calculate 2D distance for trophies too
+        const dx = engineState.player.position.x - trophy.position.x;
+        const dz = engineState.player.position.z - trophy.position.z;
+        const distance = Math.hypot(dx, dz);
+        
         if (distance < minTrophyDistance) {
             minTrophyDistance = distance;
             closestTrophy = trophy;
