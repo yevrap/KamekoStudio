@@ -52,7 +52,7 @@ New mechanics that add replayability.
 | p2-05 | Hidden Object: themed scenes | L | open | Layered scenes (kitchen, forest, space) instead of flat emoji grid |
 | p2-06 | Materials Run: material combos | M | open | Cross-material transitions (ice→sand = skid, water→ice = frozen slide) |
 | p2-07 | Durak: smarter AI with tells | M | open | Hesitation delays and a "thinking..." indicator already exist (`ai.js` `scheduleAiAction`: 500–900ms random delay; `ui.js` `status-thinking` class). Remaining gap: personality variation per AI seat is still unbuilt. Confirmed during 2026-07-07 roadmap audit. |
-| p2-08 | Durak: match history and stats | S | open | Win/loss tracking in localStorage, post-game breakdown screen |
+| p2-08 | Durak: match history and stats | S | ✅ | Shipped 2026-07-07 in `36f6085`. Seat 0 (device-owner human) win/loss/draw record tracked in `durak_wins`/`durak_losses`/`durak_draws`, shown on the game-over overlay. |
 | p2-09 | Waterfall: wave structure | M | open | Organized waves (line, V-formation, spiral) instead of random spawns |
 | p2-10 | River Run: biome transitions | M | open | Visual storytelling as score increases: forest → canyon → volcanic → space |
 
