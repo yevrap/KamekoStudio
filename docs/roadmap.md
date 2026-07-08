@@ -37,7 +37,7 @@ Biggest visible improvements to the player experience.
 | p1-04 | Blob Zapper: combo system | S | open | Chain kills within a short window for score multipliers |
 | p1-05 | River Run: ghost run | M | open | Record best run's boat positions in localStorage, replay as transparent ghost on next attempt |
 | p1-06 | Hidden Object: hint system (token cost) | S | open | Hint button highlights the quadrant containing the target, costs 1 token |
-| p1-07 | Fix AI Hard failing test (durak ai.js bug) | M | open | Test "AI Hard: Takes instead of spending a high trump on a low attack when hand is comfortable" (durak.test.mjs:410) fails — indicates ai.js doesn't match intended hard-difficulty behavior |
+| p1-07 | Fix AI Hard failing test (durak ai.js bug) | M | ✅ | Shipped 2026-07-08 in `9c9a629`. Root cause: `aiPlayHard`'s defend branch forced a trump defense whenever the deck was empty, before the existing comfort-based take/defend check could run. Now the forced-defend path only fires when defending would clear (or nearly clear) the hand (genuine survival), otherwise the comfort check can declare Take. Also fixed the test's fixture — the attacker seat needs a matching-rank card so `declareTake` settles at `pileOn` instead of auto-resolving via `endBout`. All 113 tests pass. |
 | p1-08 | High-score displays: celebrate new records | S | open | `updateTopScore()` in materials-run (and the same plain-textContent pattern elsewhere) writes a new high score with zero visual distinction from a non-record score — no color pulse, badge, or haptic. Found during 2026-07-07 /improve scan. |
 
 ---
