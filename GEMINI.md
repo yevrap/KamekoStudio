@@ -150,6 +150,9 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `durak_difficulty` | durak | `'easy'`\|`'normal'`\|`'hard'` | AI decision logic variance |
 | `durak_name_ai_[seat]` | durak | string | User-customized name for VS Computer mode seats |
 | `durak_name_hotseat_[seat]` | durak | string | User-customized name for Hot-seat mode seats |
+| `durak_wins` | durak | integer string | Seat 0 (device-owner human) match win count, across both modes |
+| `durak_losses` | durak | integer string | Seat 0 (device-owner human) match loss count, across both modes |
+| `durak_draws` | durak | integer string | Seat 0 (device-owner human) match draw count, across both modes |
 | `lastPlayed_durakDungeon` | durak-dungeon | timestamp (ms) | Set on run start |
 | `durakDungeon_bestFloor` | durak-dungeon | integer string | Highest floor reached |
 | `durakDungeon_victories` | durak-dungeon | integer string | Number of complete runs (floor 20) |

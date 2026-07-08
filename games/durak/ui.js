@@ -10,7 +10,7 @@ import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
     $statusDisplay, $trumpDisplay, $deckCount, $discardZone, $discardStack, $discardCount,
-    $startOverlay, $gameoverOverlay, $winnerText,
+    $startOverlay, $gameoverOverlay, $winnerText, $gameoverStats,
     $passDeviceOverlay, $passDeviceName, $pileBanner,
     $btnTake, $btnPass, $btnDone, $waitSpinner,
     $deckStack, $trumpSlot,
@@ -30,6 +30,7 @@ export function cacheDom() {
   $startOverlay      = document.getElementById('start-overlay');
   $gameoverOverlay   = document.getElementById('gameover-overlay');
   $winnerText        = document.getElementById('winner-text');
+  $gameoverStats     = document.getElementById('gameover-stats');
   $passDeviceOverlay = document.getElementById('pass-device-overlay');
   $passDeviceName    = document.getElementById('pass-device-name');
   $pileBanner        = document.getElementById('pile-banner');
@@ -544,8 +545,11 @@ export function hideOverlays() {
   if (namesOverlay) namesOverlay.classList.add('hidden');
 }
 
-export function showGameOver(msg) {
+export function showGameOver(msg, stats) {
   $winnerText.textContent = msg;
+  if ($gameoverStats && stats) {
+    $gameoverStats.textContent = 'Record: ' + stats.wins + 'W · ' + stats.losses + 'L · ' + stats.draws + 'D';
+  }
   $gameoverOverlay.classList.remove('hidden');
 }
 

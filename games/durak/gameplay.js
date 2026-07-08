@@ -294,6 +294,24 @@ function eliminationSweep() {
 
 // ── Game over ──────────────────────────────────────────────────────────────
 
+// Seat 0 is always human (state.js), in both AI and hot-seat modes, so its
+// outcome doubles as the device-owner's personal win/loss record.
+function recordMatchResult(outcome) {
+  if (typeof localStorage === 'undefined') return;
+  var key = outcome === 'win' ? 'durak_wins' : outcome === 'loss' ? 'durak_losses' : 'durak_draws';
+  var count = parseInt(localStorage.getItem(key), 10) || 0;
+  localStorage.setItem(key, String(count + 1));
+}
+
+export function getMatchStats() {
+  if (typeof localStorage === 'undefined') return { wins: 0, losses: 0, draws: 0 };
+  return {
+    wins: parseInt(localStorage.getItem('durak_wins'), 10) || 0,
+    losses: parseInt(localStorage.getItem('durak_losses'), 10) || 0,
+    draws: parseInt(localStorage.getItem('durak_draws'), 10) || 0
+  };
+}
+
 export function checkGameOver() {
   if (state.phase === 'gameover') return true;
   var n = activeCount();
@@ -301,6 +319,7 @@ export function checkGameOver() {
   state.phase = 'gameover';
   if (n === 0) {
     state.winnerText = 'Draw!';
+    recordMatchResult('draw');
   } else {
     // The single remaining player holding cards is the Durak.
     var durak = null;
@@ -309,8 +328,10 @@ export function checkGameOver() {
     }
     if (durak && durak.isHuman && durak.seat === 0) {
       state.winnerText = 'You are the Durak!';
+      recordMatchResult('loss');
     } else if (durak) {
       state.winnerText = durak.name + ' is the Durak!';
+      recordMatchResult('win');
     } else {
       state.winnerText = 'Game over';
     }

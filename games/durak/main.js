@@ -9,7 +9,7 @@ import {
 } from './ui.js';
 import {
   playAttack, playDefense, passAttack, declareTake,
-  pileOnPass, checkGameOver, dealInitial, legalDefense, legalAttack
+  pileOnPass, checkGameOver, dealInitial, legalDefense, legalAttack, getMatchStats
 } from './gameplay.js';
 import { scheduleAiAction, clearAiTimeout } from './ai.js';
 
@@ -160,7 +160,7 @@ function tick() {
   renderAll();
   if (checkGameOver()) {
     clearAiTimeout();
-    showGameOver(state.winnerText);
+    showGameOver(state.winnerText, getMatchStats());
     renderAll();
     return;
   }
