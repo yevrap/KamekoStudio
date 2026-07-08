@@ -9,7 +9,9 @@ Design documentation and studio notes. These are living documents — update the
 - **`durak-like/`** — Numbered design docs (`NN-name-focus.md`) for the Durak family of games: existing variants (dungeon, tactics, alchemist), unimplemented proposals (bazaar, tower, merge/chaining concepts), and major refactor plans for shipped games.
   - **`10-durak-base-refactor.md`** — Active multi-phase plan to refactor the original Durak game (`games/durak/`) from a 606-line monolith into a flagship multiplayer card game: ES module split, multi-opponent (2–6) play, themed-table SVG visuals, AI difficulty levels, and async link-sharing turn-based play.
 
+<!-- GEMINI-OVERRIDE:notes-heading -->
 ## Notes for Claude
+<!-- /GEMINI-OVERRIDE -->
 
 - These docs are the source of truth for *intent* — what the studio is trying to do and why.
 - The memory game design doc contains open questions that haven't been resolved yet. Don't assume answers to them.

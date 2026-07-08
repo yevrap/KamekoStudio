@@ -1,3 +1,5 @@
+<!-- AUTO-GENERATED from games/CLAUDE.md by scripts/generate-context-docs.js — DO NOT EDIT DIRECTLY. Edit games/CLAUDE.md (and context-src/gemini-overrides.md for Gemini-specific sections) instead. -->
+
 # games/ — Kameko Studio Games
 
 Each game lives in its own subdirectory. Modern games are split across multiple files (see "File Convention" below). Older games use a single self-contained `index.html` and are candidates for future splitting.

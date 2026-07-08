@@ -1,4 +1,6 @@
+<!-- GEMINI-OVERRIDE:title -->
 # Kameko Studio — Claude Context
+<!-- /GEMINI-OVERRIDE -->
 
 ## What This Project Is
 
@@ -30,7 +32,9 @@ tests/
   durak.test.mjs            — Unit tests for games/durak/ pure rules (constants, state, gameplay)
   durak-alchemist.test.mjs  — Unit tests for games/durak-alchemist/ pure rules (gridLogic, combatLogic, constants)
   README.md                 — How to run tests
+<!-- GEMINI-OVERRIDE:structure-self-ref -->
 CLAUDE.md           — This file
+<!-- /GEMINI-OVERRIDE -->
 README.md           — GitHub Pages URL
 docs/               — Design docs and studio notes
   mission.md        — Studio philosophy and principles
@@ -229,7 +233,7 @@ Browser-side logic (game loops, DOM state, T9 input state machine) is not unit-t
 ## Development Notes
 
 - Each game is self-contained in its own directory — editing one never affects others
-- When adding a new game: create `games/<name>/` with `index.html`, `style.css`, and ES module files (`main.js` + supporting modules per `games/CLAUDE.md`); add a card to `index.html` and a portal link to `3d.html`; use `href="games/<name>/"` (trailing slash — see below); include `shared/utils.js` (if needed) + `settings.js`; add token gate + `lastPlayed` write; add `settingsOpened`/`settingsClosed` pause/resume listeners
+- When adding a new game: create `games/<name>/` with `index.html`, `style.css`, and ES module files (`main.js` + supporting modules per <!-- GEMINI-OVERRIDE:games-file-ref -->`games/CLAUDE.md`<!-- /GEMINI-OVERRIDE -->); add a card to `index.html` and a portal link to `3d.html`; use `href="games/<name>/"` (trailing slash — see below); include `shared/utils.js` (if needed) + `settings.js`; add token gate + `lastPlayed` write; add `settingsOpened`/`settingsClosed` pause/resume listeners
 - **Game link trailing slash** — links to games in `index.html` and `3d.html` must use `href="games/<name>/"` with a trailing slash, **not** `href="games/<name>/index.html"`. `npx serve` redirects `foo/index.html` → `foo/index` → `foo` (strips extension then `index`), landing without a trailing slash. At that URL the browser treats `<name>` as a filename, so relative assets (`style.css`, `main.js`) resolve from the wrong directory and 404. Trailing slash avoids the redirect entirely.
 - Inline `//` comments inside single-line JS functions comment out everything after them including closing braces — avoid this pattern; it causes silent syntax errors
 - Game state in materials-run uses a `gameState` string: `'menu'`, `'playing'`, `'gameover'`, `'won'`
@@ -253,6 +257,7 @@ Agents do not have a human's time pressure and can afford to double-check before
 - Before *adding* a new item to the roadmap (via `/improve` or otherwise), do the same check in the other direction: confirm the gap is real in the code, not just plausible from a title or a skim.
 - If an item turns out to be already done, don't implement anything — mark it `✅` with a note explaining what already covers it and point to the commit if you can find it, then stop and report rather than proceeding on autopilot.
 
+<!-- GEMINI-OVERRIDE:ai-workflow-tool-section -->
 ### Claude Code Skills (`.claude/commands/`)
 
 Three custom slash commands are available when using Claude Code:
@@ -264,7 +269,8 @@ Three custom slash commands are available when using Claude Code:
 ### Workflow for Antigravity / Gemini
 
 The same `docs/roadmap.md` is the shared priority list. Use `GEMINI.md` as your context file. Follow the same plan-before-implement discipline: read the relevant files, present a plan, wait for Yevster's approval, then execute. Run `node --test tests/` before committing.
+<!-- /GEMINI-OVERRIDE -->
 
-### Sync discipline: CLAUDE.md ↔ GEMINI.md
+### Sync discipline: CLAUDE.md → GEMINI.md
 
-These files are maintained in parallel and must stay in sync. When updating one, update the other. The only intentional differences are: the filename reference in line 1 header and project structure comment, and any tool-specific sections (this section is the only one).
+`GEMINI.md` (and the `docs/`, `drafts/`, `games/` `GEMINI.md` files) are **generated** from their `CLAUDE.md` counterparts — never hand-edit a `GEMINI.md` file directly, it will be overwritten. After editing any `CLAUDE.md` file, run `node scripts/generate-context-docs.js` to regenerate; run `node scripts/generate-context-docs.js --check` to verify all `GEMINI.md` files are in sync (non-zero exit if stale). Sections that must read differently for Gemini/Antigravity are wrapped inline in `CLAUDE.md` with a pair of GEMINI-OVERRIDE HTML comment markers (see `scripts/generate-context-docs.js` for the exact syntax); the actual replacement text for each key lives in `context-src/gemini-overrides.md`.

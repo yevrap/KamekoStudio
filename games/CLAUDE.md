@@ -18,7 +18,7 @@ New games and major refactors use **Native ES Modules** (`type="module"`) with l
 
 Classic `<script>` tags (no `type="module"`) remain correct for `shared/settings.js` and `shared/utils.js` — they inject globals and don't need to import game code.
 
-**`ui.js` is optional:** When rendering code is tightly coupled to game logic (e.g. DOM elements are built with inline event handlers that call gameplay functions directly), merge them into `gameplay.js`. `games/durak-tactics/` uses this pattern. `games/durak-dungeon/` is the reference implementation when a clean ui/gameplay split is possible.
+**`ui.js` is optional:** When rendering code is tightly coupled to game logic (e.g. DOM elements are built with inline event handlers that call gameplay functions directly), merge them into `gameplay.js` rather than creating an artificial split. `games/durak-tactics/` uses this pattern. `games/durak-dungeon/` uses a separate `ui.js` and is the reference implementation when the split is clean.
 
 **Local testing note:** `type="module"` scripts require HTTP, not `file://`. Use `npx serve .` from the project root or VS Code Live Server. Opening via `file://` will silently fail to load ES modules — the start screen may appear styled but the game won't initialize.
 
@@ -86,10 +86,10 @@ The `lastPlayed_*` key feeds the "Recently Played" section on the arcade dashboa
 
 ## Settings Panel Integration (required in every game)
 
-Include `settings.js` (and `utils.js` if the game uses shared utilities) before `</body>`:
+Include `settings.js` (and `utils.js` if the game uses shared utilities) before `</body>`. For ES module games use `type="module"`:
 ```html
 <script src="../../shared/utils.js"></script>
-<script src="game.js"></script>
+<script type="module" src="main.js"></script>
 <script src="../../shared/settings.js" data-gallery-depth="2"></script>
 ```
 
@@ -99,7 +99,7 @@ window.addEventListener('settingsOpened', () => { /* pause */ });
 window.addEventListener('settingsClosed', () => { /* resume */ });
 ```
 
-**Per-game settings rows:** Inject custom content into `#settings-panel` using `insertBefore(section, document.getElementById('dev-mode-section'))` so it appears above the developer tools. See `games/keypad-quest/main.js` for a full example (input mode selector + stats section).
+**Per-game settings rows:** Inject custom content into `#settings-panel` using `insertBefore(section, document.getElementById('dev-mode-section'))` so it appears above the developer tools. See `games/keypad-quest/main.js` for a full example (input mode selector + stats section injected on `settingsOpened`, removed on `settingsClosed`).
 
 ## localStorage Keys
 

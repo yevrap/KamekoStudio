@@ -1,3 +1,5 @@
+<!-- AUTO-GENERATED from drafts/CLAUDE.md by scripts/generate-context-docs.js — DO NOT EDIT DIRECTLY. Edit drafts/CLAUDE.md (and context-src/gemini-overrides.md for Gemini-specific sections) instead. -->
+
 # drafts/ — Work in Progress
 
 Files here are experiments or prototypes not yet linked from the main arcade home.

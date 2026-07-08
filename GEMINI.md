@@ -1,3 +1,5 @@
+<!-- AUTO-GENERATED from CLAUDE.md by scripts/generate-context-docs.js — DO NOT EDIT DIRECTLY. Edit CLAUDE.md (and context-src/gemini-overrides.md for Gemini-specific sections) instead. -->
+
 # Kameko Studio — Gemini Context
 
 ## What This Project Is
@@ -270,6 +272,6 @@ Claude Code users have three additional slash commands in `.claude/commands/`:
 - **`/improve`** — read-only quality scan across the codebase
 - **`/ship [item-id]`** — fully autonomous: pick item → plan → implement → test → commit → push → mark complete
 
-### Sync discipline: CLAUDE.md ↔ GEMINI.md
+### Sync discipline: CLAUDE.md → GEMINI.md
 
-These files are maintained in parallel and must stay in sync. When updating one, update the other. The only intentional differences are: the filename reference in the header and project structure comment, and tool-specific sections.
+`GEMINI.md` (and the `docs/`, `drafts/`, `games/` `GEMINI.md` files) are **generated** from their `CLAUDE.md` counterparts — never hand-edit a `GEMINI.md` file directly, it will be overwritten. After editing any `CLAUDE.md` file, run `node scripts/generate-context-docs.js` to regenerate; run `node scripts/generate-context-docs.js --check` to verify all `GEMINI.md` files are in sync (non-zero exit if stale). Sections that must read differently for Gemini/Antigravity are wrapped inline in `CLAUDE.md` with a pair of GEMINI-OVERRIDE HTML comment markers (see `scripts/generate-context-docs.js` for the exact syntax); the actual replacement text for each key lives in `context-src/gemini-overrides.md`.

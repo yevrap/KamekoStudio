@@ -1,3 +1,5 @@
+<!-- AUTO-GENERATED from docs/CLAUDE.md by scripts/generate-context-docs.js — DO NOT EDIT DIRECTLY. Edit docs/CLAUDE.md (and context-src/gemini-overrides.md for Gemini-specific sections) instead. -->
+
 # docs/ — Kameko Studio Design Docs
 
 Design documentation and studio notes. These are living documents — update them as decisions are made.
