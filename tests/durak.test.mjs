@@ -413,6 +413,9 @@ test('AI Hard: Takes instead of spending a high trump on a low attack when hand 
   // AI is defender. Hand has no spades. Hand has high trump (11♥).
   // The attack is a weak 6♠. The AI has 5 cards total, very comfortable.
   state.players[1].hand = [new Card(11, 4), new Card(7, 2), new Card(8, 2), new Card(9, 2), new Card(10, 2)];
+  // Attacker needs a matching-rank card so declareTake settles at 'pileOn'
+  // instead of immediately auto-resolving via endBout (no eligible contributor).
+  state.players[0].hand = [new Card(6, 2)];
   _test_aiTurn(1);
   
   // Hard AI should declare 'Take' rather than wasting an 11-Trump on a 6-Attack.

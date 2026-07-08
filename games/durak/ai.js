@@ -206,12 +206,22 @@ function aiPlayHard(seat) {
     }
 
     if (sameSuit.length > 0) { playDefense(seat, sameSuit[0].id); return; }
-    if (state.deck.length === 0) { playDefense(seat, trumpOnly[0].id); return; } // Endgame survival
+
+    var handSize = getPlayer(seat).hand.length;
+    var undefendedCount = 0;
+    for (var u = 0; u < state.field.defenses.length; u++) {
+      if (state.field.defenses[u] === null) undefendedCount++;
+    }
+    // Genuinely desperate: defending now would clear (or nearly clear) our hand
+    // while the deck is out — always take the safety over the comfort check below.
+    if (state.deck.length === 0 && handSize <= undefendedCount) {
+      playDefense(seat, trumpOnly[0].id); return;
+    }
 
     // We must use a trump. Do we want to?
     var cheapestTrumpVal = trumpOnly[0].value;
     if (atkVal < 10 && cheapestTrumpVal >= 11 && state.field.attacks.length === 1) {
-      if (getPlayer(seat).hand.length <= 6) { declareTake(seat); return; }
+      if (handSize <= 6) { declareTake(seat); return; }
     }
     playDefense(seat, trumpOnly[0].id);
     return;
