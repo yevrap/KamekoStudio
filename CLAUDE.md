@@ -41,7 +41,7 @@ docs/               — Design docs and studio notes
 drafts/             — WIP files not yet in production (see drafts/CLAUDE.md)
   arcadeHome.html   — Alternate arcade home, not yet linked
 games/              — One subdirectory per game (see games/CLAUDE.md)
-  blob-zapper/
+  blob-zapper/      — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   durak-alchemist/  — index.html + style.css + ES modules (constants/state/gridLogic/combatLogic/ui/main.js)
   durak/            — index.html + style.css + ES modules (constants/state/gameplay/ai/cards/ui/main.js)
   durak-dungeon/    — index.html + style.css + ES modules (constants/state/ui/gameplay/main.js)
