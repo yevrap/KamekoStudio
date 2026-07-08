@@ -17,7 +17,7 @@ Pre-conditions that should be cleared before adding features.
 |----|------|--------|--------|-------|
 | p0-01 | Add durak-alchemist to CLAUDE.md and GEMINI.md game tables | S | ✅ | Already done — durak-alchemist has been in the Games table in both files since commit `0eb7f36`, the same commit that created this roadmap and listed the item as open. Found stale during the 2026-07-07 roadmap audit. |
 | p0-02 | Delete orphaned game.js monoliths | S | ✅ | Deleted 2026-07-07 in `d42587c`. Verified zero references before removal; also fixed a stale doc pointer in games/CLAUDE.md. |
-| p0-03 | Add durak-alchemist unit tests | M | open | No tests exist for it; add to tests/ covering core logic in gridLogic.js and combatLogic.js |
+| p0-03 | Add durak-alchemist unit tests | M | ✅ | Shipped 2026-07-07 in `93be05d`. 28 tests covering gridLogic.js (spawnCard, getEmptyCells, spawnRandomBaseCard, slideGrid, isGameOver) and combatLogic.js (canBeat, canTransfer, getExposedRanks). Also added games/durak-alchemist/package.json (type:module) so Node's test runner can import the game's ES modules, matching games/durak/'s existing pattern. |
 | p0-04 | Remove Tailwind CDN from blob-zapper, hidden-object, waterfall | M | open | CLAUDE.md says "No Tailwind — no longer used anywhere" but 3 games still load it from CDN. Constraint violation + unnecessary network dependency. |
 | p0-05 | Fix waterfall missing lastPlayed_ write | S | ✅ | waterfall/index.html spends a token on start but never writes `lastPlayed_waterfall` to localStorage — dashboard can't track when it was last played. |
 
