@@ -97,7 +97,7 @@ window.addEventListener('settingsOpened', () => { /* pause */ });
 window.addEventListener('settingsClosed', () => { /* resume */ });
 ```
 
-**Per-game settings rows:** Inject custom content into `#settings-panel` using `insertBefore(section, document.getElementById('dev-mode-section'))` so it appears above the developer tools. See `games/keypad-quest/game.js` for a full example (input mode selector + stats section).
+**Per-game settings rows:** Inject custom content into `#settings-panel` using `insertBefore(section, document.getElementById('dev-mode-section'))` so it appears above the developer tools. See `games/keypad-quest/main.js` for a full example (input mode selector + stats section).
 
 ## localStorage Keys
 
