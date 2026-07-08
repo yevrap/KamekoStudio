@@ -15,7 +15,7 @@ Pre-conditions that should be cleared before adding features.
 
 | ID | Item | Effort | Status | Notes |
 |----|------|--------|--------|-------|
-| p0-01 | Add durak-alchemist to CLAUDE.md and GEMINI.md game tables | S | open | Game exists in games/ but is missing from the Games table in both context files |
+| p0-01 | Add durak-alchemist to CLAUDE.md and GEMINI.md game tables | S | ✅ | Already done — durak-alchemist has been in the Games table in both files since commit `0eb7f36`, the same commit that created this roadmap and listed the item as open. Found stale during the 2026-07-07 roadmap audit. |
 | p0-02 | Delete orphaned game.js monoliths | S | open | keypad-quest/game.js (1539 lines), durak-dungeon/game.js (1373 lines), durak-tactics/game.js (815 lines) exist alongside ES modules — verify unused then delete |
 | p0-03 | Add durak-alchemist unit tests | M | open | No tests exist for it; add to tests/ covering core logic in gridLogic.js and combatLogic.js |
 | p0-04 | Remove Tailwind CDN from blob-zapper, hidden-object, waterfall | M | open | CLAUDE.md says "No Tailwind — no longer used anywhere" but 3 games still load it from CDN. Constraint violation + unnecessary network dependency. |
@@ -48,10 +48,10 @@ New mechanics that add replayability.
 | p2-01 | Arcade Passport (achievement system) | L | open | Cross-game achievements stored in localStorage, passport-stamp UI on index.html dashboard |
 | p2-02 | Daily Arcade Challenge | M | open | Date-seeded featured challenge per game on 7-day rotation, awards bonus tokens, shown on dashboard |
 | p2-03 | Keypad Quest: visual wave map | M | open | 3-second interstitial between waves showing upcoming enemy types/counts |
-| p2-04 | Keypad Quest: tower upgrades | M | open | Spend in-game currency (kills) on fire rate / splash / range upgrades |
+| p2-04 | Keypad Quest: tower upgrades | M | open | Spend in-game currency (kills) on fire rate / splash / range upgrades. Note: `upgradeRandom()` in gameplay.js already applies an automatic random tower level-up every 10 correct answers — that's not player-chosen or currency-spent, so the actual gap (player agency over which upgrade) is still unbuilt. Confirmed during 2026-07-07 roadmap audit. |
 | p2-05 | Hidden Object: themed scenes | L | open | Layered scenes (kitchen, forest, space) instead of flat emoji grid |
 | p2-06 | Materials Run: material combos | M | open | Cross-material transitions (ice→sand = skid, water→ice = frozen slide) |
-| p2-07 | Durak: smarter AI with tells | M | open | Hesitation delays, "thinking..." indicator, personality variation per AI seat |
+| p2-07 | Durak: smarter AI with tells | M | open | Hesitation delays and a "thinking..." indicator already exist (`ai.js` `scheduleAiAction`: 500–900ms random delay; `ui.js` `status-thinking` class). Remaining gap: personality variation per AI seat is still unbuilt. Confirmed during 2026-07-07 roadmap audit. |
 | p2-08 | Durak: match history and stats | S | open | Win/loss tracking in localStorage, post-game breakdown screen |
 | p2-09 | Waterfall: wave structure | M | open | Organized waves (line, V-formation, spiral) instead of random spawns |
 | p2-10 | River Run: biome transitions | M | open | Visual storytelling as score increases: forest → canyon → volcanic → space |
@@ -79,9 +79,9 @@ Lower priority but worth doing when a game is getting other attention.
 | b-03 | ES module split: hidden-object | L | open | index.html is 621 lines with all JS inline. |
 | b-04 | ES module split: blob-zapper | M | open | index.html is 512 lines with all JS inline. |
 | b-05 | ES module split: waterfall | M | open | index.html is 494 lines with all JS inline. |
-| b-06 | CLAUDE.md / GEMINI.md sync discipline | S | open | Files maintained manually in parallel; easy to drift. Add a checklist or shared source-of-truth approach. |
-| b-07 | Durak: test coverage for ai.js | M | open | ai.js has no unit tests; logic is complex enough to warrant coverage. |
-| b-08 | Consolidate to pointer events: blob-zapper, hidden-object, waterfall | M | open | These 3 games use split mousedown/touchstart handlers instead of unified pointerdown/pointermove/pointerup. blob-zapper canvas also missing touch-action: none. |
+| b-06 | CLAUDE.md / GEMINI.md sync discipline | S | open | A prose "Sync discipline" reminder section already exists in both files (commit `0eb7f36`), but there's no actual checklist or automated/shared-source-of-truth mechanism — the prose rule alone didn't prevent this same roadmap from drifting (see p0-01, p1-01, b-07). Still worth a real mechanism, not just a sentence. Confirmed during 2026-07-07 roadmap audit. |
+| b-07 | Durak: test coverage for ai.js | M | ✅ | Already done — `tests/durak.test.mjs` has 3 dedicated AI-logic tests via the exported `_test_aiTurn` (Normal-difficulty defense, Hard-difficulty take-vs-defend endgame branches). One of the three currently fails, but that's a bug (tracked as p1-07), not a coverage gap. Found stale during the 2026-07-07 roadmap audit. |
+| b-08 | Consolidate to pointer events: blob-zapper, hidden-object, waterfall | M | open | Confirmed still real: all 3 games use split mousedown/touchstart handlers, none use unified pointerdown/pointermove/pointerup. Correction: only blob-zapper is missing `touch-action: none` — hidden-object and waterfall already have it. Confirmed during 2026-07-07 roadmap audit. |
 
 ---
 
