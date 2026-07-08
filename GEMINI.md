@@ -233,6 +233,15 @@ Kameko Studio uses AI agents (Claude Code, Antigravity/Gemini) as development pa
 
 The source of truth for priorities is `docs/roadmap.md`. It has four tiers (P0–P3) plus a Backlog. Items have IDs (e.g. `p1-01`), effort estimates (S/M/L), and a status field (`open`, `🚧 in progress`, `✅`). Update status and mark complete when work ships.
 
+**The roadmap is agent-authored and can be stale.** It is not derived from the code — it's a snapshot someone (human or agent) wrote down, and it drifts whenever work ships without a matching roadmap edit (e.g. a feature lands as a side effect of an unrelated redesign commit). Do not treat an item's `open` status as proof the work doesn't exist yet. This has already happened once: `p1-01` (Durak card animations) sat marked `open` for months after it fully shipped in commit `b663dfa`, because the roadmap was generated fresh without cross-checking existing code and docs. Before planning or implementing *any* roadmap item, verify it against the current codebase first — see "Verification discipline" below.
+
+### Verification discipline
+
+Agents do not have a human's time pressure and can afford to double-check before acting — an extra grep or file read is nearly free, while implementing something that already exists (or duplicating/conflicting with it) burns a full plan → implement → test cycle and erodes trust in the roadmap itself. Default to more verification, not less speed:
+- Before implementing a roadmap item, grep the relevant files for the behavior it describes and read that game's row in `games/CLAUDE.md` — it documents shipped subsystems in real detail and often already answers whether the item is done.
+- Before *adding* a new item to the roadmap (via `/improve` or otherwise), do the same check in the other direction: confirm the gap is real in the code, not just plausible from a title or a skim.
+- If an item turns out to be already done, don't implement anything — mark it `✅` with a note explaining what already covers it and point to the commit if you can find it, then stop and report rather than proceeding on autopilot.
+
 ### Workflow
 
 When starting a session:

@@ -22,6 +22,13 @@ Read every file relevant to the selected item. This includes:
 
 Do not skip this step. Surprises mid-implementation are expensive.
 
+**Verify the item isn't already done before planning any work.** `docs/roadmap.md` is written by agents and can drift from reality — items get shipped as a side effect of other work (a redesign commit, a bug fix) without the roadmap being updated. Trusting the "open" status without checking is exactly the mistake to avoid: it wastes a full plan/implement/test cycle re-solving a solved problem.
+- Grep the target game's files for the behavior the item describes (function names, CSS classes, the mechanic itself) — don't rely on the title alone.
+- Read `games/CLAUDE.md`'s per-game notes row for the target game; it documents shipped subsystems in detail and often already answers whether the feature exists.
+- You have no deadline pressure a human would — spending extra tool calls confirming current state is always cheaper than implementing a duplicate, or worse, silently overwriting/conflicting with an existing implementation. Default to more verification, not less.
+- If you find the item is already fully implemented: stop, do not write a plan, report the finding with file/line evidence, update `docs/roadmap.md` to `✅` with a note explaining why, and ask whether to commit that alone (see Phase 8) — do not proceed to Phase 3.
+- If it's partially implemented: say so explicitly in the plan and scope the plan to the actual gap, not the full original description.
+
 ## Phase 3 — Plan
 
 Write a plan: what changes, which files, in what order. Max 7 bullet points. Flag any risk or irreversible action.

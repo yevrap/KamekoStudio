@@ -25,9 +25,10 @@ Ask: "Which item do you want to work on? Reply with the number, ID, or describe 
 
 Once the director picks an item:
 1. Read all files relevant to that item (game files, tests, CLAUDE.md context).
-2. Produce a concise implementation plan: what you'll change, which files, in what order. Max 6 bullet points.
-3. State any risks or open questions.
-4. Ask: "Ready to proceed, or any changes to the plan?"
+2. **Verify the item isn't already done.** `docs/roadmap.md` is agent-authored and can be stale — features sometimes ship as a side effect of unrelated commits without the roadmap being updated. Grep the target files for the described behavior and check `games/CLAUDE.md`'s per-game notes (they document shipped subsystems in detail) before assuming the item is real work. This costs a few extra tool calls; skipping it costs a whole wasted implementation cycle. If it's already done, stop here, report the evidence, and offer to mark it `✅` in the roadmap instead of planning.
+3. Produce a concise implementation plan: what you'll change, which files, in what order. Max 6 bullet points.
+4. State any risks or open questions.
+5. Ask: "Ready to proceed, or any changes to the plan?"
 
 ## Step 5 — Execute only after approval
 

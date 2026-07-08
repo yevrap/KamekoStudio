@@ -2,6 +2,13 @@
 
 Read-only scan. Do NOT make any changes. Return a ranked list of quality and polish opportunities across the entire codebase.
 
+## Verify before flagging
+
+Every issue you report becomes a roadmap item another agent will later trust at face value and implement without re-checking. A false positive here doesn't just cost your tokens — it costs a full plan/implement/test cycle for whoever picks it up later, possibly months from now. Before including any finding:
+- Grep the actual game files for the mechanic/pattern in question — don't infer "missing" from a title, a skim, or an assumption about what a game "probably" has.
+- Read `games/CLAUDE.md`'s per-game notes row for that game. It documents shipped subsystems (animation systems, input handling, safe-area handling, etc.) in detail, and often already answers whether something exists.
+- You are not time-constrained the way a human reviewer is. Take the extra tool calls to confirm a gap is real before writing it down — a slower, accurate scan beats a fast one that plants stale work items.
+
 ## What to check
 
 ### 1. Structural debt
