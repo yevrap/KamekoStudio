@@ -1,21 +1,69 @@
 import { state, domElements, engineState } from './state.js';
 import { PLAYER_SPEED, PLAYER_HEIGHT, PLAYER_RADIUS, INTERACTION_DISTANCE } from './constants.js';
 
+function createGridTexture(colorStr) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 512;
+    canvas.height = 512;
+    const context = canvas.getContext('2d');
+    
+    context.fillStyle = '#020208'; // very dark base
+    context.fillRect(0, 0, 512, 512);
+    
+    context.strokeStyle = colorStr;
+    context.lineWidth = 4;
+    context.shadowBlur = 15;
+    context.shadowColor = colorStr;
+    
+    context.beginPath();
+    for (let i = 0; i <= 512; i += 64) {
+        context.moveTo(i, 0);
+        context.lineTo(i, 512);
+        context.moveTo(0, i);
+        context.lineTo(512, i);
+    }
+    context.stroke();
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    return texture;
+}
+
 export function createEnvironment() {
     const roomWidth = 18; 
     const roomDepth = 24; 
     const roomHeight = 6; 
     const wallThickness = 0.5;
 
-    const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x455A64, roughness: 0.8, metalness: 0.2 });
+    // Floor
+    const floorTexture = createGridTexture('#00ffff');
+    floorTexture.repeat.set(roomWidth / 4, roomDepth / 4);
+    const floorMaterial = new THREE.MeshStandardMaterial({ 
+        map: floorTexture, 
+        roughness: 0.1, 
+        metalness: 0.8,
+        emissive: 0x001111 // faint glow
+    });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(roomWidth, roomDepth), floorMaterial);
     floor.rotation.x = -Math.PI / 2; 
     floor.receiveShadow = true; 
     engineState.scene.add(floor);
 
-    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x607D8B, roughness: 0.7, metalness: 0.1 });
-    function createWall(w,h,d,x,y,z){
-        const wall = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wallMaterial);
+    // Walls
+    const wallTexture = createGridTexture('#ff00ff');
+    const wallMaterial = new THREE.MeshStandardMaterial({ 
+        map: wallTexture, 
+        roughness: 0.4, 
+        metalness: 0.6,
+        emissive: 0x110011
+    });
+
+    function createWall(w,h,d,x,y,z, repeatX){
+        const mat = wallMaterial.clone();
+        mat.map = wallMaterial.map.clone();
+        mat.map.repeat.set(repeatX / 4, roomHeight / 4);
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
         wall.position.set(x,y,z);
         wall.castShadow = true;
         wall.receiveShadow = true;
@@ -23,35 +71,63 @@ export function createEnvironment() {
         engineState.walls.push(new THREE.Box3().setFromObject(wall));
     }
 
-    createWall(roomWidth+wallThickness,roomHeight,wallThickness,0,roomHeight/2,-roomDepth/2);
-    createWall(roomWidth+wallThickness,roomHeight,wallThickness,0,roomHeight/2,roomDepth/2);
-    createWall(wallThickness,roomHeight,roomDepth,-roomWidth/2,roomHeight/2,0);
-    createWall(wallThickness,roomHeight,roomDepth,roomWidth/2,roomHeight/2,0);
+    createWall(roomWidth+wallThickness,roomHeight,wallThickness,0,roomHeight/2,-roomDepth/2, roomWidth);
+    createWall(roomWidth+wallThickness,roomHeight,wallThickness,0,roomHeight/2,roomDepth/2, roomWidth);
+    createWall(wallThickness,roomHeight,roomDepth,-roomWidth/2,roomHeight/2,0, roomDepth);
+    createWall(wallThickness,roomHeight,roomDepth,roomWidth/2,roomHeight/2,0, roomDepth);
 
-    const ceilingMaterial = new THREE.MeshStandardMaterial({color:0x546E7A,side:THREE.DoubleSide,roughness:0.9});
+    // Ceiling
+    const ceilingTexture = createGridTexture('#8800ff');
+    ceilingTexture.repeat.set(roomWidth / 4, roomDepth / 4);
+    const ceilingMaterial = new THREE.MeshStandardMaterial({
+        map: ceilingTexture,
+        side: THREE.DoubleSide,
+        roughness: 0.9,
+        metalness: 0.2
+    });
     const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(roomWidth,roomDepth), ceilingMaterial);
     ceiling.position.y = roomHeight;
     ceiling.rotation.x = Math.PI/2;
     engineState.scene.add(ceiling);
 
+    // Activator Mesh
     const activatorGeometry = new THREE.OctahedronGeometry(0.7, 0);
     const activatorMaterial = new THREE.MeshStandardMaterial({
-        color: 0x00ccff,
-        emissive: 0x0077aa,
-        metalness: 0.4,
-        roughness: 0.3,
+        color: 0x00ffff,
+        emissive: 0x00ffff,
+        emissiveIntensity: 0.5,
+        metalness: 0.8,
+        roughness: 0.2,
         transparent: true,
-        opacity: 0.85
+        opacity: 0.9,
+        wireframe: true
     });
     engineState.menuActivatorMesh = new THREE.Mesh(activatorGeometry, activatorMaterial);
     engineState.menuActivatorMesh.position.set(0, 1.0, -roomDepth/2 + wallThickness + 1.2);
     engineState.menuActivatorMesh.castShadow = true;
     engineState.scene.add(engineState.menuActivatorMesh);
 
-    const activatorLight = new THREE.PointLight(0x00ccff, 1, 7);
+    // Localized Neon Lights
+    const activatorLight = new THREE.PointLight(0x00ffff, 1.5, 10);
     activatorLight.position.copy(engineState.menuActivatorMesh.position);
-    activatorLight.position.y += 0.2;
     engineState.scene.add(activatorLight);
+
+    const cornerLightDist = 12;
+    const c1 = new THREE.PointLight(0xff00ff, 1.2, cornerLightDist);
+    c1.position.set(-roomWidth/2 + 1, 3, -roomDepth/2 + 1);
+    engineState.scene.add(c1);
+
+    const c2 = new THREE.PointLight(0xff00ff, 1.2, cornerLightDist);
+    c2.position.set(roomWidth/2 - 1, 3, -roomDepth/2 + 1);
+    engineState.scene.add(c2);
+
+    const c3 = new THREE.PointLight(0x00ffff, 1.2, cornerLightDist);
+    c3.position.set(-roomWidth/2 + 1, 3, roomDepth/2 - 1);
+    engineState.scene.add(c3);
+
+    const c4 = new THREE.PointLight(0x00ffff, 1.2, cornerLightDist);
+    c4.position.set(roomWidth/2 - 1, 3, roomDepth/2 - 1);
+    engineState.scene.add(c4);
 }
 
 export function updatePlayer(deltaTime) {

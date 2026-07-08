@@ -14,8 +14,8 @@ function init() {
     engineState.clock = new THREE.Clock();
 
     engineState.scene = new THREE.Scene();
-    engineState.scene.background = new THREE.Color(0x1a1a2e);
-    engineState.scene.fog = new THREE.Fog(0x1a1a2e, 12, 35);
+    engineState.scene.background = new THREE.Color(0x050510);
+    engineState.scene.fog = new THREE.FogExp2(0x050510, 0.04);
 
     engineState.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     engineState.camera.position.set(0, PLAYER_HEIGHT, 0);
@@ -31,10 +31,10 @@ function init() {
     engineState.player.add(engineState.camera);
     engineState.scene.add(engineState.player);
 
-    const ambientLight = new THREE.AmbientLight(0x708090, 0.8);
+    const ambientLight = new THREE.AmbientLight(0x202040, 0.5);
     engineState.scene.add(ambientLight);
     
-    const directionalLight = new THREE.DirectionalLight(0xe0e0ff, 1.0);
+    const directionalLight = new THREE.DirectionalLight(0xa0a0ff, 0.4);
     directionalLight.position.set(10, 18, 12);
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 1024;
