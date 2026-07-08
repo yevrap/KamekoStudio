@@ -26,9 +26,10 @@ shared/
   settings.js       — Global settings panel + token system (included in every page)
   utils.js          — Pure utility functions (tested; loaded by keypad-quest)
 tests/
-  keypad-quest.test.js  — Unit tests for shared/utils.js (node --test tests/)
-  durak.test.mjs        — Unit tests for games/durak/ pure rules (constants, state, gameplay)
-  README.md             — How to run tests
+  keypad-quest.test.js      — Unit tests for shared/utils.js (node --test tests/)
+  durak.test.mjs            — Unit tests for games/durak/ pure rules (constants, state, gameplay)
+  durak-alchemist.test.mjs  — Unit tests for games/durak-alchemist/ pure rules (gridLogic, combatLogic, constants)
+  README.md                 — How to run tests
 CLAUDE.md           — This file
 README.md           — GitHub Pages URL
 docs/               — Design docs and studio notes
@@ -38,7 +39,7 @@ drafts/             — WIP files not yet in production (see drafts/CLAUDE.md)
 games/              — One subdirectory per game (see games/CLAUDE.md)
   blob-zapper/
   durak-alchemist/  — index.html + style.css + ES modules (constants/state/gridLogic/combatLogic/ui/main.js)
-  durak/            — index.html + style.css + ES modules (constants/state/gameplay/ai/ui/main.js)
+  durak/            — index.html + style.css + ES modules (constants/state/gameplay/ai/cards/ui/main.js)
   durak-dungeon/    — index.html + style.css + ES modules (constants/state/ui/gameplay/main.js)
   durak-tactics/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   hidden-object/
@@ -211,10 +212,13 @@ Keypad Quest (`games/keypad-quest/`) is the most complex game in the studio. Key
 
 ## Testing
 
-Pure utility functions are extracted to `shared/utils.js` and covered by Node.js tests.
+Pure utility functions in `shared/utils.js`, and pure game-logic modules in `games/durak/` and `games/durak-alchemist/`, are covered by Node.js tests.
 
 **Run:** `node --test tests/` — requires Node.js 18+
-**Coverage:** `parsePlainText`, `deckToPlainText`, `typeForStreak`, `shuffle`, `lerpHex`
+**Coverage:**
+- `shared/utils.js` (`keypad-quest.test.js`): `parsePlainText`, `deckToPlainText`, `typeForStreak`, `shuffle`, `lerpHex`
+- `games/durak/` (`durak.test.mjs`): constants, state, gameplay rules, AI logic (`_test_aiTurn`)
+- `games/durak-alchemist/` (`durak-alchemist.test.mjs`): `gridLogic.js`, `combatLogic.js`, `constants.js`
 
 Browser-side logic (game loops, DOM state, T9 input state machine) is not unit-tested — verify by running the game in a browser.
 

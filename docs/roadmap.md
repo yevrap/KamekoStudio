@@ -19,7 +19,7 @@ Pre-conditions that should be cleared before adding features.
 | p0-02 | Delete orphaned game.js monoliths | S | ✅ | Deleted 2026-07-07 in `d42587c`. Verified zero references before removal; also fixed a stale doc pointer in games/CLAUDE.md. |
 | p0-03 | Add durak-alchemist unit tests | M | ✅ | Shipped 2026-07-07 in `93be05d`. 28 tests covering gridLogic.js (spawnCard, getEmptyCells, spawnRandomBaseCard, slideGrid, isGameOver) and combatLogic.js (canBeat, canTransfer, getExposedRanks). Also added games/durak-alchemist/package.json (type:module) so Node's test runner can import the game's ES modules, matching games/durak/'s existing pattern. |
 | p0-04 | Remove Tailwind CDN from blob-zapper, hidden-object, waterfall | M | ✅ | Shipped 2026-07-07 in `f9955d6`. blob-zapper had zero Tailwind classes (script tag only); waterfall had one heading; hidden-object was fully ported to plain CSS (responsive breakpoints, colors, modals). Caught and fixed a self-introduced cascade-order bug (`.hidden` losing to `.modal-overlay`'s `display:flex`) via in-browser testing before committing. |
-| p0-05 | Fix waterfall missing lastPlayed_ write | S | ✅ | waterfall/index.html spends a token on start but never writes `lastPlayed_waterfall` to localStorage — dashboard can't track when it was last played. |
+| p0-05 | Fix waterfall missing lastPlayed_ write | S | ✅ | Shipped in `0a6fcb3` — `games/waterfall/index.html:223` writes `lastPlayed_waterfall` right after the token spend. Status was already ✅ on disk; note text updated for clarity during the 2026-07-07 /ship pass. |
 
 ---
 

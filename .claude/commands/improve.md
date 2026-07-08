@@ -16,6 +16,7 @@ Every issue you report becomes a roadmap item another agent will later trust at 
 - JS files over 800 lines (candidates for split)
 - Old `game.js` monoliths sitting alongside newer ES module files (dead code)
 - Games missing from the CLAUDE.md and GEMINI.md game tables
+- `CLAUDE.md`/`GEMINI.md`'s Project Structure tree and `## Testing` section, plus `tests/README.md`'s coverage table, out of sync with what's actually in `tests/` and each game's module list — check `ls tests/` and each game's directory against what the docs claim
 
 ### 2. Test gaps
 - Games or modules with no unit tests
