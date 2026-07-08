@@ -214,6 +214,7 @@
                 container.addEventListener('touchstart', handleTouchStart, { passive: false }); // For touch shooting
                 resetButton.addEventListener('click', () => {
                     if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+                    localStorage.setItem('lastPlayed_waterfall', Date.now());
                     resetGame();
                 });
 

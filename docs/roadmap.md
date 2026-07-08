@@ -19,7 +19,7 @@ Pre-conditions that should be cleared before adding features.
 | p0-02 | Delete orphaned game.js monoliths | S | open | keypad-quest/game.js (1539 lines), durak-dungeon/game.js (1373 lines), durak-tactics/game.js (815 lines) exist alongside ES modules — verify unused then delete |
 | p0-03 | Add durak-alchemist unit tests | M | open | No tests exist for it; add to tests/ covering core logic in gridLogic.js and combatLogic.js |
 | p0-04 | Remove Tailwind CDN from blob-zapper, hidden-object, waterfall | M | open | CLAUDE.md says "No Tailwind — no longer used anywhere" but 3 games still load it from CDN. Constraint violation + unnecessary network dependency. |
-| p0-05 | Fix waterfall missing lastPlayed_ write | S | open | waterfall/index.html spends a token on start but never writes `lastPlayed_waterfall` to localStorage — dashboard can't track when it was last played. |
+| p0-05 | Fix waterfall missing lastPlayed_ write | S | ✅ | waterfall/index.html spends a token on start but never writes `lastPlayed_waterfall` to localStorage — dashboard can't track when it was last played. |
 
 ---
 
