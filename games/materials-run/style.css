@@ -1,0 +1,84 @@
+        :root {
+            /* Grid and Cell Dimensions */
+            --grid-size: 20; --cell-size: 30px; --zone-size: 5;
+
+            /* --- Light Mode Colors (Default) --- */
+            --bg-color: #f0f0f0; --text-color: #333; --grid-bg-color: #ffffff;
+            --border-color: #ccc; --button-bg: #eee; --button-text: #333;
+            --button-hover-bg: #ddd; --score-color: #111;
+            --timer-color: #111; --overlay-text: #ffffff; --info-overlay-text: #333; /* Text for info overlay */
+            --target-blink-outline: yellow; --bullet-color: #ff4500;
+            --danger-zone-outline: red; --game-over-bg: rgba(0, 0, 0, 0.75);
+            --win-bg: rgba(0, 100, 0, 0.75); --info-overlay-bg: rgba(255, 255, 255, 0.9); /* Lighter overlay for info */
+            --enemy-color: #8B008B; --enemy-border: #4B0082;
+            --pin-color: rgba(0, 0, 255, 0.6); /* Color for movement pins */
+            --pin-border-color: rgba(0, 0, 150, 0.8);
+
+            /* Material Colors */
+            --grass-color: #8FBC8F; --water-color: #ADD8E6; --ice-color: #B0E0E6; --sand-color: #F4A460;
+
+            /* Player & Effects Colors */
+            --player-color: #FF6347; --player-border: #000000; --arc-color: rgba(51, 51, 51, 0.7);
+
+            /* --- Base Variables --- */
+            --player-diameter-ratio: 0.7; --font-family: 'Press Start 2P', cursive;
+            --enemy-size-ratio: 0.6;
+        }
+
+        body.dark-mode {
+             /* --- Dark Mode Colors --- */
+            --bg-color: #1a1a1a; --text-color: #f0f0f0; --grid-bg-color: #2a2a2a;
+            --border-color: #555; --button-bg: #444; --button-text: #f0f0f0;
+            --button-hover-bg: #555; --score-color: #eee; --timer-color: #eee;
+            --overlay-text: #f0f0f0; --info-overlay-text: #f0f0f0; /* Text for info overlay */
+            --target-blink-outline: #FFD700; --bullet-color: #ff6347;
+            --danger-zone-outline: #ff4d4d; --game-over-bg: rgba(20, 20, 20, 0.85);
+            --win-bg: rgba(0, 60, 0, 0.85); --info-overlay-bg: rgba(40, 40, 40, 0.9); /* Darker overlay for info */
+            --enemy-color: #DA70D6; --enemy-border: #BA55D3;
+            --pin-color: rgba(100, 100, 255, 0.7); /* Color for movement pins */
+            --pin-border-color: rgba(50, 50, 200, 0.9);
+
+            /* Dark Material Colors */
+            --grass-color: #3E8E3E; --water-color: #5F9EA0; --ice-color: #778899; --sand-color: #A0522D;
+
+            /* Dark Player & Effects Colors */
+            --player-color: #FF6347; --player-border: #cccccc; --arc-color: rgba(220, 220, 220, 0.7);
+        }
+
+
+        body { font-family: var(--font-family); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; min-height: 100dvh; background-color: var(--bg-color); color: var(--text-color); padding: 10px; box-sizing: border-box; overflow: hidden; position: relative; transition: background-color 0.3s ease, color 0.3s ease; user-select: none; -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+#score-display { position: absolute; top: 15px; left: 15px; font-size: 1em; color: var(--score-color); z-index: 100; transition: color 0.3s ease; }
+        #timer-display { position: absolute; top: 40px; left: 15px; font-size: 0.8em; color: var(--timer-color); z-index: 100; transition: color 0.3s ease; display: none; }
+        #ingame-buttons { position: absolute; top: 65px; left: 15px; z-index: 100; display: flex; flex-direction: column; gap: 5px; }
+        #ingame-buttons button { font-family: var(--font-family); font-size: 0.6em; padding: 5px 8px; background-color: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; transition: background-color 0.3s ease; opacity: 0.8; }
+        #ingame-buttons button:hover { background-color: var(--button-hover-bg); opacity: 1.0; }
+        #game-container { display: flex; justify-content: center; align-items: center; width: 100%; margin-top: 60px; }
+        #game-grid { --grid-width: calc(var(--grid-size) * var(--cell-size)); --grid-height: calc(var(--grid-size) * var(--cell-size)); display: grid; grid-template-columns: repeat(var(--grid-size), var(--cell-size)); grid-template-rows: repeat(var(--grid-size), var(--cell-size)); width: var(--grid-width); height: var(--grid-height); border: 2px solid var(--border-color); background-color: var(--grid-bg-color); position: relative; box-sizing: content-box; max-width: 95vw; flex-shrink: 0; touch-action: none; cursor: pointer; transition: border-color 0.3s ease, background-color 0.3s ease; overflow: hidden; }
+        .cell { width: var(--cell-size); height: var(--cell-size); border: 1px solid var(--border-color); box-sizing: border-box; display: flex; align-items: center; justify-content: center; transition: background-color 0.3s ease, border-color 0.3s ease, outline 0.1s linear; outline: 3px solid transparent; outline-offset: -3px; }
+        .cell.blinking-target { animation: blink-target 1s infinite step-end; } @keyframes blink-target { 50% { outline-color: var(--target-blink-outline); } }
+        .cell.danger-zone-blinking { animation: blink-danger 0.5s infinite step-end; } @keyframes blink-danger { 50% { outline-color: var(--danger-zone-outline); } }
+        .cell.grass { background-color: var(--grass-color); } .cell.water { background-color: var(--water-color); } .cell.ice { background-color: var(--ice-color); } .cell.sand { background-color: var(--sand-color); }
+        #player { --player-diameter: calc(var(--cell-size) * var(--player-diameter-ratio)); position: absolute; top: 0; left: 0; width: var(--player-diameter); height: var(--player-diameter); background-color: var(--player-color); border-radius: 50%; border: 2px solid var(--player-border); box-sizing: border-box; pointer-events: none; z-index: 10; transition: background-color 0.3s ease, border-color 0.3s ease; }
+        .spin-arcs-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform-origin: center center; pointer-events: none; }
+        .arc { position: absolute; top: 50%; left: 50%; width: 150%; height: 150%; border-radius: 50%; border: 2px solid transparent; border-top: 3px solid var(--arc-color); transform-origin: center center; box-sizing: border-box; transition: border-top-color 0.3s ease; }
+        .arc1 { transform: translate(-50%, -50%) rotate(0deg); opacity: 0.9; } .arc2 { transform: translate(-50%, -50%) rotate(120deg); opacity: 0.7; width: 135%; height: 135%; } .arc3 { transform: translate(-50%, -50%) rotate(240deg); opacity: 0.5; width: 120%; height: 120%; }
+        .bullet { position: absolute; width: 6px; height: 6px; background-color: var(--bullet-color); border-radius: 50%; pointer-events: none; z-index: 5; transition: background-color 0.3s ease; }
+        .enemy { --enemy-diameter: calc(var(--cell-size) * var(--enemy-size-ratio)); position: absolute; top: 0; left: 0; width: var(--enemy-diameter); height: var(--enemy-diameter); background-color: var(--enemy-color); border: 2px solid var(--enemy-border); border-radius: 15%; box-sizing: border-box; pointer-events: none; z-index: 9; transition: background-color 0.3s ease, border-color 0.3s ease; }
+        /* Style for the movement pins */
+        .pin { position: absolute; width: 10px; height: 10px; background-color: var(--pin-color); border: 1px solid var(--pin-border-color); border-radius: 50%; pointer-events: none; z-index: 4; /* Below bullets, above grid */ transform: translate(-50%, -50%); /* Center on click */ transition: background-color 0.3s ease, border-color 0.3s ease, opacity 0.5s ease; /* Fade out */ opacity: 1; }
+        .pin.fading-out { opacity: 0; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; text-align: center; font-size: 1.5em; line-height: 1.5; transition: background-color 0.3s ease, color 0.3s ease; }
+        #start-screen-overlay { background-color: var(--game-over-bg); color: var(--overlay-text); }
+        #game-over-overlay { background-color: var(--game-over-bg); color: var(--overlay-text); display: none; }
+        #win-overlay { background-color: var(--win-bg); color: var(--overlay-text); display: none; }
+        #top-scores-overlay { background-color: var(--info-overlay-bg); color: var(--info-overlay-text); display: none; z-index: 201; }
+        .overlay h2 { margin-bottom: 20px; font-size: 2em; } .overlay p { margin: 5px 0; font-size: 1em;} .overlay .top-scores { margin-top: 15px; font-size: 0.8em; line-height: 1.3; }
+        .top-scores span.new-record { color: #ffd76a; font-weight: bold; display: inline-block; animation: record-pulse 0.6s ease-in-out 2; }
+        .record-badge { display: none; margin-left: 6px; font-size: 0.85em; color: #ffd76a; font-weight: bold; }
+        .record-badge.show { display: inline; animation: record-pulse 0.6s ease-in-out 2; }
+        @keyframes record-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
+        .overlay button { font-family: var(--font-family); font-size: 0.8em; padding: 10px 20px; margin-top: 25px; min-height: 44px; background-color: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; margin-left: 10px; margin-right: 10px; } .overlay button:hover { background-color: var(--button-hover-bg); }
+        #close-top-scores-button { font-size: 0.7em; padding: 8px 15px; }
+        @media (max-width: 700px) { :root { --cell-size: 25px; } #score-display { top: 12px; left: 10px; font-size: 0.9em;} #timer-display { top: 35px; left: 10px; font-size: 0.7em;} #ingame-buttons { top: 60px; left: 10px;} #ingame-buttons button { font-size: 0.55em; } .overlay { font-size: 1.3em;} .overlay h2 { font-size: 1.8em;} }
+        @media (max-width: 550px) { :root { --cell-size: 20px; } body { padding: 5px; } #score-display { top: 10px; left: 8px; font-size: 0.8em;} #timer-display { top: 30px; left: 8px; font-size: 0.65em;} #ingame-buttons { top: 50px; left: 8px;} #ingame-buttons button { font-size: 0.5em; padding: 4px 6px;} .overlay { font-size: 1.1em;} .overlay h2 { font-size: 1.5em;} .overlay button{font-size: 0.7em; padding: 8px 15px;}}
+        @media (max-width: 420px) { :root { --cell-size: 18px; } #score-display { font-size: 0.7em;} #timer-display { top: 28px; font-size: 0.6em;} #ingame-buttons { top: 48px; } #ingame-buttons button { font-size: 0.45em;} .overlay { font-size: 1.0em;} .overlay h2 { font-size: 1.3em;} .overlay button{font-size: 0.6em;}}

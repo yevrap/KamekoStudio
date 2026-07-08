@@ -78,7 +78,7 @@ Lower priority but worth doing when a game is getting other attention.
 | ID | Item | Effort | Status | Notes |
 |----|------|--------|--------|-------|
 | b-01 | ES module split: river-run | L | open | index.html is 1006 lines with all JS inline. Split into constants/state/gameplay/main modules. |
-| b-02 | ES module split: materials-run | L | open | index.html is 685 lines with all JS inline. |
+| b-02 | ES module split: materials-run | L | ✅ | Shipped 2026-07-08. Split into `constants.js`/`state.js`/`gameplay.js`/`main.js` (no `ui.js` — rendering is tightly coupled to physics/state updates throughout, so merged into `gameplay.js` following the `durak-tactics` pattern). Also extracted the inline `<style>` block into `style.css` to match the documented per-game file convention (index.html was 712 lines with all CSS+JS inline; now 72 lines of markup). Verified in browser: Score Attack and Survival modes both playable, pin placement/physics/shooting/collision/danger-zone/game-over/top-scores all working, zero console errors. |
 | b-03 | ES module split: hidden-object | L | open | index.html is 621 lines with all JS inline. |
 | b-04 | ES module split: blob-zapper | M | open | index.html is 512 lines with all JS inline. |
 | b-05 | ES module split: waterfall | M | open | index.html is 494 lines with all JS inline. |
