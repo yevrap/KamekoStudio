@@ -46,7 +46,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
   durak/            — index.html + style.css + ES modules (constants/state/gameplay/ai/cards/ui/main.js)
   durak-dungeon/    — index.html + style.css + ES modules (constants/state/ui/gameplay/main.js)
   durak-tactics/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
-  hidden-object/
+  hidden-object/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   keypad-quest/     — index.html + style.css + ES modules (constants/state/fx/deck-manager/rendering/gameplay/input/main.js)
   materials-run/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   river-run/
