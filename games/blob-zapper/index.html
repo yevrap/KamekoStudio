@@ -133,6 +133,17 @@
             const ZAP_SHAKE_MAX = 14;
             const ZAP_PARTICLE_COUNT = 10;
 
+            const COMBO_WINDOW_MS = 700;
+            const COMBO_MAX_MULTIPLIER = 5;
+            const BASE_ZAP_SCORE = 10;
+            let score = 0;
+            let highScore = parseInt(localStorage.getItem('blobZapperHighScore') || '0', 10);
+            let comboCount = 0;
+            let comboMultiplier = 1;
+            let lastZapTime = -Infinity;
+            let comboFlashIntensity = 0;
+            let isNewBest = false;
+
             let isGameOver = false;
             let animationFrameId;
             let lastTime = 0;
@@ -193,6 +204,12 @@
                     touchPoints = [];
                     particles = [];
                     shakeIntensity = 0;
+                    score = 0;
+                    comboCount = 0;
+                    comboMultiplier = 1;
+                    lastZapTime = -Infinity;
+                    comboFlashIntensity = 0;
+                    isNewBest = false;
 
                     // Use calculated speed (with fallback)
                     const initialSpeedX = (Math.random() - 0.5) * (destructionZoneSpeed || 0.1) * 2;
@@ -303,6 +320,19 @@
             }
 
 
+            // --- Combo Scoring ---
+            function registerZap(currentTime) {
+                if (currentTime - lastZapTime <= COMBO_WINDOW_MS) {
+                    comboCount++;
+                } else {
+                    comboCount = 1;
+                }
+                lastZapTime = currentTime;
+                comboMultiplier = Math.min(COMBO_MAX_MULTIPLIER, comboCount);
+                score += BASE_ZAP_SCORE * comboMultiplier;
+                comboFlashIntensity = 1;
+            }
+
             // --- Zap Feedback: particles + screen shake ---
             function spawnZapParticles(x, y, color) {
                 for (let i = 0; i < ZAP_PARTICLE_COUNT; i++) {
@@ -344,6 +374,7 @@
             function drawDestructionZone() { /* ... */ }
             function drawTendrils() { /* ... */ }
             function drawBlobs() { /* ... */ }
+            function drawScoreUI() { /* ... */ }
             function drawUI() { /* ... */ }
             // --- Drawing Functions Implementation (Collapsed) ---
              function drawDestructionZone() {
@@ -385,6 +416,30 @@
                     blobs.forEach(blob => blob.draw());
                 } catch (error) { console.error("Error drawing blobs:", error); }
             }
+            function drawScoreUI() {
+                try {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    const fontSize = Math.max(14, Math.min(canvas.width * 0.045, 22));
+                    ctx.font = `bold ${fontSize}px Inter`;
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    ctx.fillText(`Score: ${score}`, 12, 12);
+
+                    if (comboMultiplier > 1 && comboFlashIntensity > 0.01) {
+                        const comboFontSize = Math.max(18, Math.min(canvas.width * 0.08, 42));
+                        ctx.font = `bold ${comboFontSize}px Inter`;
+                        ctx.fillStyle = `rgba(255, 220, 80, ${Math.min(1, comboFlashIntensity)})`;
+                        ctx.textAlign = 'center';
+                        ctx.save();
+                        ctx.translate(canvas.width / 2, canvas.height * 0.14);
+                        ctx.scale(1 + comboFlashIntensity * 0.3, 1 + comboFlashIntensity * 0.3);
+                        ctx.fillText(`x${comboMultiplier} COMBO!`, 0, 0);
+                        ctx.restore();
+                    }
+                } catch (error) { console.error("Error drawing score UI:", error); }
+            }
+
             function drawUI() {
                  if (isGameOver) {
                     try {
@@ -395,11 +450,18 @@
                         ctx.font = `bold ${gameOverFontSize}px Inter`;
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
-                        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - gameOverFontSize * 0.5);
+                        ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - gameOverFontSize * 0.9);
+                        const scoreFontSize = Math.max(16, Math.min(canvas.width * 0.05, 28));
+                        ctx.font = `bold ${scoreFontSize}px Inter`;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 - gameOverFontSize * 0.1);
+                        ctx.fillStyle = isNewBest ? '#ffd76a' : 'rgba(255, 255, 255, 0.7)';
+                        const bestLabel = isNewBest ? `New Best! ${highScore}` : `Best: ${highScore}`;
+                        ctx.fillText(bestLabel, canvas.width / 2, canvas.height / 2 + gameOverFontSize * 0.35);
                         const restartFontSize = Math.max(14, Math.min(canvas.width * 0.04, 24));
                         ctx.font = `${restartFontSize}px Inter`;
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                        ctx.fillText('Tap to Restart', canvas.width / 2, canvas.height / 2 + gameOverFontSize * 0.5);
+                        ctx.fillText('Tap to Restart', canvas.width / 2, canvas.height / 2 + gameOverFontSize * 0.9);
                     } catch (error) { console.error("Error drawing game over UI:", error); }
                  }
             }
@@ -428,9 +490,16 @@
                     } else {
                         shakeIntensity = 0;
                     }
+                    comboFlashIntensity *= 0.9;
+                    if (comboFlashIntensity < 0.01) comboFlashIntensity = 0;
 
                     if (!isGameOver) {
                         updateDestructionZone(deltaTime);
+
+                        if (comboCount > 0 && currentTime - lastZapTime > COMBO_WINDOW_MS) {
+                            comboCount = 0;
+                            comboMultiplier = 1;
+                        }
 
                         for (let i = blobs.length - 1; i >= 0; i--) {
                             const blob = blobs[i];
@@ -441,6 +510,7 @@
                             // Use calculated radius
                             if (distSq < (destructionZone.radius + blob.radius) * (destructionZone.radius + blob.radius)) {
                                 spawnZapParticles(blob.x, blob.y, blob.color);
+                                registerZap(currentTime);
                                 blobs.splice(i, 1);
                             }
                         }
@@ -449,12 +519,18 @@
                              console.log("Game Over condition met.");
                              isGameOver = true;
                              document.body.dataset.gameOver = "true";
-                             if (window.KamekoTokens) window.KamekoTokens.earn(1, 'blob-zapper finish');
+                             isNewBest = score > highScore;
+                             if (isNewBest) {
+                                 highScore = score;
+                                 localStorage.setItem('blobZapperHighScore', String(highScore));
+                             }
+                             if (window.KamekoTokens) window.KamekoTokens.earn(isNewBest ? 2 : 1, isNewBest ? 'blob-zapper new best' : 'blob-zapper finish');
                         }
 
                         drawDestructionZone();
                         drawBlobs();
                         drawTendrils();
+                        drawScoreUI();
                     }
 
                     updateParticles(deltaTime);

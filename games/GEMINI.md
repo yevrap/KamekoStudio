@@ -110,6 +110,7 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `lastPlayed_keypadQuest` | keypad-quest | Set on session start |
 | `lastPlayed_riverRun` | river-run | Set on session start |
 | `lastPlayed_blobZapper` | blob-zapper | Set on session start |
+| `blobZapperHighScore` | blob-zapper | Highest combo-scoring run |
 | `lastPlayed_durak` | durak | Set on session start |
 | `lastPlayed_durakDungeon` | durak-dungeon | Set on run start |
 | `durakDungeon_bestFloor` | durak-dungeon | Highest floor reached |

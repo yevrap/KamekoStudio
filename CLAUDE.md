@@ -133,7 +133,7 @@ startButton.addEventListener('click', () => {
 ```
 Tokens are free to add via the settings panel (no real economy — it's a casual mechanic).
 
-**Earning tokens by playing:** Games reward tokens on session finish via `window.KamekoTokens.earn(n, reason)` — adds `n` tokens and logs `{ts, amount, reason}` to the `tokenHistory` array (capped at 50 entries). Convention: finishing a session = 1 token, beating a personal best (high score, high wave, best floor, etc.) = 2 tokens instead of 1 (not additive). Games with no comparable "best" concept (e.g. blob-zapper, durak, hidden-object) award a flat 1 token on finish only. Intermediate progress within a still-active session (e.g. a durak-dungeon floor clear, a durak-tactics non-final battle win) does not award tokens — only the actual end of the play session does. The settings-panel faucet (`add()`, no history entry) remains the fallback for players who don't want to grind.
+**Earning tokens by playing:** Games reward tokens on session finish via `window.KamekoTokens.earn(n, reason)` — adds `n` tokens and logs `{ts, amount, reason}` to the `tokenHistory` array (capped at 50 entries). Convention: finishing a session = 1 token, beating a personal best (high score, high wave, best floor, etc.) = 2 tokens instead of 1 (not additive). Games with no comparable "best" concept (e.g. durak, hidden-object) award a flat 1 token on finish only. Intermediate progress within a still-active session (e.g. a durak-dungeon floor clear, a durak-tactics non-final battle win) does not award tokens — only the actual end of the play session does. The settings-panel faucet (`add()`, no history entry) remains the fallback for players who don't want to grind.
 
 ## localStorage Keys Reference
 
@@ -148,6 +148,7 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `lastPlayed_keypadQuest` | keypad-quest | timestamp (ms) | Set on session start |
 | `lastPlayed_riverRun` | river-run | timestamp (ms) | Set on session start |
 | `lastPlayed_blobZapper` | blob-zapper | timestamp (ms) | Set on session start |
+| `blobZapperHighScore` | blob-zapper | integer string | Highest combo-scoring run |
 | `lastPlayed_durak` | durak | timestamp (ms) | Set on session start |
 | `durak_mode` | durak | `'ai'`\|`'hotseat'` | Game mode: vs Computer or Hot-seat (shared device) |
 | `durak_playerCount` | durak | integer string (2–6) | Table size for the next new game |
