@@ -31,6 +31,7 @@ export const engineState = {
     player: null,
     walls: [],
     portals: [], // Array of portal meshes
+    trophies: [], // Array of trophy meshes
     clock: null,
     time: 0
 };

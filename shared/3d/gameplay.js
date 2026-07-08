@@ -115,13 +115,12 @@ export function createEnvironment() {
     ];
 
     ARCADE_GAMES.forEach((game, index) => {
-        if (!positions[index]) return; // Fallback if more than 9 games
+        if (!positions[index]) return; 
         const portalGroup = new THREE.Group();
         portalGroup.position.copy(positions[index]);
         portalGroup.rotation.y = rotations[index];
         portalGroup.userData = { game: game }; 
 
-        // Outer Ring
         const ringGeo = new THREE.TorusGeometry(1, 0.1, 16, 64);
         const ringMat = new THREE.MeshStandardMaterial({
             color: game.color,
@@ -133,7 +132,6 @@ export function createEnvironment() {
         const ring = new THREE.Mesh(ringGeo, ringMat);
         portalGroup.add(ring);
 
-        // Inner Core
         const coreGeo = new THREE.OctahedronGeometry(0.3, 0);
         const coreMat = new THREE.MeshStandardMaterial({
             color: 0xffffff,
@@ -144,16 +142,120 @@ export function createEnvironment() {
         const core = new THREE.Mesh(coreGeo, coreMat);
         portalGroup.add(core);
 
-        // Light
         const light = new THREE.PointLight(game.color, 1.2, 10);
         portalGroup.add(light);
 
         engineState.scene.add(portalGroup);
         engineState.portals.push(portalGroup);
     });
+
+    spawnTrophies();
+}
+
+function spawnTrophies() {
+    const shelfWidth = 10;
+    const shelfDepth = 1.5;
+    const shelfHeight = 0.2;
+    const shelfZ = 12 - shelfDepth / 2; // Front wall
+    const shelfY = 2.0;
+
+    const shelfGeo = new THREE.BoxGeometry(shelfWidth, shelfHeight, shelfDepth);
+    const shelfMat = new THREE.MeshStandardMaterial({
+        color: 0x333333,
+        roughness: 0.7,
+        metalness: 0.3
+    });
+    const shelf = new THREE.Mesh(shelfGeo, shelfMat);
+    shelf.position.set(0, shelfY, shelfZ);
+    shelf.castShadow = true;
+    shelf.receiveShadow = true;
+    engineState.scene.add(shelf);
+    
+    // Add shelf to walls collision so player doesn't clip through the base wall under it
+    engineState.walls.push(new THREE.Box3().setFromObject(shelf));
+
+    const achievements = [];
+    
+    if (parseInt(localStorage.getItem('tokens') || '0', 10) > 0) 
+        achievements.push({ type: 'coin', color: 0xffd700 });
+    
+    if (parseInt(localStorage.getItem('blobZapperHighScore') || '0', 10) > 0) 
+        achievements.push({ type: 'blob', color: 0xff0000 });
+
+    if (parseInt(localStorage.getItem('riverRunHighScore') || '0', 10) > 0) 
+        achievements.push({ type: 'boat', color: 0x0088ff });
+
+    if (parseInt(localStorage.getItem('alchemistHighScore') || '0', 10) > 0) 
+        achievements.push({ type: 'potion', color: 0x00ff00 });
+
+    if (parseInt(localStorage.getItem('durakDungeon_victories') || '0', 10) > 0) 
+        achievements.push({ type: 'crown', color: 0xaa00ff });
+
+    if (parseInt(localStorage.getItem('durakTactics_victories') || '0', 10) > 0) 
+        achievements.push({ type: 'sword', color: 0x00ffff });
+
+    if (achievements.length === 0) return;
+
+    const spacing = shelfWidth / (achievements.length + 1);
+    let startX = -shelfWidth / 2 + spacing;
+
+    achievements.forEach((ach) => {
+        const trophyGroup = new THREE.Group();
+        trophyGroup.position.set(startX, shelfY + 0.5, shelfZ);
+
+        let mesh;
+        const mat = new THREE.MeshStandardMaterial({
+            color: ach.color,
+            emissive: ach.color,
+            emissiveIntensity: 0.6,
+            metalness: 0.8,
+            roughness: 0.2
+        });
+
+        if (ach.type === 'coin') {
+            mesh = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.1, 16), mat);
+            mesh.rotation.x = Math.PI / 2;
+        } else if (ach.type === 'blob') {
+            mesh = new THREE.Mesh(new THREE.IcosahedronGeometry(0.3, 0), mat);
+        } else if (ach.type === 'boat') {
+            mesh = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.6, 4), mat);
+        } else if (ach.type === 'potion') {
+            const group = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 0.4, 8), mat);
+            const top = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), mat);
+            top.position.y = 0.3;
+            group.add(base);
+            group.add(top);
+            mesh = group;
+        } else if (ach.type === 'crown') {
+            mesh = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.05, 8, 5), mat);
+            mesh.rotation.x = Math.PI / 2;
+        } else if (ach.type === 'sword') {
+            mesh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.8, 0.1), mat);
+            const cross = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.1, 0.1), mat);
+            cross.position.y = -0.2;
+            mesh.add(cross);
+        }
+
+        if (mesh) {
+            mesh.castShadow = true;
+            trophyGroup.add(mesh);
+        }
+
+        const light = new THREE.PointLight(ach.color, 0.5, 3);
+        light.position.y = 0.5;
+        trophyGroup.add(light);
+
+        engineState.scene.add(trophyGroup);
+        engineState.trophies.push(trophyGroup);
+
+        startX += spacing;
+    });
 }
 
 export function updatePlayer(deltaTime) {
+    engineState.time += deltaTime;
+
     const moveSpeed = PLAYER_SPEED * deltaTime;
     let moveDirection = new THREE.Vector3();
 
@@ -241,4 +343,9 @@ export function updatePlayer(deltaTime) {
         state.currentActivePortal = null;
         domElements.interactionPrompt.style.display = 'none';
     }
+
+    engineState.trophies.forEach((trophy, i) => {
+        trophy.rotation.y += deltaTime;
+        trophy.position.y = 2.5 + Math.sin(engineState.time * 2 + i) * 0.1;
+    });
 }
