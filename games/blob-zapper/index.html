@@ -29,6 +29,7 @@
             max-height: 100dvh;
             box-shadow: 0 0 15px rgba(0,0,0,0.5);
             border-radius: 8px;
+            touch-action: none;
         }
         /* Style for overlays (Title Only) */
         .overlay {
@@ -621,25 +622,23 @@
 
 
             // --- Attach Listeners ---
-            canvas.addEventListener('mousedown', (e) => { handlePointerDown('mouse', e.clientX, e.clientY); });
-            canvas.addEventListener('mousemove', (e) => { if (e.buttons === 1) handlePointerMove('mouse', e.clientX, e.clientY); });
-            window.addEventListener('mouseup', () => handlePointerUp('mouse'));
-            canvas.addEventListener('touchstart', (e) => {
+            canvas.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) { const touch = e.changedTouches[i]; handlePointerDown(touch.identifier, touch.clientX, touch.clientY); }
-            }, { passive: false });
-            canvas.addEventListener('touchmove', (e) => {
+                canvas.setPointerCapture(e.pointerId);
+                handlePointerDown(e.pointerId, e.clientX, e.clientY);
+            });
+            canvas.addEventListener('pointermove', (e) => {
                 e.preventDefault();
-                for (let i = 0; i < e.changedTouches.length; i++) { const touch = e.changedTouches[i]; handlePointerMove(touch.identifier, touch.clientX, touch.clientY); }
-            }, { passive: false });
-            canvas.addEventListener('touchend', (e) => {
+                handlePointerMove(e.pointerId, e.clientX, e.clientY);
+            });
+            canvas.addEventListener('pointerup', (e) => {
                 e.preventDefault();
-                if (!isGameOver) { for (let i = 0; i < e.changedTouches.length; i++) { const touch = e.changedTouches[i]; handlePointerUp(touch.identifier); } }
+                if (!isGameOver) { handlePointerUp(e.pointerId); }
                 else { touchPoints = []; }
             });
-             canvas.addEventListener('touchcancel', (e) => {
+            canvas.addEventListener('pointercancel', (e) => {
                 e.preventDefault();
-                if (!isGameOver) { for (let i = 0; i < e.changedTouches.length; i++) { const touch = e.changedTouches[i]; handlePointerUp(touch.identifier); } }
+                if (!isGameOver) { handlePointerUp(e.pointerId); }
                 else { touchPoints = []; }
             });
 
