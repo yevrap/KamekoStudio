@@ -37,6 +37,7 @@ drafts/             — WIP files not yet in production (see drafts/CLAUDE.md)
   arcadeHome.html   — Alternate arcade home, not yet linked
 games/              — One subdirectory per game (see games/CLAUDE.md)
   blob-zapper/
+  durak-alchemist/  — index.html + style.css + ES modules (constants/state/gridLogic/combatLogic/ui/main.js)
   durak/            — index.html + style.css + ES modules (constants/state/gameplay/ai/cards/ui/main.js)
   durak-dungeon/    — index.html + style.css + ES modules (constants/state/ui/gameplay/main.js)
   durak-tactics/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
@@ -61,6 +62,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/river-run/` | River Runner 3D | Three.js | 3D obstacle-dodging river runner. Has per-game settings (auto-shoot, auto-avoid, invert drag). Saves `riverRunHighScore`. |
 | `games/waterfall/` | 3D Auto-Aim Endless Shooter | Three.js | 3D shooter, mobile-friendly. Not listed in gallery (intentional). |
 | `games/blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Push blobs with electricity. |
+| `games/durak-alchemist/` | Durak Alchemist | DOM/CSS grid | Grid-based puzzle game using Durak card mechanics. Place cards on a grid to trigger chain reactions. Saves `alchemistHighScore`. |
 | `games/durak/` | Durak | DOM | Classic Russian card game for 2–6 players. Modes: vs Computer (1 human + 2–5 AI) or Hot-seat (2–6 humans sharing a device, with a pass-device cover at 3+ players). Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap, pile-on during the defender's take, ordered end-of-bout draws (attacker → contributors → defender), elimination when hand and deck are both empty. Last player holding cards is the Durak. |
 | `games/durak-dungeon/` | Durak Dungeon | DOM | Roguelike dungeon crawler using Durak card mechanics. Defend against enemy attacks using Durak rules, then counter-attack to deal damage. 20-floor run with relics (15 types), shops, enhanced cards (burning/armored/vampiric/lucky), boss mutations. Seeded runs for async multiplayer via URL. |
 | `games/durak-tactics/` | Durak Tactics | DOM | Turn-based grid tactics using Durak card mechanics. Place cards as units on a 5×4 grid to battle enemy units. Campaign map with battles, shops, events, and bosses. Draft cards and spend gold between encounters. |
@@ -222,3 +224,32 @@ Browser-side logic (game loops, DOM state, T9 input state machine) is not unit-t
 - Game state in materials-run uses a `gameState` string: `'menu'`, `'playing'`, `'gameover'`, `'won'`
 - All scores stored in localStorage; no server-side persistence anywhere
 - `obstacles` arrays in Three.js games store `{ mesh, boundingBox }` objects — access position as `obs.mesh.position`, not `obs.position`
+
+## AI Workflow
+
+Kameko Studio uses AI agents (Claude Code, Antigravity/Gemini) as development partners. Yevster acts as engineering director: picks what to build, approves plans, and reviews results. Agents implement and ship.
+
+### Roadmap
+
+The source of truth for priorities is `docs/roadmap.md`. It has four tiers (P0–P3) plus a Backlog. Items have IDs (e.g. `p1-01`), effort estimates (S/M/L), and a status field (`open`, `🚧 in progress`, `✅`). Update status and mark complete when work ships.
+
+### Workflow
+
+When starting a session:
+1. Read `docs/roadmap.md` to understand current priorities.
+2. Read relevant game files before proposing any changes.
+3. Present a plan (max 7 bullet points) and wait for Yevster's explicit approval before writing code.
+4. After implementation, run `node --test tests/` and confirm all tests pass.
+5. Commit with a clear message (`feat:`, `fix:`, `refactor:`, `chore:`, etc.) and push to main.
+6. Mark the roadmap item complete and note the date.
+
+### Claude Code Skills
+
+Claude Code users have three additional slash commands in `.claude/commands/`:
+- **`/triage`** — presents a prioritized menu from `docs/roadmap.md` for Yevster to choose from
+- **`/improve`** — read-only quality scan across the codebase
+- **`/ship [item-id]`** — fully autonomous: pick item → plan → implement → test → commit → push → mark complete
+
+### Sync discipline: CLAUDE.md ↔ GEMINI.md
+
+These files are maintained in parallel and must stay in sync. When updating one, update the other. The only intentional differences are: the filename reference in the header and project structure comment, and tool-specific sections.

@@ -10,8 +10,12 @@
 # VS Code
 .vscode/
 
-# Claude Code
-.claude/
+# Claude Code — track project settings and commands; ignore only personal/local settings
+.claude/settings.local.json
+
+# Antigravity / Google AI tools — track project context; ignore only local/personal files
+.antigravity/local/
+.gemini/local/
 
 # Node (if ever added)
 node_modules/
