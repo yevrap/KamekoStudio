@@ -18,6 +18,8 @@ Pre-conditions that should be cleared before adding features.
 | p0-01 | Add durak-alchemist to CLAUDE.md and GEMINI.md game tables | S | open | Game exists in games/ but is missing from the Games table in both context files |
 | p0-02 | Delete orphaned game.js monoliths | S | open | keypad-quest/game.js (1539 lines), durak-dungeon/game.js (1373 lines), durak-tactics/game.js (815 lines) exist alongside ES modules — verify unused then delete |
 | p0-03 | Add durak-alchemist unit tests | M | open | No tests exist for it; add to tests/ covering core logic in gridLogic.js and combatLogic.js |
+| p0-04 | Remove Tailwind CDN from blob-zapper, hidden-object, waterfall | M | open | CLAUDE.md says "No Tailwind — no longer used anywhere" but 3 games still load it from CDN. Constraint violation + unnecessary network dependency. |
+| p0-05 | Fix waterfall missing lastPlayed_ write | S | open | waterfall/index.html spends a token on start but never writes `lastPlayed_waterfall` to localStorage — dashboard can't track when it was last played. |
 
 ---
 
@@ -33,6 +35,7 @@ Biggest visible improvements to the player experience.
 | p1-04 | Blob Zapper: combo system | S | open | Chain kills within a short window for score multipliers |
 | p1-05 | River Run: ghost run | M | open | Record best run's boat positions in localStorage, replay as transparent ghost on next attempt |
 | p1-06 | Hidden Object: hint system (token cost) | S | open | Hint button highlights the quadrant containing the target, costs 1 token |
+| p1-07 | Fix AI Hard failing test (durak ai.js bug) | M | open | Test "AI Hard: Takes instead of spending a high trump on a low attack when hand is comfortable" (durak.test.mjs:410) fails — indicates ai.js doesn't match intended hard-difficulty behavior |
 
 ---
 
@@ -78,6 +81,7 @@ Lower priority but worth doing when a game is getting other attention.
 | b-05 | ES module split: waterfall | M | open | index.html is 494 lines with all JS inline. |
 | b-06 | CLAUDE.md / GEMINI.md sync discipline | S | open | Files maintained manually in parallel; easy to drift. Add a checklist or shared source-of-truth approach. |
 | b-07 | Durak: test coverage for ai.js | M | open | ai.js has no unit tests; logic is complex enough to warrant coverage. |
+| b-08 | Consolidate to pointer events: blob-zapper, hidden-object, waterfall | M | open | These 3 games use split mousedown/touchstart handlers instead of unified pointerdown/pointermove/pointerup. blob-zapper canvas also missing touch-action: none. |
 
 ---
 
