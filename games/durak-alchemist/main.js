@@ -86,6 +86,7 @@ function handleGameOver() {
     state.gameState = STATES.GAMEOVER;
     const currentHighScore = parseInt(localStorage.getItem('alchemistHighScore') || '0', 10);
     const isNewRecord = state.score > currentHighScore;
+    state.isNewRecord = isNewRecord;
     if (isNewRecord) {
         localStorage.setItem('alchemistHighScore', state.score.toString());
     }

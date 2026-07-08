@@ -176,8 +176,8 @@ export function endWave() {
   const newBest = !state.chillMode && saveBT(state.wave, elapsed);
   if (!state.chillMode && state.wave % 5 === 0) saveCP();
   const msg = newBest ? 'Wave ' + state.wave + ' — new best!' : 'Wave ' + state.wave + ' clear!';
-  floatText(state.pathCX, state.pathCY - state.pathRY * 0.5, msg, '#00ffee');
   startWave(state.wave + 1);
+  floatText(state.pathCX, state.pathCY - state.pathRY * 0.5, msg, newBest ? '#ffd76a' : '#00ffee');
 }
 
 // ─── Screens ──────────────────────────────────────────────────────────────────

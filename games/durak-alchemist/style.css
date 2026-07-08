@@ -88,6 +88,10 @@ body {
     z-index: 100;
 }
 #game-over-screen h2 { font-size: 2rem; margin-bottom: 20px; color: #ff5252; }
+#game-over-final-score { margin-bottom: 8px; font-size: 1.1rem; color: #ccc; }
+#game-over-record-badge { display: none; margin-bottom: 20px; font-size: 1.1rem; font-weight: bold; color: #ffd76a; }
+#game-over-record-badge.show { display: block; animation: record-pulse 0.6s ease-in-out 2; }
+@keyframes record-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2); } }
 #restart-btn {
     background: var(--accent); color: #fff;
     border: none; padding: 15px 30px; font-size: 1.2rem;

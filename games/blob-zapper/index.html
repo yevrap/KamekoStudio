@@ -457,7 +457,16 @@
                         ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 - gameOverFontSize * 0.1);
                         ctx.fillStyle = isNewBest ? '#ffd76a' : 'rgba(255, 255, 255, 0.7)';
                         const bestLabel = isNewBest ? `New Best! ${highScore}` : `Best: ${highScore}`;
-                        ctx.fillText(bestLabel, canvas.width / 2, canvas.height / 2 + gameOverFontSize * 0.35);
+                        if (isNewBest) {
+                            const bestPulse = 1 + Math.sin(lastTime * 0.005) * 0.08;
+                            ctx.save();
+                            ctx.translate(canvas.width / 2, canvas.height / 2 + gameOverFontSize * 0.35);
+                            ctx.scale(bestPulse, bestPulse);
+                            ctx.fillText(bestLabel, 0, 0);
+                            ctx.restore();
+                        } else {
+                            ctx.fillText(bestLabel, canvas.width / 2, canvas.height / 2 + gameOverFontSize * 0.35);
+                        }
                         const restartFontSize = Math.max(14, Math.min(canvas.width * 0.04, 24));
                         ctx.font = `${restartFontSize}px Inter`;
                         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';

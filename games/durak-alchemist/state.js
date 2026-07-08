@@ -15,4 +15,5 @@ export const state = {
     bout: [], // Array of { attack: card, defense: card | null }
     playerTurn: true, // true if player is attacking or defending this turn, wait, is it player's turn to attack or AI's turn?
     isPlayerAttacking: true, // If player is the attacker
+    isNewRecord: false,
 };

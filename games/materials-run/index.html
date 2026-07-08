@@ -81,6 +81,10 @@
         #win-overlay { background-color: var(--win-bg); color: var(--overlay-text); display: none; }
         #top-scores-overlay { background-color: var(--info-overlay-bg); color: var(--info-overlay-text); display: none; z-index: 201; }
         .overlay h2 { margin-bottom: 20px; font-size: 2em; } .overlay p { margin: 5px 0; font-size: 1em;} .overlay .top-scores { margin-top: 15px; font-size: 0.8em; line-height: 1.3; }
+        .top-scores span.new-record { color: #ffd76a; font-weight: bold; display: inline-block; animation: record-pulse 0.6s ease-in-out 2; }
+        .record-badge { display: none; margin-left: 6px; font-size: 0.85em; color: #ffd76a; font-weight: bold; }
+        .record-badge.show { display: inline; animation: record-pulse 0.6s ease-in-out 2; }
+        @keyframes record-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.25); } }
         .overlay button { font-family: var(--font-family); font-size: 0.8em; padding: 10px 20px; margin-top: 25px; min-height: 44px; background-color: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); border-radius: 5px; cursor: pointer; transition: background-color 0.3s ease; margin-left: 10px; margin-right: 10px; } .overlay button:hover { background-color: var(--button-hover-bg); }
         #close-top-scores-button { font-size: 0.7em; padding: 8px 15px; }
         @media (max-width: 700px) { :root { --cell-size: 25px; } #score-display { top: 12px; left: 10px; font-size: 0.9em;} #timer-display { top: 35px; left: 10px; font-size: 0.7em;} #ingame-buttons { top: 60px; left: 10px;} #ingame-buttons button { font-size: 0.55em; } .overlay { font-size: 1.3em;} .overlay h2 { font-size: 1.8em;} }
@@ -121,8 +125,8 @@
         <h2>Game Over!</h2>
         <p>Final Score: <span id="final-score">0</span></p>
         <div class="top-scores">
-             <p>Top Score (Score Attack): <span id="top-score-score">0</span></p>
-             <p>Top Score (Survival): <span id="top-score-survival">0</span></p>
+             <p>Top Score (Score Attack): <span id="top-score-score">0</span><span class="record-badge" id="top-score-score-badge">🏆 New Record!</span></p>
+             <p>Top Score (Survival): <span id="top-score-survival">0</span><span class="record-badge" id="top-score-survival-badge">🏆 New Record!</span></p>
         </div>
         <button id="play-again-button-lose">Play Again</button>
     </div>
@@ -131,8 +135,8 @@
         <h2>You Survived!</h2>
         <p>Final Score: <span id="win-final-score">0</span></p>
          <div class="top-scores">
-             <p>Top Score (Score Attack): <span id="win-top-score-score">0</span></p>
-             <p>Top Score (Survival): <span id="win-top-score-survival">0</span></p>
+             <p>Top Score (Score Attack): <span id="win-top-score-score">0</span><span class="record-badge" id="win-top-score-score-badge">🏆 New Record!</span></p>
+             <p>Top Score (Survival): <span id="win-top-score-survival">0</span><span class="record-badge" id="win-top-score-survival-badge">🏆 New Record!</span></p>
         </div>
         <button id="play-again-button-win">Play Again</button>
     </div>
@@ -194,7 +198,8 @@
             startScreenOverlay, startScoreButton, startSurvivalButton,
             gameOverOverlay, finalScoreElement, topScoreScoreElement, topScoreSurvivalElement, playAgainButtonLose,
             winOverlay, winFinalScoreElement, winTopScoreScoreElement, winTopScoreSurvivalElement, playAgainButtonWin,
-            spinArcsContainer, menuButton, topScoresButton, topScoresOverlay, infoTopScoreScoreElement, infoTopScoreSurvivalElement, closeTopScoresButton;
+            spinArcsContainer, menuButton, topScoresButton, topScoresOverlay, infoTopScoreScoreElement, infoTopScoreSurvivalElement, closeTopScoresButton,
+            topScoreScoreBadge, topScoreSurvivalBadge, winTopScoreScoreBadge, winTopScoreSurvivalBadge;
 
         // --- Constants for localStorage keys ---
         const TOP_SCORE_SCORE_KEY = 'gridGameTopScoreScore';
@@ -342,12 +347,21 @@
         function getTopScore(mode) { const key = mode === 'survival' ? TOP_SCORE_SURVIVAL_KEY : TOP_SCORE_SCORE_KEY; return parseInt(localStorage.getItem(key) || '0'); }
         function updateTopScore(mode, currentScore) { const key = mode === 'survival' ? TOP_SCORE_SURVIVAL_KEY : TOP_SCORE_SCORE_KEY; const topScore = getTopScore(mode); if (currentScore > topScore) { localStorage.setItem(key, currentScore.toString()); return currentScore; } return topScore; }
 
+        /** Toggles the celebratory gold pulse + badge on whichever score span matches the mode just played */
+        function applyRecordCelebration(isNewRecord, scoreEl, badgeEl, otherScoreEl, otherBadgeEl) {
+            otherScoreEl?.classList.remove('new-record');
+            otherBadgeEl?.classList.remove('show');
+            scoreEl?.classList.toggle('new-record', isNewRecord);
+            badgeEl?.classList.toggle('show', isNewRecord);
+        }
+
         /** Displays end screen (Game Over or Win) */
         function showEndScreen(isWin) {
             const finalScore = score;
             const priorTop = getTopScore(currentGameMode);
             updateTopScore(currentGameMode, finalScore); // Update score for the mode played
-            if (window.KamekoTokens) window.KamekoTokens.earn(finalScore > priorTop ? 2 : 1, 'materials-run finish');
+            const isNewRecord = finalScore > priorTop;
+            if (window.KamekoTokens) window.KamekoTokens.earn(isNewRecord ? 2 : 1, 'materials-run finish');
             const topScoreScore = getTopScore('score'); // Get latest scores for display
             const topScoreSurvival = getTopScore('survival');
 
@@ -355,11 +369,21 @@
                 if(winFinalScoreElement) winFinalScoreElement.textContent = finalScore;
                 if(winTopScoreScoreElement) winTopScoreScoreElement.textContent = topScoreScore;
                 if(winTopScoreSurvivalElement) winTopScoreSurvivalElement.textContent = topScoreSurvival;
+                if (currentGameMode === 'survival') {
+                    applyRecordCelebration(isNewRecord, winTopScoreSurvivalElement, winTopScoreSurvivalBadge, winTopScoreScoreElement, winTopScoreScoreBadge);
+                } else {
+                    applyRecordCelebration(isNewRecord, winTopScoreScoreElement, winTopScoreScoreBadge, winTopScoreSurvivalElement, winTopScoreSurvivalBadge);
+                }
                 if(winOverlay) winOverlay.style.display = 'flex';
             } else {
                 if(finalScoreElement) finalScoreElement.textContent = finalScore;
                 if(topScoreScoreElement) topScoreScoreElement.textContent = topScoreScore;
                 if(topScoreSurvivalElement) topScoreSurvivalElement.textContent = topScoreSurvival;
+                if (currentGameMode === 'survival') {
+                    applyRecordCelebration(isNewRecord, topScoreSurvivalElement, topScoreSurvivalBadge, topScoreScoreElement, topScoreScoreBadge);
+                } else {
+                    applyRecordCelebration(isNewRecord, topScoreScoreElement, topScoreScoreBadge, topScoreSurvivalElement, topScoreSurvivalBadge);
+                }
                 if(gameOverOverlay) gameOverOverlay.style.display = 'flex';
             }
         }
@@ -647,6 +671,7 @@
             // Assign DOM Elements
             gridElement = document.getElementById('game-grid'); playerElement = document.getElementById('player'); bodyElement = document.body; scoreDisplay = document.getElementById('score-display'); timerDisplay = document.getElementById('timer-display'); startScreenOverlay = document.getElementById('start-screen-overlay'); startScoreButton = document.getElementById('start-score-button'); startSurvivalButton = document.getElementById('start-survival-button'); gameOverOverlay = document.getElementById('game-over-overlay'); finalScoreElement = document.getElementById('final-score'); topScoreScoreElement = document.getElementById('top-score-score'); topScoreSurvivalElement = document.getElementById('top-score-survival'); playAgainButtonLose = document.getElementById('play-again-button-lose'); winOverlay = document.getElementById('win-overlay'); winFinalScoreElement = document.getElementById('win-final-score'); winTopScoreScoreElement = document.getElementById('win-top-score-score'); winTopScoreSurvivalElement = document.getElementById('win-top-score-survival'); playAgainButtonWin = document.getElementById('play-again-button-win');
             menuButton = document.getElementById('menu-button'); topScoresButton = document.getElementById('top-scores-button'); topScoresOverlay = document.getElementById('top-scores-overlay'); infoTopScoreScoreElement = document.getElementById('info-top-score-score'); infoTopScoreSurvivalElement = document.getElementById('info-top-score-survival'); closeTopScoresButton = document.getElementById('close-top-scores-button');
+            topScoreScoreBadge = document.getElementById('top-score-score-badge'); topScoreSurvivalBadge = document.getElementById('top-score-survival-badge'); winTopScoreScoreBadge = document.getElementById('win-top-score-score-badge'); winTopScoreSurvivalBadge = document.getElementById('win-top-score-survival-badge');
 
             // Check if all elements were found
              if (!gridElement || !playerElement || !bodyElement || !scoreDisplay || !gameOverOverlay || !startScreenOverlay || !startScoreButton || !startSurvivalButton || !playAgainButtonLose || !winOverlay || !playAgainButtonWin || !timerDisplay || !menuButton || !topScoresButton || !topScoresOverlay || !closeTopScoresButton) { console.error("One or more essential DOM elements could not be found. Aborting initialization."); document.body.innerHTML = '<p style="color: red; font-family: sans-serif; padding: 20px;">Error: Could not initialize game components.</p>'; return; }

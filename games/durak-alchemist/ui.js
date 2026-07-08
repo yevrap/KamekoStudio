@@ -16,6 +16,8 @@ export const DOM = {
     enemyHP: document.getElementById('enemy-hp'),
     endTurnBtn: document.getElementById('end-turn-btn'),
     highScoreDisplay: document.getElementById('high-score-display'),
+    gameOverFinalScore: document.getElementById('game-over-final-score'),
+    gameOverRecordBadge: document.getElementById('game-over-record-badge'),
 };
 
 const cellW = 65;
@@ -53,6 +55,8 @@ export function render() {
         DOM.gameOverScreen.style.display = 'flex';
         DOM.combatArea.style.display = 'none';
         DOM.endTurnBtn.style.display = 'none';
+        DOM.gameOverFinalScore.textContent = `Score: ${state.score}`;
+        DOM.gameOverRecordBadge.classList.toggle('show', state.isNewRecord);
     } else if (state.gameState === STATES.COMBAT) {
         DOM.startScreen.style.display = 'none';
         DOM.gameOverScreen.style.display = 'none';
