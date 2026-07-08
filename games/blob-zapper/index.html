@@ -127,6 +127,11 @@
             let blobs = [];
             let touchPoints = [];
             let destructionZone = { x: 0, y: 0, radius: 0, vx: 0, vy: 0 };
+            let particles = [];
+            let shakeIntensity = 0;
+            const ZAP_SHAKE_KICK = 6;
+            const ZAP_SHAKE_MAX = 14;
+            const ZAP_PARTICLE_COUNT = 10;
 
             let isGameOver = false;
             let animationFrameId;
@@ -186,6 +191,8 @@
                     document.body.dataset.gameOver = "false";
                     blobs = [];
                     touchPoints = [];
+                    particles = [];
+                    shakeIntensity = 0;
 
                     // Use calculated speed (with fallback)
                     const initialSpeedX = (Math.random() - 0.5) * (destructionZoneSpeed || 0.1) * 2;
@@ -296,6 +303,43 @@
             }
 
 
+            // --- Zap Feedback: particles + screen shake ---
+            function spawnZapParticles(x, y, color) {
+                for (let i = 0; i < ZAP_PARTICLE_COUNT; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 1 + Math.random() * 3;
+                    particles.push({
+                        x, y, color,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1,
+                        decay: 0.03 + Math.random() * 0.03,
+                        size: 2 + Math.random() * 2.5
+                    });
+                }
+                shakeIntensity = Math.min(ZAP_SHAKE_MAX, shakeIntensity + ZAP_SHAKE_KICK);
+            }
+            function updateParticles(deltaTime) {
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx * deltaTime; p.y += p.vy * deltaTime;
+                    p.vx *= 0.94; p.vy *= 0.94;
+                    p.life -= p.decay * deltaTime;
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+            }
+            function drawParticles() {
+                try {
+                    ctx.globalCompositeOperation = 'source-over';
+                    particles.forEach(p => {
+                        ctx.globalAlpha = Math.max(0, p.life);
+                        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        ctx.fillStyle = p.color; ctx.fill();
+                    });
+                    ctx.globalAlpha = 1;
+                } catch (error) { console.error("Error drawing particles:", error); }
+            }
+
             // --- Drawing ---
             function drawDestructionZone() { /* ... */ }
             function drawTendrils() { /* ... */ }
@@ -304,11 +348,17 @@
             // --- Drawing Functions Implementation (Collapsed) ---
              function drawDestructionZone() {
                 try {
-                    const pulse = Math.sin(performance.now() * 0.003) * 3 + 3;
+                    const remainingRatio = NUM_BLOBS_START > 0 ? blobs.length / NUM_BLOBS_START : 1;
+                    const urgency = 1 - remainingRatio; // rises toward 1 as blobs clear out
+                    const pulseSpeed = 0.003 + urgency * 0.006;
+                    const pulseAmp = 3 + urgency * 5;
+                    const pulse = Math.sin(performance.now() * pulseSpeed) * pulseAmp + pulseAmp;
                     ctx.globalCompositeOperation = 'source-over';
                     ctx.fillStyle = DESTRUCTION_ZONE_COLOR_FILL;
                     ctx.beginPath(); ctx.arc(destructionZone.x, destructionZone.y, destructionZone.radius, 0, Math.PI * 2); ctx.fill();
-                    ctx.strokeStyle = DESTRUCTION_ZONE_COLOR_STROKE; ctx.lineWidth = pulse;
+                    const strokeAlpha = (0.5 + urgency * 0.5).toFixed(2);
+                    ctx.strokeStyle = `rgba(255, ${Math.round(80 - urgency * 50)}, ${Math.round(80 - urgency * 50)}, ${strokeAlpha})`;
+                    ctx.lineWidth = pulse;
                     ctx.beginPath(); ctx.arc(destructionZone.x, destructionZone.y, destructionZone.radius, 0, Math.PI * 2); ctx.stroke();
                     ctx.lineWidth = 1;
                 } catch (error) { console.error("Error drawing destruction zone:", error); }
@@ -369,6 +419,16 @@
 
                     // --- DEBUG: Draw Red Square Removed ---
 
+                    ctx.save();
+                    if (shakeIntensity > 0.1) {
+                        const shakeX = (Math.random() - 0.5) * shakeIntensity;
+                        const shakeY = (Math.random() - 0.5) * shakeIntensity;
+                        ctx.translate(shakeX, shakeY);
+                        shakeIntensity *= 0.88;
+                    } else {
+                        shakeIntensity = 0;
+                    }
+
                     if (!isGameOver) {
                         updateDestructionZone(deltaTime);
 
@@ -380,6 +440,7 @@
                             const distSq = dx * dx + dy * dy;
                             // Use calculated radius
                             if (distSq < (destructionZone.radius + blob.radius) * (destructionZone.radius + blob.radius)) {
+                                spawnZapParticles(blob.x, blob.y, blob.color);
                                 blobs.splice(i, 1);
                             }
                         }
@@ -395,6 +456,10 @@
                         drawTendrils();
                     }
 
+                    updateParticles(deltaTime);
+                    drawParticles();
+
+                    ctx.restore();
                     drawUI(); // Draw UI last
 
                 } catch (error) {
