@@ -1,7 +1,7 @@
 # Kameko Studio — Roadmap
 
 Engineering director: Yevster  
-Last updated: 2026-07-07
+Last updated: 2026-07-08
 
 AI agents read this file to pick the next work item. Items marked ✅ are complete. Items marked 🚧 are in progress. All other items are open.
 
@@ -89,6 +89,7 @@ Lower priority but worth doing when a game is getting other attention.
 | b-10 | durak-dungeon: relic-slot tap target under 44px | S | ✅ | Fixed 2026-07-08. `.relic-slot` bumped from 32×32px (28px/36px at responsive breakpoints) to a uniform 44×44px at all breakpoints; `#relic-bar` min-height bumped to match. Safe to do without overflow concerns — `state.run.relics` caps at 5 equipped relics per run (confirmed via `main.js`'s "Relics: X/5" display), not the 15 total relic *types* in the pool as the original note implied. Verified visually in browser: 5-slot relic bar renders with no wrapping or overflow. |
 | b-11 | Delete stale `patch_style.py` from repo root | S | ✅ | Deleted 2026-07-08. Confirmed zero references anywhere in the repo before removal (grep for `patch_style` matched only this roadmap row). |
 | b-12 | durak-alchemist: settings gear/overlay never renders | S | ✅ | Fixed 2026-07-08. Moved `shared/settings.js` from `<head>` to right before `</body>` (after `main.js`), matching every other game's convention. Verified in browser: gear icon renders top-right, settings overlay opens with tokens/theme/gallery/dev-mode sections, no console errors. |
+| b-13 | Adopt `AGENTS.md`-canonical context pattern; extend generator to other repos | M | open | Cross-repo dev-infra item, not Kameko-specific — noted here since this repo's Backlog is the active tracker. The Obsidian vault ("Optimistic Staircase") already uses the pattern worth copying: `AGENTS.md` at repo root is canonical shared context, `CLAUDE.md`/`ANTIGRAVITY.md` mirror it, `GEMINI.md` is a thin backward-compat stub. Kameko has b-06's generator (`CLAUDE.md` → `GEMINI.md`) but no `AGENTS.md` yet. `~/Development/Clothes Inventory` has no generator at all — its `CLAUDE.md` and `antigravity.md` are hand-maintained separately and have already diverged (218 vs 262 lines as of 2026-07-08). Plan: add `AGENTS.md` as the canonical file in both repos, generalize `scripts/generate-context-docs.js` to derive `CLAUDE.md`/`GEMINI.md`/`ANTIGRAVITY.md` from it, retire Clothes Inventory's hand-maintained `antigravity.md`. Do this as a deliberate per-repo pass, not a blind regeneration — content should be reviewed line by line. |
 
 ---
 

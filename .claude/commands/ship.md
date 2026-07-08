@@ -68,9 +68,14 @@ Note: browser-side UI logic is not unit-tested. For UI changes, manual verificat
 
 ## Phase 6 — Commit
 
-Stage only the files changed for this item. Commit with a clear message:
+Stage only the files changed for this item. **Before staging, bump the version:**
 ```
-git add <specific files>
+node scripts/bump-version.js
+```
+
+Then stage the files (including `version.json`) and commit with a clear message:
+```
+git add <specific files> version.json
 git commit -m "<type>: <short description>
 
 <one paragraph body if the change is non-trivial>"

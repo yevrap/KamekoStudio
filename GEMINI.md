@@ -2,6 +2,16 @@
 
 # Kameko Studio — Gemini Context
 
+## Vault Context
+
+Product planning, backlogs, and design decisions live in the Obsidian vault:
+- **Vault:** `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Optimistic Staircase/`
+- **Project notes:** `30-39 Indy App Dev/31 Kameko Arcade/`
+- **Development Index:** `30-39 Indy App Dev/Development Index.md`
+- **Active roadmap:** `docs/roadmap.md` (this repo — the vault links here)
+
+Read the vault notes for product context. Keep this file technical-only.
+
 ## What This Project Is
 
 Kameko Studio is a one-person web game studio. All games are mobile-first progressive web apps built with vanilla HTML, CSS, and JavaScript — no frameworks, no backend, no build step. Everything is static files deployed on GitHub Pages at https://yevrap.github.io/KamekoStudio/.

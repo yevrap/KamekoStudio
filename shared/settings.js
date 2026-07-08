@@ -100,6 +100,125 @@
     }
   };
 
+  // ─── Versioning System ────────────────────────────────────────────────────────
+
+  let loadedVersion = null; // Object: {version, buildDate, timestamp}
+
+  function fetchVersionInfo(forceBypassCache = false) {
+    const basePath = getGalleryPath().replace('index.html', '');
+    const url = basePath + 'version.json' + (forceBypassCache ? '?t=' + Date.now() : '');
+    return fetch(url)
+      .then(res => res.json())
+      .catch(() => null);
+  }
+
+  function initVersioning() {
+    try {
+      const stored = sessionStorage.getItem('kameko_version');
+      if (stored) loadedVersion = JSON.parse(stored);
+    } catch (e) {}
+
+    if (!loadedVersion) {
+      fetchVersionInfo().then(data => {
+        if (data) {
+          loadedVersion = data;
+          sessionStorage.setItem('kameko_version', JSON.stringify(loadedVersion));
+          updateSettingsVersionDisplay();
+        }
+      });
+    }
+
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) checkForUpdates();
+    });
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) checkForUpdates();
+    });
+  }
+
+  function checkForUpdates() {
+    if (!loadedVersion) return;
+    fetchVersionInfo(true).then(newData => {
+      if (newData && newData.version > loadedVersion.version) {
+        showUpdateBanner(newData);
+      }
+    });
+  }
+
+  function simulateUpdate() {
+    showUpdateBanner({
+      version: (loadedVersion ? loadedVersion.version : 1) + 1,
+      buildDate: new Date().toISOString().split('T')[0]
+    });
+  }
+
+  function showUpdateBanner(newData) {
+    if (document.getElementById('kameko-update-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'kameko-update-banner';
+    banner.setAttribute('role', 'status');
+    banner.setAttribute('aria-live', 'polite');
+    
+    banner.style.cssText = [
+      'position:fixed', 'bottom:24px', 'left:50%', 'transform:translateX(-50%)',
+      'background:rgba(20,20,40,0.85)', 'backdrop-filter:blur(12px)', '-webkit-backdrop-filter:blur(12px)',
+      'border:1px solid rgba(100,100,255,0.4)', 'border-radius:12px',
+      'padding:12px 16px', 'display:flex', 'align-items:center', 'gap:12px',
+      'box-shadow:0 8px 32px rgba(0,0,0,0.6)', 'z-index:20000',
+      'color:white', 'font-family:sans-serif', 'width:max-content', 'max-width:90vw',
+      'animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+    ].join(';');
+
+    const text = document.createElement('div');
+    text.style.cssText = 'font-size:0.95em; font-weight:500; display:flex; flex-direction:column; gap:2px;';
+    text.innerHTML = '<span>New version available (v' + newData.version + ')</span>' +
+                     '<span style="font-size:0.8em; opacity:0.7">Refresh to update</span>';
+
+    const updateBtn = document.createElement('button');
+    updateBtn.textContent = 'Update';
+    updateBtn.style.cssText = [
+      'background:#4f46e5', 'color:white', 'border:none', 'border-radius:6px',
+      'padding:8px 16px', 'font-weight:600', 'cursor:pointer',
+      'transition:background 0.2s, transform 0.1s'
+    ].join(';');
+    updateBtn.addEventListener('pointerover', function() { updateBtn.style.background = '#4338ca'; });
+    updateBtn.addEventListener('pointerout', function() { updateBtn.style.background = '#4f46e5'; });
+    updateBtn.addEventListener('pointerdown', function() { updateBtn.style.transform = 'scale(0.95)'; });
+    updateBtn.addEventListener('click', function() {
+      sessionStorage.setItem('kameko_version', JSON.stringify(newData));
+      location.reload(true);
+    });
+
+    const dismissBtn = document.createElement('button');
+    dismissBtn.innerHTML = '&times;';
+    dismissBtn.style.cssText = [
+      'background:transparent', 'color:rgba(255,255,255,0.6)', 'border:none',
+      'font-size:1.4em', 'cursor:pointer', 'padding:0 4px', 'line-height:1'
+    ].join(';');
+    dismissBtn.addEventListener('click', function() { banner.remove(); });
+
+    banner.appendChild(text);
+    banner.appendChild(updateBtn);
+    banner.appendChild(dismissBtn);
+    
+    if (!document.getElementById('update-banner-styles')) {
+      const style = document.createElement('style');
+      style.id = 'update-banner-styles';
+      style.textContent = '@keyframes slideUp { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }';
+      document.head.appendChild(style);
+    }
+
+    document.body.appendChild(banner);
+  }
+
+  function updateSettingsVersionDisplay() {
+    const el = document.getElementById('settings-version-display');
+    if (el && loadedVersion) {
+      el.textContent = 'v' + loadedVersion.version + ' • ' + loadedVersion.buildDate;
+    }
+  }
+
   // ─── Theme helpers ───────────────────────────────────────────────────────────
 
   function getSavedTheme() {
@@ -193,6 +312,9 @@
 
   // Apply saved theme immediately (body is available since script is before </body>)
   applyTheme(getSavedTheme());
+
+  // Init versioning system (fetch initial version or hook into visibility change)
+  initVersioning();
 
   // ─── Gallery path resolution ─────────────────────────────────────────────────
 
@@ -471,6 +593,29 @@
 
     devToolsContainer.appendChild(clearDataBtn);
 
+    const simulateUpdateBtn = document.createElement('button');
+    simulateUpdateBtn.id = 'simulate-update-btn';
+    simulateUpdateBtn.textContent = '\uD83D\uDC1B Simulate Update Available';
+    simulateUpdateBtn.style.cssText = [
+        'background:rgba(255,255,255,0.1)', 'color:white',
+        'border:1px solid rgba(255,255,255,0.3)',
+        'border-radius:8px', 'padding:12px 16px',
+        'font-size:1em', 'cursor:pointer', 'text-align:left',
+        'transition:background 0.2s', 'min-height:44px',
+        'font-family:sans-serif', 'width:100%'
+    ].join(';');
+    simulateUpdateBtn.addEventListener('pointerover', function() {
+        simulateUpdateBtn.style.background = 'rgba(255,255,255,0.2)';
+    });
+    simulateUpdateBtn.addEventListener('pointerout', function() {
+        simulateUpdateBtn.style.background = 'rgba(255,255,255,0.1)';
+    });
+    simulateUpdateBtn.addEventListener('click', function() {
+        closeSettings();
+        simulateUpdate();
+    });
+    devToolsContainer.appendChild(simulateUpdateBtn);
+
     // Wrap separator + dev mode toggle + dev tools in a named section so games can insert before it
     const devSection = document.createElement('div');
     devSection.id = 'dev-mode-section';
@@ -478,6 +623,38 @@
     devSection.appendChild(devModeRow);
     devSection.appendChild(devToolsContainer);
     panel.appendChild(devSection);
+
+    // --- Version Footer ---
+    const versionRow = document.createElement('div');
+    versionRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-top:4px; font-size:0.75em; color:rgba(255,255,255,0.4); font-family:sans-serif; padding: 0 4px;';
+    
+    const versionDisplay = document.createElement('span');
+    versionDisplay.id = 'settings-version-display';
+    versionDisplay.textContent = loadedVersion ? ('v' + loadedVersion.version + ' • ' + loadedVersion.buildDate) : '';
+
+    const checkUpdatesBtn = document.createElement('button');
+    checkUpdatesBtn.textContent = 'Check for updates';
+    checkUpdatesBtn.style.cssText = 'background:none; border:none; color:rgba(255,255,255,0.5); text-decoration:underline; cursor:pointer; padding:0; font-size:1em;';
+    checkUpdatesBtn.addEventListener('click', function() {
+      const origText = checkUpdatesBtn.textContent;
+      checkUpdatesBtn.textContent = 'Checking...';
+      fetchVersionInfo(true).then(function(newData) {
+        if (newData && loadedVersion && newData.version > loadedVersion.version) {
+          showUpdateBanner(newData);
+          checkUpdatesBtn.textContent = 'Update found!';
+        } else {
+          checkUpdatesBtn.textContent = 'Up to date';
+          setTimeout(function() { checkUpdatesBtn.textContent = origText; }, 2000);
+        }
+      }).catch(function() {
+        checkUpdatesBtn.textContent = 'Error';
+        setTimeout(function() { checkUpdatesBtn.textContent = origText; }, 2000);
+      });
+    });
+
+    versionRow.appendChild(versionDisplay);
+    versionRow.appendChild(checkUpdatesBtn);
+    panel.appendChild(versionRow);
 
     overlay.appendChild(panel);
 
