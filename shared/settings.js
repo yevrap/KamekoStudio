@@ -215,7 +215,7 @@
   function updateSettingsVersionDisplay() {
     const el = document.getElementById('settings-version-display');
     if (el && loadedVersion) {
-      el.textContent = 'v' + loadedVersion.version + ' • ' + loadedVersion.buildDate;
+      el.textContent = 'v' + loadedVersion.version + ' (' + loadedVersion.buildDate + ')';
     }
   }
 
@@ -593,28 +593,7 @@
 
     devToolsContainer.appendChild(clearDataBtn);
 
-    const simulateUpdateBtn = document.createElement('button');
-    simulateUpdateBtn.id = 'simulate-update-btn';
-    simulateUpdateBtn.textContent = '\uD83D\uDC1B Simulate Update Available';
-    simulateUpdateBtn.style.cssText = [
-        'background:rgba(255,255,255,0.1)', 'color:white',
-        'border:1px solid rgba(255,255,255,0.3)',
-        'border-radius:8px', 'padding:12px 16px',
-        'font-size:1em', 'cursor:pointer', 'text-align:left',
-        'transition:background 0.2s', 'min-height:44px',
-        'font-family:sans-serif', 'width:100%'
-    ].join(';');
-    simulateUpdateBtn.addEventListener('pointerover', function() {
-        simulateUpdateBtn.style.background = 'rgba(255,255,255,0.2)';
-    });
-    simulateUpdateBtn.addEventListener('pointerout', function() {
-        simulateUpdateBtn.style.background = 'rgba(255,255,255,0.1)';
-    });
-    simulateUpdateBtn.addEventListener('click', function() {
-        closeSettings();
-        simulateUpdate();
-    });
-    devToolsContainer.appendChild(simulateUpdateBtn);
+
 
     // Wrap separator + dev mode toggle + dev tools in a named section so games can insert before it
     const devSection = document.createElement('div');
@@ -624,37 +603,87 @@
     devSection.appendChild(devToolsContainer);
     panel.appendChild(devSection);
 
-    // --- Version Footer ---
-    const versionRow = document.createElement('div');
-    versionRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center; margin-top:4px; font-size:0.75em; color:rgba(255,255,255,0.4); font-family:sans-serif; padding: 0 4px;';
+    // --- Version & Updates Section ---
+    const versionContainer = document.createElement('div');
+    versionContainer.style.cssText = 'display:flex; flex-direction:column; gap:10px; margin-top:8px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.15); font-family:sans-serif;';
     
-    const versionDisplay = document.createElement('span');
+    const versionHeaderRow = document.createElement('div');
+    versionHeaderRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center; color:rgba(255,255,255,0.7); font-size:0.9em;';
+    
+    const versionLabel = document.createElement('span');
+    versionLabel.textContent = 'App Version';
+    
+    const versionDisplay = document.createElement('strong');
     versionDisplay.id = 'settings-version-display';
-    versionDisplay.textContent = loadedVersion ? ('v' + loadedVersion.version + ' • ' + loadedVersion.buildDate) : '';
-
+    versionDisplay.style.cssText = 'color:white;';
+    versionDisplay.textContent = loadedVersion ? ('v' + loadedVersion.version + ' (' + loadedVersion.buildDate + ')') : 'v?';
+    
+    versionHeaderRow.appendChild(versionLabel);
+    versionHeaderRow.appendChild(versionDisplay);
+    
     const checkUpdatesBtn = document.createElement('button');
-    checkUpdatesBtn.textContent = 'Check for updates';
-    checkUpdatesBtn.style.cssText = 'background:none; border:none; color:rgba(255,255,255,0.5); text-decoration:underline; cursor:pointer; padding:0; font-size:1em;';
+    checkUpdatesBtn.textContent = 'Check for Updates';
+    checkUpdatesBtn.style.cssText = [
+        'background:rgba(255,255,255,0.1)', 'color:white',
+        'border:1px solid rgba(255,255,255,0.25)',
+        'border-radius:8px', 'padding:10px 12px',
+        'font-size:0.9em', 'font-weight:500', 'cursor:pointer', 'text-align:center',
+        'transition:background 0.2s', 'width:100%'
+    ].join(';');
+    
+    const updateResultBox = document.createElement('div');
+    updateResultBox.style.cssText = 'display:none; flex-direction:column; gap:8px; background:rgba(0,0,0,0.3); border-radius:8px; padding:12px; border:1px solid rgba(100,100,255,0.3); font-size:0.85em;';
+    
+    checkUpdatesBtn.addEventListener('pointerover', function() { checkUpdatesBtn.style.background = 'rgba(255,255,255,0.15)'; });
+    checkUpdatesBtn.addEventListener('pointerout', function() { checkUpdatesBtn.style.background = 'rgba(255,255,255,0.1)'; });
     checkUpdatesBtn.addEventListener('click', function() {
-      const origText = checkUpdatesBtn.textContent;
       checkUpdatesBtn.textContent = 'Checking...';
       fetchVersionInfo(true).then(function(newData) {
         if (newData && loadedVersion && newData.version > loadedVersion.version) {
-          showUpdateBanner(newData);
-          checkUpdatesBtn.textContent = 'Update found!';
+          checkUpdatesBtn.style.display = 'none';
+          
+          updateResultBox.style.display = 'flex';
+          updateResultBox.innerHTML = '';
+          
+          const title = document.createElement('div');
+          title.textContent = '\u2728 New version available!';
+          title.style.cssText = 'color:#a88aff; font-weight:700; margin-bottom:2px; font-size:1.1em;';
+          
+          const compareRow = document.createElement('div');
+          compareRow.style.cssText = 'display:flex; justify-content:space-between; color:rgba(255,255,255,0.8); margin-bottom:6px;';
+          compareRow.innerHTML = '<span>Current: v' + loadedVersion.version + '</span> \u2192 <span style="color:white; font-weight:bold;">Latest: v' + newData.version + '</span>';
+          
+          const applyBtn = document.createElement('button');
+          applyBtn.textContent = 'Update Now';
+          applyBtn.style.cssText = [
+            'background:#4f46e5', 'color:white', 'border:none', 'border-radius:6px',
+            'padding:10px', 'font-weight:600', 'cursor:pointer', 'width:100%', 'font-size:1.05em'
+          ].join(';');
+          applyBtn.addEventListener('click', function() {
+            sessionStorage.setItem('kameko_version', JSON.stringify(newData));
+            location.reload(true);
+          });
+          
+          updateResultBox.appendChild(title);
+          updateResultBox.appendChild(compareRow);
+          updateResultBox.appendChild(applyBtn);
+          
+          showUpdateBanner(newData); // Also spawn the toast in case they leave settings
+          
         } else {
-          checkUpdatesBtn.textContent = 'Up to date';
-          setTimeout(function() { checkUpdatesBtn.textContent = origText; }, 2000);
+          checkUpdatesBtn.textContent = 'App is up to date \u2714\uFE0F';
+          setTimeout(function() { checkUpdatesBtn.textContent = 'Check for Updates'; }, 2500);
         }
       }).catch(function() {
-        checkUpdatesBtn.textContent = 'Error';
-        setTimeout(function() { checkUpdatesBtn.textContent = origText; }, 2000);
+        checkUpdatesBtn.textContent = 'Error checking for updates';
+        setTimeout(function() { checkUpdatesBtn.textContent = 'Check for Updates'; }, 2500);
       });
     });
 
-    versionRow.appendChild(versionDisplay);
-    versionRow.appendChild(checkUpdatesBtn);
-    panel.appendChild(versionRow);
+    versionContainer.appendChild(versionHeaderRow);
+    versionContainer.appendChild(checkUpdatesBtn);
+    versionContainer.appendChild(updateResultBox);
+    panel.appendChild(versionContainer);
 
     overlay.appendChild(panel);
 
