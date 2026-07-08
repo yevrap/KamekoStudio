@@ -29,7 +29,7 @@ Biggest visible improvements to the player experience.
 
 | ID | Item | Effort | Status | Notes |
 |----|------|--------|--------|-------|
-| p1-01 | Durak: card animations | M | open | Animate card plays (slide to table), pickups (fan into hand), round resolution (sweep to discard). CSS transitions on DOM elements. |
+| p1-01 | Durak: card animations | M | ✅ | Already implemented — `ui.js` runs a generic FLIP animation on every `renderAll()`, covering plays sliding to the field, pickups fanning into hand on take, and round resolution sweeping to discard. Shipped in `b663dfa`; discovered already-done during 2026-07-07 /ship triage. |
 | p1-02 | Token economy: earn tokens by playing | M | open | Finish a game = 1 token, beat high score = 2 tokens. Settings panel faucet stays as fallback. Needs a token-history array in localStorage. |
 | p1-03 | Blob Zapper: juice + feedback | S | open | Screen shake on blob escape, particle burst on zap, pulsing color when destruction zone shrinks |
 | p1-04 | Blob Zapper: combo system | S | open | Chain kills within a short window for score multipliers |
