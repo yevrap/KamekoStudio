@@ -1,7 +1,6 @@
 export const state = {
     keysPressed: {},
-    canInteract: false,
-    menuOpen: false,
+    currentActivePortal: null, // Holds the reference to the game object if near one
     
     // Mobile controls state
     currentMovePointerId: null,
@@ -18,7 +17,6 @@ export const state = {
 };
 
 export const domElements = {
-    menu: null,
     interactionPrompt: null,
     sceneContainer: null,
     interactButtonTouch: null,
@@ -32,7 +30,7 @@ export const engineState = {
     renderer: null,
     player: null,
     walls: [],
-    menuActivatorMesh: null,
+    portals: [], // Array of portal meshes
     clock: null,
     time: 0
 };

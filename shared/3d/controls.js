@@ -25,25 +25,21 @@ export function setupControls() {
         window.addEventListener('pointercancel', handlePointerUp);
 
         domElements.interactButtonTouch.addEventListener('click', () => {
-            if (state.canInteract && !state.menuOpen) showMenu();
+            if (state.currentActivePortal) window.location.href = state.currentActivePortal.url;
         });
-        domElements.interactionPrompt.textContent = "Tap ACT to activate Gateway";
     } else {
         document.addEventListener('keydown', onKeyDown);
         document.addEventListener('keyup', onKeyUp);
         document.addEventListener('pointerlockchange', onPointerLockChange);
         engineState.renderer.domElement.addEventListener('click', () => {
-            if (!document.pointerLockElement && !state.menuOpen) {
+            if (!document.pointerLockElement) {
                 engineState.renderer.domElement.requestPointerLock();
             }
         });
-        domElements.interactionPrompt.textContent = "Press 'E' to activate Gateway";
     }
 }
 
 function handlePointerDown(e) {
-    if (state.menuOpen) return;
-    
     engineState.renderer.domElement.setPointerCapture(e.pointerId);
 
     if (e.clientX < window.innerWidth / 2) {
@@ -69,8 +65,6 @@ function handlePointerDown(e) {
 }
 
 function handlePointerMove(e) {
-    if (state.menuOpen) return;
-
     if (e.pointerId === state.currentMovePointerId) {
         let deltaX = e.clientX - state.movePointerStartX;
         let deltaY = e.clientY - state.movePointerStartY;
@@ -145,11 +139,10 @@ export function applyLookInertia() {
 
 function onKeyDown(event) {
     state.keysPressed[event.key.toLowerCase()] = true;
-    if (event.key.toLowerCase() === 'e' && state.canInteract && !state.menuOpen) {
-        showMenu();
+    if (event.key.toLowerCase() === 'e' && state.currentActivePortal) {
+        window.location.href = state.currentActivePortal.url;
     } else if (event.key.toLowerCase() === 'escape') {
-        if (state.menuOpen) hideMenu();
-        else if (document.pointerLockElement) document.exitPointerLock();
+        if (document.pointerLockElement) document.exitPointerLock();
     }
 }
 
@@ -169,26 +162,10 @@ function onPointerLockChange() {
 }
 
 function onMouseMove(event) {
-    if (!isPointerLocked || state.menuOpen) return;
+    if (!isPointerLocked) return;
     const movementX = event.movementX || 0;
     const movementY = event.movementY || 0;
     engineState.player.rotation.y -= movementX * 0.002;
     engineState.camera.rotation.x -= movementY * 0.002;
     engineState.camera.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, engineState.camera.rotation.x));
-}
-
-export function showMenu() {
-    domElements.menu.style.display = 'block';
-    state.menuOpen = true;
-    domElements.interactionPrompt.style.display = 'none';
-    if (!isTouchDevice && document.pointerLockElement) {
-        document.exitPointerLock();
-    }
-    domElements.sceneContainer.style.filter = 'blur(4px)';
-}
-
-export function hideMenu() {
-    domElements.menu.style.display = 'none';
-    state.menuOpen = false;
-    domElements.sceneContainer.style.filter = 'none';
 }

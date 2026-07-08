@@ -1,10 +1,9 @@
 import { state, domElements, engineState } from './state.js';
 import { PLAYER_HEIGHT } from './constants.js';
 import { createEnvironment, updatePlayer } from './gameplay.js';
-import { setupControls, applyLookInertia, hideMenu } from './controls.js';
+import { setupControls, applyLookInertia } from './controls.js';
 
 function init() {
-    domElements.menu = document.getElementById('menu');
     domElements.interactionPrompt = document.getElementById('interaction-prompt');
     domElements.sceneContainer = document.getElementById('scene-container');
     domElements.interactButtonTouch = document.getElementById('interact-button-touch');
@@ -47,11 +46,6 @@ function init() {
     setupControls();
 
     window.addEventListener('resize', onWindowResize);
-
-    const closeBtn = document.querySelector('.close-button');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', hideMenu);
-    }
 
     animate();
 }

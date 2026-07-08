@@ -1,5 +1,6 @@
 import { state, domElements, engineState } from './state.js';
-import { PLAYER_SPEED, PLAYER_HEIGHT, PLAYER_RADIUS, INTERACTION_DISTANCE } from './constants.js';
+import { PLAYER_SPEED, PLAYER_HEIGHT, PLAYER_RADIUS, INTERACTION_DISTANCE, ARCADE_GAMES } from './constants.js';
+import { isTouchDevice } from './controls.js';
 
 function createGridTexture(colorStr) {
     const canvas = document.createElement('canvas');
@@ -7,7 +8,7 @@ function createGridTexture(colorStr) {
     canvas.height = 512;
     const context = canvas.getContext('2d');
     
-    context.fillStyle = '#020208'; // very dark base
+    context.fillStyle = '#020208'; 
     context.fillRect(0, 0, 512, 512);
     
     context.strokeStyle = colorStr;
@@ -43,7 +44,7 @@ export function createEnvironment() {
         map: floorTexture, 
         roughness: 0.1, 
         metalness: 0.8,
-        emissive: 0x001111 // faint glow
+        emissive: 0x001111 
     });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(roomWidth, roomDepth), floorMaterial);
     floor.rotation.x = -Math.PI / 2; 
@@ -90,53 +91,69 @@ export function createEnvironment() {
     ceiling.rotation.x = Math.PI/2;
     engineState.scene.add(ceiling);
 
-    // Activator Mesh
-    const activatorGeometry = new THREE.OctahedronGeometry(0.7, 0);
-    const activatorMaterial = new THREE.MeshStandardMaterial({
-        color: 0x00ffff,
-        emissive: 0x00ffff,
-        emissiveIntensity: 0.5,
-        metalness: 0.8,
-        roughness: 0.2,
-        transparent: true,
-        opacity: 0.9,
-        wireframe: true
+    // Spawning Portals
+    const leftPositions = [
+        new THREE.Vector3(-roomWidth/2 + 1.2, 2.5, -roomDepth/4),
+        new THREE.Vector3(-roomWidth/2 + 1.2, 2.5, 0),
+        new THREE.Vector3(-roomWidth/2 + 1.2, 2.5, roomDepth/4)
+    ];
+    const rightPositions = [
+        new THREE.Vector3(roomWidth/2 - 1.2, 2.5, -roomDepth/4),
+        new THREE.Vector3(roomWidth/2 - 1.2, 2.5, 0),
+        new THREE.Vector3(roomWidth/2 - 1.2, 2.5, roomDepth/4)
+    ];
+    const backPositions = [
+        new THREE.Vector3(-roomWidth/4, 2.5, -roomDepth/2 + 1.2),
+        new THREE.Vector3(0, 2.5, -roomDepth/2 + 1.2),
+        new THREE.Vector3(roomWidth/4, 2.5, -roomDepth/2 + 1.2)
+    ];
+    const positions = [...leftPositions, ...rightPositions, ...backPositions];
+    const rotations = [
+        ...leftPositions.map(() => Math.PI/2),
+        ...rightPositions.map(() => -Math.PI/2),
+        ...backPositions.map(() => 0)
+    ];
+
+    ARCADE_GAMES.forEach((game, index) => {
+        if (!positions[index]) return; // Fallback if more than 9 games
+        const portalGroup = new THREE.Group();
+        portalGroup.position.copy(positions[index]);
+        portalGroup.rotation.y = rotations[index];
+        portalGroup.userData = { game: game }; 
+
+        // Outer Ring
+        const ringGeo = new THREE.TorusGeometry(1, 0.1, 16, 64);
+        const ringMat = new THREE.MeshStandardMaterial({
+            color: game.color,
+            emissive: game.color,
+            emissiveIntensity: 0.8,
+            metalness: 0.5,
+            roughness: 0.2
+        });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        portalGroup.add(ring);
+
+        // Inner Core
+        const coreGeo = new THREE.OctahedronGeometry(0.3, 0);
+        const coreMat = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            emissive: game.color,
+            emissiveIntensity: 1.0,
+            wireframe: true
+        });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        portalGroup.add(core);
+
+        // Light
+        const light = new THREE.PointLight(game.color, 1.2, 10);
+        portalGroup.add(light);
+
+        engineState.scene.add(portalGroup);
+        engineState.portals.push(portalGroup);
     });
-    engineState.menuActivatorMesh = new THREE.Mesh(activatorGeometry, activatorMaterial);
-    engineState.menuActivatorMesh.position.set(0, 1.0, -roomDepth/2 + wallThickness + 1.2);
-    engineState.menuActivatorMesh.castShadow = true;
-    engineState.scene.add(engineState.menuActivatorMesh);
-
-    // Localized Neon Lights
-    const activatorLight = new THREE.PointLight(0x00ffff, 1.5, 10);
-    activatorLight.position.copy(engineState.menuActivatorMesh.position);
-    engineState.scene.add(activatorLight);
-
-    const cornerLightDist = 12;
-    const c1 = new THREE.PointLight(0xff00ff, 1.2, cornerLightDist);
-    c1.position.set(-roomWidth/2 + 1, 3, -roomDepth/2 + 1);
-    engineState.scene.add(c1);
-
-    const c2 = new THREE.PointLight(0xff00ff, 1.2, cornerLightDist);
-    c2.position.set(roomWidth/2 - 1, 3, -roomDepth/2 + 1);
-    engineState.scene.add(c2);
-
-    const c3 = new THREE.PointLight(0x00ffff, 1.2, cornerLightDist);
-    c3.position.set(-roomWidth/2 + 1, 3, roomDepth/2 - 1);
-    engineState.scene.add(c3);
-
-    const c4 = new THREE.PointLight(0x00ffff, 1.2, cornerLightDist);
-    c4.position.set(roomWidth/2 - 1, 3, roomDepth/2 - 1);
-    engineState.scene.add(c4);
 }
 
 export function updatePlayer(deltaTime) {
-    if (state.menuOpen) {
-        state.movementInput = { x: 0, y: 0 };
-        state.keysPressed = {};
-        return;
-    }
-
     const moveSpeed = PLAYER_SPEED * deltaTime;
     let moveDirection = new THREE.Vector3();
 
@@ -200,18 +217,28 @@ export function updatePlayer(deltaTime) {
         if (!collisionZ) engineState.player.position.z = tempPos.z;
     }
 
-    const distanceToActivator = engineState.player.position.distanceTo(engineState.menuActivatorMesh.position);
-    if (distanceToActivator < INTERACTION_DISTANCE && !state.menuOpen) {
-        state.canInteract = true;
-        domElements.interactionPrompt.style.display = 'block';
-    } else {
-        state.canInteract = false;
-        domElements.interactionPrompt.style.display = 'none';
+    let closestPortal = null;
+    let minDistance = INTERACTION_DISTANCE;
+
+    for (const portal of engineState.portals) {
+        portal.children[0].rotation.z += deltaTime * 1.5;
+        portal.children[1].rotation.y -= deltaTime * 2.0;
+        portal.children[1].rotation.x += deltaTime * 1.0;
+
+        const distance = engineState.player.position.distanceTo(portal.position);
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestPortal = portal;
+        }
     }
 
-    if (engineState.menuActivatorMesh) {
-        engineState.time += deltaTime;
-        engineState.menuActivatorMesh.rotation.y = engineState.time * 0.5;
-        engineState.menuActivatorMesh.position.y = 1.0 + Math.sin(engineState.time * 1.5) * 0.1;
+    if (closestPortal) {
+        state.currentActivePortal = closestPortal.userData.game;
+        const btn = isTouchDevice ? 'ACT' : 'E';
+        domElements.interactionPrompt.textContent = `Press ${btn} to enter ${state.currentActivePortal.name}`;
+        domElements.interactionPrompt.style.display = 'block';
+    } else {
+        state.currentActivePortal = null;
+        domElements.interactionPrompt.style.display = 'none';
     }
 }
