@@ -783,6 +783,7 @@
             activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
              if (Tone && Tone.Transport.state === "started") { Tone.Transport.stop(); }
             const _prevRR = parseInt(localStorage.getItem('riverRunHighScore') || '0', 10); if (score > _prevRR) localStorage.setItem('riverRunHighScore', score);
+            if (window.KamekoTokens) window.KamekoTokens.earn(score > _prevRR ? 2 : 1, 'river-run finish');
             messageText.innerHTML = `Game Over!<br>Final Score: ${score}`; startButton.textContent = 'Restart Game'; messageBox.style.display = 'block';
         }
 

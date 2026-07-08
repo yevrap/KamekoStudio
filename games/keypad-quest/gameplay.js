@@ -8,7 +8,7 @@ import { updateMenuPlayBtn, buildActiveDeck } from './deck-manager.js';
 // ─── Persistence ──────────────────────────────────────────────────────────────
 
 export function getHW() { return parseInt(localStorage.getItem('keypadQuestHighWave') || '0', 10); }
-export function saveHW(w) { if (w > getHW()) localStorage.setItem('keypadQuestHighWave', w); }
+export function saveHW(w) { const isNew = w > getHW(); if (isNew) localStorage.setItem('keypadQuestHighWave', w); return isNew; }
 export function getBT(n) { return parseInt(localStorage.getItem('keypadQuestBestTime_' + n) || '0', 10); }
 export function saveBT(n, ms) {
   const p = getBT(n);
@@ -172,7 +172,7 @@ export function updateWave(dt) {
 export function endWave() {
   const elapsed = performance.now() - state.waveStartTime;
   state.score += state.waveScore;
-  saveHW(state.wave);
+  if (saveHW(state.wave) && window.KamekoTokens) window.KamekoTokens.earn(2, 'keypad-quest new high wave');
   const newBest = !state.chillMode && saveBT(state.wave, elapsed);
   if (!state.chillMode && state.wave % 5 === 0) saveCP();
   const msg = newBest ? 'Wave ' + state.wave + ' — new best!' : 'Wave ' + state.wave + ' clear!';

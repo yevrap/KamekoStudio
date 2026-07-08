@@ -440,6 +440,7 @@
             if (!userQuit) {
                 sessionEndedScoreTextElement.textContent = `Session over! Reached round ${currentRoundNumber}.`;
                 gameOverModalElement.classList.remove('hidden');
+                if (window.KamekoTokens) window.KamekoTokens.earn(1, 'hidden-object finish');
             } else {
                 showScreen('main');
             }

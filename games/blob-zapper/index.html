@@ -449,6 +449,7 @@
                              console.log("Game Over condition met.");
                              isGameOver = true;
                              document.body.dataset.gameOver = "true";
+                             if (window.KamekoTokens) window.KamekoTokens.earn(1, 'blob-zapper finish');
                         }
 
                         drawDestructionZone();

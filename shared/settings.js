@@ -18,10 +18,12 @@
  *
  * Token system (window.KamekoTokens):
  *   localStorage key: 'tokens' = integer
- *   KamekoTokens.get()     — returns current count
- *   KamekoTokens.add(n=1)  — adds n tokens
- *   KamekoTokens.spend()   — deducts 1; returns true on success, false if none
- *   KamekoTokens.toast(msg)— shows a brief no-tokens notice
+ *   localStorage key: 'tokenHistory' = JSON array of {ts, amount, reason}, capped at 50 entries
+ *   KamekoTokens.get()             — returns current count
+ *   KamekoTokens.add(n=1)          — adds n tokens (no history entry; used by the settings-panel faucet)
+ *   KamekoTokens.earn(n, reason)   — adds n tokens and records a history entry; used by games rewarding play
+ *   KamekoTokens.spend()           — deducts 1; returns true on success, false if none
+ *   KamekoTokens.toast(msg)        — shows a brief no-tokens notice
  */
 
 (function () {
@@ -41,11 +43,26 @@
     if (header) header.textContent = count;
   }
 
+  function recordTokenHistory(amount, reason) {
+    let history;
+    try { history = JSON.parse(localStorage.getItem('tokenHistory') || '[]'); }
+    catch (e) { history = []; }
+    history.push({ ts: Date.now(), amount: amount, reason: reason || '' });
+    if (history.length > 50) history = history.slice(history.length - 50);
+    localStorage.setItem('tokenHistory', JSON.stringify(history));
+  }
+
   window.KamekoTokens = {
     get: getTokenCount,
     add: function (n) {
       if (n === undefined) n = 1;
       saveTokenCount(getTokenCount() + n);
+      updateTokenDisplay();
+    },
+    earn: function (n, reason) {
+      if (n === undefined) n = 1;
+      saveTokenCount(getTokenCount() + n);
+      recordTokenHistory(n, reason);
       updateTokenDisplay();
     },
     spend: function () {
@@ -145,7 +162,7 @@
     }
 
     const keysToRemove = [
-      'theme', 'tokens', 'devMode',
+      'theme', 'tokens', 'tokenHistory', 'devMode',
       // Game progress
       'gridGameTopScoreScore', 'gridGameTopScoreSurvival',
       'riverRunHighScore', 'keypadQuestHighWave',

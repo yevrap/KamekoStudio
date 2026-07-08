@@ -336,6 +336,7 @@ export function checkGameOver() {
       state.winnerText = 'Game over';
     }
   }
+  if (typeof window !== 'undefined' && window.KamekoTokens) window.KamekoTokens.earn(1, 'durak finish');
   return true;
 }
 

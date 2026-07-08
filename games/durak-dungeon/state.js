@@ -30,6 +30,7 @@ export function newRun(seed) {
     attackDamageDealt: 0,
     lastDefendSuit: 0,
     currentTrumpOverride: null,
+    newBestFloorThisRun: false,
     stats: {
       floorsCleared: 0,
       totalDamageDealt: 0,

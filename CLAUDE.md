@@ -81,7 +81,7 @@ Every page includes this script before `</body>`:
 - Gear button (⚙) injected fixed top-right on every page
 - Settings overlay with: dark mode toggle, Back to Gallery link, token count + Get Token button
 - Dispatches `window` events: `settingsOpened` / `settingsClosed` — games listen to these to pause/resume
-- `window.KamekoTokens` global: `.get()`, `.add(n=1)`, `.spend()` (returns false if 0), `.toast(msg)`
+- `window.KamekoTokens` global: `.get()`, `.add(n=1)`, `.earn(n, reason)` (adds + logs to `tokenHistory`), `.spend()` (returns false if 0), `.toast(msg)`
 - Dark mode: `localStorage` key `theme` = `'dark'` | `'light'`, applied as `body.dark-mode` class
 - Token count: `localStorage` key `tokens` = integer
 
@@ -133,12 +133,15 @@ startButton.addEventListener('click', () => {
 ```
 Tokens are free to add via the settings panel (no real economy — it's a casual mechanic).
 
+**Earning tokens by playing:** Games reward tokens on session finish via `window.KamekoTokens.earn(n, reason)` — adds `n` tokens and logs `{ts, amount, reason}` to the `tokenHistory` array (capped at 50 entries). Convention: finishing a session = 1 token, beating a personal best (high score, high wave, best floor, etc.) = 2 tokens instead of 1 (not additive). Games with no comparable "best" concept (e.g. blob-zapper, durak, hidden-object) award a flat 1 token on finish only. Intermediate progress within a still-active session (e.g. a durak-dungeon floor clear, a durak-tactics non-final battle win) does not award tokens — only the actual end of the play session does. The settings-panel faucet (`add()`, no history entry) remains the fallback for players who don't want to grind.
+
 ## localStorage Keys Reference
 
 | Key | Owner | Type | Notes |
 |-----|-------|------|-------|
 | `theme` | settings.js | `'dark'`\|`'light'` | Default `'dark'` |
 | `tokens` | settings.js | integer string | Token balance |
+| `tokenHistory` | settings.js | JSON string | Array of `{ts, amount, reason}` earn events, capped at 50 entries |
 | `devMode` | settings.js | `'true'`\|`'false'` | Enables developer tools in settings panel |
 | `lastPlayed_hiddenObject` | hidden-object | timestamp (ms) | Set on session start |
 | `lastPlayed_materialsRun` | materials-run | timestamp (ms) | Set on session start |

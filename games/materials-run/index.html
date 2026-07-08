@@ -345,7 +345,9 @@
         /** Displays end screen (Game Over or Win) */
         function showEndScreen(isWin) {
             const finalScore = score;
+            const priorTop = getTopScore(currentGameMode);
             updateTopScore(currentGameMode, finalScore); // Update score for the mode played
+            if (window.KamekoTokens) window.KamekoTokens.earn(finalScore > priorTop ? 2 : 1, 'materials-run finish');
             const topScoreScore = getTopScore('score'); // Get latest scores for display
             const topScoreSurvival = getTopScore('survival');
 

@@ -85,9 +85,11 @@ function enterCombatPhase() {
 function handleGameOver() {
     state.gameState = STATES.GAMEOVER;
     const currentHighScore = parseInt(localStorage.getItem('alchemistHighScore') || '0', 10);
-    if (state.score > currentHighScore) {
+    const isNewRecord = state.score > currentHighScore;
+    if (isNewRecord) {
         localStorage.setItem('alchemistHighScore', state.score.toString());
     }
+    if (window.KamekoTokens) window.KamekoTokens.earn(isNewRecord ? 2 : 1, 'durak-alchemist finish');
 }
 
 function endCombatTurn() {
