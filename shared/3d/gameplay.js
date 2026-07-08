@@ -176,23 +176,29 @@ function spawnTrophies() {
 
     const achievements = [];
     
-    if (parseInt(localStorage.getItem('tokens') || '0', 10) > 0) 
-        achievements.push({ type: 'coin', color: 0xffd700 });
+    const tokens = parseInt(localStorage.getItem('tokens') || '0', 10);
+    if (tokens > 0) 
+        achievements.push({ type: 'coin', color: 0xffd700, desc: `Arcade Tokens: ${tokens}` });
     
-    if (parseInt(localStorage.getItem('blobZapperHighScore') || '0', 10) > 0) 
-        achievements.push({ type: 'blob', color: 0xff0000 });
+    const blobScore = parseInt(localStorage.getItem('blobZapperHighScore') || '0', 10);
+    if (blobScore > 0) 
+        achievements.push({ type: 'blob', color: 0xff0000, desc: `Blob Zapper High Score: ${blobScore}` });
 
-    if (parseInt(localStorage.getItem('riverRunHighScore') || '0', 10) > 0) 
-        achievements.push({ type: 'boat', color: 0x0088ff });
+    const riverScore = parseInt(localStorage.getItem('riverRunHighScore') || '0', 10);
+    if (riverScore > 0) 
+        achievements.push({ type: 'boat', color: 0x0088ff, desc: `River Run High Score: ${riverScore}` });
 
-    if (parseInt(localStorage.getItem('alchemistHighScore') || '0', 10) > 0) 
-        achievements.push({ type: 'potion', color: 0x00ff00 });
+    const alchScore = parseInt(localStorage.getItem('alchemistHighScore') || '0', 10);
+    if (alchScore > 0) 
+        achievements.push({ type: 'potion', color: 0x00ff00, desc: `Durak Alchemist High Score: ${alchScore}` });
 
-    if (parseInt(localStorage.getItem('durakDungeon_victories') || '0', 10) > 0) 
-        achievements.push({ type: 'crown', color: 0xaa00ff });
+    const ddWins = parseInt(localStorage.getItem('durakDungeon_victories') || '0', 10);
+    if (ddWins > 0) 
+        achievements.push({ type: 'crown', color: 0xaa00ff, desc: `Durak Dungeon Victories: ${ddWins}` });
 
-    if (parseInt(localStorage.getItem('durakTactics_victories') || '0', 10) > 0) 
-        achievements.push({ type: 'sword', color: 0x00ffff });
+    const dtWins = parseInt(localStorage.getItem('durakTactics_victories') || '0', 10);
+    if (dtWins > 0) 
+        achievements.push({ type: 'sword', color: 0x00ffff, desc: `Durak Tactics Victories: ${dtWins}` });
 
     if (achievements.length === 0) return;
 
@@ -202,6 +208,7 @@ function spawnTrophies() {
     achievements.forEach((ach) => {
         const trophyGroup = new THREE.Group();
         trophyGroup.position.set(startX, shelfY + 0.5, shelfZ);
+        trophyGroup.userData = { isTrophy: true, description: ach.desc };
 
         let mesh;
         const mat = new THREE.MeshStandardMaterial({
@@ -320,7 +327,9 @@ export function updatePlayer(deltaTime) {
     }
 
     let closestPortal = null;
+    let closestTrophy = null;
     let minDistance = INTERACTION_DISTANCE;
+    let minTrophyDistance = INTERACTION_DISTANCE;
 
     for (const portal of engineState.portals) {
         portal.children[0].rotation.z += deltaTime * 1.5;
@@ -334,18 +343,28 @@ export function updatePlayer(deltaTime) {
         }
     }
 
+    engineState.trophies.forEach((trophy, i) => {
+        trophy.rotation.y += deltaTime;
+        trophy.position.y = 2.5 + Math.sin(engineState.time * 2 + i) * 0.1;
+        
+        const distance = engineState.player.position.distanceTo(trophy.position);
+        if (distance < minTrophyDistance) {
+            minTrophyDistance = distance;
+            closestTrophy = trophy;
+        }
+    });
+
     if (closestPortal) {
         state.currentActivePortal = closestPortal.userData.game;
         const btn = isTouchDevice ? 'ACT' : 'E';
         domElements.interactionPrompt.textContent = `Press ${btn} to enter ${state.currentActivePortal.name}`;
         domElements.interactionPrompt.style.display = 'block';
+    } else if (closestTrophy) {
+        state.currentActivePortal = null;
+        domElements.interactionPrompt.textContent = `🏆 ${closestTrophy.userData.description}`;
+        domElements.interactionPrompt.style.display = 'block';
     } else {
         state.currentActivePortal = null;
         domElements.interactionPrompt.style.display = 'none';
     }
-
-    engineState.trophies.forEach((trophy, i) => {
-        trophy.rotation.y += deltaTime;
-        trophy.position.y = 2.5 + Math.sin(engineState.time * 2 + i) * 0.1;
-    });
 }
