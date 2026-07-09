@@ -7,6 +7,8 @@ AI agents read this file to pick the next work item. Items marked ✅ are comple
 
 Priorities: P0 (foundation/blockers) → P1 (high-impact polish) → P2 (medium features) → P3 (new games) → Backlog (tech debt).
 
+> **Direction (2026-07-09):** The studio is moving to a verdict-driven loop — Yev's playtest verdicts set per-game tiers (**Invest** / **Maintain** / **Park**) that reprioritize this roadmap. Until the tier questionnaire is filled (vault: `30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/Kameko Studio Questionnaire — Taste and Tiers.md`), prefer the loop-infrastructure items (p0-08…p0-11) and the durak items over P1/P2 polish for other games — some of those games are about to be parked. Full plan: vault note `Kameko Studio — Agent Game Loop Roadmap.md` in the same folder; per-session verdicts land in `Kameko Playtest Log.md` there too — read it before triaging.
+
 ---
 
 ## P0 — Foundation
@@ -22,6 +24,10 @@ Pre-conditions that should be cleared before adding features.
 | p0-05 | Fix waterfall missing lastPlayed_ write | S | ✅ | Shipped in `0a6fcb3` — `games/waterfall/index.html:223` writes `lastPlayed_waterfall` right after the token spend. Status was already ✅ on disk; note text updated for clarity during the 2026-07-07 /ship pass. |
 | p0-06 | Add durak-alchemist to games/CLAUDE.md and games/GEMINI.md | S | ✅ | Shipped 2026-07-07 in `5c889a7`. Added durak-alchemist rows to the ES Module Refactor Status, Games, and localStorage Keys tables in both files. |
 | p0-07 | Add unit tests for durak-dungeon and durak-tactics pure logic | M | ✅ | Shipped 2026-07-07 in `63c1879`. durak-dungeon: 20 tests on constants.js + state.js (mulberry32, seedFromString, shuffle, canDefend incl. no-trumps mutation, hasRelic, getActiveTrumpSuit). durak-tactics: 7 tests on constants.js's `getDisplayVal` — its only DOM-free function; the rest of the game's logic lives in gameplay.js, which reads DOM elements at module load and isn't unit-testable without a refactor (documented as an intentional ui+gameplay merge in games/CLAUDE.md). |
+| p0-08 | Create `docs/brief.md` — taste brief steering new-game generation | S | open | The steering doc `/new-game` reads: what makes a game good *for Yev* (durak is the benchmark), genres to try, session length, prototype bar, things to avoid. **Seed it from the vault questionnaire answers** (path in the Direction note above) — if the questionnaire is still unfilled, skip this item and pick another. |
+| p0-09 | `/new-game` command — jam workflow | M | open | New `.claude/commands/new-game.md`: read `docs/brief.md` + the vault playtest log → pitch 3 concepts (one line each) → build the strongest as a **single-file prototype** at `drafts/<slug>/index.html` (mobile-first, playable core loop, restart button; NO tests/token hooks/module split/doc tables at draft stage) → write `drafts/<slug>/PLAYTEST.md` (3 bullets: what to evaluate) → register it on the drafts index (p0-10) → commit, push, verify deploy, report the live URL. Must work with a sensible fallback brief if p0-08 hasn't shipped yet. |
+| p0-10 | Drafts index page | S | open | `drafts/index.html` listing every prototype folder (name, one-liner, link, date). Link to it from the arcade root page as a small "Lab"/"Drafts" entry (settings panel dev section is fine). Drafts already deploy with the repo on GitHub Pages — this just makes them findable on the phone. |
+| p0-11 | Promotion checklist doc | S | open | `docs/promotion-checklist.md`: everything a draft pays to graduate into `games/` — ES module split per convention, unit tests for pure logic, token earn hook, `shared/settings.js` integration, `lastPlayed_*` key, CLAUDE.md game-table rows (GEMINI.md via generator), roadmap entry. Written concretely enough that `/ship promote <slug>` can execute it without follow-up questions. |
 
 ---
 
@@ -39,6 +45,8 @@ Biggest visible improvements to the player experience.
 | p1-06 | Hidden Object: hint system (token cost) | S | open | Hint button highlights the quadrant containing the target, costs 1 token |
 | p1-07 | Fix AI Hard failing test (durak ai.js bug) | M | ✅ | Shipped 2026-07-08 in `9c9a629`. Root cause: `aiPlayHard`'s defend branch forced a trump defense whenever the deck was empty, before the existing comfort-based take/defend check could run. Now the forced-defend path only fires when defending would clear (or nearly clear) the hand (genuine survival), otherwise the comfort check can declare Take. Also fixed the test's fixture — the attacker seat needs a matching-rank card so `declareTake` settles at `pileOn` instead of auto-resolving via `endBout`. All 113 tests pass. |
 | p1-08 | High-score displays: celebrate new records | S | ✅ | Shipped 2026-07-08 in `afe7df4`. Added a gold pulse/badge treatment: materials-run gets a pulsing "New Record!" badge on the top-score line matching the mode just played; durak-alchemist's game-over screen previously showed no final score or record indicator at all, both added; blob-zapper's existing "New Best!" text now scale-pulses; keypad-quest's new-best wave-clear message renders gold instead of the same cyan as a normal clear. Also fixed a pre-existing keypad-quest bug found during verification: `endWave()` pushed the float text then immediately called `startWave()`, which reset `state.floats` in the same synchronous call before any frame rendered it — the wave-clear/new-best message never actually displayed for either case. river-run left out of scope: it has no score display on its game-over overlay at all today, a larger gap than "no visual distinction." |
+| p1-09 | Durak: hand sort toggle | S | open | Sort my hand by suit-then-rank or by strength (trump last); persist the choice in localStorage. Verified 2026-07-09: no sorting UI exists (ai.js sorts internally only). From the vault durak inbox. |
+| p1-10 | Durak: finishing-placement display | S | open | Game-over overlay shows the finish order for all seats ("You finished 2nd of 4"), not just who is the durak. Verified 2026-07-09: no placement concept in gameplay.js. From the vault durak inbox. |
 
 ---
 
@@ -58,6 +66,10 @@ New mechanics that add replayability.
 | p2-08 | Durak: match history and stats | S | ✅ | Shipped 2026-07-07 in `36f6085`. Seat 0 (device-owner human) win/loss/draw record tracked in `durak_wins`/`durak_losses`/`durak_draws`, shown on the game-over overlay. |
 | p2-09 | Waterfall: wave structure | M | open | Organized waves (line, V-formation, spiral) instead of random spawns |
 | p2-10 | River Run: biome transitions | M | open | Visual storytelling as score increases: forest → canyon → volcanic → space |
+| p2-11 | Durak: perevodnoy (transfer) variant | M | open | Rules toggle at game setup: defender may transfer the attack to the next player by adding a card of the same rank; AI must play the variant correctly. Verified 2026-07-09: no transfer logic exists in games/durak (durak-alchemist's canTransfer is a different mechanic). From the vault durak inbox. |
+| p2-12 | Durak: seeded deals + share link | M | open | Optional seed (URL param + "share this deal" button) producing a deterministic shuffle so a deal can be replayed or sent to a friend. Needs a seeded RNG — durak-dungeon's mulberry32/seedFromString are the in-repo prior art. From the vault durak inbox. |
+| p2-13 | Durak: extended stats | S | open | Beyond p2-08's W/L/D: wins as attacker vs defender, take rate, average game length, current streak; small stats view reachable from the game-over overlay or settings. From the vault durak inbox ("Stats"). |
+| p2-14 | Durak: learning/referee mode — design note first | M | open | Vault inbox asks for an audit/learning/tutorial mode. Too big for one ship: first deliverable is `docs/durak-learning-mode.md` (what it teaches, hint UI, move-legality explanations, relationship to difficulty levels) plus a proposed first shippable slice as a new roadmap item. |
 
 ---
 
