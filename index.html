@@ -353,6 +353,16 @@
                     </div>
                 </div>
 
+                <div class="game-card" style="--card-accent:#ffd54f">
+                    <div class="game-card-body">
+                        <div class="game-emoji">🎴</div>
+                        <div class="game-title">Tysiacha</div>
+                        <div class="game-desc">Classic trick-taking card game — bid, declare marriages, race to 1000</div>
+                        <div class="game-meta" id="meta-tysiacha"></div>
+                        <a href="games/tysiacha/" class="play-btn" style="background:#ffd54f; color:#000;">▶ Play &nbsp;1🪙</a>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -369,6 +379,7 @@
             { id: 'durakDungeon', name: 'Durak Dungeon', emoji: '🏰', href: 'games/durak-dungeon/' },
             { id: 'durakTactics', name: 'Durak Tactics', emoji: '⚔️', href: 'games/durak-tactics/' },
             { id: 'durakAlchemist', name: 'Durak Alchemist', emoji: '⚗️', href: 'games/durak-alchemist/' },
+            { id: 'tysiacha',     name: 'Tysiacha (1000)', emoji: '🎴', href: 'games/tysiacha/' },
         ];
 
         const SCORES_META = [
@@ -378,6 +389,7 @@
             { label: 'Keypad Quest',              key: 'keypadQuestHighWave',      suffix: ' waves' },
             { label: 'Durak Dungeon',              key: 'durakDungeon_bestFloor',   suffix: ' floors' },
             { label: 'Durak Alchemist',          key: 'alchemistHighScore',       suffix: ' pts' },
+            { label: 'Tysiacha',                 key: 'tysiachaHighScore',        suffix: ' pts' },
         ];
 
         function timeAgo(ts) {
@@ -448,6 +460,12 @@
             if (ddFloor > 0) {
                 var el = document.getElementById('meta-durakDungeon');
                 if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: Floor ' + ddFloor;
+            }
+
+            var tyScore = parseInt(localStorage.getItem('tysiachaHighScore') || '0', 10);
+            if (tyScore > 0) {
+                var el = document.getElementById('meta-tysiacha');
+                if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: ' + tyScore + ' pts';
             }
 
             // Your Best Scores section

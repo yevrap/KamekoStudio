@@ -21,5 +21,6 @@ export const ARCADE_GAMES = [
     { name: "Durak Card Arena", url: "games/durak/", color: 0xff00ff },
     { name: "Durak Dungeon", url: "games/durak-dungeon/", color: 0x8800ff },
     { name: "Durak Tactics Arena", url: "games/durak-tactics/", color: 0x00ffff },
-    { name: "Durak Alchemist", url: "games/durak-alchemist/", color: 0x00ff88 }
+    { name: "Durak Alchemist", url: "games/durak-alchemist/", color: 0x00ff88 },
+    { name: "Tysiacha", url: "games/tysiacha/", color: 0xffd54f }
 ];

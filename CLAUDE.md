@@ -41,6 +41,7 @@ tests/
   keypad-quest.test.js      — Unit tests for shared/utils.js (node --test tests/)
   durak.test.mjs            — Unit tests for games/durak/ pure rules (constants, state, gameplay)
   durak-alchemist.test.mjs  — Unit tests for games/durak-alchemist/ pure rules (gridLogic, combatLogic, constants)
+  tysiacha.test.mjs         — Unit tests for games/tysiacha/ pure rules (constants, state, gameplay)
   README.md                 — How to run tests
 <!-- GEMINI-OVERRIDE:structure-self-ref -->
 CLAUDE.md           — This file
@@ -59,6 +60,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
   hidden-object/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   keypad-quest/     — index.html + style.css + ES modules (constants/state/fx/deck-manager/rendering/gameplay/input/main.js)
   materials-run/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
+  tysiacha/         — index.html + style.css + ES modules (constants/state/gameplay/ai/ui/main.js)
   river-run/
   waterfall/
 ```
@@ -81,6 +83,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/durak/` | Durak | DOM | Classic Russian card game for 2–6 players. Modes: vs Computer (1 human + 2–5 AI) or Hot-seat (2–6 humans sharing a device, with a pass-device cover at 3+ players). Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap, pile-on during the defender's take, ordered end-of-bout draws (attacker → contributors → defender), elimination when hand and deck are both empty. Last player holding cards is the Durak. |
 | `games/durak-dungeon/` | Durak Dungeon | DOM | Roguelike dungeon crawler using Durak card mechanics. Defend against enemy attacks using Durak rules, then counter-attack to deal damage. 20-floor run with relics (15 types), shops, enhanced cards (burning/armored/vampiric/lucky), boss mutations. Seeded runs for async multiplayer via URL. |
 | `games/durak-tactics/` | Durak Tactics | DOM | Turn-based grid tactics using Durak card mechanics. Place cards as units on a 5×4 grid to battle enemy units. Campaign map with battles, shops, events, and bosses. Draft cards and spend gold between encounters. |
+| `games/tysiacha/` | Tysiacha | DOM | Classic trick-taking card game — bid, declare marriages, race to 1000. Built-in interactive coach. Saves `tysiachaHighScore`. |
 
 ## Shared Infrastructure: `shared/settings.js`
 
@@ -180,6 +183,8 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `durakTactics_victories` | durak-tactics | integer string | Number of campaign victories |
 | `lastPlayed_durakAlchemist` | durak-alchemist | timestamp (ms) | Set on session start |
 | `alchemistHighScore` | durak-alchemist | integer string | Highest score achieved |
+| `lastPlayed_tysiacha` | tysiacha | timestamp (ms) | Set on session start |
+| `tysiachaHighScore` | tysiacha | integer string | Highest score achieved |
 | `gridGameTopScoreScore` | materials-run | integer string | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | integer string | Survival mode high score |
 | `riverRunHighScore` | river-run | integer string | Points high score |
@@ -237,6 +242,7 @@ Pure utility functions in `shared/utils.js`, and pure game-logic modules in `gam
 - `shared/utils.js` (`keypad-quest.test.js`): `parsePlainText`, `deckToPlainText`, `typeForStreak`, `shuffle`, `lerpHex`
 - `games/durak/` (`durak.test.mjs`): constants, state, gameplay rules, AI logic (`_test_aiTurn`)
 - `games/durak-alchemist/` (`durak-alchemist.test.mjs`): `gridLogic.js`, `combatLogic.js`, `constants.js`
+- `games/tysiacha/` (`tysiacha.test.mjs`): `constants.js`, `state.js`, `gameplay.js`
 
 Browser-side logic (game loops, DOM state, T9 input state machine) is not unit-tested — verify by running the game in a browser.
 

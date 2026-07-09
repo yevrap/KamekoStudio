@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1117">
+<title>Tysiacha</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+    <div id="topbar">
+        <div class="title">🎴 Tysiacha <small>· to 1000</small></div>
+        <div class="tb-btns">
+            <button class="tb-btn" id="btn-howto">?</button>
+            <button class="tb-btn coach-on" id="btn-coach">Coach</button>
+            <button class="tb-btn" id="btn-restart">↺</button>
+        </div>
+    </div>
+
+    <div id="opponents"></div>
+
+    <div id="table">
+        <div id="status"></div>
+        <div id="trump-chip"></div>
+        <div id="trick-area"></div>
+        <div id="banner"></div>
+    </div>
+
+    <div id="tip"><span class="tip-icon">🧭</span><span id="tip-text"></span></div>
+
+    <div id="actions"></div>
+
+    <div id="hand-wrap">
+        <div id="me-info"></div>
+        <div id="hand"></div>
+    </div>
+</div>
+
+<div class="overlay hidden" id="howto">
+    <div class="panel">
+        <h2 id="ht-title"></h2>
+        <div class="p-body" id="ht-body"></div>
+        <div class="p-dots" id="ht-dots"></div>
+        <div class="p-nav">
+            <button class="act-btn secondary" id="ht-back">Back</button>
+            <button class="act-btn" id="ht-next">Next</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay hidden" id="marry">
+    <div class="panel">
+        <h2>Declare a marriage?</h2>
+        <div class="p-body" id="marry-body"></div>
+        <div class="p-nav">
+            <button class="act-btn secondary" id="marry-no">Just play the card</button>
+            <button class="act-btn" id="marry-yes">Declare!</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay hidden" id="summary">
+    <div class="panel">
+        <h2 id="sum-title"></h2>
+        <div class="p-body" id="sum-body"></div>
+        <div class="p-nav">
+            <button class="act-btn" id="sum-next"></button>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="main.js"></script>
+<script src="../../shared/settings.js" data-gallery-depth="2"></script>
+</body>
+</html>

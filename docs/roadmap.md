@@ -80,7 +80,7 @@ New mechanics that add replayability.
 | p3-01 | Signal Tower | L | open | Listen to procedurally generated melody, reproduce on colored pads. Web Audio API + Canvas 2D. Mobile-first. |
 | p3-02 | Hex Drift | L | open | Hex-grid territory game vs AI. CSS Grid + DOM. Turn-based strategy — fills a gap in the arcade lineup. |
 | p3-03 | Glyph Run | L | open | Endless side-scroller: auto-run, swipe to jump/duck/dash, obstacles are glyphs matching a cognitive prompt. Canvas 2D. |
-| p3-04 | Tysiacha (1000) — draft in the Lab | M | 🚧 | Prototype shipped 2026-07-09 at `drafts/tysiacha/` (first `/new-game`-style jam, direction picked by Yev). 3-player trick-taking with bidding, K+Q marriages/trump, race to 1000; built teach-first (5-step how-to overlay + always-on Coach bar with legal-move dimming) because Yev is learning the rules. **Next step is a phone playtest verdict in the vault's Kameko Playtest Log** — keep → run `docs/promotion-checklist.md`; kill/meh → iterate or delete the draft. Simplifications listed in `drafts/tysiacha/PLAYTEST.md`. |
+| p3-04 | Tysiacha (1000) — draft in the Lab | M | ✅ | Promoted to `games/tysiacha/` on 2026-07-09. All phases (split, tests, token/settings hooks, PWA metas, root registrations) complete. 130 tests covering `constants.js`, `state.js`, and `gameplay.js` passing.
 
 ---
 

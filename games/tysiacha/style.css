@@ -1,0 +1,312 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --bg:        #0d1117;
+    --surface:   #161d29;
+    --surface2:  #1d2637;
+    --border:    #2c3a52;
+    --text:      #e6edf7;
+    --muted:     #8494ad;
+    --accent:    #00e5a0;
+    --gold:      #ffd54f;
+    --red:       #ff5252;
+    --card-face: #f7f5ef;
+    --card-text: #1a1a1a;
+}
+
+body.light-mode {
+    --bg:        #f4f5f7;
+    --surface:   #ffffff;
+    --surface2:  #e9ecef;
+    --border:    #d0d5dc;
+    --text:      #1a1a1a;
+    --muted:     #6b7280;
+    --card-face: #ffffff;
+    --card-text: #000000;
+}
+
+html {
+    background-color: var(--bg);
+}
+
+html, body { height: 100%; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    overflow: hidden;
+}
+
+#app {
+    width: 100%;
+    max-width: 520px;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+
+/* ── Settings Gear Override ── */
+#settings-btn-global {
+    top: env(safe-area-inset-top, 8px) !important;
+    right: 8px !important;
+}
+
+/* ── Header ── */
+#topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    /* Make space for settings gear if needed, though settings gear is absolute */
+}
+#topbar .title { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.05em; }
+#topbar .title small { color: var(--muted); font-weight: 500; }
+.tb-btns { display: flex; gap: 0.4rem; padding-right: 44px; /* Space for settings gear */ }
+.tb-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    min-width: 44px; /* 44px min tap target */
+    min-height: 44px; /* 44px min tap target */
+    padding: 0 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.tb-btn.coach-on { border-color: var(--accent); color: var(--accent); }
+
+/* ── Opponents ── */
+#opponents { display: flex; gap: 0.5rem; padding: 0.5rem 0.75rem 0; }
+.opp {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.45rem 0.6rem;
+    transition: border-color .2s, box-shadow .2s;
+}
+.opp.active { border-color: var(--accent); box-shadow: 0 0 8px #00e5a044; }
+.opp .o-name { font-size: 0.8rem; font-weight: 700; }
+.opp .o-info { font-size: 0.66rem; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+.opp .o-bid { font-size: 0.66rem; margin-top: 2px; color: var(--gold); min-height: 0.9em; }
+
+/* ── Table ── */
+#table {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0.25rem 0.75rem;
+    min-height: 150px;
+}
+#status {
+    position: absolute;
+    top: 0.4rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.66rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+#trump-chip {
+    position: absolute;
+    top: 1.6rem;
+    right: 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.72rem;
+    text-align: center;
+    line-height: 1.3;
+}
+#trump-chip .t-suit { font-size: 1.25rem; display: block; }
+#trick-area { display: flex; gap: 0.9rem; align-items: flex-end; }
+.slot { text-align: center; width: 66px; }
+.slot .s-name { font-size: 0.62rem; color: var(--muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.slot .s-card { height: 92px; display: flex; align-items: center; justify-content: center; }
+.slot .s-empty {
+    width: 62px; height: 88px;
+    border: 1.5px dashed var(--border);
+    border-radius: 9px;
+}
+#banner {
+    position: absolute;
+    bottom: 0.35rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gold);
+    min-height: 1.1em;
+    transition: opacity 0.3s;
+}
+
+/* ── Cards ── */
+.card {
+    width: 62px;
+    height: 88px;
+    background: var(--card-face);
+    color: var(--card-text);
+    border-radius: 9px;
+    border: 1px solid #00000033;
+    box-shadow: 0 2px 5px #00000055;
+    position: relative;
+    display: inline-block;
+    flex: 0 0 auto;
+}
+.card .c-corner {
+    position: absolute;
+    top: 5px; left: 7px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.05;
+    text-align: center;
+}
+.card .c-pip { position: absolute; bottom: 6px; right: 8px; font-size: 1.5rem; }
+.card .c-pts {
+    position: absolute;
+    bottom: 6px; left: 7px;
+    font-size: 0.55rem;
+    color: #00000088;
+    font-weight: 600;
+}
+.card.red { color: #c62828; }
+.card.back {
+    background: repeating-linear-gradient(45deg, #24406b, #24406b 6px, #1c3357 6px, #1c3357 12px);
+    border-color: #0d1b30;
+}
+
+/* ── Coach bar ── */
+#tip {
+    margin: 0 0.75rem;
+    background: #0f2b22;
+    border: 1px solid #1d5c47;
+    border-radius: 10px;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.74rem;
+    line-height: 1.45;
+    color: #b8f5dd;
+    min-height: 2.4em;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+#tip.hidden { display: none; }
+#tip .tip-icon { flex: 0 0 auto; }
+#tip.flash { animation: tipflash 0.5s; }
+@keyframes tipflash { 0%,100% { background:#0f2b22; } 50% { background:#1d5c47; } }
+
+/* ── Actions ── */
+#actions {
+    display: flex;
+    gap: 0.55rem;
+    justify-content: center;
+    padding: 0.55rem 0.75rem 0.25rem;
+    min-height: 54px;
+}
+.act-btn {
+    border: none;
+    border-radius: 10px;
+    min-height: 46px; /* 46px > 44px min */
+    padding: 0 1.3rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #06281c;
+    background: var(--accent);
+}
+.act-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.act-btn:disabled { opacity: 0.4; }
+
+/* ── Hand ── */
+#hand-wrap { padding: 0.25rem 0.75rem 0.8rem; }
+#me-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--muted);
+    padding: 0 0.15rem 0.35rem;
+}
+#me-info .me-name { color: var(--text); font-weight: 700; }
+#hand {
+    display: flex;
+    justify-content: center;
+    min-height: 104px;
+    padding-top: 14px;
+}
+#hand .card {
+    margin-left: -22px;
+    cursor: pointer;
+    transition: transform 0.12s, opacity 0.12s;
+}
+#hand .card:first-child { margin-left: 0; }
+#hand.crowded .card { margin-left: -34px; }
+#hand .card.sel { transform: translateY(-14px); box-shadow: 0 4px 12px #000a, 0 0 0 2px var(--accent); z-index: 2; }
+#hand .card.dim { opacity: 0.32; }
+#hand .card .c-give {
+    position: absolute;
+    top: -12px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: #222;
+    font-size: 0.58rem;
+    font-weight: 800;
+    border-radius: 6px;
+    padding: 1px 6px;
+    white-space: nowrap;
+}
+
+/* ── Overlays ── */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: #000000c9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.2rem;
+    z-index: 50;
+}
+.overlay.hidden { display: none; }
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.3rem;
+    width: 100%;
+    max-width: 420px;
+    max-height: 85vh;
+    max-height: 85dvh;
+    overflow-y: auto;
+}
+.panel h2 { font-size: 1.05rem; margin-bottom: 0.7rem; }
+.panel .p-body { font-size: 0.82rem; line-height: 1.6; color: var(--text); }
+.panel .p-body p { margin-bottom: 0.6rem; }
+.panel .p-body .hl { color: var(--gold); font-weight: 700; }
+.panel .p-nav { display: flex; gap: 0.55rem; justify-content: flex-end; margin-top: 1rem; }
+.panel .p-dots { text-align: center; color: var(--muted); font-size: 0.7rem; margin-top: 0.8rem; letter-spacing: 0.3em; }
+.pt-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin: 0.5rem 0; }
+.pt-table td, .pt-table th { padding: 0.3rem 0.4rem; border-bottom: 1px solid var(--border); text-align: right; }
+.pt-table td:first-child, .pt-table th:first-child { text-align: left; }
+.pt-table .made { color: var(--accent); font-weight: 700; }
+.pt-table .failed { color: var(--red); font-weight: 700; }
+.suit-red { color: #ff6b6b; }
