@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Lab — Vibe Arcade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:           #0a0a14;
+            --surface:      #12122a;
+            --surface-hover:#1a1a3a;
+            --border:       #2a2a50;
+            --text:         #e0e0ff;
+            --text-muted:   #7777aa;
+            --accent:       #00e5a0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding-bottom: 5rem;
+        }
+
+        .site-header { border-bottom: 1px solid var(--border); }
+        .header-inner {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 1.1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .lab-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+        .back-link {
+            background: #2a1a6622;
+            border: 1px solid #6644ff55;
+            color: #a88aff;
+            border-radius: 8px;
+            padding: 0.35rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .back-link:hover { background: #6644ff33; }
+
+        .main {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+        .lab-blurb {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        .section-label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.9rem;
+        }
+
+        .draft-list { display: flex; flex-direction: column; gap: 0.85rem; }
+        .draft-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            text-decoration: none;
+            color: var(--text);
+            min-height: 44px;
+            transition: background 0.2s, transform 0.15s;
+        }
+        .draft-card:hover {
+            background: var(--surface-hover);
+            transform: translateY(-2px);
+        }
+        .d-emoji { font-size: 1.7rem; }
+        .d-body { flex: 1; }
+        .d-name {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 0.25rem;
+        }
+        .d-desc {
+            display: block;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+        .d-date {
+            font-size: 0.62rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .empty-note {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="lab-title">🧪 The Lab</div>
+            <a href="../" class="back-link">← Arcade</a>
+        </div>
+    </header>
+
+    <main class="main">
+        <p class="lab-blurb">
+            Prototype drafts fresh out of a jam session. Rough on purpose — play one,
+            then log a verdict (<strong>keep</strong> / <strong>meh</strong> / <strong>kill</strong>)
+            in the vault's Kameko Playtest Log. Keepers graduate to the arcade.
+        </p>
+
+        <section>
+            <div class="section-label">Prototypes — newest first</div>
+            <div class="draft-list">
+
+                <a href="tysiacha/" class="draft-card">
+                    <span class="d-emoji">🎴</span>
+                    <span class="d-body">
+                        <span class="d-name">Tysiacha (1000)</span>
+                        <span class="d-desc">The classic trick-taking card game — bid, declare marriages, race to 1000. Built-in coach teaches the rules as you play.</span>
+                    </span>
+                    <span class="d-date">2026-07-09</span>
+                </a>
+
+            </div>
+        </section>
+    </main>
+</body>
+
+</html>
