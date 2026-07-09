@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tysiacha (1000) — Lab Draft</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --bg:        #0d1117;
+    --surface:   #161d29;
+    --surface2:  #1d2637;
+    --border:    #2c3a52;
+    --text:      #e6edf7;
+    --muted:     #8494ad;
+    --accent:    #00e5a0;
+    --gold:      #ffd54f;
+    --red:       #ff5252;
+    --card-face: #f7f5ef;
+    --card-text: #1a1a1a;
+}
+html, body { height: 100%; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    overflow: hidden;
+}
+#app {
+    width: 100%;
+    max-width: 520px;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+
+/* ── Header ── */
+#topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+#topbar .title { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.05em; }
+#topbar .title small { color: var(--muted); font-weight: 500; }
+.tb-btns { display: flex; gap: 0.4rem; }
+.tb-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0 0.55rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.tb-btn.coach-on { border-color: var(--accent); color: var(--accent); }
+
+/* ── Opponents ── */
+#opponents { display: flex; gap: 0.5rem; padding: 0.5rem 0.75rem 0; }
+.opp {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.45rem 0.6rem;
+    transition: border-color .2s, box-shadow .2s;
+}
+.opp.active { border-color: var(--accent); box-shadow: 0 0 8px #00e5a044; }
+.opp .o-name { font-size: 0.8rem; font-weight: 700; }
+.opp .o-info { font-size: 0.66rem; color: var(--muted); margin-top: 2px; line-height: 1.45; }
+.opp .o-bid { font-size: 0.66rem; margin-top: 2px; color: var(--gold); min-height: 0.9em; }
+
+/* ── Table ── */
+#table {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 0.25rem 0.75rem;
+    min-height: 150px;
+}
+#status {
+    position: absolute;
+    top: 0.4rem;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.66rem;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+#trump-chip {
+    position: absolute;
+    top: 1.6rem;
+    right: 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.72rem;
+    text-align: center;
+    line-height: 1.3;
+}
+#trump-chip .t-suit { font-size: 1.25rem; display: block; }
+#trick-area { display: flex; gap: 0.9rem; align-items: flex-end; }
+.slot { text-align: center; width: 66px; }
+.slot .s-name { font-size: 0.62rem; color: var(--muted); margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.slot .s-card { height: 92px; display: flex; align-items: center; justify-content: center; }
+.slot .s-empty {
+    width: 62px; height: 88px;
+    border: 1.5px dashed var(--border);
+    border-radius: 9px;
+}
+#banner {
+    position: absolute;
+    bottom: 0.35rem;
+    left: 0.75rem;
+    right: 0.75rem;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--gold);
+    min-height: 1.1em;
+    transition: opacity 0.3s;
+}
+
+/* ── Cards ── */
+.card {
+    width: 62px;
+    height: 88px;
+    background: var(--card-face);
+    color: var(--card-text);
+    border-radius: 9px;
+    border: 1px solid #00000033;
+    box-shadow: 0 2px 5px #00000055;
+    position: relative;
+    display: inline-block;
+    flex: 0 0 auto;
+}
+.card .c-corner {
+    position: absolute;
+    top: 5px; left: 7px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.05;
+    text-align: center;
+}
+.card .c-pip { position: absolute; bottom: 6px; right: 8px; font-size: 1.5rem; }
+.card .c-pts {
+    position: absolute;
+    bottom: 6px; left: 7px;
+    font-size: 0.55rem;
+    color: #00000088;
+    font-weight: 600;
+}
+.card.red { color: #c62828; }
+.card.back {
+    background: repeating-linear-gradient(45deg, #24406b, #24406b 6px, #1c3357 6px, #1c3357 12px);
+    border-color: #0d1b30;
+}
+
+/* ── Coach bar ── */
+#tip {
+    margin: 0 0.75rem;
+    background: #0f2b22;
+    border: 1px solid #1d5c47;
+    border-radius: 10px;
+    padding: 0.5rem 0.7rem;
+    font-size: 0.74rem;
+    line-height: 1.45;
+    color: #b8f5dd;
+    min-height: 2.4em;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+#tip.hidden { display: none; }
+#tip .tip-icon { flex: 0 0 auto; }
+#tip.flash { animation: tipflash 0.5s; }
+@keyframes tipflash { 0%,100% { background:#0f2b22; } 50% { background:#1d5c47; } }
+
+/* ── Actions ── */
+#actions {
+    display: flex;
+    gap: 0.55rem;
+    justify-content: center;
+    padding: 0.55rem 0.75rem 0.25rem;
+    min-height: 54px;
+}
+.act-btn {
+    border: none;
+    border-radius: 10px;
+    min-height: 46px;
+    padding: 0 1.3rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: #06281c;
+    background: var(--accent);
+}
+.act-btn.secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.act-btn:disabled { opacity: 0.4; }
+
+/* ── Hand ── */
+#hand-wrap { padding: 0.25rem 0.75rem 0.8rem; }
+#me-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--muted);
+    padding: 0 0.15rem 0.35rem;
+}
+#me-info .me-name { color: var(--text); font-weight: 700; }
+#hand {
+    display: flex;
+    justify-content: center;
+    min-height: 104px;
+    padding-top: 14px;
+}
+#hand .card {
+    margin-left: -22px;
+    cursor: pointer;
+    transition: transform 0.12s, opacity 0.12s;
+}
+#hand .card:first-child { margin-left: 0; }
+#hand.crowded .card { margin-left: -34px; }
+#hand .card.sel { transform: translateY(-14px); box-shadow: 0 4px 12px #000a, 0 0 0 2px var(--accent); z-index: 2; }
+#hand .card.dim { opacity: 0.32; }
+#hand .card .c-give {
+    position: absolute;
+    top: -12px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: #222;
+    font-size: 0.58rem;
+    font-weight: 800;
+    border-radius: 6px;
+    padding: 1px 6px;
+    white-space: nowrap;
+}
+
+/* ── Overlays ── */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: #000000c9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.2rem;
+    z-index: 50;
+}
+.overlay.hidden { display: none; }
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.3rem;
+    width: 100%;
+    max-width: 420px;
+    max-height: 85vh;
+    max-height: 85dvh;
+    overflow-y: auto;
+}
+.panel h2 { font-size: 1.05rem; margin-bottom: 0.7rem; }
+.panel .p-body { font-size: 0.82rem; line-height: 1.6; color: var(--text); }
+.panel .p-body p { margin-bottom: 0.6rem; }
+.panel .p-body .hl { color: var(--gold); font-weight: 700; }
+.panel .p-nav { display: flex; gap: 0.55rem; justify-content: flex-end; margin-top: 1rem; }
+.panel .p-dots { text-align: center; color: var(--muted); font-size: 0.7rem; margin-top: 0.8rem; letter-spacing: 0.3em; }
+.pt-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; margin: 0.5rem 0; }
+.pt-table td, .pt-table th { padding: 0.3rem 0.4rem; border-bottom: 1px solid var(--border); text-align: right; }
+.pt-table td:first-child, .pt-table th:first-child { text-align: left; }
+.pt-table .made { color: var(--accent); font-weight: 700; }
+.pt-table .failed { color: var(--red); font-weight: 700; }
+.suit-red { color: #ff6b6b; }
+</style>
+</head>
+<body>
+<div id="app">
+    <div id="topbar">
+        <div class="title">🎴 Tysiacha <small>· to 1000</small></div>
+        <div class="tb-btns">
+            <button class="tb-btn" id="btn-howto">?</button>
+            <button class="tb-btn coach-on" id="btn-coach">Coach</button>
+            <button class="tb-btn" id="btn-restart">↺</button>
+        </div>
+    </div>
+
+    <div id="opponents"></div>
+
+    <div id="table">
+        <div id="status"></div>
+        <div id="trump-chip"></div>
+        <div id="trick-area"></div>
+        <div id="banner"></div>
+    </div>
+
+    <div id="tip"><span class="tip-icon">🧭</span><span id="tip-text"></span></div>
+
+    <div id="actions"></div>
+
+    <div id="hand-wrap">
+        <div id="me-info"></div>
+        <div id="hand"></div>
+    </div>
+</div>
+
+<div class="overlay hidden" id="howto">
+    <div class="panel">
+        <h2 id="ht-title"></h2>
+        <div class="p-body" id="ht-body"></div>
+        <div class="p-dots" id="ht-dots"></div>
+        <div class="p-nav">
+            <button class="act-btn secondary" id="ht-back">Back</button>
+            <button class="act-btn" id="ht-next">Next</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay hidden" id="marry">
+    <div class="panel">
+        <h2>Declare a marriage?</h2>
+        <div class="p-body" id="marry-body"></div>
+        <div class="p-nav">
+            <button class="act-btn secondary" id="marry-no">Just play the card</button>
+            <button class="act-btn" id="marry-yes">Declare!</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay hidden" id="summary">
+    <div class="panel">
+        <h2 id="sum-title"></h2>
+        <div class="p-body" id="sum-body"></div>
+        <div class="p-nav">
+            <button class="act-btn" id="sum-next"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+'use strict';
+
+// ── Rules constants ──────────────────────────────────────────
+const SUITS = ['H', 'C', 'D', 'S'];
+const SUIT_CHAR = { H: '♥', D: '♦', C: '♣', S: '♠' };
+const SUIT_IS_RED = { H: true, D: true, C: false, S: false };
+const RANKS = ['9', 'J', 'Q', 'K', '10', 'A'];            // low → high
+const PTS = { '9': 0, J: 2, Q: 3, K: 4, '10': 10, A: 11 }; // 120 per deal
+const MARRIAGE = { H: 100, D: 80, C: 60, S: 40 };
+const TARGET = 1000;
+const OPEN_BID = 100;
+const RAISE = 10;
+
+const NAMES = ['You', 'Vera', 'Boris'];
+
+// ── State ────────────────────────────────────────────────────
+const S = {
+    session: 0,
+    coach: true,
+    players: [],
+    dealer: 2,
+    dealNum: 0,
+    phase: 'idle',   // bidding | talon | exchange | play | dealEnd | matchEnd
+    talon: [],
+    talonUp: false,
+    currentBid: 0,
+    highBidder: null,
+    bidTurn: 0,
+    passed: [false, false, false],
+    bidLabel: ['', '', ''],
+    declarer: null,
+    trump: null,
+    trick: [],
+    trickNum: 1,
+    leader: 0,
+    turn: 0,
+    wonTrick: [false, false, false],
+    selected: null,      // card key selected in hand (two-tap play)
+    give: [],            // exchange: card keys chosen to give away
+    pendingCard: null,   // card awaiting marriage prompt
+    aiEstimate: [0, 0, 0],
+};
+
+function newPlayer(name) {
+    return { name, hand: [], trickPts: 0, marriagePts: 0, marriages: [], tricks: 0, total: 0 };
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const key = c => c.r + c.s;
+const rankIdx = c => RANKS.indexOf(c.r);
+const cardLabel = c => c.r + SUIT_CHAR[c.s];
+const suitSpan = s => `<span class="${SUIT_IS_RED[s] ? 'suit-red' : ''}">${SUIT_CHAR[s]}</span>`;
+
+function later(fn, ms) {
+    const sess = S.session;
+    setTimeout(() => { if (S.session === sess) fn(); }, ms);
+}
+
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function buildDeck() {
+    const d = [];
+    for (const s of SUITS) for (const r of RANKS) d.push({ s, r });
+    return shuffle(d);
+}
+
+function sortHand(hand) {
+    hand.sort((a, b) => {
+        if (a.s !== b.s) return SUITS.indexOf(a.s) - SUITS.indexOf(b.s);
+        return rankIdx(b) - rankIdx(a);
+    });
+}
+
+function handCardPts(hand) { return hand.reduce((t, c) => t + PTS[c.r], 0); }
+
+function marriagesInHand(hand) {
+    return SUITS.filter(s =>
+        hand.some(c => c.s === s && c.r === 'K') &&
+        hand.some(c => c.s === s && c.r === 'Q'));
+}
+
+function legalMoves(hand) {
+    if (S.trick.length === 0) return hand.slice();
+    const led = S.trick[0].card.s;
+    const follow = hand.filter(c => c.s === led);
+    if (follow.length) return follow;
+    if (S.trump) {
+        const trumps = hand.filter(c => c.s === S.trump);
+        if (trumps.length) return trumps;
+    }
+    return hand.slice();
+}
+
+function cardBeats(challenger, incumbent) {
+    if (challenger.s === incumbent.s) return rankIdx(challenger) > rankIdx(incumbent);
+    return challenger.s === S.trump;
+}
+
+function trickWinnerSlot() {
+    let best = 0;
+    for (let i = 1; i < S.trick.length; i++) {
+        if (cardBeats(S.trick[i].card, S.trick[best].card)) best = i;
+    }
+    return best;
+}
+
+function wouldWinNow(card) {
+    if (S.trick.length === 0) return true;
+    return cardBeats(card, S.trick[trickWinnerSlot()].card);
+}
+
+function trickPts() { return S.trick.reduce((t, x) => t + PTS[x.card.r], 0); }
+
+function canDeclare(p) {
+    return S.wonTrick[p] || (p === S.declarer && S.trickNum === 1 && S.trick.length === 0);
+}
+
+// ── Match / deal flow ────────────────────────────────────────
+function newMatch() {
+    S.session++;
+    S.players = NAMES.map(newPlayer);
+    S.dealer = 2;          // first deal: You open the bidding — best seat to learn from
+    S.dealNum = 0;
+    newDeal();
+}
+
+function newDeal() {
+    S.session++;
+    S.dealNum++;
+    const deck = buildDeck();
+    S.players.forEach(pl => {
+        pl.hand = deck.splice(0, 7);
+        sortHand(pl.hand);
+        pl.trickPts = 0; pl.marriagePts = 0; pl.marriages = []; pl.tricks = 0;
+    });
+    S.talon = deck.splice(0, 3);
+    S.talonUp = false;
+    S.trump = null;
+    S.trick = [];
+    S.trickNum = 1;
+    S.wonTrick = [false, false, false];
+    S.selected = null;
+    S.give = [];
+    S.pendingCard = null;
+    S.passed = [false, false, false];
+    S.bidLabel = ['', '', ''];
+    S.declarer = null;
+    S.phase = 'bidding';
+
+    for (let p = 1; p < 3; p++) {
+        const h = S.players[p].hand;
+        const marPts = marriagesInHand(h).reduce((t, s) => t + MARRIAGE[s], 0);
+        S.aiEstimate[p] = handCardPts(h) + Math.round(marPts * 0.9) + 15 - Math.floor(Math.random() * 12);
+    }
+
+    const opener = (S.dealer + 1) % 3;
+    S.currentBid = OPEN_BID;
+    S.highBidder = opener;
+    S.bidLabel[opener] = 'bid 100';
+    S.bidTurn = nextActive(opener);
+    banner(`Deal ${S.dealNum} — ${S.players[opener].name} open${opener === 0 ? '' : 's'} the bidding at 100 (the opening bid is forced)`);
+    render();
+    later(bidStep, 1400);
+}
+
+function nextActive(from) {
+    let t = from;
+    do { t = (t + 1) % 3; } while (S.passed[t]);
+    return t;
+}
+
+function activeBidders() {
+    return [0, 1, 2].filter(p => !S.passed[p]);
+}
+
+function bidStep() {
+    if (S.phase !== 'bidding') return;
+    const active = activeBidders();
+    if (active.length === 1) { winBidding(active[0]); return; }
+    render();
+    if (S.bidTurn !== 0) later(() => aiBid(S.bidTurn), 900 + Math.random() * 500);
+    // human turn: buttons rendered by render()
+}
+
+function aiBid(p) {
+    if (S.phase !== 'bidding') return;
+    if (S.currentBid + RAISE <= S.aiEstimate[p]) {
+        S.currentBid += RAISE;
+        S.highBidder = p;
+        S.bidLabel[p] = 'bid ' + S.currentBid;
+    } else {
+        S.passed[p] = true;
+        S.bidLabel[p] = 'passed';
+    }
+    S.bidTurn = nextActive(p);
+    bidStep();
+}
+
+function humanBid(pass) {
+    if (S.phase !== 'bidding' || S.bidTurn !== 0) return;
+    if (pass) {
+        S.passed[0] = true;
+        S.bidLabel[0] = 'passed';
+    } else {
+        S.currentBid += RAISE;
+        S.highBidder = 0;
+        S.bidLabel[0] = 'bid ' + S.currentBid;
+    }
+    S.bidTurn = nextActive(0);
+    bidStep();
+}
+
+function winBidding(p) {
+    S.declarer = p;
+    S.phase = 'talon';
+    S.talonUp = true;
+    banner(`${S.players[p].name} win${p === 0 ? '' : 's'} the bidding at ${S.currentBid} and take${p === 0 ? '' : 's'} the talon`);
+    render();
+    later(() => {
+        S.players[p].hand.push(...S.talon);
+        sortHand(S.players[p].hand);
+        S.talon = [];
+        S.talonUp = false;
+        S.phase = 'exchange';
+        if (p === 0) { render(); }
+        else { render(); later(() => aiExchange(p), 1200); }
+    }, 2200);
+}
+
+function aiExchange(p) {
+    if (S.phase !== 'exchange') return;
+    const marSuits = marriagesInHand(S.players[p].hand);
+    const ranked = S.players[p].hand.slice().sort((a, b) => giveScore(a, marSuits) - giveScore(b, marSuits));
+    const gives = [ranked[0], ranked[1]];
+    const opp1 = (p + 1) % 3, opp2 = (p + 2) % 3;
+    giveCard(p, opp1, gives[0]);
+    giveCard(p, opp2, gives[1]);
+    banner(`${S.players[p].name} passes one card to ${S.players[opp1].name} and one to ${S.players[opp2].name}`);
+    startPlay();
+}
+
+function giveScore(c, marSuits) {
+    let v = PTS[c.r] + rankIdx(c) * 0.1;
+    if (marSuits.includes(c.s) && (c.r === 'K' || c.r === 'Q')) v += 100;
+    return v;
+}
+
+function giveCard(from, to, card) {
+    const h = S.players[from].hand;
+    h.splice(h.findIndex(c => key(c) === key(card)), 1);
+    S.players[to].hand.push(card);
+    sortHand(S.players[to].hand);
+}
+
+function confirmExchange() {
+    if (S.phase !== 'exchange' || S.declarer !== 0 || S.give.length !== 2) return;
+    const cards = S.give.map(k => S.players[0].hand.find(c => key(c) === k));
+    giveCard(0, 1, cards[0]);
+    giveCard(0, 2, cards[1]);
+    S.give = [];
+    banner('You passed a card to Vera and one to Boris');
+    startPlay();
+}
+
+function startPlay() {
+    S.phase = 'play';
+    S.leader = S.declarer;
+    S.turn = S.declarer;
+    S.trick = [];
+    S.trickNum = 1;
+    render();
+    later(step, 900);
+}
+
+function step() {
+    if (S.phase !== 'play') return;
+    render();
+    if (S.trick.length === 3) { later(resolveTrick, 1250); return; }
+    if (S.turn !== 0) later(() => aiMove(S.turn), 800 + Math.random() * 450);
+    // human turn: hand enabled via render()
+}
+
+function playCard(p, card, declare) {
+    const h = S.players[p].hand;
+    h.splice(h.findIndex(c => key(c) === key(card)), 1);
+    if (declare) {
+        S.trump = card.s;
+        S.players[p].marriagePts += MARRIAGE[card.s];
+        S.players[p].marriages.push(card.s);
+        banner(`💍 ${S.players[p].name} declare${p === 0 ? '' : 's'} the ${SUIT_CHAR[card.s]} marriage — ${suitName(card.s)} are trump! +${MARRIAGE[card.s]}`);
+    }
+    S.trick.push({ p, card });
+    S.selected = null;
+    S.turn = (p + 1) % 3;
+    step();
+}
+
+function resolveTrick() {
+    if (S.phase !== 'play') return;
+    const slot = trickWinnerSlot();
+    const winner = S.trick[slot].p;
+    const pts = trickPts();
+    S.players[winner].trickPts += pts;
+    S.players[winner].tricks++;
+    S.wonTrick[winner] = true;
+    banner(`${S.players[winner].name} take${winner === 0 ? '' : 's'} the trick (+${pts})`);
+    S.trick = [];
+    S.leader = winner;
+    S.turn = winner;
+    S.trickNum++;
+    if (S.trickNum > 8) { later(endDeal, 1000); render(); return; }
+    step();
+}
+
+function endDeal() {
+    S.phase = 'dealEnd';
+    const rows = [];
+    let champion = null;
+    S.players.forEach((pl, p) => {
+        const got = pl.trickPts + pl.marriagePts;
+        let delta, note;
+        if (p === S.declarer) {
+            const made = got >= S.currentBid;
+            delta = made ? S.currentBid : -S.currentBid;
+            note = made
+                ? `<span class="made">made the ${S.currentBid} bid → +${S.currentBid}</span>`
+                : `<span class="failed">failed the ${S.currentBid} bid → −${S.currentBid}</span>`;
+        } else {
+            delta = got;
+            note = `+${got}`;
+        }
+        pl.total += delta;
+        rows.push({ pl, p, got, delta, note });
+    });
+    const leader = S.players.reduce((a, b) => (b.total > a.total ? b : a));
+    if (leader.total >= TARGET) champion = leader;
+
+    let html = `<table class="pt-table"><tr><th>Player</th><th>Tricks</th><th>Marriage</th><th>Result</th><th>Total</th></tr>`;
+    rows.forEach(({ pl, p, note }) => {
+        const mar = pl.marriages.length ? pl.marriages.map(s => suitSpan(s)).join(' ') + ` (${pl.marriagePts})` : '—';
+        html += `<tr><td>${pl.name}${p === S.declarer ? ' 👑' : ''}</td><td>${pl.trickPts}</td><td>${mar}</td><td>${note}</td><td><strong>${pl.total}</strong></td></tr>`;
+    });
+    html += `</table>`;
+    if (S.coach) {
+        const you = rows[0];
+        html += `<p style="color:#b8f5dd">🧭 ${S.declarer === 0
+            ? (you.delta > 0 ? 'You bid and delivered — that’s the whole game.' : 'Failed bids subtract the full bid — bid closer to what your hand can actually win.')
+            : 'As a defender you keep every point you grab — stealing tricks from the declarer hurts them twice.'}</p>`;
+    }
+
+    if (champion) {
+        S.phase = 'matchEnd';
+        $('sum-title').textContent = champion === S.players[0] ? '🏆 You win the match!' : `🏆 ${champion.name} wins the match`;
+        $('sum-next').textContent = 'New match';
+    } else {
+        $('sum-title').textContent = `Deal ${S.dealNum} — result`;
+        $('sum-next').textContent = 'Next deal →';
+    }
+    $('sum-body').innerHTML = html;
+    $('summary').classList.remove('hidden');
+    render();
+}
+
+function summaryNext() {
+    $('summary').classList.add('hidden');
+    if (S.phase === 'matchEnd') { newMatch(); return; }
+    S.dealer = (S.dealer + 1) % 3;
+    newDeal();
+}
+
+// ── AI play ──────────────────────────────────────────────────
+function aiMove(p) {
+    if (S.phase !== 'play' || S.turn !== p) return;
+    const hand = S.players[p].hand;
+    const legal = legalMoves(hand);
+
+    if (S.trick.length === 0) {
+        if (canDeclare(p)) {
+            const suits = marriagesInHand(hand).sort((a, b) => MARRIAGE[b] - MARRIAGE[a]);
+            if (suits.length) {
+                const q = hand.find(c => c.s === suits[0] && c.r === 'Q');
+                playCard(p, q, true);
+                return;
+            }
+        }
+        const ace = legal.find(c => c.r === 'A' && (!S.trump || c.s === S.trump))
+                 || legal.find(c => c.r === 'A');
+        if (ace) { playCard(p, ace, false); return; }
+        playCard(p, lowest(legal), false);
+        return;
+    }
+
+    const winners = legal.filter(wouldWinNow).sort((a, b) => (PTS[a.r] - PTS[b.r]) || (rankIdx(a) - rankIdx(b)));
+    const last = S.trick.length === 2;
+    const pts = trickPts();
+    if (winners.length && ((last && (pts > 0 || PTS[winners[0].r] <= 2)) || (!last && pts >= 8))) {
+        playCard(p, winners[0], false);
+        return;
+    }
+    playCard(p, lowest(legal), false);
+}
+
+function lowest(cards) {
+    return cards.slice().sort((a, b) => (PTS[a.r] - PTS[b.r]) || (rankIdx(a) - rankIdx(b)))[0];
+}
+
+// ── Human interaction ────────────────────────────────────────
+function onCardTap(card) {
+    const k = key(card);
+
+    if (S.phase === 'exchange' && S.declarer === 0) {
+        const i = S.give.indexOf(k);
+        if (i >= 0) S.give.splice(i, 1);
+        else if (S.give.length < 2) S.give.push(k);
+        render();
+        return;
+    }
+
+    if (S.phase !== 'play' || S.turn !== 0 || S.trick.length === 3) return;
+    const legal = legalMoves(S.players[0].hand);
+    if (!legal.some(c => key(c) === k)) {
+        flashTip(illegalReason());
+        return;
+    }
+    if (S.selected !== k) {
+        S.selected = k;
+        render();
+        return;
+    }
+    // second tap on the same card — play it
+    const isLead = S.trick.length === 0;
+    const partnerRank = card.r === 'K' ? 'Q' : card.r === 'Q' ? 'K' : null;
+    const hasPartner = partnerRank && S.players[0].hand.some(c => c.s === card.s && c.r === partnerRank);
+    if (isLead && hasPartner && canDeclare(0) && S.trump !== card.s) {
+        S.pendingCard = card;
+        $('marry-body').innerHTML =
+            `<p>You hold both ${suitSpan(card.s)} K and Q. Leading the <span class="hl">${cardLabel(card)}</span> lets you declare the marriage:</p>
+             <p>· ${suitName(card.s)} become <span class="hl">trump</span> — they beat every other suit<br>
+              · you immediately score <span class="hl">+${MARRIAGE[card.s]} points</span></p>`;
+        $('marry').classList.remove('hidden');
+        return;
+    }
+    playCard(0, card, false);
+}
+
+function illegalReason() {
+    const led = S.trick[0].card.s;
+    const hand = S.players[0].hand;
+    if (hand.some(c => c.s === led)) return `You must follow suit — play a ${suitName(led)} card (${SUIT_CHAR[led]}).`;
+    if (S.trump && hand.some(c => c.s === S.trump)) return `No ${SUIT_CHAR[led]} in hand — you must play a trump (${SUIT_CHAR[S.trump]}).`;
+    return 'That card can’t be played right now.';
+}
+
+function suitName(s) { return { H: 'hearts', D: 'diamonds', C: 'clubs', S: 'spades' }[s]; }
+
+// ── Coach ────────────────────────────────────────────────────
+function coachText() {
+    const me = S.players[0];
+    if (S.phase === 'bidding') {
+        if (S.passed[0]) return 'You passed — watch how high the others push the bid.';
+        const mar = marriagesInHand(me.hand);
+        const marTxt = mar.length ? ` + marriage${mar.length > 1 ? 's' : ''} ${mar.map(s => SUIT_CHAR[s] + MARRIAGE[s]).join(', ')}` : ', no marriage in hand';
+        const est = handCardPts(me.hand) + mar.reduce((t, s) => t + MARRIAGE[s], 0) + 15;
+        if (S.bidTurn === 0) return `Your hand: ~${handCardPts(me.hand)} card points${marTxt}. The talon adds ~3 cards of upside. Bidding much beyond ~${Math.floor(est / 10) * 10} is risky — fail the bid and you LOSE that many points.`;
+        return `${S.players[S.bidTurn].name} is deciding whether to outbid ${S.currentBid}…`;
+    }
+    if (S.phase === 'talon') return 'The 3 talon cards are revealed to everyone, then join the bid winner’s hand.';
+    if (S.phase === 'exchange') {
+        if (S.declarer === 0) return 'Pick 2 cards to give away — 1st goes to Vera, 2nd to Boris. Coach: dump 9s and Js, never split a K+Q pair (that’s a future trump!), and keep aces.';
+        return `${S.players[S.declarer].name} is choosing two cards to give away…`;
+    }
+    if (S.phase === 'play') {
+        if (S.turn !== 0) return `${S.players[S.turn].name} is thinking…`;
+        const legal = legalMoves(me.hand);
+        if (S.trick.length === 0) {
+            const mar = marriagesInHand(me.hand).filter(s => s !== S.trump);
+            if (mar.length && canDeclare(0)) return `You lead. You hold K+Q of ${mar.map(s => SUIT_CHAR[s]).join(' ')} — lead one of them (tap twice) and declare to set trump and score +${MARRIAGE[mar[0]]}!`;
+            if (mar.length) return `You lead. You hold a K+Q pair (${mar.map(s => SUIT_CHAR[s]).join(' ')}) but must WIN a trick before declaring it. An ace lead usually wins.`;
+            return 'You lead — any card. Coach: aces almost always win their trick (11 pts); save weak cards for tricks you’ve already lost.';
+        }
+        const winners = legal.filter(wouldWinNow);
+        const led = S.trick[0].card.s;
+        const mustTrump = !me.hand.some(c => c.s === led) && S.trump && me.hand.some(c => c.s === S.trump);
+        let txt = mustTrump ? `No ${SUIT_CHAR[led]} — you must play a trump.` : `Follow ${suitName(led)} ${SUIT_CHAR[led]} if you can.`;
+        if (winners.length) txt += ` Your ${cardLabel(winners.sort((a, b) => rankIdx(a) - rankIdx(b))[0])} would win the trick (${trickPts()} pts in it).`;
+        else txt += ' You can’t win this trick — dump your most worthless card (9 or J).';
+        txt += ' Tap a card twice to play it.';
+        return txt;
+    }
+    return '';
+}
+
+function flashTip(msg) {
+    const tip = $('tip');
+    $('tip-text').textContent = msg;
+    tip.classList.remove('hidden');
+    tip.classList.remove('flash');
+    void tip.offsetWidth;
+    tip.classList.add('flash');
+}
+
+// ── Rendering ────────────────────────────────────────────────
+function cardHTML(c, extra = '', give = '') {
+    return `<div class="card ${SUIT_IS_RED[c.s] ? 'red' : ''} ${extra}" data-k="${key(c)}">
+        ${give ? `<span class="c-give">${give}</span>` : ''}
+        <div class="c-corner">${c.r}<br>${SUIT_CHAR[c.s]}</div>
+        <div class="c-pip">${SUIT_CHAR[c.s]}</div>
+        ${PTS[c.r] ? `<div class="c-pts">${PTS[c.r]}</div>` : ''}
+    </div>`;
+}
+
+function cardBackHTML() { return '<div class="card back"></div>'; }
+
+function render() {
+    if (!S.players.length) return;
+    // opponents
+    $('opponents').innerHTML = [1, 2].map(p => {
+        const pl = S.players[p];
+        const active = (S.phase === 'bidding' && S.bidTurn === p) || (S.phase === 'play' && S.turn === p);
+        const bidNote = S.phase === 'bidding' || S.phase === 'talon' ? S.bidLabel[p]
+            : (p === S.declarer ? `👑 plays for ${S.currentBid}` : '');
+        return `<div class="opp ${active ? 'active' : ''}">
+            <div class="o-name">${pl.name}</div>
+            <div class="o-info">🂠 ${pl.hand.length} · tricks ${pl.tricks} · deal pts ${pl.trickPts + pl.marriagePts}<br>score <strong>${pl.total}</strong></div>
+            <div class="o-bid">${bidNote}</div>
+        </div>`;
+    }).join('');
+
+    // status
+    const phaseTxt = {
+        bidding: `Deal ${S.dealNum} · Bidding — high bid ${S.currentBid} (${S.players[S.highBidder]?.name ?? ''})`,
+        talon: `Deal ${S.dealNum} · Talon revealed`,
+        exchange: `Deal ${S.dealNum} · Exchange`,
+        play: `Deal ${S.dealNum} · Trick ${Math.min(S.trickNum, 8)}/8`,
+        dealEnd: `Deal ${S.dealNum} · Finished`,
+        matchEnd: 'Match over',
+    }[S.phase] || '';
+    $('status').textContent = phaseTxt;
+
+    // trump chip
+    $('trump-chip').innerHTML = S.trump
+        ? `<span class="t-suit ${SUIT_IS_RED[S.trump] ? 'suit-red' : ''}">${SUIT_CHAR[S.trump]}</span>trump`
+        : `<span class="t-suit" style="color:var(--muted)">—</span>no trump`;
+
+    // table center: talon during bidding/talon, trick during play
+    if (S.phase === 'bidding' || S.phase === 'talon') {
+        $('trick-area').innerHTML = `
+            <div style="display:flex;gap:0.5rem;align-items:center">
+                ${S.talonUp ? S.talon.map(c => cardHTML(c)).join('') : S.talon.map(() => cardBackHTML()).join('')}
+            </div>`;
+    } else {
+        $('trick-area').innerHTML = [0, 1, 2].map(slotP => {
+            const played = S.trick.find(t => t.p === slotOrder()[slotP]);
+            const p = slotOrder()[slotP];
+            return `<div class="slot">
+                <div class="s-name">${S.players[p].name}</div>
+                <div class="s-card">${played ? cardHTML(played.card) : '<div class="s-empty"></div>'}</div>
+            </div>`;
+        }).join('');
+    }
+
+    // tip
+    if (S.coach) {
+        const t = coachText();
+        $('tip').classList.toggle('hidden', !t);
+        $('tip-text').textContent = t;
+    } else {
+        $('tip').classList.add('hidden');
+    }
+
+    // actions
+    let actions = '';
+    if (S.phase === 'bidding' && S.bidTurn === 0 && !S.passed[0]) {
+        actions = `<button class="act-btn" id="act-bid">Bid ${S.currentBid + RAISE}</button>
+                   <button class="act-btn secondary" id="act-pass">Pass</button>`;
+    } else if (S.phase === 'exchange' && S.declarer === 0) {
+        actions = `<button class="act-btn" id="act-give" ${S.give.length === 2 ? '' : 'disabled'}>Give cards</button>`;
+    }
+    $('actions').innerHTML = actions;
+    if ($('act-bid')) $('act-bid').onclick = () => humanBid(false);
+    if ($('act-pass')) $('act-pass').onclick = () => humanBid(true);
+    if ($('act-give')) $('act-give').onclick = confirmExchange;
+
+    // my info + hand
+    const me = S.players[0];
+    const myTurn = (S.phase === 'play' && S.turn === 0 && S.trick.length < 3);
+    const exchanging = S.phase === 'exchange' && S.declarer === 0;
+    $('me-info').innerHTML = `<span class="me-name">You ${S.declarer === 0 ? '👑' : ''}</span>
+        <span>tricks ${me.tricks} · deal pts ${me.trickPts + me.marriagePts} · score <strong style="color:var(--text)">${me.total}</strong></span>`;
+
+    const legal = myTurn ? legalMoves(me.hand).map(key) : null;
+    $('hand').classList.toggle('crowded', me.hand.length > 8);
+    $('hand').innerHTML = me.hand.map(c => {
+        const k = key(c);
+        let cls = '', give = '';
+        if (myTurn && !legal.includes(k)) cls = 'dim';
+        if (S.selected === k) cls += ' sel';
+        if (exchanging) {
+            const gi = S.give.indexOf(k);
+            if (gi >= 0) { cls += ' sel'; give = gi === 0 ? '→ Vera' : '→ Boris'; }
+        }
+        return cardHTML(c, cls, give);
+    }).join('');
+    document.querySelectorAll('#hand .card').forEach(el => {
+        el.onclick = () => {
+            const c = me.hand.find(x => key(x) === el.dataset.k);
+            if (c) onCardTap(c);
+        };
+    });
+}
+
+function slotOrder() { return [1, 0, 2]; } // Vera left, You center, Boris right
+
+let bannerTimer = null;
+function banner(msg) {
+    const b = $('banner');
+    b.textContent = msg;
+    b.style.opacity = 1;
+    clearTimeout(bannerTimer);
+    bannerTimer = setTimeout(() => { b.style.opacity = 0; }, 3400);
+}
+
+// ── How-to overlay ───────────────────────────────────────────
+const HOWTO = [
+    ['The goal', `<p>Tysiacha ("<span class="hl">a thousand</span>") is a classic 3-player card game from the Russian-speaking world. First player to <span class="hl">1000 points</span> wins.</p><p>You play against Vera and Boris. Each deal, you win points by taking <span class="hl">tricks</span> — and by declaring <span class="hl">marriages</span>.</p><p>The built-in 🧭 Coach explains every situation as you play. This overlay reopens with the <span class="hl">?</span> button.</p>`],
+    ['The cards', `<p>Only 24 cards are used: <span class="hl">9, J, Q, K, 10, A</span> in each suit.</p><p>Card strength (high → low): <span class="hl">A, 10, K, Q, J, 9</span> — yes, the 10 beats the King!</p><p>Each card is worth points:<br>A = <span class="hl">11</span> · 10 = <span class="hl">10</span> · K = <span class="hl">4</span> · Q = <span class="hl">3</span> · J = <span class="hl">2</span> · 9 = <span class="hl">0</span></p><p>There are 120 card points in every deal. (Point values are printed in the card corner.)</p>`],
+    ['Bidding', `<p>Each deal starts with an <span class="hl">auction</span>: how many points do you promise to win this deal? Bidding starts at 100 (forced) and rises in tens.</p><p>The winner (the <span class="hl">declarer</span> 👑) takes the 3-card <span class="hl">talon</span>, then gives one unwanted card to each opponent.</p><p><span class="hl">Make the bid → +bid points. Fail → −bid points.</span> Defenders always keep whatever points they win. Bid boldly, but only if your hand can deliver.</p>`],
+    ['Tricks', `<p>The declarer leads a card; the others each add one. You <span class="hl">must follow the led suit</span> if you can; with none, you <span class="hl">must play a trump</span> if you have one.</p><p>Highest card of the led suit wins — unless a <span class="hl">trump</span> was played; then the highest trump wins. The winner collects the points and leads next.</p><p>Illegal cards are dimmed in your hand — you can't misplay. Tap a card once to raise it, twice to play it.</p>`],
+    ['Marriages 💍', `<p>Holding both <span class="hl">K + Q of one suit</span> is a "marriage". When it's your turn to <span class="hl">lead</span> (after you've won at least one trick), lead the K or Q and declare it:</p><p>· that suit becomes <span class="hl">trump</span> immediately<br>· you instantly score: <span class="suit-red">♥</span> = <span class="hl">100</span> · <span class="suit-red">♦</span> = <span class="hl">80</span> · ♣ = <span class="hl">60</span> · ♠ = <span class="hl">40</span></p><p>A new marriage overrides the old trump. Marriages are the engine of big bids — protect those K+Q pairs!</p><p style="color:var(--muted);font-size:0.72rem">Simplified for this draft: no barrel at 880, no re-raising after the talon, exact scores (no rounding).</p>`],
+];
+let htStep = 0;
+function showHowto(step) {
+    htStep = step;
+    $('ht-title').textContent = HOWTO[step][0];
+    $('ht-body').innerHTML = HOWTO[step][1];
+    $('ht-dots').textContent = HOWTO.map((_, i) => (i === step ? '●' : '○')).join(' ');
+    $('ht-back').style.visibility = step === 0 ? 'hidden' : 'visible';
+    $('ht-next').textContent = step === HOWTO.length - 1 ? "Let's play" : 'Next';
+    $('howto').classList.remove('hidden');
+}
+
+// ── Wiring ───────────────────────────────────────────────────
+$('ht-next').onclick = () => {
+    if (htStep < HOWTO.length - 1) { showHowto(htStep + 1); return; }
+    $('howto').classList.add('hidden');
+    if (S.phase === 'idle') newMatch();
+};
+$('ht-back').onclick = () => showHowto(Math.max(0, htStep - 1));
+$('btn-howto').onclick = () => showHowto(0);
+$('btn-coach').onclick = () => {
+    S.coach = !S.coach;
+    $('btn-coach').classList.toggle('coach-on', S.coach);
+    render();
+};
+$('btn-restart').onclick = () => { $('summary').classList.add('hidden'); newMatch(); };
+$('sum-next').onclick = summaryNext;
+$('marry-yes').onclick = () => {
+    $('marry').classList.add('hidden');
+    if (S.pendingCard) { playCard(0, S.pendingCard, true); S.pendingCard = null; }
+};
+$('marry-no').onclick = () => {
+    $('marry').classList.add('hidden');
+    if (S.pendingCard) { playCard(0, S.pendingCard, false); S.pendingCard = null; }
+};
+
+showHowto(0);
+</script>
+</body>
+</html>
