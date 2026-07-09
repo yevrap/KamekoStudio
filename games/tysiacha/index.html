@@ -14,8 +14,9 @@
     <div id="topbar">
         <div class="title">🎴 Tysiacha <small>· to 1000</small></div>
         <div class="tb-btns">
-            <button class="tb-btn" id="btn-howto">?</button>
-            <button class="tb-btn coach-on" id="btn-coach">Coach</button>
+            <button class="tb-btn" id="btn-tys-settings">⚙️</button>
+            <button class="tb-btn" id="btn-howto">Rules</button>
+            <button class="tb-btn" id="btn-coach">Hint</button>
             <button class="tb-btn" id="btn-restart">↺</button>
         </div>
     </div>
@@ -68,6 +69,34 @@
         <div class="p-body" id="sum-body"></div>
         <div class="p-nav">
             <button class="act-btn" id="sum-next"></button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay hidden" id="tys-settings">
+    <div class="panel">
+        <h2>Game Settings</h2>
+        <div class="p-body">
+            <div class="setting-row">
+                <label>Target Score</label>
+                <select id="set-target">
+                    <option value="500">500 (Quick Match)</option>
+                    <option value="1000">1000 (Classic)</option>
+                </select>
+            </div>
+            
+            <div class="setting-header">Classic Rules</div>
+            
+            <label class="setting-check"><input type="checkbox" id="set-barrel"> <span><strong>The Barrel (880):</strong> Must win on the bid. 3 fails drops score.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-bolts"> <span><strong>Bolts:</strong> 0 tricks in a deal gives a bolt. 3 bolts = −120.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-rounding"> <span><strong>Rounding:</strong> Round scores to the nearest 5.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-reraise"> <span><strong>Re-raise:</strong> Declarer can raise bid after talon.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-raspasy"> <span><strong>Raspasy:</strong> If all pass, negative round is played.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-hidden"> <span><strong>Hidden Points:</strong> Hide opponent scores during deal.</span></label>
+        </div>
+        <div class="p-nav">
+            <button class="act-btn secondary" id="tys-set-close">Close</button>
+            <button class="act-btn" id="tys-set-apply">Apply & Restart</button>
         </div>
     </div>
 </div>

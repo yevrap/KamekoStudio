@@ -5,12 +5,21 @@
 import { NAMES, RANKS, key, rankIdx, PTS } from './constants.js';
 
 export function newPlayer(name) {
-    return { name, hand: [], trickPts: 0, marriagePts: 0, marriages: [], tricks: 0, total: 0 };
+    return { name, hand: [], trickPts: 0, marriagePts: 0, marriages: [], tricks: 0, total: 0, bolts: 0, barrelAttempts: 0 };
 }
 
 export const state = {
     session: 0,
-    coach: true,
+    coach: false,
+    settings: {
+        targetScore: 500,
+        rounding: false,
+        hiddenPoints: false,
+        bolts: false,
+        barrel: false,
+        reraise: false,
+        raspasy: false
+    },
     players: [],
     dealer: 2,
     dealNum: 0,
@@ -71,6 +80,7 @@ export function wouldWinNow(card) {
 export function trickPts() { return state.trick.reduce((t, x) => t + PTS[x.card.r], 0); }
 
 export function canDeclare(p) {
+    if (state.isRaspasy) return false;
     return state.wonTrick[p] || (p === state.declarer && state.trickNum === 1 && state.trick.length === 0);
 }
 

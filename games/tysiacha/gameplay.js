@@ -61,11 +61,22 @@ export function newDeal() {
     }
 
     const opener = (state.dealer + 1) % 3;
-    state.currentBid = OPEN_BID;
-    state.highBidder = opener;
-    state.bidLabel[opener] = 'bid 100';
-    state.bidTurn = nextActive(opener);
-    banner(`Deal ${state.dealNum} — ${state.players[opener].name} open${opener === 0 ? '' : 's'} the bidding at 100 (the opening bid is forced)`);
+    
+    state.isRaspasy = false;
+    
+    if (state.settings.raspasy) {
+        state.currentBid = OPEN_BID - RAISE; // Starts below 100 so next bid is 100
+        state.highBidder = null;
+        state.bidTurn = opener;
+        banner(`Deal ${state.dealNum} — ${state.players[opener].name} starts the bidding`);
+    } else {
+        state.currentBid = OPEN_BID;
+        state.highBidder = opener;
+        state.bidLabel[opener] = 'bid 100';
+        state.bidTurn = nextActive(opener);
+        banner(`Deal ${state.dealNum} — ${state.players[opener].name} open${opener === 0 ? '' : 's'} the bidding at 100 (forced)`);
+    }
+    
     render();
     later(bidStep, 1400);
 }
@@ -75,7 +86,28 @@ export function newDeal() {
 export function bidStep() {
     if (state.phase !== 'bidding') return;
     const active = activeBidders();
-    if (active.length === 1) { winBidding(active[0]); return; }
+    
+    if (active.length === 0) {
+        // Everyone passed, play Raspasy
+        state.isRaspasy = true;
+        state.declarer = null;
+        state.phase = 'play';
+        state.leader = (state.dealer + 1) % 3;
+        state.turn = state.leader;
+        state.trick = [];
+        state.trickNum = 1;
+        state.talon = []; // Discard talon in Raspasy
+        banner('Everyone passed! Playing Raspasy (Negative Round) 📉');
+        render();
+        later(step, 1400);
+        return;
+    }
+    
+    if (active.length === 1 && state.highBidder !== null) { 
+        winBidding(active[0]); 
+        return; 
+    }
+    
     render();
     if (state.bidTurn !== 0) later(() => aiDoBid(state.bidTurn), 900 + Math.random() * 500);
 }
@@ -187,26 +219,88 @@ export function endDeal() {
     state.phase = 'dealEnd';
     const rows = [];
     let champion = null;
-    state.players.forEach((pl, p) => {
-        const got = pl.trickPts + pl.marriagePts;
-        let delta, note;
-        if (p === state.declarer) {
-            const made = got >= state.currentBid;
-            delta = made ? state.currentBid : -state.currentBid;
-            note = made
-                ? `<span class="made">made the ${state.currentBid} bid → +${state.currentBid}</span>`
-                : `<span class="failed">failed the ${state.currentBid} bid → −${state.currentBid}</span>`;
-        } else {
-            delta = got;
-            note = `+${got}`;
-        }
-        pl.total += delta;
-        rows.push({ pl, p, got, delta, note });
-    });
-    const leader = state.players.reduce((a, b) => (b.total > a.total ? b : a));
-    if (leader.total >= TARGET) champion = leader;
+    
+    const target = state.settings.targetScore || 1000;
+    const barrelThreshold = target - 120;
 
-    const result = { rows, champion };
+    state.players.forEach((pl, p) => {
+        let got = pl.trickPts + pl.marriagePts;
+        
+        // Rounding
+        if (state.settings.rounding) {
+            got = Math.round(got / 5) * 5;
+        }
+
+        let delta = 0;
+        let note = '';
+        let boltAdded = false;
+        
+        if (state.isRaspasy) {
+            delta = -got;
+            note = `<span class="failed">Took ${got} pts → −${got}</span>`;
+            if (got === 0) note = `<span class="made">No tricks → 0</span>`;
+        } else {
+            if (p === state.declarer) {
+                const made = got >= state.currentBid;
+                delta = made ? state.currentBid : -state.currentBid;
+                note = made
+                    ? `<span class="made">made the ${state.currentBid} bid → +${state.currentBid}</span>`
+                    : `<span class="failed">failed the ${state.currentBid} bid → −${state.currentBid}</span>`;
+            } else {
+                delta = got;
+                note = `+${got}`;
+                
+                // Bolts
+                if (state.settings.bolts && pl.tricks === 0) {
+                    pl.bolts = (pl.bolts || 0) + 1;
+                    boltAdded = true;
+                    note += ` (Bolt)`;
+                    if (pl.bolts >= 3) {
+                        delta -= 120;
+                        note += ` <span class="failed">3 Bolts! −120</span>`;
+                        pl.bolts = 0;
+                    }
+                }
+            }
+        }
+
+        // Apply delta
+        let newTotal = pl.total + delta;
+        
+        // The Barrel
+        if (state.settings.barrel) {
+            if (pl.total === barrelThreshold) {
+                // Already on the barrel
+                if (p === state.declarer && newTotal >= target) {
+                    // Won the game!
+                } else {
+                    // Failed to win
+                    newTotal = barrelThreshold;
+                    pl.barrelAttempts = (pl.barrelAttempts || 0) + 1;
+                    if (pl.barrelAttempts >= 3) {
+                        newTotal -= 120;
+                        pl.barrelAttempts = 0;
+                        note += ` <span class="failed">Fell off barrel! −120</span>`;
+                    } else {
+                        note += ` <span class="muted">Barrel attempt ${pl.barrelAttempts}/3</span>`;
+                    }
+                }
+            } else if (newTotal >= barrelThreshold && newTotal < target) {
+                // Just got on the barrel
+                newTotal = barrelThreshold;
+                pl.barrelAttempts = 0;
+                note += ` <span class="made">On the barrel!</span>`;
+            }
+        }
+
+        pl.total = newTotal;
+        rows.push({ pl, p, got, delta, note, boltAdded });
+    });
+
+    const leader = state.players.reduce((a, b) => (b.total > a.total ? b : a));
+    if (leader.total >= target) champion = leader;
+
+    const result = { rows, champion, target };
     if (state.onDealEnd) state.onDealEnd(result);
     return result;
 }

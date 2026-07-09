@@ -102,9 +102,23 @@ export function render() {
         const active = (state.phase === 'bidding' && state.bidTurn === p) || (state.phase === 'play' && state.turn === p);
         const bidNote = state.phase === 'bidding' || state.phase === 'talon' ? state.bidLabel[p]
             : (p === state.declarer ? `👑 plays for ${state.currentBid}` : '');
+            
+        let boltText = '';
+        if (state.settings.bolts && pl.bolts > 0) {
+            boltText = '<span class="o-bolt">' + '⚡'.repeat(pl.bolts) + '</span>';
+        }
+        
+        let scoreStr = pl.total;
+        if (state.settings.hiddenPoints && state.phase !== 'dealEnd' && state.phase !== 'matchEnd') {
+            scoreStr = '???';
+        }
+        
+        const target = state.settings.targetScore || 1000;
+        const barrelStr = (state.settings.barrel && pl.total === target - 120) ? ' 🛢️' : '';
+        
         return `<div class="opp ${active ? 'active' : ''}">
-            <div class="o-name">${pl.name}</div>
-            <div class="o-info">🂠 ${pl.hand.length} · tricks ${pl.tricks} · deal pts ${pl.trickPts + pl.marriagePts}<br>score <strong>${pl.total}</strong></div>
+            <div class="o-name">${pl.name}${boltText}${barrelStr}</div>
+            <div class="o-info">🂠 ${pl.hand.length} · tricks ${pl.tricks} · deal pts ${pl.trickPts + pl.marriagePts}<br>score <strong>${scoreStr}</strong></div>
             <div class="o-bid">${bidNote}</div>
         </div>`;
     }).join('');
@@ -158,6 +172,8 @@ export function render() {
                    <button class="act-btn secondary" id="act-pass">Pass</button>`;
     } else if (state.phase === 'exchange' && state.declarer === 0) {
         actions = `<button class="act-btn" id="act-give" ${state.give.length === 2 ? '' : 'disabled'}>Give cards</button>`;
+    } else if (state.phase === 'play' && state.trickNum === 1 && state.trick.length === 0 && state.declarer === 0 && state.settings.reraise) {
+        actions = `<button class="act-btn" id="act-reraise">Raise bid to ${state.currentBid + 10}</button>`;
     }
     $('actions').innerHTML = actions;
 
@@ -165,7 +181,15 @@ export function render() {
     const me = state.players[0];
     const myTurn = (state.phase === 'play' && state.turn === 0 && state.trick.length < 3);
     const exchanging = state.phase === 'exchange' && state.declarer === 0;
-    $('me-info').innerHTML = `<span class="me-name">You ${state.declarer === 0 ? '👑' : ''}</span>
+    
+    let myBoltText = '';
+    if (state.settings.bolts && me.bolts > 0) {
+        myBoltText = '<span class="me-bolt">' + '⚡'.repeat(me.bolts) + '</span>';
+    }
+    const target = state.settings.targetScore || 1000;
+    const myBarrel = (state.settings.barrel && me.total === target - 120) ? ' 🛢️' : '';
+    
+    $('me-info').innerHTML = `<span class="me-name">You ${state.declarer === 0 ? '👑' : ''}${myBoltText}${myBarrel}</span>
         <span>tricks ${me.tricks} · deal pts ${me.trickPts + me.marriagePts} · score <strong style="color:var(--text)">${me.total}</strong></span>`;
 
     const legal = myTurn ? legalMoves(me.hand).map(key) : null;
@@ -186,9 +210,10 @@ export function render() {
 // ── How-to overlay content ───────────────────────────────────────────────
 
 export const HOWTO = [
-    ['The goal', `<p>Tysiacha ("<span class="hl">a thousand</span>") is a classic 3-player card game from the Russian-speaking world. First player to <span class="hl">1000 points</span> wins.</p><p>You play against Vera and Boris. Each deal, you win points by taking <span class="hl">tricks</span> — and by declaring <span class="hl">marriages</span>.</p><p>The built-in 🧭 Coach explains every situation as you play. This overlay reopens with the <span class="hl">?</span> button.</p>`],
+    ['The goal', `<p>Tysiacha ("<span class="hl">a thousand</span>") is a classic 3-player card game from the Russian-speaking world. First player to <span class="hl">1000 points</span> (or 500 in Quick Match) wins.</p><p>You play against Vera and Boris. Each deal, you win points by taking <span class="hl">tricks</span> — and by declaring <span class="hl">marriages</span>.</p><p>The built-in 🧭 Hint bar explains every situation. This overlay reopens with the <span class="hl">Rules</span> button.</p>`],
     ['The cards', `<p>Only 24 cards are used: <span class="hl">9, J, Q, K, 10, A</span> in each suit.</p><p>Card strength (high → low): <span class="hl">A, 10, K, Q, J, 9</span> — yes, the 10 beats the King!</p><p>Each card is worth points:<br>A = <span class="hl">11</span> · 10 = <span class="hl">10</span> · K = <span class="hl">4</span> · Q = <span class="hl">3</span> · J = <span class="hl">2</span> · 9 = <span class="hl">0</span></p><p>There are 120 card points in every deal. (Point values are printed in the card corner.)</p>`],
     ['Bidding', `<p>Each deal starts with an <span class="hl">auction</span>: how many points do you promise to win this deal? Bidding starts at 100 (forced) and rises in tens.</p><p>The winner (the <span class="hl">declarer</span> 👑) takes the 3-card <span class="hl">talon</span>, then gives one unwanted card to each opponent.</p><p><span class="hl">Make the bid → +bid points. Fail → −bid points.</span> Defenders always keep whatever points they win. Bid boldly, but only if your hand can deliver.</p>`],
     ['Tricks', `<p>The declarer leads a card; the others each add one. You <span class="hl">must follow the led suit</span> if you can; with none, you <span class="hl">must play a trump</span> if you have one.</p><p>Highest card of the led suit wins — unless a <span class="hl">trump</span> was played; then the highest trump wins. The winner collects the points and leads next.</p><p>Illegal cards are dimmed in your hand — you can't misplay. Tap a card once to raise it, twice to play it.</p>`],
     ['Marriages 💍', `<p>Holding both <span class="hl">K + Q of one suit</span> is a "marriage". When it's your turn to <span class="hl">lead</span> (after you've won at least one trick), lead the K or Q and declare it:</p><p>· that suit becomes <span class="hl">trump</span> immediately<br>· you instantly score: <span class="suit-red">♥</span> = <span class="hl">100</span> · <span class="suit-red">♦</span> = <span class="hl">80</span> · ♣ = <span class="hl">60</span> · ♠ = <span class="hl">40</span></p><p>A new marriage overrides the old trump. Marriages are the engine of big bids — protect those K+Q pairs!</p>`],
+    ['Classic Rules', `<p>Toggle advanced rules in the ⚙️ Settings menu.</p><p><span class="hl">The Barrel:</span> A player at 880 pts (or 380) sits on the barrel. They must win the bid to win the match. 3 fails drops them 120 pts.</p><p><span class="hl">Bolts ⚡:</span> Taking 0 tricks gives a bolt. 3 bolts = −120 penalty.</p><p><span class="hl">Raspasy:</span> If all pass, play a negative round where tricks lose points.</p><p><span class="hl">Re-raise:</span> Declarer can raise bid after talon.</p>`],
 ];

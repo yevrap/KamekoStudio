@@ -33,9 +33,42 @@ $('ht-next').onclick = () => {
 $('ht-back').onclick = () => showHowto(Math.max(0, htStep - 1));
 $('btn-howto').onclick = () => showHowto(0);
 
+$('btn-tys-settings').onclick = () => {
+    // Populate settings UI from state
+    $('set-target').value = state.settings.targetScore;
+    $('set-barrel').checked = state.settings.barrel;
+    $('set-bolts').checked = state.settings.bolts;
+    $('set-rounding').checked = state.settings.rounding;
+    $('set-reraise').checked = state.settings.reraise;
+    $('set-raspasy').checked = state.settings.raspasy;
+    $('set-hidden').checked = state.settings.hiddenPoints;
+    $('tys-settings').classList.remove('hidden');
+};
+
+$('tys-set-close').onclick = () => $('tys-settings').classList.add('hidden');
+
+$('tys-set-apply').onclick = () => {
+    state.settings.targetScore = parseInt($('set-target').value, 10);
+    state.settings.barrel = $('set-barrel').checked;
+    state.settings.bolts = $('set-bolts').checked;
+    state.settings.rounding = $('set-rounding').checked;
+    state.settings.reraise = $('set-reraise').checked;
+    state.settings.raspasy = $('set-raspasy').checked;
+    state.settings.hiddenPoints = $('set-hidden').checked;
+    $('tys-settings').classList.add('hidden');
+    
+    // Restart match to apply rules cleanly
+    if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
+        if (window.KamekoTokens) window.KamekoTokens.toast();
+        return;
+    }
+    localStorage.setItem('lastPlayed_tysiacha', Date.now());
+    newMatch();
+};
+
 $('btn-coach').onclick = () => {
     state.coach = !state.coach;
-    $('btn-coach').classList.toggle('coach-on', state.coach);
+    // Removed coach-on class toggle, button stays neutral.
     render();
 };
 
@@ -74,6 +107,12 @@ document.addEventListener('click', (e) => {
     if (e.target.closest('#act-bid')) return humanBid(false);
     if (e.target.closest('#act-pass')) return humanBid(true);
     if (e.target.closest('#act-give')) return confirmExchange();
+    if (e.target.closest('#act-reraise')) {
+        state.currentBid += 10;
+        banner(`You raised the bid to ${state.currentBid}`);
+        render();
+        return;
+    }
 
     const cardEl = e.target.closest('#hand .card');
     if (cardEl) {
@@ -158,5 +197,5 @@ window.addEventListener('settingsClosed', () => {
     }
 });
 
-// Initialize app with How-to
+// Initialize app with Rules (unless it's not their first time)
 showHowto(0);

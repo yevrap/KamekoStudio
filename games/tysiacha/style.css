@@ -310,3 +310,14 @@ body {
 .pt-table .made { color: var(--accent); font-weight: 700; }
 .pt-table .failed { color: var(--red); font-weight: 700; }
 .suit-red { color: #ff6b6b; }
+
+/* ── Settings ── */
+.setting-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; font-size: 0.85rem; }
+.setting-row select { background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 0.3rem 0.5rem; border-radius: 6px; }
+.setting-header { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin: 1.2rem 0 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.2rem; }
+.setting-check { display: flex; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.6rem; font-size: 0.82rem; cursor: pointer; }
+.setting-check input { margin-top: 0.15rem; }
+.setting-check span { line-height: 1.4; color: var(--muted); }
+.setting-check span strong { color: var(--text); }
+.o-bolt { color: var(--muted); font-size: 0.7rem; margin-left: 2px; }
+.me-bolt { color: var(--muted); font-size: 0.7rem; margin-left: 4px; }

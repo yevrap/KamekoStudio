@@ -57,6 +57,10 @@ export function aiMove(p) {
     const legal = legalMoves(hand);
 
     if (state.trick.length === 0) {
+        if (state.settings.reraise && state.declarer === p && state.trickNum === 1 && state.currentBid < state.aiEstimate[p] - 10) {
+            state.currentBid = Math.floor(state.aiEstimate[p] / 10) * 10;
+            banner(`${state.players[p].name} raises the bid to ${state.currentBid}`);
+        }
         if (canDeclare(p)) {
             const suits = marriagesInHand(hand).sort((a, b) => MARRIAGE[b] - MARRIAGE[a]);
             if (suits.length) {
