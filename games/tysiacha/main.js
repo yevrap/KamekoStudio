@@ -6,19 +6,13 @@ const $ = id => document.getElementById(id);
 
 // ── App wiring ──────────────────────────────────────────────────────────────
 
-let htStep = 0;
-function showHowto(step) {
-    htStep = step;
-    $('ht-title').textContent = HOWTO[step][0];
-    $('ht-body').innerHTML = HOWTO[step][1];
-    $('ht-dots').textContent = HOWTO.map((_, i) => (i === step ? '●' : '○')).join(' ');
-    $('ht-back').style.visibility = step === 0 ? 'hidden' : 'visible';
-    $('ht-next').textContent = step === HOWTO.length - 1 ? "Let's play" : 'Next';
+function showHowto() {
+    const content = HOWTO.map(([title, body]) => `<h3>${title}</h3>${body}`).join('<br>');
+    $('ht-body').innerHTML = content;
     $('howto').classList.remove('hidden');
 }
 
-$('ht-next').onclick = () => {
-    if (htStep < HOWTO.length - 1) { showHowto(htStep + 1); return; }
+$('ht-close').onclick = () => {
     $('howto').classList.add('hidden');
     if (state.phase === 'idle') {
         if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
@@ -30,8 +24,7 @@ $('ht-next').onclick = () => {
     }
 };
 
-$('ht-back').onclick = () => showHowto(Math.max(0, htStep - 1));
-$('btn-howto').onclick = () => showHowto(0);
+$('btn-howto').onclick = () => showHowto();
 
 $('btn-tys-settings').onclick = () => {
     // Populate settings UI from state
@@ -197,5 +190,14 @@ window.addEventListener('settingsClosed', () => {
     }
 });
 
-// Initialize app with Rules (unless it's not their first time)
-showHowto(0);
+// Initialize app
+if (localStorage.getItem('lastPlayed_tysiacha')) {
+    if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
+        if (window.KamekoTokens) window.KamekoTokens.toast();
+    } else {
+        localStorage.setItem('lastPlayed_tysiacha', Date.now());
+        newMatch();
+    }
+} else {
+    showHowto();
+}

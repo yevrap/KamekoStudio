@@ -299,6 +299,7 @@ body {
     overflow-y: auto;
 }
 .panel h2 { font-size: 1.05rem; margin-bottom: 0.7rem; }
+.panel h3 { font-size: 0.9rem; margin: 1rem 0 0.4rem; color: var(--gold); }
 .panel .p-body { font-size: 0.82rem; line-height: 1.6; color: var(--text); }
 .panel .p-body p { margin-bottom: 0.6rem; }
 .panel .p-body .hl { color: var(--gold); font-weight: 700; }
