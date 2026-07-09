@@ -42,17 +42,20 @@
 
 <div class="overlay hidden" id="howto">
     <div class="panel">
-        <h2>Rules of Tysiacha</h2>
-        <div class="p-body" id="ht-body"></div>
-        <div class="p-nav">
-            <button class="act-btn" id="ht-close">Close</button>
+        <div class="p-header">
+            <h2>Rules of Tysiacha</h2>
+            <button class="icon-btn close-btn" id="ht-close-top">✕</button>
         </div>
+        <div class="p-body" id="ht-body"></div>
     </div>
 </div>
 
 <div class="overlay hidden" id="marry">
     <div class="panel">
-        <h2>Declare a marriage?</h2>
+        <div class="p-header">
+            <h2>Declare a marriage?</h2>
+            <button class="icon-btn close-btn" id="marry-close-top">✕</button>
+        </div>
         <div class="p-body" id="marry-body"></div>
         <div class="p-nav">
             <button class="act-btn secondary" id="marry-no">Just play the card</button>
@@ -63,7 +66,10 @@
 
 <div class="overlay hidden" id="summary">
     <div class="panel">
-        <h2 id="sum-title"></h2>
+        <div class="p-header">
+            <h2 id="sum-title"></h2>
+            <button class="icon-btn close-btn" id="sum-close-top">✕</button>
+        </div>
         <div class="p-body" id="sum-body"></div>
         <div class="p-nav">
             <button class="act-btn" id="sum-next"></button>
@@ -73,7 +79,10 @@
 
 <div class="overlay hidden" id="tys-settings">
     <div class="panel">
-        <h2>Game Settings</h2>
+        <div class="p-header">
+            <h2>Game Settings</h2>
+            <button class="icon-btn close-btn" id="tys-set-close-top">✕</button>
+        </div>
         <div class="p-body">
             <div class="setting-row">
                 <label>Target Score</label>
@@ -93,7 +102,6 @@
             <label class="setting-check"><input type="checkbox" id="set-hidden"> <span><strong>Hidden Points:</strong> Hide opponent scores during deal.</span></label>
         </div>
         <div class="p-nav">
-            <button class="act-btn secondary" id="tys-set-close">Close</button>
             <button class="act-btn" id="tys-set-apply">Apply & Restart</button>
         </div>
     </div>

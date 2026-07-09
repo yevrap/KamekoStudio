@@ -97,6 +97,21 @@ $('marry-no').onclick = () => {
 };
 
 document.addEventListener('click', (e) => {
+    // Overlay outside click or X button
+    if (e.target.classList.contains('overlay') || e.target.classList.contains('close-btn')) {
+        const overlay = e.target.closest('.overlay');
+        if (overlay) overlay.classList.add('hidden');
+        if (overlay && overlay.id === 'howto' && state.phase === 'idle') {
+            if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
+                if (window.KamekoTokens) window.KamekoTokens.toast();
+                return;
+            }
+            localStorage.setItem('lastPlayed_tysiacha', Date.now());
+            newMatch();
+        }
+        return;
+    }
+
     if (e.target.closest('#act-bid')) return humanBid(false);
     if (e.target.closest('#act-pass')) return humanBid(true);
     if (e.target.closest('#act-give')) return confirmExchange();

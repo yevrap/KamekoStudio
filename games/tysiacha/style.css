@@ -296,11 +296,38 @@ body {
     max-width: 420px;
     max-height: 85vh;
     max-height: 85dvh;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
-.panel h2 { font-size: 1.05rem; margin-bottom: 0.7rem; }
+.panel .p-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.7rem;
+    flex: 0 0 auto;
+}
+.panel h2 { font-size: 1.05rem; margin: 0; }
+.panel .close-btn {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 1.2rem;
+    line-height: 1;
+    padding: 0.2rem;
+    cursor: pointer;
+    margin: -0.2rem -0.2rem 0 0;
+}
+.panel .close-btn:hover { color: var(--text); }
 .panel h3 { font-size: 0.9rem; margin: 1rem 0 0.4rem; color: var(--gold); }
-.panel .p-body { font-size: 0.82rem; line-height: 1.6; color: var(--text); }
+.panel .p-body { 
+    font-size: 0.82rem; 
+    line-height: 1.6; 
+    color: var(--text);
+    overflow-y: auto;
+    flex: 1 1 auto;
+    padding-right: 0.2rem;
+}
 .panel .p-body p { margin-bottom: 0.6rem; }
 .panel .p-body .hl { color: var(--gold); font-weight: 700; }
 .panel .p-nav { display: flex; gap: 0.55rem; justify-content: flex-end; margin-top: 1rem; }
