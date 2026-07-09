@@ -12,17 +12,7 @@ function showHowto() {
     $('howto').classList.remove('hidden');
 }
 
-$('ht-close').onclick = () => {
-    $('howto').classList.add('hidden');
-    if (state.phase === 'idle') {
-        if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-            if (window.KamekoTokens) window.KamekoTokens.toast();
-            return;
-        }
-        localStorage.setItem('lastPlayed_tysiacha', Date.now());
-        newMatch();
-    }
-};
+
 
 $('btn-howto').onclick = () => showHowto();
 
@@ -38,7 +28,7 @@ $('btn-tys-settings').onclick = () => {
     $('tys-settings').classList.remove('hidden');
 };
 
-$('tys-set-close').onclick = () => $('tys-settings').classList.add('hidden');
+
 
 $('tys-set-apply').onclick = () => {
     state.settings.targetScore = parseInt($('set-target').value, 10);
