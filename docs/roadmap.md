@@ -47,6 +47,10 @@ Biggest visible improvements to the player experience.
 | p1-08 | High-score displays: celebrate new records | S | ✅ | Shipped 2026-07-08 in `afe7df4`. Added a gold pulse/badge treatment: materials-run gets a pulsing "New Record!" badge on the top-score line matching the mode just played; durak-alchemist's game-over screen previously showed no final score or record indicator at all, both added; blob-zapper's existing "New Best!" text now scale-pulses; keypad-quest's new-best wave-clear message renders gold instead of the same cyan as a normal clear. Also fixed a pre-existing keypad-quest bug found during verification: `endWave()` pushed the float text then immediately called `startWave()`, which reset `state.floats` in the same synchronous call before any frame rendered it — the wave-clear/new-best message never actually displayed for either case. river-run left out of scope: it has no score display on its game-over overlay at all today, a larger gap than "no visual distinction." |
 | p1-09 | Durak: hand sort toggle | S | open | Sort my hand by suit-then-rank or by strength (trump last); persist the choice in localStorage. Verified 2026-07-09: no sorting UI exists (ai.js sorts internally only). From the vault durak inbox. |
 | p1-10 | Durak: finishing-placement display | S | open | Game-over overlay shows the finish order for all seats ("You finished 2nd of 4"), not just who is the durak. Verified 2026-07-09: no placement concept in gameplay.js. From the vault durak inbox. |
+| p1-11 | Tysiacha: UI/UX Overlay Improvements | S | ✅ | Shipped 2026-07-09. Upgraded overlays to have fixed headers and close buttons, with scrollable bodies, and tap-outside-to-close behavior. |
+| p1-12 | Tysiacha: Card animations | M | open | Add slide-to-trick and sweep-to-winner animations (borrowing FLIP patterns from Durak). |
+| p1-13 | Tysiacha: Audio layer | S | open | Add sound effects for card snaps, marriage chimes, and the bid gavel. |
+| p1-14 | Tysiacha: Russian Language Toggle | S | open | Add an option to play with authentic Russian terminology (Тысяча, масти). |
 
 ---
 
@@ -70,6 +74,11 @@ New mechanics that add replayability.
 | p2-12 | Durak: seeded deals + share link | M | open | Optional seed (URL param + "share this deal" button) producing a deterministic shuffle so a deal can be replayed or sent to a friend. Needs a seeded RNG — durak-dungeon's mulberry32/seedFromString are the in-repo prior art. From the vault durak inbox. |
 | p2-13 | Durak: extended stats | S | open | Beyond p2-08's W/L/D: wins as attacker vs defender, take rate, average game length, current streak; small stats view reachable from the game-over overlay or settings. From the vault durak inbox ("Stats"). |
 | p2-14 | Durak: learning/referee mode — design note first | M | open | Vault inbox asks for an audit/learning/tutorial mode. Too big for one ship: first deliverable is `docs/durak-learning-mode.md` (what it teaches, hint UI, move-legality explanations, relationship to difficulty levels) plus a proposed first shippable slice as a new roadmap item. |
+| p2-15 | Tysiacha: Scripted First Deal | M | open | A stacked tutorial hand that forces a marriage, a trump scenario, and a bid decision to ease new players into the game mechanics. |
+| p2-16 | Tysiacha: Post-Deal Analysis | S | open | A one-line hint at the end of a deal explaining the biggest missed opportunity or best play made. |
+| p2-17 | Tysiacha: Match Stats & History | M | open | Track bids made/failed rate, average points per deal, and win streaks. |
+| p2-18 | Tysiacha: AI Personalities | M | open | Differentiate the bots (e.g., Cautious Vera, Aggressive Boris) with distinct bidding and play styles. |
+| p2-19 | Tysiacha: Seeded Deals & Sharing | M | open | Play a specific deal via a share link (using mulberry32, similar to Durak Dungeon). |
 
 ---
 
@@ -80,7 +89,8 @@ New mechanics that add replayability.
 | p3-01 | Signal Tower | L | open | Listen to procedurally generated melody, reproduce on colored pads. Web Audio API + Canvas 2D. Mobile-first. |
 | p3-02 | Hex Drift | L | open | Hex-grid territory game vs AI. CSS Grid + DOM. Turn-based strategy — fills a gap in the arcade lineup. |
 | p3-03 | Glyph Run | L | open | Endless side-scroller: auto-run, swipe to jump/duck/dash, obstacles are glyphs matching a cognitive prompt. Canvas 2D. |
-| p3-04 | Tysiacha (1000) — draft in the Lab | M | ✅ | Promoted to `games/tysiacha/` on 2026-07-09. All phases (split, tests, token/settings hooks, PWA metas, root registrations) complete. 130 tests covering `constants.js`, `state.js`, and `gameplay.js` passing.
+| p3-04 | Tysiacha (1000) — draft in the Lab | M | ✅ | Promoted to `games/tysiacha/` on 2026-07-09. All phases (split, tests, token/settings hooks, PWA metas, root registrations) complete. 130 tests covering `constants.js`, `state.js`, and `gameplay.js` passing. |
+| p3-05 | Tysiacha: Hot-Seat Mode | L | open | Pass-and-play multiplayer for 2-3 local humans. |
 
 ---
 
