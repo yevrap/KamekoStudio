@@ -100,13 +100,21 @@ git commit -m "chore: mark <item-id> complete in roadmap"
 git push origin main
 ```
 
-## Phase 9 — Report
+## Phase 9 — Close the loop in the vault
+
+The Obsidian vault (root: `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Optimistic Staircase/`, project folder: `30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/`) is Yev's command center — repo-only context is invisible to him.
+
+- Append an entry (newest first) to the vault `Dev Log.md`: date, item ID, what shipped, commits, live URL.
+- If the item **added or meaningfully changed a product surface** (new game/mode/mechanic/ruleset — not refactors or bugfixes): create or update the game's vault overview note (subfolder per game), drop cut scope and new ideas into its `Improvements.md`, and turn open product decisions into a checkbox questionnaire note Yev can fill in Obsidian. Register any new note in the vault's `Map of Content.md`.
+
+## Phase 10 — Report
 
 Summarize in 3-5 sentences:
 - What was built
 - What files changed
 - What was tested and how
 - The live URL where it can be verified: https://yevrap.github.io/KamekoStudio/
+- Which vault notes were updated (Dev Log, overview, questionnaire)
 
 ---
 

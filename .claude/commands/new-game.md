@@ -59,9 +59,19 @@ Serve locally (`npx serve .` from repo root) and play one full loop: start → a
 4. `git push origin main`, wait for the Pages deploy (`gh run list --limit 1`, `gh run watch <id>`)
 5. Confirm the live URL serves the prototype
 
-## Phase 8 — Report
+## Phase 8 — Vault documentation (part of "done")
 
-3–5 sentences: the concept, what the prototype includes/excludes, the live URL (`https://yevrap.github.io/KamekoStudio/drafts/<slug>/`), and a reminder to log the verdict in the vault's `Kameko Playtest Log.md`.
+The vault is Yev's command center — a jam that exists only in the repo is invisible to him. In the vault (root: `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Optimistic Staircase/`), create `30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/<Game>/` with:
+
+1. **`<Game>.md`** — overview: what the game is, rules/mechanics in plain language, design decisions *and why*, simplifications/cut scope, live URL + repo path, roadmap ID, what happens next (verdict → promote/iterate/kill).
+2. **`Improvements.md`** — idea inbox seeded with everything deliberately cut plus ideas that came up while building (checkboxes, gated on the playtest verdict).
+3. **`<Game> Questionnaire — ….md`** — checkbox questionnaire covering the verdict and every product judgment call you made (rules depth, session length, difficulty, language, tutorial style…). Yev fills it in Obsidian; the next session reads it.
+
+Then link all three: add a `Kameko Arcade/<Game>/` line to `00-09 System & Meta/00 Index & Entry Points/Map of Content.md` (§ 31 Kameko Arcade; full-path wikilink for `Improvements` — that basename is not unique) and reference them from the session's entry in the vault `Dev Log.md` (same folder as the playtest log).
+
+## Phase 9 — Report
+
+3–5 sentences: the concept, what the prototype includes/excludes, the live URL (`https://yevrap.github.io/KamekoStudio/drafts/<slug>/`), links to the vault notes from Phase 8, and a reminder to log the verdict in the vault's `Kameko Playtest Log.md` and fill the questionnaire.
 
 ---
 
