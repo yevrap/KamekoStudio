@@ -271,22 +271,32 @@ export function endDeal() {
         if (state.settings.barrel) {
             if (pl.total === barrelThreshold) {
                 // Already on the barrel
-                if (p === state.declarer && newTotal >= target) {
-                    // Won the game!
-                } else {
-                    // Failed to win
-                    newTotal = barrelThreshold;
-                    pl.barrelAttempts = (pl.barrelAttempts || 0) + 1;
-                    if (pl.barrelAttempts >= 3) {
-                        newTotal -= 120;
-                        pl.barrelAttempts = 0;
-                        note += ` <span class="failed">Fell off barrel! −120</span>`;
+                if (p === state.declarer) {
+                    if (newTotal >= target) {
+                        // Won the game!
                     } else {
-                        note += ` <span class="muted">Barrel attempt ${pl.barrelAttempts}/3</span>`;
+                        // Failed to win (either failed bid or didn't reach 1000)
+                        pl.barrelAttempts = (pl.barrelAttempts || 0) + 1;
+                        if (pl.barrelAttempts >= 3) {
+                            newTotal = barrelThreshold - 120;
+                            pl.barrelAttempts = 0;
+                            note += ` <span class="failed">Fell off barrel! −120</span>`;
+                        } else {
+                            newTotal = barrelThreshold;
+                            note += ` <span class="muted">Barrel attempt ${pl.barrelAttempts}/3</span>`;
+                        }
+                    }
+                } else {
+                    // Defender on the barrel
+                    if (newTotal > barrelThreshold) {
+                        newTotal = barrelThreshold; // Can't earn points
+                    } else if (newTotal < barrelThreshold) {
+                        pl.barrelAttempts = 0; // Lost points to bolts/raspasy, fell off
+                        note += ` <span class="failed">Fell off barrel!</span>`;
                     }
                 }
-            } else if (newTotal >= barrelThreshold && newTotal < target) {
-                // Just got on the barrel
+            } else if (pl.total < barrelThreshold && newTotal >= barrelThreshold) {
+                // Just got on the barrel (even if they would have crossed 1000)
                 newTotal = barrelThreshold;
                 pl.barrelAttempts = 0;
                 note += ` <span class="made">On the barrel!</span>`;

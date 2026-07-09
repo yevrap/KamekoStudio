@@ -12,7 +12,7 @@ import {
 } from '../games/tysiacha/state.js';
 
 import {
-    scoreDeal
+    scoreDeal, endDeal
 } from '../games/tysiacha/gameplay.js';
 
 // ─── constants.js ────────────────────────────────────────────────────────────
@@ -170,4 +170,154 @@ test('scoreDeal: declarer fails bid', () => {
     assert.equal(deltas[0], 10);
     assert.equal(deltas[1], -140); // declarer loses bid amount
     assert.equal(deltas[2], 40);
+});
+
+// ─── gameplay.js (endDeal full logic) ──────────────────────────────────────
+
+function setupDeal(declarer, bid, isRaspasy = false) {
+    state.players = [newPlayer('P1'), newPlayer('P2'), newPlayer('P3')];
+    state.declarer = declarer;
+    state.currentBid = bid;
+    state.isRaspasy = isRaspasy;
+    state.settings = { targetScore: 1000, bolts: false, barrel: false, rounding: false };
+}
+
+test('endDeal: basic declarer makes bid', () => {
+    setupDeal(0, 100);
+    state.players[0].trickPts = 110;
+    state.players[1].trickPts = 10;
+    state.players[2].trickPts = 0;
+    state.players[1].tricks = 1;
+    
+    endDeal();
+    
+    assert.equal(state.players[0].total, 100);
+    assert.equal(state.players[1].total, 10);
+    assert.equal(state.players[2].total, 0);
+});
+
+test('endDeal: basic declarer fails bid', () => {
+    setupDeal(1, 120);
+    state.players[0].trickPts = 40; state.players[0].tricks = 2;
+    state.players[1].trickPts = 80; state.players[1].tricks = 6;
+    state.players[2].trickPts = 0;  state.players[2].tricks = 0;
+    
+    endDeal();
+    
+    assert.equal(state.players[0].total, 40);
+    assert.equal(state.players[1].total, -120);
+    assert.equal(state.players[2].total, 0);
+});
+
+test('endDeal: bolts rule', () => {
+    setupDeal(0, 100);
+    state.settings.bolts = true;
+    
+    state.players[0].trickPts = 100; state.players[0].tricks = 8;
+    state.players[1].trickPts = 0;   state.players[1].tricks = 0; // Defender gets bolt
+    state.players[2].trickPts = 20;  state.players[2].tricks = 2; // (Not 8 tricks total, but just a test setup)
+    
+    // 1st bolt
+    endDeal();
+    assert.equal(state.players[1].bolts, 1);
+    assert.equal(state.players[1].total, 0);
+    
+    // 2nd bolt
+    state.players[1].tricks = 0; state.players[1].trickPts = 0;
+    endDeal();
+    assert.equal(state.players[1].bolts, 2);
+    assert.equal(state.players[1].total, 0);
+    
+    // 3rd bolt -> -120 and reset
+    state.players[1].tricks = 0; state.players[1].trickPts = 0;
+    endDeal();
+    assert.equal(state.players[1].bolts, 0);
+    assert.equal(state.players[1].total, -120);
+});
+
+test('endDeal: declarer cannot get bolts', () => {
+    setupDeal(0, 100);
+    state.settings.bolts = true;
+    state.players[0].trickPts = 0; state.players[0].tricks = 0; // Declarer fails totally
+    endDeal();
+    assert.equal(state.players[0].bolts, 0); // Declarer shouldn't get a bolt
+    assert.equal(state.players[0].total, -100);
+});
+
+test('endDeal: raspasy subtracts points', () => {
+    setupDeal(null, 0, true);
+    state.players[0].trickPts = 30;
+    state.players[1].trickPts = 0;
+    state.players[2].trickPts = 90;
+    endDeal();
+    assert.equal(state.players[0].total, -30);
+    assert.equal(state.players[1].total, 0);
+    assert.equal(state.players[2].total, -90);
+});
+
+test('endDeal: rounding', () => {
+    setupDeal(0, 100);
+    state.settings.rounding = true;
+    state.players[0].trickPts = 100; state.players[0].tricks = 5;
+    state.players[1].trickPts = 12;  state.players[1].tricks = 1;
+    state.players[2].trickPts = 8;   state.players[2].tricks = 1;
+    endDeal();
+    // 12 rounds to 10. 8 rounds to 10.
+    assert.equal(state.players[1].total, 10);
+    assert.equal(state.players[2].total, 10);
+});
+
+test('endDeal: barrel - hitting barrel stops score', () => {
+    setupDeal(1, 100);
+    state.settings.barrel = true;
+    state.players[0].total = 870; 
+    state.players[0].trickPts = 150; state.players[0].tricks = 4; // Defender jumps past 880
+    
+    endDeal();
+    // Must stop at 880
+    assert.equal(state.players[0].total, 880);
+    assert.equal(state.players[0].barrelAttempts, 0);
+});
+
+test('endDeal: barrel - winning bid on barrel wins game', () => {
+    setupDeal(0, 120);
+    state.settings.barrel = true;
+    state.players[0].total = 880; 
+    state.players[0].trickPts = 120; state.players[0].tricks = 5; // Declarer fulfills bid
+    
+    const result = endDeal();
+    assert.equal(state.players[0].total, 1000);
+    assert.equal(result.champion, state.players[0]);
+});
+
+test('endDeal: barrel - failing bid on barrel gives strike', () => {
+    setupDeal(0, 120);
+    state.settings.barrel = true;
+    state.players[0].total = 880; 
+    state.players[0].trickPts = 40; state.players[0].tricks = 2; // Declarer fails bid
+    
+    endDeal();
+    // Stays at 880, but gains a strike
+    assert.equal(state.players[0].total, 880);
+    assert.equal(state.players[0].barrelAttempts, 1);
+    
+    // Fails again
+    endDeal();
+    assert.equal(state.players[0].barrelAttempts, 2);
+    
+    // 3rd strike
+    endDeal();
+    assert.equal(state.players[0].total, 760); // Falls off
+    assert.equal(state.players[0].barrelAttempts, 0);
+});
+
+test('endDeal: barrel - defender on barrel stays 880, no strike', () => {
+    setupDeal(1, 100);
+    state.settings.barrel = true;
+    state.players[0].total = 880; 
+    state.players[0].trickPts = 40; state.players[0].tricks = 2; // Defender on barrel scores
+    
+    endDeal();
+    assert.equal(state.players[0].total, 880);
+    assert.equal(state.players[0].barrelAttempts, 0); // No strike
 });
