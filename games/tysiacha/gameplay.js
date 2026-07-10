@@ -9,6 +9,7 @@ import {
     state, newPlayer, legalMoves, cardBeats, trickWinnerSlot, wouldWinNow,
     trickPts, canDeclare, activeBidders, nextActive
 } from './state.js';
+import { aiBid as aiDoBid, aiExchange as aiDoExchange, aiMove as aiDoMove, estimateHand } from './ai.js';
 import { logEvent, eventText, trickReason } from './log.js';
 import { render, banner, flashTip, coachText, animateSweepToWinner } from './ui.js';
 import { snap, chime, gavel } from './sfx.js';
