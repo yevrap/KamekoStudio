@@ -9,7 +9,8 @@ import {
 } from './ui.js';
 import {
   playAttack, playDefense, passAttack, declareTake,
-  pileOnPass, checkGameOver, dealInitial, legalDefense, legalAttack, getMatchStats
+  pileOnPass, checkGameOver, dealInitial, legalDefense, legalAttack, getMatchStats,
+  legalTransfer, playTransfer
 } from './gameplay.js';
 import { scheduleAiAction, clearAiTimeout } from './ai.js';
 
@@ -48,6 +49,31 @@ var $btnReplay    = document.getElementById('btn-replay');
 var $passOverlay  = document.getElementById('pass-device-overlay');
 var $humanHand    = document.getElementById('human-hand');
 var $humanOptions = document.getElementById('human-options');
+
+if (window.$btnLog) {
+  window.$btnLog.addEventListener('click', function() {
+    import('./log.js').then(logModule => {
+      var html = '';
+      var lastBout = 0;
+      for (var i = 0; i < state.log.length; i++) {
+        var e = state.log[i];
+        if (e.bout !== lastBout) {
+          html += `<div style="margin-top:12px; font-weight:bold; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px; margin-bottom:4px;">Bout ${e.bout}</div>`;
+          lastBout = e.bout;
+        }
+        html += `<div style="padding:4px 0;">${logModule.eventText(e)}</div>`;
+      }
+      window.$logBody.innerHTML = html;
+      window.$logOverlay.classList.remove('hidden');
+    });
+  });
+}
+
+if (window.$btnCloseLog) {
+  window.$btnCloseLog.addEventListener('click', function() {
+    window.$logOverlay.classList.add('hidden');
+  });
+}
 
 function applyActive(container, attr, value) {
   var btns = container.querySelectorAll('[' + attr + ']');
@@ -264,8 +290,12 @@ $humanHand.addEventListener('pointerup', function (e) {
   if (!card) return;
 
   var ok = false;
-  if (seat === state.defenderSeat && state.phase === 'playing' && legalDefense(seat, card)) {
-    ok = playDefense(seat, start.cardId);
+  if (seat === state.defenderSeat && state.phase === 'playing') {
+    if (legalTransfer(seat, card)) {
+      ok = playTransfer(seat, start.cardId);
+    } else if (legalDefense(seat, card)) {
+      ok = playDefense(seat, start.cardId);
+    }
   } else if (legalAttack(seat, card)) {
     ok = playAttack(seat, start.cardId);
   }
@@ -369,6 +399,137 @@ function injectDurakSettings() {
     }
     sec.appendChild(diffToggle);
   }
+
+  // --- Perevodnoy Toggle ---
+  var pToggle = document.createElement('div');
+  pToggle.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:8px;';
+  
+  var pLabel = document.createElement('label');
+  pLabel.textContent = 'Perevodnoy (Transfers)';
+  pLabel.setAttribute('for', 'perevodnoy-checkbox');
+  pLabel.style.cssText = 'font-family:sans-serif; font-size:0.9em; cursor:pointer;';
+
+  var pSwitch = document.createElement('label');
+  pSwitch.className = 'switch';
+  pSwitch.style.cssText = 'position:relative; display:inline-block; width:48px; height:28px;';
+
+  var pInput = document.createElement('input');
+  pInput.type = 'checkbox';
+  pInput.id = 'perevodnoy-checkbox';
+  pInput.style.cssText = 'opacity:0; width:0; height:0;';
+  pInput.checked = localStorage.getItem('durak_perevodnoy') === 'true';
+
+  var pSlider = document.createElement('span');
+  pSlider.className = 'slider';
+  pSlider.style.cssText = 'position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:rgba(255,255,255,0.25); transition:.4s; border-radius:28px;';
+  
+  var pSliderBefore = document.createElement('span');
+  pSliderBefore.style.cssText = 'position:absolute; content:""; height:20px; width:20px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%;';
+  if (pInput.checked) {
+    pSlider.style.backgroundColor = '#2196F3';
+    pSliderBefore.style.transform = 'translateX(20px)';
+  }
+  pSlider.appendChild(pSliderBefore);
+  pSwitch.appendChild(pInput);
+  pSwitch.appendChild(pSlider);
+
+  pToggle.appendChild(pLabel);
+  pToggle.appendChild(pSwitch);
+  sec.appendChild(pToggle);
+
+  // --- First Attack Transferrable Toggle ---
+  var fToggle = document.createElement('div');
+  fToggle.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; opacity:' + (pInput.checked ? '1' : '0.5') + '; pointer-events:' + (pInput.checked ? 'auto' : 'none') + '; transition:opacity 0.2s;';
+  
+  var fLabel = document.createElement('label');
+  fLabel.textContent = 'Allow First-Turn Transfer';
+  fLabel.setAttribute('for', 'first-transfer-checkbox');
+  fLabel.style.cssText = 'font-family:sans-serif; font-size:0.9em; cursor:pointer;';
+
+  var fSwitch = document.createElement('label');
+  fSwitch.className = 'switch';
+  fSwitch.style.cssText = 'position:relative; display:inline-block; width:48px; height:28px;';
+
+  var fInput = document.createElement('input');
+  fInput.type = 'checkbox';
+  fInput.id = 'first-transfer-checkbox';
+  fInput.style.cssText = 'opacity:0; width:0; height:0;';
+  fInput.checked = localStorage.getItem('durak_first_transfer') === 'true';
+
+  var fSlider = document.createElement('span');
+  fSlider.className = 'slider';
+  fSlider.style.cssText = 'position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:rgba(255,255,255,0.25); transition:.4s; border-radius:28px;';
+  
+  var fSliderBefore = document.createElement('span');
+  fSliderBefore.style.cssText = 'position:absolute; content:""; height:20px; width:20px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%;';
+  if (fInput.checked) {
+    fSlider.style.backgroundColor = '#2196F3';
+    fSliderBefore.style.transform = 'translateX(20px)';
+  }
+  fSlider.appendChild(fSliderBefore);
+  fSwitch.appendChild(fInput);
+  fSwitch.appendChild(fSlider);
+
+  fToggle.appendChild(fLabel);
+  fToggle.appendChild(fSwitch);
+  sec.appendChild(fToggle);
+
+  pInput.addEventListener('change', function(e) {
+    localStorage.setItem('durak_perevodnoy', e.target.checked ? 'true' : 'false');
+    pSlider.style.backgroundColor = e.target.checked ? '#2196F3' : 'rgba(255,255,255,0.25)';
+    pSliderBefore.style.transform = e.target.checked ? 'translateX(20px)' : 'none';
+    fToggle.style.opacity = e.target.checked ? '1' : '0.5';
+    fToggle.style.pointerEvents = e.target.checked ? 'auto' : 'none';
+  });
+
+  fInput.addEventListener('change', function(e) {
+    localStorage.setItem('durak_first_transfer', e.target.checked ? 'true' : 'false');
+    fSlider.style.backgroundColor = e.target.checked ? '#2196F3' : 'rgba(255,255,255,0.25)';
+    fSliderBefore.style.transform = e.target.checked ? 'translateX(20px)' : 'none';
+  });
+
+  // --- Coach Hints Toggle ---
+  var cToggle = document.createElement('div');
+  cToggle.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;';
+  
+  var cLabel = document.createElement('label');
+  cLabel.textContent = 'Coach Hints';
+  cLabel.setAttribute('for', 'coach-hints-checkbox');
+  cLabel.style.cssText = 'font-family:sans-serif; font-size:0.9em; cursor:pointer;';
+
+  var cSwitch = document.createElement('label');
+  cSwitch.className = 'switch';
+  cSwitch.style.cssText = 'position:relative; display:inline-block; width:48px; height:28px;';
+
+  var cInput = document.createElement('input');
+  cInput.type = 'checkbox';
+  cInput.id = 'coach-hints-checkbox';
+  cInput.style.cssText = 'opacity:0; width:0; height:0;';
+  cInput.checked = localStorage.getItem('durak_coach') === 'true';
+
+  var cSlider = document.createElement('span');
+  cSlider.className = 'slider';
+  cSlider.style.cssText = 'position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:rgba(255,255,255,0.25); transition:.4s; border-radius:28px;';
+  
+  var cSliderBefore = document.createElement('span');
+  cSliderBefore.style.cssText = 'position:absolute; content:""; height:20px; width:20px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%;';
+  if (cInput.checked) {
+    cSlider.style.backgroundColor = '#2196F3';
+    cSliderBefore.style.transform = 'translateX(20px)';
+  }
+  cSlider.appendChild(cSliderBefore);
+  cSwitch.appendChild(cInput);
+  cSwitch.appendChild(cSlider);
+
+  cToggle.appendChild(cLabel);
+  cToggle.appendChild(cSwitch);
+  sec.appendChild(cToggle);
+
+  cInput.addEventListener('change', function(e) {
+    localStorage.setItem('durak_coach', e.target.checked ? 'true' : 'false');
+    cSlider.style.backgroundColor = e.target.checked ? '#2196F3' : 'rgba(255,255,255,0.25)';
+    cSliderBefore.style.transform = e.target.checked ? 'translateX(20px)' : 'none';
+  });
 
   var endRow = document.createElement('div');
   endRow.style.cssText = 'margin-top:24px;margin-bottom:8px;';

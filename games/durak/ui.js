@@ -7,6 +7,8 @@
 import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
 import { suitEmoji, suitName, displayValue } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
+import { getHardAiMove } from './ai.js';
+import { logEvent } from './log.js';
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
     $statusDisplay, $trumpDisplay, $deckCount, $discardZone, $discardStack, $discardCount,
@@ -45,6 +47,12 @@ export function cacheDom() {
   $discardZone       = document.getElementById('discard-zone');
   $discardStack      = document.getElementById('discard-stack');
   $discardCount      = document.getElementById('discard-count');
+
+  window.$logOverlay = document.getElementById('log-overlay');
+  window.$logBody    = document.getElementById('log-body');
+  window.$btnLog     = document.getElementById('btn-log');
+  window.$btnCloseLog = document.getElementById('btn-close-log');
+  window.$coachBanner = document.getElementById('coach-banner');
 
   wireHandScroll($humanHand);
 }
@@ -344,6 +352,41 @@ function updateActionButtons() {
   if ($waitSpinner) {
     var waiting = !canTake && !canPass && !canDone && (state.phase === 'playing' || state.phase === 'pileOn');
     $waitSpinner.classList.toggle('hidden', !waiting);
+  }
+
+  if (window.$coachBanner) {
+    var isCoach = localStorage.getItem('durak_coach') === 'true';
+    if (isCoach && hasPriority && state.phase !== 'start' && state.phase !== 'gameover') {
+      var move = getHardAiMove(viewer);
+      if (move) {
+        var text = 'Coach: ';
+        var logText = '';
+        if (move.action === 'pass') {
+          text += 'Pass';
+          logText = 'Pass';
+        } else if (move.action === 'take') {
+          text += 'Take';
+          logText = 'Take';
+        } else if (move.card) {
+          var actName = move.action === 'transfer' ? 'Transfer' : (move.action === 'defend' ? 'Defend' : 'Play');
+          var isRed = (move.card.suit === 3 || move.card.suit === 4);
+          var cSpan = `<span class="${isRed ? 'suit-red' : 'suit-black'}">${displayValue(move.card.value)}${suitEmoji(move.card.suit)}</span>`;
+          text += actName + ' ' + cSpan;
+          logText = actName + ' ' + displayValue(move.card.value) + suitEmoji(move.card.suit);
+        }
+        window.$coachBanner.innerHTML = text;
+        window.$coachBanner.classList.remove('hidden');
+
+        var lastLog = state.log[state.log.length - 1];
+        if (!lastLog || lastLog.type !== 'coach_hint' || lastLog.text !== logText) {
+          logEvent('coach_hint', { text: logText, seat: viewer });
+        }
+      } else {
+        window.$coachBanner.classList.add('hidden');
+      }
+    } else {
+      window.$coachBanner.classList.add('hidden');
+    }
   }
 }
 

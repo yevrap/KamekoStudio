@@ -7,7 +7,7 @@ import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
 import { cardStrength } from './constants.js';
 import {
   legalAttack, legalDefense, playAttack, playDefense,
-  passAttack, declareTake, pileOnPass
+  passAttack, declareTake, pileOnPass, legalTransfer, playTransfer
 } from './gameplay.js';
 
 var aiTimeout = null;
@@ -68,6 +68,16 @@ function playableDefenseCards(seat) {
   return out;
 }
 
+function playableTransferCards(seat) {
+  var hand = getPlayer(seat).hand;
+  var out = [];
+  for (var i = 0; i < hand.length; i++) {
+    if (legalTransfer(seat, hand[i])) out.push(hand[i]);
+  }
+  out.sort(function (a, b) { return cardStrength(a, state.trumpSuit) - cardStrength(b, state.trumpSuit); });
+  return out;
+}
+
 function fieldFullyDefended() {
   if (state.field.attacks.length === 0) return false;
   for (var i = 0; i < state.field.defenses.length; i++) {
@@ -110,7 +120,19 @@ function aiAttack(seat) {
 }
 
 function aiDefend(seat) {
+  var pt = playableTransferCards(seat);
   var playable = playableDefenseCards(seat);
+
+  if (pt.length > 0) {
+    var nonTrumpTransfer = [];
+    for (var j = 0; j < pt.length; j++) if (!isTrump(pt[j].suit)) nonTrumpTransfer.push(pt[j]);
+    if (nonTrumpTransfer.length > 0) { playTransfer(seat, nonTrumpTransfer[0].id); return; }
+    
+    var nonTrumpDefense = [];
+    for (var k = 0; k < playable.length; k++) if (!isTrump(playable[k].suit)) nonTrumpDefense.push(playable[k]);
+    if (nonTrumpDefense.length === 0) { playTransfer(seat, pt[0].id); return; }
+  }
+
   if (playable.length === 0) { declareTake(seat); return; }
 
   var firstOpen = state.field.defenses.indexOf(null);
@@ -158,7 +180,14 @@ function aiPlayEasy(seat) {
   }
 
   if (seat === state.defenderSeat) {
+    var pt = playableTransferCards(seat);
     var pd = playableDefenseCards(seat);
+    
+    if (pt.length > 0 && Math.random() < 0.4) {
+      playTransfer(seat, pt[Math.floor(Math.random() * pt.length)].id);
+      return;
+    }
+
     // Occasionally artificially miss a defense! But usually play one if able to.
     if (pd.length === 0 || Math.random() < 0.15) { declareTake(seat); return; }
     playDefense(seat, pd[Math.floor(Math.random() * pd.length)].id);
@@ -177,21 +206,38 @@ function aiPlayEasy(seat) {
 // ═══════════════════════════════════════════════════════════════════════════
 // HARD AI LOGIC
 // ═══════════════════════════════════════════════════════════════════════════
-function aiPlayHard(seat) {
+export function getHardAiMove(seat) {
   if (state.phase === 'pileOn') {
     var playable = playableAttackCards(seat);
-    if (playable.length === 0) { pileOnPass(seat); return; }
+    if (playable.length === 0) return { action: 'pass' };
+    
     // Dump worst non-trumps aggressively on a player taking cards.
     var nonTrump = [];
     for (var i = 0; i < playable.length; i++) if (!isTrump(playable[i].suit)) nonTrump.push(playable[i]);
-    if (nonTrump.length > 0) { playAttack(seat, nonTrump[0].id); return; }
-    pileOnPass(seat); // Don't waste trumps on a taker in pile-on
-    return;
+    if (nonTrump.length > 0) return { action: 'attack', card: nonTrump[0] };
+    return { action: 'pass' }; // Don't waste trumps on a taker in pile-on
   }
 
   if (seat === state.defenderSeat) {
+    var pt = playableTransferCards(seat);
     var pd = playableDefenseCards(seat);
-    if (pd.length === 0) { declareTake(seat); return; }
+    
+    var nonTrumpTransfer = [];
+    var trumpTransfer = [];
+    if (pt.length > 0) {
+      for (var j = 0; j < pt.length; j++) {
+        if (!isTrump(pt[j].suit)) nonTrumpTransfer.push(pt[j]);
+        else trumpTransfer.push(pt[j]);
+      }
+      // Always transfer if we can do it without a trump
+      if (nonTrumpTransfer.length > 0) return { action: 'transfer', card: nonTrumpTransfer[0] };
+    }
+
+    if (pd.length === 0) {
+      // We can't defend. If we can transfer with a trump, do it (better than taking).
+      if (pt.length > 0) return { action: 'transfer', card: pt[0] };
+      return { action: 'take' }; 
+    }
 
     var firstOpen = state.field.defenses.indexOf(null);
     var atk = state.field.attacks[firstOpen];
@@ -205,33 +251,39 @@ function aiPlayHard(seat) {
       else trumpOnly.push(pd[k]);
     }
 
-    if (sameSuit.length > 0) { playDefense(seat, sameSuit[0].id); return; }
+    if (sameSuit.length > 0) return { action: 'defend', card: sameSuit[0] };
+    
+    // We would have to use a trump to defend. If we can transfer using a trump, 
+    // it's generally better than defending with a trump (unless it's an Ace maybe).
+    if (trumpTransfer.length > 0 && trumpTransfer[0].value <= (trumpOnly.length > 0 ? trumpOnly[0].value : 14)) {
+      return { action: 'transfer', card: trumpTransfer[0] };
+    }
 
     var handSize = getPlayer(seat).hand.length;
     var undefendedCount = 0;
     for (var u = 0; u < state.field.defenses.length; u++) {
       if (state.field.defenses[u] === null) undefendedCount++;
     }
+    
     // Genuinely desperate: defending now would clear (or nearly clear) our hand
     // while the deck is out — always take the safety over the comfort check below.
     if (state.deck.length === 0 && handSize <= undefendedCount) {
-      playDefense(seat, trumpOnly[0].id); return;
+      return { action: 'defend', card: trumpOnly[0] };
     }
 
     // We must use a trump. Do we want to?
     var cheapestTrumpVal = trumpOnly[0].value;
     if (atkVal < 10 && cheapestTrumpVal >= 11 && state.field.attacks.length === 1) {
-      if (handSize <= 6) { declareTake(seat); return; }
+      if (handSize <= 6) return { action: 'take' };
     }
-    playDefense(seat, trumpOnly[0].id);
-    return;
+    return { action: 'defend', card: trumpOnly[0] };
   }
 
   // Attack logic
   var pa = playableAttackCards(seat);
   var hand = getPlayer(seat).hand;
   if (state.field.attacks.length === 0) {
-    if (pa.length === 0) return;
+    if (pa.length === 0) return null;
     var counts = {};
     var nonTrumps = [];
     for (var j = 0; j < pa.length; j++) {
@@ -245,25 +297,42 @@ function aiPlayHard(seat) {
         if (counts[nonTrumps[p].value] > 1) { pick = nonTrumps[p]; break; }
       }
     }
-    playAttack(seat, pick.id);
-    return;
+    return { action: 'attack', card: pick };
   }
 
-  if (pa.length === 0) { passAttack(seat); return; }
+  if (pa.length === 0) return { action: 'pass' };
 
   // Hard prefers to maximize discards if there is chance of success or endgame is near.
   if (fieldFullyDefended()) {
-    if (hand.length <= 1) { passAttack(seat); return; }
-    if (state.deck.length > 0 && hand.length <= 3) { passAttack(seat); return; }
+    if (hand.length <= 1) return { action: 'pass' };
+    if (state.deck.length > 0 && hand.length <= 3) return { action: 'pass' };
   }
 
   // Hard mode actively throws trash, NEVER throws trumps to continue an attack unless its the kill stroke.
   var nT = [];
   for (var w = 0; w < pa.length; w++) if (!isTrump(pa[w].suit)) nT.push(pa[w]);
-  if (nT.length > 0) { playAttack(seat, nT[0].id); return; }
+  if (nT.length > 0) return { action: 'attack', card: nT[0] };
 
-  if (state.deck.length === 0) { playAttack(seat, pa[0].id); return; }
-  passAttack(seat);
+  if (state.deck.length === 0) return { action: 'attack', card: pa[0] };
+  return { action: 'pass' };
+}
+
+function aiPlayHard(seat) {
+  var move = getHardAiMove(seat);
+  if (!move) return;
+  
+  if (move.action === 'pass') {
+    if (state.phase === 'pileOn') pileOnPass(seat);
+    else passAttack(seat);
+  } else if (move.action === 'take') {
+    declareTake(seat);
+  } else if (move.action === 'attack') {
+    playAttack(seat, move.card.id);
+  } else if (move.action === 'defend') {
+    playDefense(seat, move.card.id);
+  } else if (move.action === 'transfer') {
+    playTransfer(seat, move.card.id);
+  }
 }
 
 // Silence unused-import hint for adjacentContributors

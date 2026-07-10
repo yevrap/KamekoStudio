@@ -18,6 +18,7 @@
       <span id="game-title">DURAK</span>
       <span id="trump-display"></span>
       <span id="status-display"></span>
+      <button id="btn-log" title="Game log" style="background:transparent; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">📜</button>
     </div>
 
     <div id="opponents"></div>
@@ -39,6 +40,7 @@
 
     <div id="human-zone">
       <div id="human-hand" class="hand-row"></div>
+      <div id="coach-banner" class="hidden" style="color:#88ccff; font-size:0.85rem; text-align:center; padding:4px; margin-top:-8px; margin-bottom:4px; opacity:0.9;"></div>
       <div id="human-options" class="options-row">
         <div id="wait-spinner" class="hidden">
           <span class="suit-pulse suit-spades">&spades;</span>
@@ -101,6 +103,15 @@
       <button class="mbtn red" id="btn-names-done" type="button">Done</button>
       <button class="mbtn outline" id="btn-names-reset" type="button">Reset Defaults</button>
     </div>
+  </div>
+
+  <!-- Game Log screen -->
+  <div id="log-overlay" class="overlay hidden scrollable-modal" style="justify-content: flex-start; padding-top: 40px; background: rgba(10,10,20,0.95);">
+    <div style="display:flex; justify-content:space-between; width:100%; max-width:400px; margin-bottom:16px;">
+      <div class="g-title" style="font-size: 1.5rem;">📜 Game Log</div>
+      <button id="btn-close-log" style="background:transparent; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">✕</button>
+    </div>
+    <div id="log-body" style="width:100%; max-width:400px; display:flex; flex-direction:column; gap:8px; font-size:0.9rem; color:var(--text);"></div>
   </div>
 
   <script type="module" src="main.js"></script>

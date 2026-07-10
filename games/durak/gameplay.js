@@ -7,6 +7,7 @@ import {
   state, getPlayer, nextActiveSeat, adjacentContributors, activeCount
 } from './state.js';
 import { canBeat } from './constants.js';
+import { logEvent } from './log.js';
 
 // ── Predicates ─────────────────────────────────────────────────────────────
 
@@ -75,9 +76,17 @@ function findCard(seat, cardId) {
 export function playAttack(seat, cardId) {
   var card = findCard(seat, cardId);
   if (!card || !legalAttack(seat, card)) return false;
+  
+  if (state.field.attacks.length === 0) {
+    state.attacksThisGame++;
+  }
+  
   removeFromHand(seat, cardId);
   state.field.attacks.push(card);
   state.field.defenses.push(null);
+  
+  logEvent('attack', { seat: seat, card: card });
+
   if (state.contributionOrder.indexOf(seat) === -1) state.contributionOrder.push(seat);
 
   if (state.phase === 'pileOn') {
@@ -94,12 +103,67 @@ export function playAttack(seat, cardId) {
   return true;
 }
 
+export function legalTransfer(seat, card) {
+  if (!state.variantPerevodnoy) return false;
+  if (state.phase !== 'playing') return false;
+  if (state.prioritySeat !== seat) return false;
+  if (seat !== state.defenderSeat) return false;
+  if (state.field.attacks.length === 0) return false;
+
+  // Cannot transfer if any defense has already been made.
+  for (var i = 0; i < state.field.defenses.length; i++) {
+    if (state.field.defenses[i] !== null) return false;
+  }
+
+  // Rank must match the attacking card(s).
+  var v = parseInt(card.value);
+  for (var a = 0; a < state.field.attacks.length; a++) {
+    if (parseInt(state.field.attacks[a].value) !== v) return false;
+  }
+
+  // Check first turn restriction
+  if (state.attacksThisGame === 1 && !state.variantFirstTransfer) {
+    return false;
+  }
+
+  // Next active player must have enough cards to defend against the combined attacks.
+  var nextSeat = nextActiveSeat(seat);
+  var nextPlayer = getPlayer(nextSeat);
+  if (nextPlayer.hand.length < state.field.attacks.length + 1) return false;
+
+  return true;
+}
+
+export function playTransfer(seat, cardId) {
+  var card = findCard(seat, cardId);
+  if (!card || !legalTransfer(seat, card)) return false;
+  removeFromHand(seat, cardId);
+  state.field.attacks.push(card);
+  state.field.defenses.push(null);
+  
+  logEvent('transfer', { seat: seat, card: card });
+
+  // Shift defender to the next player.
+  state.attackerSeat = seat;
+  state.defenderSeat = nextActiveSeat(seat);
+  state.prioritySeat = state.defenderSeat;
+
+  // Reset pass flags and contribution order since the defender changed.
+  state.attackerPassed = false;
+  state.contributorPassed = false;
+  state.contributionOrder = [seat]; // The one who transferred is now a contributor.
+
+  return true;
+}
+
 export function playDefense(seat, cardId) {
   var card = findCard(seat, cardId);
   if (!card || !legalDefense(seat, card)) return false;
   removeFromHand(seat, cardId);
   var firstOpen = state.field.defenses.indexOf(null);
   state.field.defenses[firstOpen] = card;
+
+  logEvent('defend', { seat: seat, card: card });
 
   // Back to primary attacker; reset pass flags for the new round.
   state.prioritySeat = state.attackerSeat;
@@ -132,6 +196,7 @@ export function passAttack(seat) {
     var passed = (s === state.attackerSeat) ? state.attackerPassed : state.contributorPassed;
     if (!passed) { state.prioritySeat = s; return true; }
   }
+  logEvent('pass', { seat: seat });
   endBout('defended');
   return true;
 }
@@ -146,6 +211,8 @@ export function declareTake(seat) {
   state.attackerPassed = false;
   state.contributorPassed = false;
   state.prioritySeat = state.attackerSeat;
+
+  logEvent('take', { seat: seat });
 
   // If no eligible attacker can act, close immediately.
   if (!anyContributorCanThrow()) { endBout('taken'); }
@@ -169,6 +236,7 @@ export function pileOnPass(seat) {
     var passed = (s === state.attackerSeat) ? state.attackerPassed : state.contributorPassed;
     if (!passed) { state.prioritySeat = s; return true; }
   }
+  logEvent('pass', { seat: seat });
   endBout('taken');
   return true;
 }
@@ -233,6 +301,9 @@ export function endBout(outcome) {
       if (state.field.defenses[m]) defenderHand.push(state.field.defenses[m]);
     }
   }
+
+  logEvent(outcome === 'defended' ? 'bout_defended' : 'bout_taken', { seat: defenderSeat });
+  state.boutNum++;
 
   drawPhase();
 

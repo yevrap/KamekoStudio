@@ -133,4 +133,10 @@ export function newGame(mode, count) {
   state.phase = 'playing';
   state.pendingReveal = null;
   state.winnerText = '';
+
+  state.variantPerevodnoy = localStorage.getItem('durak_perevodnoy') === 'true';
+  state.variantFirstTransfer = localStorage.getItem('durak_first_transfer') === 'true';
+  state.attacksThisGame = 0;
+  state.boutNum = 1;
+  state.log = [];
 }
