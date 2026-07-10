@@ -104,6 +104,7 @@ const EN = {
     // action buttons
     'act.bid': n => `Bid ${n}`, 'act.pass': 'Pass', 'act.give': 'Give cards',
     'act.reraise': n => `Raise bid to ${n}`,
+    'act.playCard': 'Play Card',
     'give.to': name => `→ ${name}`,
 
     // illegal-card tips
@@ -172,6 +173,7 @@ const EN = {
     'set.diff': 'AI Difficulty',
     'set.diffEasy': 'Easy', 'set.diffNormal': 'Normal', 'set.diffHard': 'Hard',
     'set.sound': 'Sound effects',
+    'set.tapToPlay': '1-Tap Play',
     'set.target': 'Target Score',
     'set.target500': '500 (Quick Match)', 'set.target1000': '1000 (Classic)',
     'set.namesHdr': 'Player Names',
@@ -237,6 +239,7 @@ const RU = {
 
     'act.bid': n => `Ставка ${n}`, 'act.pass': 'Пас', 'act.give': 'Отдать карты',
     'act.reraise': n => `Поднять до ${n}`,
+    'act.playCard': 'Сыграть',
     'give.to': name => `→ ${name}`,
 
     'illegal.follow': led => `Нужно ходить в масть — сыграйте ${suitText(led)} (${SUIT_CHAR[led]}).`,
@@ -299,6 +302,7 @@ const RU = {
     'set.diff': 'Сила соперников',
     'set.diffEasy': 'Легко', 'set.diffNormal': 'Нормально', 'set.diffHard': 'Сложно',
     'set.sound': 'Звуковые эффекты',
+    'set.tapToPlay': 'Игра в 1 касание',
     'set.target': 'Целевой счёт',
     'set.target500': '500 (быстрый матч)', 'set.target1000': '1000 (классика)',
     'set.namesHdr': 'Имена игроков',

@@ -55,7 +55,7 @@ export function animateSweepToWinner(winnerPlayerIdx, onComplete) {
         void ghost.offsetWidth; // force reflow
         
         ghost.classList.add('sweep-animating');
-        ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
+        ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.6)`;
         ghost.style.opacity = '0';
 
         setTimeout(() => {
@@ -207,6 +207,7 @@ export function localizeStatic() {
     $('lbl-lang').textContent = t('set.lang');
     $('lbl-diff').textContent = t('set.diff');
     $('lbl-sound').textContent = t('set.sound');
+    if ($('lbl-tap-to-play')) $('lbl-tap-to-play').textContent = t('set.tapToPlay');
     $('opt-diff-easy').textContent = t('set.diffEasy');
     $('opt-diff-normal').textContent = t('set.diffNormal');
     $('opt-diff-hard').textContent = t('set.diffHard');
@@ -342,9 +343,8 @@ export function render() {
             if (isLead && hasPartner && canDeclare(0) && state.trump !== c.s) {
                 actions = `<button class="act-btn" id="act-play-card">${t('marry.no')}</button>
                            <button class="act-btn" id="act-declare" style="background:var(--gold)">${t('marry.yes')}</button>`;
-            } else {
-                // Should not happen for normal cards if they are 1-tap, but just in case
-                actions = `<button class="act-btn" id="act-play-card">${t('marry.no')}</button>`;
+            } else if (!state.settings.tapToPlay) {
+                actions = `<button class="act-btn" id="act-play-card">${t('act.playCard')}</button>`;
             }
         }
     } else if (state.phase === 'play' && state.trickNum === 1 && state.trick.length === 0 && state.declarer === 0 && state.settings.reraise) {

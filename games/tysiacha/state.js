@@ -19,7 +19,8 @@ export const state = {
         bolts: false,
         barrel: false,
         reraise: false,
-        raspasy: false
+        raspasy: false,
+        tapToPlay: false
     },
     players: [],
     dealer: 2,

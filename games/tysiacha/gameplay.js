@@ -386,7 +386,7 @@ export function onCardTap(card) {
     const hasPartner = partnerRank && state.players[0].hand.some(c => c.s === card.s && c.r === partnerRank);
     const potentialMarriage = isLead && hasPartner && canDeclare(0) && state.trump !== card.s;
 
-    if (potentialMarriage) {
+    if (potentialMarriage || !state.settings.tapToPlay) {
         if (state.selected === k) {
             state.selected = null;
             state.pendingCard = null;
@@ -398,7 +398,7 @@ export function onCardTap(card) {
         return;
     }
 
-    // Normal card plays immediately (1-tap)
+    // 1-Tap enabled: normal card plays immediately
     playCard(0, card, false);
 }
 

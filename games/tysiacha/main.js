@@ -30,6 +30,7 @@ $('btn-tys-settings').onclick = () => {
     $('set-lang').value = getLang();
     $('set-diff').value = state.difficulty;
     $('set-sound').checked = !isMuted();
+    $('set-tap-to-play').checked = state.settings.tapToPlay;
     for (let p = 0; p < 3; p++) $('set-name-' + p).value = customName(p) || '';
     $('set-target').value = state.settings.targetScore;
     $('set-barrel').checked = state.settings.barrel;
@@ -75,6 +76,7 @@ $('tys-set-apply').onclick = () => {
     state.settings.reraise = $('set-reraise').checked;
     state.settings.raspasy = $('set-raspasy').checked;
     state.settings.hiddenPoints = $('set-hidden').checked;
+    state.settings.tapToPlay = $('set-tap-to-play').checked;
     $('tys-settings').classList.add('hidden');
     localizeStatic();   // the target score shows in the title
 
