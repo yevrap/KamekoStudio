@@ -50,34 +50,9 @@ var $passOverlay  = document.getElementById('pass-device-overlay');
 var $humanHand    = document.getElementById('human-hand');
 var $humanOptions = document.getElementById('human-options');
 
-if (window.$btnLog) {
-  window.$btnLog.addEventListener('click', function() {
-    import('./log.js').then(logModule => {
-      var html = '';
-      var lastBout = 0;
-      for (var i = 0; i < state.log.length; i++) {
-        var e = state.log[i];
-        if (e.bout !== lastBout) {
-          html += `<div style="margin-top:12px; font-weight:bold; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px; margin-bottom:4px;">Bout ${e.bout}</div>`;
-          lastBout = e.bout;
-        }
-        html += `<div style="padding:4px 0;">${logModule.eventText(e)}</div>`;
-      }
-      window.$logBody.innerHTML = html;
-      window.$logOverlay.classList.remove('hidden');
-    });
-  });
-}
-
 if (window.$btnCloseLog) {
   window.$btnCloseLog.addEventListener('click', function() {
     window.$logOverlay.classList.add('hidden');
-  });
-}
-
-if (window.$btnRules) {
-  window.$btnRules.addEventListener('click', function() {
-    window.$rulesOverlay.classList.remove('hidden');
   });
 }
 
@@ -359,219 +334,147 @@ $btnReplay.addEventListener('pointerdown', function (e) {
 // ── Settings panel integration ─────────────────────────────────────────────
 
 function injectDurakSettings() {
-  if (document.getElementById('durak-settings')) return;
-  var panel = document.getElementById('settings-panel');
-  if (!panel) return;
-  var devSection = document.getElementById('dev-mode-section');
+  if (!window.KamekoSettings) return;
 
-  var sec = document.createElement('div');
-  sec.id = 'durak-settings';
+  window.KamekoSettings.registerSection('durak-quick-actions', {
+    title: 'Quick Actions',
+    render: function(container) {
+      var btnRules = document.createElement('button');
+      btnRules.className = 'settings-btn';
+      btnRules.textContent = '❓ Rules of Durak';
+      btnRules.addEventListener('click', function() {
+        window.KamekoSettings.closeDrawer();
+        window.$rulesOverlay.classList.remove('hidden');
+      });
+      container.appendChild(btnRules);
 
-  var label = document.createElement('div');
-  label.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin-bottom:2px;';
-  label.textContent = 'Current Match';
-  sec.appendChild(label);
-
-  var info = document.createElement('div');
-  info.style.cssText = 'font-family:sans-serif;font-size:0.9em;';
-  var modeName = state.mode === 'hotseat' ? 'Hot-seat' : 'vs Computer';
-  info.textContent = modeName + ' \u2014 ' + state.playerCount + ' players';
-  sec.appendChild(info);
-
-  if (state.mode === 'ai') {
-    var diffLabel = document.createElement('div');
-    diffLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin-bottom:6px;margin-top:14px;';
-    diffLabel.textContent = 'AI Difficulty (takes effect immediately)';
-    sec.appendChild(diffLabel);
-
-    var diffToggle = document.createElement('div');
-    diffToggle.className = 'mode-toggle';
-    
-    var diffs = ['easy', 'normal', 'hard'];
-    var diffNames = ['Easy', 'Normal', 'Hard'];
-    var currentDiff = localStorage.getItem('durak_difficulty') || 'normal';
-    
-    for (var i = 0; i < diffs.length; i++) {
-      (function(d, name) {
-        var btn = document.createElement('button');
-        btn.className = 'mode-btn' + (currentDiff === d ? ' active' : '');
-        btn.type = 'button';
-        btn.dataset.diff = d;
-        btn.textContent = name;
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          localStorage.setItem('durak_difficulty', d);
-          var btns = diffToggle.querySelectorAll('.mode-btn');
-          for (var j = 0; j < btns.length; j++) {
-            btns[j].classList.toggle('active', btns[j].dataset.diff === d);
+      var btnLog = document.createElement('button');
+      btnLog.className = 'settings-btn';
+      btnLog.textContent = '📜 Game Log';
+      btnLog.addEventListener('click', function() {
+        window.KamekoSettings.closeDrawer();
+        import('./log.js').then(logModule => {
+          var html = '';
+          var lastBout = 0;
+          for (var i = 0; i < state.log.length; i++) {
+            var e = state.log[i];
+            if (e.bout !== lastBout) {
+              html += `<div style="margin-top:12px; font-weight:bold; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px; margin-bottom:4px;">Bout ${e.bout}</div>`;
+              lastBout = e.bout;
+            }
+            html += `<div style="padding:4px 0;">${logModule.eventText(e)}</div>`;
           }
+          window.$logBody.innerHTML = html;
+          window.$logOverlay.classList.remove('hidden');
         });
-        diffToggle.appendChild(btn);
-      })(diffs[i], diffNames[i]);
+      });
+      container.appendChild(btnLog);
     }
-    sec.appendChild(diffToggle);
-  }
-
-  // --- Perevodnoy Toggle ---
-  var pToggle = document.createElement('div');
-  pToggle.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-top:14px; margin-bottom:8px;';
-  
-  var pLabel = document.createElement('label');
-  pLabel.textContent = 'Perevodnoy (Transfers)';
-  pLabel.setAttribute('for', 'perevodnoy-checkbox');
-  pLabel.style.cssText = 'font-family:sans-serif; font-size:0.9em; cursor:pointer;';
-
-  var pSwitch = document.createElement('label');
-  pSwitch.className = 'switch';
-  pSwitch.style.cssText = 'position:relative; display:inline-block; width:48px; height:28px;';
-
-  var pInput = document.createElement('input');
-  pInput.type = 'checkbox';
-  pInput.id = 'perevodnoy-checkbox';
-  pInput.style.cssText = 'opacity:0; width:0; height:0;';
-  pInput.checked = localStorage.getItem('durak_perevodnoy') === 'true';
-
-  var pSlider = document.createElement('span');
-  pSlider.className = 'slider';
-  pSlider.style.cssText = 'position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:rgba(255,255,255,0.25); transition:.4s; border-radius:28px;';
-  
-  var pSliderBefore = document.createElement('span');
-  pSliderBefore.style.cssText = 'position:absolute; content:""; height:20px; width:20px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%;';
-  if (pInput.checked) {
-    pSlider.style.backgroundColor = '#2196F3';
-    pSliderBefore.style.transform = 'translateX(20px)';
-  }
-  pSlider.appendChild(pSliderBefore);
-  pSwitch.appendChild(pInput);
-  pSwitch.appendChild(pSlider);
-
-  pToggle.appendChild(pLabel);
-  pToggle.appendChild(pSwitch);
-  sec.appendChild(pToggle);
-
-  // --- First Attack Transferrable Toggle ---
-  var fToggle = document.createElement('div');
-  fToggle.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; opacity:' + (pInput.checked ? '1' : '0.5') + '; pointer-events:' + (pInput.checked ? 'auto' : 'none') + '; transition:opacity 0.2s;';
-  
-  var fLabel = document.createElement('label');
-  fLabel.textContent = 'Allow First-Turn Transfer';
-  fLabel.setAttribute('for', 'first-transfer-checkbox');
-  fLabel.style.cssText = 'font-family:sans-serif; font-size:0.9em; cursor:pointer;';
-
-  var fSwitch = document.createElement('label');
-  fSwitch.className = 'switch';
-  fSwitch.style.cssText = 'position:relative; display:inline-block; width:48px; height:28px;';
-
-  var fInput = document.createElement('input');
-  fInput.type = 'checkbox';
-  fInput.id = 'first-transfer-checkbox';
-  fInput.style.cssText = 'opacity:0; width:0; height:0;';
-  fInput.checked = localStorage.getItem('durak_first_transfer') === 'true';
-
-  var fSlider = document.createElement('span');
-  fSlider.className = 'slider';
-  fSlider.style.cssText = 'position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:rgba(255,255,255,0.25); transition:.4s; border-radius:28px;';
-  
-  var fSliderBefore = document.createElement('span');
-  fSliderBefore.style.cssText = 'position:absolute; content:""; height:20px; width:20px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%;';
-  if (fInput.checked) {
-    fSlider.style.backgroundColor = '#2196F3';
-    fSliderBefore.style.transform = 'translateX(20px)';
-  }
-  fSlider.appendChild(fSliderBefore);
-  fSwitch.appendChild(fInput);
-  fSwitch.appendChild(fSlider);
-
-  fToggle.appendChild(fLabel);
-  fToggle.appendChild(fSwitch);
-  sec.appendChild(fToggle);
-
-  pInput.addEventListener('change', function(e) {
-    localStorage.setItem('durak_perevodnoy', e.target.checked ? 'true' : 'false');
-    pSlider.style.backgroundColor = e.target.checked ? '#2196F3' : 'rgba(255,255,255,0.25)';
-    pSliderBefore.style.transform = e.target.checked ? 'translateX(20px)' : 'none';
-    fToggle.style.opacity = e.target.checked ? '1' : '0.5';
-    fToggle.style.pointerEvents = e.target.checked ? 'auto' : 'none';
   });
 
-  fInput.addEventListener('change', function(e) {
-    localStorage.setItem('durak_first_transfer', e.target.checked ? 'true' : 'false');
-    fSlider.style.backgroundColor = e.target.checked ? '#2196F3' : 'rgba(255,255,255,0.25)';
-    fSliderBefore.style.transform = e.target.checked ? 'translateX(20px)' : 'none';
+  window.KamekoSettings.registerSection('durak', {
+    title: 'Current Match: ' + (state.mode === 'hotseat' ? 'Hot-seat' : 'vs Computer') + ' (' + state.playerCount + ' players)',
+    render: function(container) {
+      if (state.mode === 'ai') {
+        var diffLabel = document.createElement('div');
+        diffLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin-bottom:6px;';
+        diffLabel.textContent = 'AI Difficulty';
+        container.appendChild(diffLabel);
+
+        var diffToggle = document.createElement('div');
+        diffToggle.className = 'mode-toggle';
+        var diffs = ['easy', 'normal', 'hard'];
+        var diffNames = ['Easy', 'Normal', 'Hard'];
+        var currentDiff = localStorage.getItem('durak_difficulty') || 'normal';
+        
+        for (var i = 0; i < diffs.length; i++) {
+          (function(d, name) {
+            var btn = document.createElement('button');
+            btn.className = 'mode-btn' + (currentDiff === d ? ' active' : '');
+            btn.type = 'button';
+            btn.dataset.diff = d;
+            btn.textContent = name;
+            btn.addEventListener('click', function(e) {
+              e.preventDefault();
+              localStorage.setItem('durak_difficulty', d);
+              var btns = diffToggle.querySelectorAll('.mode-btn');
+              for (var j = 0; j < btns.length; j++) {
+                btns[j].classList.toggle('active', btns[j].dataset.diff === d);
+              }
+            });
+            diffToggle.appendChild(btn);
+          })(diffs[i], diffNames[i]);
+        }
+        container.appendChild(diffToggle);
+      }
+
+      function createToggle(label, storageKey, onChange) {
+        var row = document.createElement('div');
+        row.className = 'settings-row';
+        row.style.background = 'transparent';
+        row.style.border = 'none';
+        row.style.padding = '0';
+        
+        var lbl = document.createElement('label');
+        lbl.textContent = label;
+        lbl.style.cursor = 'pointer';
+        
+        var toggle = document.createElement('label');
+        toggle.className = 'kameko-switch';
+        var inp = document.createElement('input');
+        inp.type = 'checkbox';
+        inp.checked = localStorage.getItem(storageKey) === 'true';
+        var slider = document.createElement('span');
+        slider.className = 'kameko-slider';
+        toggle.appendChild(inp);
+        toggle.appendChild(slider);
+        
+        row.appendChild(lbl);
+        row.appendChild(toggle);
+        
+        inp.addEventListener('change', function(e) {
+          localStorage.setItem(storageKey, e.target.checked ? 'true' : 'false');
+          if (onChange) onChange(e.target.checked);
+        });
+        
+        return { el: row, input: inp };
+      }
+
+      var coachToggle = createToggle('Coach Hints', 'durak_coach');
+      var perevodnoyToggle = createToggle('Perevodnoy (Transfers)', 'durak_perevodnoy');
+      var firstTransferToggle = createToggle('Allow First-Turn Transfer', 'durak_first_transfer');
+      
+      function updateFirstTransferState(enabled) {
+        firstTransferToggle.el.style.opacity = enabled ? '1' : '0.5';
+        firstTransferToggle.el.style.pointerEvents = enabled ? 'auto' : 'none';
+      }
+      
+      perevodnoyToggle.input.addEventListener('change', function(e) {
+        updateFirstTransferState(e.target.checked);
+      });
+      updateFirstTransferState(perevodnoyToggle.input.checked);
+
+      container.appendChild(coachToggle.el);
+      container.appendChild(perevodnoyToggle.el);
+      container.appendChild(firstTransferToggle.el);
+
+      var btnEnd = document.createElement('button');
+      btnEnd.className = 'settings-danger-btn';
+      btnEnd.style.marginTop = '12px';
+      btnEnd.textContent = 'End round & back to menu';
+      btnEnd.addEventListener('click', function(e) {
+        e.preventDefault();
+        window.KamekoSettings.closeDrawer();
+        clearAiTimeout();
+        state.phase = 'gameover';
+        var startOverlay = document.getElementById('start-overlay');
+        if (startOverlay) startOverlay.classList.remove('hidden');
+        var gameoverOverlay = document.getElementById('gameover-overlay');
+        if (gameoverOverlay) gameoverOverlay.classList.add('hidden');
+      });
+      container.appendChild(btnEnd);
+    }
   });
-
-  // --- Coach Hints Toggle ---
-  var cToggle = document.createElement('div');
-  cToggle.style.cssText = 'display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;';
-  
-  var cLabel = document.createElement('label');
-  cLabel.textContent = 'Coach Hints';
-  cLabel.setAttribute('for', 'coach-hints-checkbox');
-  cLabel.style.cssText = 'font-family:sans-serif; font-size:0.9em; cursor:pointer;';
-
-  var cSwitch = document.createElement('label');
-  cSwitch.className = 'switch';
-  cSwitch.style.cssText = 'position:relative; display:inline-block; width:48px; height:28px;';
-
-  var cInput = document.createElement('input');
-  cInput.type = 'checkbox';
-  cInput.id = 'coach-hints-checkbox';
-  cInput.style.cssText = 'opacity:0; width:0; height:0;';
-  cInput.checked = localStorage.getItem('durak_coach') === 'true';
-
-  var cSlider = document.createElement('span');
-  cSlider.className = 'slider';
-  cSlider.style.cssText = 'position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:rgba(255,255,255,0.25); transition:.4s; border-radius:28px;';
-  
-  var cSliderBefore = document.createElement('span');
-  cSliderBefore.style.cssText = 'position:absolute; content:""; height:20px; width:20px; left:4px; bottom:4px; background-color:white; transition:.4s; border-radius:50%;';
-  if (cInput.checked) {
-    cSlider.style.backgroundColor = '#2196F3';
-    cSliderBefore.style.transform = 'translateX(20px)';
-  }
-  cSlider.appendChild(cSliderBefore);
-  cSwitch.appendChild(cInput);
-  cSwitch.appendChild(cSlider);
-
-  cToggle.appendChild(cLabel);
-  cToggle.appendChild(cSwitch);
-  sec.appendChild(cToggle);
-
-  cInput.addEventListener('change', function(e) {
-    localStorage.setItem('durak_coach', e.target.checked ? 'true' : 'false');
-    cSlider.style.backgroundColor = e.target.checked ? '#2196F3' : 'rgba(255,255,255,0.25)';
-    cSliderBefore.style.transform = e.target.checked ? 'translateX(20px)' : 'none';
-  });
-
-  var endRow = document.createElement('div');
-  endRow.style.cssText = 'margin-top:24px;margin-bottom:8px;';
-  var btnEnd = document.createElement('button');
-  btnEnd.style.cssText = 'width:100%;height:44px;background:#e53935;color:#fff;border:none;border-radius:8px;font-size:0.95rem;font-weight:bold;cursor:pointer;font-family:sans-serif;transition:transform 0.1s;';
-  btnEnd.textContent = 'End round & back to menu';
-  btnEnd.addEventListener('pointerdown', function(e) {
-    e.preventDefault();
-    btnEnd.style.transform = 'scale(0.96)';
-  });
-  btnEnd.addEventListener('click', function(e) {
-    e.preventDefault();
-    btnEnd.style.transform = 'none';
-    var closeBtn = document.getElementById('settings-close-btn');
-    if (closeBtn) closeBtn.click();
-
-    clearAiTimeout();
-    state.phase = 'gameover'; // prevent background actions
-
-    var startOverlay = document.getElementById('start-overlay');
-    if (startOverlay) startOverlay.classList.remove('hidden');
-
-    var gameoverOverlay = document.getElementById('gameover-overlay');
-    if (gameoverOverlay) gameoverOverlay.classList.add('hidden');
-  });
-  endRow.appendChild(btnEnd);
-  sec.appendChild(endRow);
-
-  if (devSection) panel.insertBefore(sec, devSection);
-  else panel.appendChild(sec);
 }
 
 window.addEventListener('settingsOpened', function () {
@@ -585,8 +488,11 @@ window.addEventListener('settingsOpened', function () {
 });
 
 window.addEventListener('settingsClosed', function () {
-  var sec = document.getElementById('durak-settings');
+  var sec = document.getElementById('game-settings-durak');
   if (sec) sec.remove();
+  var secQa = document.getElementById('game-settings-durak-quick-actions');
+  if (secQa) secQa.remove();
+  
   if (state.phase === 'paused') {
     state.phase = prevStatePhase || 'playing';
     renderAll();

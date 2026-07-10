@@ -103,7 +103,7 @@ window.addEventListener('settingsOpened', () => { /* pause */ });
 window.addEventListener('settingsClosed', () => { /* resume */ });
 ```
 
-**Per-game settings rows:** Inject custom content into `#settings-panel` using `insertBefore(section, document.getElementById('dev-mode-section'))` so it appears above the developer tools. See `games/keypad-quest/main.js` for a full example (input mode selector + stats section injected on `settingsOpened`, removed on `settingsClosed`).
+**Per-game settings rows:** Inject custom content into the settings drawer using `window.KamekoSettings.registerSection(id, { title, render: fn })` when the `settingsOpened` event fires. See `games/keypad-quest/main.js` or `games/tysiacha/main.js` for a full example. Custom sections injected this way will automatically be removed by the drawer, but you can also manually clean them up on `settingsClosed` if needed by looking up `document.getElementById('game-settings-' + id)`.
 
 ## localStorage Keys
 

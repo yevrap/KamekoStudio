@@ -157,36 +157,29 @@ document.getElementById('btn-replay').addEventListener('pointerdown', function (
 var pausedPhase = null;
 
 function injectDungeonSettings() {
-  if (document.getElementById('dungeon-settings')) return;
-  var panel = document.getElementById('settings-panel');
-  if (!panel) return;
-  var devSection = document.getElementById('dev-mode-section');
-
-  var sec = document.createElement('div');
-  sec.id = 'dungeon-settings';
-  sec.style.padding = '12px 16px';
-  sec.style.borderBottom = '1px solid rgba(255,255,255,0.08)';
-
-  if (state.run && state.run.phase !== 'title') {
-    var label = document.createElement('div');
-    label.style.cssText = 'font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:8px';
-    label.textContent = 'Current Run';
-    sec.appendChild(label);
-
-    var info = document.createElement('div');
-    info.style.cssText = 'font-size:0.78rem;line-height:1.6;color:var(--text)';
-    info.innerHTML =
-      'Seed: <strong>' + state.run.seed + '</strong><br>' +
-      'Floor: <strong>' + state.run.floor + '</strong><br>' +
-      'HP: <strong>' + state.run.hp + '/' + state.run.maxHp + '</strong><br>' +
-      'Gold: <strong>' + state.run.gold + '</strong><br>' +
-      'Relics: <strong>' + state.run.relics.length + '/5</strong><br>' +
-      'Deck: <strong>' + state.run.deck.length + ' cards</strong>';
-    sec.appendChild(info);
-  }
-
-  if (devSection) panel.insertBefore(sec, devSection);
-  else panel.appendChild(sec);
+  if (!window.KamekoSettings) return;
+  window.KamekoSettings.registerSection('dungeon-settings', {
+    title: 'Current Run',
+    render: function(container) {
+      if (state.run && state.run.phase !== 'title') {
+        var info = document.createElement('div');
+        info.style.cssText = 'font-size:0.78rem;line-height:1.6;color:var(--text)';
+        info.innerHTML =
+          'Seed: <strong>' + state.run.seed + '</strong><br>' +
+          'Floor: <strong>' + state.run.floor + '</strong><br>' +
+          'HP: <strong>' + state.run.hp + '/' + state.run.maxHp + '</strong><br>' +
+          'Gold: <strong>' + state.run.gold + '</strong><br>' +
+          'Relics: <strong>' + state.run.relics.length + '/5</strong><br>' +
+          'Deck: <strong>' + state.run.deck.length + ' cards</strong>';
+        container.appendChild(info);
+      } else {
+        var info = document.createElement('div');
+        info.style.cssText = 'font-size:0.78rem;line-height:1.6;color:var(--text-muted)';
+        info.textContent = 'Not currently in a run.';
+        container.appendChild(info);
+      }
+    }
+  });
 }
 
 window.addEventListener('settingsOpened', function () {
@@ -198,7 +191,7 @@ window.addEventListener('settingsOpened', function () {
 });
 
 window.addEventListener('settingsClosed', function () {
-  var el = document.getElementById('dungeon-settings');
+  var el = document.getElementById('game-settings-dungeon-settings');
   if (el) el.remove();
   if (pausedPhase) {
     state.run.phase = pausedPhase;

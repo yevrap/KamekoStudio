@@ -14,9 +14,6 @@
     <div id="topbar">
         <div class="title">🎴 <span id="title-name">Tysiacha</span> <small id="title-sub">· to 1000</small></div>
         <div class="tb-btns">
-            <button class="tb-btn" id="btn-tys-settings">⚙️</button>
-            <button class="tb-btn" id="btn-howto">Rules</button>
-            <button class="tb-btn" id="btn-coach">Hint</button>
             <button class="tb-btn" id="btn-restart">↺</button>
         </div>
     </div>
@@ -89,64 +86,7 @@
     </div>
 </div>
 
-<div class="overlay hidden" id="tys-settings">
-    <div class="panel">
-        <div class="p-header">
-            <h2 id="set-title">Game Settings</h2>
-            <button class="icon-btn close-btn" id="tys-set-close-top">✕</button>
-        </div>
-        <div class="p-body">
-            <div class="setting-row">
-                <label id="lbl-lang">Language / Язык</label>
-                <select id="set-lang">
-                    <option value="en">English</option>
-                    <option value="ru">Русский</option>
-                </select>
-            </div>
-            <div class="setting-row">
-                <label id="lbl-diff">AI Difficulty</label>
-                <select id="set-diff">
-                    <option id="opt-diff-easy" value="easy">Easy</option>
-                    <option id="opt-diff-normal" value="normal">Normal</option>
-                    <option id="opt-diff-hard" value="hard">Hard</option>
-                </select>
-            </div>
-            <div class="setting-row">
-                <label id="lbl-sound">Sound effects</label>
-                <input type="checkbox" id="set-sound" checked>
-            </div>
-            <div class="setting-row">
-                <label id="lbl-tap-to-play">1-Tap Play</label>
-                <input type="checkbox" id="set-tap-to-play" checked>
-            </div>
-            <div class="setting-row">
-                <label id="lbl-target">Target Score</label>
-                <select id="set-target">
-                    <option id="opt-500" value="500">500 (Quick Match)</option>
-                    <option id="opt-1000" value="1000">1000 (Classic)</option>
-                </select>
-            </div>
 
-            <div class="setting-header" id="set-names-hdr">Player Names</div>
-
-            <div class="setting-row"><label id="lbl-name-0">You</label><input type="text" id="set-name-0" maxlength="12" autocomplete="off"></div>
-            <div class="setting-row"><label id="lbl-name-1">Vera</label><input type="text" id="set-name-1" maxlength="12" autocomplete="off"></div>
-            <div class="setting-row"><label id="lbl-name-2">Boris</label><input type="text" id="set-name-2" maxlength="12" autocomplete="off"></div>
-
-            <div class="setting-header" id="set-rules-hdr">Classic Rules</div>
-
-            <label class="setting-check"><input type="checkbox" id="set-barrel"> <span id="lbl-barrel"><strong>The Barrel (880):</strong> Must win on the bid. 3 fails drops score.</span></label>
-            <label class="setting-check"><input type="checkbox" id="set-bolts"> <span id="lbl-bolts"><strong>Bolts:</strong> 0 tricks in a deal gives a bolt. 3 bolts = −120.</span></label>
-            <label class="setting-check"><input type="checkbox" id="set-rounding"> <span id="lbl-rounding"><strong>Rounding:</strong> Round scores to the nearest 5.</span></label>
-            <label class="setting-check"><input type="checkbox" id="set-reraise"> <span id="lbl-reraise"><strong>Re-raise:</strong> Declarer can raise bid after talon.</span></label>
-            <label class="setting-check"><input type="checkbox" id="set-raspasy"> <span id="lbl-raspasy"><strong>Raspasy:</strong> If all pass, negative round is played.</span></label>
-            <label class="setting-check"><input type="checkbox" id="set-hidden"> <span id="lbl-hidden"><strong>Hidden Points:</strong> Hide opponent scores during deal.</span></label>
-        </div>
-        <div class="p-nav">
-            <button class="act-btn" id="tys-set-apply">Apply & Restart</button>
-        </div>
-    </div>
-</div>
 
 <script type="module" src="main.js"></script>
 <script src="../../shared/settings.js" data-gallery-depth="2"></script>

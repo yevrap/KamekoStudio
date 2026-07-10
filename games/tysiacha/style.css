@@ -56,24 +56,18 @@ body {
     padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
 }
 
-/* ── Settings Gear Override ── */
-#settings-btn-global {
-    top: env(safe-area-inset-top, 8px) !important;
-    right: 8px !important;
-}
 
-/* ── Header ── */
+
 #topbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem 0.75rem;
+    padding: 0.5rem 0.75rem 0.5rem 64px;
     border-bottom: 1px solid var(--border);
-    /* Make space for settings gear if needed, though settings gear is absolute */
 }
 #topbar .title { font-weight: 700; font-size: 0.95rem; letter-spacing: 0.05em; }
 #topbar .title small { color: var(--muted); font-weight: 500; }
-.tb-btns { display: flex; gap: 0.4rem; padding-right: 44px; /* Space for settings gear */ }
+.tb-btns { display: flex; gap: 0.4rem; }
 .tb-btn {
     background: var(--surface);
     border: 1px solid var(--border);

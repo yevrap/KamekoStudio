@@ -80,7 +80,7 @@ html, body {
   justify-content: space-between;
   height: 44px;
   padding: 0 12px;
-  padding-right: 58px;
+  padding-left: 58px;
   background: var(--header-bg);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -105,10 +105,10 @@ html, body {
 #trump-display.suit-black { color: var(--card-black); }
 
 /* --- Settings gear override --- */
-#settings-gear-btn {
+#settings-hamburger-btn {
   position: fixed !important;
   top: 6px !important;
-  right: 8px !important;
+  left: 8px !important;
   width: 42px !important;
   height: 42px !important;
   border-radius: 10px !important;

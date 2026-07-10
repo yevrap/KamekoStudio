@@ -14,8 +14,6 @@ function showHowto() {
     $('howto').classList.remove('hidden');
 }
 
-$('btn-howto').onclick = () => showHowto();
-
 $('btn-log').onclick = () => {
     renderLog();
     $('logbook').classList.remove('hidden');
@@ -25,74 +23,175 @@ $('sum-log').onclick = () => {   // opens above the deal summary; closing return
     $('logbook').classList.remove('hidden');
 };
 
-$('btn-tys-settings').onclick = () => {
-    // Populate settings UI from state
-    $('set-lang').value = getLang();
-    $('set-diff').value = state.difficulty;
-    $('set-sound').checked = !isMuted();
-    $('set-tap-to-play').checked = state.settings.tapToPlay;
-    for (let p = 0; p < 3; p++) $('set-name-' + p).value = customName(p) || '';
-    $('set-target').value = state.settings.targetScore;
-    $('set-barrel').checked = state.settings.barrel;
-    $('set-bolts').checked = state.settings.bolts;
-    $('set-rounding').checked = state.settings.rounding;
-    $('set-reraise').checked = state.settings.reraise;
-    $('set-raspasy').checked = state.settings.raspasy;
-    $('set-hidden').checked = state.settings.hiddenPoints;
-    $('tys-settings').classList.remove('hidden');
-};
+function injectTysiachaSettings() {
+    if (!window.KamekoSettings) return;
 
-// Language is display-only — it applies immediately, mid-deal, no restart.
-// The log re-renders in the new language because entries are typed, not text.
-$('set-lang').onchange = () => {
-    setLang($('set-lang').value);
-    localizeStatic();
-    render();
-    if (!$('howto').classList.contains('hidden')) showHowto();
-};
+    window.KamekoSettings.registerSection('tys-quick-actions', {
+        title: 'Quick Actions',
+        render: function(container) {
+            container.innerHTML = `
+                <button class="settings-btn" id="drawer-btn-rules">❓ Rules of Tysiacha</button>
+                <button class="settings-btn" id="drawer-btn-coach">🧭 ${state.coach ? 'Turn off Coach Hints' : 'Turn on Coach Hints'}</button>
+            `;
+            $('drawer-btn-rules').onclick = () => {
+                window.KamekoSettings.closeDrawer();
+                showHowto();
+            };
+            $('drawer-btn-coach').onclick = () => {
+                state.coach = !state.coach;
+                render();
+                $('drawer-btn-coach').textContent = state.coach ? '🧭 Turn off Coach Hints' : '🧭 Turn on Coach Hints';
+            };
+        }
+    });
 
-// Difficulty and names are also live — they steer the NEXT AI decision /
-// render, no restart needed.
-$('set-diff').onchange = () => {
-    state.difficulty = $('set-diff').value;
-    localStorage.setItem('tysiacha_difficulty', state.difficulty);
-};
+    window.KamekoSettings.registerSection('tys-game-settings', {
+        title: 'Tysiacha Match Settings',
+        render: function(container) {
+            container.innerHTML = `
+            <div class="setting-row">
+                <label id="lbl-lang">Language / Язык</label>
+                <select id="set-lang">
+                    <option value="en">English</option>
+                    <option value="ru">Русский</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label id="lbl-diff">AI Difficulty</label>
+                <select id="set-diff">
+                    <option id="opt-diff-easy" value="easy">Easy</option>
+                    <option id="opt-diff-normal" value="normal">Normal</option>
+                    <option id="opt-diff-hard" value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label id="lbl-sound">Sound effects</label>
+                <div class="kameko-switch" style="display:inline-block; position:relative; width:44px; height:24px;">
+                    <input type="checkbox" id="set-sound" style="opacity:0; width:0; height:0;">
+                    <span class="kameko-slider" style="position:absolute; inset:0; background:rgba(255,255,255,0.25); border-radius:24px; transition:.4s; cursor:pointer;">
+                        <span style="position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.4s; pointer-events:none;"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="setting-row">
+                <label id="lbl-tap-to-play">1-Tap Play</label>
+                <div class="kameko-switch" style="display:inline-block; position:relative; width:44px; height:24px;">
+                    <input type="checkbox" id="set-tap-to-play" style="opacity:0; width:0; height:0;">
+                    <span class="kameko-slider" style="position:absolute; inset:0; background:rgba(255,255,255,0.25); border-radius:24px; transition:.4s; cursor:pointer;">
+                        <span style="position:absolute; width:18px; height:18px; left:3px; bottom:3px; background:#fff; border-radius:50%; transition:.4s; pointer-events:none;"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="setting-row">
+                <label id="lbl-target">Target Score</label>
+                <select id="set-target">
+                    <option id="opt-500" value="500">500 (Quick Match)</option>
+                    <option id="opt-1000" value="1000">1000 (Classic)</option>
+                </select>
+            </div>
 
-$('set-sound').onchange = () => setMuted(!$('set-sound').checked);
+            <div class="setting-header" id="set-names-hdr">Player Names</div>
 
-for (let p = 0; p < 3; p++) {
-    $('set-name-' + p).onchange = e => {
-        setCustomName(p, e.target.value.trim());
-        if (state.players[p]) state.players[p].name = playerName(p);
-        render();
-    };
+            <div class="setting-row"><label id="lbl-name-0">You</label><input type="text" id="set-name-0" maxlength="12" autocomplete="off"></div>
+            <div class="setting-row"><label id="lbl-name-1">Vera</label><input type="text" id="set-name-1" maxlength="12" autocomplete="off"></div>
+            <div class="setting-row"><label id="lbl-name-2">Boris</label><input type="text" id="set-name-2" maxlength="12" autocomplete="off"></div>
+
+            <div class="setting-header" id="set-rules-hdr">Classic Rules</div>
+
+            <label class="setting-check"><input type="checkbox" id="set-barrel"> <span id="lbl-barrel"><strong>The Barrel (880):</strong> Must win on the bid. 3 fails drops score.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-bolts"> <span id="lbl-bolts"><strong>Bolts:</strong> 0 tricks in a deal gives a bolt. 3 bolts = −120.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-rounding"> <span id="lbl-rounding"><strong>Rounding:</strong> Round scores to the nearest 5.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-reraise"> <span id="lbl-reraise"><strong>Re-raise:</strong> Declarer can raise bid after talon.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-raspasy"> <span id="lbl-raspasy"><strong>Raspasy:</strong> If all pass, negative round is played.</span></label>
+            <label class="setting-check"><input type="checkbox" id="set-hidden"> <span id="lbl-hidden"><strong>Hidden Points:</strong> Hide opponent scores during deal.</span></label>
+
+            <button class="settings-danger-btn" id="tys-set-apply" style="margin-top:16px;">Apply & Restart</button>
+            `;
+
+            // Helper to style custom toggles since they don't have the global kameko-switch class structure natively attached if we inline them, wait actually we can just manually trigger the transform.
+            function updateSwitchUI(id) {
+                let inp = $(id);
+                let slider = inp.nextElementSibling;
+                let knob = slider.firstElementChild;
+                if (inp.checked) {
+                    slider.style.background = '#00e5a0';
+                    knob.style.transform = 'translateX(20px)';
+                } else {
+                    slider.style.background = 'rgba(255,255,255,0.25)';
+                    knob.style.transform = 'none';
+                }
+            }
+
+            // Populate settings UI from state
+            $('set-lang').value = getLang();
+            $('set-diff').value = state.difficulty;
+            $('set-sound').checked = !isMuted();
+            $('set-tap-to-play').checked = state.settings.tapToPlay;
+            updateSwitchUI('set-sound');
+            updateSwitchUI('set-tap-to-play');
+
+            for (let p = 0; p < 3; p++) $('set-name-' + p).value = customName(p) || '';
+            $('set-target').value = state.settings.targetScore;
+            $('set-barrel').checked = state.settings.barrel;
+            $('set-bolts').checked = state.settings.bolts;
+            $('set-rounding').checked = state.settings.rounding;
+            $('set-reraise').checked = state.settings.reraise;
+            $('set-raspasy').checked = state.settings.raspasy;
+            $('set-hidden').checked = state.settings.hiddenPoints;
+
+            // Call localizeStatic so labels inside our new HTML get localized.
+            localizeStatic();
+
+            // Bind events
+            $('set-lang').onchange = () => {
+                setLang($('set-lang').value);
+                localizeStatic();
+                render();
+            };
+            $('set-diff').onchange = () => {
+                state.difficulty = $('set-diff').value;
+                localStorage.setItem('tysiacha_difficulty', state.difficulty);
+            };
+            $('set-sound').onchange = (e) => {
+                setMuted(!e.target.checked);
+                updateSwitchUI('set-sound');
+            };
+            $('set-tap-to-play').onchange = (e) => {
+                updateSwitchUI('set-tap-to-play');
+            }
+            
+            for (let p = 0; p < 3; p++) {
+                $('set-name-' + p).onchange = e => {
+                    setCustomName(p, e.target.value.trim());
+                    if (state.players[p]) state.players[p].name = playerName(p);
+                    render();
+                };
+            }
+
+            $('tys-set-apply').onclick = () => {
+                state.settings.targetScore = parseInt($('set-target').value, 10);
+                state.settings.barrel = $('set-barrel').checked;
+                state.settings.bolts = $('set-bolts').checked;
+                state.settings.rounding = $('set-rounding').checked;
+                state.settings.reraise = $('set-reraise').checked;
+                state.settings.raspasy = $('set-raspasy').checked;
+                state.settings.hiddenPoints = $('set-hidden').checked;
+                state.settings.tapToPlay = $('set-tap-to-play').checked;
+                
+                window.KamekoSettings.closeDrawer();
+                localizeStatic();
+
+                // Restart match to apply rules cleanly
+                if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
+                    if (window.KamekoTokens) window.KamekoTokens.toast();
+                    return;
+                }
+                localStorage.setItem('lastPlayed_tysiacha', Date.now());
+                newMatch();
+            };
+        }
+    });
 }
-
-$('tys-set-apply').onclick = () => {
-    state.settings.targetScore = parseInt($('set-target').value, 10);
-    state.settings.barrel = $('set-barrel').checked;
-    state.settings.bolts = $('set-bolts').checked;
-    state.settings.rounding = $('set-rounding').checked;
-    state.settings.reraise = $('set-reraise').checked;
-    state.settings.raspasy = $('set-raspasy').checked;
-    state.settings.hiddenPoints = $('set-hidden').checked;
-    state.settings.tapToPlay = $('set-tap-to-play').checked;
-    $('tys-settings').classList.add('hidden');
-    localizeStatic();   // the target score shows in the title
-
-    // Restart match to apply rules cleanly
-    if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-        if (window.KamekoTokens) window.KamekoTokens.toast();
-        return;
-    }
-    localStorage.setItem('lastPlayed_tysiacha', Date.now());
-    newMatch();
-};
-
-$('btn-coach').onclick = () => {
-    state.coach = !state.coach;
-    render();
-};
 
 $('btn-restart').onclick = () => {
     $('summary').classList.add('hidden');
@@ -226,11 +325,17 @@ state.onDealEnd = (result) => {
 // ── Pause / Resume ─────────────────────────────────────────────────────────
 let prevPhase = 'idle';
 window.addEventListener('settingsOpened', () => {
+    injectTysiachaSettings();
     prevPhase = state.phase;
     state.phase = 'paused';
     render();
 });
 window.addEventListener('settingsClosed', () => {
+    var sec = document.getElementById('game-settings-tys-game-settings');
+    if (sec) sec.remove();
+    var secQa = document.getElementById('game-settings-tys-quick-actions');
+    if (secQa) secQa.remove();
+    
     if (state.phase === 'paused') {
         state.phase = prevPhase;
         render();

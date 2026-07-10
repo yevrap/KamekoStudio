@@ -167,94 +167,72 @@ document.getElementById('btn-skip').addEventListener('click', () => {
 
 // ─── Settings integration ─────────────────────────────────────────────────────
 
-function injectInputModeSection() {
-  if (document.getElementById('kq-input-mode')) return;
-  const panel = document.getElementById('settings-panel');
-  if (!panel) return;
-  const sec = document.createElement('div');
-  sec.id = 'kq-input-mode';
-  sec.style.cssText = 'padding:14px 4px 0; font-family:sans-serif;';
-  const lbl = document.createElement('div');
-  lbl.textContent = 'Input Mode';
-  lbl.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.35);letter-spacing:0.1em;margin-bottom:8px;';
-  const row = document.createElement('div');
-  row.style.cssText = 'display:flex; gap:6px; flex-wrap:wrap;';
-  [['scroll','Tap to Spell'],['predict','T9 Smart'],['keyboard','Keyboard']].forEach(([mode, name]) => {
-    const btn = document.createElement('button');
-    btn.className = 'mode-btn';
-    btn.dataset.mode = mode;
-    btn.textContent = name;
-    btn.classList.toggle('active', mode === state.inputMode);
-    row.appendChild(btn);
-  });
-  sec.appendChild(lbl); sec.appendChild(row);
-  const devSection = document.getElementById('dev-mode-section');
-  if (devSection) panel.insertBefore(sec, devSection);
-  else panel.appendChild(sec);
-}
+function injectKeypadSettings() {
+  if (!window.KamekoSettings) return;
 
-function injectGameStatsSection() {
-  if (document.getElementById('kq-game-stats')) { updateGameStatsSection(); return; }
-  const panel = document.getElementById('settings-panel');
-  if (!panel) return;
-  const sec = document.createElement('div');
-  sec.id = 'kq-game-stats';
-  sec.style.cssText = 'width:100%;max-width:300px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);';
-  const title = document.createElement('div');
-  title.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.35);letter-spacing:0.1em;margin-bottom:6px;';
-  title.textContent = 'CURRENT RUN';
-  sec.appendChild(title);
-  const statsWrap = document.createElement('div');
-  statsWrap.id = 'kq-stats-rows';
-  sec.appendChild(statsWrap);
-  const quitBtn = document.createElement('button');
-  quitBtn.className = 'mbtn dim center';
-  quitBtn.style.cssText = 'margin-top:8px;max-width:300px;font-size:0.82em;';
-  quitBtn.textContent = '← Back to Game Menu';
-  quitBtn.addEventListener('click', () => {
-    document.getElementById('kq-game-stats')?.remove();
-    const closeBtn = document.querySelector('#settings-panel .settings-close, #settings-overlay .close-btn, button[aria-label="Close settings"]');
-    if (closeBtn) closeBtn.click();
-    showMenu();
+  window.KamekoSettings.registerSection('kq-input-mode', {
+    title: 'Input Mode',
+    render: function(container) {
+      const row = document.createElement('div');
+      row.className = 'mode-toggle';
+      [['scroll','Tap to Spell'],['predict','T9 Smart'],['keyboard','Keyboard']].forEach(([mode, name]) => {
+        const btn = document.createElement('button');
+        btn.className = 'mode-btn' + (mode === state.inputMode ? ' active' : '');
+        btn.dataset.mode = mode;
+        btn.textContent = name;
+        row.appendChild(btn);
+      });
+      container.appendChild(row);
+    }
   });
-  sec.appendChild(quitBtn);
-  const devSection = document.getElementById('dev-mode-section');
-  if (devSection) panel.insertBefore(sec, devSection);
-  else panel.appendChild(sec);
-  updateGameStatsSection();
-}
 
-function updateGameStatsSection() {
-  const rows = document.getElementById('kq-stats-rows');
-  if (!rows) return;
-  const acc = state.correctW + state.wrongW > 0 ? Math.round(state.correctW / (state.correctW + state.wrongW) * 100) : 100;
-  const bms = getBT(state.wave);
-  const data = [
-    ['Wave', state.wave],
-    ['Score', state.score],
-    ['Accuracy', acc + '%'],
-    ['Towers', state.towers.length + '/' + state.slots.length],
-    ['Best time W' + state.wave, bms > 0 ? (bms / 1000).toFixed(1) + 's' : '—']
-  ];
-  rows.innerHTML = '';
-  for (const [label, val] of data) {
-    const r = document.createElement('div');
-    r.className = 'srow';
-    r.innerHTML = '<span class="slabel">' + label + '</span><span class="sval">' + val + '</span>';
-    rows.appendChild(r);
+  if (state.gameState === 'paused' || state.gameState === 'playing') {
+    window.KamekoSettings.registerSection('kq-game-stats', {
+      title: 'Current Run',
+      render: function(container) {
+        const acc = state.correctW + state.wrongW > 0 ? Math.round(state.correctW / (state.correctW + state.wrongW) * 100) : 100;
+        const bms = getBT(state.wave);
+        const data = [
+          ['Wave', state.wave],
+          ['Score', state.score],
+          ['Accuracy', acc + '%'],
+          ['Towers', state.towers.length + '/' + state.slots.length],
+          ['Best time W' + state.wave, bms > 0 ? (bms / 1000).toFixed(1) + 's' : '—']
+        ];
+        
+        data.forEach(([label, val]) => {
+          const r = document.createElement('div');
+          r.className = 'settings-row';
+          r.style.background = 'transparent';
+          r.style.border = 'none';
+          r.style.padding = '0';
+          r.innerHTML = '<span style="color:var(--text-muted)">' + label + '</span><span>' + val + '</span>';
+          container.appendChild(r);
+        });
+
+        const quitBtn = document.createElement('button');
+        quitBtn.className = 'settings-danger-btn';
+        quitBtn.style.marginTop = '12px';
+        quitBtn.textContent = 'End round & back to menu';
+        quitBtn.addEventListener('click', () => {
+          window.KamekoSettings.closeDrawer();
+          showMenu();
+        });
+        container.appendChild(quitBtn);
+      }
+    });
   }
 }
 
 window.addEventListener('settingsOpened', () => {
   if (state.rafId) { cancelAnimationFrame(state.rafId); state.rafId = null; }
   if (state.gameState === 'playing') state.gameState = 'paused';
-  injectInputModeSection();
-  if (state.gameState === 'paused') injectGameStatsSection();
+  injectKeypadSettings();
 });
 
 window.addEventListener('settingsClosed', () => {
-  document.getElementById('kq-input-mode')?.remove();
-  document.getElementById('kq-game-stats')?.remove();
+  document.getElementById('game-settings-kq-input-mode')?.remove();
+  document.getElementById('game-settings-kq-game-stats')?.remove();
   if (state.gameState === 'paused') state.gameState = 'playing';
   startLoop();
 });

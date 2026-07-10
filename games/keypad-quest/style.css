@@ -16,7 +16,7 @@
 
     #header {
       height: 55px; display: flex; align-items: center;
-      justify-content: space-between; padding: 0 58px 0 12px;
+      justify-content: space-between; padding: 0 12px 0 58px;
       background: rgba(5,5,16,0.9);
       border-bottom: 1px solid rgba(0,255,238,0.15); flex-shrink: 0; gap: 8px;
     }
@@ -26,11 +26,11 @@
     #streak-display { font-size: 0.8em; color: #ff44aa; text-shadow: 0 0 8px #ff44aa; min-width: 55px; text-align: center; }
     #token-display { font-size: 0.8em; color: #ffcc44; flex-shrink: 0; margin-right: 6px; }
 
-    /* Pin the shared settings gear inside the header row, right-aligned */
-    #settings-gear-btn {
+    /* Pin the shared settings hamburger inside the header row, left-aligned */
+    #settings-hamburger-btn {
       position: fixed !important;
       top: 6px !important;
-      right: 8px !important;
+      left: 8px !important;
       width: 42px !important;
       height: 42px !important;
       border-radius: 10px !important;
