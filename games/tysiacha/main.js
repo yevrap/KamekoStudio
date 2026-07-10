@@ -148,16 +148,27 @@ document.addEventListener('click', (e) => {
         render();
         return;
     }
+    
+    if (e.target.closest('#act-play-card')) {
+        if (state.pendingCard) {
+            playCard(0, state.pendingCard, false);
+            state.pendingCard = null;
+        }
+        return;
+    }
+    if (e.target.closest('#act-declare')) {
+        if (state.pendingCard) {
+            playCard(0, state.pendingCard, true);
+            state.pendingCard = null;
+        }
+        return;
+    }
 
     const cardEl = e.target.closest('#hand .card');
     if (cardEl) {
         const c = state.players[0].hand.find(x => x.s + x.r === cardEl.dataset.k || x.r + x.s === cardEl.dataset.k);
         if (c) {
-            const res = onCardTap(c);
-            if (res && res.action === 'marriage-prompt') {
-                $('marry-body').innerHTML = t('marry.body', res.card);
-                $('marry').classList.remove('hidden');
-            }
+            onCardTap(c); // Modal prompt logic removed, handled in onCardTap and ui.js
         }
     }
 });
@@ -227,9 +238,11 @@ window.addEventListener('settingsClosed', () => {
 // Initialize app
 state.difficulty = localStorage.getItem('tysiacha_difficulty') || 'normal';
 localizeStatic();
+
 if (localStorage.getItem('lastPlayed_tysiacha')) {
     if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
         if (window.KamekoTokens) window.KamekoTokens.toast();
+        showHowto(); // Fallback so screen isn't blank
     } else {
         localStorage.setItem('lastPlayed_tysiacha', Date.now());
         newMatch();

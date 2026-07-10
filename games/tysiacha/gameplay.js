@@ -9,9 +9,8 @@ import {
     state, newPlayer, legalMoves, cardBeats, trickWinnerSlot, wouldWinNow,
     trickPts, canDeclare, activeBidders, nextActive
 } from './state.js';
-import { aiBid as aiDoBid, aiExchange as aiDoExchange, aiMove as aiDoMove, estimateHand } from './ai.js';
 import { logEvent, eventText, trickReason } from './log.js';
-import { render, banner, flashTip, coachText } from './ui.js';
+import { render, banner, flashTip, coachText, animateSweepToWinner } from './ui.js';
 import { snap, chime, gavel } from './sfx.js';
 
 // ── Session-safe timer ───────────────────────────────────────────────────
@@ -224,16 +223,19 @@ export function resolveTrick() {
     const slot = trickWinnerSlot();
     const winner = state.trick[slot].p;
     const pts = trickPts();
-    state.players[winner].trickPts += pts;
-    state.players[winner].tricks++;
-    state.wonTrick[winner] = true;
-    announce('trick-won', { p: winner, pts, reason: trickReason(state.trick, slot) });
-    state.trick = [];
-    state.leader = winner;
-    state.turn = winner;
-    state.trickNum++;
-    if (state.trickNum > 8) { later(endDeal, 1000); render(); return; }
-    step();
+    
+    animateSweepToWinner(winner, () => {
+        state.players[winner].trickPts += pts;
+        state.players[winner].tricks++;
+        state.wonTrick[winner] = true;
+        announce('trick-won', { p: winner, pts, reason: trickReason(state.trick, slot) });
+        state.trick = [];
+        state.leader = winner;
+        state.turn = winner;
+        state.trickNum++;
+        if (state.trickNum > 8) { later(endDeal, 1000); render(); return; }
+        step();
+    });
 }
 
 // ── Deal end / scoring ───────────────────────────────────────────────────
@@ -377,19 +379,25 @@ export function onCardTap(card) {
         flashTip(illegalReason());
         return;
     }
-    if (state.selected !== k) {
-        state.selected = k;
-        render();
-        return;
-    }
-    // second tap on the same card — play it
+
     const isLead = state.trick.length === 0;
     const partnerRank = card.r === 'K' ? 'Q' : card.r === 'Q' ? 'K' : null;
     const hasPartner = partnerRank && state.players[0].hand.some(c => c.s === card.s && c.r === partnerRank);
-    if (isLead && hasPartner && canDeclare(0) && state.trump !== card.s) {
-        state.pendingCard = card;
-        return { action: 'marriage-prompt', card };
+    const potentialMarriage = isLead && hasPartner && canDeclare(0) && state.trump !== card.s;
+
+    if (potentialMarriage) {
+        if (state.selected === k) {
+            state.selected = null;
+            state.pendingCard = null;
+        } else {
+            state.selected = k;
+            state.pendingCard = card;
+        }
+        render();
+        return;
     }
+
+    // Normal card plays immediately (1-tap)
     playCard(0, card, false);
 }
 

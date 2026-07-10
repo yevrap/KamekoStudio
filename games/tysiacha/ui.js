@@ -19,6 +19,53 @@ import { t, playerName, rankText, cardText } from './i18n.js';
 
 const $ = id => document.getElementById(id);
 
+export function animateSweepToWinner(winnerPlayerIdx, onComplete) {
+    if (typeof document === 'undefined') return onComplete();
+
+    let targetEl;
+    if (winnerPlayerIdx === 0) {
+        targetEl = $('me-info');
+    } else {
+        targetEl = $('opponents').children[winnerPlayerIdx === 1 ? 0 : 1];
+    }
+    if (!targetEl) return onComplete();
+
+    const targetRect = targetEl.getBoundingClientRect();
+    const trickArea = $('trick-area');
+    const cards = trickArea.querySelectorAll('.card');
+    if (cards.length === 0) return onComplete();
+
+    let animated = 0;
+    cards.forEach(el => {
+        const startRect = el.getBoundingClientRect();
+        const ghost = el.cloneNode(true);
+        ghost.style.position = 'absolute';
+        ghost.style.left = startRect.left + 'px';
+        ghost.style.top = startRect.top + 'px';
+        ghost.style.margin = '0';
+        ghost.style.zIndex = '100';
+        ghost.classList.remove('win-pulse');
+        document.body.appendChild(ghost);
+
+        el.style.opacity = '0';
+
+        const dx = (targetRect.left + targetRect.width / 2) - (startRect.left + startRect.width / 2);
+        const dy = (targetRect.top + targetRect.height / 2) - (startRect.top + startRect.height / 2);
+
+        void ghost.offsetWidth; // force reflow
+        
+        ghost.classList.add('sweep-animating');
+        ghost.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
+        ghost.style.opacity = '0';
+
+        setTimeout(() => {
+            if (document.body.contains(ghost)) document.body.removeChild(ghost);
+            animated++;
+            if (animated === cards.length) onComplete();
+        }, 400);
+    });
+}
+
 // ── Card HTML ────────────────────────────────────────────────────────────
 
 export function cardHTML(c, extra = '', give = '') {
@@ -188,6 +235,13 @@ function bidLabelText(lbl) {
 export function render() {
     if (typeof document === 'undefined') return;   // unit tests run gameplay headless
     if (!state.players.length) return;
+    
+    // --- FLIP First Phase ---
+    const oldRects = {};
+    document.querySelectorAll('.card').forEach(el => {
+        if (el.dataset.k) oldRects[el.dataset.k] = el.getBoundingClientRect();
+    });
+
     // opponents
     $('opponents').innerHTML = [1, 2].map(p => {
         const pl = state.players[p];
@@ -273,6 +327,27 @@ export function render() {
     } else if (state.phase === 'exchange' && state.declarer === 0) {
         actions = `<button class="act-btn" id="act-give" ${state.give.length === 2 ? '' : 'disabled'}>${t('act.give')}</button>`;
     } else if (state.phase === 'play' && state.trickNum === 1 && state.trick.length === 0 && state.declarer === 0 && state.settings.reraise) {
+        // If a card is selected in reraise phase, we don't show the reraise button since we replaced the action bar.
+        // But let's check selection first.
+    }
+    
+    // 1-Tap Play / Marriage Selection logic
+    if (state.phase === 'play' && state.turn === 0 && state.trick.length < 3 && state.selected) {
+        const cStr = state.selected;
+        const c = state.players[0].hand.find(x => key(x) === cStr);
+        if (c) {
+            const isLead = state.trick.length === 0;
+            const partnerRank = c.r === 'K' ? 'Q' : c.r === 'Q' ? 'K' : null;
+            const hasPartner = partnerRank && state.players[0].hand.some(x => x.s === c.s && x.r === partnerRank);
+            if (isLead && hasPartner && canDeclare(0) && state.trump !== c.s) {
+                actions = `<button class="act-btn" id="act-play-card">${t('marry.no')}</button>
+                           <button class="act-btn" id="act-declare" style="background:var(--gold)">${t('marry.yes')}</button>`;
+            } else {
+                // Should not happen for normal cards if they are 1-tap, but just in case
+                actions = `<button class="act-btn" id="act-play-card">${t('marry.no')}</button>`;
+            }
+        }
+    } else if (state.phase === 'play' && state.trickNum === 1 && state.trick.length === 0 && state.declarer === 0 && state.settings.reraise) {
         actions = `<button class="act-btn" id="act-reraise">${t('act.reraise', state.currentBid + 10)}</button>`;
     }
     $('actions').innerHTML = actions;
@@ -309,4 +384,40 @@ export function render() {
         }
         return cardHTML(c, cls, give);
     }).join('');
+
+    // --- FLIP Last & Invert Phase ---
+    const animatingEls = [];
+    document.querySelectorAll('.card').forEach(el => {
+        const oldRect = oldRects[el.dataset.k];
+        if (oldRect) {
+            const newRect = el.getBoundingClientRect();
+            const dx = oldRect.left - newRect.left;
+            const dy = oldRect.top - newRect.top;
+            if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
+                el.style.setProperty('--flip-dx', dx + 'px');
+                el.style.setProperty('--flip-dy', dy + 'px');
+                animatingEls.push(el);
+            }
+        }
+    });
+
+    // --- FLIP Play Phase ---
+    if (animatingEls.length) {
+        void document.body.offsetHeight; // force reflow
+        animatingEls.forEach(el => {
+            el.classList.add('flip-animating');
+            el.style.setProperty('--flip-dx', '0px');
+            el.style.setProperty('--flip-dy', '0px');
+            const cleanup = (e) => {
+                if (e.target === el && e.propertyName === 'transform') {
+                    el.removeEventListener('transitionend', cleanup);
+                    el.classList.remove('flip-animating');
+                    el.style.removeProperty('--flip-dx');
+                    el.style.removeProperty('--flip-dy');
+                }
+            };
+            el.addEventListener('transitionend', cleanup);
+            setTimeout(() => cleanup({target: el, propertyName: 'transform'}), 350); 
+        });
+    }
 }

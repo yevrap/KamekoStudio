@@ -241,6 +241,16 @@ body {
     position: relative;
     display: inline-block;
     flex: 0 0 auto;
+    --shift-x: 0px;
+    --shift-y: 0px;
+    transform: translate(var(--flip-dx, var(--shift-x)), var(--flip-dy, var(--shift-y)));
+}
+.card.flip-animating {
+    transition: transform 0.25s ease-out;
+    z-index: 100;
+}
+.card.sweep-animating {
+    transition: transform 0.4s ease-in, opacity 0.4s, scale 0.4s;
 }
 .card .c-corner {
     position: absolute;
@@ -329,7 +339,9 @@ body {
 }
 #hand .card:first-child { margin-left: 0; }
 #hand.crowded .card { margin-left: -34px; }
-#hand .card.sel { transform: translateY(-14px); box-shadow: 0 4px 12px #000a, 0 0 0 2px var(--accent); z-index: 2; }
+#hand .card.sel { --shift-y: -14px; box-shadow: 0 4px 12px #000a, 0 0 0 2px var(--accent); z-index: 2; }
+#hand .card:hover ~ .card,
+#hand .card.sel ~ .card { --shift-x: 18px; }
 #hand .card.dim { opacity: 0.32; }
 #hand .card .c-give {
     position: absolute;
