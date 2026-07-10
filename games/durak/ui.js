@@ -52,6 +52,9 @@ export function cacheDom() {
   window.$logBody    = document.getElementById('log-body');
   window.$btnLog     = document.getElementById('btn-log');
   window.$btnCloseLog = document.getElementById('btn-close-log');
+  window.$rulesOverlay = document.getElementById('rules-overlay');
+  window.$btnRules    = document.getElementById('btn-rules');
+  window.$btnCloseRules = document.getElementById('btn-close-rules');
   window.$coachBanner = document.getElementById('coach-banner');
 
   wireHandScroll($humanHand);

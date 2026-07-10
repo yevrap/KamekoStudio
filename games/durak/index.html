@@ -18,6 +18,7 @@
       <span id="game-title">DURAK</span>
       <span id="trump-display"></span>
       <span id="status-display"></span>
+      <button id="btn-rules" title="Rules" style="background:transparent; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">❓</button>
       <button id="btn-log" title="Game log" style="background:transparent; border:none; color:var(--text-muted); font-size:1.2rem; cursor:pointer;">📜</button>
     </div>
 
@@ -112,6 +113,22 @@
       <button id="btn-close-log" style="background:transparent; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">✕</button>
     </div>
     <div id="log-body" style="width:100%; max-width:400px; display:flex; flex-direction:column; gap:8px; font-size:0.9rem; color:var(--text);"></div>
+  </div>
+
+  <!-- Rules screen -->
+  <div id="rules-overlay" class="overlay hidden scrollable-modal" style="justify-content: flex-start; padding-top: 40px; background: rgba(10,10,20,0.95);">
+    <div style="display:flex; justify-content:space-between; width:100%; max-width:400px; margin-bottom:16px;">
+      <div class="g-title" style="font-size: 1.5rem;">❓ Rules of Durak</div>
+      <button id="btn-close-rules" style="background:transparent; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">✕</button>
+    </div>
+    <div id="rules-body" style="width:100%; max-width:400px; display:flex; flex-direction:column; gap:12px; font-size:0.9rem; color:var(--text); text-align:left; line-height:1.4;">
+      <p><strong>Objective:</strong> Get rid of all your cards. The last player with cards is the Durak (Fool).</p>
+      <p><strong>Trump Suit:</strong> The bottom card of the deck sets the trump suit, which beats all non-trump suits.</p>
+      <p><strong>Attacking:</strong> Play a card to attack the player to your left. Other players can "pile on" by playing cards of the same rank as those already in the bout (up to 6 attacks total).</p>
+      <p><strong>Defending:</strong> Beat attacks with a higher card of the same suit, or any trump card.</p>
+      <p><strong>Transfer (Perevodnoy):</strong> If enabled, you can transfer an attack to the next player by playing a card of the same rank (provided you haven't defended yet and they have enough cards).</p>
+      <p><strong>Resolution:</strong> If you beat all attacks, the bout is discarded. If you can't or won't defend, you take all cards on the table. The attacker draws first, then others, to refill their hands to 6 cards.</p>
+    </div>
   </div>
 
   <script type="module" src="main.js"></script>

@@ -75,6 +75,18 @@ if (window.$btnCloseLog) {
   });
 }
 
+if (window.$btnRules) {
+  window.$btnRules.addEventListener('click', function() {
+    window.$rulesOverlay.classList.remove('hidden');
+  });
+}
+
+if (window.$btnCloseRules) {
+  window.$btnCloseRules.addEventListener('click', function() {
+    window.$rulesOverlay.classList.add('hidden');
+  });
+}
+
 function applyActive(container, attr, value) {
   var btns = container.querySelectorAll('[' + attr + ']');
   for (var i = 0; i < btns.length; i++) {
