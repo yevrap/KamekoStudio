@@ -11,6 +11,7 @@ export function newPlayer(name) {
 export const state = {
     session: 0,
     coach: false,
+    difficulty: 'normal',   // easy | normal | hard — applies live, persisted in main.js
     settings: {
         targetScore: 500,
         rounding: false,

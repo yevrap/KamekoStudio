@@ -158,9 +158,18 @@ export function localizeStatic() {
     $('sum-log').textContent = t('sum.review');
     $('set-title').textContent = t('set.title');
     $('lbl-lang').textContent = t('set.lang');
+    $('lbl-diff').textContent = t('set.diff');
+    $('opt-diff-easy').textContent = t('set.diffEasy');
+    $('opt-diff-normal').textContent = t('set.diffNormal');
+    $('opt-diff-hard').textContent = t('set.diffHard');
     $('lbl-target').textContent = t('set.target');
     $('opt-500').textContent = t('set.target500');
     $('opt-1000').textContent = t('set.target1000');
+    $('set-names-hdr').textContent = t('set.namesHdr');
+    for (let p = 0; p < 3; p++) {
+        $('lbl-name-' + p).textContent = t('name' + p);
+        $('set-name-' + p).placeholder = t('name' + p);
+    }
     $('set-rules-hdr').textContent = t('set.rulesHdr');
     for (const k of ['barrel', 'bolts', 'rounding', 'reraise', 'raspasy', 'hidden']) {
         $('lbl-' + k).innerHTML = t('set.' + k);

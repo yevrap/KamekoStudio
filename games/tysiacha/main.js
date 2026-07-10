@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { newMatch, summaryNext, humanBid, confirmExchange, playCard, onCardTap, announce } from './gameplay.js';
 import { render, renderLog, localizeStatic, banner } from './ui.js';
-import { t, getLang, setLang, playerName, suitHTML } from './i18n.js';
+import { t, getLang, setLang, playerName, customName, setCustomName, suitHTML } from './i18n.js';
 
 const $ = id => document.getElementById(id);
 
@@ -27,6 +27,8 @@ $('sum-log').onclick = () => {   // opens above the deal summary; closing return
 $('btn-tys-settings').onclick = () => {
     // Populate settings UI from state
     $('set-lang').value = getLang();
+    $('set-diff').value = state.difficulty;
+    for (let p = 0; p < 3; p++) $('set-name-' + p).value = customName(p) || '';
     $('set-target').value = state.settings.targetScore;
     $('set-barrel').checked = state.settings.barrel;
     $('set-bolts').checked = state.settings.bolts;
@@ -45,6 +47,21 @@ $('set-lang').onchange = () => {
     render();
     if (!$('howto').classList.contains('hidden')) showHowto();
 };
+
+// Difficulty and names are also live — they steer the NEXT AI decision /
+// render, no restart needed.
+$('set-diff').onchange = () => {
+    state.difficulty = $('set-diff').value;
+    localStorage.setItem('tysiacha_difficulty', state.difficulty);
+};
+
+for (let p = 0; p < 3; p++) {
+    $('set-name-' + p).onchange = e => {
+        setCustomName(p, e.target.value.trim());
+        if (state.players[p]) state.players[p].name = playerName(p);
+        render();
+    };
+}
 
 $('tys-set-apply').onclick = () => {
     state.settings.targetScore = parseInt($('set-target').value, 10);
@@ -204,6 +221,7 @@ window.addEventListener('settingsClosed', () => {
 });
 
 // Initialize app
+state.difficulty = localStorage.getItem('tysiacha_difficulty') || 'normal';
 localizeStatic();
 if (localStorage.getItem('lastPlayed_tysiacha')) {
     if (!window.KamekoTokens || !window.KamekoTokens.spend()) {

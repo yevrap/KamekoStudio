@@ -3,16 +3,13 @@
 //            DOM-free pure logic.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import {
-    SUITS, SUIT_CHAR, RANKS, PTS, MARRIAGE, TARGET, OPEN_BID, RAISE,
-    key, rankIdx, buildDeck, sortHand, handCardPts, marriagesInHand
-} from './constants.js';
+import { MARRIAGE, OPEN_BID, RAISE, key, buildDeck, sortHand } from './constants.js';
 import { t, playerName } from './i18n.js';
 import {
     state, newPlayer, legalMoves, cardBeats, trickWinnerSlot, wouldWinNow,
     trickPts, canDeclare, activeBidders, nextActive
 } from './state.js';
-import { aiBid as aiDoBid, aiExchange as aiDoExchange, aiMove as aiDoMove } from './ai.js';
+import { aiBid as aiDoBid, aiExchange as aiDoExchange, aiMove as aiDoMove, estimateHand } from './ai.js';
 import { logEvent, eventText, trickReason } from './log.js';
 import { render, banner, flashTip, coachText } from './ui.js';
 
@@ -74,9 +71,7 @@ export function newDeal() {
     state.phase = 'bidding';
 
     for (let p = 1; p < 3; p++) {
-        const h = state.players[p].hand;
-        const marPts = marriagesInHand(h).reduce((t, s) => t + MARRIAGE[s], 0);
-        state.aiEstimate[p] = handCardPts(h) + Math.round(marPts * 0.9) + 15 - Math.floor(Math.random() * 12);
+        state.aiEstimate[p] = estimateHand(state.players[p].hand, state.difficulty);
     }
 
     const opener = (state.dealer + 1) % 3;

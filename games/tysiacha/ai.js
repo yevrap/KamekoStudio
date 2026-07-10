@@ -2,12 +2,25 @@
 // AI — bidding decisions, card play logic, exchange. DOM-free.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { RANKS, PTS, MARRIAGE, RAISE, rankIdx, marriagesInHand, key } from './constants.js';
+import { RANKS, PTS, MARRIAGE, RAISE, rankIdx, marriagesInHand, key, handCardPts } from './constants.js';
 import {
     state, legalMoves, wouldWinNow, trickPts, canDeclare, nextActive, activeBidders
 } from './state.js';
 import { bidStep, giveCard, startPlay, playCard, step, announce } from './gameplay.js';
 import { logEvent } from './log.js';
+
+// ── Hand estimate (drives bidding) ───────────────────────────────────────
+// Difficulty is the noise on the estimate: easy bots undervalue marriages
+// and swing wildly (timid auctions, occasional wild overbids); hard bots
+// price the hand tightly and bid to the edge.
+
+export function estimateHand(hand, difficulty = 'normal') {
+    const marPts = marriagesInHand(hand).reduce((tot, s) => tot + MARRIAGE[s], 0);
+    const pts = handCardPts(hand);
+    if (difficulty === 'easy') return pts + Math.round(marPts * 0.7) + 8 - Math.floor(Math.random() * 25);
+    if (difficulty === 'hard') return pts + marPts + 16 - Math.floor(Math.random() * 6);
+    return pts + Math.round(marPts * 0.9) + 15 - Math.floor(Math.random() * 12);
+}
 
 // ── AI Bidding ───────────────────────────────────────────────────────────
 
@@ -53,19 +66,34 @@ function lowest(cards) {
     return cards.slice().sort((a, b) => (PTS[a.r] - PTS[b.r]) || (rankIdx(a) - rankIdx(b)))[0];
 }
 
+// What to throw on a lost trick. Hard bots won't break up a K+Q pair —
+// that's a future marriage — unless nothing else is legal.
+function dumpCard(hand, legal, diff) {
+    if (diff !== 'hard') return lowest(legal);
+    const marSuits = marriagesInHand(hand);
+    const safe = legal.filter(c => !(marSuits.includes(c.s) && (c.r === 'K' || c.r === 'Q')));
+    return lowest(safe.length ? safe : legal);
+}
+
 export function aiMove(p) {
     if (state.phase !== 'play' || state.turn !== p) return;
+    const diff = state.difficulty || 'normal';
     const hand = state.players[p].hand;
     const legal = legalMoves(hand);
 
+    // Easy bots blunder: about a third of the time they just toss the
+    // lowest legal card without looking at the trick at all.
+    if (diff === 'easy' && Math.random() < 0.35) { playCard(p, lowest(legal), false); return; }
+
     if (state.trick.length === 0) {
-        if (state.settings.reraise && state.declarer === p && state.trickNum === 1 && state.currentBid < state.aiEstimate[p] - 10) {
+        if (diff !== 'easy' && state.settings.reraise && state.declarer === p && state.trickNum === 1 && state.currentBid < state.aiEstimate[p] - 10) {
             state.currentBid = Math.floor(state.aiEstimate[p] / 10) * 10;
             announce('reraise', { p, amount: state.currentBid });
         }
         if (canDeclare(p)) {
             const suits = marriagesInHand(hand).sort((a, b) => MARRIAGE[b] - MARRIAGE[a]);
-            if (suits.length) {
+            // ...and sometimes forget they're holding a marriage.
+            if (suits.length && !(diff === 'easy' && Math.random() < 0.25)) {
                 const q = hand.find(c => c.s === suits[0] && c.r === 'Q');
                 playCard(p, q, true);
                 return;
@@ -74,16 +102,22 @@ export function aiMove(p) {
         const ace = legal.find(c => c.r === 'A' && (!state.trump || c.s === state.trump))
                  || legal.find(c => c.r === 'A');
         if (ace) { playCard(p, ace, false); return; }
-        playCard(p, lowest(legal), false);
+        playCard(p, dumpCard(hand, legal, diff), false);
         return;
     }
 
     const winners = legal.filter(wouldWinNow).sort((a, b) => (PTS[a.r] - PTS[b.r]) || (rankIdx(a) - rankIdx(b)));
     const last = state.trick.length === 2;
     const pts = trickPts();
-    if (winners.length && ((last && (pts > 0 || PTS[winners[0].r] <= 2)) || (!last && pts >= 8))) {
-        playCard(p, winners[0], false);
-        return;
+    if (winners.length) {
+        const cheapWin = PTS[winners[0].r] <= 2;
+        // Hard bots also grab the lead when a marriage is waiting to be
+        // declared (declaring requires having won a trick), and contest
+        // mid-trick points sooner.
+        const wantsLead = diff === 'hard' && !state.wonTrick[p] && marriagesInHand(hand).length > 0;
+        const take = last ? (pts > 0 || cheapWin || wantsLead)
+                          : (pts >= (diff === 'hard' ? 5 : 8));
+        if (take) { playCard(p, winners[0], false); return; }
     }
-    playCard(p, lowest(legal), false);
+    playCard(p, dumpCard(hand, legal, diff), false);
 }

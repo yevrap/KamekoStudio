@@ -527,3 +527,55 @@ test('i18n: playerName follows the language, unknown keys fall back to English',
         setLang('en');
     }
 });
+
+// ─── AI difficulty + custom names (p2-18 / p2-21) ────────────────────────────
+
+test('estimateHand: difficulty shifts the bid estimate (easy timid, hard sharp)', async () => {
+    const { estimateHand } = await import('../games/tysiacha/ai.js');
+    // A=11+11, K+Q of hearts (marriage 100) → 29 card pts, 100 marriage pts
+    const hand = [
+        { s: 'H', r: 'K' }, { s: 'H', r: 'Q' },
+        { s: 'D', r: 'A' }, { s: 'C', r: 'A' },
+        { s: 'S', r: '9' }, { s: 'S', r: 'J' }, { s: 'D', r: '9' }
+    ];
+    for (let i = 0; i < 50; i++) {
+        const easy = estimateHand(hand, 'easy');
+        const normal = estimateHand(hand, 'normal');
+        const hard = estimateHand(hand, 'hard');
+        // easy: 31 + 70 + 8 − [0..24] → [85, 109]
+        assert.ok(easy >= 85 && easy <= 109, `easy ${easy}`);
+        // normal: 31 + 90 + 15 − [0..11] → [125, 136]
+        assert.ok(normal >= 125 && normal <= 136, `normal ${normal}`);
+        // hard: 31 + 100 + 16 − [0..5] → [142, 147]
+        assert.ok(hard >= 142 && hard <= 147, `hard ${hard}`);
+    }
+});
+
+test('estimateHand: defaults to normal when difficulty is unset', async () => {
+    const { estimateHand } = await import('../games/tysiacha/ai.js');
+    const hand = [{ s: 'D', r: 'A' }];
+    const est = estimateHand(hand);
+    assert.ok(est >= 11 + 15 - 11 && est <= 11 + 15, `default ${est}`);
+});
+
+test('i18n: custom names override defaults and flip player 0 to third person', async () => {
+    const { setCustomName, playerName, setLang } = await import('../games/tysiacha/i18n.js');
+    const { eventText } = await import('../games/tysiacha/log.js');
+    setCustomName(0, 'Yev');
+    setCustomName(1, 'Masha');
+    try {
+        assert.equal(playerName(0), 'Yev');
+        assert.equal(playerName(1), 'Masha');
+        assert.equal(eventText({ type: 'pass', p: 0 }), 'Yev passes');
+        assert.equal(eventText({ type: 'bid', p: 0, amount: 110 }), 'Yev bids 110');
+        setLang('ru');
+        assert.equal(eventText({ type: 'pass', p: 0 }), 'Yev пасует');
+        assert.equal(playerName(2), 'Борис'); // untouched seat keeps localized default
+    } finally {
+        setLang('en');
+        setCustomName(0, '');
+        setCustomName(1, '');
+    }
+    assert.equal(playerName(0), 'You');
+    assert.equal(eventText({ type: 'pass', p: 0 }), 'You pass');
+});
