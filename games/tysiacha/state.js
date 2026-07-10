@@ -2,7 +2,7 @@
 // STATE — mutable game state object and state query helpers. DOM-free.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { NAMES, RANKS, key, rankIdx, PTS } from './constants.js';
+import { RANKS, key, rankIdx, PTS } from './constants.js';
 
 export function newPlayer(name) {
     return { name, hand: [], trickPts: 0, marriagePts: 0, marriages: [], tricks: 0, total: 0, bolts: 0, barrelAttempts: 0 };
@@ -30,7 +30,7 @@ export const state = {
     highBidder: null,
     bidTurn: 0,
     passed: [false, false, false],
-    bidLabel: ['', '', ''],
+    bidLabel: [null, null, null],   // typed: {kind:'bid',amount} | {kind:'pass'} | null — formatted at render
     declarer: null,
     trump: null,
     trick: [],

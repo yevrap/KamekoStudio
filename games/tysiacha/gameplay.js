@@ -4,9 +4,10 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-    NAMES, SUITS, SUIT_CHAR, RANKS, PTS, MARRIAGE, TARGET, OPEN_BID, RAISE,
-    key, rankIdx, buildDeck, sortHand, handCardPts, marriagesInHand, suitSpan, suitName
+    SUITS, SUIT_CHAR, RANKS, PTS, MARRIAGE, TARGET, OPEN_BID, RAISE,
+    key, rankIdx, buildDeck, sortHand, handCardPts, marriagesInHand
 } from './constants.js';
+import { t, playerName } from './i18n.js';
 import {
     state, newPlayer, legalMoves, cardBeats, trickWinnerSlot, wouldWinNow,
     trickPts, canDeclare, activeBidders, nextActive
@@ -42,7 +43,7 @@ function logHumanHint() {
 
 export function newMatch() {
     state.session++;
-    state.players = NAMES.map(newPlayer);
+    state.players = [0, 1, 2].map(p => newPlayer(playerName(p)));
     state.dealer = 2;          // first deal: You open the bidding
     state.dealNum = 0;
     state.log = [];
@@ -68,7 +69,7 @@ export function newDeal() {
     state.give = [];
     state.pendingCard = null;
     state.passed = [false, false, false];
-    state.bidLabel = ['', '', ''];
+    state.bidLabel = [null, null, null];
     state.declarer = null;
     state.phase = 'bidding';
 
@@ -90,7 +91,7 @@ export function newDeal() {
     } else {
         state.currentBid = OPEN_BID;
         state.highBidder = opener;
-        state.bidLabel[opener] = 'bid 100';
+        state.bidLabel[opener] = { kind: 'bid', amount: OPEN_BID };
         state.bidTurn = nextActive(opener);
         announce('deal-start', { p: opener, forced: true });
     }
@@ -135,12 +136,12 @@ export function humanBid(pass) {
     if (state.phase !== 'bidding' || state.bidTurn !== 0) return;
     if (pass) {
         state.passed[0] = true;
-        state.bidLabel[0] = 'passed';
+        state.bidLabel[0] = { kind: 'pass' };
         logEvent('pass', { p: 0 });
     } else {
         state.currentBid += RAISE;
         state.highBidder = 0;
-        state.bidLabel[0] = 'bid ' + state.currentBid;
+        state.bidLabel[0] = { kind: 'bid', amount: state.currentBid };
         logEvent('bid', { p: 0, amount: state.currentBid });
     }
     state.bidTurn = nextActive(0);
@@ -260,27 +261,24 @@ export function endDeal() {
         
         if (state.isRaspasy) {
             delta = -got;
-            note = `<span class="failed">Took ${got} pts → −${got}</span>`;
-            if (got === 0) note = `<span class="made">No tricks → 0</span>`;
+            note = got === 0 ? t('note.raspasyZero') : t('note.raspasyTook', got);
         } else {
             if (p === state.declarer) {
                 const made = got >= state.currentBid;
                 delta = made ? state.currentBid : -state.currentBid;
-                note = made
-                    ? `<span class="made">made the ${state.currentBid} bid → +${state.currentBid}</span>`
-                    : `<span class="failed">failed the ${state.currentBid} bid → −${state.currentBid}</span>`;
+                note = made ? t('note.made', state.currentBid) : t('note.failed', state.currentBid);
             } else {
                 delta = got;
                 note = `+${got}`;
-                
+
                 // Bolts
                 if (state.settings.bolts && pl.tricks === 0) {
                     pl.bolts = (pl.bolts || 0) + 1;
                     boltAdded = true;
-                    note += ` (Bolt)`;
+                    note += t('note.bolt');
                     if (pl.bolts >= 3) {
                         delta -= 120;
-                        note += ` <span class="failed">3 Bolts! −120</span>`;
+                        note += t('note.bolts3');
                         pl.bolts = 0;
                     }
                 }
@@ -303,10 +301,10 @@ export function endDeal() {
                         if (pl.barrelAttempts >= 3) {
                             newTotal = barrelThreshold - 120;
                             pl.barrelAttempts = 0;
-                            note += ` <span class="failed">Fell off barrel! −120</span>`;
+                            note += t('note.barrelFellOff');
                         } else {
                             newTotal = barrelThreshold;
-                            note += ` <span class="muted">Barrel attempt ${pl.barrelAttempts}/3</span>`;
+                            note += t('note.barrelAttempt', pl.barrelAttempts);
                         }
                     }
                 } else {
@@ -315,14 +313,14 @@ export function endDeal() {
                         newTotal = barrelThreshold; // Can't earn points
                     } else if (newTotal < barrelThreshold) {
                         pl.barrelAttempts = 0; // Lost points to bolts/raspasy, fell off
-                        note += ` <span class="failed">Fell off barrel!</span>`;
+                        note += t('note.barrelLost');
                     }
                 }
             } else if (pl.total < barrelThreshold && newTotal >= barrelThreshold) {
                 // Just got on the barrel (even if they would have crossed 1000)
                 newTotal = barrelThreshold;
                 pl.barrelAttempts = 0;
-                note += ` <span class="made">On the barrel!</span>`;
+                note += t('note.barrelOn');
             }
         }
 
@@ -399,7 +397,7 @@ export function onCardTap(card) {
 function illegalReason() {
     const led = state.trick[0].card.s;
     const hand = state.players[0].hand;
-    if (hand.some(c => c.s === led)) return `You must follow suit — play a ${suitName(led)} card (${SUIT_CHAR[led]}).`;
-    if (state.trump && hand.some(c => c.s === state.trump)) return `No ${SUIT_CHAR[led]} in hand — you must play a trump (${SUIT_CHAR[state.trump]}).`;
-    return 'That card can\'t be played right now.';
+    if (hand.some(c => c.s === led)) return t('illegal.follow', led);
+    if (state.trump && hand.some(c => c.s === state.trump)) return t('illegal.trump', led, state.trump);
+    return t('illegal.other');
 }

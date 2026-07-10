@@ -473,3 +473,57 @@ test('step: no hint logged on an AI turn', async () => {
 
     assert.equal(state.log.filter(e => e.type === 'hint').length, 0);
 });
+
+// ─── i18n (Russian language toggle — p1-14) ──────────────────────────────────
+
+test('i18n: defaults to English and eventText matches the original grammar', async () => {
+    const { getLang, t } = await import('../games/tysiacha/i18n.js');
+    assert.equal(getLang(), 'en');
+    assert.equal(t('lbl.bid', 110), 'bid 110');
+    assert.equal(t('lbl.passed'), 'passed');
+});
+
+test('i18n: setLang(ru) localizes the event stream, setLang(en) restores it', async () => {
+    const { setLang } = await import('../games/tysiacha/i18n.js');
+    const { eventText } = await import('../games/tysiacha/log.js');
+    setLang('ru');
+    try {
+        assert.equal(eventText({ type: 'pass', p: 0 }), 'Вы пасуете');
+        assert.equal(eventText({ type: 'bid', p: 2, amount: 120 }), 'Борис ставит 120');
+        assert.equal(eventText({ type: 'marriage', p: 1, suit: 'D' }),
+            '💍 Вера объявляет марьяж ♦ — бубны козыри! +80');
+        assert.equal(
+            eventText({ type: 'trick-won', p: 0, pts: 14, reason: { kind: 'trumped', card: { s: 'S', r: '9' } } }),
+            'Вы забираете взятку (+14 — бита козырем 9♠)');
+    } finally {
+        setLang('en');
+    }
+    assert.equal(eventText({ type: 'pass', p: 1 }), 'Vera passes');
+});
+
+test('i18n: Russian rank letters (Т В Д К) appear in card text', async () => {
+    const { setLang, cardText, rankText } = await import('../games/tysiacha/i18n.js');
+    assert.equal(cardText({ s: 'H', r: 'A' }), 'A♥');
+    setLang('ru');
+    try {
+        assert.equal(rankText('J'), 'В');
+        assert.equal(cardText({ s: 'H', r: 'A' }), 'Т♥');
+        assert.equal(cardText({ s: 'C', r: '10' }), '10♣');
+    } finally {
+        setLang('en');
+    }
+});
+
+test('i18n: playerName follows the language, unknown keys fall back to English', async () => {
+    const { setLang, playerName, t } = await import('../games/tysiacha/i18n.js');
+    assert.equal(playerName(0), 'You');
+    setLang('ru');
+    try {
+        assert.equal(playerName(0), 'Вы');
+        assert.equal(playerName(2), 'Борис');
+        // 'log.deal' exists in both; a key present only in EN must still resolve
+        assert.equal(t('log.deal', 3), 'Раздача 3');
+    } finally {
+        setLang('en');
+    }
+});

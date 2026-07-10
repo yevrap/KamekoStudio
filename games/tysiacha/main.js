@@ -1,18 +1,17 @@
 import { state } from './state.js';
-import { newMatch, summaryNext, humanBid, confirmExchange, playCard, onCardTap } from './gameplay.js';
-import { render, renderLog, HOWTO, banner } from './ui.js';
+import { newMatch, summaryNext, humanBid, confirmExchange, playCard, onCardTap, announce } from './gameplay.js';
+import { render, renderLog, localizeStatic, banner } from './ui.js';
+import { t, getLang, setLang, playerName, suitHTML } from './i18n.js';
 
 const $ = id => document.getElementById(id);
 
 // ── App wiring ──────────────────────────────────────────────────────────────
 
 function showHowto() {
-    const content = HOWTO.map(([title, body]) => `<h3>${title}</h3>${body}`).join('<br>');
+    const content = t('howto').map(([title, body]) => `<h3>${title}</h3>${body}`).join('<br>');
     $('ht-body').innerHTML = content;
     $('howto').classList.remove('hidden');
 }
-
-
 
 $('btn-howto').onclick = () => showHowto();
 
@@ -27,6 +26,7 @@ $('sum-log').onclick = () => {   // opens above the deal summary; closing return
 
 $('btn-tys-settings').onclick = () => {
     // Populate settings UI from state
+    $('set-lang').value = getLang();
     $('set-target').value = state.settings.targetScore;
     $('set-barrel').checked = state.settings.barrel;
     $('set-bolts').checked = state.settings.bolts;
@@ -37,7 +37,14 @@ $('btn-tys-settings').onclick = () => {
     $('tys-settings').classList.remove('hidden');
 };
 
-
+// Language is display-only — it applies immediately, mid-deal, no restart.
+// The log re-renders in the new language because entries are typed, not text.
+$('set-lang').onchange = () => {
+    setLang($('set-lang').value);
+    localizeStatic();
+    render();
+    if (!$('howto').classList.contains('hidden')) showHowto();
+};
 
 $('tys-set-apply').onclick = () => {
     state.settings.targetScore = parseInt($('set-target').value, 10);
@@ -48,7 +55,8 @@ $('tys-set-apply').onclick = () => {
     state.settings.raspasy = $('set-raspasy').checked;
     state.settings.hiddenPoints = $('set-hidden').checked;
     $('tys-settings').classList.add('hidden');
-    
+    localizeStatic();   // the target score shows in the title
+
     // Restart match to apply rules cleanly
     if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
         if (window.KamekoTokens) window.KamekoTokens.toast();
@@ -60,18 +68,17 @@ $('tys-set-apply').onclick = () => {
 
 $('btn-coach').onclick = () => {
     state.coach = !state.coach;
-    // Removed coach-on class toggle, button stays neutral.
     render();
 };
 
-$('btn-restart').onclick = () => { 
-    $('summary').classList.add('hidden'); 
+$('btn-restart').onclick = () => {
+    $('summary').classList.add('hidden');
     if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
         if (window.KamekoTokens) window.KamekoTokens.toast();
         return;
     }
     localStorage.setItem('lastPlayed_tysiacha', Date.now());
-    newMatch(); 
+    newMatch();
 };
 
 $('sum-next').onclick = () => {
@@ -116,7 +123,7 @@ document.addEventListener('click', (e) => {
     if (e.target.closest('#act-give')) return confirmExchange();
     if (e.target.closest('#act-reraise')) {
         state.currentBid += 10;
-        banner(`You raised the bid to ${state.currentBid}`);
+        announce('reraise', { p: 0, amount: state.currentBid });
         render();
         return;
     }
@@ -127,15 +134,7 @@ document.addEventListener('click', (e) => {
         if (c) {
             const res = onCardTap(c);
             if (res && res.action === 'marriage-prompt') {
-                const card = res.card;
-                const suitSpan = s => `<span class="${['H', 'D'].includes(s) ? 'suit-red' : ''}">${{ H: '♥', D: '♦', C: '♣', S: '♠' }[s]}</span>`;
-                const suitName = s => ({ H: 'hearts', D: 'diamonds', C: 'clubs', S: 'spades' }[s]);
-                const MARRIAGE = { H: 100, D: 80, C: 60, S: 40 };
-                
-                $('marry-body').innerHTML =
-                    `<p>You hold both ${suitSpan(card.s)} K and Q. Leading the <span class="hl">${card.r + { H: '♥', D: '♦', C: '♣', S: '♠' }[card.s]}</span> lets you declare the marriage:</p>
-                     <p>· ${suitName(card.s)} become <span class="hl">trump</span> — they beat every other suit<br>
-                      · you immediately score <span class="hl">+${MARRIAGE[card.s]} points</span></p>`;
+                $('marry-body').innerHTML = t('marry.body', res.card);
                 $('marry').classList.remove('hidden');
             }
         }
@@ -146,31 +145,31 @@ document.addEventListener('click', (e) => {
 
 state.onDealEnd = (result) => {
     const { rows, champion } = result;
-    const suitSpan = s => `<span class="${['H', 'D'].includes(s) ? 'suit-red' : ''}">${{ H: '♥', D: '♦', C: '♣', S: '♠' }[s]}</span>`;
-    
-    let html = `<table class="pt-table"><tr><th>Player</th><th>Tricks</th><th>Marriage</th><th>Result</th><th>Total</th></tr>`;
+
+    const headers = t('sum.headers');
+    let html = `<table class="pt-table"><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
     rows.forEach(({ pl, p, note }) => {
-        const mar = pl.marriages.length ? pl.marriages.map(s => suitSpan(s)).join(' ') + ` (${pl.marriagePts})` : '—';
-        html += `<tr><td>${pl.name}${p === state.declarer ? ' 👑' : ''}</td><td>${pl.trickPts}</td><td>${mar}</td><td>${note}</td><td><strong>${pl.total}</strong></td></tr>`;
+        const mar = pl.marriages.length ? pl.marriages.map(s => suitHTML(s)).join(' ') + ` (${pl.marriagePts})` : '—';
+        html += `<tr><td>${playerName(p)}${p === state.declarer ? ' 👑' : ''}</td><td>${pl.trickPts}</td><td>${mar}</td><td>${note}</td><td><strong>${pl.total}</strong></td></tr>`;
     });
     html += `</table>`;
-    
+
     if (state.coach) {
         const you = rows[0];
         html += `<p style="color:#b8f5dd">🧭 ${state.declarer === 0
-            ? (you.delta > 0 ? 'You bid and delivered — that’s the whole game.' : 'Failed bids subtract the full bid — bid closer to what your hand can actually win.')
-            : 'As a defender you keep every point you grab — stealing tricks from the declarer hurts them twice.'}</p>`;
+            ? (you.delta > 0 ? t('coach.endMade') : t('coach.endFailed'))
+            : t('coach.endDefender')}</p>`;
     }
 
     if (champion) {
         const youWon = champion === state.players[0];
-        $('sum-title').textContent = youWon ? '🏆 You win the match!' : `🏆 ${champion.name} wins the match`;
-        $('sum-next').textContent = 'New match';
-        
+        $('sum-title').textContent = youWon ? t('sum.youWin') : t('sum.winner', playerName(state.players.indexOf(champion)));
+        $('sum-next').textContent = t('sum.newMatch');
+
         if (window.KamekoTokens) {
             window.KamekoTokens.earn(1, 'tysiacha: finished');
         }
-        
+
         // High score logic (best win margin)
         if (youWon) {
             const myScore = state.players[0].total;
@@ -178,12 +177,12 @@ state.onDealEnd = (result) => {
             if (myScore > highScore) {
                 localStorage.setItem('tysiachaHighScore', myScore);
                 if (window.KamekoTokens) window.KamekoTokens.earn(2, 'tysiacha: new high score');
-                banner('New high score! ' + myScore);
+                banner(t('banner.highScore', myScore));
             }
         }
     } else {
-        $('sum-title').textContent = `Deal ${state.dealNum} — result`;
-        $('sum-next').textContent = 'Next deal →';
+        $('sum-title').textContent = t('sum.deal', state.dealNum);
+        $('sum-next').textContent = t('sum.nextDeal');
     }
     $('sum-body').innerHTML = html;
     $('summary').classList.remove('hidden');
@@ -205,6 +204,7 @@ window.addEventListener('settingsClosed', () => {
 });
 
 // Initialize app
+localizeStatic();
 if (localStorage.getItem('lastPlayed_tysiacha')) {
     if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
         if (window.KamekoTokens) window.KamekoTokens.toast();

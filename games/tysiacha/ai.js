@@ -16,11 +16,11 @@ export function aiBid(p) {
     if (state.currentBid + RAISE <= state.aiEstimate[p]) {
         state.currentBid += RAISE;
         state.highBidder = p;
-        state.bidLabel[p] = 'bid ' + state.currentBid;
+        state.bidLabel[p] = { kind: 'bid', amount: state.currentBid };
         logEvent('bid', { p, amount: state.currentBid });
     } else {
         state.passed[p] = true;
-        state.bidLabel[p] = 'passed';
+        state.bidLabel[p] = { kind: 'pass' };
         logEvent('pass', { p });
     }
     state.bidTurn = nextActive(p);

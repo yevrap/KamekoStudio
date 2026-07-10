@@ -12,15 +12,10 @@ export const TARGET = 1000;
 export const OPEN_BID = 100;
 export const RAISE = 10;
 
-export const NAMES = ['You', 'Vera', 'Boris'];
-
 // ── Pure helpers (DOM-free) ──────────────────────────────────────────────
 
 export const key = c => c.r + c.s;
 export const rankIdx = c => RANKS.indexOf(c.r);
-export const cardLabel = c => c.r + SUIT_CHAR[c.s];
-export const suitSpan = s => `<span class="${SUIT_IS_RED[s] ? 'suit-red' : ''}">${SUIT_CHAR[s]}</span>`;
-export function suitName(s) { return { H: 'hearts', D: 'diamonds', C: 'clubs', S: 'spades' }[s]; }
 
 export function shuffle(a) {
     for (let i = a.length - 1; i > 0; i--) {
