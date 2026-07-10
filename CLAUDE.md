@@ -83,7 +83,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/durak/` | Durak | DOM | Classic Russian card game for 2–6 players. Modes: vs Computer (1 human + 2–5 AI) or Hot-seat (2–6 humans sharing a device, with a pass-device cover at 3+ players). Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap, pile-on during the defender's take, ordered end-of-bout draws (attacker → contributors → defender), elimination when hand and deck are both empty. Last player holding cards is the Durak. |
 | `games/durak-dungeon/` | Durak Dungeon | DOM | Roguelike dungeon crawler using Durak card mechanics. Defend against enemy attacks using Durak rules, then counter-attack to deal damage. 20-floor run with relics (15 types), shops, enhanced cards (burning/armored/vampiric/lucky), boss mutations. Seeded runs for async multiplayer via URL. |
 | `games/durak-tactics/` | Durak Tactics | DOM | Turn-based grid tactics using Durak card mechanics. Place cards as units on a 5×4 grid to battle enemy units. Campaign map with battles, shops, events, and bosses. Draft cards and spend gold between encounters. |
-| `games/tysiacha/` | Tysiacha | DOM | Classic trick-taking card game — bid, declare marriages, race to 1000. Built-in interactive coach. Saves `tysiachaHighScore`. |
+| `games/tysiacha/` | Tysiacha | DOM | Classic trick-taking card game — bid, declare marriages, race to 1000. Built-in interactive coach, full English/Russian toggle (i18n.js string table), AI difficulty levels, renamable players, synthesized sound effects (sfx.js). Saves `tysiachaHighScore`. |
 
 ## Shared Infrastructure: `shared/settings.js`
 
@@ -185,6 +185,10 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `alchemistHighScore` | durak-alchemist | integer string | Highest score achieved |
 | `lastPlayed_tysiacha` | tysiacha | timestamp (ms) | Set on session start |
 | `tysiachaHighScore` | tysiacha | integer string | Highest score achieved |
+| `tysiacha_lang` | tysiacha | `'en'`\|`'ru'` | UI language; applies live, default `'en'` |
+| `tysiacha_difficulty` | tysiacha | `'easy'`\|`'normal'`\|`'hard'` | AI bidding/play strength |
+| `tysiacha_name_[seat]` | tysiacha | string | Custom name for seat 0–2; unset = localized default |
+| `tysiacha_muted` | tysiacha | `'true'`\|`'false'` | Sound effects off/on (default on) |
 | `gridGameTopScoreScore` | materials-run | integer string | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | integer string | Survival mode high score |
 | `riverRunHighScore` | river-run | integer string | Points high score |
