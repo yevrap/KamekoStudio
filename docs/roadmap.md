@@ -1,7 +1,7 @@
 # Kameko Studio — Roadmap
 
 Engineering director: Yevster  
-Last updated: 2026-07-08
+Last updated: 2026-07-09
 
 AI agents read this file to pick the next work item. Items marked ✅ are complete. Items marked 🚧 are in progress. All other items are open.
 
@@ -51,6 +51,8 @@ Biggest visible improvements to the player experience.
 | p1-12 | Tysiacha: Card animations | M | open | Add slide-to-trick and sweep-to-winner animations (borrowing FLIP patterns from Durak). |
 | p1-13 | Tysiacha: Audio layer | S | open | Add sound effects for card snaps, marriage chimes, and the bid gavel. |
 | p1-14 | Tysiacha: Russian Language Toggle | S | open | Add an option to play with authentic Russian terminology (Тысяча, масти). |
+| p1-15 | Tysiacha: event stream + ambient trick clarity | M | open | Sprint slice 1/3 of the game-log design (vault: `31 Kameko Arcade/Kameko Arcade/Tysiacha/Tysiacha — Game Log & Clarity Design.md`). Structured `state.log` event stream for every game action (deal, bid, talon, exchange, play w/ leader flag, marriage, trick result w/ computed reason, deal score); `banner()` renders from it. Live-UI clarity: "led" marker on the leader's trick slot (`state.leader`), trick banner explains the win ("trumped with 9♠" / "highest ♣"), winning card pulses during the existing 1.25s resolve pause. Unit tests: event emission replays a deal faithfully; reason strings correct for led-suit vs trump wins. Playtest origin: a correct trick resolution looked like a bug because the led suit was invisible. |
+| p1-16 | Tysiacha: 📜 log drawer | M | open | Sprint slice 2/3, needs p1-15. Log button beside the trump chip opens a scrollable drawer (reuse p1-11 overlay patterns: fixed header, close button, tap-outside). Trick-grouped chronological feed: mini card labels (red/black), bids, marriages, trick results with reasons; coach hints logged when the hint bar is on. Closed by default, zero footprint when unopened. Open product options (log scope, hints-when-coach-off) have defaults recorded in the vault questionnaire — ship the defaults unless it's been filled. |
 
 ---
 
@@ -79,6 +81,7 @@ New mechanics that add replayability.
 | p2-17 | Tysiacha: Match Stats & History | M | open | Track bids made/failed rate, average points per deal, and win streaks. |
 | p2-18 | Tysiacha: AI Personalities | M | open | Differentiate the bots (e.g., Cautious Vera, Aggressive Boris) with distinct bidding and play styles. |
 | p2-19 | Tysiacha: Seeded Deals & Sharing | M | open | Play a specific deal via a share link (using mulberry32, similar to Durak Dungeon). |
+| p2-20 | Tysiacha: trick audit rows + deal recap | S | open | Sprint slice 3/3 of the game-log design, needs p1-15 + p1-16. In the log drawer, each completed trick renders as a structured row: the 3 cards in play order, leader marked, winner highlighted, points taken, trump at that moment. Deal-end scoring screen links "review deal" into it. Natural surface for p2-16 (post-deal analysis) to build on later. |
 
 ---
 
