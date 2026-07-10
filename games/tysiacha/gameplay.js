@@ -13,7 +13,7 @@ import {
 } from './state.js';
 import { aiBid as aiDoBid, aiExchange as aiDoExchange, aiMove as aiDoMove } from './ai.js';
 import { logEvent, eventText, trickReason } from './log.js';
-import { render, banner, flashTip } from './ui.js';
+import { render, banner, flashTip, coachText } from './ui.js';
 
 // ── Session-safe timer ───────────────────────────────────────────────────
 
@@ -28,6 +28,14 @@ function later(fn, ms) {
 
 export function announce(type, data) {
     banner(eventText(logEvent(type, data)));
+}
+
+// Log what the coach would say at every human decision point — even with the
+// hint bar off (Q10): the bar toggle controls live display only, so the log
+// can answer "what would coach have said?" after a confusing moment.
+function logHumanHint() {
+    const text = coachText();
+    if (text) logEvent('hint', { text });
 }
 
 // ── Match / deal flow ────────────────────────────────────────────────────
@@ -113,11 +121,12 @@ export function bidStep() {
         return;
     }
     
-    if (active.length === 1 && state.highBidder !== null) { 
-        winBidding(active[0]); 
-        return; 
+    if (active.length === 1 && state.highBidder !== null) {
+        winBidding(active[0]);
+        return;
     }
-    
+
+    if (state.bidTurn === 0) logHumanHint();
     render();
     if (state.bidTurn !== 0) later(() => aiDoBid(state.bidTurn), 900 + Math.random() * 500);
 }
@@ -150,7 +159,7 @@ function winBidding(p) {
         state.talon = [];
         state.talonUp = false;
         state.phase = 'exchange';
-        if (p === 0) { render(); }
+        if (p === 0) { logHumanHint(); render(); }
         else { render(); later(() => aiDoExchange(p), 1200); }
     }, 2200);
 }
@@ -188,6 +197,7 @@ export function startPlay() {
 
 export function step() {
     if (state.phase !== 'play') return;
+    if (state.trick.length < 3 && state.turn === 0) logHumanHint();
     render();
     if (state.trick.length === 3) { later(resolveTrick, 1250); return; }
     if (state.turn !== 0) later(() => aiDoMove(state.turn), 800 + Math.random() * 450);

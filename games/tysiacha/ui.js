@@ -10,6 +10,7 @@ import {
 import {
     state, legalMoves, wouldWinNow, trickPts, canDeclare, trickWinnerSlot
 } from './state.js';
+import { eventText } from './log.js';
 
 // ── DOM ref cache ────────────────────────────────────────────────────────
 
@@ -92,6 +93,30 @@ export function coachText() {
         return txt;
     }
     return '';
+}
+
+// ── Game log drawer ──────────────────────────────────────────────────────
+
+const colorSuits = txt => txt.replace(/[♥♦]/g, m => `<span class="suit-red">${m}</span>`);
+
+export function renderLog() {
+    if (typeof document === 'undefined') return;
+    const body = $('lg-body');
+    if (!body) return;
+    if (!state.log.length) {
+        body.innerHTML = '<p class="lg-empty">Nothing yet — events appear here as the deal unfolds.</p>';
+        return;
+    }
+    const deals = [...new Set(state.log.map(e => e.deal))];
+    body.innerHTML = deals.map(d => {
+        const lines = state.log.filter(e => e.deal === d).map(e => {
+            const trickHdr = e.type === 'play' && e.isLead
+                ? `<div class="lg-trick">trick ${e.trick}</div>` : '';
+            return trickHdr + `<div class="lg-line lg-${e.type}">${colorSuits(eventText(e))}</div>`;
+        }).join('');
+        return `<details class="lg-deal"${d === state.dealNum ? ' open' : ''}><summary>Deal ${d}</summary>${lines}</details>`;
+    }).join('');
+    body.scrollTop = body.scrollHeight;   // newest events sit at the bottom
 }
 
 // ── Main render ──────────────────────────────────────────────────────────
@@ -202,6 +227,10 @@ export function render() {
     
     $('me-info').innerHTML = `<span class="me-name">You ${state.declarer === 0 ? '👑' : ''}${myBoltText}${myBarrel}</span>
         <span>tricks ${me.tricks} · deal pts ${me.trickPts + me.marriagePts} · score <strong style="color:var(--text)">${me.total}</strong></span>`;
+
+    // keep an open log drawer live
+    const lb = $('logbook');
+    if (lb && !lb.classList.contains('hidden')) renderLog();
 
     const legal = myTurn ? legalMoves(me.hand).map(key) : null;
     $('hand').classList.toggle('crowded', me.hand.length > 8);

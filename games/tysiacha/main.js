@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { newMatch, summaryNext, humanBid, confirmExchange, playCard, onCardTap } from './gameplay.js';
-import { render, HOWTO, banner } from './ui.js';
+import { render, renderLog, HOWTO, banner } from './ui.js';
 
 const $ = id => document.getElementById(id);
 
@@ -15,6 +15,11 @@ function showHowto() {
 
 
 $('btn-howto').onclick = () => showHowto();
+
+$('btn-log').onclick = () => {
+    renderLog();
+    $('logbook').classList.remove('hidden');
+};
 
 $('btn-tys-settings').onclick = () => {
     // Populate settings UI from state

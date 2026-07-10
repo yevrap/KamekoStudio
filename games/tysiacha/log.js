@@ -57,6 +57,8 @@ export function eventText(e) {
             return `${name(e.p)} play${s(e.p)} ${cardLabel(e.card)}${e.isLead ? ' (led)' : ''}`;
         case 'trick-won':
             return `${name(e.p)} take${s(e.p)} the trick (+${e.pts} — ${reasonText(e.reason)})`;
+        case 'hint':
+            return `🧭 ${e.text}`;
         case 'deal-end':
             return `Deal ${e.deal} scored — ` + e.deltas
                 .map(d => `${name(d.p)} ${d.delta >= 0 ? '+' : ''}${d.delta}`)

@@ -426,3 +426,50 @@ test('gameplay: declaring a marriage logs the event and sets trump', async () =>
     assert.equal(state.log[0].suit, 'D');
     assert.equal(state.log[1].trump, 'D');     // trump recorded as of the play
 });
+
+// ─── hint logging (log drawer — p1-16) ──────────────────────────────────────
+
+test('eventText: hint entries', async () => {
+    const { eventText } = await import('../games/tysiacha/log.js');
+    assert.equal(eventText({ type: 'hint', text: 'Follow hearts ♥ if you can.' }),
+        '🧭 Follow hearts ♥ if you can.');
+});
+
+test('step: logs a coach hint on the human turn even with coach off', async () => {
+    const { step } = await import('../games/tysiacha/gameplay.js');
+    state.session++;
+    state.players = ['You', 'Vera', 'Boris'].map(newPlayer);
+    state.coach = false;
+    state.log = [];
+    state.dealNum = 1;
+    state.phase = 'play';
+    state.trump = null;
+    state.trick = [{ p: 2, card: { s: 'H', r: '9' } }];
+    state.trickNum = 1;
+    state.wonTrick = [false, false, false];
+    state.leader = 2;
+    state.turn = 0;
+    state.players[0].hand = [{ s: 'H', r: 'A' }, { s: 'S', r: 'J' }];
+
+    step();
+
+    const hints = state.log.filter(e => e.type === 'hint');
+    assert.equal(hints.length, 1);
+    assert.ok(hints[0].text.includes('♥'), 'hint should mention the led suit');
+});
+
+test('step: no hint logged on an AI turn', async () => {
+    const { step } = await import('../games/tysiacha/gameplay.js');
+    state.session++;
+    state.players = ['You', 'Vera', 'Boris'].map(newPlayer);
+    state.log = [];
+    state.phase = 'play';
+    state.trick = [];
+    state.turn = 1;
+    state.players[1].hand = [{ s: 'H', r: '9' }];
+
+    step();
+    state.session++; // cancel the scheduled AI move
+
+    assert.equal(state.log.filter(e => e.type === 'hint').length, 0);
+});

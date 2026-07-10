@@ -138,6 +138,44 @@ body {
     line-height: 1.3;
 }
 #trump-chip { display: flex; gap: 0.55rem; }
+#btn-log {
+    position: absolute;
+    top: 1.6rem;
+    left: 0.85rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.3rem 0.5rem;
+    font-size: 1.15rem;
+    line-height: 1.3;
+    cursor: pointer;
+}
+#btn-log:active { background: var(--surface2); }
+/* log drawer */
+.lg-empty { color: var(--muted); font-size: 0.85rem; }
+.lg-deal { margin-bottom: 0.4rem; }
+.lg-deal summary {
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    padding: 0.25rem 0;
+}
+.lg-trick {
+    margin: 0.45rem 0 0.1rem;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+}
+.lg-line { font-size: 0.8rem; line-height: 1.5; padding-left: 0.35rem; }
+.lg-line.lg-bid, .lg-line.lg-pass, .lg-line.lg-play { color: var(--muted); }
+.lg-line.lg-marriage { color: var(--gold); }
+.lg-line.lg-trick-won { color: var(--text); font-weight: 600; }
+.lg-line.lg-deal-start, .lg-line.lg-bid-won, .lg-line.lg-deal-end, .lg-line.lg-raspasy, .lg-line.lg-reraise { color: var(--accent); }
+.lg-line.lg-hint { color: #b8f5dd; font-style: italic; }
 #trump-chip .t-part { display: block; }
 #trump-chip .t-part + .t-part { border-left: 1px solid var(--border); padding-left: 0.55rem; }
 #trump-chip .t-suit { font-size: 1.25rem; display: block; }
