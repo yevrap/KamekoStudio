@@ -589,6 +589,7 @@ window.addEventListener('settingsClosed', function () {
   if (sec) sec.remove();
   if (state.phase === 'paused') {
     state.phase = prevStatePhase || 'playing';
+    renderAll();
     tick();
   }
 });

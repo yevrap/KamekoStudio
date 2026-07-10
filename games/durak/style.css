@@ -816,3 +816,4 @@ body:not(.dark-mode) .mbtn.outline:active {
 @media (max-width: 420px) {
   .seat-tile .seat-role { font-size: 0.5rem; padding: 1px 3px; letter-spacing: 0.02em; }
 }
+#coach-banner.hidden { display: none; }
