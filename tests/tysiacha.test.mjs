@@ -321,3 +321,108 @@ test('endDeal: barrel - defender on barrel stays 880, no strike', () => {
     assert.equal(state.players[0].total, 880);
     assert.equal(state.players[0].barrelAttempts, 0); // No strike
 });
+
+// ─── log.js (event stream — p1-15) ──────────────────────────────────────────
+
+test('logEvent: appends entry stamped with current deal and trick', async () => {
+    const { logEvent } = await import('../games/tysiacha/log.js');
+    state.log = [];
+    state.dealNum = 3;
+    state.trickNum = 5;
+    const entry = logEvent('bid', { p: 1, amount: 110 });
+    assert.equal(state.log.length, 1);
+    assert.deepEqual(entry, { type: 'bid', deal: 3, trick: 5, p: 1, amount: 110 });
+});
+
+test('trickReason: highest of led suit vs trumped', async () => {
+    const { trickReason } = await import('../games/tysiacha/log.js');
+    const trick = [
+        { p: 0, card: { s: 'H', r: 'A' } },
+        { p: 1, card: { s: 'S', r: '9' } },
+        { p: 2, card: { s: 'H', r: 'K' } },
+    ];
+    assert.deepEqual(trickReason(trick, 1), { kind: 'trumped', card: { s: 'S', r: '9' } });
+    assert.deepEqual(trickReason(trick, 0), { kind: 'highest', suit: 'H' });
+    assert.deepEqual(trickReason(trick, 2), { kind: 'highest', suit: 'H' });
+});
+
+test('eventText: trick-won grammar and reasons for You vs AI', async () => {
+    const { eventText } = await import('../games/tysiacha/log.js');
+    assert.equal(
+        eventText({ type: 'trick-won', p: 0, pts: 14, reason: { kind: 'trumped', card: { s: 'S', r: '9' } } }),
+        'You take the trick (+14 — trumped with 9♠)');
+    assert.equal(
+        eventText({ type: 'trick-won', p: 1, pts: 25, reason: { kind: 'highest', suit: 'H' } }),
+        'Vera takes the trick (+25 — highest ♥)');
+});
+
+test('eventText: bidding and deal-start lines', async () => {
+    const { eventText } = await import('../games/tysiacha/log.js');
+    assert.equal(eventText({ type: 'deal-start', deal: 3, p: 2, forced: true }),
+        'Deal 3 — Boris opens the bidding at 100 (forced)');
+    assert.equal(eventText({ type: 'pass', p: 0 }), 'You pass');
+    assert.equal(eventText({ type: 'pass', p: 1 }), 'Vera passes');
+    assert.equal(eventText({ type: 'bid', p: 2, amount: 120 }), 'Boris bids 120');
+    assert.equal(eventText({ type: 'marriage', p: 1, suit: 'D' }),
+        '💍 Vera declares the ♦ marriage — diamonds are trump! +80');
+});
+
+test('gameplay: a played trick logs plays in order and a reasoned trick-won', async () => {
+    const { playCard, resolveTrick } = await import('../games/tysiacha/gameplay.js');
+    state.session++;
+    state.players = ['You', 'Vera', 'Boris'].map(newPlayer);
+    state.log = [];
+    state.dealNum = 1;
+    state.phase = 'play';
+    state.trump = null;
+    state.trick = [];
+    state.trickNum = 1;
+    state.wonTrick = [false, false, false];
+    state.leader = 0;
+    state.turn = 0;
+    state.players[0].hand = [{ s: 'H', r: '9' }];
+    state.players[1].hand = [{ s: 'S', r: 'A' }]; // void in hearts, no trump: discard
+    state.players[2].hand = [{ s: 'H', r: 'J' }];
+
+    playCard(0, { s: 'H', r: '9' }, false);
+    playCard(1, { s: 'S', r: 'A' }, false);
+    playCard(2, { s: 'H', r: 'J' }, false);
+    state.session++; // cancel the scheduled auto-resolve; resolve synchronously
+    resolveTrick();
+
+    const types = state.log.map(e => e.type);
+    assert.deepEqual(types, ['play', 'play', 'play', 'trick-won']);
+    assert.equal(state.log[0].isLead, true);
+    assert.equal(state.log[1].isLead, false);
+    const won = state.log[3];
+    assert.equal(won.p, 2);                    // J♥ beats 9♥; off-suit A♠ never wins
+    assert.equal(won.pts, 13);                 // 0 + 11 + 2
+    assert.deepEqual(won.reason, { kind: 'highest', suit: 'H' });
+    assert.equal(won.trick, 1);
+    assert.equal(state.trickNum, 2);
+});
+
+test('gameplay: declaring a marriage logs the event and sets trump', async () => {
+    const { playCard } = await import('../games/tysiacha/gameplay.js');
+    state.session++;
+    state.players = ['You', 'Vera', 'Boris'].map(newPlayer);
+    state.log = [];
+    state.dealNum = 2;
+    state.phase = 'play';
+    state.trump = null;
+    state.trick = [];
+    state.trickNum = 2;
+    state.wonTrick = [false, true, false];
+    state.leader = 1;
+    state.turn = 1;
+    state.players[1].hand = [{ s: 'D', r: 'Q' }, { s: 'D', r: 'K' }];
+
+    playCard(1, { s: 'D', r: 'Q' }, true);
+
+    assert.equal(state.trump, 'D');
+    assert.equal(state.players[1].marriagePts, 80);
+    const types = state.log.map(e => e.type);
+    assert.deepEqual(types, ['marriage', 'play']);
+    assert.equal(state.log[0].suit, 'D');
+    assert.equal(state.log[1].trump, 'D');     // trump recorded as of the play
+});

@@ -6,8 +6,8 @@ import { RANKS, PTS, MARRIAGE, RAISE, rankIdx, marriagesInHand, key } from './co
 import {
     state, legalMoves, wouldWinNow, trickPts, canDeclare, nextActive, activeBidders
 } from './state.js';
-import { bidStep, giveCard, startPlay, playCard, step } from './gameplay.js';
-import { render, banner } from './ui.js';
+import { bidStep, giveCard, startPlay, playCard, step, announce } from './gameplay.js';
+import { logEvent } from './log.js';
 
 // ── AI Bidding ───────────────────────────────────────────────────────────
 
@@ -17,9 +17,11 @@ export function aiBid(p) {
         state.currentBid += RAISE;
         state.highBidder = p;
         state.bidLabel[p] = 'bid ' + state.currentBid;
+        logEvent('bid', { p, amount: state.currentBid });
     } else {
         state.passed[p] = true;
         state.bidLabel[p] = 'passed';
+        logEvent('pass', { p });
     }
     state.bidTurn = nextActive(p);
     bidStep();
@@ -41,7 +43,7 @@ export function aiExchange(p) {
     const opp1 = (p + 1) % 3, opp2 = (p + 2) % 3;
     giveCard(p, opp1, gives[0]);
     giveCard(p, opp2, gives[1]);
-    banner(`${state.players[p].name} passes one card to ${state.players[opp1].name} and one to ${state.players[opp2].name}`);
+    announce('exchange', { p, to1: opp1, to2: opp2 });
     startPlay();
 }
 
@@ -59,7 +61,7 @@ export function aiMove(p) {
     if (state.trick.length === 0) {
         if (state.settings.reraise && state.declarer === p && state.trickNum === 1 && state.currentBid < state.aiEstimate[p] - 10) {
             state.currentBid = Math.floor(state.aiEstimate[p] / 10) * 10;
-            banner(`${state.players[p].name} raises the bid to ${state.currentBid}`);
+            announce('reraise', { p, amount: state.currentBid });
         }
         if (canDeclare(p)) {
             const suits = marriagesInHand(hand).sort((a, b) => MARRIAGE[b] - MARRIAGE[a]);

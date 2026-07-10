@@ -38,6 +38,7 @@ export const state = {
     leader: 0,
     turn: 0,
     wonTrick: [false, false, false],
+    log: [],             // match-long event stream (see log.js); reset in newMatch
     selected: null,      // card key selected in hand (two-tap play)
     give: [],            // exchange: card keys chosen to give away
     pendingCard: null,   // card awaiting marriage prompt

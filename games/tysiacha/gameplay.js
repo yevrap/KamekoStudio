@@ -12,6 +12,7 @@ import {
     trickPts, canDeclare, activeBidders, nextActive
 } from './state.js';
 import { aiBid as aiDoBid, aiExchange as aiDoExchange, aiMove as aiDoMove } from './ai.js';
+import { logEvent, eventText, trickReason } from './log.js';
 import { render, banner, flashTip } from './ui.js';
 
 // ── Session-safe timer ───────────────────────────────────────────────────
@@ -21,6 +22,14 @@ function later(fn, ms) {
     setTimeout(() => { if (state.session === sess) fn(); }, ms);
 }
 
+// ── Event announcement ───────────────────────────────────────────────────
+// Log an event and show it as the banner — the banner is a view of the log,
+// so the two can never disagree. Silent events use logEvent directly.
+
+export function announce(type, data) {
+    banner(eventText(logEvent(type, data)));
+}
+
 // ── Match / deal flow ────────────────────────────────────────────────────
 
 export function newMatch() {
@@ -28,6 +37,7 @@ export function newMatch() {
     state.players = NAMES.map(newPlayer);
     state.dealer = 2;          // first deal: You open the bidding
     state.dealNum = 0;
+    state.log = [];
     newDeal();
 }
 
@@ -68,13 +78,13 @@ export function newDeal() {
         state.currentBid = OPEN_BID - RAISE; // Starts below 100 so next bid is 100
         state.highBidder = null;
         state.bidTurn = opener;
-        banner(`Deal ${state.dealNum} — ${state.players[opener].name} starts the bidding`);
+        announce('deal-start', { p: opener, forced: false });
     } else {
         state.currentBid = OPEN_BID;
         state.highBidder = opener;
         state.bidLabel[opener] = 'bid 100';
         state.bidTurn = nextActive(opener);
-        banner(`Deal ${state.dealNum} — ${state.players[opener].name} open${opener === 0 ? '' : 's'} the bidding at 100 (forced)`);
+        announce('deal-start', { p: opener, forced: true });
     }
     
     render();
@@ -97,7 +107,7 @@ export function bidStep() {
         state.trick = [];
         state.trickNum = 1;
         state.talon = []; // Discard talon in Raspasy
-        banner('Everyone passed! Playing Raspasy (Negative Round) 📉');
+        announce('raspasy', {});
         render();
         later(step, 1400);
         return;
@@ -117,10 +127,12 @@ export function humanBid(pass) {
     if (pass) {
         state.passed[0] = true;
         state.bidLabel[0] = 'passed';
+        logEvent('pass', { p: 0 });
     } else {
         state.currentBid += RAISE;
         state.highBidder = 0;
         state.bidLabel[0] = 'bid ' + state.currentBid;
+        logEvent('bid', { p: 0, amount: state.currentBid });
     }
     state.bidTurn = nextActive(0);
     bidStep();
@@ -130,7 +142,7 @@ function winBidding(p) {
     state.declarer = p;
     state.phase = 'talon';
     state.talonUp = true;
-    banner(`${state.players[p].name} win${p === 0 ? '' : 's'} the bidding at ${state.currentBid} and take${p === 0 ? '' : 's'} the talon`);
+    announce('bid-won', { p, amount: state.currentBid, talon: state.talon.slice() });
     render();
     later(() => {
         state.players[p].hand.push(...state.talon);
@@ -158,7 +170,7 @@ export function confirmExchange() {
     giveCard(0, 1, cards[0]);
     giveCard(0, 2, cards[1]);
     state.give = [];
-    banner('You passed a card to Vera and one to Boris');
+    announce('exchange', { p: 0, to1: 1, to2: 2 });
     startPlay();
 }
 
@@ -188,15 +200,16 @@ export function playCard(p, card, declare) {
         state.trump = card.s;
         state.players[p].marriagePts += MARRIAGE[card.s];
         state.players[p].marriages.push(card.s);
-        banner(`💍 ${state.players[p].name} declare${p === 0 ? '' : 's'} the ${SUIT_CHAR[card.s]} marriage — ${suitName(card.s)} are trump! +${MARRIAGE[card.s]}`);
+        announce('marriage', { p, suit: card.s });
     }
+    logEvent('play', { p, card, isLead: state.trick.length === 0, trump: state.trump });
     state.trick.push({ p, card });
     state.selected = null;
     state.turn = (p + 1) % 3;
     step();
 }
 
-function resolveTrick() {
+export function resolveTrick() {
     if (state.phase !== 'play') return;
     const slot = trickWinnerSlot();
     const winner = state.trick[slot].p;
@@ -204,7 +217,7 @@ function resolveTrick() {
     state.players[winner].trickPts += pts;
     state.players[winner].tricks++;
     state.wonTrick[winner] = true;
-    banner(`${state.players[winner].name} take${winner === 0 ? '' : 's'} the trick (+${pts})`);
+    announce('trick-won', { p: winner, pts, reason: trickReason(state.trick, slot) });
     state.trick = [];
     state.leader = winner;
     state.turn = winner;
@@ -306,6 +319,8 @@ export function endDeal() {
         pl.total = newTotal;
         rows.push({ pl, p, got, delta, note, boltAdded });
     });
+
+    logEvent('deal-end', { deltas: rows.map(r => ({ p: r.p, delta: r.delta, got: r.got })) });
 
     const leader = state.players.reduce((a, b) => (b.total > a.total ? b : a));
     if (leader.total >= target) champion = leader;

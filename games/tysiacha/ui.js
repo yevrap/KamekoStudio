@@ -8,7 +8,7 @@ import {
     key, rankIdx, cardLabel, suitSpan, suitName, handCardPts, marriagesInHand
 } from './constants.js';
 import {
-    state, legalMoves, wouldWinNow, trickPts, canDeclare
+    state, legalMoves, wouldWinNow, trickPts, canDeclare, trickWinnerSlot
 } from './state.js';
 
 // ── DOM ref cache ────────────────────────────────────────────────────────
@@ -36,6 +36,7 @@ function slotOrder() { return [1, 0, 2]; }
 
 let bannerTimer = null;
 export function banner(msg) {
+    if (typeof document === 'undefined') return;   // unit tests run gameplay headless
     const b = $('banner');
     b.textContent = msg;
     b.style.opacity = 1;
@@ -46,6 +47,7 @@ export function banner(msg) {
 // ── Flash tip ────────────────────────────────────────────────────────────
 
 export function flashTip(msg) {
+    if (typeof document === 'undefined') return;
     const tip = $('tip');
     $('tip-text').textContent = msg;
     tip.classList.remove('hidden');
@@ -95,6 +97,7 @@ export function coachText() {
 // ── Main render ──────────────────────────────────────────────────────────
 
 export function render() {
+    if (typeof document === 'undefined') return;   // unit tests run gameplay headless
     if (!state.players.length) return;
     // opponents
     $('opponents').innerHTML = [1, 2].map(p => {
@@ -134,10 +137,15 @@ export function render() {
     }[state.phase] || '';
     $('status').textContent = phaseTxt;
 
-    // trump chip
-    $('trump-chip').innerHTML = state.trump
-        ? `<span class="t-suit ${SUIT_IS_RED[state.trump] ? 'suit-red' : ''}">${SUIT_CHAR[state.trump]}</span>trump`
-        : `<span class="t-suit" style="color:var(--muted)">—</span>no trump`;
+    // trump chip — during a trick it gains a second column naming the led suit
+    const ledSuit = state.phase === 'play' && state.trick.length ? state.trick[0].card.s : null;
+    const ledPart = ledSuit
+        ? `<span class="t-part"><span class="t-suit ${SUIT_IS_RED[ledSuit] ? 'suit-red' : ''}">${SUIT_CHAR[ledSuit]}</span>led</span>`
+        : '';
+    const trumpPart = state.trump
+        ? `<span class="t-part"><span class="t-suit ${SUIT_IS_RED[state.trump] ? 'suit-red' : ''}">${SUIT_CHAR[state.trump]}</span>trump</span>`
+        : `<span class="t-part"><span class="t-suit" style="color:var(--muted)">—</span>no trump</span>`;
+    $('trump-chip').innerHTML = ledPart + trumpPart;
 
     // table center: talon during bidding/talon, trick during play
     if (state.phase === 'bidding' || state.phase === 'talon') {
@@ -146,12 +154,15 @@ export function render() {
                 ${state.talonUp ? state.talon.map(c => cardHTML(c)).join('') : state.talon.map(() => cardBackHTML()).join('')}
             </div>`;
     } else {
+        // Lead marker on the leader's slot; winner pulse once the trick is full
+        const ledP = state.trick.length ? state.trick[0].p : null;
+        const winP = state.trick.length === 3 ? state.trick[trickWinnerSlot()].p : null;
         $('trick-area').innerHTML = [0, 1, 2].map(slotP => {
             const played = state.trick.find(t => t.p === slotOrder()[slotP]);
             const p = slotOrder()[slotP];
             return `<div class="slot">
-                <div class="s-name">${state.players[p].name}</div>
-                <div class="s-card">${played ? cardHTML(played.card) : '<div class="s-empty"></div>'}</div>
+                <div class="s-name">${state.players[p].name}${p === ledP ? '<span class="s-led">led</span>' : ''}</div>
+                <div class="s-card">${played ? cardHTML(played.card, p === winP ? 'win-pulse' : '') : '<div class="s-empty"></div>'}</div>
             </div>`;
         }).join('');
     }
