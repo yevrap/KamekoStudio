@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import {
-    SUITS, SUIT_CHAR, SUIT_IS_RED, RANKS, PTS, MARRIAGE, TARGET,
+    NAMES, SUITS, SUIT_CHAR, SUIT_IS_RED, RANKS, PTS, MARRIAGE, TARGET,
     key, rankIdx, cardLabel, suitSpan, suitName, handCardPts, marriagesInHand
 } from './constants.js';
 import {
@@ -109,15 +109,34 @@ export function renderLog() {
     }
     const deals = [...new Set(state.log.map(e => e.deal))];
     body.innerHTML = deals.map(d => {
-        const lines = state.log.filter(e => e.deal === d).map(e => {
-            const trickHdr = e.type === 'play' && e.isLead
-                ? `<div class="lg-trick">trick ${e.trick}</div>` : '';
-            return trickHdr + `<div class="lg-line lg-${e.type}">${colorSuits(eventText(e))}</div>`;
-        }).join('');
-        return `<details class="lg-deal"${d === state.dealNum ? ' open' : ''}><summary>Deal ${d}</summary>${lines}</details>`;
+        // Completed tricks render as audit rows (cards in play order, leader
+        // first, winner highlighted); other events stay chronological lines.
+        const lines = [];
+        let plays = [];
+        for (const e of state.log.filter(x => x.deal === d)) {
+            if (e.type === 'play') { plays.push(e); continue; }
+            if (e.type === 'trick-won') { lines.push(trickRowHTML(plays, e)); plays = []; continue; }
+            lines.push(`<div class="lg-line lg-${e.type}">${colorSuits(eventText(e))}</div>`);
+        }
+        plays.forEach(e =>   // trick still in progress
+            lines.push(`<div class="lg-line lg-play">${colorSuits(eventText(e))}</div>`));
+        return `<details class="lg-deal"${d === state.dealNum ? ' open' : ''}><summary>Deal ${d}</summary>${lines.join('')}</details>`;
     }).join('');
     body.scrollTop = body.scrollHeight;   // newest events sit at the bottom
 }
+
+function trickRowHTML(plays, won) {
+    const cards = plays.map(e =>
+        `<span class="lg-card${SUIT_IS_RED[e.card.s] ? ' red' : ''}${e.p === won.p ? ' win' : ''}">
+            <b>${cardLabel(e.card)}</b><i>${NAMES[e.p]}${e.isLead ? ' · led' : ''}</i>
+        </span>`).join('');
+    return `<div class="lg-line lg-trickrow">
+        <span class="lg-tno">T${won.trick}</span>${cards}
+        <span class="lg-res">${NAMES[won.p]} +${won.pts}<i>${colorSuits(reasonTxt(won.reason))}</i></span>
+    </div>`;
+}
+
+const reasonTxt = r => r.kind === 'highest' ? `highest ${SUIT_CHAR[r.suit]}` : `trumped ${cardLabel(r.card)}`;
 
 // ── Main render ──────────────────────────────────────────────────────────
 

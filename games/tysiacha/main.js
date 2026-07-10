@@ -20,6 +20,10 @@ $('btn-log').onclick = () => {
     renderLog();
     $('logbook').classList.remove('hidden');
 };
+$('sum-log').onclick = () => {   // opens above the deal summary; closing returns to it
+    renderLog();
+    $('logbook').classList.remove('hidden');
+};
 
 $('btn-tys-settings').onclick = () => {
     // Populate settings UI from state
