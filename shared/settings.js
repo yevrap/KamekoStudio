@@ -73,7 +73,7 @@
       return true;
     },
     toast: function (msg) {
-      msg = msg || 'No tokens! Open \u2699\uFE0F Settings to get one.';
+      msg = msg || 'No tokens! Open ☰ Menu to get one.';
       let toast = document.getElementById('kameko-toast');
       if (!toast) {
         toast = document.createElement('div');
@@ -369,10 +369,10 @@
       contentContainer.style.flexDirection = 'column';
       contentContainer.style.gap = '8px';
       
-      options.render(contentContainer);
       sectionWrapper.appendChild(contentContainer);
-      
       gameSection.appendChild(sectionWrapper);
+      
+      options.render(contentContainer);
     }
   };
 
