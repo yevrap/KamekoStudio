@@ -159,6 +159,7 @@ export function localizeStatic() {
     $('set-title').textContent = t('set.title');
     $('lbl-lang').textContent = t('set.lang');
     $('lbl-diff').textContent = t('set.diff');
+    $('lbl-sound').textContent = t('set.sound');
     $('opt-diff-easy').textContent = t('set.diffEasy');
     $('opt-diff-normal').textContent = t('set.diffNormal');
     $('opt-diff-hard').textContent = t('set.diffHard');

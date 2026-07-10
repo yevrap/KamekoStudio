@@ -2,6 +2,7 @@ import { state } from './state.js';
 import { newMatch, summaryNext, humanBid, confirmExchange, playCard, onCardTap, announce } from './gameplay.js';
 import { render, renderLog, localizeStatic, banner } from './ui.js';
 import { t, getLang, setLang, playerName, customName, setCustomName, suitHTML } from './i18n.js';
+import { isMuted, setMuted } from './sfx.js';
 
 const $ = id => document.getElementById(id);
 
@@ -28,6 +29,7 @@ $('btn-tys-settings').onclick = () => {
     // Populate settings UI from state
     $('set-lang').value = getLang();
     $('set-diff').value = state.difficulty;
+    $('set-sound').checked = !isMuted();
     for (let p = 0; p < 3; p++) $('set-name-' + p).value = customName(p) || '';
     $('set-target').value = state.settings.targetScore;
     $('set-barrel').checked = state.settings.barrel;
@@ -54,6 +56,8 @@ $('set-diff').onchange = () => {
     state.difficulty = $('set-diff').value;
     localStorage.setItem('tysiacha_difficulty', state.difficulty);
 };
+
+$('set-sound').onchange = () => setMuted(!$('set-sound').checked);
 
 for (let p = 0; p < 3; p++) {
     $('set-name-' + p).onchange = e => {

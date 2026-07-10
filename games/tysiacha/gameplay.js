@@ -12,6 +12,7 @@ import {
 import { aiBid as aiDoBid, aiExchange as aiDoExchange, aiMove as aiDoMove, estimateHand } from './ai.js';
 import { logEvent, eventText, trickReason } from './log.js';
 import { render, banner, flashTip, coachText } from './ui.js';
+import { snap, chime, gavel } from './sfx.js';
 
 // ── Session-safe timer ───────────────────────────────────────────────────
 
@@ -147,6 +148,7 @@ function winBidding(p) {
     state.declarer = p;
     state.phase = 'talon';
     state.talonUp = true;
+    gavel();
     announce('bid-won', { p, amount: state.currentBid, talon: state.talon.slice() });
     render();
     later(() => {
@@ -202,11 +204,13 @@ export function step() {
 export function playCard(p, card, declare) {
     const h = state.players[p].hand;
     h.splice(h.findIndex(c => key(c) === key(card)), 1);
+    snap();
     if (declare) {
         state.trump = card.s;
         state.players[p].marriagePts += MARRIAGE[card.s];
         state.players[p].marriages.push(card.s);
         announce('marriage', { p, suit: card.s });
+        chime();
     }
     logEvent('play', { p, card, isLead: state.trick.length === 0, trump: state.trump });
     state.trick.push({ p, card });
