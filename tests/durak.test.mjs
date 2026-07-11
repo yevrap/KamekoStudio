@@ -7,7 +7,8 @@ import {
 } from '../games/durak/state.js';
 import {
   legalAttack, legalDefense, playAttack, playDefense,
-  passAttack, declareTake, pileOnPass, endBout, dealInitial, checkGameOver
+  passAttack, declareTake, pileOnPass, endBout, dealInitial, checkGameOver,
+  legalTransfer, playTransfer, defenseTargetIndex
 } from '../games/durak/gameplay.js';
 import { _test_aiTurn } from '../games/durak/ai.js';
 
@@ -380,6 +381,143 @@ test('isTrump: matches state.trumpSuit', () => {
   assert.equal(isTrump(3), true);
   assert.equal(isTrump('3'), true);
   assert.equal(isTrump(1), false);
+});
+
+// ─── Perevodnoy (transfer) ──────────────────────────────────────────────────
+
+// 3-player board mid-game with perevodnoy on: seat 0 attacked seat 1 with 6♠.
+function setupTransferBoard() {
+  newGame('ai', 3);
+  state.deck = [];
+  state.trumpSuit = 4;
+  state.variantPerevodnoy = true;
+  state.variantFirstTransfer = false;
+  state.attacksThisGame = 5; // not the game's first bout
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 1;
+  state.phase = 'playing';
+  state.field.attacks = [new Card(6, 1)];
+  state.field.defenses = [null];
+  state.contributionOrder = [0];
+  state.players[0].hand = [new Card(12, 3)];
+  state.players[1].hand = [new Card(6, 2), new Card(9, 2), new Card(12, 2)];
+  state.players[2].hand = [new Card(7, 1), new Card(9, 1), new Card(10, 1), new Card(12, 1)];
+}
+
+test('legalTransfer: same-rank card yes, different rank no', () => {
+  setupTransferBoard();
+  assert.equal(legalTransfer(1, state.players[1].hand[0]), true);  // 6♣
+  assert.equal(legalTransfer(1, state.players[1].hand[1]), false); // 9♣
+});
+
+test('legalTransfer: disabled when perevodnoy variant is off', () => {
+  setupTransferBoard();
+  state.variantPerevodnoy = false;
+  assert.equal(legalTransfer(1, state.players[1].hand[0]), false);
+});
+
+test('legalTransfer: illegal once any defense is on the field', () => {
+  setupTransferBoard();
+  state.field.attacks.push(new Card(6, 3));
+  state.field.defenses = [new Card(9, 1), null];
+  assert.equal(legalTransfer(1, state.players[1].hand[0]), false);
+});
+
+test('legalTransfer: illegal when next player cannot cover the grown attack', () => {
+  setupTransferBoard();
+  state.players[2].hand = [new Card(12, 1)]; // 1 card < attacks(1) + 1
+  assert.equal(legalTransfer(1, state.players[1].hand[0]), false);
+});
+
+test('legalTransfer: first-bout transfer gated by variantFirstTransfer', () => {
+  setupTransferBoard();
+  state.attacksThisGame = 1;
+  assert.equal(legalTransfer(1, state.players[1].hand[0]), false);
+  state.variantFirstTransfer = true;
+  assert.equal(legalTransfer(1, state.players[1].hand[0]), true);
+});
+
+test('playTransfer: transferrer becomes attacker, next seat defends both cards', () => {
+  setupTransferBoard();
+  assert.equal(playTransfer(1, state.players[1].hand[0].id), true); // 6♣ across
+  assert.equal(state.attackerSeat, 1);
+  assert.equal(state.defenderSeat, 2);
+  assert.equal(state.prioritySeat, 2);
+  assert.equal(state.field.attacks.length, 2);
+  assert.deepEqual(state.field.defenses, [null, null]);
+  assert.deepEqual(state.contributionOrder, [1]);
+});
+
+test('post-transfer: defender keeps priority until every attack is covered (deadlock regression)', () => {
+  setupTransferBoard();
+  playTransfer(1, state.players[1].hand[0].id); // field: 6♠, 6♣ — both open
+  // Seat 2 covers the first attack; one attack is still open, so priority
+  // must STAY with the defender (the old code handed it to the attacker, who
+  // could neither add a card nor pass → the game hung).
+  assert.equal(playDefense(2, state.players[2].hand[0].id), true); // 7♠ on 6♠
+  assert.equal(state.prioritySeat, 2);
+  assert.equal(state.defenderSeat, 2);
+  // Covering the last open attack hands priority back to the attacker...
+  const sevenClubs = new Card(7, 2);
+  state.players[2].hand.push(sevenClubs);
+  assert.equal(playDefense(2, sevenClubs.id), true); // 7♣ on 6♣
+  assert.equal(state.prioritySeat, 1);
+  // ...whose pass is legal again now that the field is fully defended.
+  assert.equal(passAttack(1), true);
+});
+
+test('post-transfer: defense may cover ANY open attack, not just the first', () => {
+  setupTransferBoard();
+  playTransfer(1, state.players[1].hand[0].id); // field: 6♠, 6♣ — both open
+  const eightClubs = new Card(8, 2);
+  state.players[2].hand = [eightClubs, new Card(7, 1), new Card(12, 1)];
+  // 8♣ cannot beat 6♠ (attacks[0]) but beats 6♣ (attacks[1]).
+  assert.equal(legalDefense(2, eightClubs), true);
+  assert.equal(defenseTargetIndex(eightClubs), 1);
+  assert.equal(playDefense(2, eightClubs.id), true);
+  assert.equal(state.field.defenses[0], null);
+  assert.equal(state.field.defenses[1].id, eightClubs.id);
+  assert.equal(state.prioritySeat, 2); // first attack still open
+});
+
+test('post-transfer AI: takes when the first open attack has no beater', () => {
+  setupTransferBoard();
+  global.localStorage.setItem('durak_difficulty', 'normal');
+  playTransfer(1, state.players[1].hand[0].id); // field: 6♠, 6♣ — both open
+  // AI seat 2 can only beat the second attack — the bout is unwinnable.
+  state.players[2].hand = [new Card(8, 2), new Card(12, 3)];
+  // Attacker seat 1 holds a rank match so declareTake settles at pileOn.
+  state.players[1].hand = [new Card(6, 3), new Card(12, 2)];
+  _test_aiTurn(2);
+  assert.equal(state.phase, 'pileOn');
+});
+
+test('AI defender transfers with a non-trump same-rank card', () => {
+  setupTransferBoard();
+  global.localStorage.setItem('durak_difficulty', 'normal');
+  _test_aiTurn(1); // holds 6♣ — non-trump transfer available
+  assert.equal(state.attackerSeat, 1);
+  assert.equal(state.defenderSeat, 2);
+  assert.equal(state.field.attacks.length, 2);
+});
+
+// ─── Finishing placements ───────────────────────────────────────────────────
+
+test('finishOrder: winner first, durak appended last', () => {
+  newGame('ai', 2);
+  state.deck = [];
+  state.trumpSuit = 4;
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 0;
+  state.phase = 'playing';
+  state.field.attacks = []; state.field.defenses = [];
+  state.contributionOrder = [];
+  state.players[0].hand = [new Card(14, 1)];
+  state.players[1].hand = [new Card(7, 1)];
+
+  playAttack(0, state.players[0].hand[0].id);
+  declareTake(1); // no pile-on possible → bout resolves, seat 0 empties out
+  assert.equal(state.phase, 'gameover');
+  assert.deepEqual(state.finishOrder, [0, 1]);
+  assert.equal(state.players[1].isOut, false); // seat 1 is the durak
 });
 
 // ─── AI Difficulty Logic (`_test_aiTurn`) ───────────────────────────────────

@@ -5,7 +5,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
-import { suitEmoji, suitName, displayValue } from './constants.js';
+import { suitEmoji, suitName, displayValue, cardStrength } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 import { getHardAiMove } from './ai.js';
 import { logEvent } from './log.js';
@@ -301,14 +301,35 @@ function renderField() {
 
 // ── Human hand ─────────────────────────────────────────────────────────────
 
+// Display-order sort for the viewer's hand; the underlying hand array is
+// never reordered. Persisted preference: durak_sort = 'none'|'suit'|'strength'.
+function sortedHandForDisplay(hand) {
+  var mode = (typeof localStorage !== 'undefined') ? localStorage.getItem('durak_sort') : null;
+  if (mode !== 'suit' && mode !== 'strength') return hand;
+  var copy = hand.slice();
+  if (mode === 'suit') {
+    copy.sort(function (a, b) {
+      var sa = parseInt(a.suit), sb = parseInt(b.suit);
+      if (sa !== sb) return sa - sb;
+      return parseInt(a.value) - parseInt(b.value);
+    });
+  } else {
+    copy.sort(function (a, b) {
+      return cardStrength(a, state.trumpSuit) - cardStrength(b, state.trumpSuit);
+    });
+  }
+  return copy;
+}
+
 function renderHumanHand() {
   $humanHand.innerHTML = '';
   if (state.phase === 'passDevice') return;
   var viewer = currentViewerSeat();
   var p = state.players[viewer];
   if (!p) return;
-  for (var i = 0; i < p.hand.length; i++) {
-    var el = createCardEl(p.hand[i], 'hand');
+  var hand = sortedHandForDisplay(p.hand);
+  for (var i = 0; i < hand.length; i++) {
+    var el = createCardEl(hand[i], 'hand');
     el.dataset.seat = viewer;
     $humanHand.appendChild(el);
   }
@@ -589,6 +610,49 @@ export function hideOverlays() {
   if ($passDeviceOverlay) $passDeviceOverlay.classList.add('hidden');
   var namesOverlay = document.getElementById('names-overlay');
   if (namesOverlay) namesOverlay.classList.add('hidden');
+  var choiceOverlay = document.getElementById('choice-overlay');
+  if (choiceOverlay) choiceOverlay.classList.add('hidden');
+}
+
+// Ordinal for finishing places: 1st, 2nd, 3rd, 4th…
+function ordinal(n) {
+  if (n === 1) return '1st';
+  if (n === 2) return '2nd';
+  if (n === 3) return '3rd';
+  return n + 'th';
+}
+
+function renderPlacements() {
+  var $box = document.getElementById('gameover-placements');
+  if (!$box) return;
+  $box.innerHTML = '';
+  var order = state.finishOrder || [];
+  // Only render when every seat has a recorded finish (normal game end).
+  if (state.players.length < 2 || order.length !== state.players.length) {
+    $box.classList.add('hidden');
+    return;
+  }
+  for (var i = 0; i < order.length; i++) {
+    var p = state.players[order[i]];
+    if (!p) continue;
+    var row = document.createElement('div');
+    row.className = 'placement-row';
+    if (p.seat === 0) row.classList.add('is-you');
+    // The durak is the one still holding cards; in a draw nobody is.
+    var isDurak = !p.isOut;
+    if (isDurak) row.classList.add('is-durak');
+
+    var nameEl = document.createElement('span');
+    nameEl.textContent = p.name;
+    var rankEl = document.createElement('span');
+    rankEl.className = 'placement-rank';
+    rankEl.textContent = isDurak ? 'Durak' : ordinal(i + 1);
+
+    row.appendChild(nameEl);
+    row.appendChild(rankEl);
+    $box.appendChild(row);
+  }
+  $box.classList.remove('hidden');
 }
 
 export function showGameOver(msg, stats) {
@@ -596,6 +660,7 @@ export function showGameOver(msg, stats) {
   if ($gameoverStats && stats) {
     $gameoverStats.textContent = 'Record: ' + stats.wins + 'W · ' + stats.losses + 'L · ' + stats.draws + 'D';
   }
+  renderPlacements();
   $gameoverOverlay.classList.remove('hidden');
 }
 

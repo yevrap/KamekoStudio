@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
-import { cardStrength } from './constants.js';
+import { cardStrength, canBeat } from './constants.js';
 import {
   legalAttack, legalDefense, playAttack, playDefense,
   passAttack, declareTake, pileOnPass, legalTransfer, playTransfer
@@ -139,10 +139,19 @@ function aiDefend(seat) {
   var atk = state.field.attacks[firstOpen];
   var atkSuit = parseInt(atk.suit);
 
+  // Defense is legal against ANY open attack, so `playable` may hold cards
+  // that only beat a later one. Beating everything requires beating the first
+  // open attack too — if nothing in hand can, the bout is lost: take now.
+  var beaters = [];
+  for (var b = 0; b < playable.length; b++) {
+    if (canBeat(atk, playable[b], state.trumpSuit)) beaters.push(playable[b]);
+  }
+  if (beaters.length === 0) { declareTake(seat); return; }
+
   var sameSuit = [];
   var trumpOnly = [];
-  for (var i = 0; i < playable.length; i++) {
-    var c = playable[i];
+  for (var i = 0; i < beaters.length; i++) {
+    var c = beaters[i];
     if (parseInt(c.suit) === atkSuit) sameSuit.push(c);
     else trumpOnly.push(c);
   }
@@ -233,22 +242,30 @@ export function getHardAiMove(seat) {
       if (nonTrumpTransfer.length > 0) return { action: 'transfer', card: nonTrumpTransfer[0] };
     }
 
-    if (pd.length === 0) {
-      // We can't defend. If we can transfer with a trump, do it (better than taking).
-      if (pt.length > 0) return { action: 'transfer', card: pt[0] };
-      return { action: 'take' }; 
-    }
-
     var firstOpen = state.field.defenses.indexOf(null);
     var atk = state.field.attacks[firstOpen];
     var atkSuit = parseInt(atk.suit);
     var atkVal = parseInt(atk.value);
 
+    // Only cards that beat the FIRST open attack count — pd may hold cards
+    // that only beat a later open attack (post-transfer multi-attack field),
+    // and a bout where the first attack has no beater is already lost.
+    var beaters = [];
+    for (var b = 0; b < pd.length; b++) {
+      if (canBeat(atk, pd[b], state.trumpSuit)) beaters.push(pd[b]);
+    }
+
+    if (beaters.length === 0) {
+      // We can't defend. If we can transfer with a trump, do it (better than taking).
+      if (pt.length > 0) return { action: 'transfer', card: pt[0] };
+      return { action: 'take' };
+    }
+
     var sameSuit = [];
     var trumpOnly = [];
-    for (var k = 0; k < pd.length; k++) {
-      if (parseInt(pd[k].suit) === atkSuit) sameSuit.push(pd[k]);
-      else trumpOnly.push(pd[k]);
+    for (var k = 0; k < beaters.length; k++) {
+      if (parseInt(beaters[k].suit) === atkSuit) sameSuit.push(beaters[k]);
+      else trumpOnly.push(beaters[k]);
     }
 
     if (sameSuit.length > 0) return { action: 'defend', card: sameSuit[0] };

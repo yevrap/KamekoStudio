@@ -157,6 +157,7 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `durak_name_ai_[seat]` | durak | string | User-customized name for VS Computer mode seats |
 | `durak_name_hotseat_[seat]` | durak | string | User-customized name for Hot-seat mode seats |
 | `durak_coach` | durak | `'true'`\|`'false'` | Coach hints on/off (quick action in the drawer) |
+| `durak_sort` | durak | `'none'`\|`'suit'`\|`'strength'` | Hand display sort (drawer toggle); display-order only |
 | `durak_perevodnoy` | durak | `'true'`\|`'false'` | Perevodnoy variant rule (toggle on the start screen) |
 | `durak_first_transfer` | durak | `'true'`\|`'false'` | Allow first-turn transfer (only meaningful with perevodnoy on) |
 | `durak_wins` | durak | integer string | Seat 0 (device-owner human) match win count, across both modes |

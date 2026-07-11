@@ -17,6 +17,7 @@ export var state = {
 
   field: { attacks: [], defenses: [] },  // defenses[i] is null or the card beating attacks[i]
   contributionOrder: [],                 // seats in attack-contribution order (for draw order)
+  finishOrder: [],                       // seats in the order they emptied their hands (durak appended last)
   attackerPassed: false,                 // primary attacker has passed this round
   contributorPassed: false,              // right-of-defender contributor has passed this round
 
@@ -125,6 +126,7 @@ export function newGame(mode, count) {
   state.field.attacks = [];
   state.field.defenses = [];
   state.contributionOrder = [];
+  state.finishOrder = [];
   state.attackerPassed = false;
   state.contributorPassed = false;
   state.attackerSeat = 0;

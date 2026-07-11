@@ -2,7 +2,9 @@
 // MAIN — event wiring, start/restart, settings integration, tick orchestration
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { state, newGame, getPlayer } from './state.js';
+import { state, newGame, getPlayer, isTrump } from './state.js';
+import { suitName } from './constants.js';
+import { buildCardFaceSvg } from './cards.js';
 import {
   renderAll, hideOverlays, showGameOver, cacheDom,
   showPassDevice, hidePassDevice
@@ -303,9 +305,12 @@ $humanHand.addEventListener('pointerup', function (e) {
 
   var ok = false;
   if (seat === state.defenderSeat && state.phase === 'playing') {
-    if (legalTransfer(seat, card)) {
+    var canTransfer = legalTransfer(seat, card);
+    var canBeatIt = legalDefense(seat, card);
+    if (canTransfer && canBeatIt) { showChoice(seat, card); return; }
+    if (canTransfer) {
       ok = playTransfer(seat, start.cardId);
-    } else if (legalDefense(seat, card)) {
+    } else if (canBeatIt) {
       ok = playDefense(seat, start.cardId);
     }
   } else if (legalAttack(seat, card)) {
@@ -317,10 +322,53 @@ $humanHand.addEventListener('pointerup', function (e) {
 
 $humanHand.addEventListener('pointercancel', function () { tapStart = null; });
 
+// ── Transfer-or-beat choice (perevodnoy) ───────────────────────────────────
+// A trump card matching the attack rank can either transfer the bout or beat
+// the attack — the defender picks; auto-transferring was taking the choice away.
+
+var $choiceOverlay = document.getElementById('choice-overlay');
+var $choiceCard = document.getElementById('choice-card');
+var pendingChoice = null;
+
+function showChoice(seat, card) {
+  pendingChoice = { seat: seat, cardId: card.id };
+  $choiceCard.className = 'card-btn suit-' + suitName(card.suit) + (isTrump(card.suit) ? ' trump-card' : '');
+  $choiceCard.innerHTML = buildCardFaceSvg(card.suit, card.value);
+  $choiceOverlay.classList.remove('hidden');
+}
+
+function hideChoice() {
+  pendingChoice = null;
+  $choiceOverlay.classList.add('hidden');
+}
+
+function resolveChoice(action) {
+  if (!pendingChoice) return;
+  var pc = pendingChoice;
+  hideChoice();
+  var ok = action === 'transfer' ? playTransfer(pc.seat, pc.cardId) : playDefense(pc.seat, pc.cardId);
+  if (ok) handleAfterAction(pc.seat);
+}
+
+document.getElementById('btn-choice-transfer').addEventListener('pointerdown', function (e) {
+  e.preventDefault();
+  e.stopPropagation();
+  resolveChoice('transfer');
+});
+document.getElementById('btn-choice-beat').addEventListener('pointerdown', function (e) {
+  e.preventDefault();
+  e.stopPropagation();
+  resolveChoice('beat');
+});
+$choiceOverlay.addEventListener('pointerdown', function (e) {
+  if (e.target === $choiceOverlay) hideChoice();
+});
+
 // ── Start / restart ────────────────────────────────────────────────────────
 
 function startGame() {
   clearAiTimeout();
+  hideChoice();
   newGame(setupMode, setupCount);
   dealInitial();
   hideOverlays();
@@ -456,6 +504,38 @@ function injectDurakSettings() {
         container.appendChild(diffToggle);
       }
 
+      var sortLabel = document.createElement('div');
+      sortLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin:12px 0 6px;';
+      sortLabel.textContent = 'Hand Sort';
+      container.appendChild(sortLabel);
+
+      var sortToggle = document.createElement('div');
+      sortToggle.className = 'mode-toggle';
+      var sorts = ['none', 'suit', 'strength'];
+      var sortNames = ['Off', 'Suit', 'Strength'];
+      var currentSort = localStorage.getItem('durak_sort') || 'none';
+
+      for (var s = 0; s < sorts.length; s++) {
+        (function(mode, name) {
+          var btn = document.createElement('button');
+          btn.className = 'mode-btn' + (currentSort === mode ? ' active' : '');
+          btn.type = 'button';
+          btn.dataset.sort = mode;
+          btn.textContent = name;
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.setItem('durak_sort', mode);
+            var btns = sortToggle.querySelectorAll('.mode-btn');
+            for (var j = 0; j < btns.length; j++) {
+              btns[j].classList.toggle('active', btns[j].dataset.sort === mode);
+            }
+            renderAll();
+          });
+          sortToggle.appendChild(btn);
+        })(sorts[s], sortNames[s]);
+      }
+      container.appendChild(sortToggle);
+
       var btnEnd = document.createElement('button');
       btnEnd.className = 'settings-danger-btn';
       btnEnd.style.marginTop = '12px';
@@ -479,6 +559,7 @@ function injectDurakSettings() {
 // open, so the listeners below only handle pause/resume.
 window.addEventListener('settingsOpened', function () {
   clearAiTimeout();
+  hideChoice();
   if (state.phase === 'playing' || state.phase === 'pileOn' || state.phase === 'passDevice') {
     prevStatePhase = state.phase;
     state.phase = 'paused';

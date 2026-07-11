@@ -96,10 +96,23 @@
     <div class="g-rules">Tap anywhere when ready.</div>
   </div>
 
+  <!-- Transfer-or-beat choice (perevodnoy: tapped card can do both) -->
+  <div id="choice-overlay" class="overlay choice-overlay hidden">
+    <div id="choice-panel">
+      <div id="choice-card"></div>
+      <div class="choice-buttons">
+        <button class="action-btn choice-transfer" type="button" id="btn-choice-transfer">&#8644; Transfer</button>
+        <button class="action-btn choice-beat" type="button" id="btn-choice-beat">&#128737;&#65039; Beat</button>
+      </div>
+      <div class="choice-hint">Tap outside to cancel</div>
+    </div>
+  </div>
+
   <!-- Game over screen -->
   <div id="gameover-overlay" class="overlay hidden">
     <div class="g-title" id="winner-text"></div>
     <div class="g-sub" id="gameover-stats"></div>
+    <div id="gameover-placements" class="placements hidden"></div>
     <button class="mbtn red" id="btn-replay" type="button">&#9654; Play Again</button>
   </div>
 

@@ -49,10 +49,18 @@ export function legalDefense(seat, card) {
   if (state.phase !== 'playing') return false;
   if (state.prioritySeat !== seat) return false;
   if (seat !== state.defenderSeat) return false;
-  var firstOpen = state.field.defenses.indexOf(null);
-  if (firstOpen === -1) return false;
-  var atk = state.field.attacks[firstOpen];
-  return canBeat(atk, card, state.trumpSuit);
+  return defenseTargetIndex(card) !== -1;
+}
+
+// First open attack this card can beat. After a transfer several attacks can
+// be open at once; the defender may cover them in any order, so a defense is
+// legal against any open attack, not just the first.
+export function defenseTargetIndex(card) {
+  for (var i = 0; i < state.field.attacks.length; i++) {
+    if (state.field.defenses[i] === null &&
+        canBeat(state.field.attacks[i], card, state.trumpSuit)) return i;
+  }
+  return -1;
 }
 
 // ── Card play ──────────────────────────────────────────────────────────────
@@ -159,14 +167,18 @@ export function playTransfer(seat, cardId) {
 export function playDefense(seat, cardId) {
   var card = findCard(seat, cardId);
   if (!card || !legalDefense(seat, card)) return false;
+  var target = defenseTargetIndex(card);
   removeFromHand(seat, cardId);
-  var firstOpen = state.field.defenses.indexOf(null);
-  state.field.defenses[firstOpen] = card;
+  state.field.defenses[target] = card;
 
   logEvent('defend', { seat: seat, card: card });
 
-  // Back to primary attacker; reset pass flags for the new round.
-  state.prioritySeat = state.attackerSeat;
+  // Priority returns to the primary attacker only once every attack is
+  // covered. After a transfer several attacks are open at once; handing
+  // priority back early deadlocks the attacker, who can neither add a card
+  // (no rank match) nor pass (field not fully defended).
+  var stillOpen = state.field.defenses.indexOf(null) !== -1;
+  state.prioritySeat = stillOpen ? state.defenderSeat : state.attackerSeat;
   state.attackerPassed = false;
   state.contributorPassed = false;
   return true;
@@ -359,7 +371,10 @@ function eliminationSweep() {
   if (state.deck.length > 0) return;
   for (var i = 0; i < state.players.length; i++) {
     var p = state.players[i];
-    if (!p.isOut && p.hand.length === 0) p.isOut = true;
+    if (!p.isOut && p.hand.length === 0) {
+      p.isOut = true;
+      if (state.finishOrder.indexOf(p.seat) === -1) state.finishOrder.push(p.seat);
+    }
   }
 }
 
@@ -396,6 +411,9 @@ export function checkGameOver() {
     var durak = null;
     for (var i = 0; i < state.players.length; i++) {
       if (!state.players[i].isOut) { durak = state.players[i]; break; }
+    }
+    if (durak && state.finishOrder.indexOf(durak.seat) === -1) {
+      state.finishOrder.push(durak.seat);
     }
     if (durak && durak.isHuman && durak.seat === 0) {
       state.winnerText = 'You are the Durak!';
