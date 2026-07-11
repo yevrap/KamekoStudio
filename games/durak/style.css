@@ -757,6 +757,8 @@ body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
+/* Prevent flex from compressing children to zero — lets overflow-y: auto scroll instead */
+.scrollable-modal > * { flex-shrink: 0; }
 .names-grid {
   display: flex;
   flex-direction: column;
