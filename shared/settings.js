@@ -290,7 +290,7 @@
     // Per-seat / per-wave keys have dynamic suffixes — clear by prefix.
     const prefixesToRemove = [
       'tysiacha_name_', 'durak_name_ai_', 'durak_name_hotseat_',
-      'keypadQuestBestTime_'
+      'keypadQuestBestTime_', 'materialsRun_'
     ];
 
     let clearedCount = 0;

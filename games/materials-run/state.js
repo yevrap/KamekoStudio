@@ -32,6 +32,8 @@ export const state = {
     nextEnemyId: 0,
     gameStartTime: 0, // For survival timer
     animationFrameId: null, // To control game loop
+    lastManualTakeoverTime: 0,
+    lastAutoPinTime: 0,
 };
 
 // DOM element references, populated by main.js on DOMContentLoaded

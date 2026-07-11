@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.winTopScoreScoreElement = document.getElementById('win-top-score-score');
     dom.winTopScoreSurvivalElement = document.getElementById('win-top-score-survival');
     dom.playAgainButtonWin = document.getElementById('play-again-button-win');
+    dom.startSpectateButton = document.getElementById('start-spectate-button');
     dom.menuButton = document.getElementById('menu-button');
     dom.topScoresButton = document.getElementById('top-scores-button');
     dom.topScoresOverlay = document.getElementById('top-scores-overlay');
@@ -54,8 +55,17 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.startSurvivalButton.addEventListener('click', () => {
         if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
         localStorage.setItem('lastPlayed_materialsRun', Date.now());
+        localStorage.setItem('materialsRun_autoPlay', 'false');
         startGame('survival');
     });
+    if (dom.startSpectateButton) {
+        dom.startSpectateButton.addEventListener('click', () => {
+            if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+            localStorage.setItem('lastPlayed_materialsRun', Date.now());
+            localStorage.setItem('materialsRun_autoPlay', 'true');
+            startGame('score'); // Spectate defaults to Score Attack
+        });
+    }
     dom.menuButton.addEventListener('click', goToStartScreen);
     dom.topScoresButton.addEventListener('click', showTopScores);
     dom.closeTopScoresButton.addEventListener('click', hideTopScores);
@@ -71,3 +81,49 @@ window.addEventListener('settingsOpened', () => {
 window.addEventListener('settingsClosed', () => {
     if (state.gameState === 'playing') state.animationFrameId = requestAnimationFrame(gameLoop);
 });
+
+// --- Register Settings Drawer Section ---
+if (window.KamekoSettings) {
+    window.KamekoSettings.registerSection('materials-run', {
+        title: 'Materials Run',
+        render: (container) => {
+            const autoPlayRow = document.createElement('div');
+            autoPlayRow.className = 'settings-row';
+            autoPlayRow.style.background = 'transparent';
+            autoPlayRow.style.border = 'none';
+            autoPlayRow.style.padding = '0';
+            autoPlayRow.innerHTML = `
+                <label for="materials-autoplay" style="cursor:pointer">👁️ Auto-Play</label>
+                <label class="kameko-switch">
+                    <input type="checkbox" id="materials-autoplay">
+                    <span class="kameko-slider"></span>
+                </label>
+            `;
+            const autoPlayCheckbox = autoPlayRow.querySelector('#materials-autoplay');
+            autoPlayCheckbox.checked = localStorage.getItem('materialsRun_autoPlay') === 'true';
+            autoPlayCheckbox.addEventListener('change', (e) => {
+                localStorage.setItem('materialsRun_autoPlay', e.target.checked);
+            });
+            container.appendChild(autoPlayRow);
+
+            const autoRestartRow = document.createElement('div');
+            autoRestartRow.className = 'settings-row';
+            autoRestartRow.style.background = 'transparent';
+            autoRestartRow.style.border = 'none';
+            autoRestartRow.style.padding = '0';
+            autoRestartRow.innerHTML = `
+                <label for="materials-autorestart" style="cursor:pointer">🔄 Auto-Restart</label>
+                <label class="kameko-switch">
+                    <input type="checkbox" id="materials-autorestart">
+                    <span class="kameko-slider"></span>
+                </label>
+            `;
+            const autoRestartCheckbox = autoRestartRow.querySelector('#materials-autorestart');
+            autoRestartCheckbox.checked = localStorage.getItem('materialsRun_autoRestart') === 'true';
+            autoRestartCheckbox.addEventListener('change', (e) => {
+                localStorage.setItem('materialsRun_autoRestart', e.target.checked);
+            });
+            container.appendChild(autoRestartRow);
+        }
+    });
+}

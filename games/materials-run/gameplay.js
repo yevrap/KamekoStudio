@@ -260,6 +260,7 @@ export function handlePointerDown(event) {
     const pos = getPointerPosOnGrid(event);
     if (pos && pos.x >= 0 && pos.x <= state.gridPixelWidth && pos.y >= 0 && pos.y <= state.gridPixelHeight) {
         event.preventDefault(); // Prevent default actions like text selection
+        state.lastManualTakeoverTime = performance.now();
 
         // Create pin data
         const newPin = {
@@ -336,6 +337,15 @@ function showEndScreen(isWin) {
             applyRecordCelebration(isNewRecord, dom.topScoreScoreElement, dom.topScoreScoreBadge, dom.topScoreSurvivalElement, dom.topScoreSurvivalBadge);
         }
         if (dom.gameOverOverlay) dom.gameOverOverlay.style.display = 'flex';
+    }
+
+    if (localStorage.getItem('materialsRun_autoRestart') === 'true') {
+        setTimeout(() => {
+            if (state.gameState === 'gameover' || state.gameState === 'won') {
+                goToStartScreen();
+                startGame(state.currentGameMode);
+            }
+        }, 2500);
     }
 }
 
@@ -462,11 +472,84 @@ export function hideTopScores() {
     if (dom.topScoresOverlay) dom.topScoresOverlay.style.display = 'none';
 }
 
+function autoPlayBot(now) {
+    if (localStorage.getItem('materialsRun_autoPlay') !== 'true') return;
+    if (now - state.lastManualTakeoverTime < 3000) return;
+    if (now - state.lastAutoPinTime < 500) return;
+
+    let bestScore = -Infinity;
+    let bestX = state.playerPos.x + state.playerSize / 2;
+    let bestY = state.playerPos.y + state.playerSize / 2;
+
+    for (let y = 0; y < GRID_SIZE; y += 2) {
+        for (let x = 0; x < GRID_SIZE; x += 2) {
+            const px = x * state.cellSize + state.cellSize / 2;
+            const py = y * state.cellSize + state.cellSize / 2;
+
+            let cellScore = 0;
+
+            if (state.isDangerZoneActive) {
+                if (x >= state.dangerZone.x && x < state.dangerZone.x + state.dangerZone.size &&
+                    y >= state.dangerZone.y && y < state.dangerZone.y + state.dangerZone.size) {
+                    cellScore -= 10000;
+                }
+            }
+
+            let minEnemyDist = Infinity;
+            state.enemies.forEach(e => {
+                const dist = Math.sqrt((e.x - px) ** 2 + (e.y - py) ** 2);
+                if (dist < minEnemyDist) minEnemyDist = dist;
+            });
+            
+            if (minEnemyDist < state.cellSize * 4) {
+                cellScore -= (state.cellSize * 4 - minEnemyDist) * 100;
+            }
+
+            if (state.currentGameMode === 'score' && state.targetTile.x !== null) {
+                const targetPx = state.targetTile.x * state.cellSize + state.cellSize / 2;
+                const targetPy = state.targetTile.y * state.cellSize + state.cellSize / 2;
+                const distToTarget = Math.sqrt((targetPx - px) ** 2 + (targetPy - py) ** 2);
+                cellScore -= distToTarget;
+            } else if (state.currentGameMode === 'survival') {
+                cellScore += minEnemyDist;
+            }
+
+            if (cellScore > bestScore) {
+                bestScore = cellScore;
+                bestX = px;
+                bestY = py;
+            }
+        }
+    }
+
+    const newPin = {
+        id: state.nextPinId++,
+        x: bestX,
+        y: bestY,
+        creationTime: now,
+        element: null
+    };
+    const pinElement = document.createElement('div');
+    pinElement.classList.add('pin');
+    pinElement.id = `pin-${newPin.id}`;
+    pinElement.style.left = `${newPin.x}px`;
+    pinElement.style.top = `${newPin.y}px`;
+    pinElement.style.borderColor = 'rgba(0, 255, 255, 0.8)';
+    pinElement.style.boxShadow = '0 0 10px rgba(0, 255, 255, 0.8)';
+    dom.gridElement.appendChild(pinElement);
+    newPin.element = pinElement;
+    state.activePins.push(newPin);
+
+    state.lastAutoPinTime = now;
+}
+
 /** Main game update loop */
 function update(deltaTime) {
     if (state.gameState !== 'playing') return;
     if (!deltaTime || deltaTime > 0.1) { deltaTime = 0.016; } // Prevent large jumps
     const now = performance.now();
+
+    autoPlayBot(now);
 
     // --- Update and Remove Expired Pins ---
     state.activePins = state.activePins.filter(pin => {
