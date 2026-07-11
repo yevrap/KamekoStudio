@@ -374,3 +374,48 @@ export function buildT9Pad() {
     pad.appendChild(btn);
   }
 }
+
+// ─── Auto Play ────────────────────────────────────────────────────────────────
+
+export function updateAutoPlay(ts) {
+  if (!state.currentPair || state.gameState !== 'playing') return;
+  const hasEnemies = state.enemies.some(e => !e.dead);
+  if (!hasEnemies) return;
+
+  if (ts - state.lastAutoTypeTs > state.autoTypingDelay) {
+    state.lastAutoTypeTs = ts;
+    const v = state.currentPair.v;
+    
+    if (state.inputMode === 'keyboard') {
+      const ki = document.getElementById('keyboard-input');
+      const typed = ki.value;
+      const expected = v.toLowerCase();
+      const alphanumExpected = expected.replace(/[^a-z0-9]/gi, '');
+      if (typed.length < alphanumExpected.length) {
+        ki.value += alphanumExpected[typed.length];
+        ki.dispatchEvent(new Event('input'));
+      } else {
+        document.getElementById('keyboard-submit').click();
+      }
+    } else if (state.inputMode === 'predict') {
+      if (state.t9pos < v.length) {
+        let expected = v[state.t9pos].toLowerCase();
+        if (!/[a-z0-9]/.test(expected)) {
+          state.t9pos++;
+          updateInputDisplay();
+        } else {
+          handleT9(expected);
+        }
+      } else {
+        handleT9('ok');
+      }
+    } else if (state.inputMode === 'scroll') {
+      if (state.t9buf.length < v.length) {
+        state.t9buf += v[state.t9buf.length];
+        autoFillScrollSpecials();
+      } else {
+        submitAnswer(state.t9buf);
+      }
+    }
+  }
+}

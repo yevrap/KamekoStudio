@@ -35,6 +35,12 @@ export const state = {
   inputMode: localStorage.getItem('keypadQuest_inputMode') || 'scroll',
   t9buf: '', t9pend: '', t9pendKey: '', t9pendIdx: 0, t9timer: null,
   t9pos: 0,
+  
+  // Auto Play
+  autoPlay: localStorage.getItem('keypadQuest_autoPlay') === 'true',
+  autoRestart: localStorage.getItem('keypadQuest_autoRestart') === 'true',
+  autoTypingDelay: 120,
+  lastAutoTypeTs: 0,
 
   // Canvas / geometry
   canvas: canvas,

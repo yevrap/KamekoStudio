@@ -130,8 +130,19 @@ document.addEventListener('visibilitychange', () => {
 document.addEventListener('click', e => { const btn = e.target.closest('.mode-btn'); if (btn) setInputMode(btn.dataset.mode); });
 
 // Menu buttons
-document.getElementById('btn-play').addEventListener('click',          () => startGame('play', false));
-document.getElementById('btn-chill').addEventListener('click',         () => startGame('chill', false));
+document.getElementById('btn-play').addEventListener('click',          () => {
+  state.autoPlay = false; localStorage.setItem('keypadQuest_autoPlay', false);
+  startGame('play', false);
+});
+document.getElementById('btn-chill').addEventListener('click',         () => {
+  state.autoPlay = false; localStorage.setItem('keypadQuest_autoPlay', false);
+  startGame('chill', false);
+});
+document.getElementById('btn-spectate').addEventListener('click',      () => {
+  state.autoPlay = true; localStorage.setItem('keypadQuest_autoPlay', true);
+  // Auto-play might look better in fast 'play' mode instead of 'chill'
+  startGame('play', false);
+});
 document.getElementById('continue-btn').addEventListener('click',      () => startGame('play', true));
 document.getElementById('btn-choose-decks').addEventListener('click',  showDeckSelector);
 document.getElementById('btn-deck-mgr').addEventListener('click',      () => showDeckManager(null));
@@ -182,6 +193,36 @@ function injectKeypadSettings() {
         btn.textContent = name;
         row.appendChild(btn);
       });
+      container.appendChild(row);
+    }
+  });
+
+  window.KamekoSettings.registerSection('kq-autoplay', {
+    title: 'Auto Play (Virtual Typist)',
+    render: function(container) {
+      const row = document.createElement('div');
+      row.className = 'mode-toggle';
+      
+      const apBtn = document.createElement('button');
+      apBtn.className = 'mode-btn' + (state.autoPlay ? ' active' : '');
+      apBtn.textContent = 'Auto Play';
+      apBtn.addEventListener('click', () => {
+        state.autoPlay = !state.autoPlay;
+        localStorage.setItem('keypadQuest_autoPlay', state.autoPlay);
+        apBtn.classList.toggle('active', state.autoPlay);
+      });
+      row.appendChild(apBtn);
+
+      const arBtn = document.createElement('button');
+      arBtn.className = 'mode-btn' + (state.autoRestart ? ' active' : '');
+      arBtn.textContent = 'Auto Restart';
+      arBtn.addEventListener('click', () => {
+        state.autoRestart = !state.autoRestart;
+        localStorage.setItem('keypadQuest_autoRestart', state.autoRestart);
+        arBtn.classList.toggle('active', state.autoRestart);
+      });
+      row.appendChild(arBtn);
+
       container.appendChild(row);
     }
   });

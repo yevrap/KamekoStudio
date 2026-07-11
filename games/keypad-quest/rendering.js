@@ -4,6 +4,7 @@ import { state } from './state.js';
 import { TR, ER_X, ER_Y, PR, RING_ANGLES, RINGS, TTYPES } from './constants.js';
 import { updateFX } from './fx.js';
 import { updateWave, updateEnemies, updateTowers, updateProjs } from './gameplay.js';
+import { updateAutoPlay } from './input.js';
 
 // ─── Canvas / Slots ───────────────────────────────────────────────────────────
 
@@ -166,6 +167,7 @@ function drawFrame() {
 function loop(ts) {
   const dt = Math.min((ts - state.lastTs)/1000, 0.1); state.lastTs = ts;
   if (state.gameState === 'playing') {
+    if (state.autoPlay) updateAutoPlay(ts);
     updateWave(dt); updateEnemies(dt); updateTowers(dt); updateProjs(dt);
   }
   updateFX();
