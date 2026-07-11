@@ -188,42 +188,51 @@ function trickRowHTML(plays, won) {
 
 // ── Static chrome ────────────────────────────────────────────────────────
 // Re-labels everything that lives in index.html rather than in render().
-// Called at boot and whenever the language changes.
+// Called at boot and whenever the language changes. Drawer content is
+// injected per-open, so it has its own pass: localizeDrawer(), called from
+// the drawer render in main.js. Both use setText — a missing element must
+// never abort localization (that crash took down boot and every drawer
+// binding after the Drawer API migration).
+
+const setText = (id, txt) => { const el = $(id); if (el) el.textContent = txt; };
+const setHTML = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
 
 export function localizeStatic() {
     if (typeof document === 'undefined') return;
     document.title = t('title');
-    $('title-name').textContent = t('title');
-    $('title-sub').textContent = t('subtitle', state.settings.targetScore || 1000);
-    $('btn-howto').textContent = t('btn.rules');
-    $('btn-coach').textContent = t('btn.hint');
-    $('ht-title').textContent = t('howto.title');
-    $('lg-title').textContent = t('log.title');
-    $('marry-title').textContent = t('marry.title');
-    $('marry-no').textContent = t('marry.no');
-    $('marry-yes').textContent = t('marry.yes');
-    $('sum-log').textContent = t('sum.review');
-    $('set-title').textContent = t('set.title');
-    $('lbl-lang').textContent = t('set.lang');
-    $('lbl-diff').textContent = t('set.diff');
-    $('lbl-sound').textContent = t('set.sound');
-    if ($('lbl-tap-to-play')) $('lbl-tap-to-play').textContent = t('set.tapToPlay');
-    $('opt-diff-easy').textContent = t('set.diffEasy');
-    $('opt-diff-normal').textContent = t('set.diffNormal');
-    $('opt-diff-hard').textContent = t('set.diffHard');
-    $('lbl-target').textContent = t('set.target');
-    $('opt-500').textContent = t('set.target500');
-    $('opt-1000').textContent = t('set.target1000');
-    $('set-names-hdr').textContent = t('set.namesHdr');
+    setText('title-name', t('title'));
+    setText('title-sub', t('subtitle', state.settings.targetScore || 1000));
+    setText('ht-title', t('howto.title'));
+    setText('lg-title', t('log.title'));
+    setText('marry-title', t('marry.title'));
+    setText('marry-no', t('marry.no'));
+    setText('marry-yes', t('marry.yes'));
+    setText('sum-log', t('sum.review'));
+}
+
+export function localizeDrawer() {
+    if (typeof document === 'undefined') return;
+    setText('lbl-lang', t('set.lang'));
+    setText('lbl-diff', t('set.diff'));
+    setText('lbl-sound', t('set.sound'));
+    setText('lbl-tap-to-play', t('set.tapToPlay'));
+    setText('opt-diff-easy', t('set.diffEasy'));
+    setText('opt-diff-normal', t('set.diffNormal'));
+    setText('opt-diff-hard', t('set.diffHard'));
+    setText('lbl-target', t('set.target'));
+    setText('opt-500', t('set.target500'));
+    setText('opt-1000', t('set.target1000'));
+    setText('set-names-hdr', t('set.namesHdr'));
     for (let p = 0; p < 3; p++) {
-        $('lbl-name-' + p).textContent = t('name' + p);
-        $('set-name-' + p).placeholder = t('name' + p);
+        setText('lbl-name-' + p, t('name' + p));
+        const inp = $('set-name-' + p);
+        if (inp) inp.placeholder = t('name' + p);
     }
-    $('set-rules-hdr').textContent = t('set.rulesHdr');
+    setText('set-rules-hdr', t('set.rulesHdr'));
     for (const k of ['barrel', 'bolts', 'rounding', 'reraise', 'raspasy', 'hidden']) {
-        $('lbl-' + k).innerHTML = t('set.' + k);
+        setHTML('lbl-' + k, t('set.' + k));
     }
-    $('tys-set-apply').textContent = t('set.apply');
+    setText('tys-set-apply', t('set.apply'));
 }
 
 // ── Main render ──────────────────────────────────────────────────────────

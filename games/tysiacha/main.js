@@ -1,6 +1,6 @@
 import { state } from './state.js';
 import { newMatch, summaryNext, humanBid, confirmExchange, playCard, onCardTap, announce } from './gameplay.js';
-import { render, renderLog, localizeStatic, banner } from './ui.js';
+import { render, renderLog, localizeStatic, localizeDrawer, banner } from './ui.js';
 import { t, getLang, setLang, playerName, customName, setCustomName, suitHTML } from './i18n.js';
 import { isMuted, setMuted } from './sfx.js';
 
@@ -139,13 +139,14 @@ function injectTysiachaSettings() {
             $('set-raspasy').checked = state.settings.raspasy;
             $('set-hidden').checked = state.settings.hiddenPoints;
 
-            // Call localizeStatic so labels inside our new HTML get localized.
-            localizeStatic();
+            // Localize the freshly injected drawer HTML (page chrome is separate).
+            localizeDrawer();
 
             // Bind events
             $('set-lang').onchange = () => {
                 setLang($('set-lang').value);
                 localizeStatic();
+                localizeDrawer();
                 render();
             };
             $('set-diff').onchange = () => {
