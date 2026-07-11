@@ -130,6 +130,105 @@
   display: flex;
 }
 
+/* ─── Quick Game Switcher ─── */
+.settings-subhead {
+  font-size: 0.72em;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.5);
+  font-family: sans-serif;
+  margin-bottom: -8px;
+}
+
+#settings-game-switcher {
+  display: flex;
+  flex-shrink: 0; /* the drawer body is a flex column — don't collapse the row */
+  gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x;
+  padding: 2px 0 6px;
+  scrollbar-width: thin;
+}
+
+.kameko-switcher-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35em;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.kameko-switcher-icon:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+.kameko-switcher-icon.current {
+  border-color: #4f46e5;
+  background: rgba(79,70,229,0.25);
+  box-shadow: 0 0 8px rgba(79,70,229,0.45);
+}
+
+/* ─── Compact side-by-side chrome row ─── */
+.settings-row-pair {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-btn.compact {
+  flex: 1;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 8px;
+  min-height: 44px;
+  font-size: 0.92em;
+  white-space: nowrap;
+}
+
+/* ─── App disclosure (version, updates, dev tools) ─── */
+#settings-app-details {
+  border-top: 1px solid rgba(255,255,255,0.15);
+  padding-top: 12px;
+  margin-top: 4px;
+  font-family: sans-serif;
+}
+
+#settings-app-details summary {
+  cursor: pointer;
+  list-style: none;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.9em;
+  padding: 6px 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#settings-app-details summary::-webkit-details-marker {
+  display: none;
+}
+
+#settings-app-details summary::after {
+  content: ' ▸';
+  font-size: 0.85em;
+}
+
+#settings-app-details[open] summary::after {
+  content: ' ▾';
+}
+
+#settings-app-details[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* ─── Shared UI Elements ─── */
 .settings-row {
   display: flex;

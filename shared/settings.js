@@ -469,6 +469,42 @@
     body.appendChild(gameSection);
 
     const galleryPath = getGalleryPath();
+    const basePath = galleryPath.replace('index.html', '');
+
+    // ─── Quick game switcher ──────────────────────────────────────────────
+    // One-tap jumps between games without going through the gallery.
+    const GAMES = [
+      { slug: 'hidden-object',   emoji: '🔍', title: 'Hidden Object' },
+      { slug: 'keypad-quest',    emoji: '⌨️', title: 'Keypad Quest' },
+      { slug: 'river-run',       emoji: '🌊', title: 'River Run' },
+      { slug: 'blob-zapper',     emoji: '⚡', title: 'Blob Zapper' },
+      { slug: 'materials-run',   emoji: '🏃', title: 'Materials Run' },
+      { slug: 'durak',           emoji: '🃏', title: 'Durak' },
+      { slug: 'durak-dungeon',   emoji: '🏰', title: 'Durak Dungeon' },
+      { slug: 'durak-tactics',   emoji: '⚔️', title: 'Durak Tactics' },
+      { slug: 'durak-alchemist', emoji: '⚗️', title: 'Durak Alchemist' },
+      { slug: 'tysiacha',        emoji: '🎴', title: 'Tysiacha' }
+    ];
+    const currentGameMatch = location.pathname.match(/\/games\/([^/]+)/);
+    const currentSlug = currentGameMatch ? currentGameMatch[1] : null;
+
+    const switcherHead = document.createElement('div');
+    switcherHead.className = 'settings-subhead';
+    switcherHead.textContent = 'Games';
+    body.appendChild(switcherHead);
+
+    const switcher = document.createElement('div');
+    switcher.id = 'settings-game-switcher';
+    GAMES.forEach(function (g) {
+      const icon = document.createElement('a');
+      icon.className = 'kameko-switcher-icon' + (g.slug === currentSlug ? ' current' : '');
+      icon.href = basePath + 'games/' + g.slug + '/';
+      icon.title = g.title;
+      icon.setAttribute('aria-label', g.title);
+      icon.textContent = g.emoji;
+      switcher.appendChild(icon);
+    });
+    body.appendChild(switcher);
 
     // Token row: count + Get Token button
     const tokenRow = document.createElement('div');
@@ -485,27 +521,41 @@
     tokenRow.appendChild(getTokenBtn);
     body.appendChild(tokenRow);
 
-    // Dark mode toggle button
+    // Theme toggle + gallery link, side by side to keep the drawer short
+    const chromeRow = document.createElement('div');
+    chromeRow.className = 'settings-row-pair';
+
     const darkModeBtn = document.createElement('button');
     darkModeBtn.id = 'settings-dark-mode-btn';
-    darkModeBtn.className = 'settings-btn';
+    darkModeBtn.className = 'settings-btn compact';
     darkModeBtn.addEventListener('click', function () {
       setTheme(getSavedTheme() === 'dark' ? 'light' : 'dark');
     });
-    body.appendChild(darkModeBtn);
+    chromeRow.appendChild(darkModeBtn);
 
     // Gallery link
     const galleryLink = document.createElement('a');
     galleryLink.id = 'settings-gallery-link';
     galleryLink.href = galleryPath;
-    galleryLink.className = 'settings-btn';
-    galleryLink.innerHTML = '\uD83C\uDFE0 Back to Gallery';
-    body.appendChild(galleryLink);
+    galleryLink.className = 'settings-btn compact';
+    galleryLink.innerHTML = '\uD83C\uDFE0 Gallery';
+    chromeRow.appendChild(galleryLink);
+
+    body.appendChild(chromeRow);
 
     // ─── Developer Tools ──────────────────────────────────────────────────
     const devToolsSeparator = document.createElement('div');
     devToolsSeparator.style.cssText = 'border-top: 1px solid rgba(255,255,255,0.15); margin-top: 8px;';
     body.appendChild(devToolsSeparator);
+
+    // ─── App section (collapsed by default) ───────────────────────────────
+    // Dev mode, clear-data, and version/update controls are rarely needed —
+    // they fold away behind a disclosure so the drawer stays short.
+    const appDetails = document.createElement('details');
+    appDetails.id = 'settings-app-details';
+    const appSummary = document.createElement('summary');
+    appSummary.textContent = '⚙️ App — version, updates & dev tools';
+    appDetails.appendChild(appSummary);
 
     // --- Developer Mode Toggle ---
     const devModeRow = document.createElement('div');
@@ -537,7 +587,7 @@
 
     devModeRow.appendChild(devModeLabel);
     devModeRow.appendChild(devModeToggleSwitch);
-    body.appendChild(devModeRow);
+    appDetails.appendChild(devModeRow);
 
     // --- Clear Data Button (in its own container) ---
     const devToolsContainer = document.createElement('div');
@@ -551,11 +601,11 @@
     clearDataBtn.addEventListener('click', clearAllGameData);
 
     devToolsContainer.appendChild(clearDataBtn);
-    body.appendChild(devToolsContainer);
+    appDetails.appendChild(devToolsContainer);
 
     // --- Version & Updates Section ---
     const versionContainer = document.createElement('div');
-    versionContainer.style.cssText = 'display:flex; flex-direction:column; gap:10px; margin-top:8px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.15); font-family:sans-serif;';
+    versionContainer.style.cssText = 'display:flex; flex-direction:column; gap:10px; margin-top:8px; font-family:sans-serif;';
     
     const versionHeaderRow = document.createElement('div');
     versionHeaderRow.style.cssText = 'display:flex; justify-content:space-between; align-items:center; color:rgba(255,255,255,0.7); font-size:0.9em;';
@@ -623,8 +673,10 @@
     versionContainer.appendChild(versionHeaderRow);
     versionContainer.appendChild(checkUpdatesBtn);
     versionContainer.appendChild(updateResultBox);
-    body.appendChild(versionContainer);
-    
+    appDetails.appendChild(versionContainer);
+
+    body.appendChild(appDetails);
+
     panel.appendChild(body);
     overlay.appendChild(panel);
 
