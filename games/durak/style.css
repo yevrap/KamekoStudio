@@ -684,6 +684,7 @@ body:not(.dark-mode) .placement-row.is-durak .placement-rank { color: #d32f2f; }
   width: min(320px, 82vw);
   font-size: 0.85rem;
   color: var(--text);
+  flex-shrink: 0;
 }
 
 .mbtn {
@@ -709,6 +710,7 @@ body:not(.dark-mode) .placement-row.is-durak .placement-rank { color: #d32f2f; }
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--btn-border);
+  flex-shrink: 0;
 }
 .mode-btn, .count-btn {
   flex: 1;
@@ -721,6 +723,7 @@ body:not(.dark-mode) .placement-row.is-durak .placement-rank { color: #d32f2f; }
   cursor: pointer;
   touch-action: manipulation;
   transition: background 0.15s, color 0.15s;
+  min-height: 38px;
 }
 .count-btn { min-width: 44px; padding: 8px 0; }
 .mode-btn.active, .count-btn.active { background: #e53935; color: #fff; }
