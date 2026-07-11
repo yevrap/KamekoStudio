@@ -373,7 +373,9 @@ function injectDurakSettings() {
   });
 
   window.KamekoSettings.registerSection('durak', {
-    title: 'Current Match: ' + (state.mode === 'hotseat' ? 'Hot-seat' : 'vs Computer') + ' (' + state.playerCount + ' players)',
+    title: function() {
+      return 'Current Match: ' + (state.mode === 'hotseat' ? 'Hot-seat' : 'vs Computer') + ' (' + state.playerCount + ' players)';
+    },
     render: function(container) {
       if (state.mode === 'ai') {
         var diffLabel = document.createElement('div');
@@ -477,6 +479,8 @@ function injectDurakSettings() {
   });
 }
 
+// Sections are registered once at boot; the drawer re-renders them on every
+// open, so the listeners below only handle pause/resume.
 window.addEventListener('settingsOpened', function () {
   clearAiTimeout();
   if (state.phase === 'playing' || state.phase === 'pileOn' || state.phase === 'passDevice') {
@@ -484,15 +488,9 @@ window.addEventListener('settingsOpened', function () {
     state.phase = 'paused';
   }
   renderAll();
-  injectDurakSettings();
 });
 
 window.addEventListener('settingsClosed', function () {
-  var sec = document.getElementById('game-settings-durak');
-  if (sec) sec.remove();
-  var secQa = document.getElementById('game-settings-durak-quick-actions');
-  if (secQa) secQa.remove();
-  
   if (state.phase === 'paused') {
     state.phase = prevStatePhase || 'playing';
     renderAll();
@@ -506,3 +504,4 @@ window.addEventListener('pageshow', function (e) { if (e.persisted) renderAll();
 
 // Initial render (start overlay is already visible in HTML).
 renderAll();
+injectDurakSettings();

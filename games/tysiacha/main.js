@@ -324,19 +324,15 @@ state.onDealEnd = (result) => {
 };
 
 // ── Pause / Resume ─────────────────────────────────────────────────────────
+// Sections are registered once at boot; the drawer re-renders them on every
+// open, so the listeners below only handle pause/resume.
 let prevPhase = 'idle';
 window.addEventListener('settingsOpened', () => {
-    injectTysiachaSettings();
     prevPhase = state.phase;
     state.phase = 'paused';
     render();
 });
 window.addEventListener('settingsClosed', () => {
-    var sec = document.getElementById('game-settings-tys-game-settings');
-    if (sec) sec.remove();
-    var secQa = document.getElementById('game-settings-tys-quick-actions');
-    if (secQa) secQa.remove();
-    
     if (state.phase === 'paused') {
         state.phase = prevPhase;
         render();
@@ -346,6 +342,7 @@ window.addEventListener('settingsClosed', () => {
 // Initialize app
 state.difficulty = localStorage.getItem('tysiacha_difficulty') || 'normal';
 localizeStatic();
+injectTysiachaSettings();
 
 if (localStorage.getItem('lastPlayed_tysiacha')) {
     if (!window.KamekoTokens || !window.KamekoTokens.spend()) {

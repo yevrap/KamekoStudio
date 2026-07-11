@@ -182,17 +182,16 @@ function injectDungeonSettings() {
   });
 }
 
+// The section is registered once at boot; the drawer re-renders it on every
+// open, so the listeners below only handle pause/resume.
 window.addEventListener('settingsOpened', function () {
   if (state.run && (state.run.phase === 'defend' || state.run.phase === 'attack')) {
     pausedPhase = state.run.phase;
     state.run.phase = 'paused';
   }
-  injectDungeonSettings();
 });
 
 window.addEventListener('settingsClosed', function () {
-  var el = document.getElementById('game-settings-dungeon-settings');
-  if (el) el.remove();
   if (pausedPhase) {
     state.run.phase = pausedPhase;
     pausedPhase = null;
@@ -204,3 +203,5 @@ window.addEventListener('settingsClosed', function () {
 window.addEventListener('pageshow', function (e) {
   if (e.persisted && state.run) renderAll();
 });
+
+injectDungeonSettings();

@@ -314,6 +314,7 @@
       updateDarkModeButton();
       updateTokenDisplay();
       updateDevModeUI();
+      renderAllGameSections();
     }
     window.dispatchEvent(new CustomEvent('settingsOpened'));
   }
@@ -337,42 +338,83 @@
   }
 
   // ─── Game Settings API ────────────────────────────────────────────────────────
+  // Sections are registered once (any time, typically at game boot) and
+  // re-rendered from scratch on EVERY drawer open, so control values always
+  // reflect live game state. Games must not remove their sections on
+  // settingsClosed — the drawer owns the lifecycle.
+  //
+  // registerSection(id, options):
+  //   title:  string, or function returning a string (re-evaluated per open)
+  //   when:   optional function returning boolean — section is skipped when false
+  //   render: function(container) — build the section's controls
+  const gameSectionRegistry = []; // {id, options} in registration order
+
+  function renderGameSection(entry) {
+    const gameSection = document.getElementById('settings-game-section');
+    if (!gameSection) return;
+
+    let wrapper = document.getElementById('game-settings-' + entry.id);
+    const visible = entry.options.when ? !!entry.options.when() : true;
+    if (!visible) {
+      if (wrapper) wrapper.remove();
+      return;
+    }
+
+    if (!wrapper) {
+      wrapper = document.createElement('div');
+      wrapper.id = 'game-settings-' + entry.id;
+      wrapper.style.display = 'flex';
+      wrapper.style.flexDirection = 'column';
+      wrapper.style.gap = '12px';
+    }
+    wrapper.innerHTML = '';
+
+    const titleText = typeof entry.options.title === 'function' ? entry.options.title() : entry.options.title;
+    if (titleText) {
+      const title = document.createElement('h3');
+      title.textContent = titleText;
+      title.style.margin = '0';
+      title.style.fontSize = '1.1em';
+      title.style.fontFamily = 'sans-serif';
+      title.style.color = 'rgba(255,255,255,0.85)';
+      wrapper.appendChild(title);
+    }
+
+    const contentContainer = document.createElement('div');
+    contentContainer.style.display = 'flex';
+    contentContainer.style.flexDirection = 'column';
+    contentContainer.style.gap = '8px';
+    wrapper.appendChild(contentContainer);
+
+    // appendChild moves an existing wrapper to the end; iterating the
+    // registry in order re-establishes registration order on every pass.
+    gameSection.appendChild(wrapper);
+
+    entry.options.render(contentContainer);
+  }
+
+  function renderAllGameSections() {
+    gameSectionRegistry.forEach(function (entry) {
+      try { renderGameSection(entry); }
+      catch (e) { console.error('KamekoSettings: section "' + entry.id + '" failed to render', e); }
+    });
+  }
+
   window.KamekoSettings = {
     openDrawer: openSettings,
     closeDrawer: closeSettings,
     registerSection: function(id, options) {
-      // options: { title: string, render: function(container) }
-      const gameSection = document.getElementById('settings-game-section');
-      if (!gameSection) return;
+      const existing = gameSectionRegistry.find(function (s) { return s.id === id; });
+      if (existing) existing.options = options;
+      else gameSectionRegistry.push({ id: id, options: options });
 
-      // Check if already registered
-      if (document.getElementById('game-settings-' + id)) return;
-
-      const sectionWrapper = document.createElement('div');
-      sectionWrapper.id = 'game-settings-' + id;
-      sectionWrapper.style.display = 'flex';
-      sectionWrapper.style.flexDirection = 'column';
-      sectionWrapper.style.gap = '12px';
-      
-      if (options.title) {
-        const title = document.createElement('h3');
-        title.textContent = options.title;
-        title.style.margin = '0';
-        title.style.fontSize = '1.1em';
-        title.style.fontFamily = 'sans-serif';
-        title.style.color = 'rgba(255,255,255,0.85)';
-        sectionWrapper.appendChild(title);
+      // If the drawer is already open (e.g. registration from a
+      // settingsOpened listener), render right away.
+      const overlay = document.getElementById('settings-overlay');
+      if (overlay && overlay.classList.contains('open')) {
+        try { renderGameSection(gameSectionRegistry.find(function (s) { return s.id === id; })); }
+        catch (e) { console.error('KamekoSettings: section "' + id + '" failed to render', e); }
       }
-
-      const contentContainer = document.createElement('div');
-      contentContainer.style.display = 'flex';
-      contentContainer.style.flexDirection = 'column';
-      contentContainer.style.gap = '8px';
-      
-      sectionWrapper.appendChild(contentContainer);
-      gameSection.appendChild(sectionWrapper);
-      
-      options.render(contentContainer);
     }
   };
 

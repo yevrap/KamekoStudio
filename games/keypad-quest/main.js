@@ -186,10 +186,10 @@ function injectKeypadSettings() {
     }
   });
 
-  if (state.gameState === 'paused' || state.gameState === 'playing') {
-    window.KamekoSettings.registerSection('kq-game-stats', {
-      title: 'Current Run',
-      render: function(container) {
+  window.KamekoSettings.registerSection('kq-game-stats', {
+    title: 'Current Run',
+    when: () => state.gameState === 'paused' || state.gameState === 'playing',
+    render: function(container) {
         const acc = state.correctW + state.wrongW > 0 ? Math.round(state.correctW / (state.correctW + state.wrongW) * 100) : 100;
         const bms = getBT(state.wave);
         const data = [
@@ -221,18 +221,17 @@ function injectKeypadSettings() {
         container.appendChild(quitBtn);
       }
     });
-  }
 }
 
+// Sections are registered once at init; the drawer re-renders them on every
+// open (the stats section's `when` hides it outside a run), so the listeners
+// below only handle pause/resume.
 window.addEventListener('settingsOpened', () => {
   if (state.rafId) { cancelAnimationFrame(state.rafId); state.rafId = null; }
   if (state.gameState === 'playing') state.gameState = 'paused';
-  injectKeypadSettings();
 });
 
 window.addEventListener('settingsClosed', () => {
-  document.getElementById('game-settings-kq-input-mode')?.remove();
-  document.getElementById('game-settings-kq-game-stats')?.remove();
   if (state.gameState === 'paused') state.gameState = 'playing';
   startLoop();
 });
@@ -259,6 +258,7 @@ function init() {
   if (state.W === 0) requestAnimationFrame(() => resizeCanvas());
   buildT9Pad(); buildTowerStrip(); setInputMode(state.inputMode);
   showMenu(); startLoop();
+  injectKeypadSettings();
   if (state.pendingImport) showImportPrompt(state.pendingImport);
 }
 
