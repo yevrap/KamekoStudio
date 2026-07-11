@@ -156,10 +156,13 @@ export function playTransfer(seat, cardId) {
   state.defenderSeat = nextActiveSeat(seat);
   state.prioritySeat = state.defenderSeat;
 
-  // Reset pass flags and contribution order since the defender changed.
+  // Reset pass flags since the defender changed. contributionOrder is NOT
+  // reset — the seat(s) that threw the original attack(s) already earned a
+  // spot in the post-bout draw phase, and wiping it here would silently drop
+  // them from drawPhase() forever. The transferrer is a contributor too.
   state.attackerPassed = false;
   state.contributorPassed = false;
-  state.contributionOrder = [seat]; // The one who transferred is now a contributor.
+  if (state.contributionOrder.indexOf(seat) === -1) state.contributionOrder.push(seat);
 
   return true;
 }

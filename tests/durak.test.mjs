@@ -444,7 +444,49 @@ test('playTransfer: transferrer becomes attacker, next seat defends both cards',
   assert.equal(state.prioritySeat, 2);
   assert.equal(state.field.attacks.length, 2);
   assert.deepEqual(state.field.defenses, [null, null]);
-  assert.deepEqual(state.contributionOrder, [1]);
+  // contributionOrder must keep seat 0 (threw the original attack, set up by
+  // setupTransferBoard as [0]) AND gain seat 1 (the transferrer) — dropping
+  // either one means that seat never draws back up to 6 after the bout ends.
+  assert.deepEqual(state.contributionOrder, [0, 1]);
+});
+
+test('post-transfer draw regression: original attacker redraws to 6, not just the transferrer/defender', () => {
+  // Reproduces Yev's reported bug: after a perevodnoy transfer, the seat that
+  // threw the original attack card was silently dropped from the draw phase
+  // and never refilled to 6 for the rest of the game.
+  newGame('ai', 3);
+  state.trumpSuit = 4;
+  state.variantPerevodnoy = true;
+  state.variantFirstTransfer = false;
+  state.attacksThisGame = 5;
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 0;
+  state.phase = 'playing';
+  state.field.attacks = []; state.field.defenses = [];
+  state.contributionOrder = [];
+  // Plenty of cards so everyone reaches 6 regardless of draw order — this
+  // test is about who gets INCLUDED in the draw phase, not draw order.
+  state.deck = [];
+  for (var i = 0; i < 20; i++) state.deck.push(new Card(9, 1));
+
+  // Everyone starts short of 6 so the draw phase has visible work to do.
+  state.players[0].hand = [new Card(6, 1)];                                   // attacker: plays 6♠
+  state.players[1].hand = [new Card(6, 2), new Card(12, 3)];                  // transfers 6♣, keeps Q♦
+  state.players[2].hand = [new Card(10, 1), new Card(10, 2), new Card(7, 3)]; // 10♠ beats 6♠, 10♣ beats 6♣
+
+  playAttack(0, state.players[0].hand[0].id);        // seat 0 attacks 6♠
+  assert.equal(playTransfer(1, state.players[1].hand[0].id), true); // seat 1 transfers 6♣
+  // Field now: 6♠, 6♣ — both open. Seat 2 must defend both.
+  assert.equal(playDefense(2, state.players[2].hand[0].id), true); // 10♠ beats 6♠
+  assert.equal(playDefense(2, state.players[2].hand[0].id), true); // 10♣ beats 6♣ (hand shifted after splice)
+  // Field fully defended → priority back to the attacker (seat 1, per transfer semantics).
+  assert.equal(passAttack(1), true); // seat 1 declines to add more...
+  assert.equal(state.prioritySeat, 0); // ...priority passes to the other contributor
+  assert.equal(passAttack(0), true);   // seat 0 also declines → bout ends 'defended'
+  assert.equal(state.phase, 'playing'); // endBout ran and dealt the next bout
+
+  assert.equal(state.players[0].hand.length, 6); // <- was stuck below 6 before the fix
+  assert.equal(state.players[1].hand.length, 6);
+  assert.equal(state.players[2].hand.length, 6);
 });
 
 test('post-transfer: defender keeps priority until every attack is covered (deadlock regression)', () => {
