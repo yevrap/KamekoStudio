@@ -258,20 +258,38 @@
 
     const keysToRemove = [
       'theme', 'tokens', 'tokenHistory', 'devMode',
-      // Game progress
+      // High scores / progress
       'gridGameTopScoreScore', 'gridGameTopScoreSurvival',
-      'riverRunHighScore', 'keypadQuestHighWave',
+      'riverRunHighScore', 'keypadQuestHighWave', 'blobZapperHighScore',
+      'alchemistHighScore', 'tysiachaHighScore',
       // Last played timestamps
       'lastPlayed_hiddenObject', 'lastPlayed_materialsRun',
       'lastPlayed_keypadQuest', 'lastPlayed_riverRun',
       'lastPlayed_blobZapper', 'lastPlayed_durak',
-      'lastPlayed_durakDungeon',
-      // Game-specific settings
+      'lastPlayed_durakDungeon', 'lastPlayed_durakTactics',
+      'lastPlayed_durakAlchemist', 'lastPlayed_tysiacha',
+      'lastPlayed_waterfall',
+      // River Run
       'riverRun_autoShoot', 'riverRun_autoAvoid',
       'riverRun_invertControls', 'muted',
-      'durak_mode',
+      // Durak
+      'durak_mode', 'durak_playerCount', 'durak_difficulty',
+      'durak_wins', 'durak_losses', 'durak_draws',
+      'durak_coach', 'durak_perevodnoy', 'durak_first_transfer',
+      // Durak Dungeon / Tactics
       'durakDungeon_bestFloor', 'durakDungeon_victories',
-      'durakDungeon_lastSeed'
+      'durakDungeon_lastSeed', 'durakTactics_victories',
+      // Keypad Quest
+      'keypadQuestCheckpoint', 'keypadQuest_decks',
+      'keypadQuest_activeDeckIds', 'keypadQuest_inputMode',
+      // Tysiacha
+      'tysiacha_lang', 'tysiacha_difficulty', 'tysiacha_muted',
+      'tysiacha_settings'
+    ];
+    // Per-seat / per-wave keys have dynamic suffixes — clear by prefix.
+    const prefixesToRemove = [
+      'tysiacha_name_', 'durak_name_ai_', 'durak_name_hotseat_',
+      'keypadQuestBestTime_'
     ];
 
     let clearedCount = 0;
@@ -281,6 +299,13 @@
         clearedCount++;
       }
     });
+    for (let i = localStorage.length - 1; i >= 0; i--) {
+      const key = localStorage.key(i);
+      if (prefixesToRemove.some(p => key.indexOf(p) === 0)) {
+        localStorage.removeItem(key);
+        clearedCount++;
+      }
+    }
 
     window.KamekoTokens.toast(`Cleared ${clearedCount} item(s). Page will reload.`);
     setTimeout(() => location.reload(), 1500);
