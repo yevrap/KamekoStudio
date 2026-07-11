@@ -178,6 +178,9 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `tysiacha_name_[seat]` | tysiacha | string | Custom name for seat 0–2; unset = localized default |
 | `tysiacha_muted` | tysiacha | `'true'`\|`'false'` | Sound effects off/on (default on) |
 | `tysiacha_settings` | tysiacha | JSON string | Match settings blob: targetScore, classic-rule flags, tapToPlay — loaded at boot, saved from the New Match setup and the 1-tap toggle |
+| `tysiacha_autoPlay` | tysiacha | `'true'`\|`'false'` | Simulated tournament mode |
+| `tysiacha_fastForward` | tysiacha | `'true'`\|`'false'` | Speed up AI actions during auto play |
+| `tysiacha_autoRestart` | tysiacha | `'true'`\|`'false'` | Auto-start next match |
 | `gridGameTopScoreScore` | materials-run | integer string | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | integer string | Survival mode high score |
 | `riverRunHighScore` | river-run | integer string | Points high score |

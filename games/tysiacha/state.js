@@ -11,6 +11,9 @@ export function newPlayer(name) {
 export const state = {
     session: 0,
     coach: false,
+    autoPlay: false,
+    fastForward: false,
+    autoRestart: false,
     difficulty: 'normal',   // easy | normal | hard — applies live, persisted in main.js
     settings: {
         targetScore: 500,

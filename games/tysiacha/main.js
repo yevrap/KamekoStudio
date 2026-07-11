@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { newMatch, summaryNext, humanBid, confirmExchange, playCard, onCardTap, announce } from './gameplay.js';
+import { newMatch, summaryNext, humanBid, confirmExchange, playCard, onCardTap, announce, step } from './gameplay.js';
 import { render, renderLog, localizeStatic, localizeDrawer, banner } from './ui.js';
 import { t, getLang, setLang, playerName, customName, setCustomName, suitHTML } from './i18n.js';
 import { isMuted, setMuted } from './sfx.js';
@@ -183,6 +183,54 @@ function injectTysiachaSettings() {
             };
         }
     });
+
+    window.KamekoSettings.registerSection('tys-autoplay-settings', {
+        title: () => t('set.autoplay') || 'Simulated Tournament',
+        render: function(container) {
+            container.innerHTML = `
+            <div class="setting-row">
+                <label id="lbl-autoplay">Auto Play Visualizer</label>
+                <label class="kameko-switch">
+                    <input type="checkbox" id="set-autoplay">
+                    <span class="kameko-slider"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <label id="lbl-fast-forward">Fast Forward</label>
+                <label class="kameko-switch">
+                    <input type="checkbox" id="set-fast-forward">
+                    <span class="kameko-slider"></span>
+                </label>
+            </div>
+            <div class="setting-row">
+                <label id="lbl-auto-restart">Auto-Restart</label>
+                <label class="kameko-switch">
+                    <input type="checkbox" id="set-auto-restart">
+                    <span class="kameko-slider"></span>
+                </label>
+            </div>
+            `;
+            document.getElementById('set-autoplay').checked = state.autoPlay;
+            document.getElementById('set-fast-forward').checked = state.fastForward;
+            document.getElementById('set-auto-restart').checked = state.autoRestart;
+
+            document.getElementById('set-autoplay').onchange = (e) => {
+                state.autoPlay = e.target.checked;
+                localStorage.setItem('tysiacha_autoPlay', state.autoPlay);
+                if (state.autoPlay && state.phase !== 'paused') {
+                    step(); // Poke the loop if we just turned it on
+                }
+            };
+            document.getElementById('set-fast-forward').onchange = (e) => {
+                state.fastForward = e.target.checked;
+                localStorage.setItem('tysiacha_fastForward', state.fastForward);
+            };
+            document.getElementById('set-auto-restart').onchange = (e) => {
+                state.autoRestart = e.target.checked;
+                localStorage.setItem('tysiacha_autoRestart', state.autoRestart);
+            };
+        }
+    });
 }
 
 // ↺ opens the New Match setup instead of silently restarting — one obvious
@@ -307,6 +355,17 @@ state.onDealEnd = (result) => {
     $('sum-body').innerHTML = html;
     $('summary').classList.remove('hidden');
     render();
+
+    // Auto-advance logic for Visualizer mode
+    if (state.autoPlay || (champion && state.autoRestart)) {
+        setTimeout(() => {
+            const summary = document.getElementById('summary');
+            if (!summary.classList.contains('hidden')) {
+                if (champion && !state.autoRestart) return; // Wait at match end if not auto-restarting
+                document.getElementById('sum-next').click();
+            }
+        }, state.fastForward ? 1500 : 3500);
+    }
 };
 
 // ── Pause / Resume ─────────────────────────────────────────────────────────
@@ -332,6 +391,9 @@ window.addEventListener('settingsClosed', () => {
 
 // Initialize app
 state.difficulty = localStorage.getItem('tysiacha_difficulty') || 'normal';
+state.autoPlay = localStorage.getItem('tysiacha_autoPlay') === 'true';
+state.fastForward = localStorage.getItem('tysiacha_fastForward') === 'true';
+state.autoRestart = localStorage.getItem('tysiacha_autoRestart') === 'true';
 loadMatchSettings();
 localizeStatic();
 injectTysiachaSettings();

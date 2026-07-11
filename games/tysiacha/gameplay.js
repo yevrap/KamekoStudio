@@ -100,7 +100,7 @@ export function newDeal() {
     }
     
     render();
-    later(bidStep, 1400);
+    later(bidStep, state.fastForward ? 400 : 1400);
 }
 
 // ── Bidding ──────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export function bidStep() {
         state.talon = []; // Discard talon in Raspasy
         announce('raspasy', {});
         render();
-        later(step, 1400);
+        later(step, state.fastForward ? 400 : 1400);
         return;
     }
     
@@ -130,9 +130,12 @@ export function bidStep() {
         return;
     }
 
-    if (state.bidTurn === 0) logHumanHint();
+    if (state.bidTurn === 0) {
+        logHumanHint();
+        if (state.autoPlay) later(() => aiDoBid(0), state.fastForward ? 200 : 900 + Math.random() * 500);
+    }
     render();
-    if (state.bidTurn !== 0) later(() => aiDoBid(state.bidTurn), 900 + Math.random() * 500);
+    if (state.bidTurn !== 0) later(() => aiDoBid(state.bidTurn), state.fastForward ? 200 : 900 + Math.random() * 500);
 }
 
 export function humanBid(pass) {
@@ -164,9 +167,13 @@ function winBidding(p) {
         state.talon = [];
         state.talonUp = false;
         state.phase = 'exchange';
-        if (p === 0) { logHumanHint(); render(); }
-        else { render(); later(() => aiDoExchange(p), 1200); }
-    }, 2200);
+        if (p === 0) { 
+            logHumanHint(); 
+            render(); 
+            if (state.autoPlay) later(() => aiDoExchange(0), state.fastForward ? 200 : 1200);
+        }
+        else { render(); later(() => aiDoExchange(p), state.fastForward ? 200 : 1200); }
+    }, state.fastForward ? 500 : 2200);
 }
 
 // ── Exchange ─────────────────────────────────────────────────────────────
@@ -195,17 +202,20 @@ export function startPlay() {
     state.trick = [];
     state.trickNum = 1;
     render();
-    later(step, 900);
+    later(step, state.fastForward ? 300 : 900);
 }
 
 // ── Play ─────────────────────────────────────────────────────────────────
 
 export function step() {
     if (state.phase !== 'play') return;
-    if (state.trick.length < 3 && state.turn === 0) logHumanHint();
+    if (state.trick.length < 3 && state.turn === 0) {
+        logHumanHint();
+        if (state.autoPlay) later(() => aiDoMove(0), state.fastForward ? 200 : 800 + Math.random() * 450);
+    }
     render();
-    if (state.trick.length === 3) { later(resolveTrick, 1250); return; }
-    if (state.turn !== 0) later(() => aiDoMove(state.turn), 800 + Math.random() * 450);
+    if (state.trick.length === 3) { later(resolveTrick, state.fastForward ? 400 : 1250); return; }
+    if (state.turn !== 0) later(() => aiDoMove(state.turn), state.fastForward ? 200 : 800 + Math.random() * 450);
 }
 
 export function playCard(p, card, declare) {
@@ -241,7 +251,7 @@ export function resolveTrick() {
         state.leader = winner;
         state.turn = winner;
         state.trickNum++;
-        if (state.trickNum > 8) { later(endDeal, 1000); render(); return; }
+        if (state.trickNum > 8) { later(endDeal, state.fastForward ? 400 : 1000); render(); return; }
         step();
     });
 }
