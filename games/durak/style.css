@@ -605,7 +605,6 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
   opacity: 1;
   transition: opacity 0.2s ease, visibility 0s linear 0s;
 }
-.overlay > * { flex-shrink: 0; }
 .overlay.hidden {
   opacity: 0;
   pointer-events: none;
@@ -710,7 +709,6 @@ body:not(.dark-mode) .placement-row.is-durak .placement-rank { color: #d32f2f; }
   border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--btn-border);
-  flex-shrink: 0;
 }
 .mode-btn, .count-btn {
   flex: 1;
