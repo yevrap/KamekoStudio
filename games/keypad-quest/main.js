@@ -127,7 +127,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // Mode button clicks (delegated)
-document.addEventListener('click', e => { const btn = e.target.closest('.mode-btn'); if (btn) setInputMode(btn.dataset.mode); });
+document.addEventListener('click', e => { const btn = e.target.closest('.mode-btn'); if (btn && btn.dataset.mode) setInputMode(btn.dataset.mode); });
 
 // Menu buttons
 document.getElementById('btn-play').addEventListener('click',          () => {
@@ -214,15 +214,26 @@ function injectKeypadSettings() {
       });
       row.appendChild(apBtn);
 
-      const arBtn = document.createElement('button');
-      arBtn.className = 'mode-btn' + (state.autoRestart ? ' active' : '');
-      arBtn.textContent = 'Auto Restart';
-      arBtn.addEventListener('click', () => {
-        state.autoRestart = !state.autoRestart;
-        localStorage.setItem('keypadQuest_autoRestart', state.autoRestart);
-        arBtn.classList.toggle('active', state.autoRestart);
+      const spdWrap = document.createElement('div');
+      spdWrap.style.display = 'flex';
+      spdWrap.style.gap = '2px';
+      spdWrap.style.flex = '1';
+      
+      ['slow', 'normal', 'fast'].forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'mode-btn' + (state.autoPlaySpeed === s ? ' active' : '');
+        btn.textContent = s;
+        btn.style.flex = '1';
+        btn.style.padding = '4px 2px';
+        btn.addEventListener('click', () => {
+          state.autoPlaySpeed = s;
+          localStorage.setItem('keypadQuest_autoPlaySpeed', s);
+          Array.from(spdWrap.children).forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+        });
+        spdWrap.appendChild(btn);
       });
-      row.appendChild(arBtn);
+      row.appendChild(spdWrap);
 
       container.appendChild(row);
     }

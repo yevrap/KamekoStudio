@@ -382,7 +382,8 @@ export function updateAutoPlay(ts) {
   const hasEnemies = state.enemies.some(e => !e.dead);
   if (!hasEnemies) return;
 
-  if (ts - state.lastAutoTypeTs > state.autoTypingDelay) {
+  const delay = state.autoPlaySpeed === 'slow' ? 350 : (state.autoPlaySpeed === 'fast' ? 40 : 120);
+  if (ts - state.lastAutoTypeTs > delay) {
     state.lastAutoTypeTs = ts;
     const v = state.currentPair.v;
     

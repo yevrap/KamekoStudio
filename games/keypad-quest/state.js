@@ -38,8 +38,7 @@ export const state = {
   
   // Auto Play
   autoPlay: localStorage.getItem('keypadQuest_autoPlay') === 'true',
-  autoRestart: localStorage.getItem('keypadQuest_autoRestart') === 'true',
-  autoTypingDelay: 120,
+  autoPlaySpeed: localStorage.getItem('keypadQuest_autoPlaySpeed') || 'normal',
   lastAutoTypeTs: 0,
 
   // Canvas / geometry
