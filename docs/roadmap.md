@@ -102,7 +102,7 @@ New mechanics that add replayability.
 | p2-23 | Tysiacha: Auto Play Visualizer | M | ✅ | **Shipped 2026-07-11**. Implemented "Simulated Tournament" auto-play mode (3 AIs). Supported Auto-Restart, Fast Forward speed, and human takeover. Settings live in the drawer. |
 | p2-24 | Keypad Quest: Auto Play Visualizer | M | ✅ | **Shipped 2026-07-11**. Implemented "Virtual Typist" auto-play that types answers directly into the active input mode buffer. Added Spectate (Auto-Play) button to start menu and Auto-Play / Auto-Restart toggles in settings drawer. See vault note `Kameko Studio — Auto Play Visualizers.md` |
 | p2-25 | Materials Run: Auto Play Visualizer | M | ✅ | Shipped 2026-07-11 in 72cd18a. Implemented pathfinder bot that navigates safely. | Implement a greedy pathfinding bot (for Score/Survival) that navigates the grid. Support Auto-Restart and manual takeover. See vault note `Kameko Studio — Auto Play Visualizers.md` |
-| p2-26 | Blob Zapper: Auto Play Visualizer | M | open | Implement automated defense grid that zaps dangerous blobs procedurally. Support Auto-Restart and manual takeover. See vault note `Kameko Studio — Auto Play Visualizers.md` |
+| p2-26 | Blob Zapper: Auto Play Visualizer | M | ✅ | **Shipped 2026-07-11** in 4cc8c44. Implement automated defense grid that zaps dangerous blobs procedurally. Support Auto-Restart and manual takeover. See vault note `Kameko Studio — Auto Play Visualizers.md` |
 
 ---
 
