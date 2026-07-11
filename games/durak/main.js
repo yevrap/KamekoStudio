@@ -90,6 +90,31 @@ $countToggle.addEventListener('pointerdown', function (e) {
   applyActive($countToggle, 'data-count', setupCount);
 });
 
+// ── Rules toggles (start screen) ────────────────────────────────────────────
+// Perevodnoy is a match rule read at game init (state.js), so it belongs on
+// the setup screen, not the mid-game drawer.
+
+var $setupPerevodnoy = document.getElementById('setup-perevodnoy');
+var $setupFirstTransfer = document.getElementById('setup-first-transfer');
+var $setupFirstTransferRow = document.getElementById('setup-first-transfer-row');
+
+function syncRuleTogglesUI() {
+  $setupPerevodnoy.checked = localStorage.getItem('durak_perevodnoy') === 'true';
+  $setupFirstTransfer.checked = localStorage.getItem('durak_first_transfer') === 'true';
+  var on = $setupPerevodnoy.checked;
+  $setupFirstTransferRow.style.opacity = on ? '1' : '0.5';
+  $setupFirstTransferRow.style.pointerEvents = on ? 'auto' : 'none';
+}
+
+$setupPerevodnoy.addEventListener('change', function (e) {
+  localStorage.setItem('durak_perevodnoy', e.target.checked ? 'true' : 'false');
+  syncRuleTogglesUI();
+});
+$setupFirstTransfer.addEventListener('change', function (e) {
+  localStorage.setItem('durak_first_transfer', e.target.checked ? 'true' : 'false');
+});
+syncRuleTogglesUI();
+
 // ── Names Modal ────────────────────────────────────────────────────────────
 
 var $btnEditNames = document.getElementById('btn-edit-names');
@@ -369,12 +394,33 @@ function injectDurakSettings() {
         });
       });
       container.appendChild(btnLog);
+
+      // Coach hints: quick action, not a settings toggle (drawer-UX Q5).
+      var btnCoach = document.createElement('button');
+      btnCoach.className = 'settings-btn';
+      function coachLabel() {
+        return localStorage.getItem('durak_coach') === 'true' ? '🧭 Turn off Coach Hints' : '🧭 Turn on Coach Hints';
+      }
+      btnCoach.textContent = coachLabel();
+      btnCoach.addEventListener('click', function() {
+        var on = localStorage.getItem('durak_coach') === 'true';
+        localStorage.setItem('durak_coach', on ? 'false' : 'true');
+        btnCoach.textContent = coachLabel();
+        renderAll();
+      });
+      container.appendChild(btnCoach);
     }
   });
 
+  // Match-scoped section: only rendered while a round is actually underway.
+  // On the start menu there is no current match — mode/players/rules live on
+  // the setup screen itself (drawer-UX p1-18).
   window.KamekoSettings.registerSection('durak', {
     title: function() {
       return 'Current Match: ' + (state.mode === 'hotseat' ? 'Hot-seat' : 'vs Computer') + ' (' + state.playerCount + ' players)';
+    },
+    when: function() {
+      return state.phase !== 'start' && state.phase !== 'gameover';
     },
     render: function(container) {
       if (state.mode === 'ai') {
@@ -388,7 +434,7 @@ function injectDurakSettings() {
         var diffs = ['easy', 'normal', 'hard'];
         var diffNames = ['Easy', 'Normal', 'Hard'];
         var currentDiff = localStorage.getItem('durak_difficulty') || 'normal';
-        
+
         for (var i = 0; i < diffs.length; i++) {
           (function(d, name) {
             var btn = document.createElement('button');
@@ -409,56 +455,6 @@ function injectDurakSettings() {
         }
         container.appendChild(diffToggle);
       }
-
-      function createToggle(label, storageKey, onChange) {
-        var row = document.createElement('div');
-        row.className = 'settings-row';
-        row.style.background = 'transparent';
-        row.style.border = 'none';
-        row.style.padding = '0';
-        
-        var lbl = document.createElement('label');
-        lbl.textContent = label;
-        lbl.style.cursor = 'pointer';
-        
-        var toggle = document.createElement('label');
-        toggle.className = 'kameko-switch';
-        var inp = document.createElement('input');
-        inp.type = 'checkbox';
-        inp.checked = localStorage.getItem(storageKey) === 'true';
-        var slider = document.createElement('span');
-        slider.className = 'kameko-slider';
-        toggle.appendChild(inp);
-        toggle.appendChild(slider);
-        
-        row.appendChild(lbl);
-        row.appendChild(toggle);
-        
-        inp.addEventListener('change', function(e) {
-          localStorage.setItem(storageKey, e.target.checked ? 'true' : 'false');
-          if (onChange) onChange(e.target.checked);
-        });
-        
-        return { el: row, input: inp };
-      }
-
-      var coachToggle = createToggle('Coach Hints', 'durak_coach');
-      var perevodnoyToggle = createToggle('Perevodnoy (Transfers)', 'durak_perevodnoy');
-      var firstTransferToggle = createToggle('Allow First-Turn Transfer', 'durak_first_transfer');
-      
-      function updateFirstTransferState(enabled) {
-        firstTransferToggle.el.style.opacity = enabled ? '1' : '0.5';
-        firstTransferToggle.el.style.pointerEvents = enabled ? 'auto' : 'none';
-      }
-      
-      perevodnoyToggle.input.addEventListener('change', function(e) {
-        updateFirstTransferState(e.target.checked);
-      });
-      updateFirstTransferState(perevodnoyToggle.input.checked);
-
-      container.appendChild(coachToggle.el);
-      container.appendChild(perevodnoyToggle.el);
-      container.appendChild(firstTransferToggle.el);
 
       var btnEnd = document.createElement('button');
       btnEnd.className = 'settings-danger-btn';
