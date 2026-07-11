@@ -185,6 +185,14 @@ const EN = {
     'set.raspasy': '<strong>Raspasy:</strong> If all pass, negative round is played.',
     'set.hidden': '<strong>Hidden Points:</strong> Hide opponent scores during deal.',
     'set.apply': 'Apply & Restart',
+    'set.quickActions': 'Quick Actions',
+    'set.newMatch': '🔁 New match / rules…',
+    'set.coachOn': '🧭 Turn on Coach Hints',
+    'set.coachOff': '🧭 Turn off Coach Hints',
+    'set.matchHdr': 'Match',
+    'setup.title': 'New Match',
+    'setup.play': '▶ Play',
+    'setup.playCost': '▶ Play · 1 🪙',
 
     // how-to overlay (title/body pairs)
     'howto': () => HOWTO_EN,
@@ -314,6 +322,14 @@ const RU = {
     'set.raspasy': '<strong>Распасы:</strong> если все пасуют, играется распасовка.',
     'set.hidden': '<strong>Скрытые очки:</strong> счёт соперников скрыт во время раздачи.',
     'set.apply': 'Применить и начать заново',
+    'set.quickActions': 'Быстрые действия',
+    'set.newMatch': '🔁 Новый матч / правила…',
+    'set.coachOn': '🧭 Включить подсказки',
+    'set.coachOff': '🧭 Выключить подсказки',
+    'set.matchHdr': 'Матч',
+    'setup.title': 'Новый матч',
+    'setup.play': '▶ Играть',
+    'setup.playCost': '▶ Играть · 1 🪙',
 
     'howto': () => HOWTO_RU,
 };

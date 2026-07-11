@@ -208,6 +208,22 @@ export function localizeStatic() {
     setText('marry-no', t('marry.no'));
     setText('marry-yes', t('marry.yes'));
     setText('sum-log', t('sum.review'));
+    // New Match setup overlay (static markup in index.html)
+    setText('setup-title', t('setup.title'));
+    setText('set-names-hdr', t('set.namesHdr'));
+    for (let p = 0; p < 3; p++) {
+        setText('lbl-name-' + p, t('name' + p));
+        const inp = $('set-name-' + p);
+        if (inp) inp.placeholder = t('name' + p);
+    }
+    setText('set-match-hdr', t('set.matchHdr'));
+    setText('lbl-target', t('set.target'));
+    setText('opt-500', t('set.target500'));
+    setText('opt-1000', t('set.target1000'));
+    setText('set-rules-hdr', t('set.rulesHdr'));
+    for (const k of ['barrel', 'bolts', 'rounding', 'reraise', 'raspasy', 'hidden']) {
+        setHTML('lbl-' + k, t('set.' + k));
+    }
 }
 
 export function localizeDrawer() {
@@ -219,20 +235,6 @@ export function localizeDrawer() {
     setText('opt-diff-easy', t('set.diffEasy'));
     setText('opt-diff-normal', t('set.diffNormal'));
     setText('opt-diff-hard', t('set.diffHard'));
-    setText('lbl-target', t('set.target'));
-    setText('opt-500', t('set.target500'));
-    setText('opt-1000', t('set.target1000'));
-    setText('set-names-hdr', t('set.namesHdr'));
-    for (let p = 0; p < 3; p++) {
-        setText('lbl-name-' + p, t('name' + p));
-        const inp = $('set-name-' + p);
-        if (inp) inp.placeholder = t('name' + p);
-    }
-    setText('set-rules-hdr', t('set.rulesHdr'));
-    for (const k of ['barrel', 'bolts', 'rounding', 'reraise', 'raspasy', 'hidden']) {
-        setHTML('lbl-' + k, t('set.' + k));
-    }
-    setText('tys-set-apply', t('set.apply'));
 }
 
 // ── Main render ──────────────────────────────────────────────────────────
