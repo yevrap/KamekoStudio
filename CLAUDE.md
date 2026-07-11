@@ -95,45 +95,31 @@ Every page includes this script before `</body>`:
 - `data-gallery-depth="2"` for games (`games/<name>/index.html`)
 
 **What it provides:**
-- Gear button (⚙) injected fixed top-right on every page
-- Settings overlay with: dark mode toggle, Back to Gallery link, token count + Get Token button
-- Dispatches `window` events: `settingsOpened` / `settingsClosed` — games listen to these to pause/resume
+- Hamburger button (`#settings-hamburger-btn`, ☰) injected fixed top-LEFT on every page; opens a slide-in drawer (`#settings-overlay` > `#settings-panel`)
+- Drawer contents, top to bottom: game-specific sections (see the Drawer API below) → quick game switcher (emoji row, current game highlighted) → token row → theme toggle + Gallery link → collapsed `⚙️ App` `<details>` (Developer Mode, Clear All Game Data, App Version, Check for Updates)
+- Dispatches `window` events: `settingsOpened` / `settingsClosed` — games listen to these to pause/resume ONLY (never to inject or remove sections; the drawer owns section lifecycle)
 - `window.KamekoTokens` global: `.get()`, `.add(n=1)`, `.earn(n, reason)` (adds + logs to `tokenHistory`), `.spend()` (returns false if 0), `.toast(msg)`
 - Dark mode: `localStorage` key `theme` = `'dark'` | `'light'`, applied as `body.dark-mode` class
 - Token count: `localStorage` key `tokens` = integer
 
 **Developer Mode:**
-The settings panel includes a "Developer Mode" toggle. When enabled, this mode does two things:
-- It adds a blue glow to the settings gear icon as a visual indicator.
-- It shows a "Clear All Game Data" button in the panel. This button removes all known `localStorage` keys related to game progress, settings, and tokens, which is useful for testing from a clean state.
+Inside the drawer's `⚙️ App` disclosure. When enabled it adds a blue glow to the hamburger button and shows a "Clear All Game Data" button (removes every known game/settings/token `localStorage` key — the list plus dynamic-suffix prefixes lives in `clearAllGameData`; keep it in sync when adding keys).
 
-**Per-game settings injection:** Games can append their own sections to `#settings-panel` on `settingsOpened`. Use `insertBefore(section, document.getElementById('dev-mode-section'))` to keep content above the developer tools:
+**Drawer API — per-game sections (`window.KamekoSettings`):** register once at boot; sections are re-rendered from scratch on EVERY drawer open, so control values always reflect live game state. Do NOT remove sections on `settingsClosed`.
 ```js
-window.addEventListener('settingsOpened', () => {
-    const panel = document.getElementById('settings-panel');
-    const devSection = document.getElementById('dev-mode-section');
-    if (!document.getElementById('my-section')) {
-        const sec = buildMySection();
-        if (devSection) panel.insertBefore(sec, devSection);
-        else panel.appendChild(sec);
-    }
+window.KamekoSettings.registerSection('my-game-settings', {
+  title: () => t('set.title'),          // string, or function re-evaluated per open
+  when:  () => state.phase !== 'menu',  // optional — section is hidden when false
+  render: function (container) {        // rebuild controls; read live state here
+    container.innerHTML = '…';
+    // bind events on the fresh elements
+  }
 });
-window.addEventListener('settingsClosed', () => {
-    document.getElementById('my-section')?.remove();
-});
+// window.KamekoSettings.openDrawer() / .closeDrawer() are also available.
 ```
-See `games/river-run/index.html` for a pill-toggle example; see `games/keypad-quest/main.js` for a stats + "Back to Menu" button example.
+Conventions: a "Quick Actions" section first (`.settings-btn` buttons — rules, game log, coach-hints toggle-button, "new match…"), then a "Game Settings" section with **instant-apply, persisted** controls only. Match-scoped choices (names, rules, target score) belong on the game's own setup/new-match screen, not in the drawer — see `games/durak/` (start overlay) and `games/tysiacha/` (`#setup` overlay) for the reference pattern. `games/keypad-quest/main.js` shows a `when()`-gated stats section.
 
-**Settings gear positioning:** The gear is injected as `position:fixed; top:15px; right:15px`. Games with a top header bar should override this in their CSS to align it within the header and add right padding to the header so content doesn't slide under it:
-```css
-#settings-gear-btn {
-  position: fixed !important;
-  top: 6px !important; right: 8px !important;
-  width: 42px !important; height: 42px !important;
-  border-radius: 10px !important;
-}
-#header { padding-right: 58px; } /* clear the gear */
-```
+**Hamburger positioning:** injected as `position:fixed; top:15px; left:15px` (44×44). Games with a top header bar may override `#settings-hamburger-btn` in their CSS to align it within the header (add left padding to the header so content doesn't slide under it), including `env(safe-area-inset-top)` on iOS-styled games.
 
 ## Token System
 
@@ -172,6 +158,9 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `durak_difficulty` | durak | `'easy'`\|`'normal'`\|`'hard'` | AI decision logic variance |
 | `durak_name_ai_[seat]` | durak | string | User-customized name for VS Computer mode seats |
 | `durak_name_hotseat_[seat]` | durak | string | User-customized name for Hot-seat mode seats |
+| `durak_coach` | durak | `'true'`\|`'false'` | Coach hints on/off (quick action in the drawer) |
+| `durak_perevodnoy` | durak | `'true'`\|`'false'` | Perevodnoy variant rule (toggle on the start screen) |
+| `durak_first_transfer` | durak | `'true'`\|`'false'` | Allow first-turn transfer (only meaningful with perevodnoy on) |
 | `durak_wins` | durak | integer string | Seat 0 (device-owner human) match win count, across both modes |
 | `durak_losses` | durak | integer string | Seat 0 (device-owner human) match loss count, across both modes |
 | `durak_draws` | durak | integer string | Seat 0 (device-owner human) match draw count, across both modes |
@@ -189,6 +178,7 @@ Tokens are free to add via the settings panel (no real economy — it's a casual
 | `tysiacha_difficulty` | tysiacha | `'easy'`\|`'normal'`\|`'hard'` | AI bidding/play strength |
 | `tysiacha_name_[seat]` | tysiacha | string | Custom name for seat 0–2; unset = localized default |
 | `tysiacha_muted` | tysiacha | `'true'`\|`'false'` | Sound effects off/on (default on) |
+| `tysiacha_settings` | tysiacha | JSON string | Match settings blob: targetScore, classic-rule flags, tapToPlay — loaded at boot, saved from the New Match setup and the 1-tap toggle |
 | `gridGameTopScoreScore` | materials-run | integer string | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | integer string | Survival mode high score |
 | `riverRunHighScore` | river-run | integer string | Points high score |
@@ -241,7 +231,8 @@ Keypad Quest (`games/keypad-quest/`) is the most complex game in the studio. Key
 
 Pure utility functions in `shared/utils.js`, and pure game-logic modules in `games/durak/` and `games/durak-alchemist/`, are covered by Node.js tests.
 
-**Run:** `node --test tests/` — requires Node.js 18+
+**Run:** `node --test tests/` (or `npm test`) — requires Node.js 18+
+**Page-load smoke test:** `npm run smoke` (after a one-time `npm install`) — serves the repo locally and loads every page (gallery, 3d, Lab, all game dirs) in headless system Chrome via `puppeteer-core`, failing on any uncaught error at load. Run it before shipping anything that touches boot paths, `shared/settings.js`, or game `index.html` structure — the unit suite runs gameplay headless and cannot catch a page that crashes on load. Override the browser binary with `CHROME_PATH` if needed.
 **Coverage:**
 - `shared/utils.js` (`keypad-quest.test.js`): `parsePlainText`, `deckToPlainText`, `typeForStreak`, `shuffle`, `lerpHex`
 - `games/durak/` (`durak.test.mjs`): constants, state, gameplay rules, AI logic (`_test_aiTurn`)

@@ -103,7 +103,7 @@ window.addEventListener('settingsOpened', () => { /* pause */ });
 window.addEventListener('settingsClosed', () => { /* resume */ });
 ```
 
-**Per-game settings rows:** Inject custom content into the settings drawer using `window.KamekoSettings.registerSection(id, { title, render: fn })` when the `settingsOpened` event fires. See `games/keypad-quest/main.js` or `games/tysiacha/main.js` for a full example. Custom sections injected this way will automatically be removed by the drawer, but you can also manually clean them up on `settingsClosed` if needed by looking up `document.getElementById('game-settings-' + id)`.
+**Per-game settings sections:** register once at game boot with `window.KamekoSettings.registerSection(id, { title, when, render })` — `title` may be a function (re-evaluated per open), the optional `when()` predicate hides the section contextually, and `render(container)` is re-run from scratch on EVERY drawer open so controls always show live state. Never remove sections on `settingsClosed`; the drawer owns the lifecycle. Keep only instant-apply, persisted controls in the drawer — match-scoped choices (names, rules, target score) go on the game's own setup/new-match screen. See `games/keypad-quest/main.js` (a `when()`-gated stats section) and `games/tysiacha/main.js` / `games/durak/main.js` for full examples. Full API docs: root `CLAUDE.md` → "Drawer API".
 
 ## localStorage Keys
 
