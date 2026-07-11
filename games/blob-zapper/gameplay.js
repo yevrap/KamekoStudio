@@ -71,6 +71,8 @@ export function init() {
         state.lastZapTime = -Infinity;
         state.comboFlashIntensity = 0;
         state.isNewBest = false;
+        state.autoPlayTarget = null;
+        state.autoPlayLaser = null;
 
         // Use calculated speed (with fallback)
         const initialSpeedX = (Math.random() - 0.5) * (state.destructionZoneSpeed || 0.1) * 2;
@@ -230,6 +232,64 @@ function drawParticles() {
     } catch (error) { console.error("Error drawing particles:", error); }
 }
 
+function drawAutoPlayVisuals() {
+    if (!state.autoPlayTarget && !state.autoPlayLaser) return;
+    try {
+        dom.ctx.globalCompositeOperation = 'source-over';
+        
+        // Draw Reticle
+        if (state.autoPlayTarget && state.blobs.includes(state.autoPlayTarget)) {
+            const timeSinceLock = performance.now() - state.autoPlayLockTime;
+            const progress = Math.min(1, timeSinceLock / 300); // 300ms lock time
+            
+            dom.ctx.save();
+            dom.ctx.translate(state.autoPlayTarget.x, state.autoPlayTarget.y);
+            // Spin and shrink
+            dom.ctx.rotate(progress * Math.PI);
+            const scale = 1.5 - progress * 0.5;
+            dom.ctx.scale(scale, scale);
+            
+            dom.ctx.strokeStyle = 'rgba(255, 50, 50, 0.8)';
+            dom.ctx.lineWidth = 2;
+            const r = state.autoPlayTarget.radius + 10;
+            
+            dom.ctx.beginPath();
+            dom.ctx.arc(0, 0, r, 0, Math.PI * 2);
+            dom.ctx.stroke();
+            
+            dom.ctx.beginPath();
+            dom.ctx.moveTo(-r - 5, 0); dom.ctx.lineTo(-r + 5, 0);
+            dom.ctx.moveTo(r - 5, 0); dom.ctx.lineTo(r + 5, 0);
+            dom.ctx.moveTo(0, -r - 5); dom.ctx.lineTo(0, -r + 5);
+            dom.ctx.moveTo(0, r - 5); dom.ctx.lineTo(0, r + 5);
+            dom.ctx.stroke();
+            
+            dom.ctx.restore();
+        }
+        
+        // Draw Laser
+        if (state.autoPlayLaser) {
+            if (state.autoPlayLaser.life > 0) {
+                dom.ctx.save();
+                dom.ctx.strokeStyle = `rgba(255, 100, 100, ${state.autoPlayLaser.life})`;
+                dom.ctx.lineWidth = 4 * state.autoPlayLaser.life;
+                dom.ctx.beginPath();
+                dom.ctx.moveTo(state.destructionZone.x, state.destructionZone.y);
+                dom.ctx.lineTo(state.autoPlayLaser.x, state.autoPlayLaser.y);
+                dom.ctx.stroke();
+                
+                dom.ctx.strokeStyle = `rgba(255, 255, 255, ${state.autoPlayLaser.life})`;
+                dom.ctx.lineWidth = 2 * state.autoPlayLaser.life;
+                dom.ctx.beginPath();
+                dom.ctx.moveTo(state.destructionZone.x, state.destructionZone.y);
+                dom.ctx.lineTo(state.autoPlayLaser.x, state.autoPlayLaser.y);
+                dom.ctx.stroke();
+                dom.ctx.restore();
+            }
+        }
+    } catch (error) { console.error("Error drawing autoplay visuals:", error); }
+}
+
 // --- Drawing ---
 function drawDestructionZone() {
     try {
@@ -374,6 +434,52 @@ export function animate(currentTime = 0) {
                     state.blobs.splice(i, 1);
                 }
             }
+            
+            // --- Auto Play Logic ---
+            if (localStorage.getItem('blobZapper_autoPlay') === 'true') {
+                if (state.touchPoints.length > 0) {
+                    // Manual takeover (user is touching), pause autoplay
+                    state.autoPlayLastZap = currentTime; // reset timer
+                    state.autoPlayTarget = null;
+                } else {
+                    if (!state.autoPlayLastZap) state.autoPlayLastZap = currentTime;
+                    
+                    if (!state.autoPlayTarget && state.blobs.length > 0) {
+                        const delay = Math.max(100, 800 - (state.score * 5)); // Gets faster
+                        if (currentTime - state.autoPlayLastZap > delay) {
+                            // Find largest blob
+                            let largest = state.blobs[0];
+                            for (let i=1; i<state.blobs.length; i++) {
+                                if (state.blobs[i].radius > largest.radius) {
+                                    largest = state.blobs[i];
+                                }
+                            }
+                            state.autoPlayTarget = largest;
+                            state.autoPlayLockTime = currentTime;
+                        }
+                    } else if (state.autoPlayTarget) {
+                        // We have a target, wait for reticle
+                        if (!state.blobs.includes(state.autoPlayTarget)) {
+                            // Target was zapped manually or by destruction zone
+                            state.autoPlayTarget = null;
+                        } else if (currentTime - state.autoPlayLockTime > 300) {
+                            // Zap it!
+                            const index = state.blobs.indexOf(state.autoPlayTarget);
+                            if (index !== -1) {
+                                spawnZapParticles(state.autoPlayTarget.x, state.autoPlayTarget.y, state.autoPlayTarget.color);
+                                registerZap(currentTime);
+                                state.blobs.splice(index, 1);
+                                state.autoPlayLaser = { x: state.autoPlayTarget.x, y: state.autoPlayTarget.y, life: 1.0 };
+                            }
+                            state.autoPlayTarget = null;
+                            state.autoPlayLastZap = currentTime;
+                        }
+                    }
+                }
+            }
+            if (state.autoPlayLaser) {
+                state.autoPlayLaser.life -= 0.05 * deltaTime;
+            }
 
             if (state.blobs.length === 0 && NUM_BLOBS_START > 0) {
                 console.log("Game Over condition met.");
@@ -385,11 +491,25 @@ export function animate(currentTime = 0) {
                     localStorage.setItem('blobZapperHighScore', String(state.highScore));
                 }
                 if (window.KamekoTokens) window.KamekoTokens.earn(state.isNewBest ? 2 : 1, state.isNewBest ? 'blob-zapper new best' : 'blob-zapper finish');
+                
+                if (localStorage.getItem('blobZapper_autoRestart') === 'true') {
+                    setTimeout(() => {
+                        if (state.isGameOver) {
+                            if (window.KamekoTokens && !window.KamekoTokens.spend()) {
+                                window.KamekoTokens.toast();
+                            } else {
+                                localStorage.setItem('lastPlayed_blobZapper', Date.now());
+                                init();
+                            }
+                        }
+                    }, 2500);
+                }
             }
 
             drawDestructionZone();
             drawBlobs();
             drawTendrils();
+            drawAutoPlayVisuals();
             drawScoreUI();
         }
 

@@ -22,6 +22,11 @@ export const state = {
     comboFlashIntensity: 0,
     isNewBest: false,
 
+    autoPlayTarget: null,
+    autoPlayLastZap: 0,
+    autoPlayLockTime: 0,
+    autoPlayLaser: null,
+
     isGameOver: false,
     animationFrameId: null,
     lastTime: 0,
