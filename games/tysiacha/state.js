@@ -46,6 +46,7 @@ export const state = {
     pendingCard: null,   // card awaiting marriage prompt
     aiEstimate: [0, 0, 0],
     pausedPhase: null,   // phase before settings pause
+    resumeAction: null,  // saved later() action while paused
 };
 
 // ── State query helpers ──────────────────────────────────────────────────

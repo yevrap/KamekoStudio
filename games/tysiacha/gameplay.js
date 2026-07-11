@@ -18,7 +18,14 @@ import { snap, chime, gavel } from './sfx.js';
 
 function later(fn, ms) {
     const sess = state.session;
-    setTimeout(() => { if (state.session === sess) fn(); }, ms);
+    setTimeout(() => {
+        if (state.session !== sess) return;
+        if (state.phase === 'paused') {
+            state.resumeAction = fn;
+            return;
+        }
+        fn();
+    }, ms);
 }
 
 // ── Event announcement ───────────────────────────────────────────────────

@@ -322,6 +322,11 @@ window.addEventListener('settingsClosed', () => {
     if (state.phase === 'paused') {
         state.phase = prevPhase;
         render();
+        if (state.resumeAction) {
+            const fn = state.resumeAction;
+            state.resumeAction = null;
+            fn();
+        }
     }
 });
 
