@@ -1,0 +1,12 @@
+{
+  "name": "kameko-studio",
+  "private": true,
+  "description": "Kameko Studio — vanilla-JS web arcade. No build step; package.json exists only for the test tooling.",
+  "scripts": {
+    "test": "node --test tests/",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.10.0"
+  }
+}
