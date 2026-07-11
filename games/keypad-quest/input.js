@@ -404,7 +404,16 @@ export function updateAutoPlay(ts) {
           state.t9pos++;
           updateInputDisplay();
         } else {
-          handleT9(expected);
+          if (/^[0-9]$/.test(expected)) {
+            handleT9(expected);
+          } else {
+            let foundKey = '';
+            for (const k in T9_MAP) {
+              if (T9_MAP[k].includes(expected)) { foundKey = k; break; }
+            }
+            if (foundKey) handleT9(foundKey);
+            else { state.t9pos++; updateInputDisplay(); }
+          }
         }
       } else {
         handleT9('ok');

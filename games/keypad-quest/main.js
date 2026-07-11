@@ -210,6 +210,7 @@ function injectKeypadSettings() {
         state.autoPlay = !state.autoPlay;
         localStorage.setItem('keypadQuest_autoPlay', state.autoPlay);
         apBtn.classList.toggle('active', state.autoPlay);
+        if (state.autoPlay && window.KamekoSettings) window.KamekoSettings.closeDrawer();
       });
       row.appendChild(apBtn);
 
