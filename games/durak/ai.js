@@ -20,14 +20,14 @@ export function scheduleAiAction(seat, onDone) {
   clearAiTimeout();
   if (state.phase !== 'playing' && state.phase !== 'pileOn') return;
   if (state.prioritySeat !== seat) return;
-  if (getPlayer(seat).isHuman) return;
+  if (getPlayer(seat).isHuman && localStorage.getItem('durak_autoPlay') !== 'true') return;
 
   var delay = 500 + Math.floor(Math.random() * 400);
   aiTimeout = setTimeout(function () {
     aiTimeout = null;
     if (state.phase !== 'playing' && state.phase !== 'pileOn') return;
     if (state.prioritySeat !== seat) return;
-    if (getPlayer(seat).isHuman) return;
+    if (getPlayer(seat).isHuman && localStorage.getItem('durak_autoPlay') !== 'true') return;
 
     aiTurn(seat);
     if (onDone) onDone();

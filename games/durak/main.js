@@ -99,10 +99,14 @@ $countToggle.addEventListener('pointerdown', function (e) {
 var $setupPerevodnoy = document.getElementById('setup-perevodnoy');
 var $setupFirstTransfer = document.getElementById('setup-first-transfer');
 var $setupFirstTransferRow = document.getElementById('setup-first-transfer-row');
+var $setupAutoPlay = document.getElementById('setup-autoplay');
+var $setupAutoRestart = document.getElementById('setup-autorestart');
 
 function syncRuleTogglesUI() {
   $setupPerevodnoy.checked = localStorage.getItem('durak_perevodnoy') === 'true';
   $setupFirstTransfer.checked = localStorage.getItem('durak_first_transfer') === 'true';
+  if ($setupAutoPlay) $setupAutoPlay.checked = localStorage.getItem('durak_autoPlay') === 'true';
+  if ($setupAutoRestart) $setupAutoRestart.checked = localStorage.getItem('durak_autoRestart') === 'true';
   var on = $setupPerevodnoy.checked;
   $setupFirstTransferRow.style.opacity = on ? '1' : '0.5';
   $setupFirstTransferRow.style.pointerEvents = on ? 'auto' : 'none';
@@ -115,6 +119,16 @@ $setupPerevodnoy.addEventListener('change', function (e) {
 $setupFirstTransfer.addEventListener('change', function (e) {
   localStorage.setItem('durak_first_transfer', e.target.checked ? 'true' : 'false');
 });
+if ($setupAutoPlay) {
+  $setupAutoPlay.addEventListener('change', function (e) {
+    localStorage.setItem('durak_autoPlay', e.target.checked ? 'true' : 'false');
+  });
+}
+if ($setupAutoRestart) {
+  $setupAutoRestart.addEventListener('change', function (e) {
+    localStorage.setItem('durak_autoRestart', e.target.checked ? 'true' : 'false');
+  });
+}
 syncRuleTogglesUI();
 
 // ── Names Modal ────────────────────────────────────────────────────────────
@@ -202,6 +216,11 @@ function tick() {
     clearAiTimeout();
     showGameOver(state.winnerText, getMatchStats());
     renderAll();
+    if (localStorage.getItem('durak_autoRestart') === 'true') {
+      setTimeout(function() {
+        if (state.phase === 'gameover') spendTokenAndStart();
+      }, 2500);
+    }
     return;
   }
   if (state.phase === 'passDevice') return;      // waiting on user tap
@@ -210,7 +229,7 @@ function tick() {
 
   var p = getPlayer(state.prioritySeat);
   if (!p) return;
-  if (p.isHuman) return;                          // human's turn — wait for input
+  if (p.isHuman && localStorage.getItem('durak_autoPlay') !== 'true') return;
   scheduleAiAction(state.prioritySeat, tick);
 }
 
@@ -457,6 +476,22 @@ function injectDurakSettings() {
         renderAll();
       });
       container.appendChild(btnCoach);
+
+      // Auto Play toggle
+      var btnAutoPlay = document.createElement('button');
+      btnAutoPlay.className = 'settings-btn';
+      function autoPlayLabel() {
+        return localStorage.getItem('durak_autoPlay') === 'true' ? '🤖 Turn off Auto Play' : '🤖 Turn on Auto Play';
+      }
+      btnAutoPlay.textContent = autoPlayLabel();
+      btnAutoPlay.addEventListener('click', function() {
+        var on = localStorage.getItem('durak_autoPlay') === 'true';
+        localStorage.setItem('durak_autoPlay', on ? 'false' : 'true');
+        btnAutoPlay.textContent = autoPlayLabel();
+        if (typeof syncRuleTogglesUI === 'function') syncRuleTogglesUI();
+        if (!on && state.phase === 'playing') tick(); // trigger turn if we just turned it on
+      });
+      container.appendChild(btnAutoPlay);
     }
   });
 
