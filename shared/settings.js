@@ -205,7 +205,7 @@
       'keypadQuest_autoPlay', 'keypadQuest_autoPlaySpeed',
       // Tysiacha
       'tysiacha_lang', 'tysiacha_difficulty', 'tysiacha_muted',
-      'tysiacha_settings', 'tysiacha_autoPlay', 'tysiacha_fastForward', 'tysiacha_autoRestart'
+      'tysiacha_settings', 'tysiacha_autoPlay', 'tysiacha_autoPlaySpeed', 'tysiacha_revealHands', 'tysiacha_autoRestart'
     ];
     // Per-seat / per-wave keys have dynamic suffixes — clear by prefix.
     const prefixesToRemove = [
@@ -364,6 +364,92 @@
         try { renderGameSection(gameSectionRegistry.find(function (s) { return s.id === id; })); }
         catch (e) { console.error('KamekoSettings: section "' + id + '" failed to render', e); }
       }
+    },
+    registerWatchSection: function(gamePrefix, watchOptions) {
+      this.registerSection(gamePrefix + '-watch', {
+        title: '▶ Watch Mode',
+        when: function() { return localStorage.getItem(gamePrefix + '_autoPlay') === 'true'; },
+        render: function(container) {
+          if (watchOptions.hasSpeed !== false) {
+            const speedRow = document.createElement('div');
+            speedRow.className = 'settings-row-pair';
+            const speedVal = localStorage.getItem(gamePrefix + '_autoPlaySpeed') || 'normal';
+            ['slow', 'normal', 'fast'].forEach(function(s) {
+              const btn = document.createElement('button');
+              btn.className = 'settings-btn compact' + (speedVal === s ? ' active' : '');
+              btn.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+              if (speedVal === s) btn.style.background = 'rgba(255,255,255,0.2)';
+              btn.addEventListener('click', function() {
+                localStorage.setItem(gamePrefix + '_autoPlaySpeed', s);
+                renderAllGameSections();
+              });
+              speedRow.appendChild(btn);
+            });
+            container.appendChild(speedRow);
+          }
+
+          if (watchOptions.hasRevealHands) {
+            const revealRow = document.createElement('div');
+            revealRow.className = 'settings-row';
+            revealRow.style.background = 'transparent';
+            revealRow.style.border = 'none';
+            revealRow.style.padding = '0';
+            const revealLabel = document.createElement('label');
+            revealLabel.textContent = 'Reveal all hands';
+            revealLabel.style.cursor = 'pointer';
+            const revealSwitch = document.createElement('label');
+            revealSwitch.className = 'kameko-switch';
+            const revealInput = document.createElement('input');
+            revealInput.type = 'checkbox';
+            revealInput.checked = localStorage.getItem(gamePrefix + '_revealHands') === 'true';
+            revealInput.addEventListener('change', function(e) {
+              localStorage.setItem(gamePrefix + '_revealHands', e.target.checked ? 'true' : 'false');
+            });
+            const revealSlider = document.createElement('span');
+            revealSlider.className = 'kameko-slider';
+            revealSwitch.appendChild(revealInput);
+            revealSwitch.appendChild(revealSlider);
+            revealRow.appendChild(revealLabel);
+            revealRow.appendChild(revealSwitch);
+            container.appendChild(revealRow);
+          }
+
+          const restartRow = document.createElement('div');
+          restartRow.className = 'settings-row';
+          restartRow.style.background = 'transparent';
+          restartRow.style.border = 'none';
+          restartRow.style.padding = '0';
+          const restartLabel = document.createElement('label');
+          restartLabel.textContent = 'Auto-restart match';
+          restartLabel.style.cursor = 'pointer';
+          const restartSwitch = document.createElement('label');
+          restartSwitch.className = 'kameko-switch';
+          const restartInput = document.createElement('input');
+          restartInput.type = 'checkbox';
+          restartInput.checked = localStorage.getItem(gamePrefix + '_autoRestart') === 'true';
+          restartInput.addEventListener('change', function(e) {
+            localStorage.setItem(gamePrefix + '_autoRestart', e.target.checked ? 'true' : 'false');
+          });
+          const restartSlider = document.createElement('span');
+          restartSlider.className = 'kameko-slider';
+          restartSwitch.appendChild(restartInput);
+          restartSwitch.appendChild(restartSlider);
+          restartRow.appendChild(restartLabel);
+          restartRow.appendChild(restartSwitch);
+          container.appendChild(restartRow);
+
+          const btnTakeOver = document.createElement('button');
+          btnTakeOver.className = 'settings-primary-btn';
+          btnTakeOver.textContent = 'Take Over / Stop';
+          btnTakeOver.addEventListener('click', function() {
+            localStorage.setItem(gamePrefix + '_autoPlay', 'false');
+            if (watchOptions.onStop) watchOptions.onStop();
+            window.KamekoSettings.closeDrawer();
+            renderAllGameSections();
+          });
+          container.appendChild(btnTakeOver);
+        }
+      });
     }
   };
 

@@ -58,36 +58,17 @@ if (!dom.ctx) {
 
 function injectBlobZapperSettings() {
     if (!window.KamekoSettings) return;
-    window.KamekoSettings.registerSection('blob-zapper', {
-        title: 'Blob Zapper',
-        render: function(container) {
-            var btnAutoPlay = document.createElement('button');
-            btnAutoPlay.className = 'settings-btn';
-            function autoPlayLabel() {
-                return localStorage.getItem('blobZapper_autoPlay') === 'true' ? '🤖 Turn off Auto Play' : '🤖 Turn on Auto Play';
-            }
-            btnAutoPlay.textContent = autoPlayLabel();
-            btnAutoPlay.addEventListener('click', function() {
-                var on = localStorage.getItem('blobZapper_autoPlay') === 'true';
-                localStorage.setItem('blobZapper_autoPlay', on ? 'false' : 'true');
-                btnAutoPlay.textContent = autoPlayLabel();
-            });
-            container.appendChild(btnAutoPlay);
-
-            var btnAutoRestart = document.createElement('button');
-            btnAutoRestart.className = 'settings-btn';
-            function autoRestartLabel() {
-                return localStorage.getItem('blobZapper_autoRestart') === 'true' ? '🔁 Turn off Auto Restart' : '🔁 Turn on Auto Restart';
-            }
-            btnAutoRestart.textContent = autoRestartLabel();
-            btnAutoRestart.addEventListener('click', function() {
-                var on = localStorage.getItem('blobZapper_autoRestart') === 'true';
-                localStorage.setItem('blobZapper_autoRestart', on ? 'false' : 'true');
-                btnAutoRestart.textContent = autoRestartLabel();
-            });
-            container.appendChild(btnAutoRestart);
-        }
+    window.KamekoSettings.registerWatchSection('blobZapper', {
+        hasRevealHands: false
     });
 }
 
 injectBlobZapperSettings();
+
+const btnWatch = document.getElementById('btn-watch');
+if (btnWatch) {
+    btnWatch.addEventListener('click', () => {
+        localStorage.setItem('blobZapper_autoPlay', 'true');
+        init(); // Restart game in auto-play
+    });
+}

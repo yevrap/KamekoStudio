@@ -12,7 +12,6 @@ export const state = {
     session: 0,
     coach: false,
     autoPlay: false,
-    fastForward: false,
     autoRestart: false,
     difficulty: 'normal',   // easy | normal | hard — applies live, persisted in main.js
     settings: {
@@ -99,4 +98,12 @@ export function nextActive(from) {
     let t = from;
     do { t = (t + 1) % 3; } while (state.passed[t]);
     return t;
+}
+
+export function getDelay(fastMs, normalMs, slowMs = normalMs * 1.5) {
+    if (typeof localStorage === 'undefined') return 0;
+    const speed = localStorage.getItem('tysiacha_autoPlaySpeed') || 'normal';
+    if (speed === 'fast') return fastMs;
+    if (speed === 'slow') return slowMs;
+    return normalMs;
 }

@@ -192,45 +192,10 @@ function injectKeypadSettings() {
     }
   });
 
-  window.KamekoSettings.registerSection('kq-autoplay', {
-    title: 'Auto Play (Virtual Typist)',
-    render: function(container) {
-      const row = document.createElement('div');
-      row.className = 'mode-toggle';
-      
-      const apBtn = document.createElement('button');
-      apBtn.className = 'mode-btn' + (state.autoPlay ? ' active' : '');
-      apBtn.textContent = 'Auto Play';
-      apBtn.addEventListener('click', () => {
-        state.autoPlay = !state.autoPlay;
-        localStorage.setItem('keypadQuest_autoPlay', state.autoPlay);
-        apBtn.classList.toggle('active', state.autoPlay);
-        if (state.autoPlay && window.KamekoSettings) window.KamekoSettings.closeDrawer();
-      });
-      row.appendChild(apBtn);
-
-      const spdWrap = document.createElement('div');
-      spdWrap.style.display = 'flex';
-      spdWrap.style.gap = '2px';
-      spdWrap.style.flex = '1';
-      
-      ['slow', 'normal', 'fast'].forEach(s => {
-        const btn = document.createElement('button');
-        btn.className = 'mode-btn' + (state.autoPlaySpeed === s ? ' active' : '');
-        btn.textContent = s;
-        btn.style.flex = '1';
-        btn.style.padding = '4px 2px';
-        btn.addEventListener('click', () => {
-          state.autoPlaySpeed = s;
-          localStorage.setItem('keypadQuest_autoPlaySpeed', s);
-          Array.from(spdWrap.children).forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-        });
-        spdWrap.appendChild(btn);
-      });
-      row.appendChild(spdWrap);
-
-      container.appendChild(row);
+  window.KamekoSettings.registerWatchSection('keypadQuest', { 
+    hasRevealHands: false,
+    onStop: () => {
+      // Nothing special for Keypad Quest since it doesn't pause gameplay for the drawer.
     }
   });
 
