@@ -7,7 +7,7 @@ import { MARRIAGE, OPEN_BID, RAISE, key, buildDeck, sortHand } from './constants
 import { t, playerName } from './i18n.js';
 import {
     state, newPlayer, legalMoves, cardBeats, trickWinnerSlot, wouldWinNow,
-    trickPts, canDeclare, activeBidders, nextActive
+    trickPts, canDeclare, activeBidders, nextActive, getDelay
 } from './state.js';
 import { aiBid as aiDoBid, aiExchange as aiDoExchange, aiMove as aiDoMove, estimateHand } from './ai.js';
 import { logEvent, eventText, trickReason } from './log.js';
@@ -100,7 +100,7 @@ export function newDeal() {
     }
     
     render();
-    later(bidStep, state.fastForward ? 400 : 1400);
+    later(bidStep, getDelay(400, 1400));
 }
 
 // ── Bidding ──────────────────────────────────────────────────────────────
@@ -121,7 +121,7 @@ export function bidStep() {
         state.talon = []; // Discard talon in Raspasy
         announce('raspasy', {});
         render();
-        later(step, state.fastForward ? 400 : 1400);
+        later(step, getDelay(400, 1400));
         return;
     }
     
@@ -132,10 +132,10 @@ export function bidStep() {
 
     if (state.bidTurn === 0) {
         logHumanHint();
-        if (state.autoPlay) later(() => aiDoBid(0), state.fastForward ? 200 : 900 + Math.random() * 500);
+        if (state.autoPlay) later(() => aiDoBid(0), getDelay(200, 900) + Math.random() * 500);
     }
     render();
-    if (state.bidTurn !== 0) later(() => aiDoBid(state.bidTurn), state.fastForward ? 200 : 900 + Math.random() * 500);
+    if (state.bidTurn !== 0) later(() => aiDoBid(state.bidTurn), getDelay(200, 900) + Math.random() * 500);
 }
 
 export function humanBid(pass) {
@@ -170,10 +170,10 @@ function winBidding(p) {
         if (p === 0) { 
             logHumanHint(); 
             render(); 
-            if (state.autoPlay) later(() => aiDoExchange(0), state.fastForward ? 200 : 1200);
+            if (state.autoPlay) later(() => aiDoExchange(0), getDelay(200, 1200));
         }
-        else { render(); later(() => aiDoExchange(p), state.fastForward ? 200 : 1200); }
-    }, state.fastForward ? 500 : 2200);
+        else { render(); later(() => aiDoExchange(p), getDelay(200, 1200)); }
+    }, getDelay(500, 2200));
 }
 
 // ── Exchange ─────────────────────────────────────────────────────────────
@@ -202,7 +202,7 @@ export function startPlay() {
     state.trick = [];
     state.trickNum = 1;
     render();
-    later(step, state.fastForward ? 300 : 900);
+    later(step, getDelay(300, 900));
 }
 
 // ── Play ─────────────────────────────────────────────────────────────────
@@ -211,11 +211,11 @@ export function step() {
     if (state.phase !== 'play') return;
     if (state.trick.length < 3 && state.turn === 0) {
         logHumanHint();
-        if (state.autoPlay) later(() => aiDoMove(0), state.fastForward ? 200 : 800 + Math.random() * 450);
+        if (state.autoPlay) later(() => aiDoMove(0), getDelay(200, 800) + Math.random() * 450);
     }
     render();
-    if (state.trick.length === 3) { later(resolveTrick, state.fastForward ? 400 : 1250); return; }
-    if (state.turn !== 0) later(() => aiDoMove(state.turn), state.fastForward ? 200 : 800 + Math.random() * 450);
+    if (state.trick.length === 3) { later(resolveTrick, getDelay(400, 1250)); return; }
+    if (state.turn !== 0) later(() => aiDoMove(state.turn), getDelay(200, 800) + Math.random() * 450);
 }
 
 export function playCard(p, card, declare) {
@@ -251,7 +251,7 @@ export function resolveTrick() {
         state.leader = winner;
         state.turn = winner;
         state.trickNum++;
-        if (state.trickNum > 8) { later(endDeal, state.fastForward ? 400 : 1000); render(); return; }
+        if (state.trickNum > 8) { later(endDeal, getDelay(400, 1000)); render(); return; }
         step();
     });
 }

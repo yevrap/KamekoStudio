@@ -274,10 +274,22 @@ export function render() {
         const target = state.settings.targetScore || 1000;
         const barrelStr = (state.settings.barrel && pl.total === target - 120) ? ' 🛢️' : '';
 
+        let revealHtml = '';
+        if (state.autoPlay && localStorage.getItem('tysiacha_revealHands') === 'true' && pl.hand.length > 0) {
+            const sorted = pl.hand.slice().sort((a, b) => {
+                if (a.s !== b.s) return a.s.localeCompare(b.s);
+                return rankIdx(b) - rankIdx(a);
+            });
+            revealHtml = `<div style="margin-top:6px; display:flex; gap:3px; justify-content:center; flex-wrap:wrap;">` + 
+                sorted.map(c => `<span class="lg-card ${SUIT_IS_RED[c.s] ? 'red' : ''}" style="padding:0.05rem 0.2rem;"><b>${rankText(c.r)}</b><i>${SUIT_CHAR[c.s]}</i></span>`).join('') +
+                `</div>`;
+        }
+
         return `<div class="opp ${active ? 'active' : ''}">
             <div class="o-name">${playerName(p)}${boltText}${barrelStr}</div>
             <div class="o-info">🂠 ${pl.hand.length} · ${t('info.opp', pl.tricks, pl.trickPts + pl.marriagePts)}<br>${t('info.score')} <strong>${scoreStr}</strong></div>
             <div class="o-bid">${bidNote}</div>
+            ${revealHtml}
         </div>`;
     }).join('');
 

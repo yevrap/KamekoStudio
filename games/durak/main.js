@@ -47,6 +47,7 @@ cacheDom();
 var $modeToggle   = document.getElementById('mode-toggle');
 var $countToggle  = document.getElementById('count-toggle');
 var $btnPlay      = document.getElementById('btn-play');
+var $btnWatch     = document.getElementById('btn-watch');
 var $btnReplay    = document.getElementById('btn-replay');
 var $passOverlay  = document.getElementById('pass-device-overlay');
 var $humanHand    = document.getElementById('human-hand');
@@ -99,14 +100,10 @@ $countToggle.addEventListener('pointerdown', function (e) {
 var $setupPerevodnoy = document.getElementById('setup-perevodnoy');
 var $setupFirstTransfer = document.getElementById('setup-first-transfer');
 var $setupFirstTransferRow = document.getElementById('setup-first-transfer-row');
-var $setupAutoPlay = document.getElementById('setup-autoplay');
-var $setupAutoRestart = document.getElementById('setup-autorestart');
 
 function syncRuleTogglesUI() {
   $setupPerevodnoy.checked = localStorage.getItem('durak_perevodnoy') === 'true';
   $setupFirstTransfer.checked = localStorage.getItem('durak_first_transfer') === 'true';
-  if ($setupAutoPlay) $setupAutoPlay.checked = localStorage.getItem('durak_autoPlay') === 'true';
-  if ($setupAutoRestart) $setupAutoRestart.checked = localStorage.getItem('durak_autoRestart') === 'true';
   var on = $setupPerevodnoy.checked;
   $setupFirstTransferRow.style.opacity = on ? '1' : '0.5';
   $setupFirstTransferRow.style.pointerEvents = on ? 'auto' : 'none';
@@ -119,16 +116,6 @@ $setupPerevodnoy.addEventListener('change', function (e) {
 $setupFirstTransfer.addEventListener('change', function (e) {
   localStorage.setItem('durak_first_transfer', e.target.checked ? 'true' : 'false');
 });
-if ($setupAutoPlay) {
-  $setupAutoPlay.addEventListener('change', function (e) {
-    localStorage.setItem('durak_autoPlay', e.target.checked ? 'true' : 'false');
-  });
-}
-if ($setupAutoRestart) {
-  $setupAutoRestart.addEventListener('change', function (e) {
-    localStorage.setItem('durak_autoRestart', e.target.checked ? 'true' : 'false');
-  });
-}
 syncRuleTogglesUI();
 
 // ── Names Modal ────────────────────────────────────────────────────────────
@@ -412,8 +399,17 @@ function spendTokenAndStart() {
 
 $btnPlay.addEventListener('pointerdown', function (e) {
   e.preventDefault();
+  localStorage.setItem('durak_autoPlay', 'false');
   spendTokenAndStart();
 });
+
+if ($btnWatch) {
+  $btnWatch.addEventListener('pointerdown', function (e) {
+    e.preventDefault();
+    localStorage.setItem('durak_autoPlay', 'true');
+    spendTokenAndStart();
+  });
+}
 
 $btnReplay.addEventListener('pointerdown', function (e) {
   e.preventDefault();
@@ -476,75 +472,7 @@ function injectDurakSettings() {
     }
   });
 
-  // Automation: Auto Play (spectate) + how fast it plays + whether it shows
-  // opponents' hands while spectating. Reveal only ever takes effect while
-  // Auto Play is on (p2-27 Q4) — taking over hides hands again immediately.
-  window.KamekoSettings.registerSection('durak-automation', {
-    title: 'Automation',
-    render: function(container) {
-      var btnAutoPlay = document.createElement('button');
-      btnAutoPlay.className = 'settings-btn';
-      function autoPlayLabel() {
-        return localStorage.getItem('durak_autoPlay') === 'true' ? '🤖 Turn off Auto Play' : '🤖 Turn on Auto Play';
-      }
-      btnAutoPlay.textContent = autoPlayLabel();
-      btnAutoPlay.addEventListener('click', function() {
-        var on = localStorage.getItem('durak_autoPlay') === 'true';
-        localStorage.setItem('durak_autoPlay', on ? 'false' : 'true');
-        btnAutoPlay.textContent = autoPlayLabel();
-        if (typeof syncRuleTogglesUI === 'function') syncRuleTogglesUI();
-        if (!on && state.phase === 'playing') tick(); // trigger turn if we just turned it on
-        renderAll(); // opponent hands flip visible/hidden immediately if reveal is on
-      });
-      container.appendChild(btnAutoPlay);
-
-      var speedLabel = document.createElement('div');
-      speedLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin:12px 0 6px;';
-      speedLabel.textContent = 'Speed';
-      container.appendChild(speedLabel);
-
-      var speedToggle = document.createElement('div');
-      speedToggle.className = 'mode-toggle';
-      var speeds = ['slow', 'normal', 'fast'];
-      var speedNames = ['Slow', 'Normal', 'Fast'];
-      var currentSpeed = localStorage.getItem('durak_autoPlaySpeed') || 'normal';
-
-      for (var sp = 0; sp < speeds.length; sp++) {
-        (function(sVal, sName) {
-          var btn = document.createElement('button');
-          btn.className = 'mode-btn' + (currentSpeed === sVal ? ' active' : '');
-          btn.type = 'button';
-          btn.dataset.speed = sVal;
-          btn.textContent = sName;
-          btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            localStorage.setItem('durak_autoPlaySpeed', sVal);
-            var btns = speedToggle.querySelectorAll('.mode-btn');
-            for (var j = 0; j < btns.length; j++) {
-              btns[j].classList.toggle('active', btns[j].dataset.speed === sVal);
-            }
-          });
-          speedToggle.appendChild(btn);
-        })(speeds[sp], speedNames[sp]);
-      }
-      container.appendChild(speedToggle);
-
-      var btnReveal = document.createElement('button');
-      btnReveal.className = 'settings-btn';
-      btnReveal.style.marginTop = '12px';
-      function revealLabel() {
-        return localStorage.getItem('durak_revealHands') === 'true' ? '👁️ Turn off Reveal All Hands' : '👁️ Turn on Reveal All Hands';
-      }
-      btnReveal.textContent = revealLabel();
-      btnReveal.addEventListener('click', function() {
-        var on = localStorage.getItem('durak_revealHands') === 'true';
-        localStorage.setItem('durak_revealHands', on ? 'false' : 'true');
-        btnReveal.textContent = revealLabel();
-        renderAll();
-      });
-      container.appendChild(btnReveal);
-    }
-  });
+  window.KamekoSettings.registerWatchSection('durak', { hasRevealHands: true });
 
   // Match-scoped section: only rendered while a round is actually underway.
   // On the start menu there is no current match — mode/players/rules live on

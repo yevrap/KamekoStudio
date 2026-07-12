@@ -62,7 +62,7 @@ function showSetup() {
     $('setup').classList.remove('hidden');
 }
 
-$('setup-play').onclick = () => {
+function applySetup() {
     for (let p = 0; p < 3; p++) setCustomName(p, $('set-name-' + p).value.trim());
     state.settings.targetScore = parseInt($('set-target').value, 10);
     state.settings.barrel = $('set-barrel').checked;
@@ -73,12 +73,26 @@ $('setup-play').onclick = () => {
     state.settings.hiddenPoints = $('set-hidden').checked;
     saveMatchSettings();
 
-
     localStorage.setItem('lastPlayed_tysiacha', Date.now());
     $('setup').classList.add('hidden');
     localizeStatic();   // title-sub tracks the chosen target score
+}
+
+$('setup-play').onclick = () => {
+    localStorage.setItem('tysiacha_autoPlay', 'false');
+    state.autoPlay = false;
+    applySetup();
     newMatch();
 };
+
+if ($('setup-watch')) {
+    $('setup-watch').onclick = () => {
+        localStorage.setItem('tysiacha_autoPlay', 'true');
+        state.autoPlay = true;
+        applySetup();
+        newMatch();
+    };
+}
 
 // ── Settings drawer ─────────────────────────────────────────────────────────
 // Drawer = quick actions + instant settings only. Everything here applies
@@ -176,51 +190,18 @@ function injectTysiachaSettings() {
         }
     });
 
-    window.KamekoSettings.registerSection('tys-autoplay-settings', {
-        title: () => t('set.autoplay') || 'Simulated Tournament',
-        render: function(container) {
-            container.innerHTML = `
-            <div class="setting-row">
-                <label id="lbl-autoplay">Auto Play Visualizer</label>
-                <label class="kameko-switch">
-                    <input type="checkbox" id="set-autoplay">
-                    <span class="kameko-slider"></span>
-                </label>
-            </div>
-            <div class="setting-row">
-                <label id="lbl-fast-forward">Fast Forward</label>
-                <label class="kameko-switch">
-                    <input type="checkbox" id="set-fast-forward">
-                    <span class="kameko-slider"></span>
-                </label>
-            </div>
-            <div class="setting-row">
-                <label id="lbl-auto-restart">Auto-Restart</label>
-                <label class="kameko-switch">
-                    <input type="checkbox" id="set-auto-restart">
-                    <span class="kameko-slider"></span>
-                </label>
-            </div>
-            `;
-            document.getElementById('set-autoplay').checked = state.autoPlay;
-            document.getElementById('set-fast-forward').checked = state.fastForward;
-            document.getElementById('set-auto-restart').checked = state.autoRestart;
-
-            document.getElementById('set-autoplay').onchange = (e) => {
-                state.autoPlay = e.target.checked;
-                localStorage.setItem('tysiacha_autoPlay', state.autoPlay);
-                if (state.autoPlay && state.phase !== 'paused') {
-                    step(); // Poke the loop if we just turned it on
+    window.KamekoSettings.registerWatchSection('tysiacha', { 
+        hasRevealHands: true,
+        onStop: () => {
+            if (state.phase === 'paused') {
+                state.phase = prevPhase;
+                render();
+                if (state.resumeAction) {
+                    const fn = state.resumeAction;
+                    state.resumeAction = null;
+                    fn();
                 }
-            };
-            document.getElementById('set-fast-forward').onchange = (e) => {
-                state.fastForward = e.target.checked;
-                localStorage.setItem('tysiacha_fastForward', state.fastForward);
-            };
-            document.getElementById('set-auto-restart').onchange = (e) => {
-                state.autoRestart = e.target.checked;
-                localStorage.setItem('tysiacha_autoRestart', state.autoRestart);
-            };
+            }
         }
     });
 }
@@ -349,7 +330,7 @@ state.onDealEnd = (result) => {
                 if (champion && !state.autoRestart) return; // Wait at match end if not auto-restarting
                 document.getElementById('sum-next').click();
             }
-        }, state.fastForward ? 1500 : 3500);
+        }, localStorage.getItem('tysiacha_autoPlaySpeed') === 'fast' ? 1500 : (localStorage.getItem('tysiacha_autoPlaySpeed') === 'slow' ? 5000 : 3500));
     }
 };
 
@@ -377,7 +358,6 @@ window.addEventListener('settingsClosed', () => {
 // Initialize app
 state.difficulty = localStorage.getItem('tysiacha_difficulty') || 'normal';
 state.autoPlay = localStorage.getItem('tysiacha_autoPlay') === 'true';
-state.fastForward = localStorage.getItem('tysiacha_fastForward') === 'true';
 state.autoRestart = localStorage.getItem('tysiacha_autoRestart') === 'true';
 loadMatchSettings();
 localizeStatic();
