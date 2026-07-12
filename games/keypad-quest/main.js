@@ -10,16 +10,11 @@ import { buildT9Pad, buildTowerStrip, setInputMode, updateInputDisplay, updateSt
 // ─── Start / continue game ────────────────────────────────────────────────────
 
 function startGame(mode, fromCP) {
-  if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-    if (window.KamekoTokens) window.KamekoTokens.toast();
-    return;
-  }
   localStorage.setItem('lastPlayed_keypadQuest', Date.now());
   state.chillMode = (mode === 'chill');
 
   const activePairs = buildActiveDeck();
   if (activePairs.length === 0) {
-    window.KamekoTokens && window.KamekoTokens.add(1);
     alert('No pairs selected! Choose at least one deck from "Choose Decks".');
     return;
   }

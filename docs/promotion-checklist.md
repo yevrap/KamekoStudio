@@ -22,8 +22,7 @@ Work through the phases in order — each builds on the previous.
 ## Phase 3 — Shared infrastructure
 
 - [ ] Include `<script src="../../shared/settings.js" data-gallery-depth="2"></script>` before `</body>`.
-- [ ] Token gate on game start: `KamekoTokens.spend()` + toast fallback (pattern in root `CLAUDE.md` § Token System).
-- [ ] Token earning: `KamekoTokens.earn(1, '<slug>: finished')` on session end; `earn(2, ...)` instead when a personal best is beaten (not additive). If the game has no "best" concept, flat 1 and note it in the CLAUDE.md games table.
+
 - [ ] `localStorage.setItem('lastPlayed_<camelSlug>', Date.now())` on session start.
 - [ ] Persist the game's high score / best result under a `<camelSlug>`-prefixed key.
 - [ ] Pause/resume on `settingsOpened` / `settingsClosed` window events.

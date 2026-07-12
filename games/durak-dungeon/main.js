@@ -125,19 +125,13 @@ $gameoverSeed.addEventListener('pointerdown', function () {
 // Play / Replay buttons (token gate)
 document.getElementById('btn-play').addEventListener('pointerdown', function (e) {
   e.preventDefault();
-  if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-    if (window.KamekoTokens) window.KamekoTokens.toast();
-    return;
-  }
+
   startGame();
 });
 
 document.getElementById('btn-replay').addEventListener('pointerdown', function (e) {
   e.preventDefault();
-  if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-    if (window.KamekoTokens) window.KamekoTokens.toast();
-    return;
-  }
+
   startGame();
 });
 

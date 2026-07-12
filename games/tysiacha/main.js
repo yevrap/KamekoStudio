@@ -43,8 +43,6 @@ function saveMatchSettings() {
 // ── New Match setup overlay ─────────────────────────────────────────────────
 // Names, target score, and classic rules apply to the NEXT match, so they
 // live here (durak's setup-screen pattern), not in the settings drawer.
-// Token rule: starting play from boot costs 1 token; a restart triggered by
-// changing match settings mid-session is free.
 
 function showSetup() {
     for (let p = 0; p < 3; p++) $('set-name-' + p).value = customName(p) || '';
@@ -56,8 +54,7 @@ function showSetup() {
     $('set-raspasy').checked = state.settings.raspasy;
     $('set-hidden').checked = state.settings.hiddenPoints;
 
-    // No match to return to → no close button; the honest Play label shows
-    // the token cost only when it will actually charge one.
+    // No match to return to → no close button.
     const isFirstStart = state.phase === 'idle';
     $('setup-close-top').style.display = isFirstStart ? 'none' : '';
     $('setup-play').textContent = isFirstStart ? t('setup.playCost') : t('setup.play');
@@ -76,12 +73,7 @@ $('setup-play').onclick = () => {
     state.settings.hiddenPoints = $('set-hidden').checked;
     saveMatchSettings();
 
-    if (state.phase === 'idle') {
-        if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-            if (window.KamekoTokens) window.KamekoTokens.toast();
-            return;
-        }
-    }
+
     localStorage.setItem('lastPlayed_tysiacha', Date.now());
     $('setup').classList.add('hidden');
     localizeStatic();   // title-sub tracks the chosen target score
@@ -234,7 +226,7 @@ function injectTysiachaSettings() {
 }
 
 // ↺ opens the New Match setup instead of silently restarting — one obvious
-// restart path, and its Play button is explicit about any token cost.
+// restart path.
 $('btn-restart').onclick = () => {
     $('summary').classList.add('hidden');
     showSetup();
@@ -243,10 +235,6 @@ $('btn-restart').onclick = () => {
 $('sum-next').onclick = () => {
     $('summary').classList.add('hidden');
     if (state.phase === 'matchEnd') {
-        if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-            if (window.KamekoTokens) window.KamekoTokens.toast();
-            return;
-        }
         localStorage.setItem('lastPlayed_tysiacha', Date.now());
     }
     summaryNext();
@@ -334,9 +322,7 @@ state.onDealEnd = (result) => {
         $('sum-title').textContent = youWon ? t('sum.youWin') : t('sum.winner', playerName(state.players.indexOf(champion)));
         $('sum-next').textContent = t('sum.newMatch');
 
-        if (window.KamekoTokens) {
-            window.KamekoTokens.earn(1, 'tysiacha: finished');
-        }
+
 
         // High score logic (best win margin)
         if (youWon) {
@@ -344,7 +330,6 @@ state.onDealEnd = (result) => {
             const highScore = parseInt(localStorage.getItem('tysiachaHighScore') || '0', 10);
             if (myScore > highScore) {
                 localStorage.setItem('tysiachaHighScore', myScore);
-                if (window.KamekoTokens) window.KamekoTokens.earn(2, 'tysiacha: new high score');
                 banner(t('banner.highScore', myScore));
             }
         }
@@ -398,7 +383,7 @@ loadMatchSettings();
 localizeStatic();
 injectTysiachaSettings();
 
-// Boot lands on the New Match setup; its Play button owns the token spend.
+// Boot lands on the New Match setup.
 // First visit shows the rules first (closing them reveals the setup).
 if (localStorage.getItem('lastPlayed_tysiacha')) {
     showSetup();

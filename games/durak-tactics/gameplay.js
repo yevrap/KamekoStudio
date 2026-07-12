@@ -375,7 +375,7 @@ export function checkGameOver() {
 
 function processBattleEnd(isVictory, msg) {
     if (!isVictory) {
-        if (window.KamekoTokens) window.KamekoTokens.earn(1, 'durak-tactics defeat');
+
         $gameOverTitle.textContent = 'Defeat';
         $gameOverMsg.textContent = msg;
         $gameOverScreen.style.display = 'flex';
@@ -384,7 +384,7 @@ function processBattleEnd(isVictory, msg) {
     if (state.campaign.currentNodeId === 15) {
         const wins = parseInt(localStorage.getItem('durakTactics_victories') || '0') + 1;
         localStorage.setItem('durakTactics_victories', wins);
-        if (window.KamekoTokens) window.KamekoTokens.earn(2, 'durak-tactics campaign victory');
+
         $gameOverTitle.textContent = 'Campaign Victory!';
         $gameOverMsg.textContent = 'You defeated the Final Boss!';
         $gameOverScreen.style.display = 'flex';

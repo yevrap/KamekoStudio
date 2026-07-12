@@ -313,7 +313,7 @@ function showEndScreen(isWin) {
     const priorTop = getTopScore(state.currentGameMode);
     updateTopScore(state.currentGameMode, finalScore); // Update score for the mode played
     const isNewRecord = finalScore > priorTop;
-    if (window.KamekoTokens) window.KamekoTokens.earn(isNewRecord ? 2 : 1, 'materials-run finish');
+
     const topScoreScore = getTopScore('score'); // Get latest scores for display
     const topScoreSurvival = getTopScore('survival');
 

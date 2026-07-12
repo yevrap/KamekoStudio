@@ -92,14 +92,12 @@ Every page includes this script before `</body>`:
 
 **What it provides:**
 - Hamburger button (`#settings-hamburger-btn`, ☰) injected fixed top-LEFT on every page; opens a slide-in drawer (`#settings-overlay` > `#settings-panel`)
-- Drawer contents, top to bottom: game-specific sections (see the Drawer API below) → quick game switcher (emoji row, current game highlighted) → token row → theme toggle + Gallery link → collapsed `⚙️ App` `<details>` (Developer Mode, Clear All Game Data, App Version, Check for Updates)
+- Drawer contents, top to bottom: game-specific sections (see the Drawer API below) → quick game switcher (emoji row, current game highlighted) → theme toggle + Gallery link → collapsed `⚙️ App` `<details>` (Developer Mode, Clear All Game Data, App Version, Check for Updates)
 - Dispatches `window` events: `settingsOpened` / `settingsClosed` — games listen to these to pause/resume ONLY (never to inject or remove sections; the drawer owns section lifecycle)
-- `window.KamekoTokens` global: `.get()`, `.add(n=1)`, `.earn(n, reason)` (adds + logs to `tokenHistory`), `.spend()` (returns false if 0), `.toast(msg)`
 - Dark mode: `localStorage` key `theme` = `'dark'` | `'light'`, applied as `body.dark-mode` class
-- Token count: `localStorage` key `tokens` = integer
 
 **Developer Mode:**
-Inside the drawer's `⚙️ App` disclosure. When enabled it adds a blue glow to the hamburger button and shows a "Clear All Game Data" button (removes every known game/settings/token `localStorage` key — the list plus dynamic-suffix prefixes lives in `clearAllGameData`; keep it in sync when adding keys).
+Inside the drawer's `⚙️ App` disclosure. When enabled it adds a blue glow to the hamburger button and shows a "Clear All Game Data" button (removes every known game/settings `localStorage` key — the list plus dynamic-suffix prefixes lives in `clearAllGameData`; keep it in sync when adding keys).
 
 **Drawer API — per-game sections (`window.KamekoSettings`):** register once at boot; sections are re-rendered from scratch on EVERY drawer open, so control values always reflect live game state. Do NOT remove sections on `settingsClosed`.
 ```js
@@ -117,30 +115,14 @@ Conventions: a "Quick Actions" section first (`.settings-btn` buttons — rules,
 
 **Hamburger positioning:** injected as `position:fixed; top:15px; left:15px` (44×44). Games with a top header bar may override `#settings-hamburger-btn` in their CSS to align it within the header (add left padding to the header so content doesn't slide under it), including `env(safe-area-inset-top)` on iOS-styled games.
 
-## Token System
 
-Each game costs 1 token to play. Pattern for gating game start:
-```js
-startButton.addEventListener('click', () => {
-    if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-        if (window.KamekoTokens) window.KamekoTokens.toast();
-        return;
-    }
-    localStorage.setItem('lastPlayed_myGame', Date.now()); // for dashboard
-    startGame();
-});
-```
-Tokens are free to add via the settings panel (no real economy — it's a casual mechanic).
-
-**Earning tokens by playing:** Games reward tokens on session finish via `window.KamekoTokens.earn(n, reason)` — adds `n` tokens and logs `{ts, amount, reason}` to the `tokenHistory` array (capped at 50 entries). Convention: finishing a session = 1 token, beating a personal best (high score, high wave, best floor, etc.) = 2 tokens instead of 1 (not additive). Games with no comparable "best" concept (e.g. durak, hidden-object) award a flat 1 token on finish only. Intermediate progress within a still-active session (e.g. a durak-dungeon floor clear, a durak-tactics non-final battle win) does not award tokens — only the actual end of the play session does. The settings-panel faucet (`add()`, no history entry) remains the fallback for players who don't want to grind.
 
 ## localStorage Keys Reference
 
 | Key | Owner | Type | Notes |
 |-----|-------|------|-------|
 | `theme` | settings.js | `'dark'`\|`'light'` | Default `'dark'` |
-| `tokens` | settings.js | integer string | Token balance |
-| `tokenHistory` | settings.js | JSON string | Array of `{ts, amount, reason}` earn events, capped at 50 entries |
+
 | `devMode` | settings.js | `'true'`\|`'false'` | Enables developer tools in settings panel |
 | `lastPlayed_hiddenObject` | hidden-object | timestamp (ms) | Set on session start |
 | `lastPlayed_materialsRun` | materials-run | timestamp (ms) | Set on session start |

@@ -172,7 +172,7 @@ export function updateWave(dt) {
 export function endWave() {
   const elapsed = performance.now() - state.waveStartTime;
   state.score += state.waveScore;
-  if (saveHW(state.wave) && window.KamekoTokens) window.KamekoTokens.earn(2, 'keypad-quest new high wave');
+  saveHW(state.wave);
   const newBest = !state.chillMode && saveBT(state.wave, elapsed);
   if (!state.chillMode && state.wave % 5 === 0) saveCP();
   const msg = newBest ? 'Wave ' + state.wave + ' — new best!' : 'Wave ' + state.wave + ' clear!';

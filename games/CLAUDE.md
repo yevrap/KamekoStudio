@@ -67,22 +67,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 - **No back-navigation** — games have internal menu screens; users use the browser back button or Settings → Back to Gallery
 - **All scores** stored in localStorage; no server communication
 
-## Token Gate (required in every game)
 
-Each game costs 1 token to start. Always call `KamekoTokens.spend()` before starting, and write `lastPlayed_*` immediately after a successful spend:
-
-```js
-startButton.addEventListener('click', () => {
-    if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-        if (window.KamekoTokens) window.KamekoTokens.toast();
-        return;
-    }
-    localStorage.setItem('lastPlayed_myGame', Date.now());
-    startGame();
-});
-```
-
-The `lastPlayed_*` key feeds the "Recently Played" section on the arcade dashboard. The dashboard derives the key from the game's `id` in `GAMES_META` in `index.html` — keep them consistent.
 
 ## Settings Panel Integration (required in every game)
 
@@ -154,7 +139,7 @@ In Three.js games, obstacle arrays store objects of shape `{ mesh, boundingBox }
 2. Add a card to root `index.html` with `href="games/<game-name>/"` (**trailing slash, not** `index.html`) and `id` matching `lastPlayed_<id>` key
 3. Add a portal link to root `3d.html` — same trailing slash rule
 4. Include `shared/utils.js` (if needed) and `shared/settings.js` with `data-gallery-depth="2"`
-5. Add token gate + `localStorage.setItem('lastPlayed_<id>', Date.now())` at session start
+5. Add `localStorage.setItem('lastPlayed_<id>', Date.now())` at session start
 6. Add `settingsOpened` / `settingsClosed` pause/resume listeners
 7. Add the `lastPlayed_<id>` entry to the localStorage key tables in root `CLAUDE.md` and `GEMINI.md`
 

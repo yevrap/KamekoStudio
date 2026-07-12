@@ -22,10 +22,7 @@ function triggerShake() {
 }
 
 function startGame() {
-    if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-        if (window.KamekoTokens) window.KamekoTokens.toast();
-        return;
-    }
+
     
     localStorage.setItem('lastPlayed_durakAlchemist', Date.now());
     
@@ -90,7 +87,7 @@ function handleGameOver() {
     if (isNewRecord) {
         localStorage.setItem('alchemistHighScore', state.score.toString());
     }
-    if (window.KamekoTokens) window.KamekoTokens.earn(isNewRecord ? 2 : 1, 'durak-alchemist finish');
+
 }
 
 function endCombatTurn() {

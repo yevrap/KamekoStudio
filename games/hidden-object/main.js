@@ -8,7 +8,7 @@ import {
 dom.mainScreenElement = document.getElementById('mainScreen');
 dom.gameScreenContainerElement = document.getElementById('gameScreenContainer');
 dom.startGameButton = document.getElementById('startGameButton');
-dom.tokenDisplayMain = document.getElementById('tokenDisplayMain');
+
 dom.canvas = document.getElementById('gameCanvas');
 dom.ctx = dom.canvas.getContext('2d');
 dom.targetMessageElement = document.getElementById('targetMessage');
@@ -26,10 +26,7 @@ dom.backToMainScreenButtonFromGameOver = document.getElementById('backToMainScre
 
 // --- Event Listeners ---
 dom.startGameButton.addEventListener('click', () => {
-    if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-        if (window.KamekoTokens) window.KamekoTokens.toast();
-        return;
-    }
+
     localStorage.setItem('lastPlayed_hiddenObject', Date.now());
     startNewGameSession();
 });

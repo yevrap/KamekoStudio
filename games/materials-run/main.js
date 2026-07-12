@@ -48,19 +48,19 @@ document.addEventListener('DOMContentLoaded', () => {
     dom.playAgainButtonLose.addEventListener('click', goToStartScreen);
     dom.playAgainButtonWin.addEventListener('click', goToStartScreen);
     dom.startScoreButton.addEventListener('click', () => {
-        if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+
         localStorage.setItem('lastPlayed_materialsRun', Date.now());
         startGame('score');
     });
     dom.startSurvivalButton.addEventListener('click', () => {
-        if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+
         localStorage.setItem('lastPlayed_materialsRun', Date.now());
         localStorage.setItem('materialsRun_autoPlay', 'false');
         startGame('survival');
     });
     if (dom.startSpectateButton) {
         dom.startSpectateButton.addEventListener('click', () => {
-            if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+    
             localStorage.setItem('lastPlayed_materialsRun', Date.now());
             localStorage.setItem('materialsRun_autoPlay', 'true');
             startGame('score'); // Spectate defaults to Score Attack

@@ -490,17 +490,13 @@ export function animate(currentTime = 0) {
                     state.highScore = state.score;
                     localStorage.setItem('blobZapperHighScore', String(state.highScore));
                 }
-                if (window.KamekoTokens) window.KamekoTokens.earn(state.isNewBest ? 2 : 1, state.isNewBest ? 'blob-zapper new best' : 'blob-zapper finish');
+
                 
                 if (localStorage.getItem('blobZapper_autoRestart') === 'true') {
                     setTimeout(() => {
                         if (state.isGameOver) {
-                            if (window.KamekoTokens && !window.KamekoTokens.spend()) {
-                                window.KamekoTokens.toast();
-                            } else {
-                                localStorage.setItem('lastPlayed_blobZapper', Date.now());
-                                init();
-                            }
+                            localStorage.setItem('lastPlayed_blobZapper', Date.now());
+                            init();
                         }
                     }, 2500);
                 }
@@ -544,7 +540,7 @@ export function pushBlobsTowardsCenter() {
 // --- Input Handling ---
 export function handlePointerDown(id, clientX, clientY) {
     if (state.isGameOver) {
-        if (!window.KamekoTokens || !window.KamekoTokens.spend()) { if (window.KamekoTokens) window.KamekoTokens.toast(); return; }
+
         localStorage.setItem('lastPlayed_blobZapper', Date.now()); init(); return;
     }
     try {

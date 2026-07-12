@@ -425,7 +425,7 @@ export function floorCleared() {
     var victories = parseInt(localStorage.getItem('durakDungeon_victories') || '0', 10);
     localStorage.setItem('durakDungeon_victories', String(victories + 1));
     state.run.phase = 'victory';
-    if (window.KamekoTokens) window.KamekoTokens.earn(2, 'durak-dungeon victory');
+
     showGameOver(true);
     return;
   }
@@ -678,7 +678,7 @@ export function handleShopClick(e) {
 
 export function endRun() {
   state.run.phase = 'gameover';
-  if (window.KamekoTokens) window.KamekoTokens.earn(state.run.newBestFloorThisRun ? 2 : 1, 'durak-dungeon finish');
+
   showGameOver(false);
 }
 

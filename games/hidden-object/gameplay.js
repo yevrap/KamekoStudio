@@ -7,7 +7,7 @@ import { state, dom } from './state.js';
 
 // --- Screen Management & UI Updates ---
 export function updateTokenDisplay() {
-    if (dom.tokenDisplayMain) dom.tokenDisplayMain.textContent = window.KamekoTokens ? window.KamekoTokens.get() : 0;
+
 }
 
 export function showScreen(screenName) {
@@ -81,7 +81,7 @@ export function handleSessionEnd(wasFound, timeTakenToFind, userQuit = false) {
         if (!userQuit) {
             dom.sessionEndedScoreTextElement.textContent = `Session over! Reached round ${state.currentRoundNumber}.`;
             dom.gameOverModalElement.classList.remove('hidden');
-            if (window.KamekoTokens) window.KamekoTokens.earn(1, 'hidden-object finish');
+
         } else {
             showScreen('main');
         }

@@ -62,15 +62,6 @@
             align-items: center;
             gap: 0.85rem;
         }
-        .token-badge {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 9999px;
-            padding: 0.3rem 0.8rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            white-space: nowrap;
-        }
         .mode-link {
             background: #2a1a6622;
             border: 1px solid #6644ff55;
@@ -237,7 +228,6 @@
         <div class="header-inner">
             <div class="arcade-title">🕹️ Vibe Arcade</div>
             <div class="header-right">
-                <span class="token-badge">🪙 <span id="headerTokenCount">0</span></span>
                 <a href="drafts/" class="mode-link">Lab 🧪</a>
                 <a href="3d.html" class="mode-link">3D Mode ✦</a>
             </div>
@@ -269,7 +259,7 @@
                         <div class="game-title">Hidden Object</div>
                         <div class="game-desc">Find the hidden emoji before time runs out</div>
                         <div class="game-meta" id="meta-hiddenObject"></div>
-                        <a href="games/hidden-object/" class="play-btn" style="background:#9c27b0">▶ Play &nbsp;1🪙</a>
+                        <a href="games/hidden-object/" class="play-btn" style="background:#9c27b0">▶ Play</a>
                     </div>
                 </div>
 
@@ -279,7 +269,7 @@
                         <div class="game-title">Keypad Quest</div>
                         <div class="game-desc">Answer questions to build your tower defense — T9 or keyboard</div>
                         <div class="game-meta" id="meta-keypadQuest"></div>
-                        <a href="games/keypad-quest/" class="play-btn" style="background:#009940">▶ Play &nbsp;1🪙</a>
+                        <a href="games/keypad-quest/" class="play-btn" style="background:#009940">▶ Play</a>
                     </div>
                 </div>
 
@@ -289,7 +279,7 @@
                         <div class="game-title">River Run</div>
                         <div class="game-desc">3D obstacle-dodging river runner</div>
                         <div class="game-meta" id="meta-riverRun"></div>
-                        <a href="games/river-run/" class="play-btn" style="background:#2979ff">▶ Play &nbsp;1🪙</a>
+                        <a href="games/river-run/" class="play-btn" style="background:#2979ff">▶ Play</a>
                     </div>
                 </div>
 
@@ -299,7 +289,7 @@
                         <div class="game-title">Blob Zapper</div>
                         <div class="game-desc">Push blobs with electricity before they escape</div>
                         <div class="game-meta" id="meta-blobZapper"></div>
-                        <a href="games/blob-zapper/" class="play-btn" style="background:#ff6d00">▶ Play &nbsp;1🪙</a>
+                        <a href="games/blob-zapper/" class="play-btn" style="background:#ff6d00">▶ Play</a>
                     </div>
                 </div>
 
@@ -309,7 +299,7 @@
                         <div class="game-title">Materials Run</div>
                         <div class="game-desc">Navigate material types — ice, sand, water, grass</div>
                         <div class="game-meta" id="meta-materialsRun"></div>
-                        <a href="games/materials-run/" class="play-btn" style="background:#f44336">▶ Play &nbsp;1🪙</a>
+                        <a href="games/materials-run/" class="play-btn" style="background:#f44336">▶ Play</a>
                     </div>
                 </div>
 
@@ -319,7 +309,7 @@
                         <div class="game-title">Durak</div>
                         <div class="game-desc">Classic Russian card game — attack and defend, pass and play</div>
                         <div class="game-meta" id="meta-durak"></div>
-                        <a href="games/durak/" class="play-btn" style="background:#e53935">▶ Play &nbsp;1🪙</a>
+                        <a href="games/durak/" class="play-btn" style="background:#e53935">▶ Play</a>
                     </div>
                 </div>
 
@@ -329,7 +319,7 @@
                         <div class="game-title">Tysiacha</div>
                         <div class="game-desc">Classic trick-taking card game — bid, declare marriages, race to 1000</div>
                         <div class="game-meta" id="meta-tysiacha"></div>
-                        <a href="games/tysiacha/" class="play-btn" style="background:#ffd54f; color:#000;">▶ Play &nbsp;1🪙</a>
+                        <a href="games/tysiacha/" class="play-btn" style="background:#ffd54f; color:#000;">▶ Play</a>
                     </div>
                 </div>
 
@@ -370,10 +360,6 @@
         }
 
         function buildDashboard() {
-            // Token count in header
-            document.getElementById('headerTokenCount').textContent =
-                localStorage.getItem('tokens') || '0';
-
             // Recently Played
             const played = GAMES_META
                 .map(g => ({ ...g, ts: parseInt(localStorage.getItem('lastPlayed_' + g.id) || '0', 10) }))

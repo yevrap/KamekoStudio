@@ -99,10 +99,7 @@
         /* --- Plain-CSS replacements for former Tailwind utility classes --- */
         .screen-title-lg { font-size: 1.875rem; font-weight: 700; margin-bottom: 1rem; }
         .screen-title-sm { font-size: 1.25rem; font-weight: 700; }
-        .token-section { margin-bottom: 1.5rem; }
-        .token-label { color: #cbd5e1; font-size: 1rem; margin: 0; }
-        .token-value { font-size: 1.875rem; font-weight: 700; color: #38bdf8; margin: 0; }
-        .token-hint { color: #94a3b8; font-size: 0.75rem; margin-top: 0.5rem; }
+
         .btn-primary, .btn-secondary, .btn-danger, .btn-warning {
             border: none;
             border-radius: 0.5rem;
@@ -195,10 +192,7 @@
             #currentRoundDisplay { font-size: 1rem; }
             .screen-title-lg { font-size: 2.25rem; margin-bottom: 1.5rem; }
             .screen-title-sm { font-size: 1.5rem; }
-            .token-section { margin-bottom: 2rem; }
-            .token-label { font-size: 1.125rem; }
-            .token-value { font-size: 2.25rem; }
-            .token-hint { font-size: 0.875rem; }
+
             .btn-primary { padding-left: 2rem; padding-right: 2rem; font-size: 1.25rem; }
             .btn-secondary, .btn-warning { font-size: 0.875rem; }
             .btn-danger { font-size: 0.875rem; margin-bottom: 0.5rem; }

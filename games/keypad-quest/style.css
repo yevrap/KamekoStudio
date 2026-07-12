@@ -24,7 +24,7 @@
 
     #wave-display { font-size: 0.85em; color: #00ffee; text-shadow: 0 0 8px #00ffee; flex: 1; }
     #streak-display { font-size: 0.8em; color: #ff44aa; text-shadow: 0 0 8px #ff44aa; min-width: 55px; text-align: center; }
-    #token-display { font-size: 0.8em; color: #ffcc44; flex-shrink: 0; margin-right: 6px; }
+
 
     /* Pin the shared settings hamburger inside the header row, left-aligned */
     #settings-hamburger-btn {

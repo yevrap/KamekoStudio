@@ -15,91 +15,9 @@
  * Manages dark mode via:
  *   localStorage key: 'theme' = 'dark' | 'light'
  *   CSS class: body.dark-mode
- *
- * Token system (window.KamekoTokens):
- *   localStorage key: 'tokens' = integer
- *   localStorage key: 'tokenHistory' = JSON array of {ts, amount, reason}, capped at 50 entries
- *   KamekoTokens.get()             — returns current count
- *   KamekoTokens.add(n=1)          — adds n tokens (no history entry; used by the settings-panel faucet)
- *   KamekoTokens.earn(n, reason)   — adds n tokens and records a history entry; used by games rewarding play
- *   KamekoTokens.spend()           — deducts 1; returns true on success, false if none
- *   KamekoTokens.toast(msg)        — shows a brief no-tokens notice
  */
 
 (function () {
-  // ─── Token system ───────────────────────────────────────────────────────────
-
-  function getTokenCount() {
-    return parseInt(localStorage.getItem('tokens') || '0', 10);
-  }
-  function saveTokenCount(n) {
-    localStorage.setItem('tokens', Math.max(0, n));
-  }
-  function updateTokenDisplay() {
-    const count = getTokenCount();
-    const el = document.getElementById('settings-token-count');
-    if (el) el.textContent = count;
-    const header = document.getElementById('headerTokenCount');
-    if (header) header.textContent = count;
-  }
-
-  function recordTokenHistory(amount, reason) {
-    let history;
-    try { history = JSON.parse(localStorage.getItem('tokenHistory') || '[]'); }
-    catch (e) { history = []; }
-    history.push({ ts: Date.now(), amount: amount, reason: reason || '' });
-    if (history.length > 50) history = history.slice(history.length - 50);
-    localStorage.setItem('tokenHistory', JSON.stringify(history));
-  }
-
-  window.KamekoTokens = {
-    get: getTokenCount,
-    add: function (n) {
-      if (n === undefined) n = 1;
-      saveTokenCount(getTokenCount() + n);
-      updateTokenDisplay();
-    },
-    earn: function (n, reason) {
-      if (n === undefined) n = 1;
-      saveTokenCount(getTokenCount() + n);
-      recordTokenHistory(n, reason);
-      updateTokenDisplay();
-    },
-    spend: function () {
-      const t = getTokenCount();
-      if (t <= 0) return false;
-      saveTokenCount(t - 1);
-      updateTokenDisplay();
-      return true;
-    },
-    toast: function (msg) {
-      msg = msg || 'No tokens! Open ☰ Menu to get one.';
-      let toast = document.getElementById('kameko-toast');
-      if (!toast) {
-        toast = document.createElement('div');
-        toast.id = 'kameko-toast';
-        toast.style.cssText = [
-          'position:fixed', 'bottom:24px', 'left:50%',
-          'transform:translateX(-50%)',
-          'background:rgba(20,20,40,0.95)', 'color:white',
-          'padding:12px 22px', 'border-radius:10px',
-          'font-family:sans-serif', 'font-size:0.95em',
-          'z-index:20000', 'pointer-events:none',
-          'transition:opacity 0.4s ease',
-          'box-shadow:0 4px 16px rgba(0,0,0,0.5)',
-          'text-align:center', 'max-width:80vw'
-        ].join(';');
-        document.body.appendChild(toast);
-      }
-      toast.textContent = msg;
-      toast.style.opacity = '1';
-      clearTimeout(toast._hideTimeout);
-      toast._hideTimeout = setTimeout(function () {
-        toast.style.opacity = '0';
-      }, 2500);
-    }
-  };
-
   // ─── Versioning System ────────────────────────────────────────────────────────
 
   let loadedVersion = null; // Object: {version, buildDate, timestamp}
@@ -317,6 +235,10 @@
   // Apply saved theme immediately (body is available since script is before </body>)
   applyTheme(getSavedTheme());
 
+  // One-time cleanup for removed token system (Sprint 2)
+  localStorage.removeItem('tokens');
+  localStorage.removeItem('tokenHistory');
+
   // Init versioning system (fetch initial version or hook into visibility change)
   initVersioning();
 
@@ -340,7 +262,6 @@
       void overlay.offsetWidth;
       overlay.classList.add('open');
       updateDarkModeButton();
-      updateTokenDisplay();
       updateDevModeUI();
       renderAllGameSections();
     }
@@ -537,21 +458,6 @@
       switcher.appendChild(icon);
     });
     body.appendChild(switcher);
-
-    // Token row: count + Get Token button
-    const tokenRow = document.createElement('div');
-    tokenRow.className = 'settings-row';
-    const tokenLabel = document.createElement('span');
-    tokenLabel.innerHTML = '\uD83E\uDE99 Tokens: <strong id="settings-token-count">' + getTokenCount() + '</strong>';
-    const getTokenBtn = document.createElement('button');
-    getTokenBtn.id = 'settings-get-token-btn';
-    getTokenBtn.textContent = '+ 1 \uD83E\uDE99';
-    getTokenBtn.addEventListener('click', function () {
-      window.KamekoTokens.add(1);
-    });
-    tokenRow.appendChild(tokenLabel);
-    tokenRow.appendChild(getTokenBtn);
-    body.appendChild(tokenRow);
 
     // Theme toggle + gallery link, side by side to keep the drawer short
     const chromeRow = document.createElement('div');

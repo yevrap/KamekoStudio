@@ -30,10 +30,7 @@ function startGame() {
 // ─── Event listeners ──────────────────────────────────────────────────────────
 
 document.getElementById('btn-start').addEventListener('click', () => {
-    if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-        if (window.KamekoTokens) window.KamekoTokens.toast();
-        return;
-    }
+
     localStorage.setItem('lastPlayed_durakTactics', Date.now());
     startGame();
 });

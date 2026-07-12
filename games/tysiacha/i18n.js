@@ -192,7 +192,7 @@ const EN = {
     'set.matchHdr': 'Match',
     'setup.title': 'New Match',
     'setup.play': '▶ Play',
-    'setup.playCost': '▶ Play · 1 🪙',
+    'setup.playCost': '▶ Play',
 
     // how-to overlay (title/body pairs)
     'howto': () => HOWTO_EN,
@@ -329,7 +329,7 @@ const RU = {
     'set.matchHdr': 'Матч',
     'setup.title': 'Новый матч',
     'setup.play': '▶ Играть',
-    'setup.playCost': '▶ Играть · 1 🪙',
+    'setup.playCost': '▶ Играть',
 
     'howto': () => HOWTO_RU,
 };

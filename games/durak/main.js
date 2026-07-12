@@ -405,10 +405,7 @@ function startGame() {
 }
 
 function spendTokenAndStart() {
-  if (!window.KamekoTokens || !window.KamekoTokens.spend()) {
-    if (window.KamekoTokens) window.KamekoTokens.toast();
-    return;
-  }
+
   localStorage.setItem('lastPlayed_durak', Date.now());
   startGame();
 }
