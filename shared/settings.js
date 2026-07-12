@@ -383,8 +383,9 @@
     registerWatchSection: function(gamePrefix, watchOptions) {
       this.registerSection(gamePrefix + '-watch', {
         title: '▶ Watch Mode',
-        when: function() { return localStorage.getItem(gamePrefix + '_autoPlay') === 'true'; },
         render: function(container) {
+          const isWatching = localStorage.getItem(gamePrefix + '_autoPlay') === 'true';
+          
           if (watchOptions.hasSpeed !== false) {
             const speedRow = document.createElement('div');
             speedRow.className = 'settings-row-pair';
@@ -453,16 +454,16 @@
           restartRow.appendChild(restartSwitch);
           container.appendChild(restartRow);
 
-          const btnTakeOver = document.createElement('button');
-          btnTakeOver.className = 'settings-primary-btn';
-          btnTakeOver.textContent = 'Take Over / Stop';
-          btnTakeOver.addEventListener('click', function() {
-            localStorage.setItem(gamePrefix + '_autoPlay', 'false');
-            if (watchOptions.onStop) watchOptions.onStop();
+          const btnAction = document.createElement('button');
+          btnAction.className = isWatching ? 'settings-primary-btn' : 'settings-btn';
+          btnAction.textContent = isWatching ? 'Take Over / Stop' : '▶ Watch';
+          btnAction.addEventListener('click', function() {
+            localStorage.setItem(gamePrefix + '_autoPlay', isWatching ? 'false' : 'true');
+            if (isWatching && watchOptions.onStop) watchOptions.onStop();
             window.KamekoSettings.closeDrawer();
             renderAllGameSections();
           });
-          container.appendChild(btnTakeOver);
+          container.appendChild(btnAction);
         }
       });
     }
