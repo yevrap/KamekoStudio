@@ -16,13 +16,22 @@ export function clearAiTimeout() {
   if (aiTimeout !== null) { clearTimeout(aiTimeout); aiTimeout = null; }
 }
 
+// Auto Play speed setting (p2-27) scales the base thinking delay; 'normal'
+// keeps the original 500-900ms pacing unchanged.
+export function speedMultiplier(speed) {
+  if (speed === 'slow') return 2;
+  if (speed === 'fast') return 0.3;
+  return 1;
+}
+
 export function scheduleAiAction(seat, onDone) {
   clearAiTimeout();
   if (state.phase !== 'playing' && state.phase !== 'pileOn') return;
   if (state.prioritySeat !== seat) return;
   if (getPlayer(seat).isHuman && localStorage.getItem('durak_autoPlay') !== 'true') return;
 
-  var delay = 500 + Math.floor(Math.random() * 400);
+  var speed = (typeof localStorage !== 'undefined') ? (localStorage.getItem('durak_autoPlaySpeed') || 'normal') : 'normal';
+  var delay = Math.round((500 + Math.floor(Math.random() * 400)) * speedMultiplier(speed));
   aiTimeout = setTimeout(function () {
     aiTimeout = null;
     if (state.phase !== 'playing' && state.phase !== 'pileOn') return;

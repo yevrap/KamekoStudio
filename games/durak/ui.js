@@ -181,6 +181,12 @@ function renderOpponents() {
   }
 }
 
+// Auto Play must be on for reveal to have any effect (p2-27 Q4): taking over
+// hides hands again immediately on the next render, regardless of the toggle.
+function shouldRevealHands() {
+  return localStorage.getItem('durak_autoPlay') === 'true' && localStorage.getItem('durak_revealHands') === 'true';
+}
+
 function buildOpponentTile(seat) {
   var p = state.players[seat];
   var tile = document.createElement('div');
@@ -193,10 +199,17 @@ function buildOpponentTile(seat) {
   var cardWrap = document.createElement('div');
   cardWrap.className = 'seat-card';
 
-  var countBadge = document.createElement('span');
-  countBadge.className = 'seat-count';
-  countBadge.textContent = p.hand.length;
-  cardWrap.appendChild(countBadge);
+  if (shouldRevealHands() && p.hand.length > 0) {
+    cardWrap.classList.add('revealed');
+    for (var i = 0; i < p.hand.length; i++) {
+      cardWrap.appendChild(createCardEl(p.hand[i], 'opponent'));
+    }
+  } else {
+    var countBadge = document.createElement('span');
+    countBadge.className = 'seat-count';
+    countBadge.textContent = p.hand.length;
+    cardWrap.appendChild(countBadge);
+  }
 
   tile.appendChild(cardWrap);
 

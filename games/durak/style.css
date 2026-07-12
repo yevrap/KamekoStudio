@@ -192,6 +192,30 @@ body:not(.dark-mode) .seat-tile .seat-card {
     #e8e8f0;
 }
 
+.seat-tile .seat-card.revealed {
+  width: auto;
+  height: auto;
+  min-height: 45px;
+  border: none;
+  background: none;
+  box-shadow: none;
+  display: flex;
+  align-items: flex-end;
+  padding: 0 4px;
+}
+.seat-card.revealed .card-btn.opponent {
+  position: relative;
+  width: 32px;
+  height: 45px;
+  border-radius: 4px;
+  cursor: default;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.seat-card.revealed .card-btn.opponent + .card-btn.opponent {
+  margin-left: -14px;
+}
+
 .seat-count {
   position: absolute;
   top: -6px;

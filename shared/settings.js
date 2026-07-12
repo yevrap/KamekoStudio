@@ -276,7 +276,7 @@
       'durak_mode', 'durak_playerCount', 'durak_difficulty',
       'durak_wins', 'durak_losses', 'durak_draws',
       'durak_coach', 'durak_perevodnoy', 'durak_first_transfer',
-      'durak_sort',
+      'durak_sort', 'durak_autoPlay', 'durak_autoPlaySpeed', 'durak_revealHands',
       // Durak Dungeon / Tactics
       'durakDungeon_bestFloor', 'durakDungeon_victories',
       'durakDungeon_lastSeed', 'durakTactics_victories',

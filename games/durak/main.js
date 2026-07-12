@@ -476,8 +476,15 @@ function injectDurakSettings() {
         renderAll();
       });
       container.appendChild(btnCoach);
+    }
+  });
 
-      // Auto Play toggle
+  // Automation: Auto Play (spectate) + how fast it plays + whether it shows
+  // opponents' hands while spectating. Reveal only ever takes effect while
+  // Auto Play is on (p2-27 Q4) — taking over hides hands again immediately.
+  window.KamekoSettings.registerSection('durak-automation', {
+    title: 'Automation',
+    render: function(container) {
       var btnAutoPlay = document.createElement('button');
       btnAutoPlay.className = 'settings-btn';
       function autoPlayLabel() {
@@ -490,8 +497,55 @@ function injectDurakSettings() {
         btnAutoPlay.textContent = autoPlayLabel();
         if (typeof syncRuleTogglesUI === 'function') syncRuleTogglesUI();
         if (!on && state.phase === 'playing') tick(); // trigger turn if we just turned it on
+        renderAll(); // opponent hands flip visible/hidden immediately if reveal is on
       });
       container.appendChild(btnAutoPlay);
+
+      var speedLabel = document.createElement('div');
+      speedLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin:12px 0 6px;';
+      speedLabel.textContent = 'Speed';
+      container.appendChild(speedLabel);
+
+      var speedToggle = document.createElement('div');
+      speedToggle.className = 'mode-toggle';
+      var speeds = ['slow', 'normal', 'fast'];
+      var speedNames = ['Slow', 'Normal', 'Fast'];
+      var currentSpeed = localStorage.getItem('durak_autoPlaySpeed') || 'normal';
+
+      for (var sp = 0; sp < speeds.length; sp++) {
+        (function(sVal, sName) {
+          var btn = document.createElement('button');
+          btn.className = 'mode-btn' + (currentSpeed === sVal ? ' active' : '');
+          btn.type = 'button';
+          btn.dataset.speed = sVal;
+          btn.textContent = sName;
+          btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.setItem('durak_autoPlaySpeed', sVal);
+            var btns = speedToggle.querySelectorAll('.mode-btn');
+            for (var j = 0; j < btns.length; j++) {
+              btns[j].classList.toggle('active', btns[j].dataset.speed === sVal);
+            }
+          });
+          speedToggle.appendChild(btn);
+        })(speeds[sp], speedNames[sp]);
+      }
+      container.appendChild(speedToggle);
+
+      var btnReveal = document.createElement('button');
+      btnReveal.className = 'settings-btn';
+      btnReveal.style.marginTop = '12px';
+      function revealLabel() {
+        return localStorage.getItem('durak_revealHands') === 'true' ? '👁️ Turn off Reveal All Hands' : '👁️ Turn on Reveal All Hands';
+      }
+      btnReveal.textContent = revealLabel();
+      btnReveal.addEventListener('click', function() {
+        var on = localStorage.getItem('durak_revealHands') === 'true';
+        localStorage.setItem('durak_revealHands', on ? 'false' : 'true');
+        btnReveal.textContent = revealLabel();
+        renderAll();
+      });
+      container.appendChild(btnReveal);
     }
   });
 

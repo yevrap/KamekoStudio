@@ -10,7 +10,7 @@ import {
   passAttack, declareTake, pileOnPass, endBout, dealInitial, checkGameOver,
   legalTransfer, playTransfer, defenseTargetIndex
 } from '../games/durak/gameplay.js';
-import { _test_aiTurn } from '../games/durak/ai.js';
+import { _test_aiTurn, speedMultiplier } from '../games/durak/ai.js';
 
 global.localStorage = {
   _store: {},
@@ -616,4 +616,11 @@ test('AI Hard: Protects self in endgame by defending with highest trump if force
   // Hard AI should defend because survival depends on it.
   assert.equal(state.phase, 'playing'); // Did not take
   assert.equal(state.field.defenses[0].value, 11);
+});
+
+test('speedMultiplier: slow/normal/fast scale the Auto Play delay distinctly (p2-27)', () => {
+  assert.equal(speedMultiplier('slow'), 2);
+  assert.equal(speedMultiplier('normal'), 1);
+  assert.equal(speedMultiplier('fast'), 0.3);
+  assert.equal(speedMultiplier(undefined), 1); // unknown/missing speed falls back to normal pacing
 });
