@@ -359,6 +359,8 @@ window.addEventListener('settingsOpened', () => {
     render();
 });
 window.addEventListener('settingsClosed', () => {
+    state.autoPlay = localStorage.getItem('tysiacha_autoPlay') === 'true';
+    state.autoRestart = localStorage.getItem('tysiacha_autoRestart') === 'true';
     if (state.phase === 'paused') {
         state.phase = prevPhase;
         render();
@@ -366,6 +368,20 @@ window.addEventListener('settingsClosed', () => {
             const fn = state.resumeAction;
             state.resumeAction = null;
             fn();
+        } else if (state.autoPlay) {
+            import('./ai.js').then(ai => {
+                if (state.phase === 'bidding' && state.bidTurn === 0) setTimeout(() => ai.aiBid(0), 400);
+                else if (state.phase === 'exchange' && state.declarer === 0) setTimeout(() => ai.aiExchange(0), 400);
+                else if (state.phase === 'play' && state.turn === 0 && state.trick.length < 3) setTimeout(() => ai.aiMove(0), 400);
+            });
+            if (state.phase === 'dealEnd' || state.phase === 'matchEnd') {
+                const summary = document.getElementById('summary');
+                if (summary && !summary.classList.contains('hidden')) {
+                    if (state.phase === 'dealEnd' || state.autoRestart) {
+                        setTimeout(() => document.getElementById('sum-next').click(), 400);
+                    }
+                }
+            }
         }
     }
 });

@@ -358,10 +358,15 @@
   }
 
   function renderAllGameSections() {
+    const body = document.getElementById('settings-drawer-body');
+    const st = body ? body.scrollTop : 0;
+
     gameSectionRegistry.forEach(function (entry) {
       try { renderGameSection(entry); }
       catch (e) { console.error('KamekoSettings: section "' + entry.id + '" failed to render', e); }
     });
+
+    if (body) body.scrollTop = st;
   }
 
   window.KamekoSettings = {
