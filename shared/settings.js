@@ -193,6 +193,7 @@
       // River Run
       'riverRun_autoShoot', 'riverRun_autoAvoid',
       'riverRun_invertControls', 'muted',
+      'riverRun_autoPlay', 'riverRun_autoPlaySpeed', 'riverRun_autoRestart',
       // Blob Zapper
       'blobZapper_autoPlay', 'blobZapper_autoRestart',
       // Durak

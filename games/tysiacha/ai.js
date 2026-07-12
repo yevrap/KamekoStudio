@@ -26,6 +26,7 @@ export function estimateHand(hand, difficulty = 'normal') {
 
 export function aiBid(p) {
     if (state.phase !== 'bidding' || state.bidTurn !== p) return;
+    if (p === 0 && !state.autoPlay) return;
     if (state.currentBid + RAISE <= state.aiEstimate[p]) {
         state.currentBid += RAISE;
         state.highBidder = p;
@@ -50,6 +51,7 @@ export function giveScore(c, marSuits) {
 
 export function aiExchange(p) {
     if (state.phase !== 'exchange') return;
+    if (p === 0 && !state.autoPlay) return;
     const marSuits = marriagesInHand(state.players[p].hand);
     const ranked = state.players[p].hand.slice().sort((a, b) => giveScore(a, marSuits) - giveScore(b, marSuits));
     const gives = [ranked[0], ranked[1]];
@@ -77,6 +79,7 @@ function dumpCard(hand, legal, diff) {
 
 export function aiMove(p) {
     if (state.phase !== 'play' || state.turn !== p) return;
+    if (p === 0 && !state.autoPlay) return;
     const diff = state.difficulty || 'normal';
     const hand = state.players[p].hand;
     const legal = legalMoves(hand);

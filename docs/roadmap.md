@@ -109,6 +109,8 @@ Shipped and closed items, moved out of the working tables on 2026-07-12. Full sh
 
 ### Sprint history
 
+> **Bugfix (2026-07-12) — Tysiacha Watch Mode Takeover & Settings Jump: ✅ completed same day, verified live.** Fixed AI failing to take over when Watch Mode is enabled mid-deal in Tysiacha, and fixed the settings drawer scroll-jump when toggling Watch Speed. Root cause: the settings-closed handler didn't refresh `autoPlay` from localStorage or kickstart the AI for the human seat; the drawer render wiped `innerHTML` without preserving `scrollTop`. Commit `204f9bc`.
+
 > **Bugfix (2026-07-12) — Arcade Watch Mode (b-21): ✅ completed same day, verified live.** Fixed Watch Mode section missing from the settings drawer mid-game. `registerWatchSection` was inappropriately hidden when `autoPlay` was false, preventing players from enabling watch mode during a game. Removed the `when` condition and changed the bottom button to toggle between '▶ Watch' and 'Take Over / Stop' based on the active state. Commit `caa73f7`.
 
 > **Sprint (2026-07-12) — Drawer & update polish (Sprint 4): ✅ completed same day, verified live.** Implemented p1-34 (Update UX deferral), p1-35 (Drawer regroup into Arcade cluster), and b-16 (Drawer scroll affordance). Tests and smoke checks pass. Vault logs updated.
