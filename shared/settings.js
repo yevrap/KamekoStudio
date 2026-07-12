@@ -271,20 +271,23 @@
       // River Run
       'riverRun_autoShoot', 'riverRun_autoAvoid',
       'riverRun_invertControls', 'muted',
+      // Blob Zapper
+      'blobZapper_autoPlay', 'blobZapper_autoRestart',
       // Durak
       'durak_mode', 'durak_playerCount', 'durak_difficulty',
       'durak_wins', 'durak_losses', 'durak_draws',
       'durak_coach', 'durak_perevodnoy', 'durak_first_transfer',
-      'durak_sort', 'durak_autoPlay', 'durak_autoPlaySpeed', 'durak_revealHands',
+      'durak_sort', 'durak_autoPlay', 'durak_autoPlaySpeed', 'durak_revealHands', 'durak_autoRestart',
       // Durak Dungeon / Tactics
       'durakDungeon_bestFloor', 'durakDungeon_victories',
       'durakDungeon_lastSeed', 'durakTactics_victories',
       // Keypad Quest
-      'keypadQuestCheckpoint', 'keypadQuest_decks',
+      'keypadQuestCheckpoint', 'keypadQuest_decks', 'keypadQuest_customDeck',
       'keypadQuest_activeDeckIds', 'keypadQuest_inputMode',
+      'keypadQuest_autoPlay', 'keypadQuest_autoPlaySpeed',
       // Tysiacha
       'tysiacha_lang', 'tysiacha_difficulty', 'tysiacha_muted',
-      'tysiacha_settings'
+      'tysiacha_settings', 'tysiacha_autoPlay', 'tysiacha_fastForward', 'tysiacha_autoRestart'
     ];
     // Per-seat / per-wave keys have dynamic suffixes — clear by prefix.
     const prefixesToRemove = [
@@ -451,6 +454,13 @@
     const basePath = getGalleryPath().replace('index.html', '');
     link.href = basePath + 'shared/settings.css';
     document.head.appendChild(link);
+
+    if (!document.head.querySelector('link[rel="icon"], link[rel="apple-touch-icon"]')) {
+      const fav = document.createElement('link');
+      fav.rel = 'icon';
+      fav.href = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🕹️</text></svg>';
+      document.head.appendChild(fav);
+    }
   }
 
   function injectUI() {

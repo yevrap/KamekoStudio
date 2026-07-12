@@ -926,57 +926,58 @@
             renderer.render(scene, camera);
         };
 
+        // --- Settings panel registration ---
+        if (window.KamekoSettings) {
+            window.KamekoSettings.registerSection('riverrun-settings-section', {
+                title: 'River Run Settings',
+                render: function(container) {
+                    const options = [
+                        { key: 'riverRun_autoShoot',      label: '\uD83C\uDFF9 Auto-Shoot',  get: () => autoShoot,      set: (v) => { autoShoot = v; } },
+                        { key: 'riverRun_autoAvoid',       label: '\uD83D\uDEA4 Auto-Avoid',  get: () => autoAvoid,       set: (v) => { autoAvoid = v; } },
+                        { key: 'riverRun_invertControls',  label: '\uD83D\uDD04 Invert Drag', get: () => invertControls,  set: (v) => { invertControls = v; } },
+                    ];
+
+                    options.forEach(opt => {
+                        const row = document.createElement('div');
+                        row.className = 'settings-row';
+                        row.style.background = 'transparent';
+                        row.style.border = 'none';
+                        row.style.padding = '0';
+
+                        const lbl = document.createElement('label');
+                        lbl.textContent = opt.label;
+                        lbl.style.cursor = 'pointer';
+
+                        const toggle = document.createElement('label');
+                        toggle.className = 'kameko-switch';
+                        const inp = document.createElement('input');
+                        inp.type = 'checkbox';
+                        inp.checked = opt.get();
+                        const slider = document.createElement('span');
+                        slider.className = 'kameko-slider';
+                        toggle.appendChild(inp);
+                        toggle.appendChild(slider);
+
+                        row.appendChild(lbl);
+                        row.appendChild(toggle);
+                        
+                        inp.addEventListener('change', (e) => {
+                            const newVal = e.target.checked;
+                            opt.set(newVal);
+                            localStorage.setItem(opt.key, newVal);
+                        });
+
+                        container.appendChild(row);
+                    });
+                }
+            });
+        }
+
         // --- Settings pause/resume + theme sync ---
         window.addEventListener('settingsOpened', () => {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            if (window.KamekoSettings) {
-                window.KamekoSettings.registerSection('riverrun-settings-section', {
-                    title: 'River Run Settings',
-                    render: function(container) {
-                        const options = [
-                            { key: 'riverRun_autoShoot',      label: '\uD83C\uDFF9 Auto-Shoot',  get: () => autoShoot,      set: (v) => { autoShoot = v; } },
-                            { key: 'riverRun_autoAvoid',       label: '\uD83D\uDEA4 Auto-Avoid',  get: () => autoAvoid,       set: (v) => { autoAvoid = v; } },
-                            { key: 'riverRun_invertControls',  label: '\uD83D\uDD04 Invert Drag', get: () => invertControls,  set: (v) => { invertControls = v; } },
-                        ];
-
-                        options.forEach(opt => {
-                            const row = document.createElement('div');
-                            row.className = 'settings-row';
-                            row.style.background = 'transparent';
-                            row.style.border = 'none';
-                            row.style.padding = '0';
-
-                            const lbl = document.createElement('label');
-                            lbl.textContent = opt.label;
-                            lbl.style.cursor = 'pointer';
-
-                            const toggle = document.createElement('label');
-                            toggle.className = 'kameko-switch';
-                            const inp = document.createElement('input');
-                            inp.type = 'checkbox';
-                            inp.checked = opt.get();
-                            const slider = document.createElement('span');
-                            slider.className = 'kameko-slider';
-                            toggle.appendChild(inp);
-                            toggle.appendChild(slider);
-
-                            row.appendChild(lbl);
-                            row.appendChild(toggle);
-                            
-                            inp.addEventListener('change', (e) => {
-                                const newVal = e.target.checked;
-                                opt.set(newVal);
-                                localStorage.setItem(opt.key, newVal);
-                            });
-
-                            container.appendChild(row);
-                        });
-                    }
-                });
-            }
         });
         window.addEventListener('settingsClosed', () => {
-            document.getElementById('game-settings-riverrun-settings-section')?.remove();
             isDarkMode = localStorage.getItem('theme') !== 'light';
             applyTheme();
             if (!isGameOver) animationFrameId = requestAnimationFrame(gameLoop);

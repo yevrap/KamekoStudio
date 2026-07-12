@@ -113,7 +113,13 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `lastPlayed_riverRun` | river-run | Set on session start |
 | `lastPlayed_blobZapper` | blob-zapper | Set on session start |
 | `blobZapperHighScore` | blob-zapper | Highest combo-scoring run |
+| `blobZapper_autoPlay` | blob-zapper | Auto-play toggle |
+| `blobZapper_autoRestart` | blob-zapper | Auto-restart toggle |
 | `lastPlayed_durak` | durak | Set on session start |
+| `durak_autoPlay` | durak | Simulates matches |
+| `durak_autoPlaySpeed` | durak | Delay between auto actions |
+| `durak_autoRestart` | durak | Automatically restart |
+| `durak_revealHands` | durak | Show AI hands during auto-play |
 | `lastPlayed_durakDungeon` | durak-dungeon | Set on run start |
 | `durakDungeon_bestFloor` | durak-dungeon | Highest floor reached |
 | `durakDungeon_victories` | durak-dungeon | Complete run count |
@@ -128,10 +134,17 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `tysiacha_difficulty` | tysiacha | AI strength `'easy'`/`'normal'`/`'hard'` |
 | `tysiacha_name_[seat]` | tysiacha | Custom name for seat 0–2 (unset = localized default) |
 | `tysiacha_muted` | tysiacha | Sound effects `'true'` = off |
+| `tysiacha_autoPlay` | tysiacha | Simulated tournament mode |
+| `tysiacha_fastForward` | tysiacha | Speed up AI actions during auto play |
+| `tysiacha_autoRestart` | tysiacha | Auto-start next match |
 | `gridGameTopScoreScore` | materials-run | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | Survival mode high score |
+| `materialsRun_autoPlay` | materials-run | Auto-play toggle |
+| `materialsRun_autoRestart` | materials-run | Auto-restart toggle |
 | `riverRunHighScore` | river-run | Points high score |
 | `keypadQuestHighWave` | keypad-quest | Highest wave reached |
+| `keypadQuest_autoPlay` | keypad-quest | Auto-play toggle |
+| `keypadQuest_autoPlaySpeed` | keypad-quest | Delay between auto actions |
 
 ## Three.js Obstacle Arrays
 
