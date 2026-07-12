@@ -268,7 +268,6 @@
       'lastPlayed_blobZapper', 'lastPlayed_durak',
       'lastPlayed_durakDungeon', 'lastPlayed_durakTactics',
       'lastPlayed_durakAlchemist', 'lastPlayed_tysiacha',
-      'lastPlayed_waterfall',
       // River Run
       'riverRun_autoShoot', 'riverRun_autoAvoid',
       'riverRun_invertControls', 'muted',
@@ -506,9 +505,6 @@
       { slug: 'blob-zapper',     emoji: '⚡', title: 'Blob Zapper' },
       { slug: 'materials-run',   emoji: '🏃', title: 'Materials Run' },
       { slug: 'durak',           emoji: '🃏', title: 'Durak' },
-      { slug: 'durak-dungeon',   emoji: '🏰', title: 'Durak Dungeon' },
-      { slug: 'durak-tactics',   emoji: '⚔️', title: 'Durak Tactics' },
-      { slug: 'durak-alchemist', emoji: '⚗️', title: 'Durak Alchemist' },
       { slug: 'tysiacha',        emoji: '🎴', title: 'Tysiacha' }
     ];
     const currentGameMatch = location.pathname.match(/\/games\/([^/]+)/);

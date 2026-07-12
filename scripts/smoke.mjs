@@ -8,7 +8,7 @@
 //
 // Run:  npm run smoke        (needs `npm install` once, and Google Chrome)
 // Override the browser binary with CHROME_PATH if Chrome lives elsewhere.
-// Note: pages that load three.js from a CDN (river-run, waterfall, 3d.html)
+// Note: pages that load three.js from a CDN (river-run, 3d.html)
 // need network access, same as production.
 
 import http from 'node:http';

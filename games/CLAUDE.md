@@ -38,7 +38,6 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `materials-run/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; rendering tightly coupled to physics/state updates, merged into gameplay.js like durak-tactics) |
 | `blob-zapper/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; canvas rendering tightly coupled to physics/particle state, merged into gameplay.js like durak-tactics) |
 | `river-run/` | — | ⏸ Lower priority | Three.js; complex event + audio setup; different architecture |
-| `waterfall/` | — | ⏸ Lower priority | Three.js; not in gallery |
 
 **When refactoring a game:** start with `durak-dungeon/` as the reference. Use `durak-tactics/` as the example for games where rendering and game logic are too tightly coupled to split into a separate `ui.js` — put both in `gameplay.js`.
 
@@ -50,15 +49,14 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 |-----------|-------|----------|--------|
 | `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Stable |
 | `durak/` | Durak | DOM | Stable |
-| `durak-alchemist/` | Durak Alchemist | DOM/CSS grid | Stable |
-| `durak-dungeon/` | Durak Dungeon | DOM | Stable |
-| `durak-tactics/` | Durak Tactics | DOM | Stable |
+| `durak-alchemist/` | Durak Alchemist | DOM/CSS grid | Lab (shelved from gallery, p1-29) |
+| `durak-dungeon/` | Durak Dungeon | DOM | Lab (shelved from gallery, p1-29) |
+| `durak-tactics/` | Durak Tactics | DOM | Lab (shelved from gallery, p1-29) |
 | `hidden-object/` | Hidden Object Game | DOM | Stable |
 | `keypad-quest/` | Keypad Quest | Canvas 2D | Stable |
 | `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
 | `tysiacha/` | Tysiacha (1000) | DOM | Stable |
 | `river-run/` | River Runner 3D | Three.js r128 | Stable |
-| `waterfall/` | 3D Auto-Aim Endless Shooter | Three.js r128 | Stable (not in gallery) |
 
 ## Conventions Shared Across Games
 

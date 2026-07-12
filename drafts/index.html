@@ -125,6 +125,9 @@
             color: var(--text-muted);
             font-style: italic;
         }
+
+        /* Full games shelved out of the arcade gallery (still playable here) */
+        .draft-card.shelved { border-left-color: #a88aff; }
     </style>
 </head>
 
@@ -148,6 +151,40 @@
             <div class="draft-list">
 
                 <div class="empty-note">No prototypes currently in the lab.</div>
+
+            </div>
+        </section>
+
+        <section style="margin-top: 2.5rem;">
+            <div class="section-label">Shelved from the arcade</div>
+            <div class="draft-list">
+
+                <a href="../games/durak-dungeon/" class="draft-card shelved">
+                    <div class="d-emoji">🏰</div>
+                    <div class="d-body">
+                        <span class="d-name">Durak Dungeon</span>
+                        <span class="d-desc">Roguelike dungeon crawler on Durak card mechanics — 20 floors, relics, seeded runs.</span>
+                    </div>
+                    <div class="d-date">shelved 2026-07</div>
+                </a>
+
+                <a href="../games/durak-tactics/" class="draft-card shelved">
+                    <div class="d-emoji">⚔️</div>
+                    <div class="d-body">
+                        <span class="d-name">Durak Tactics</span>
+                        <span class="d-desc">Turn-based grid tactics driven by Durak combat — campaign map, shops, bosses.</span>
+                    </div>
+                    <div class="d-date">shelved 2026-07</div>
+                </a>
+
+                <a href="../games/durak-alchemist/" class="draft-card shelved">
+                    <div class="d-emoji">⚗️</div>
+                    <div class="d-body">
+                        <span class="d-name">Durak Alchemist</span>
+                        <span class="d-desc">Grid puzzle-battler — merge Durak cards, trigger chained combat.</span>
+                    </div>
+                    <div class="d-date">shelved 2026-07</div>
+                </a>
 
             </div>
         </section>

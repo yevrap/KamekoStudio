@@ -60,7 +60,6 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
   materials-run/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   tysiacha/         — index.html + style.css + ES modules (constants/state/gameplay/ai/ui/main.js)
   river-run/
-  waterfall/
 ```
 
 **Per-game file convention:** Modern games use **Native ES Modules** (`type="module"`) split by concern — `constants.js`, `state.js`, `ui.js` (or equivalent), `gameplay.js`, `main.js`. See `games/CLAUDE.md` for the full file table and rationale. `games/durak-dungeon/` is the reference implementation. Older single-file `game.js` games are acceptable until they grow unwieldy; they are candidates for the module split when they exceed ~800 lines. Classic `<script>` tags (no `type="module"`) remain correct for `shared/settings.js` and `shared/utils.js`.
@@ -75,12 +74,11 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/hidden-object/` | Hidden Object Game | DOM | Emoji-finding challenge. Mobile-vertical layout. |
 | `games/keypad-quest/` | Keypad Quest | Canvas 2D | T9 tower defense: answer flashcard questions to place towers. Circular enemy path, multiple named decks, deck import/export. Saves `keypadQuestHighWave`. |
 | `games/river-run/` | River Runner 3D | Three.js | 3D obstacle-dodging river runner. Has per-game settings (auto-shoot, auto-avoid, invert drag). Saves `riverRunHighScore`. |
-| `games/waterfall/` | 3D Auto-Aim Endless Shooter | Three.js | 3D shooter, mobile-friendly. Not listed in gallery (intentional). |
 | `games/blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Push blobs with electricity. |
-| `games/durak-alchemist/` | Durak Alchemist | DOM/CSS grid | Grid-based puzzle game using Durak card mechanics. Place cards on a grid to trigger chain reactions. Saves `alchemistHighScore`. |
+| `games/durak-alchemist/` | Durak Alchemist | DOM/CSS grid | **Lab** (shelved from the gallery 2026-07-12, p1-29). Grid-based puzzle game using Durak card mechanics. Place cards on a grid to trigger chain reactions. Saves `alchemistHighScore`. |
 | `games/durak/` | Durak | DOM | Classic Russian card game for 2–6 players. Modes: vs Computer (1 human + 2–5 AI) or Hot-seat (2–6 humans sharing a device, with a pass-device cover at 3+ players). Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap, pile-on during the defender's take, ordered end-of-bout draws (attacker → contributors → defender), elimination when hand and deck are both empty. Last player holding cards is the Durak. |
-| `games/durak-dungeon/` | Durak Dungeon | DOM | Roguelike dungeon crawler using Durak card mechanics. Defend against enemy attacks using Durak rules, then counter-attack to deal damage. 20-floor run with relics (15 types), shops, enhanced cards (burning/armored/vampiric/lucky), boss mutations. Seeded runs for async multiplayer via URL. |
-| `games/durak-tactics/` | Durak Tactics | DOM | Turn-based grid tactics using Durak card mechanics. Place cards as units on a 5×4 grid to battle enemy units. Campaign map with battles, shops, events, and bosses. Draft cards and spend gold between encounters. |
+| `games/durak-dungeon/` | Durak Dungeon | DOM | **Lab** (shelved from the gallery 2026-07-12, p1-29). Roguelike dungeon crawler using Durak card mechanics. Defend against enemy attacks using Durak rules, then counter-attack to deal damage. 20-floor run with relics (15 types), shops, enhanced cards (burning/armored/vampiric/lucky), boss mutations. Seeded runs for async multiplayer via URL. |
+| `games/durak-tactics/` | Durak Tactics | DOM | **Lab** (shelved from the gallery 2026-07-12, p1-29). Turn-based grid tactics using Durak card mechanics. Place cards as units on a 5×4 grid to battle enemy units. Campaign map with battles, shops, events, and bosses. Draft cards and spend gold between encounters. |
 | `games/tysiacha/` | Tysiacha | DOM | Classic trick-taking card game — bid, declare marriages, race to 1000. Built-in interactive coach, full English/Russian toggle (i18n.js string table), AI difficulty levels, renamable players, synthesized sound effects (sfx.js). Saves `tysiachaHighScore`. |
 
 ## Shared Infrastructure: `shared/settings.js`

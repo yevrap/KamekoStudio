@@ -4,7 +4,7 @@ Game prototypes from `/new-game` jam sessions, plus non-game experiments. Nothin
 
 ## Files
 
-- **`index.html`** — The Lab index: lists every prototype (name, one-liner, link, date, newest first). Linked from the arcade root header ("Lab 🧪"). Register every new prototype here.
+- **`index.html`** — The Lab index: lists every prototype (name, one-liner, link, date, newest first), plus a "Shelved from the arcade" section for full games demoted out of the root gallery (p1-29: durak-dungeon, durak-tactics, durak-alchemist). Shelved games keep their `games/<name>/` URLs and code — shelving is a listing move, not a code move. Linked from the arcade root header ("Lab 🧪"). Register every new prototype here.
 - **`arcadeHome.html`** — An alternate, simpler arcade home page. Generates game cards dynamically from a JS array. Not currently linked from anywhere. Candidate to replace or supplement `index.html` once it's further developed.
 
 <!-- GEMINI-OVERRIDE:notes-heading -->
