@@ -4,16 +4,16 @@ Design documentation and studio notes. These are living documents — update the
 
 ## Files
 
+- **`roadmap.md`** — The working backlog. Agents read this to pick the next work item; open items only in the priority tables, shipped history at the bottom. Keep it updated as things ship.
 - **`mission.md`** — Studio philosophy, principles, constraints, and long-term vision. Read this to understand why decisions are made the way they are.
 - **`promotion-checklist.md`** — The 6-phase checklist a `drafts/<slug>/` prototype pays to graduate into `games/`. Run it when a draft gets a **keep** verdict in the vault's Kameko Playtest Log.
-- **`memory-game-design.md`** — Full design spec (Draft v0.2) for the upcoming T9 memory/flashcard game. This is the next game to build. Covers the T9 input system (scroll-select and predictive modes), deck structure, import/export, platform layout, and technical direction.
-- **`durak-like/`** — Numbered design docs (`NN-name-focus.md`) for the Durak family of games: existing variants (dungeon, tactics, alchemist), unimplemented proposals (bazaar, tower, merge/chaining concepts), and major refactor plans for shipped games.
-  - **`10-durak-base-refactor.md`** — Active multi-phase plan to refactor the original Durak game (`games/durak/`) from a 606-line monolith into a flagship multiplayer card game: ES module split, multi-opponent (2–6) play, themed-table SVG visuals, AI difficulty levels, and async link-sharing turn-based play.
+- **`memory-game-design.md`** — Design spec (Draft v0.2) for a T9 memory/flashcard game. A jam-candidate design, not a commitment — the T9 input system it specifies shipped in keypad-quest, and new games now come from the `/new-game` jam loop steered by `brief.md` (roadmap p0-08). Its open questions are unresolved; don't assume answers.
+- **`durak-like/`** — Numbered design docs (`NN-name-focus.md`) for the Durak family of games: existing variants (dungeon, tactics, alchemist), unimplemented proposals (bazaar, tower, merge/chaining concepts), and refactor plans for shipped games. Historical design context — the three shipped durak-likes are Lab-tier as of the July 2026 taste verdicts (roadmap p1-29).
+- **`archive/`** — Superseded brainstorms kept for history (pre-loop new-game ideas, sharing-game notes). Nothing in here steers current work.
 
 <!-- GEMINI-OVERRIDE:notes-heading -->
 ## Notes for Claude
 <!-- /GEMINI-OVERRIDE -->
 
 - These docs are the source of truth for *intent* — what the studio is trying to do and why.
-- The memory game design doc contains open questions that haven't been resolved yet. Don't assume answers to them.
-- When the memory game build starts, check `memory-game-design.md` for constraints before suggesting any architecture.
+- `roadmap.md` is the source of truth for *what's next*; the vault's Kameko notes hold playtest verdicts and product decisions that feed it.

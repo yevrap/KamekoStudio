@@ -1,1 +1,0 @@
-I want to make a 3d game. One that is mobile first but looks and plays great on larger laptop screens as well. Propose 3 game ideas in this space. I want the games to be simple enough to be developed by gemini and claude agents but fun and complete.
