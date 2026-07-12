@@ -25,7 +25,7 @@ export function estimateHand(hand, difficulty = 'normal') {
 // ── AI Bidding ───────────────────────────────────────────────────────────
 
 export function aiBid(p) {
-    if (state.phase !== 'bidding') return;
+    if (state.phase !== 'bidding' || state.bidTurn !== p) return;
     if (state.currentBid + RAISE <= state.aiEstimate[p]) {
         state.currentBid += RAISE;
         state.highBidder = p;

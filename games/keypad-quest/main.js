@@ -5,7 +5,7 @@ import { TR } from './constants.js';
 import { loadDecks, buildActiveDeck, updateMenuPlayBtn, showDeckSelector, hideDeckSelector, showDeckManager, hideDeckManager, showNewDeckForm, showImportTextarea, doImport, showImportPrompt, hideImportPrompt, renderDeckSelector } from './deck-manager.js';
 import { resizeCanvas, startLoop } from './rendering.js';
 import { startWave, showMenu, clearCP, loadCP, makeTower, getBT } from './gameplay.js';
-import { buildT9Pad, buildTowerStrip, setInputMode, updateInputDisplay, updateStreakDisplay, showNextPrompt, handleT9, submitAnswer, buildKeyboardAnswer, showHint } from './input.js';
+import { buildT9Pad, buildTowerStrip, setInputMode, updateInputDisplay, updateStreakDisplay, showNextPrompt, handleT9, submitAnswer, buildKeyboardAnswer, showHint, abortKeypadQuestAutoPlay } from './input.js';
 
 // ─── Start / continue game ────────────────────────────────────────────────────
 
@@ -79,13 +79,14 @@ state.canvas.addEventListener('pointerdown', e => {
 // Keyboard shortcuts (physical keyboard → T9)
 window.addEventListener('keydown', e => {
   if (state.gameState !== 'playing' || state.inputMode === 'keyboard') return;
-  if (e.key === 'Backspace') { handleT9('back'); e.preventDefault(); return; }
-  if (e.key === 'Enter' || e.key === ' ') { handleT9('ok'); e.preventDefault(); return; }
-  if (/^[0-9]$/.test(e.key)) { handleT9(e.key); e.preventDefault(); }
+  if (e.key === 'Backspace') { abortKeypadQuestAutoPlay(); handleT9('back'); e.preventDefault(); return; }
+  if (e.key === 'Enter' || e.key === ' ') { abortKeypadQuestAutoPlay(); handleT9('ok'); e.preventDefault(); return; }
+  if (/^[0-9]$/.test(e.key)) { abortKeypadQuestAutoPlay(); handleT9(e.key); e.preventDefault(); }
 });
 
 // Keyboard mode submit
 document.getElementById('keyboard-submit').addEventListener('click', () => {
+  abortKeypadQuestAutoPlay();
   const ki = document.getElementById('keyboard-input');
   const typed = ki.value; ki.value = '';
   submitAnswer(buildKeyboardAnswer(typed)); updateInputDisplay(); ki.focus();
@@ -94,12 +95,14 @@ document.getElementById('keyboard-submit').addEventListener('click', () => {
 document.getElementById('keyboard-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
+    abortKeypadQuestAutoPlay();
     const typed = e.target.value; e.target.value = '';
     submitAnswer(buildKeyboardAnswer(typed)); updateInputDisplay(); e.target.focus();
   }
 });
 
 document.getElementById('keyboard-input').addEventListener('input', () => {
+  abortKeypadQuestAutoPlay();
   const ki = document.getElementById('keyboard-input');
   const filtered = ki.value.replace(/[^a-z0-9]/gi, '');
   if (ki.value !== filtered) ki.value = filtered;

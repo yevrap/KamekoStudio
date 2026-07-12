@@ -437,12 +437,7 @@ export function animate(currentTime = 0) {
             
             // --- Auto Play Logic ---
             if (localStorage.getItem('blobZapper_autoPlay') === 'true') {
-                if (state.touchPoints.length > 0) {
-                    // Manual takeover (user is touching), pause autoplay
-                    state.autoPlayLastZap = currentTime; // reset timer
-                    state.autoPlayTarget = null;
-                } else {
-                    if (!state.autoPlayLastZap) state.autoPlayLastZap = currentTime;
+                if (!state.autoPlayLastZap) state.autoPlayLastZap = currentTime;
                     
                     if (!state.autoPlayTarget && state.blobs.length > 0) {
                         const delay = Math.max(100, 800 - (state.score * 5)); // Gets faster
@@ -475,7 +470,6 @@ export function animate(currentTime = 0) {
                             state.autoPlayLastZap = currentTime;
                         }
                     }
-                }
             }
             if (state.autoPlayLaser) {
                 state.autoPlayLaser.life -= 0.05 * deltaTime;
@@ -521,9 +515,18 @@ export function animate(currentTime = 0) {
     }
 }
 
+function abortBlobZapperAutoPlay() {
+    if (localStorage.getItem('blobZapper_autoPlay') === 'true') {
+        localStorage.setItem('blobZapper_autoPlay', 'false');
+        state.autoPlayTarget = null;
+        if (window.KamekoSettings) window.KamekoSettings.openDrawer = window.KamekoSettings.openDrawer;
+    }
+}
+
 // --- Button Push Logic ---
 export function pushBlobsTowardsCenter() {
     if (state.isGameOver) return;
+    abortBlobZapperAutoPlay();
     console.log("Push button activated");
     state.blobs.forEach(blob => {
         const dx = state.destructionZone.x - blob.x; const dy = state.destructionZone.y - blob.y;
@@ -543,6 +546,7 @@ export function handlePointerDown(id, clientX, clientY) {
 
         localStorage.setItem('lastPlayed_blobZapper', Date.now()); init(); return;
     }
+    abortBlobZapperAutoPlay();
     try {
         const rect = dom.canvas.getBoundingClientRect();
         if (!rect) { console.error("Canvas rect not found in handlePointerDown"); return; }

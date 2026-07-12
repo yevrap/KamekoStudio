@@ -254,6 +254,13 @@ $passOverlay.addEventListener('pointerdown', function (e) {
   tick();
 });
 
+function abortDurakAutoPlay() {
+  if (localStorage.getItem('durak_autoPlay') === 'true') {
+    localStorage.setItem('durak_autoPlay', 'false');
+    if (window.KamekoSettings) window.KamekoSettings.openDrawer = window.KamekoSettings.openDrawer;
+  }
+}
+
 // ── Action buttons ─────────────────────────────────────────────────────────
 
 $humanOptions.addEventListener('pointerdown', function (e) {
@@ -271,6 +278,7 @@ $humanOptions.addEventListener('pointerdown', function (e) {
   else if (action === 'pass') ok = passAttack(seat);
   else if (action === 'done') ok = pileOnPass(seat);
   if (!ok) return;
+  abortDurakAutoPlay();
   handleAfterAction(seat);
 });
 
@@ -323,6 +331,7 @@ $humanHand.addEventListener('pointerup', function (e) {
     ok = playAttack(seat, start.cardId);
   }
   if (!ok) return;
+  abortDurakAutoPlay();
   handleAfterAction(seat);
 });
 
@@ -353,7 +362,10 @@ function resolveChoice(action) {
   var pc = pendingChoice;
   hideChoice();
   var ok = action === 'transfer' ? playTransfer(pc.seat, pc.cardId) : playDefense(pc.seat, pc.cardId);
-  if (ok) handleAfterAction(pc.seat);
+  if (ok) {
+    abortDurakAutoPlay();
+    handleAfterAction(pc.seat);
+  }
 }
 
 document.getElementById('btn-choice-transfer').addEventListener('pointerdown', function (e) {

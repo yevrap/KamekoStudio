@@ -244,6 +244,21 @@ document.addEventListener('click', (e) => {
         return;
     }
 
+    const isManualAction = e.target.closest('#act-bid') ||
+                           e.target.closest('#act-pass') ||
+                           e.target.closest('#act-give') ||
+                           e.target.closest('#act-reraise') ||
+                           e.target.closest('#act-play-card') ||
+                           e.target.closest('#act-declare') ||
+                           e.target.closest('#hand .card');
+
+    if (isManualAction && state.autoPlay) {
+        state.autoPlay = false;
+        localStorage.setItem('tysiacha_autoPlay', 'false');
+        banner('Manual Takeover');
+        if (window.KamekoSettings) window.KamekoSettings.openDrawer = window.KamekoSettings.openDrawer; // Trigger settings re-render next time it opens, though it reads localStorage anyway.
+    }
+
     if (e.target.closest('#act-bid')) return humanBid(false);
     if (e.target.closest('#act-pass')) return humanBid(true);
     if (e.target.closest('#act-give')) return confirmExchange();

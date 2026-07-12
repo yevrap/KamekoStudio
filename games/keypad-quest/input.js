@@ -368,7 +368,7 @@ export function buildT9Pad() {
     if (key.id) btn.id = key.id;
     btn.innerHTML = '<span class="kn">'+key.n+'</span>' + (key.l ? '<span class="kl">'+key.l+'</span>' : '');
     const k = key.a || key.n;
-    btn.addEventListener('pointerdown', e => { e.preventDefault(); btn.classList.add('pressed'); handleT9(k); });
+    btn.addEventListener('pointerdown', e => { e.preventDefault(); btn.classList.add('pressed'); abortKeypadQuestAutoPlay(); handleT9(k); });
     btn.addEventListener('pointerup',    () => btn.classList.remove('pressed'));
     btn.addEventListener('pointerleave', () => btn.classList.remove('pressed'));
     pad.appendChild(btn);
@@ -376,6 +376,14 @@ export function buildT9Pad() {
 }
 
 // ─── Auto Play ────────────────────────────────────────────────────────────────
+
+export function abortKeypadQuestAutoPlay() {
+  if (state.autoPlay) {
+    state.autoPlay = false;
+    localStorage.setItem('keypadQuest_autoPlay', 'false');
+    if (window.KamekoSettings) window.KamekoSettings.openDrawer = window.KamekoSettings.openDrawer;
+  }
+}
 
 export function updateAutoPlay(ts) {
   if (!state.currentPair || state.gameState !== 'playing') return;
