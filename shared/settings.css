@@ -68,6 +68,19 @@
   transform: translateX(0);
 }
 
+/* ─── Scroll Affordance ─── */
+#settings-scroll-affordance {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(to bottom, transparent, #1a1a2e);
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
 /* ─── Drawer Header ─── */
 #settings-drawer-header {
   display: flex;
@@ -130,16 +143,27 @@
   display: flex;
 }
 
-/* ─── Quick Game Switcher ─── */
-.settings-subhead {
-  font-size: 0.72em;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: rgba(255,255,255,0.5);
-  font-family: sans-serif;
-  margin-bottom: -8px;
+/* ─── Arcade Cluster ─── */
+.settings-arcade-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 8px;
 }
 
+.settings-arcade-cluster-title {
+  margin: 0;
+  font-size: 1.1em;
+  font-family: sans-serif;
+  color: rgba(255,255,255,0.85);
+  font-weight: 600;
+}
+
+/* ─── Quick Game Switcher ─── */
 #settings-game-switcher {
   display: flex;
   flex-shrink: 0; /* the drawer body is a flex column — don't collapse the row */

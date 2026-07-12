@@ -54,11 +54,15 @@
     });
   }
 
-  function checkForUpdates() {
+  function checkForUpdates(isManual = false) {
     if (!loadedVersion) return;
     fetchVersionInfo(true).then(newData => {
       if (newData && newData.version > loadedVersion.version) {
-        showUpdateBanner(newData);
+        if (isManual || getGalleryPath() === 'index.html' || (document.getElementById('settings-overlay') && document.getElementById('settings-overlay').classList.contains('open'))) {
+          showUpdateBanner(newData);
+        } else {
+          window.KamekoPendingUpdate = newData;
+        }
       }
     });
   }
@@ -264,6 +268,17 @@
       updateDarkModeButton();
       updateDevModeUI();
       renderAllGameSections();
+
+      if (window.KamekoPendingUpdate) {
+        showUpdateBanner(window.KamekoPendingUpdate);
+        window.KamekoPendingUpdate = null;
+      }
+
+      const body = document.getElementById('settings-drawer-body');
+      if (body) {
+        body.scrollTop = 0;
+        body.dispatchEvent(new Event('scroll'));
+      }
     }
     window.dispatchEvent(new CustomEvent('settingsOpened'));
   }
@@ -505,6 +520,15 @@
     const body = document.createElement('div');
     body.id = 'settings-drawer-body';
     
+    // Scroll affordance
+    const affordance = document.createElement('div');
+    affordance.id = 'settings-scroll-affordance';
+    
+    body.addEventListener('scroll', function() {
+      const isAtBottom = body.scrollHeight - body.scrollTop <= body.clientHeight + 4;
+      affordance.style.opacity = isAtBottom ? '0' : '1';
+    });
+
     // Game Specific Section Container
     const gameSection = document.createElement('div');
     gameSection.id = 'settings-game-section';
@@ -512,6 +536,15 @@
 
     const galleryPath = getGalleryPath();
     const basePath = galleryPath.replace('index.html', '');
+
+    // ─── Arcade Cluster ───────────────────────────────────────────────────
+    const arcadeCluster = document.createElement('div');
+    arcadeCluster.className = 'settings-arcade-cluster';
+
+    const arcadeTitle = document.createElement('h3');
+    arcadeTitle.textContent = 'Arcade';
+    arcadeTitle.className = 'settings-arcade-cluster-title';
+    arcadeCluster.appendChild(arcadeTitle);
 
     // ─── Quick game switcher ──────────────────────────────────────────────
     // One-tap jumps between games without going through the gallery.
@@ -527,11 +560,6 @@
     const currentGameMatch = location.pathname.match(/\/games\/([^/]+)/);
     const currentSlug = currentGameMatch ? currentGameMatch[1] : null;
 
-    const switcherHead = document.createElement('div');
-    switcherHead.className = 'settings-subhead';
-    switcherHead.textContent = 'Games';
-    body.appendChild(switcherHead);
-
     const switcher = document.createElement('div');
     switcher.id = 'settings-game-switcher';
     GAMES.forEach(function (g) {
@@ -543,7 +571,7 @@
       icon.textContent = g.emoji;
       switcher.appendChild(icon);
     });
-    body.appendChild(switcher);
+    arcadeCluster.appendChild(switcher);
 
     // Theme toggle + gallery link, side by side to keep the drawer short
     const chromeRow = document.createElement('div');
@@ -565,12 +593,7 @@
     galleryLink.innerHTML = '\uD83C\uDFE0 Gallery';
     chromeRow.appendChild(galleryLink);
 
-    body.appendChild(chromeRow);
-
-    // ─── Developer Tools ──────────────────────────────────────────────────
-    const devToolsSeparator = document.createElement('div');
-    devToolsSeparator.style.cssText = 'border-top: 1px solid rgba(255,255,255,0.15); margin-top: 8px;';
-    body.appendChild(devToolsSeparator);
+    arcadeCluster.appendChild(chromeRow);
 
     // ─── App section (collapsed by default) ───────────────────────────────
     // Dev mode, clear-data, and version/update controls are rarely needed —
@@ -699,9 +722,11 @@
     versionContainer.appendChild(updateResultBox);
     appDetails.appendChild(versionContainer);
 
-    body.appendChild(appDetails);
+    arcadeCluster.appendChild(appDetails);
+    body.appendChild(arcadeCluster);
 
     panel.appendChild(body);
+    panel.appendChild(affordance);
     overlay.appendChild(panel);
 
     // Close on backdrop click
