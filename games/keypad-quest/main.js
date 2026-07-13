@@ -200,6 +200,7 @@ function injectKeypadSettings() {
 
   window.KamekoSettings.registerWatchSection('keypadQuest', {
     hasRevealHands: false,
+    hasAutoRestart: false,
     onStart: () => {
       state.autoPlay = true;
       if (state.gameState === 'menu') startGame('play', false);

@@ -175,11 +175,7 @@ function spawnTrophies() {
     engineState.walls.push(new THREE.Box3().setFromObject(shelf));
 
     const achievements = [];
-    
-    const tokens = parseInt(localStorage.getItem('tokens') || '0', 10);
-    if (tokens > 0) 
-        achievements.push({ type: 'coin', color: 0xffd700, desc: `Arcade Tokens: ${tokens}` });
-    
+
     const blobScore = parseInt(localStorage.getItem('blobZapperHighScore') || '0', 10);
     if (blobScore > 0) 
         achievements.push({ type: 'blob', color: 0xff0000, desc: `Blob Zapper High Score: ${blobScore}` });

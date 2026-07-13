@@ -332,27 +332,6 @@
   background: #b91c1c;
 }
 
-/* ─── Token System UI ─── */
-#settings-get-token-btn {
-  background: #d97706;
-  color: #fff;
-  border: 1px solid #f59e0b;
-  border-radius: 6px;
-  padding: 6px 12px;
-  font-size: 0.85em;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s, box-shadow 0.15s;
-  font-family: sans-serif;
-  white-space: nowrap;
-  box-shadow: 0 0 8px rgba(245,158,11,0.35);
-}
-
-#settings-get-token-btn:hover {
-  background: #b45309;
-  box-shadow: 0 0 14px rgba(245,158,11,0.6);
-}
-
 /* ─── Toggle Switch ─── */
 .kameko-switch {
   position: relative;

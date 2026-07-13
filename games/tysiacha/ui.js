@@ -204,9 +204,6 @@ export function localizeStatic() {
     setText('title-sub', t('subtitle', state.settings.targetScore || 1000));
     setText('ht-title', t('howto.title'));
     setText('lg-title', t('log.title'));
-    setText('marry-title', t('marry.title'));
-    setText('marry-no', t('marry.no'));
-    setText('marry-yes', t('marry.yes'));
     setText('sum-log', t('sum.review'));
     // New Match setup overlay (static markup in index.html)
     setText('setup-title', t('setup.title'));

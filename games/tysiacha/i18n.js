@@ -155,11 +155,7 @@ const EN = {
     'sum.review': '📜 Review deal',
     'banner.highScore': n => `New high score! ${n}`,
 
-    // marriage prompt
-    'marry.title': 'Declare a marriage?',
-    'marry.body': card => `<p>You hold both ${suitHTML(card.s)} K and Q. Leading the <span class="hl">${cardText(card)}</span> lets you declare the marriage:</p>
-        <p>· ${suitText(card.s)} become <span class="hl">trump</span> — they beat every other suit<br>
-        · you immediately score <span class="hl">+${MARRIAGE[card.s]} points</span></p>`,
+    // marriage action-bar buttons (act-play-card / act-declare)
     'marry.no': 'Just play the card', 'marry.yes': 'Declare!',
 
     // static chrome
@@ -294,10 +290,6 @@ const RU = {
     'sum.review': '📜 Журнал раздачи',
     'banner.highScore': n => `Новый рекорд! ${n}`,
 
-    'marry.title': 'Объявить марьяж?',
-    'marry.body': card => `<p>У вас ${suitHTML(card.s)} К и Д. Заход с <span class="hl">${cardText(card)}</span> позволяет объявить марьяж:</p>
-        <p>· ${suitText(card.s)} становятся <span class="hl">козырем</span> — бьют все остальные масти<br>
-        · вы сразу получаете <span class="hl">+${MARRIAGE[card.s]} очков</span></p>`,
     'marry.no': 'Просто сыграть карту', 'marry.yes': 'Объявить!',
 
     'title': 'Тысяча', 'subtitle': target => `· до ${target}`,

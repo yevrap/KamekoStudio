@@ -6,16 +6,11 @@ import {
 import { state, dom } from './state.js';
 
 // --- Screen Management & UI Updates ---
-export function updateTokenDisplay() {
-
-}
-
 export function showScreen(screenName) {
     state.currentScreen = screenName;
     dom.mainScreenElement.classList.toggle('hidden', screenName !== 'main');
     dom.gameScreenContainerElement.classList.toggle('hidden', screenName !== 'game');
     if (screenName === 'main') {
-        updateTokenDisplay();
         if (state.animationFrameId) cancelAnimationFrame(state.animationFrameId);
         if (state.roundIntervalId) clearInterval(state.roundIntervalId);
         state.lastFrameTime = 0;

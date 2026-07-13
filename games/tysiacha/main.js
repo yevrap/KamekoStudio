@@ -221,15 +221,6 @@ $('sum-next').onclick = () => {
     summaryNext();
 };
 
-$('marry-yes').onclick = () => {
-    $('marry').classList.add('hidden');
-    if (state.pendingCard) { playCard(0, state.pendingCard, true); state.pendingCard = null; }
-};
-$('marry-no').onclick = () => {
-    $('marry').classList.add('hidden');
-    if (state.pendingCard) { playCard(0, state.pendingCard, false); state.pendingCard = null; }
-};
-
 document.addEventListener('click', (e) => {
     // Overlay outside click or X button
     if (e.target.classList.contains('overlay') || e.target.classList.contains('close-btn')) {
@@ -238,8 +229,7 @@ document.addEventListener('click', (e) => {
         // behind it to return to, so it can't be dismissed.
         if (overlay && overlay.id === 'setup' && state.phase === 'idle') return;
         if (overlay) overlay.classList.add('hidden');
-        // First visit: rules first, then the New Match setup (which owns the
-        // token spend via its Play button).
+        // First visit: rules first, then the New Match setup screen.
         if (overlay && overlay.id === 'howto' && state.phase === 'idle') showSetup();
         return;
     }

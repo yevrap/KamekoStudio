@@ -484,11 +484,9 @@ function updateHeader() {
     if (state.phase !== 'start' && state.trumpSuit) {
       var isRed = (state.trumpSuit === 3 || state.trumpSuit === 4);
       $trumpDisplay.className = isRed ? 'suit-red' : 'suit-black';
-      if (state.deck.length > 0 && state.trumpCard) {
-        $trumpDisplay.textContent = displayValue(state.trumpCard.value) + suitEmoji(state.trumpSuit);
-      } else {
-        $trumpDisplay.textContent = suitEmoji(state.trumpSuit);
-      }
+      // Suit only (p1-24): the actual trump card is already face-up under the
+      // deck in #trump-slot, so the header chip needn't repeat its value.
+      $trumpDisplay.textContent = suitEmoji(state.trumpSuit);
     } else {
       $trumpDisplay.textContent = '';
       $trumpDisplay.className = '';

@@ -207,7 +207,7 @@
       // Keypad Quest
       'keypadQuestCheckpoint', 'keypadQuest_decks', 'keypadQuest_customDeck',
       'keypadQuest_activeDeckIds', 'keypadQuest_inputMode',
-      'keypadQuest_autoPlay', 'keypadQuest_autoPlaySpeed',
+      'keypadQuest_autoPlay', 'keypadQuest_autoPlaySpeed', 'keypadQuest_autoRestart',
       // Tysiacha
       'tysiacha_lang', 'tysiacha_difficulty', 'tysiacha_muted',
       'tysiacha_settings', 'tysiacha_autoPlay', 'tysiacha_autoPlaySpeed', 'tysiacha_revealHands', 'tysiacha_autoRestart'
@@ -447,29 +447,34 @@
             container.appendChild(revealRow);
           }
 
-          const restartRow = document.createElement('div');
-          restartRow.className = 'settings-row';
-          restartRow.style.background = 'transparent';
-          restartRow.style.border = 'none';
-          restartRow.style.padding = '0';
-          const restartLabel = document.createElement('label');
-          restartLabel.textContent = 'Auto-restart match';
-          restartLabel.style.cursor = 'pointer';
-          const restartSwitch = document.createElement('label');
-          restartSwitch.className = 'kameko-switch';
-          const restartInput = document.createElement('input');
-          restartInput.type = 'checkbox';
-          restartInput.checked = localStorage.getItem(gamePrefix + '_autoRestart') === 'true';
-          restartInput.addEventListener('change', function(e) {
-            localStorage.setItem(gamePrefix + '_autoRestart', e.target.checked ? 'true' : 'false');
-          });
-          const restartSlider = document.createElement('span');
-          restartSlider.className = 'kameko-slider';
-          restartSwitch.appendChild(restartInput);
-          restartSwitch.appendChild(restartSlider);
-          restartRow.appendChild(restartLabel);
-          restartRow.appendChild(restartSwitch);
-          container.appendChild(restartRow);
+          // Auto-restart is opt-out: games that don't implement it (keypad-quest,
+          // river-run — no discrete game-over/restart to loop) pass hasAutoRestart:false
+          // so the drawer doesn't show a dead switch (b-26).
+          if (watchOptions.hasAutoRestart !== false) {
+            const restartRow = document.createElement('div');
+            restartRow.className = 'settings-row';
+            restartRow.style.background = 'transparent';
+            restartRow.style.border = 'none';
+            restartRow.style.padding = '0';
+            const restartLabel = document.createElement('label');
+            restartLabel.textContent = 'Auto-restart match';
+            restartLabel.style.cursor = 'pointer';
+            const restartSwitch = document.createElement('label');
+            restartSwitch.className = 'kameko-switch';
+            const restartInput = document.createElement('input');
+            restartInput.type = 'checkbox';
+            restartInput.checked = localStorage.getItem(gamePrefix + '_autoRestart') === 'true';
+            restartInput.addEventListener('change', function(e) {
+              localStorage.setItem(gamePrefix + '_autoRestart', e.target.checked ? 'true' : 'false');
+            });
+            const restartSlider = document.createElement('span');
+            restartSlider.className = 'kameko-slider';
+            restartSwitch.appendChild(restartInput);
+            restartSwitch.appendChild(restartSlider);
+            restartRow.appendChild(restartLabel);
+            restartRow.appendChild(restartSwitch);
+            container.appendChild(restartRow);
+          }
 
           const btnAction = document.createElement('button');
           btnAction.className = isWatching ? 'settings-primary-btn' : 'settings-btn';
