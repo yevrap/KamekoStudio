@@ -122,7 +122,7 @@ $gameoverSeed.addEventListener('pointerdown', function () {
   }
 });
 
-// Play / Replay buttons (token gate)
+// Play / Replay buttons
 document.getElementById('btn-play').addEventListener('pointerdown', function (e) {
   e.preventDefault();
 

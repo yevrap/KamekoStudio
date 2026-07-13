@@ -381,7 +381,6 @@ export function abortKeypadQuestAutoPlay() {
   if (state.autoPlay) {
     state.autoPlay = false;
     localStorage.setItem('keypadQuest_autoPlay', 'false');
-    if (window.KamekoSettings) window.KamekoSettings.openDrawer = window.KamekoSettings.openDrawer;
   }
 }
 

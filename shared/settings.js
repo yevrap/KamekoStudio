@@ -233,8 +233,19 @@
       }
     }
 
-    window.KamekoTokens.toast(`Cleared ${clearedCount} item(s). Page will reload.`);
+    showSettingsToast(`Cleared ${clearedCount} item(s). Page will reload.`);
     setTimeout(() => location.reload(), 1500);
+  }
+
+  // Minimal transient toast (the old one belonged to the removed token system).
+  function showSettingsToast(msg) {
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = 'position:fixed;left:50%;bottom:30px;transform:translateX(-50%);' +
+      'background:rgba(20,20,30,0.95);color:#fff;padding:10px 18px;border-radius:8px;' +
+      'font:14px system-ui,sans-serif;z-index:10000;box-shadow:0 4px 16px rgba(0,0,0,0.4)';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1400);
   }
 
   // Apply saved theme immediately (body is available since script is before </body>)
@@ -465,7 +476,10 @@
           btnAction.textContent = isWatching ? 'Take Over / Stop' : '▶ Watch';
           btnAction.addEventListener('click', function() {
             localStorage.setItem(gamePrefix + '_autoPlay', isWatching ? 'false' : 'true');
+            // Games that mirror the flag in live state sync it in these hooks —
+            // localStorage alone is invisible to games that don't re-read it per frame.
             if (isWatching && watchOptions.onStop) watchOptions.onStop();
+            if (!isWatching && watchOptions.onStart) watchOptions.onStart();
             window.KamekoSettings.closeDrawer();
             renderAllGameSections();
           });

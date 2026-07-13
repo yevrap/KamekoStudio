@@ -75,7 +75,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Tap to place movement pins; physics with material types. Score and survival modes. |
 | `games/hidden-object/` | Hidden Object Game | DOM | Emoji-finding challenge. Mobile-vertical layout. |
 | `games/keypad-quest/` | Keypad Quest | Canvas 2D | T9 tower defense: answer flashcard questions to place towers. Circular enemy path, multiple named decks, deck import/export. Saves `keypadQuestHighWave`. |
-| `games/river-run/` | River Runner 3D | Three.js | 3D obstacle-dodging river runner. Has per-game settings (auto-shoot, auto-avoid, invert drag). Saves `riverRunHighScore`. |
+| `games/river-run/` | River Runner 3D | Three.js | 3D obstacle-dodging river runner. Watch Mode (▶ Watch on start screen; auto-avoid + auto-shoot while watching) + invert-drag setting. Note: the inline script runs before `shared/settings.js`, so `KamekoSettings` registration is deferred to `DOMContentLoaded`. Saves `riverRunHighScore`. |
 | `games/blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Push blobs with electricity. |
 | `games/durak-alchemist/` | Durak Alchemist | DOM/CSS grid | **Lab** (shelved from the gallery 2026-07-12, p1-29). Grid-based puzzle game using Durak card mechanics. Place cards on a grid to trigger chain reactions. Saves `alchemistHighScore`. |
 | `games/durak/` | Durak | DOM | Classic Russian card game for 2–6 players. Modes: vs Computer (1 human + 2–5 AI) or Hot-seat (2–6 humans sharing a device, with a pass-device cover at 3+ players). Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap, pile-on during the defender's take, ordered end-of-bout draws (attacker → contributors → defender), elimination when hand and deck are both empty. Last player holding cards is the Durak. |
@@ -113,6 +113,8 @@ window.KamekoSettings.registerSection('my-game-settings', {
 });
 // window.KamekoSettings.openDrawer() / .closeDrawer() are also available.
 ```
+**Watch Mode sections (`registerWatchSection(gamePrefix, opts)`):** renders the shared speed/reveal/auto-restart controls plus a ▶ Watch / Take Over–Stop toggle that flips `<gamePrefix>_autoPlay` in localStorage. Games that re-read that key every frame (materials-run, blob-zapper, durak) need nothing else; games that mirror it in live state (keypad-quest `state.autoPlay`, river-run's `autoPlay` var) MUST pass `onStart`/`onStop` callbacks to sync it — localStorage writes alone are invisible to them (this exact gap shipped as a bug on 2026-07-12). A game whose auto-typist fires synthetic DOM events must gate its manual-takeover abort on `event.isTrusted` so autoplay can't cancel itself.
+
 Conventions: a "Quick Actions" section first (`.settings-btn` buttons — rules, game log, coach-hints toggle-button, "new match…"), then a "Game Settings" section with **instant-apply, persisted** controls only. Match-scoped choices (names, rules, target score) belong on the game's own setup/new-match screen, not in the drawer — see `games/durak/` (start overlay) and `games/tysiacha/` (`#setup` overlay) for the reference pattern. `games/keypad-quest/main.js` shows a `when()`-gated stats section.
 
 **Hamburger positioning:** injected as `position:fixed; top:15px; left:15px` (44×44). Games with a top header bar may override `#settings-hamburger-btn` in their CSS to align it within the header (add left padding to the header so content doesn't slide under it), including `env(safe-area-inset-top)` on iOS-styled games.
@@ -160,9 +162,18 @@ Conventions: a "Quick Actions" section first (`.settings-btn` buttons — rules,
 | `tysiacha_name_[seat]` | tysiacha | string | Custom name for seat 0–2; unset = localized default |
 | `tysiacha_muted` | tysiacha | `'true'`\|`'false'` | Sound effects off/on (default on) |
 | `tysiacha_settings` | tysiacha | JSON string | Match settings blob: targetScore, classic-rule flags, tapToPlay — loaded at boot, saved from the New Match setup and the 1-tap toggle |
-| `tysiacha_autoPlay` | tysiacha | `'true'`\|`'false'` | Simulated tournament mode |
-| `tysiacha_fastForward` | tysiacha | `'true'`\|`'false'` | Speed up AI actions during auto play |
+| `tysiacha_autoPlay` | tysiacha | `'true'`\|`'false'` | Watch Mode on/off |
+| `tysiacha_autoPlaySpeed` | tysiacha | `'slow'`\|`'normal'`\|`'fast'` | Watch Mode speed (replaced `tysiacha_fastForward`) |
+| `tysiacha_revealHands` | tysiacha | `'true'`\|`'false'` | Reveal all hands while watching |
 | `tysiacha_autoRestart` | tysiacha | `'true'`\|`'false'` | Auto-start next match |
+| `durak_autoPlay` | durak | `'true'`\|`'false'` | Watch Mode on/off |
+| `durak_autoPlaySpeed` | durak | `'slow'`\|`'normal'`\|`'fast'` | Watch Mode speed |
+| `durak_revealHands` | durak | `'true'`\|`'false'` | Reveal all hands while watching |
+| `durak_autoRestart` | durak | `'true'`\|`'false'` | Auto-start next match |
+| `materialsRun_autoPlay` | materials-run | `'true'`\|`'false'` | Watch Mode on/off |
+| `materialsRun_autoRestart` | materials-run | `'true'`\|`'false'` | Auto-restart after game over |
+| `blobZapper_autoPlay` | blob-zapper | `'true'`\|`'false'` | Watch Mode on/off |
+| `blobZapper_autoRestart` | blob-zapper | `'true'`\|`'false'` | Auto-restart after game over |
 | `gridGameTopScoreScore` | materials-run | integer string | Score mode high score |
 | `gridGameTopScoreSurvival` | materials-run | integer string | Survival mode high score |
 | `riverRunHighScore` | river-run | integer string | Points high score |
@@ -172,10 +183,11 @@ Conventions: a "Quick Actions" section first (`.settings-btn` buttons — rules,
 | `keypadQuest_decks` | keypad-quest | JSON string | Array of user custom decks `[{id,name,pairs}]` |
 | `keypadQuest_activeDeckIds` | keypad-quest | JSON string | Array of selected deck IDs (built-in + custom) |
 | `keypadQuest_inputMode` | keypad-quest | `'scroll'`\|`'predict'`\|`'keyboard'` | Last used T9 input mode |
-| `riverRun_autoShoot` | river-run | `'true'`\|`'false'` | Per-game option |
-| `riverRun_autoAvoid` | river-run | `'true'`\|`'false'` | Per-game option |
+| `keypadQuest_autoPlay` | keypad-quest | `'true'`\|`'false'` | Watch Mode on/off (mirrored in `state.autoPlay` — the drawer's watch section syncs it via `onStart`/`onStop`) |
+| `keypadQuest_autoPlaySpeed` | keypad-quest | `'slow'`\|`'normal'`\|`'fast'` | Watch Mode typing speed |
+| `riverRun_autoPlay` | river-run | `'true'`\|`'false'` | Watch Mode on/off (mirrored in the inline script's `autoPlay` var) |
 | `riverRun_invertControls` | river-run | `'true'`\|`'false'` | Per-game option |
-| `muted` | river-run | `'true'`\|`'false'` | Audio mute state |
+| `muted` | river-run | `'true'`\|`'false'` | Audio mute state (unnamespaced — legacy) |
 
 ## Mobile-First Patterns
 
@@ -217,6 +229,7 @@ Pure utility functions in `shared/utils.js`, and pure game-logic modules in `gam
 
 **Run:** `node --test tests/` (or `npm test`) — requires Node.js 18+
 **Page-load smoke test:** `npm run smoke` (after a one-time `npm install`) — serves the repo locally and loads every page (gallery, 3d, Lab, all game dirs) in headless system Chrome via `puppeteer-core`, failing on any uncaught error at load. Run it before shipping anything that touches boot paths, `shared/settings.js`, or game `index.html` structure — the unit suite runs gameplay headless and cannot catch a page that crashes on load. Override the browser binary with `CHROME_PATH` if needed.
+**Browser e2e tests:** `npm run e2e` (`scripts/e2e.mjs`, same puppeteer-core setup as smoke) — drives real clicks in headless Chrome and asserts game behavior: Watch Mode start/stop/take-over (keypad-quest, river-run), Clear All Game Data, and Lab games starting free. Run it whenever touching Watch Mode, the settings drawer, or game start flows. Probing trick for module games: `page.evaluate(() => import('/games/<name>/state.js'))` returns the live state singleton (ES modules are cached by URL); for inline-script games, top-level `let` bindings are directly visible from `evaluate`.
 **Coverage:**
 - `shared/utils.js` (`keypad-quest.test.js`): `parsePlainText`, `deckToPlainText`, `typeForStreak`, `shuffle`, `lerpHex`
 - `games/durak/` (`durak.test.mjs`): constants, state, gameplay rules, AI logic (`_test_aiTurn`)

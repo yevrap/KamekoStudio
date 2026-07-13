@@ -85,8 +85,9 @@ window.addEventListener('keydown', e => {
 });
 
 // Keyboard mode submit
-document.getElementById('keyboard-submit').addEventListener('click', () => {
-  abortKeypadQuestAutoPlay();
+document.getElementById('keyboard-submit').addEventListener('click', (e) => {
+  // Auto-typist submits via a synthetic click — only a real tap takes over.
+  if (e.isTrusted) abortKeypadQuestAutoPlay();
   const ki = document.getElementById('keyboard-input');
   const typed = ki.value; ki.value = '';
   submitAnswer(buildKeyboardAnswer(typed)); updateInputDisplay(); ki.focus();
@@ -101,8 +102,10 @@ document.getElementById('keyboard-input').addEventListener('keydown', e => {
   }
 });
 
-document.getElementById('keyboard-input').addEventListener('input', () => {
-  abortKeypadQuestAutoPlay();
+document.getElementById('keyboard-input').addEventListener('input', (e) => {
+  // Only real user typing takes over — the auto-typist dispatches synthetic
+  // (isTrusted=false) input events and must not cancel itself.
+  if (e.isTrusted) abortKeypadQuestAutoPlay();
   const ki = document.getElementById('keyboard-input');
   const filtered = ki.value.replace(/[^a-z0-9]/gi, '');
   if (ki.value !== filtered) ki.value = filtered;
@@ -195,11 +198,13 @@ function injectKeypadSettings() {
     }
   });
 
-  window.KamekoSettings.registerWatchSection('keypadQuest', { 
+  window.KamekoSettings.registerWatchSection('keypadQuest', {
     hasRevealHands: false,
-    onStop: () => {
-      // Nothing special for Keypad Quest since it doesn't pause gameplay for the drawer.
-    }
+    onStart: () => {
+      state.autoPlay = true;
+      if (state.gameState === 'menu') startGame('play', false);
+    },
+    onStop: () => { state.autoPlay = false; }
   });
 
   window.KamekoSettings.registerSection('kq-game-stats', {

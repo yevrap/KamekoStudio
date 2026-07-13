@@ -359,9 +359,7 @@
         let btnRight = false;
 
         // --- Per-game options ---
-        let autoShoot = false;
         let autoShootCooldown = 0;
-        let autoAvoid = false;
         let invertControls = false;
 
         // --- Theme Variable ---
@@ -907,6 +905,7 @@
 
         // Start/Restart button
         startButton.addEventListener('click', (e) => {
+             autoPlay = false;
              localStorage.setItem('riverRun_autoPlay', 'false');
              localStorage.setItem('lastPlayed_riverRun', Date.now());
              initGame();
@@ -916,6 +915,7 @@
 
         const startWatchButton = document.getElementById('start-watch-button');
         startWatchButton.addEventListener('click', (e) => {
+             autoPlay = true;
              localStorage.setItem('riverRun_autoPlay', 'true');
              localStorage.setItem('lastPlayed_riverRun', Date.now());
              initGame();
@@ -949,8 +949,19 @@
         };
 
         // --- Settings panel registration ---
+        // Deferred to DOMContentLoaded: shared/settings.js loads AFTER this inline
+        // script, so window.KamekoSettings does not exist yet at parse time.
+        window.addEventListener('DOMContentLoaded', () => {
         if (window.KamekoSettings) {
-            window.KamekoSettings.registerWatchSection('riverRun', { hasSpeed: false });
+            window.KamekoSettings.registerWatchSection('riverRun', {
+                hasSpeed: false,
+                onStart: () => {
+                    autoPlay = true;
+                    // From the start/game-over screen, Watch also starts the run.
+                    if (messageBox.style.display === 'block') initGame();
+                },
+                onStop: () => { autoPlay = false; }
+            });
 
             window.KamekoSettings.registerSection('riverrun-settings-section', {
                 title: 'River Run Settings',
@@ -994,6 +1005,7 @@
                 }
             });
         }
+        });
 
         // --- Settings pause/resume + theme sync ---
         window.addEventListener('settingsOpened', () => {
