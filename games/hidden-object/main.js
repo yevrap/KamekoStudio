@@ -50,6 +50,22 @@ if (document.fonts && typeof document.fonts.ready === 'object') {
     document.fonts.ready.catch(err => console.warn("Font loading issue.", err));
 }
 
+// Keep iOS PWA status-bar / Android theme-color in sync with the in-game
+// light/dark toggle (settings.js mutates body.dark-mode without firing an event).
+(function syncThemeColor() {
+  var meta = document.querySelector('meta[name="theme-color"]:not([media])');
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.setAttribute('name', 'theme-color');
+    document.head.appendChild(meta);
+  }
+  function apply() {
+    meta.setAttribute('content', document.body.classList.contains('dark-mode') ? '#0f172a' : '#e0f2fe');
+  }
+  apply();
+  new MutationObserver(apply).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+})();
+
 // --- Settings pause/resume ---
 window.addEventListener('settingsOpened', () => {
     if (state.animationFrameId) { cancelAnimationFrame(state.animationFrameId); state.animationFrameId = null; }

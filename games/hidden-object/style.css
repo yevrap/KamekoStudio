@@ -1,9 +1,48 @@
+
+:root {
+    --bg-grad-1: #0f172a;
+    --bg-grad-2: #1e293b;
+    --bg-grad-3: #0f172a;
+    --text: #f1f5f9;
+    --screen-bg: rgba(30, 41, 59, 0.9);
+    --html-bg: #0f172a;
+    --modal-bg: #1e293b;
+    --modal-title: #e2e8f0;
+    --modal-sub: #94a3b8;
+    --footer-hint: #64748b;
+    --canvas-bg: #374151;
+    --target-msg: #cbd5e1;
+    --selection-bg: #0ea5e9;
+    --selection-color: #fff;
+}
+
+body:not(.dark-mode) {
+    --bg-grad-1: #e0f2fe;
+    --bg-grad-2: #bae6fd;
+    --bg-grad-3: #e0f2fe;
+    --text: #0f172a;
+    --screen-bg: rgba(255, 255, 255, 0.9);
+    --html-bg: #e0f2fe;
+    --modal-bg: #ffffff;
+    --modal-title: #0f172a;
+    --modal-sub: #475569;
+    --footer-hint: #475569;
+    --canvas-bg: #f1f5f9;
+    --target-msg: #475569;
+    --selection-bg: #0ea5e9;
+    --selection-color: #fff;
+}
+
+html { background: #0f172a; }
+html:has(body:not(.dark-mode)) { background: #e0f2fe; }
+html, body { height: 100%; }
+
         body {
             font-family: 'Inter', sans-serif;
             overscroll-behavior: none;
             margin: 0;
-            background: linear-gradient(to bottom right, #0f172a, #1e293b, #0f172a);
-            color: #f1f5f9;
+            background: linear-gradient(to bottom right, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3));
+            color: var(--text);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -12,10 +51,10 @@
             min-height: 100dvh;
             padding: 0.25rem;
         }
-        ::selection { background-color: #0ea5e9; color: #fff; }
+        ::selection { background-color: var(--selection-bg); color: var(--selection-color); }
         .game-screen, .main-screen {
             width: 100%;
-            background-color: rgba(30, 41, 59, 0.9);
+            background-color: var(--screen-bg);
             backdrop-filter: blur(12px);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
             border-radius: 0.75rem;
@@ -31,7 +70,7 @@
         #gameCanvas {
             touch-action: none;
             border-radius: 0.5rem;
-            background-color: #374151; /* Fallback, slate-700 */
+            background-color: var(--canvas-bg);
             width: 100%;
             height: 100%;
         }
@@ -145,7 +184,7 @@
         }
         .btn-danger:hover { background-color: #b91c1c; }
         .game-header { text-align: center; margin-bottom: 0.5rem; }
-        .target-message { margin-top: 0.25rem; color: #cbd5e1; font-size: 0.875rem; }
+        .target-message { margin-top: 0.25rem; color: var(--target-msg); font-size: 0.875rem; }
         .target-emoji { font-size: 1.5rem; font-weight: 700; color: #facc15; }
         .game-viewport {
             width: 100%;
@@ -167,7 +206,7 @@
             padding: 0.75rem;
         }
         .modal-card {
-            background-color: #1e293b;
+            background-color: var(--modal-bg);
             padding: 1rem;
             border-radius: 0.75rem;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -177,12 +216,12 @@
         }
         .modal-title-success { font-size: 1.125rem; font-weight: 600; color: #4ade80; margin: 0 0 0.25rem; }
         .modal-title-danger { font-size: 1.25rem; font-weight: 700; color: #ef4444; margin: 0 0 0.5rem; }
-        .modal-subtitle { font-size: 1rem; color: #e2e8f0; margin: 0 0 0.25rem; }
-        .modal-subtext { font-size: 0.75rem; color: #94a3b8; margin: 0 0 0.25rem; }
-        .modal-body-text { font-size: 0.875rem; color: #e2e8f0; margin: 0 0 0.5rem; }
+        .modal-subtitle { font-size: 1rem; color: var(--modal-title); margin: 0 0 0.25rem; }
+        .modal-subtext { font-size: 0.75rem; color: var(--modal-sub); margin: 0 0 0.25rem; }
+        .modal-body-text { font-size: 0.875rem; color: var(--modal-title); margin: 0 0 0.5rem; }
         .modal-score-text { font-size: 0.875rem; color: #facc15; margin: 0 0 0.75rem; }
         .game-footer { text-align: center; margin-top: 0.5rem; }
-        .footer-hint { font-size: 0.75rem; color: #64748b; margin: 0; }
+        .footer-hint { font-size: 0.75rem; color: var(--footer-hint); margin: 0; }
 
         @media (min-width: 640px) {
             body { padding: 0.5rem; }
