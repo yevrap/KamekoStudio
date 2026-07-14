@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Astro Salon</title>
-    <!-- astro-salon v20 — zodiac-guest redesign: signs as characters, month-name dates, en/ru -->
+    <!-- astro-salon v21 — readability: read-then-confirm wheel picker, bigger labels, hub sign card; daily horoscope -->
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -99,14 +99,16 @@
         .wedge:active { fill-opacity: 0.55; }
         .wedge.correct { animation: wedgeGood 0.9s ease 2; }
         .wedge.wrong { animation: wedgeBad 0.5s ease; }
+        .wedge.preview { stroke: var(--gold); stroke-width: 2.5; fill-opacity: 0.45; }
         @keyframes wedgeGood { 50% { fill-opacity: 0.85; } }
         @keyframes wedgeBad { 25%, 75% { fill-opacity: 0.8; } }
-        .wedge-sym { font-size: 23px; pointer-events: none; }
-        .wedge-name { font-size: 9.5px; font-weight: 700; fill: #d9d4f5; pointer-events: none; }
-        .wedge-date { font-size: 10px; fill: #bdb6e6; pointer-events: none; }
-        .season-label { font-size: 12px; fill: #7d76ad; pointer-events: none; font-weight: 600; }
-        .hub-main { font-size: 26px; font-weight: 800; fill: var(--text); }
-        .hub-sub { font-size: 12.5px; fill: var(--muted); }
+        .wedge-sym { font-size: 30px; pointer-events: none; }
+        .wedge-name { font-size: 13.5px; font-weight: 700; fill: #e6e1fb; pointer-events: none; }
+        .wedge-date { font-size: 11.5px; font-weight: 600; fill: #c9c2ef; pointer-events: none; }
+        .season-label { font-size: 13px; fill: #8d86bb; pointer-events: none; font-weight: 600; }
+        .hub-a { font-size: 28px; font-weight: 800; fill: var(--text); }
+        .hub-b { font-size: 15px; font-weight: 700; fill: var(--text); }
+        .hub-c { font-size: 12px; fill: var(--muted); }
 
         /* ---------- dialogue ---------- */
         .stage {
@@ -242,6 +244,17 @@
         .end-stars { font-size: 2.2rem; font-weight: 800; color: var(--gold); margin: 0.4rem 0 0.1rem; }
         .end-line { font-size: 0.95rem; color: var(--text); margin-top: 0.4rem; }
         .fortune { font-style: italic; }
+
+        /* ---------- daily horoscope ---------- */
+        .sign-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.45rem; margin-top: 0.7rem; }
+        .sign-grid .chip { text-align: left; min-height: 56px; }
+        .sign-grid .chip .sg-sym { font-size: 1.15rem; margin-right: 0.3rem; }
+        .daily-head { font-size: 1.15rem; font-weight: 800; margin-top: 0.5rem; }
+        .daily-head span { color: var(--gold); }
+        .daily-date { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+        .daily-read { text-align: left; background: var(--surface2); border-radius: 12px; padding: 0.7rem 0.8rem; margin: 0.7rem 0 0.2rem; font-size: 0.92rem; line-height: 1.6; }
+        .daily-read p { color: var(--text); margin: 0.35rem 0; font-size: 0.92rem; }
+        .daily-read p b { color: var(--gold); }
     </style>
 </head>
 
@@ -252,6 +265,7 @@
             <div class="streak" id="streak"></div>
             <div class="stars" id="stars">⭐ 0</div>
             <button class="icon-btn lang-btn" id="btn-lang" aria-label="Switch language">RU</button>
+            <button class="icon-btn" id="btn-daily" aria-label="Daily horoscope">✨</button>
             <button class="icon-btn" id="btn-learn" aria-label="Learn the wheel">📖</button>
             <button class="icon-btn" id="btn-restart" aria-label="Restart">↻</button>
         </div>
@@ -286,8 +300,18 @@
             <p id="start-p2"></p>
             <p id="start-p3"></p>
             <button class="big-btn" id="btn-start"></button>
+            <button class="big-btn ghost slim" id="btn-start-daily"></button>
             <button class="big-btn ghost slim" id="btn-start-lang"></button>
-            <p class="ver">Lab draft · v20</p>
+            <p class="ver">Lab draft · v21</p>
+        </div>
+    </div>
+
+    <div class="overlay" id="ov-daily">
+        <div class="panel">
+            <h1 id="daily-title">✨</h1>
+            <div id="daily-body"></div>
+            <button class="big-btn ghost slim" id="btn-daily-change"></button>
+            <button class="big-btn ghost" id="btn-daily-close"></button>
         </div>
     </div>
 
@@ -467,8 +491,10 @@
                 guestN: (i, n) => `Guest ${i} of ${n}`,
                 unknown: '???',
                 born: d => `🎂 Born <b>${d}</b>`,
-                promptSign: 'Who am I? Tap the sign on the wheel',
+                promptSign: 'Who am I? Tap a sign on the wheel to read it',
+                promptConfirm: s => `Reading <b>${s.name.en} ${s.sym}</b> — tap it again to confirm`,
                 hubFind: 'find the sign',
+                wedgeFrom: d => `from ${d}`,
                 qElement: '“What’s my element — fire, earth, air or water?”',
                 promptElement: 'Pick their element',
                 qModality: '“In my season, am I the one who <b>starts</b> it, <b>holds</b> it, or <b>lets it go</b>?”',
@@ -476,7 +502,7 @@
                 qPlanet: '“Which planet rules me?”',
                 promptPlanet: 'Pick their ruling planet',
                 qOpposite: '“They say opposites attract. Who sits directly across from me?”',
-                promptOpposite: 'Tap the sign directly across the wheel',
+                promptOpposite: 'Tap the sign directly across the wheel to read it',
                 qCompat: (name, sym) => `“My partner is a <b>${name} ${sym}</b>. Do our elements get along?”`,
                 promptCompat: 'Same or paired element = easy company',
                 compatYes: 'Yes, easy company', compatYesSub: 'elements agree',
@@ -504,6 +530,13 @@
                            'The stars are patient. They will wait for tomorrow.'],
                 fortunePrefix: 'Your own fortune:',
                 againBtn: 'Open again tomorrow',
+                dailyTitle: '✨ Daily horoscope',
+                dailyBtn: '✨ Today’s horoscope',
+                dailyPick: 'Whose horoscope? Pick your sign — dates are on the cards:',
+                dailyChange: 'Change my sign',
+                dailyClose: 'Back to the salon',
+                dailyDo: 'Today',
+                dailySignOfDay: 'Sign of the day',
             },
             ru: {
                 title: '🔮 Астро <span>Салон</span>',
@@ -515,8 +548,10 @@
                 guestN: (i, n) => `Гость ${i} из ${n}`,
                 unknown: '???',
                 born: d => `🎂 Дата рождения — <b>${d}</b>`,
-                promptSign: 'Кто я? Нажмите на знак на колесе',
+                promptSign: 'Кто я? Нажмите на знак, чтобы рассмотреть его',
+                promptConfirm: s => `<b>${s.name.ru} ${s.sym}</b> — нажмите ещё раз, чтобы подтвердить`,
                 hubFind: 'найдите знак',
+                wedgeFrom: d => `с ${d}`,
                 qElement: '«Какая у меня стихия — огонь, земля, воздух или вода?»',
                 promptElement: 'Выберите стихию',
                 qModality: '«В своём сезоне я тот, кто его <b>начинает</b>, <b>держит</b> или <b>отпускает</b>?»',
@@ -524,7 +559,7 @@
                 qPlanet: '«Какая планета мной управляет?»',
                 promptPlanet: 'Выберите планету-управителя',
                 qOpposite: '«Говорят, противоположности притягиваются. Кто сидит прямо напротив меня?»',
-                promptOpposite: 'Нажмите на знак прямо напротив',
+                promptOpposite: 'Нажмите на знак прямо напротив, чтобы рассмотреть его',
                 qCompat: (name, sym) => `«Мой партнёр — <b>${name} ${sym}</b>. Наши стихии ладят?»`,
                 promptCompat: 'Одна или парная стихия = лёгкая пара',
                 compatYes: 'Да, лёгкая пара', compatYesSub: 'стихии дружат',
@@ -552,6 +587,57 @@
                            'Звёзды терпеливы. Они подождут до завтра.'],
                 fortunePrefix: 'Ваше собственное предсказание:',
                 againBtn: 'Открыть завтра снова',
+                dailyTitle: '✨ Гороскоп дня',
+                dailyBtn: '✨ Гороскоп на сегодня',
+                dailyPick: 'Чей гороскоп? Выберите свой знак — даты на карточках:',
+                dailyChange: 'Сменить знак',
+                dailyClose: 'Назад в салон',
+                dailyDo: 'Сегодня',
+                dailySignOfDay: 'Знак дня',
+            },
+        };
+
+        // daily horoscope phrase tables — composed deterministically from the date + sign
+        const HOROSCOPE = {
+            en: {
+                themes: ['The day rewards a slow start.',
+                         'Something small clicks into place before noon.',
+                         'Your patience gets tested today — and noticed.',
+                         'A conversation goes further than you planned.',
+                         'An old routine feels tight; loosen one thread of it.',
+                         'Energy comes in waves — ride the second one.',
+                         'A detail everyone missed is yours to find.',
+                         'The evening turns out better than the afternoon promises.',
+                         'Someone quotes you back to yourself. Listen.',
+                         'Luck hides in the errand you keep postponing.'],
+                advice: ['say the kind thing out loud.',
+                         'finish the smallest task first.',
+                         'drink water before deciding anything.',
+                         'let someone else pick the music.',
+                         'write the idea down before it evaporates.',
+                         'take the longer way home.',
+                         'ask the question you think is too simple.',
+                         'leave ten minutes earlier than feels necessary.'],
+            },
+            ru: {
+                themes: ['День вознаграждает неспешное начало.',
+                         'Что-то маленькое встанет на место ещё до полудня.',
+                         'Ваше терпение сегодня проверят — и заметят.',
+                         'Разговор зайдёт дальше, чем вы планировали.',
+                         'Старая привычка жмёт — ослабьте одну ниточку.',
+                         'Силы приходят волнами — ловите вторую.',
+                         'Деталь, которую все упустили, ждёт именно вас.',
+                         'Вечер окажется лучше, чем обещает день.',
+                         'Кто-то процитирует вам ваши же слова. Прислушайтесь.',
+                         'Удача прячется в деле, которое вы всё откладываете.'],
+                advice: ['скажите доброе вслух.',
+                         'начните с самого маленького дела.',
+                         'выпейте воды, прежде чем что-то решать.',
+                         'пусть музыку выберет кто-то другой.',
+                         'запишите идею, пока не испарилась.',
+                         'вернитесь домой длинной дорогой.',
+                         'задайте вопрос, который кажется слишком простым.',
+                         'выйдите на десять минут раньше, чем кажется нужным.'],
             },
         };
 
@@ -600,7 +686,7 @@
 
         /* ---------------- wheel rendering ---------------- */
 
-        const CX = 200, CY = 200, R0 = 88, R1 = 196;
+        const CX = 200, CY = 200, R0 = 72, R1 = 196;
         function polar(r, deg) {
             const rad = deg * Math.PI / 180;
             return [CX + r * Math.cos(rad), CY + r * Math.sin(rad)];
@@ -641,12 +727,13 @@
 
                 // one anchor per wedge, labels stacked vertically from it — radial
                 // stacking overlaps on the 3/9-o'clock wedges and flips order in
-                // the bottom hemisphere
-                const [ax, ay] = polar(142, mid);
-                svg.appendChild(svgText(NS, ax, ay - 17, 'wedge-sym', sign.sym, ELEMENT_COLOR[sign.el]));
-                svg.appendChild(svgText(NS, ax, ay + 1, 'wedge-name', nameOf(sign)));
-                svg.appendChild(svgText(NS, ax, ay + 14, 'wedge-date', fmtShort(sign.from[0], sign.from[1])));
-                svg.appendChild(svgText(NS, ax, ay + 26, 'wedge-date', `– ${fmtShort(sign.to[0], sign.to[1])}`));
+                // the bottom hemisphere. Only the START date is shown (the next
+                // wedge's start is this one's end — the wheel is the year); the
+                // full range appears big in the hub on first tap (read-then-confirm).
+                const [ax, ay] = polar(140, mid);
+                svg.appendChild(svgText(NS, ax, ay - 16, 'wedge-sym', sign.sym, ELEMENT_COLOR[sign.el]));
+                svg.appendChild(svgText(NS, ax, ay + 6, 'wedge-name', nameOf(sign)));
+                svg.appendChild(svgText(NS, ax, ay + 20, 'wedge-date', t('wedgeFrom')(fmtShort(sign.from[0], sign.from[1]))));
             });
             // season markers pinned to the corners, outside the rim
             SEASONS.forEach(se => {
@@ -656,23 +743,29 @@
                 label.setAttribute('text-anchor', right ? 'end' : 'start');
                 svg.appendChild(label);
             });
-            const hubMain = svgText(NS, CX, CY + 2, 'hub-main', '');
-            hubMain.id = 'hub-main';
-            svg.appendChild(hubMain);
-            const hubSub = svgText(NS, CX, CY + 24, 'hub-sub', '');
-            hubSub.id = 'hub-sub';
-            svg.appendChild(hubSub);
+            // hub: three lines — big symbol/date, name, date range
+            [['hub-a', -12], ['hub-b', 12], ['hub-c', 30]].forEach(([id, dy]) => {
+                const el = svgText(NS, CX, CY + dy, id, '');
+                el.id = id;
+                svg.appendChild(el);
+            });
         }
 
-        function setHub(main, sub) {
-            $('hub-main').textContent = main;
-            $('hub-sub').textContent = sub;
+        function setHub(a, b, c, color) {
+            $('hub-a').textContent = a;
+            $('hub-a').style.fill = color || '';
+            $('hub-b').textContent = b || '';
+            $('hub-c').textContent = c || '';
+        }
+        // the hub doubles as the readable "sign card": big symbol + name + dates
+        function setHubSign(sign) {
+            setHub(sign.sym, nameOf(sign), rangeShort(sign), ELEMENT_COLOR[sign.el]);
         }
         function wedgeEl(signId) {
             return document.querySelector(`.wedge[data-sign="${signId}"]`);
         }
         function clearWedgeMarks() {
-            document.querySelectorAll('.wedge').forEach(w => w.classList.remove('correct', 'wrong'));
+            document.querySelectorAll('.wedge').forEach(w => w.classList.remove('correct', 'wrong', 'preview'));
         }
         function setWheelActive(on) {
             $('wheel').classList.toggle('dimmed', !on);
@@ -727,6 +820,7 @@
             G.wheelHint = false;
             G.lastWrongWedge = null;
             G.chipKeys = null;
+            G.preview = null; // read-then-confirm: wedge being inspected, not yet committed
             G.happyIdx = rnd(HAPPY.en.length);
 
             if (type === 'sign') {
@@ -775,15 +869,25 @@
             $('c-sub').textContent = t('guestN')(G.idx + 1, TOTAL_GUESTS);
 
             const bday = $('bday');
+            const previewSign = !G.answered && G.preview !== null ? SIGNS[G.preview] : null;
             if (G.phase === 'sign') {
                 $('speech').innerHTML = c.sign.intro[lang];
                 bday.innerHTML = t('born')(fmtFull(c.bm, c.bd));
                 bday.classList.add('show');
-                $('prompt').textContent = t('promptSign');
-                setHub(fmtShort(c.bm, c.bd), t('hubFind'));
+                if (previewSign) {
+                    setHubSign(previewSign);
+                    $('prompt').innerHTML = t('promptConfirm')(previewSign);
+                } else if (G.answered) {
+                    $('prompt').textContent = t('promptSign');
+                    setHubSign(c.sign);
+                } else {
+                    $('prompt').textContent = t('promptSign');
+                    setHub(fmtShort(c.bm, c.bd), t('hubFind'));
+                }
             } else {
                 bday.classList.remove('show');
-                setHub(c.sign.sym, nameOf(c.sign));
+                if (G.phase === 'opposite' && previewSign) setHubSign(previewSign);
+                else setHubSign(c.sign);
                 if (G.phase === 'element') {
                     $('speech').innerHTML = t('qElement');
                     $('prompt').textContent = t('promptElement');
@@ -795,7 +899,8 @@
                     $('prompt').textContent = t('promptPlanet');
                 } else if (G.phase === 'opposite') {
                     $('speech').innerHTML = t('qOpposite');
-                    $('prompt').textContent = t('promptOpposite');
+                    if (previewSign) $('prompt').innerHTML = t('promptConfirm')(previewSign);
+                    else $('prompt').textContent = t('promptOpposite');
                 } else if (G.phase === 'compat') {
                     $('speech').innerHTML = t('qCompat')(nameOf(G.partner), G.partner.sym);
                     $('prompt').textContent = t('promptCompat');
@@ -829,6 +934,8 @@
                 if (G.answered) {
                     wedgeEl(G.answer).classList.add('correct');
                     if (G.lastWrongWedge !== null) wedgeEl(G.lastWrongWedge).classList.add('wrong');
+                } else if (G.preview !== null) {
+                    wedgeEl(G.preview).classList.add('preview');
                 }
             } else {
                 setWheelActive(false);
@@ -959,6 +1066,13 @@
         function onWheelTap(sign) {
             if (!G || G.done || G.answered) return;
             if (G.phase !== 'sign' && G.phase !== 'opposite') return;
+            // read-then-confirm: first tap shows the sign big in the hub, second commits
+            if (G.preview !== sign.id) {
+                G.preview = sign.id;
+                renderCard();
+                return;
+            }
+            G.preview = null;
             G.tries++;
             if (sign.id === G.answer) {
                 resolve(true);
@@ -966,10 +1080,10 @@
                 G.lastWrongWedge = sign.id;
                 resolve(false);
             } else {
+                G.wheelHint = true;
+                renderCard();
                 wedgeEl(sign.id).classList.add('wrong');
                 setTimeout(() => wedgeEl(sign.id).classList.remove('wrong'), 500);
-                G.wheelHint = true;
-                feedback('hint', hintText());
             }
         }
 
@@ -1017,6 +1131,65 @@
             $('btn-again').textContent = t('againBtn');
         }
 
+        /* ---------------- daily horoscope ---------------- */
+
+        let mySign = parseInt(localStorage.getItem('astroSalon_mySign'), 10);
+        if (isNaN(mySign) || mySign < 0 || mySign > 11) mySign = null;
+
+        // deterministic per (day, sign): same read all day, changes at midnight
+        function mulberry32(a) {
+            return function () {
+                a |= 0; a = a + 0x6D2B79F5 | 0;
+                let t = Math.imul(a ^ a >>> 15, 1 | a);
+                t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                return ((t ^ t >>> 14) >>> 0) / 4294967296;
+            };
+        }
+
+        function renderDaily() {
+            $('daily-title').textContent = t('dailyTitle');
+            $('btn-daily-close').textContent = t('dailyClose');
+            const body = $('daily-body');
+            const changeBtn = $('btn-daily-change');
+            changeBtn.textContent = t('dailyChange');
+
+            if (mySign === null) {
+                changeBtn.style.display = 'none';
+                body.innerHTML = `<p>${t('dailyPick')}</p><div class="sign-grid">` + SIGNS.map(s =>
+                    `<button class="chip" data-sign="${s.id}"><span class="sg-sym" style="color:${ELEMENT_COLOR[s.el]}">${s.sym}</span><b>${nameOf(s)}</b><small>${rangeShort(s)}</small></button>`
+                ).join('') + '</div>';
+                body.querySelectorAll('.chip').forEach(b => b.addEventListener('click', () => {
+                    mySign = +b.dataset.sign;
+                    localStorage.setItem('astroSalon_mySign', mySign);
+                    renderDaily();
+                }));
+                return;
+            }
+
+            changeBtn.style.display = '';
+            const s = SIGNS[mySign];
+            const now = new Date();
+            const ymd = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+            const rng = mulberry32(ymd * 31 + mySign * 7);
+            const H = HOROSCOPE[lang];
+            const theme = H.themes[Math.floor(rng() * H.themes.length)];
+            const advice = H.advice[Math.floor(rng() * H.advice.length)];
+            const sod = SIGNS[Math.floor(rng() * 12)];
+            const pair = ELEMENTS[s.el].pair;
+            const elLine = lang === 'en'
+                ? `Your element is ${elSpan(s.el)} — today pairs well with ${elSpan(pair)} company (${ELEMENTS[pair].signs}).`
+                : `Ваша стихия — ${elSpan(s.el)}. Сегодня легко в компании ${ELEMENTS[pair].gen} (${ELEMENTS[pair].signs}).`;
+            body.innerHTML = `
+                <div class="daily-head"><span style="color:${ELEMENT_COLOR[s.el]}">${s.sym}</span> ${nameOf(s)}</div>
+                <div class="daily-date">${fmtFull(now.getMonth() + 1, now.getDate())}</div>
+                <div class="daily-read">
+                    <p>${theme}</p>
+                    <p>${elLine}</p>
+                    <p><b>${t('dailyDo')}:</b> ${advice}</p>
+                    <p><b>${t('dailySignOfDay')}:</b> <span style="color:${ELEMENT_COLOR[sod.el]}">${sod.sym}</span> ${nameOf(sod)}</p>
+                </div>`;
+        }
+
         /* ---------------- static UI + learn overlay ---------------- */
 
         function buildLearnTable() {
@@ -1037,6 +1210,7 @@
             $('start-p2').innerHTML = t('startP2');
             $('start-p3').innerHTML = t('startP3');
             $('btn-start').textContent = t('startBtn');
+            $('btn-start-daily').textContent = t('dailyBtn');
             $('btn-start-lang').textContent = t('langOther');
             $('btn-lang').textContent = lang === 'en' ? 'RU' : 'EN';
             $('learn-title').textContent = t('learnTitle');
@@ -1055,6 +1229,7 @@
             renderStatic();
             buildWheel();
             buildLearnTable();
+            if ($('ov-daily').classList.contains('show')) renderDaily();
             if (G && G.done) renderEnd();
             else if (G) renderCard();
             else setHub('🔮', '');
@@ -1082,6 +1257,15 @@
         });
         $('btn-learn').addEventListener('click', () => $('ov-learn').classList.add('show'));
         $('btn-learn-close').addEventListener('click', () => $('ov-learn').classList.remove('show'));
+        const openDaily = () => { renderDaily(); $('ov-daily').classList.add('show'); };
+        $('btn-daily').addEventListener('click', openDaily);
+        $('btn-start-daily').addEventListener('click', openDaily);
+        $('btn-daily-change').addEventListener('click', () => {
+            mySign = null;
+            localStorage.removeItem('astroSalon_mySign');
+            renderDaily();
+        });
+        $('btn-daily-close').addEventListener('click', () => $('ov-daily').classList.remove('show'));
         $('btn-continue').addEventListener('click', onContinue);
         $('btn-lang').addEventListener('click', () => setLang(lang === 'en' ? 'ru' : 'en'));
         $('btn-start-lang').addEventListener('click', () => setLang(lang === 'en' ? 'ru' : 'en'));
