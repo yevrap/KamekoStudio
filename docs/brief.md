@@ -1,6 +1,6 @@
 # Kameko Studio — Taste Brief
 
-The steering wheel for new-game generation. `/new-game` reads this first (Phase 1) before pitching. Written 2026-07-13 from the answered vault questionnaire `Kameko Studio Questionnaire — Taste and Tiers.md`; edit that note to re-steer and re-derive this.
+The steering wheel for new-game generation. `/new-game` reads this first (Phase 1) before pitching. Written 2026-07-13 from the answered vault questionnaire `Kameko Studio Questionnaire — Taste and Tiers.md`; genre directions updated 2026-07-14 from the answered `Kameko Studio Questionnaire — New Game Directions.md` (archived in the vault). Edit those notes to re-steer and re-derive this.
 
 Games are built **for Yev to play on his phone**, ~5 minutes at a time. He does the taste; agents do the generative grind. A draft's only job is to earn a verdict.
 
@@ -27,19 +27,22 @@ A draft must be **playable + comfortable on the phone + have a restart button** 
 
 Jams happen when Yev says "jam kameko." No scheduled auto-drafts yet — revisit adding a weekly cron once a few on-demand jams prove the loop produces things worth playing.
 
-## Genre directions — OPEN (Q3 unanswered)
+## Genre directions — ANSWERED (Q3 closed 2026-07-14)
 
-**Q3 of the questionnaire is still blank.** Until it's answered, jams run on the durak-benchmark fallback: rules the player knows or learns in one round, 5–10 min sessions, mobile portrait, card/turn-based thinking games ranked above pure reflex arcade. The candidate directions Yev has *not yet* picked among:
+Q3 was answered via the vault's `Kameko Studio Questionnaire — New Game Directions.md` (nine worked-up concepts; four winners). The jam queue lives as roadmap rows **p3-06…p3-09** — a seeded jam should build from its row, not re-pitch. In queue order:
 
-- More card games (durak variants, Tysiacha-likes, Kozel, Preferans-lite)
-- Turn-based strategy (Hex Drift direction)
-- Puzzle / logic (Signal Tower direction)
-- Word & cognition (Glyph Run / keypad direction)
-- Games Max could play in a year or two (age 3–4: tap, colors, sounds)
-- Reinvented arcade (reflex only if the twist is genuinely new)
-- Wildcard within the brief
+1. **Flow Glider (A1, p3-06) — the next jam.** One-touch dive/soar physics (Tiny Wings energy), streak-driven visuals.
+2. **Pachinko roguelike (C3, p3-07).** Peglin-style orbs-through-pegs; double-counts as physics + mechanic-blend.
+3. **One-tower roguelike + hero sortie (B1+, p3-08).** Waves converge on one tower; draft upgrades between waves; light unlocks persist across runs.
+4. **Durak-deck score-attack roguelike (C1, p3-09).** Durak's beat mechanic as Balatro's poker — scoring-layer blend, explicitly not another durak variant.
 
-Pitch across these; treat none as confirmed until Q3 lands.
+Un-seeded/wildcard pitches are still welcome, but rank the queue above them. Directions considered and *not* picked (don't re-pitch without new signal): A2 flick golf, A3 3D marble slope, B2 lane TD with hero, B3 maze-builder TD, C2 scratch-card roguelike.
+
+New steering from the same questionnaire:
+
+- **Pause-proof (Q2=B): a strong preference, not a house rule.** Judge per game; every jam's PLAYTEST.md should say how the game pauses. Auto-pause on focus loss + instant resume is the default pattern to reach for. Not added to the promotion checklist — deliberately.
+- **Look/tech (Q6=C): per-game agent judgment call.** Polished 2D canvas vs Three.js is decided by what the concept demands, neither is the default ambition. "I want it to look cool" stands either way — budget for particles/gradients/trails even in 2D.
+- **Scope path (Q7=A): the standard loop, always.** Jam to the Lab at the Modest bar → Yev playtests → verdict decides promotion. No straight-to-gallery builds, even for the top pick.
 
 ## What the lineup already tells us (from the tiers)
 
