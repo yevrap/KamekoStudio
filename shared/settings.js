@@ -25,7 +25,8 @@
   function fetchVersionInfo(forceBypassCache = false) {
     const basePath = getGalleryPath().replace('index.html', '');
     const url = basePath + 'version.json' + (forceBypassCache ? '?t=' + Date.now() : '');
-    return fetch(url)
+    const options = forceBypassCache ? { cache: 'no-store' } : {};
+    return fetch(url, options)
       .then(res => res.json())
       .catch(() => null);
   }
@@ -57,7 +58,7 @@
   function checkForUpdates(isManual = false) {
     if (!loadedVersion) return;
     fetchVersionInfo(true).then(newData => {
-      if (newData && newData.version > loadedVersion.version) {
+      if (newData && newData.timestamp > loadedVersion.timestamp) {
         if (isManual || getGalleryPath() === 'index.html' || (document.getElementById('settings-overlay') && document.getElementById('settings-overlay').classList.contains('open'))) {
           showUpdateBanner(newData);
         } else {
@@ -183,13 +184,13 @@
       // High scores / progress
       'gridGameTopScoreScore', 'gridGameTopScoreSurvival',
       'riverRunHighScore', 'keypadQuestHighWave', 'blobZapperHighScore',
-      'alchemistHighScore', 'tysiachaHighScore', 'astroSalon_bestStars',
+      'alchemistHighScore', 'tysiachaHighScore', 'astroSalon_bestStars', 'bestScore_pachinkoBazaar',
       // Last played timestamps
       'lastPlayed_hiddenObject', 'lastPlayed_materialsRun',
       'lastPlayed_keypadQuest', 'lastPlayed_riverRun',
       'lastPlayed_blobZapper', 'lastPlayed_durak',
       'lastPlayed_durakDungeon', 'lastPlayed_durakTactics',
-      'lastPlayed_durakAlchemist', 'lastPlayed_tysiacha', 'lastPlayed_astroSalon',
+      'lastPlayed_durakAlchemist', 'lastPlayed_tysiacha', 'lastPlayed_astroSalon', 'lastPlayed_pachinkoBazaar',
       // River Run
       'riverRun_autoShoot', 'riverRun_autoAvoid',
       'riverRun_invertControls', 'muted',
@@ -708,7 +709,7 @@
     checkUpdatesBtn.addEventListener('click', function() {
       checkUpdatesBtn.textContent = 'Checking...';
       fetchVersionInfo(true).then(function(newData) {
-        if (newData && loadedVersion && newData.version > loadedVersion.version) {
+        if (newData && loadedVersion && newData.timestamp > loadedVersion.timestamp) {
           checkUpdatesBtn.style.display = 'none';
           
           updateResultBox.style.display = 'flex';

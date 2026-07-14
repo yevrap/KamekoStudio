@@ -333,6 +333,16 @@
                     </div>
                 </div>
 
+                <div class="game-card" style="--card-accent:#e040fb">
+                    <div class="game-card-body">
+                        <div class="game-emoji">🧿</div>
+                        <div class="game-title">Pachinko Bazaar</div>
+                        <div class="game-desc">Drop orbs, hit multipliers, and spend your coins at the bazaar</div>
+                        <div class="game-meta" id="meta-pachinkoBazaar"></div>
+                        <a href="games/pachinko-bazaar/" class="play-btn" style="background:#e040fb">▶ Play</a>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -348,6 +358,7 @@
             { id: 'durak',        name: 'Durak',         emoji: '🃏', href: 'games/durak/' },
             { id: 'tysiacha',     name: 'Tysiacha (1000)', emoji: '🎴', href: 'games/tysiacha/' },
             { id: 'astroSalon',   name: 'Astro Salon',   emoji: '🔮', href: 'games/astro-salon/' },
+            { id: 'pachinkoBazaar', name: 'Pachinko Bazaar', emoji: '🧿', href: 'games/pachinko-bazaar/' },
         ];
 
         const SCORES_META = [
@@ -357,6 +368,7 @@
             { label: 'Keypad Quest',              key: 'keypadQuestHighWave',      suffix: ' waves' },
             { label: 'Tysiacha',                 key: 'tysiachaHighScore',        suffix: ' pts' },
             { label: 'Astro Salon',              key: 'astroSalon_bestStars',     suffix: ' ⭐' },
+            { label: 'Pachinko Bazaar',          key: 'bestScore_pachinkoBazaar', suffix: ' pts' },
         ];
 
         function timeAgo(ts) {
@@ -435,6 +447,12 @@
             if (astroStars > 0) {
                 var el = document.getElementById('meta-astroSalon');
                 if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: ' + astroStars + ' ⭐';
+            }
+
+            var pbScore = parseInt(localStorage.getItem('bestScore_pachinkoBazaar') || '0', 10);
+            if (pbScore > 0) {
+                var el = document.getElementById('meta-pachinkoBazaar');
+                if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: ' + pbScore + ' pts';
             }
 
             // Your Best Scores section

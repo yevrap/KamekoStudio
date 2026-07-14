@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a14">
+    <title>Pachinko Bazaar</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <div class="title">🧿 Pachinko Bazaar</div>
+        <div class="header-actions">
+            <button class="hbtn" id="btn-restart" title="Restart run">↺</button>
+            <a href="../../" class="hbtn">← Arcade</a>
+        </div>
+    </header>
+
+    <div id="hud">
+        <span class="chip" id="hud-round">R1</span>
+        <div id="quota-wrap">
+            <div id="quota-bar"><div id="quota-fill"></div></div>
+            <div id="quota-label">0 / 800</div>
+        </div>
+        <span class="chip" id="hud-orbs">🧿 5</span>
+        <span class="chip" id="hud-coins" style="color:var(--coin)">🪙 4</span>
+    </div>
+
+    <div id="stage">
+        <canvas id="board"></canvas>
+        <div id="hint">drag to aim · release to drop</div>
+        <div id="banner"></div>
+    </div>
+
+    <!-- How to play -->
+    <div class="overlay" id="howto">
+        <div class="panel">
+            <h2>🧿 Pachinko Bazaar</h2>
+            <p><strong>Drag to aim, release to drop.</strong> Your orb rattles down the pegs — every peg it hits scores points.</p>
+            <div class="legend">
+                <span><span class="dot" style="background:#4d7cff"></span>peg +10</span>
+                <span><span class="dot" style="background:#ffcf4d"></span>gold +40</span>
+                <span><span class="dot" style="background:#b96bff"></span>×drop multiplier</span>
+                <span><span class="dot" style="background:#3ce38f"></span>coin</span>
+            </div>
+            <p>The bucket you land in multiplies the whole drop. <strong>Beat the round's quota before your orbs run out</strong> — then spend coins at the bazaar and take on a bigger quota.</p>
+            <p class="muted">Drop anytime, walk away anytime — nothing moves between drops.</p>
+            <button class="big-btn" id="btn-start">Drop in</button>
+        </div>
+    </div>
+
+    <!-- Shop -->
+    <div class="overlay hidden" id="shop">
+        <div class="panel">
+            <h2>🏮 The Bazaar</h2>
+            <div class="shop-coins" id="shop-coins">🪙 0</div>
+            <div id="shop-items"></div>
+            <button class="big-btn" id="btn-continue">Next round →</button>
+        </div>
+    </div>
+
+    <!-- Game over -->
+    <div class="overlay hidden" id="gameover">
+        <div class="panel">
+            <h2>💥 Run over</h2>
+            <div id="go-stats"></div>
+            <p class="muted" style="margin-top:0.7rem">Quota not met. The bazaar closes.</p>
+            <button class="big-btn" id="btn-again">Run it back</button>
+        </div>
+    </div>
+
+    <!-- Paused (mid-drop focus loss) -->
+    <div class="overlay hidden" id="paused">
+        <div class="panel" style="text-align:center">
+            <h2>⏸ Paused</h2>
+            <p class="muted">Your orb is frozen mid-flight.</p>
+            <button class="big-btn" id="btn-resume">Resume</button>
+        </div>
+    </div>
+
+    <script src="../../shared/settings.js" data-gallery-depth="2"></script>
+    <script type="module" src="main.js"></script>
+</body>
+
+</html>
