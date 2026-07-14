@@ -19,5 +19,6 @@ export const ARCADE_GAMES = [
     { name: "Blob Zapper Arena", url: "games/blob-zapper/", color: 0xff0000 },
     { name: "Materials Run Expanse", url: "games/materials-run/", color: 0xff8800 },
     { name: "Durak Card Arena", url: "games/durak/", color: 0xff00ff },
-    { name: "Tysiacha", url: "games/tysiacha/", color: 0xffd54f }
+    { name: "Tysiacha", url: "games/tysiacha/", color: 0xffd54f },
+    { name: "Astro Salon", url: "games/astro-salon/", color: 0x6d5bd0 }
 ];

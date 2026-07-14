@@ -183,13 +183,13 @@
       // High scores / progress
       'gridGameTopScoreScore', 'gridGameTopScoreSurvival',
       'riverRunHighScore', 'keypadQuestHighWave', 'blobZapperHighScore',
-      'alchemistHighScore', 'tysiachaHighScore',
+      'alchemistHighScore', 'tysiachaHighScore', 'astroSalon_bestStars',
       // Last played timestamps
       'lastPlayed_hiddenObject', 'lastPlayed_materialsRun',
       'lastPlayed_keypadQuest', 'lastPlayed_riverRun',
       'lastPlayed_blobZapper', 'lastPlayed_durak',
       'lastPlayed_durakDungeon', 'lastPlayed_durakTactics',
-      'lastPlayed_durakAlchemist', 'lastPlayed_tysiacha',
+      'lastPlayed_durakAlchemist', 'lastPlayed_tysiacha', 'lastPlayed_astroSalon',
       // River Run
       'riverRun_autoShoot', 'riverRun_autoAvoid',
       'riverRun_invertControls', 'muted',
@@ -210,7 +210,9 @@
       'keypadQuest_autoPlay', 'keypadQuest_autoPlaySpeed', 'keypadQuest_autoRestart',
       // Tysiacha
       'tysiacha_lang', 'tysiacha_difficulty', 'tysiacha_muted',
-      'tysiacha_settings', 'tysiacha_autoPlay', 'tysiacha_autoPlaySpeed', 'tysiacha_revealHands', 'tysiacha_autoRestart'
+      'tysiacha_settings', 'tysiacha_autoPlay', 'tysiacha_autoPlaySpeed', 'tysiacha_revealHands', 'tysiacha_autoRestart',
+      // Astro Salon
+      'astroSalon_lang', 'astroSalon_mySign'
     ];
     // Per-seat / per-wave keys have dynamic suffixes — clear by prefix.
     const prefixesToRemove = [
@@ -581,7 +583,8 @@
       { slug: 'blob-zapper',     emoji: '⚡', title: 'Blob Zapper' },
       { slug: 'materials-run',   emoji: '🏃', title: 'Materials Run' },
       { slug: 'durak',           emoji: '🃏', title: 'Durak' },
-      { slug: 'tysiacha',        emoji: '🎴', title: 'Tysiacha' }
+      { slug: 'tysiacha',        emoji: '🎴', title: 'Tysiacha' },
+      { slug: 'astro-salon',     emoji: '🔮', title: 'Astro Salon' }
     ];
     const currentGameMatch = location.pathname.match(/\/games\/([^/]+)/);
     const currentSlug = currentGameMatch ? currentGameMatch[1] : null;

@@ -60,6 +60,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
   materials-run/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   tysiacha/         — index.html + style.css + ES modules (constants/state/gameplay/ai/ui/main.js)
   river-run/
+  astro-salon/      — index.html + style.css + ES modules (constants/i18n/content/state/gameplay/ui/main.js)
 ```
 
 **Per-game file convention:** Modern games use **Native ES Modules** (`type="module"`) split by concern — `constants.js`, `state.js`, `ui.js` (or equivalent), `gameplay.js`, `main.js`. See `games/CLAUDE.md` for the full file table and rationale. `games/durak-dungeon/` is the reference implementation. Older single-file `game.js` games are acceptable until they grow unwieldy; they are candidates for the module split when they exceed ~800 lines. Classic `<script>` tags (no `type="module"`) remain correct for `shared/settings.js` and `shared/utils.js`.
@@ -80,6 +81,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/durak-dungeon/` | Durak Dungeon | DOM | **Lab** (shelved from the gallery 2026-07-12, p1-29). Roguelike dungeon crawler using Durak card mechanics. Defend against enemy attacks using Durak rules, then counter-attack to deal damage. 20-floor run with relics (15 types), shops, enhanced cards (burning/armored/vampiric/lucky), boss mutations. Seeded runs for async multiplayer via URL. |
 | `games/durak-tactics/` | Durak Tactics | DOM | **Lab** (shelved from the gallery 2026-07-12, p1-29). Turn-based grid tactics using Durak card mechanics. Place cards as units on a 5×4 grid to battle enemy units. Campaign map with battles, shops, events, and bosses. Draft cards and spend gold between encounters. |
 | `games/tysiacha/` | Tysiacha | DOM | Classic trick-taking card game — bid, declare marriages, race to 1000. Built-in interactive coach, full English/Russian toggle (i18n.js string table), AI difficulty levels, renamable players, synthesized sound effects (sfx.js). Saves `tysiachaHighScore`. |
+| `games/astro-salon/` | Astro Salon | DOM/SVG | Astrology teaching game: five of the twelve zodiac signs visit in disguise each session, guessed on an SVG zodiac wheel (read-then-confirm: tap previews the sign big in the hub, tap again commits), then answer one follow-up each (element, modality, ruling planet, opposite sign, or element compatibility). Full EN/RU. ✨ Daily horoscope (date+sign seeded, deterministic). Promoted from `drafts/astro-salon` 2026-07-14. Saves `astroSalon_bestStars`. |
 
 ## Shared Infrastructure: `shared/settings.js`
 
@@ -186,6 +188,10 @@ Conventions: a "Quick Actions" section first (`.settings-btn` buttons — rules,
 | `riverRun_autoPlay` | river-run | `'true'`\|`'false'` | Watch Mode on/off (mirrored in the inline script's `autoPlay` var) |
 | `riverRun_invertControls` | river-run | `'true'`\|`'false'` | Per-game option |
 | `muted` | river-run | `'true'`\|`'false'` | Audio mute state (unnamespaced — legacy) |
+| `lastPlayed_astroSalon` | astro-salon | timestamp (ms) | Set on session start |
+| `astroSalon_lang` | astro-salon | `'en'`\|`'ru'` | UI language; applies live, default `'en'` |
+| `astroSalon_mySign` | astro-salon | integer string (0-11) | Sign picked for the daily horoscope |
+| `astroSalon_bestStars` | astro-salon | integer string | Best session star total |
 
 ## Mobile-First Patterns
 

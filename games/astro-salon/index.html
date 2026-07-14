@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Astro Salon</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="dark-mode">
+    <header>
+        <div class="title" id="app-title">🔮 Astro <span>Salon</span></div>
+        <div class="hud">
+            <div class="streak" id="streak"></div>
+            <div class="stars" id="stars">⭐ 0</div>
+            <button class="icon-btn lang-btn" id="btn-lang" aria-label="Switch language">RU</button>
+            <button class="icon-btn" id="btn-daily" aria-label="Daily horoscope">✨</button>
+            <button class="icon-btn" id="btn-learn" aria-label="Learn the wheel">📖</button>
+            <button class="icon-btn" id="btn-restart" aria-label="Restart">↻</button>
+        </div>
+    </header>
+
+    <div class="wheel-wrap">
+        <svg class="wheel" id="wheel" viewBox="0 0 400 400" aria-label="Zodiac wheel"></svg>
+    </div>
+
+    <div class="stage">
+        <div class="card">
+            <div class="client-row">
+                <div class="client-emoji" id="c-emoji">🔮</div>
+                <div>
+                    <div class="client-name" id="c-name"></div>
+                    <div class="client-sub" id="c-sub"></div>
+                </div>
+            </div>
+            <div class="speech" id="speech"></div>
+            <div class="bday" id="bday"></div>
+            <div class="prompt" id="prompt"></div>
+            <div class="feedback" id="feedback"></div>
+            <div class="chips" id="chips"></div>
+        </div>
+        <button class="continue-btn" id="btn-continue">Continue →</button>
+    </div>
+
+    <div class="overlay show" id="ov-start">
+        <div class="panel">
+            <h1 id="start-title">🔮 Astro <span>Salon</span></h1>
+            <p id="start-p1"></p>
+            <p id="start-p2"></p>
+            <p id="start-p3"></p>
+            <button class="big-btn" id="btn-start"></button>
+            <button class="big-btn ghost slim" id="btn-start-daily"></button>
+            <button class="big-btn ghost slim" id="btn-start-lang"></button>
+            <p class="ver" id="best-line"></p>
+        </div>
+    </div>
+
+    <div class="overlay" id="ov-daily">
+        <div class="panel">
+            <h1 id="daily-title">✨</h1>
+            <div id="daily-body"></div>
+            <button class="big-btn ghost slim" id="btn-daily-change"></button>
+            <button class="big-btn ghost" id="btn-daily-close"></button>
+        </div>
+    </div>
+
+    <div class="overlay" id="ov-learn">
+        <div class="panel">
+            <h1 id="learn-title">📖</h1>
+            <div class="rulebox" id="rule-year"></div>
+            <div class="rulebox" id="rule-elements"></div>
+            <div class="rulebox" id="rule-mods"></div>
+            <div class="rulebox" id="rule-opps"></div>
+            <table class="learn-table" id="learn-table"></table>
+            <button class="big-btn ghost" id="btn-learn-close"></button>
+        </div>
+    </div>
+
+    <div class="overlay" id="ov-end">
+        <div class="panel">
+            <h1 id="end-title">🌙</h1>
+            <div class="end-stars" id="end-stars"></div>
+            <div class="client-sub" id="end-detail"></div>
+            <div class="end-line" id="end-line"></div>
+            <p class="fortune" id="end-fortune"></p>
+            <button class="big-btn" id="btn-again"></button>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+    <script src="../../shared/settings.js" data-gallery-depth="2"></script>
+</body>
+
+</html>

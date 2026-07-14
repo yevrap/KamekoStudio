@@ -323,6 +323,16 @@
                     </div>
                 </div>
 
+                <div class="game-card" style="--card-accent:#6d5bd0">
+                    <div class="game-card-body">
+                        <div class="game-emoji">🔮</div>
+                        <div class="game-title">Astro Salon</div>
+                        <div class="game-desc">Guess the zodiac signs visiting your salon in disguise — EN/RU</div>
+                        <div class="game-meta" id="meta-astroSalon"></div>
+                        <a href="games/astro-salon/" class="play-btn" style="background:#6d5bd0">▶ Play</a>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -337,6 +347,7 @@
             { id: 'blobZapper',   name: 'Blob Zapper',   emoji: '⚡', href: 'games/blob-zapper/' },
             { id: 'durak',        name: 'Durak',         emoji: '🃏', href: 'games/durak/' },
             { id: 'tysiacha',     name: 'Tysiacha (1000)', emoji: '🎴', href: 'games/tysiacha/' },
+            { id: 'astroSalon',   name: 'Astro Salon',   emoji: '🔮', href: 'games/astro-salon/' },
         ];
 
         const SCORES_META = [
@@ -345,6 +356,7 @@
             { label: 'River Run',                key: 'riverRunHighScore',        suffix: ' pts' },
             { label: 'Keypad Quest',              key: 'keypadQuestHighWave',      suffix: ' waves' },
             { label: 'Tysiacha',                 key: 'tysiachaHighScore',        suffix: ' pts' },
+            { label: 'Astro Salon',              key: 'astroSalon_bestStars',     suffix: ' ⭐' },
         ];
 
         function timeAgo(ts) {
@@ -417,6 +429,12 @@
             if (tyScore > 0) {
                 var el = document.getElementById('meta-tysiacha');
                 if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: ' + tyScore + ' pts';
+            }
+
+            var astroStars = parseInt(localStorage.getItem('astroSalon_bestStars') || '0', 10);
+            if (astroStars > 0) {
+                var el = document.getElementById('meta-astroSalon');
+                if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: ' + astroStars + ' ⭐';
             }
 
             // Your Best Scores section

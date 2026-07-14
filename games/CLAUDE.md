@@ -38,6 +38,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `materials-run/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; rendering tightly coupled to physics/state updates, merged into gameplay.js like durak-tactics) |
 | `blob-zapper/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; canvas rendering tightly coupled to physics/particle state, merged into gameplay.js like durak-tactics) |
 | `river-run/` | — | ⏸ Lower priority | Three.js; complex event + audio setup; different architecture |
+| `astro-salon/` | — | ✅ Done | constants/i18n/content/state/gameplay/ui/main.js. Promoted from `drafts/astro-salon` 2026-07-14 (round-3 playtest **keep**). `content.js` holds pure text-generation (chip labels, rule/hint text) shared by `ui.js` and its tests — kept separate so `gameplay.js` → `ui.js` stays one-directional (no import cycle, same shape as tysiacha's `log.js`). |
 
 **When refactoring a game:** start with `durak-dungeon/` as the reference. Use `durak-tactics/` as the example for games where rendering and game logic are too tightly coupled to split into a separate `ui.js` — put both in `gameplay.js`.
 
@@ -57,6 +58,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
 | `tysiacha/` | Tysiacha (1000) | DOM | Stable |
 | `river-run/` | River Runner 3D | Three.js r128 | Stable |
+| `astro-salon/` | Astro Salon | DOM/SVG | Stable |
 
 ## Conventions Shared Across Games
 
@@ -128,6 +130,10 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `keypadQuestHighWave` | keypad-quest | Highest wave reached |
 | `keypadQuest_autoPlay` | keypad-quest | Auto-play toggle |
 | `keypadQuest_autoPlaySpeed` | keypad-quest | Delay between auto actions |
+| `lastPlayed_astroSalon` | astro-salon | Set on session start |
+| `astroSalon_lang` | astro-salon | UI language `'en'`/`'ru'`, applies live |
+| `astroSalon_mySign` | astro-salon | Sign picked for the daily horoscope (0-11) |
+| `astroSalon_bestStars` | astro-salon | Best session star total |
 
 ## Three.js Obstacle Arrays
 
