@@ -1,14 +1,19 @@
-# Astro Salon — Playtest Notes
+# Astro Salon — Playtest Notes (v20, iteration 2)
 
-**Concept:** You run a tiny astrology salon; five clients walk in with a birthday and a question, and you answer by reading the zodiac wheel — the game teaches the real system (sign dates, elements, modalities, ruling planets, opposites, element compatibility) through client dialogue, wrong-answer rules, and a 📖 cheat sheet. First try 2⭐, second try 1⭐, streak bonuses. One session ≈ 5 minutes.
+**Concept:** Five of the twelve zodiac signs visit your salon **as characters, in disguise** — each gives a personality-flavored line and a birthday (month names, big type), and you guess who they are on the zodiac wheel, then answer their question (element, modality, ruling planet, opposite, compatibility). Full **EN/RU** toggle (header button, persisted). First try 2⭐, second try 1⭐, streak bonuses. One session ≈ 5 minutes.
+
+**What changed since v19 (per the vault questionnaire):**
+- Clients (Vera, Boris…) replaced by the **signs themselves** — 12 personas whose voice matches their sign's traits, revealed on answer.
+- **Month-name dates everywhere** (wheel wedges, birthday line, cheat sheet) instead of dd.mm; bigger wheel labels, sign names on the wedges, season markers (🌸☀️🍂❄️) in the corners, a "the wheel is the year" rule box.
+- **Russian version** — full string table, RU astrology vocabulary (Овен, стихии, кардинальный…), RU month grammar.
 
 **What this playtest should evaluate:**
 
-- **Does the teaching actually land?** After 2–3 sessions, can you place a birthday on the wheel and name an element without the cheat sheet — or does it feel like guess-and-memorize rather than learning?
-- **Is the client-dialogue framing charming or thin?** The salon/clients wrapper is the game's personality — does it make you want "one more client," or would a plain quiz feel the same?
-- **Is the session depth right?** 5 clients × 2 questions ≈ 5 min. Too shallow (want deeper reads per client — houses, cusps, daily horoscope?) or right for pick-up-put-down?
+- **Do the readable dates fix the teaching?** After 2–3 sessions, can you place a birthday without the 📖 sheet — do the month names + season corners make the time ranges stick?
+- **Do the sign-personas land?** Is guessing *who* walked in (traits + date) more fun than serving anonymous clients — and do you start recognizing signs by personality?
+- **Is RU right?** Vocabulary, grammar, tone — does the Russian version feel native or translated?
 
 **Verdict line for the vault log:**
 ```
-YYYY-MM-DD — astro-salon (draft) — keep|meh|kill — <why>
+YYYY-MM-DD — astro-salon (draft v20) — keep|meh|kill — <why>
 ```

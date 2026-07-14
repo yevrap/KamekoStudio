@@ -52,13 +52,15 @@ function findChrome() {
 
 async function collectPages() {
   const pages = ['/', '/3d.html', '/drafts/'];
-  const gamesDir = path.join(ROOT, 'games');
-  for (const entry of await fs.readdir(gamesDir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
-    try {
-      await fs.access(path.join(gamesDir, entry.name, 'index.html'));
-      pages.push('/games/' + entry.name + '/');
-    } catch { /* no index.html — not a game page */ }
+  for (const [dir, prefix] of [['games', '/games/'], ['drafts', '/drafts/']]) {
+    const abs = path.join(ROOT, dir);
+    for (const entry of await fs.readdir(abs, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      try {
+        await fs.access(path.join(abs, entry.name, 'index.html'));
+        pages.push(prefix + entry.name + '/');
+      } catch { /* no index.html — not a game page */ }
+    }
   }
   return pages;
 }
