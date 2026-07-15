@@ -196,7 +196,6 @@ if (window.KamekoSettings) {
         render(container) {
             container.innerHTML = `
                 <button class="settings-btn" id="bh-howto">❓ How to play</button>
-                <button class="settings-btn" id="bh-new">↺ New ${S.mode === 'round' ? 'round' : 'run'}</button>
                 <label class="settings-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">
                     <span>Sound effects</span>
                     <input type="checkbox" id="bh-sound" ${isMuted() ? '' : 'checked'}>
@@ -204,10 +203,6 @@ if (window.KamekoSettings) {
             container.querySelector('#bh-howto').addEventListener('click', () => {
                 window.KamekoSettings.closeDrawer();
                 ui.showHowto();
-            });
-            container.querySelector('#bh-new').addEventListener('click', () => {
-                window.KamekoSettings.closeDrawer();
-                startRun(S.mode);
             });
             container.querySelector('#bh-sound').addEventListener('change', e => {
                 setMuted(!e.target.checked);

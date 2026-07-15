@@ -75,12 +75,15 @@ body {
     gap: 8px;
 }
 #btns button {
-    width: 44px; height: 44px;
+    height: 44px;
+    min-width: 44px;
+    padding: 0 10px;
     border-radius: 12px;
     border: 1px solid var(--panel-border);
     background: var(--panel-bg);
     color: var(--ink-soft);
-    font-size: 1.15rem;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
 }
 #btns button:active { filter: brightness(1.25); }
