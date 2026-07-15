@@ -44,7 +44,7 @@ body {
 }
 
 /* ---- top score bar ---- */
-#bar {
+#bar, #exploreBar {
     position: fixed;
     top: 0; left: 0; right: 0;
     display: flex;
@@ -60,7 +60,7 @@ body {
     color: #e0e0ff;
     text-shadow: 0 1px 6px #000;
 }
-#bar .dim { color: #7777aa; font-weight: 500; }
+#bar .dim, #exploreBar .dim { color: #7777aa; font-weight: 500; }
 #bar #strokes { color: #e0e0ff; }
 #bar #total.under { color: #00e5a0; }
 #bar #total.over  { color: #ff8a5c; }

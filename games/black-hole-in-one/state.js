@@ -3,7 +3,7 @@
 
 export const S = {
     phase: 'menu',    // menu | rest | aiming | flight | orbit | sink | result | roundover
-    mode: 'endless',  // 'endless' | 'round' (9 holes + scorecard)
+    mode: 'endless',  // 'endless' | 'round' | 'explore'
     hole: 1,
     strokes: 0,
     totalDiff: 0,

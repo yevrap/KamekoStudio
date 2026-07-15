@@ -57,6 +57,27 @@ export const PALETTES = [
 export function rand(a, b) { return a + Math.random() * (b - a); }
 export function dist(ax, ay, bx, by) { return Math.hypot(bx - ax, by - ay); }
 
+// ── Seeded PRNG ────────────────────────────────────────────────────────────
+export function mulberry32(seed) {
+    let h = seed | 0;
+    return function () {
+        h = Math.imul(h ^ (h >>> 16), 2246822507);
+        h = Math.imul(h ^ (h >>> 13), 3266489909);
+        h ^= h >>> 16;
+        return (h >>> 0) / 4294967296;
+    };
+}
+
+export function seedFromString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return hash;
+}
+
+
 export function fmtDiff(d) { return d === 0 ? 'E' : (d > 0 ? '+' + d : '−' + Math.abs(d)); }
 
 // Golf label for a finished hole. fanfare = number of ascending score tones.

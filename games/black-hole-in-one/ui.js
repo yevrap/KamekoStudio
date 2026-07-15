@@ -9,6 +9,7 @@ import {
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
+import * as explore from './explore.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -38,8 +39,13 @@ export function resize() {
 
 export function toWorld(e) {
     const rect = canvas.getBoundingClientRect();
-    return [(e.clientX - rect.left) / view.scale - view.ox,
-            (e.clientY - rect.top) / view.scale - view.oy];
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    if (S.mode === 'explore') {
+        return explore.screenToWorld(sx, sy, view.scale, view.vw, view.vh, explore.camera.x, explore.camera.y);
+    }
+    return [sx / view.scale - view.ox,
+            sy / view.scale - view.oy];
 }
 
 function makeStars() {
@@ -121,18 +127,35 @@ export function render(drag) {
 
     // stars live in course coordinates (shifted by view offset below)
     ctx.save();
-    ctx.translate(view.ox, view.oy);
+    if (S.mode === 'explore') {
+        ctx.translate(view.vw / 2 - explore.camera.x, view.vh / 2 - explore.camera.y);
+    } else {
+        ctx.translate(view.ox, view.oy);
+    }
 
     for (const st of stars) {
         const tw = 0.45 + 0.55 * Math.abs(Math.sin(S.time * st.sp + st.ph));
         ctx.globalAlpha = tw;
         ctx.fillStyle = '#cdd6ff';
-        ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, 7); ctx.fill();
+        ctx.beginPath(); 
+        if (S.mode === 'explore') {
+            // Parallax wrapping for stars in explore mode
+            const px = explore.camera.x - view.vw / 2;
+            const py = explore.camera.y - view.vh / 2;
+            let sx = (st.x - explore.camera.x * 0.1) % view.vw;
+            if (sx < 0) sx += view.vw;
+            let sy = (st.y - explore.camera.y * 0.1) % view.vh;
+            if (sy < 0) sy += view.vh;
+            ctx.arc(px + sx, py + sy, st.r, 0, 7);
+        } else {
+            ctx.arc(st.x, st.y, st.r, 0, 7); 
+        }
+        ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    // faint course edge on wide screens so the play area reads
-    if (view.ox > 2) {
+    // faint course edge on wide screens so the play area reads (only in golf mode)
+    if (view.ox > 2 && S.mode !== 'explore') {
         ctx.globalAlpha = 0.1;
         ctx.strokeStyle = '#8a8ac0';
         ctx.lineWidth = 0.3;

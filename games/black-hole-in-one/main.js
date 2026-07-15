@@ -4,6 +4,7 @@
 import { DT, ROUND_HOLES } from './constants.js';
 import { S, world, comet } from './state.js';
 import * as game from './gameplay.js';
+import * as explore from './explore.js';
 import * as ui from './ui.js';
 import { sfx, audio, setMuted, isMuted } from './sfx.js';
 
@@ -39,6 +40,13 @@ game.setHooks({
     },
 });
 
+explore.setHooks({
+    toast: ui.toast,
+    bar: ui.updateBar,
+    burst: ui.burst,
+    sfx,
+});
+
 /* ============================== INPUT ============================== */
 
 let drag = null;   // {sx, sy, cx, cy, id} in world coords
@@ -65,7 +73,10 @@ canvas.addEventListener('pointerup', e => {
     const dx = drag.sx - drag.cx, dy = drag.sy - drag.cy;
     const len = Math.hypot(dx, dy);
     drag = null;
-    if (len > 0) game.launch(dx, dy, len);         // launch resumes the orbit itself on a weak drag
+    if (len > 0) {
+        if (S.mode === 'explore') explore.launch(dx, dy, len);
+        else game.launch(dx, dy, len);
+    }
     else S.phase = world.orbit ? 'orbit' : 'rest'; // no drag: fall back to whatever we were aiming from
 });
 canvas.addEventListener('pointercancel', () => { if (drag) { drag = null; S.phase = world.orbit ? 'orbit' : 'rest'; } });
@@ -77,11 +88,20 @@ function startRun(mode) {
     localStorage.setItem(LS.mode, mode);
     ui.hideHowto();
     ui.hideScorecard();
-    game.startRun(mode);
+    if (mode === 'explore') {
+        document.getElementById('bar').classList.add('hidden');
+        document.getElementById('exploreBar').classList.remove('hidden');
+        explore.startRun();
+    } else {
+        document.getElementById('bar').classList.remove('hidden');
+        document.getElementById('exploreBar').classList.add('hidden');
+        game.startRun(mode);
+    }
 }
 
 document.getElementById('modeEndless').addEventListener('click', () => startRun('endless'));
 document.getElementById('modeRound').addEventListener('click', () => startRun('round'));
+document.getElementById('modeExplore').addEventListener('click', () => startRun('explore'));
 document.getElementById('howto').addEventListener('pointerdown', e => {
     if (e.target.closest('button')) return;
     audio();
@@ -153,9 +173,14 @@ function frame(now) {
     acc += dtRaw;
     while (acc >= DT) {
         acc -= DT;
-        if (S.phase === 'flight') game.stepFlight(DT);
-        else if (S.phase === 'orbit') game.stepOrbit(DT);
-        else if (S.phase === 'sink') game.stepSink(DT);
+        if (S.mode === 'explore') {
+            if (S.phase === 'flight') explore.step(DT);
+            else if (S.phase === 'orbit') explore.stepOrbit(DT);
+        } else {
+            if (S.phase === 'flight') game.stepFlight(DT);
+            else if (S.phase === 'orbit') game.stepOrbit(DT);
+            else if (S.phase === 'sink') game.stepSink(DT);
+        }
     }
     if (S.phase === 'flight' || S.phase === 'orbit') {
         world.trail.push({ x: comet.x, y: comet.y });
