@@ -291,7 +291,8 @@ export function holeComplete() {
     hooks.bar();
     const roundDone = S.mode === 'round' && S.roundCard.length >= ROUND_HOLES;
     const isEditor = S.mode === 'editor';
-    resultTimer = schedule(roundDone ? endRound : (isEditor ? () => {} : nextHole), 1900);
+    const isCustom = S.mode === 'custom';
+    resultTimer = schedule(roundDone ? endRound : (isEditor || isCustom ? () => {} : nextHole), 1900);
 }
 
 export function nextHole() {
@@ -320,6 +321,23 @@ export function advance() {
         hooks.editorReturn();
         return;
     }
+    if (S.mode === 'custom') {
+        clearTimeout(resultTimer); resultTimer = null;
+        hooks.chip(null);
+        comet.vx = comet.vy = 0;
+        comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+        placeOnRest();
+        world.lastRest = { rest: comet.rest };
+        S.strokes = 0;
+        S.tFlight = 0;
+        world.trail = [];
+        world.orbit = null;
+        world.sink = null;
+        S.orbitCooldown = 0;
+        S.phase = 'rest';
+        hooks.bar();
+        return;
+    }
     if (S.mode === 'round' && S.roundCard.length >= ROUND_HOLES) endRound();
     else nextHole();
 }
@@ -332,5 +350,53 @@ export function startRun(mode) {
     S.totalDiff = 0;
     S.roundCard = [];
     genHole(1);
+    S.phase = 'rest';
+}
+
+export function startCustomMap(mapData) {
+    clearTimeout(resultTimer); resultTimer = null;
+    hooks.chip(null);
+    S.mode = 'custom';
+    S.hole = 1;
+    S.totalDiff = 0;
+    S.roundCard = [];
+    
+    world.bodies = mapData.bodies;
+    world.teeRock = mapData.teeRock;
+    world.blackHole = mapData.blackHole;
+    
+    // Ensure tee is in bodies
+    world.bodies = world.bodies.filter(b => b.type !== 'tee');
+    world.bodies.push(world.teeRock);
+
+    S.par = 0; // Not tracked for custom maps really, but we can set to 0 to hide "PAR X" or it will just show PAR 0
+    S.strokes = 0;
+    S.tFlight = 0;
+    S.hopsThisHole = 0;
+
+    comet.vx = comet.vy = 0;
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    placeOnRest();
+    world.lastRest = { rest: comet.rest };
+
+    world.trail = [];
+    world.slingTrack = new Map();
+    world.hoppedBodies = new Set();
+    world.orbitedThisHole = new Set();
+    world.orbit = null;
+    world.sink = null;
+    S.orbitCooldown = 0;
+
+    hooks.holeStart();
+    
+    // Hide UI elements not relevant for custom
+    document.getElementById('exploreBar').classList.add('hidden');
+    document.getElementById('editorBar').classList.add('hidden');
+    document.getElementById('bar').classList.remove('hidden');
+    document.getElementById('howto').classList.add('hidden');
+    document.getElementById('scorecard').classList.add('hidden');
+
+    hooks.bar();
+    hooks.toast('📂 Custom map loaded');
     S.phase = 'rest';
 }

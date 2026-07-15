@@ -203,6 +203,72 @@ export function saveCurrentMap() {
     renderMapsList();
 }
 
+export function encodeMap(mapData) {
+    const arr = [];
+    const r = (v) => Math.round(v * 10) / 10;
+    arr.push([0, r(mapData.teeRock.x), r(mapData.teeRock.y)]);
+    arr.push([1, r(mapData.blackHole.x), r(mapData.blackHole.y)]);
+    
+    mapData.bodies.forEach(b => {
+        if (b.type === 'planet') arr.push([2, r(b.x), r(b.y), r(b.r), b.pal, r(b.spin)]);
+        else if (b.type === 'pulsar') arr.push([3, r(b.x), r(b.y)]);
+    });
+    
+    const str = JSON.stringify(arr);
+    return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+export function decodeMap(hash) {
+    try {
+        let b64 = hash.replace(/-/g, '+').replace(/_/g, '/');
+        while (b64.length % 4) b64 += '=';
+        const arr = JSON.parse(atob(b64));
+        
+        let teeRock = null, blackHole = null;
+        const bodies = [];
+        
+        arr.forEach(i => {
+            if (i[0] === 0) teeRock = { x: i[1], y: i[2], r: 3.4, m: 8, type: 'tee' };
+            else if (i[0] === 1) blackHole = { x: i[1], y: i[2], r: 3.2, m: 230, type: 'hole' };
+            else if (i[0] === 2) bodies.push({ x: i[1], y: i[2], r: i[3], m: i[3]*i[3], type: 'planet', pal: i[4], spin: i[5] });
+            else if (i[0] === 3) bodies.push({ x: i[1], y: i[2], r: 2.6, m: -160, type: 'pulsar' });
+        });
+        
+        if (!teeRock || !blackHole) return null;
+        return { teeRock, blackHole, bodies };
+    } catch {
+        return null;
+    }
+}
+
+export function shareCurrentMap() {
+    if (S.phase !== 'edit') return;
+    const mapData = {
+        bodies: world.bodies.map(b => ({ ...b })),
+        teeRock: { ...world.teeRock },
+        blackHole: { ...world.blackHole }
+    };
+    const hash = encodeMap(mapData);
+    copyShareLink(hash);
+}
+
+function shareMap(index) {
+    const maps = getMaps();
+    const m = maps[index];
+    if (!m) return;
+    const hash = encodeMap(m);
+    copyShareLink(hash);
+}
+
+function copyShareLink(hash) {
+    const url = window.location.origin + window.location.pathname + '?map=' + hash;
+    navigator.clipboard.writeText(url).then(() => {
+        hooks.toast('🔗 Link copied');
+    }).catch(() => {
+        hooks.toast('❌ Could not copy');
+    });
+}
+
 function loadMap(index) {
     const maps = getMaps();
     const m = maps[index];
@@ -273,12 +339,17 @@ function renderMapsList() {
         renameBtn.textContent = '✎';
         renameBtn.onclick = () => renameMap(idx);
         
+        const shareBtn = document.createElement('button');
+        shareBtn.textContent = '🔗 Share';
+        shareBtn.onclick = () => shareMap(idx);
+        
         const delBtn = document.createElement('button');
         delBtn.textContent = '🗑';
         delBtn.onclick = () => deleteMap(idx);
         
         actions.appendChild(playBtn);
         actions.appendChild(renameBtn);
+        actions.appendChild(shareBtn);
         actions.appendChild(delBtn);
         
         item.appendChild(nameSpan);

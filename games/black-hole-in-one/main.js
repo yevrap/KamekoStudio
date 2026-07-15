@@ -145,6 +145,7 @@ document.getElementById('ed-add-planet').addEventListener('click', () => editor.
 document.getElementById('ed-add-pulsar').addEventListener('click', () => editor.addPulsar());
 document.getElementById('ed-maps').addEventListener('click', () => editor.toggleMapsDrawer());
 document.getElementById('mm-saveNew').addEventListener('click', () => editor.saveCurrentMap());
+document.getElementById('mm-shareNew').addEventListener('click', () => editor.shareCurrentMap());
 document.getElementById('mm-close').addEventListener('click', () => editor.toggleMapsDrawer());
 document.getElementById('howto').addEventListener('pointerdown', e => {
     if (e.target.closest('button')) return;
@@ -241,7 +242,28 @@ setMuted(localStorage.getItem(LS.muted) === 'true');
 
 window.addEventListener('resize', ui.resize);
 ui.resize();
-game.genHole(1);
-S.phase = 'menu';
-if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); game.genHole(1); S.phase = 'menu'; });
+
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('map')) {
+    const mapData = editor.decodeMap(urlParams.get('map'));
+    if (mapData) {
+        // Strip map from URL so refreshes don't re-trigger it
+        const url = new URL(window.location);
+        url.searchParams.delete('map');
+        window.history.replaceState({}, '', url);
+        
+        game.startCustomMap(mapData);
+        if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); game.startCustomMap(mapData); });
+    } else {
+        ui.toast('❌ Invalid map link');
+        game.genHole(1);
+        S.phase = 'menu';
+        if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); game.genHole(1); S.phase = 'menu'; });
+    }
+} else {
+    game.genHole(1);
+    S.phase = 'menu';
+    if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); game.genHole(1); S.phase = 'menu'; });
+}
+
 requestAnimationFrame(t => { lastT = t; requestAnimationFrame(frame); });
