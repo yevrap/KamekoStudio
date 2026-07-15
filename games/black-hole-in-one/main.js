@@ -143,6 +143,9 @@ document.getElementById('modeEditor').addEventListener('click', () => startRun('
 document.getElementById('ed-test').addEventListener('click', () => editor.toggleTestPlay());
 document.getElementById('ed-add-planet').addEventListener('click', () => editor.addPlanet());
 document.getElementById('ed-add-pulsar').addEventListener('click', () => editor.addPulsar());
+document.getElementById('ed-maps').addEventListener('click', () => editor.toggleMapsDrawer());
+document.getElementById('mm-saveNew').addEventListener('click', () => editor.saveCurrentMap());
+document.getElementById('mm-close').addEventListener('click', () => editor.toggleMapsDrawer());
 document.getElementById('howto').addEventListener('pointerdown', e => {
     if (e.target.closest('button')) return;
     audio();

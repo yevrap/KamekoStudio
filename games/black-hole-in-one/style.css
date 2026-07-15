@@ -144,8 +144,8 @@ body {
     color: #9a9ac8;
 }
 
-/* ---- overlays (how-to + scorecard) ---- */
-#howto, #scorecard {
+/* ---- overlays (how-to + scorecard + myMapsDrawer) ---- */
+#howto, #scorecard, #myMapsDrawer {
     position: fixed;
     inset: 0;
     display: flex;
@@ -161,8 +161,8 @@ body {
     z-index: 10;
     color: #e0e0ff;
 }
-#howto.hidden, #scorecard.hidden { display: none; }
-#howto h1, #scorecard h2 {
+#howto.hidden, #scorecard.hidden, #myMapsDrawer.hidden { display: none; }
+#howto h1, #scorecard h2, #myMapsDrawer h2 {
     font-size: 1.5rem;
     font-weight: 800;
     letter-spacing: 0.12em;
@@ -178,12 +178,12 @@ body {
     color: #b8b8e0;
     max-width: 300px;
 }
-#modeBtns, #sc-btns {
+#modeBtns, #sc-btns, #myMaps-actions {
     display: flex;
     gap: 12px;
     margin-top: 0.6rem;
 }
-#modeBtns button, #sc-btns button {
+#modeBtns button, #sc-btns button, #myMaps-actions button {
     min-height: 48px;
     padding: 0 1.3rem;
     border-radius: 14px;
@@ -196,11 +196,45 @@ body {
     text-transform: uppercase;
     cursor: pointer;
 }
-#modeBtns button:first-child, #sc-btns button:first-child {
+#modeBtns button:first-child, #sc-btns button:first-child, #myMaps-actions button:first-child {
     border-color: #00e5a0;
     color: #00e5a0;
 }
-#modeBtns button:active, #sc-btns button:active { background: #1a1a3a; }
+#modeBtns button:active, #sc-btns button:active, #myMaps-actions button:active { background: #1a1a3a; }
+
+#myMapsList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 320px;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+.mm-map-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #12122a;
+    border: 1px solid #2a2a50;
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+.mm-map-item span {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+.mm-map-actions button {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    margin-left: 6px;
+}
+.mm-map-actions button:active { background: rgba(255,255,255,0.2); }
 
 /* ---- scorecard ---- */
 #sc-total {

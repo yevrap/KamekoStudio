@@ -158,3 +158,131 @@ export function stopTest() {
     document.getElementById('ed-test').classList.remove('active');
     document.querySelector('.ed-tools').classList.remove('disabled');
 }
+
+/* ============================== MY MAPS ============================== */
+
+const LS_MAPS = 'blackHoleInOne_myMaps';
+
+function getMaps() {
+    try {
+        return JSON.parse(localStorage.getItem(LS_MAPS) || '[]');
+    } catch {
+        return [];
+    }
+}
+
+function saveMaps(maps) {
+    localStorage.setItem(LS_MAPS, JSON.stringify(maps));
+}
+
+export function toggleMapsDrawer() {
+    const drawer = document.getElementById('myMapsDrawer');
+    if (drawer.classList.contains('hidden')) {
+        renderMapsList();
+        drawer.classList.remove('hidden');
+    } else {
+        drawer.classList.add('hidden');
+    }
+}
+
+export function saveCurrentMap() {
+    if (S.phase !== 'edit') return; // Only save from edit phase
+    const maps = getMaps();
+    const name = prompt('Enter a name for this map:', 'My Custom Hole');
+    if (!name) return;
+
+    const mapData = {
+        name,
+        bodies: world.bodies.map(b => ({ ...b })),
+        teeRock: { ...world.teeRock },
+        blackHole: { ...world.blackHole }
+    };
+    maps.push(mapData);
+    saveMaps(maps);
+    hooks.toast('💾 Map saved');
+    renderMapsList();
+}
+
+function loadMap(index) {
+    const maps = getMaps();
+    const m = maps[index];
+    if (!m) return;
+    
+    // Stop test if we were in it
+    if (S.phase === 'rest' || S.phase === 'aiming' || S.phase === 'orbit' || S.phase === 'flight' || S.phase === 'sink') {
+        stopTest();
+    }
+    
+    world.bodies = m.bodies;
+    world.teeRock = m.teeRock;
+    world.blackHole = m.blackHole;
+    
+    // Re-link teeRock in bodies
+    world.bodies = world.bodies.filter(b => b.type !== 'tee');
+    world.bodies.push(world.teeRock);
+    
+    resetComet();
+    hooks.toast('📂 Map loaded');
+    toggleMapsDrawer();
+}
+
+function deleteMap(index) {
+    if (!confirm('Delete this map?')) return;
+    const maps = getMaps();
+    maps.splice(index, 1);
+    saveMaps(maps);
+    renderMapsList();
+}
+
+function renameMap(index) {
+    const maps = getMaps();
+    const m = maps[index];
+    if (!m) return;
+    const newName = prompt('Enter new name:', m.name);
+    if (!newName) return;
+    m.name = newName;
+    saveMaps(maps);
+    renderMapsList();
+}
+
+function renderMapsList() {
+    const maps = getMaps();
+    const list = document.getElementById('myMapsList');
+    list.innerHTML = '';
+    
+    if (maps.length === 0) {
+        list.innerHTML = '<div style="opacity:0.6;font-size:0.9rem;">No saved maps yet.</div>';
+        return;
+    }
+    
+    maps.forEach((m, idx) => {
+        const item = document.createElement('div');
+        item.className = 'mm-map-item';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = m.name;
+        
+        const actions = document.createElement('div');
+        actions.className = 'mm-map-actions';
+        
+        const playBtn = document.createElement('button');
+        playBtn.textContent = '▶ Load';
+        playBtn.onclick = () => loadMap(idx);
+        
+        const renameBtn = document.createElement('button');
+        renameBtn.textContent = '✎';
+        renameBtn.onclick = () => renameMap(idx);
+        
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '🗑';
+        delBtn.onclick = () => deleteMap(idx);
+        
+        actions.appendChild(playBtn);
+        actions.appendChild(renameBtn);
+        actions.appendChild(delBtn);
+        
+        item.appendChild(nameSpan);
+        item.appendChild(actions);
+        list.appendChild(item);
+    });
+}
