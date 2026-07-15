@@ -78,7 +78,7 @@ export function pointerDown(wx, wy, id) {
         // Reverse order to grab top-most
         for (let i = world.bodies.length - 1; i >= 0; i--) {
             const b = world.bodies[i];
-            const hitR = b.type === 'pulsar' ? b.r * 3 : b.r + 5;
+            const hitR = b.type === 'pulsar' ? 12.6 : b.r + 5;
             if (Math.hypot(b.x - wx, b.y - wy) <= hitR) {
                 found = b;
                 break;
@@ -88,6 +88,10 @@ export function pointerDown(wx, wy, id) {
     
     if (found) {
         dragged = { id, obj: found, ox: found.x - wx, oy: found.y - wy };
+        if (found.type !== 'tee' && found.type !== 'hole') {
+            const trash = document.getElementById('editorTrash');
+            if (trash) trash.classList.remove('hidden');
+        }
         return true;
     }
     return false;
@@ -101,12 +105,20 @@ export function pointerMove(wx, wy, id) {
     }
 }
 
-export function pointerUp(wx, wy, id) {
+export function pointerUp(wx, wy, id, cx, cy) {
     if (dragged && dragged.id === id) {
         const o = dragged.obj;
+        const trash = document.getElementById('editorTrash');
+        if (trash) trash.classList.add('hidden');
+        
         // Delete if dragged out of bounds (except tee/hole)
         if (o.type !== 'tee' && o.type !== 'hole') {
-            if (o.x < -10 || o.x > W + 10 || o.y < -10 || o.y > COURSE_H + 10) {
+            let overTrash = false;
+            if (trash && cx !== undefined && cy !== undefined) {
+                const rect = trash.getBoundingClientRect();
+                overTrash = (cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom);
+            }
+            if (overTrash || o.x < -10 || o.x > W + 10 || o.y < -10 || o.y > COURSE_H + 10) {
                 world.bodies = world.bodies.filter(b => b !== o);
                 hooks.sfx.pop();
                 hooks.toast('🗑️ Deleted');

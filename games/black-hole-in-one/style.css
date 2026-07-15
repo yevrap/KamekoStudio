@@ -325,3 +325,22 @@ body {
     font-size: 11px;
     opacity: 0.6;
 }
+
+#editorTrash {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 60, 60, 0.2);
+    border: 2px dashed rgba(255, 60, 60, 0.8);
+    color: #ff9999;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: bold;
+    z-index: 1000;
+    pointer-events: none;
+    white-space: nowrap;
+}
+#editorTrash.hidden {
+    display: none;
+}

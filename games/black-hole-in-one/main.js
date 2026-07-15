@@ -94,7 +94,7 @@ canvas.addEventListener('pointermove', e => {
 canvas.addEventListener('pointerup', e => {
     const [wx, wy] = ui.toWorld(e);
     if (S.mode === 'editor' && S.phase === 'edit') {
-        editor.pointerUp(wx, wy, e.pointerId);
+        editor.pointerUp(wx, wy, e.pointerId, e.clientX, e.clientY);
         return;
     }
 
