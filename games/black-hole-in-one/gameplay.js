@@ -4,12 +4,13 @@
 'use strict';
 
 import {
-    WORLD_W as W, COURSE_H, DT, MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R,
+    WORLD_W as W, COURSE_H, DT, MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, CAPTURE_R,
     OB_MARGIN, DUST_T, FLIGHT_CAP, SLING_ANG, ROUND_HOLES, PALETTES,
+    ORBIT_COOLDOWN, ORBIT_ARM_T,
     rand, dist, holeLabel,
 } from './constants.js';
 import { S, world, comet } from './state.js';
-import { stepBody, collide } from './physics.js';
+import { stepBody, collide, orbitCapture } from './physics.js';
 
 // Presentation hooks — main.js swaps in the real UI; defaults are no-ops.
 export let hooks = {
@@ -93,7 +94,10 @@ export function genHole(n) {
     world.trail = [];
     world.slingTrack = new Map();
     world.hoppedBodies = new Set();
+    world.orbitedThisHole = new Set();
+    world.orbit = null;
     world.sink = null;
+    S.orbitCooldown = 0;
 
     hooks.holeStart();
     hooks.bar();
@@ -109,9 +113,15 @@ export function placeOnRest() {
 
 export function launch(dx, dy, len) {
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
-    if (speed < MIN_SHOT) { S.phase = 'rest'; return false; }
-    comet.vx = dx / len * speed;
-    comet.vy = dy / len * speed;
+    // weak drag = cancelled shot; resume the orbit if we were flicking out of one
+    if (speed < MIN_SHOT) { S.phase = world.orbit ? 'orbit' : 'rest'; return false; }
+    // Force-push impulse (BH-4): ADD to current velocity, don't overwrite it. At
+    // rest the comet's velocity is 0 so tee shots are unchanged; flicking out of
+    // an orbit adds the impulse to the orbital velocity, bending the motion.
+    comet.vx += dx / len * speed;
+    comet.vy += dy / len * speed;
+    world.orbit = null;
+    S.orbitCooldown = ORBIT_COOLDOWN;   // don't re-capture the moment we break away
     S.strokes++;
     S.tFlight = 0;
     world.trail = [];
@@ -124,6 +134,7 @@ export function launch(dx, dy, len) {
 
 export function stepFlight(dt) {
     S.tFlight += dt;
+    if (S.orbitCooldown > 0) S.orbitCooldown = Math.max(0, S.orbitCooldown - dt);
     if (S.tFlight > DUST_T) {
         const k = Math.min((S.tFlight - DUST_T) / 3, 1);
         const f = 1 - k * 0.0022;
@@ -139,6 +150,16 @@ export function stepFlight(dt) {
         if (c.bounced) {
             hooks.sfx.bounce(c.k);
             hooks.burst(comet.x, comet.y, 7, res.hit.pal ? res.hit.pal.base : '#aaa', 18);
+        }
+    }
+
+    // Orbit capture (BH-4): a near-circular pass around a planet snaps into a live
+    // orbit. Armed after the launch instant and gated by a post-break cooldown so
+    // flicking out of one orbit doesn't immediately drop into another.
+    if (S.orbitCooldown <= 0 && S.tFlight > ORBIT_ARM_T) {
+        for (const b of world.bodies) {
+            const cap = orbitCapture(comet, b);
+            if (cap) { beginOrbit(b, cap); return; }
         }
     }
 
@@ -183,6 +204,7 @@ export function landOn(b, ang) {
     placeOnRest();
     comet.vx = comet.vy = 0;
     world.lastRest = { rest: comet.rest };
+    world.orbit = null;
     S.phase = 'rest';
     world.trail = [];
     hooks.sfx.land();
@@ -191,6 +213,47 @@ export function landOn(b, ang) {
         world.hoppedBodies.add(b);
         S.hopsThisHole++;
         if (S.hopsThisHole === 1) hooks.toast('🪐 HOP! Teed up on a planet');
+    }
+}
+
+/* ============================== ORBIT (BH-4) ============================== */
+
+// Snap the comet onto the captured circular orbit and hold it there as a live
+// state the player flicks out of. DUST_T / FLIGHT_CAP are irrelevant here — the
+// orbit is stepped by stepOrbit(), not stepFlight(), so it never decays.
+export function beginOrbit(b, cap) {
+    world.orbit = { b, radius: cap.radius, ang: cap.ang, omega: cap.omega };
+    applyOrbit(0);                       // place exactly on the circle + set tangential velocity
+    S.phase = 'orbit';
+    world.trail = [];
+    world.slingTrack = new Map();
+    hooks.sfx.sling();                   // reuse the slingshot whoosh
+    hooks.burst(comet.x, comet.y, 12, (b.pal && b.pal.base) || '#9fe3d8', 26);
+    if (!world.orbitedThisHole.has(b)) {
+        world.orbitedThisHole.add(b);
+        hooks.toast('🛰 ORBIT! Flick to break away');
+    }
+}
+
+// Advance the orbit angle by omega·dt and derive the comet's position + tangential
+// velocity, so a flick-out impulse adds to a physically correct current velocity.
+function applyOrbit(dt) {
+    const o = world.orbit;
+    o.ang += o.omega * dt;
+    comet.x = o.b.x + Math.cos(o.ang) * o.radius;
+    comet.y = o.b.y + Math.sin(o.ang) * o.radius;
+    const spd = o.omega * o.radius;      // signed tangential speed
+    comet.vx = -Math.sin(o.ang) * spd;
+    comet.vy =  Math.cos(o.ang) * spd;
+}
+
+export function stepOrbit(dt) {
+    if (!world.orbit) return;
+    applyOrbit(dt);
+    // an orbit that skims the cup still sinks — emergent, and delightful when it happens
+    if (world.blackHole && dist(comet.x, comet.y, world.blackHole.x, world.blackHole.y) < CAPTURE_R) {
+        world.orbit = null;
+        beginSink();
     }
 }
 

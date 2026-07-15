@@ -2,7 +2,10 @@
 // All functions take bodies/blackHole explicitly so tests can build scenarios.
 'use strict';
 
-import { G, MAX_V, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, SOFT_BOUNCE, REST_BOUNCE, REST_FRIC, dist } from './constants.js';
+import {
+    G, MAX_V, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, SOFT_BOUNCE, REST_BOUNCE, REST_FRIC, dist,
+    ORBIT_MIN_GAP, ORBIT_MAX_GAP, ORBIT_MIN_TAN, ORBIT_RADIAL_TOL, ORBIT_SPEED_TOL, circularSpeed,
+} from './constants.js';
 
 export function gravityAt(bodies, blackHole, x, y) {
     let ax = 0, ay = 0;
@@ -33,6 +36,33 @@ export function stepBody(p, dt, bodies, blackHole) {
         if (d < rr) return { hit: b, d };
     }
     return null;
+}
+
+// Orbit capture (BH-4). Is the flying comet p in a near-circular pass around
+// planet b — i.e. hugging it, moving nearly tangentially, at close to circular
+// speed? If so, return the orbit to snap onto: { radius, omega, ang } (omega
+// signed by travel direction). Otherwise null. Pure — takes explicit state so
+// tests build scenarios directly.
+//   radius = current distance (the orbit hugs where it was caught)
+//   omega  = angular velocity that reproduces the tangential speed at that radius
+//   ang    = current angle of the comet around b
+export function orbitCapture(p, b) {
+    if (b.type !== 'planet') return null;
+    const dx = p.x - b.x, dy = p.y - b.y;
+    const d = Math.hypot(dx, dy) || 1e-6;
+    const gap = d - (b.r + COMET_R);
+    if (gap < ORBIT_MIN_GAP || gap > ORBIT_MAX_GAP) return null;   // must hug the planet
+
+    const nx = dx / d, ny = dy / d;                 // radial (outward) unit
+    const vr = p.vx * nx + p.vy * ny;               // radial speed (+ = climbing away)
+    const vt = p.vx * -ny + p.vy * nx;              // tangential speed (signed by travel dir)
+    const vc = circularSpeed(b.m, d);               // circular speed at this radius
+    if (Math.abs(vt) < ORBIT_MIN_TAN) return null;                 // near-stationary graze → lands, not orbits
+    if (Math.abs(vr) > vc * ORBIT_RADIAL_TOL) return null;         // diving in / flying out → not an orbit
+    if (Math.abs(Math.abs(vt) - vc) > vc * ORBIT_SPEED_TOL) return null; // too fast (slingshot) / too slow
+
+    const dir = vt >= 0 ? 1 : -1;
+    return { radius: d, omega: dir * vc / d, ang: Math.atan2(dy, dx) };
 }
 
 // Collision response against body b. Repositions p onto the surface and either

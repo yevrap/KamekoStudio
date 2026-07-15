@@ -28,6 +28,24 @@ export const FLIGHT_CAP = 24;         // absolute flight timeout
 export const SLING_ANG = 1.9;         // radians swung around one planet = SLINGSHOT!
 export const ROUND_HOLES = 9;         // holes per round in Round mode
 
+// ---- Orbit-and-flick (BH-4) --------------------------------------------------
+// A near-circular pass around a planet snaps into a live, station-kept orbit the
+// player then flicks out of (force-push: the flick impulse adds to the orbital
+// velocity). Tuned to sit BETWEEN the two existing outcomes — slow tangential
+// grazes still land/soft-catch, fast swings still SLINGSHOT away and escape —
+// so only genuine "swung around but stayed" passes are captured.
+export const ORBIT_MIN_GAP = 2.5;     // comet must clear the surface by this much to orbit
+export const ORBIT_MAX_GAP = 13;      // ...and be no farther than surface+this (orbit hugs the planet)
+export const ORBIT_MIN_TAN = 7;       // ignore near-stationary grazes (those land, not orbit)
+export const ORBIT_RADIAL_TOL = 0.4;  // |radial speed| < this fraction of circular speed = "not diving"
+export const ORBIT_SPEED_TOL = 0.42;  // tangential speed within ±this fraction of circular = snap to orbit
+export const ORBIT_COOLDOWN = 0.45;   // seconds after leaving an orbit before re-capture is allowed
+export const ORBIT_ARM_T = 0.22;      // don't capture in the first instants of a flick (let it leave the tee)
+
+// Circular orbital speed at distance d from a body of mass m (v² = G·m/d, since
+// centripetal a = v²/d must equal gravity G·m/d²). Pure — unit-tested.
+export function circularSpeed(m, d) { return Math.sqrt(G * Math.abs(m) / d); }
+
 export const PALETTES = [
     { base: '#e2725b', dark: '#8c3a2c', name: 'rust' },
     { base: '#57c7c2', dark: '#20635f', name: 'teal' },

@@ -5,10 +5,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
-    WORLD_W, COURSE_H, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, MAX_V, DT,
-    ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist,
+    WORLD_W, COURSE_H, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, MAX_V, DT, G,
+    ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed,
 } from '../games/black-hole-in-one/constants.js';
-import { gravityAt, stepBody, collide } from '../games/black-hole-in-one/physics.js';
+import { gravityAt, stepBody, collide, orbitCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
 import * as game from '../games/black-hole-in-one/gameplay.js';
 
@@ -115,6 +115,84 @@ test('collide: separating contact does nothing', () => {
     const c = collide(p, planet);
     assert.equal(c.landed, false);
     assert.equal(c.bounced, false);
+});
+
+/* ============================== orbit capture (BH-4) ============================== */
+
+test('circularSpeed satisfies v² = G·m/d', () => {
+    const m = 100, d = 18;
+    assert.ok(Math.abs(circularSpeed(m, d) - Math.sqrt(G * m / d)) < 1e-9);
+});
+
+test('orbitCapture: a near-circular tangential pass snaps into an orbit', () => {
+    const planet = { x: 50, y: 50, r: 10, m: 100, type: 'planet' };
+    const d = 18, vc = circularSpeed(planet.m, d);
+    // at (68,50), radial is +x; a purely tangential (+y) velocity at circular speed
+    const p = { x: 50 + d, y: 50, vx: 0, vy: vc };
+    const cap = orbitCapture(p, planet);
+    assert.ok(cap, 'captured');
+    assert.ok(Math.abs(cap.radius - d) < 1e-9, 'orbit hugs where it was caught');
+    assert.ok(Math.abs(cap.omega - vc / d) < 1e-9, 'omega reproduces circular speed');
+    assert.ok(Math.abs(cap.ang - 0) < 1e-9, 'angle at +x');
+});
+
+test('orbitCapture rejects dives, escapes, and out-of-band passes', () => {
+    const planet = { x: 50, y: 50, r: 10, m: 100, type: 'planet' };
+    const d = 18, vc = circularSpeed(planet.m, d);
+    // diving straight in (all radial) → not an orbit
+    assert.equal(orbitCapture({ x: 50 + d, y: 50, vx: -vc, vy: 0 }, planet), null);
+    // way too fast (slingshot flyby) → escapes, not captured
+    assert.equal(orbitCapture({ x: 50 + d, y: 50, vx: 0, vy: vc * 2 }, planet), null);
+    // too far from the surface → outside the orbit band
+    assert.equal(orbitCapture({ x: 50 + 40, y: 50, vx: 0, vy: circularSpeed(planet.m, 40) }, planet), null);
+    // near-stationary graze → lands/soft-catches, doesn't orbit
+    assert.equal(orbitCapture({ x: 50 + d, y: 50, vx: 0, vy: 2 }, planet), null);
+});
+
+test('orbitCapture ignores non-planets (tee, pulsar)', () => {
+    const d = 18, vc = circularSpeed(100, d);
+    const tee = { x: 50, y: 50, r: 10, m: 100, type: 'tee' };
+    const pulsar = { x: 50, y: 50, r: 10, m: -100, type: 'pulsar' };
+    assert.equal(orbitCapture({ x: 68, y: 50, vx: 0, vy: vc }, tee), null);
+    assert.equal(orbitCapture({ x: 68, y: 50, vx: 0, vy: vc }, pulsar), null);
+});
+
+test('beginOrbit places the comet on the circle with tangential velocity; stepOrbit keeps the radius', () => {
+    game.startRun('endless');
+    world.blackHole = { x: -100, y: -100, r: 3.2, m: 230, type: 'hole' };  // far away, no accidental sink
+    const planet = { x: 50, y: 50, r: 10, m: 100, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    const d = 18, vc = circularSpeed(planet.m, d);
+    game.beginOrbit(planet, { radius: d, omega: vc / d, ang: 0 });
+    assert.equal(S.phase, 'orbit');
+    assert.ok(Math.abs(dist(comet.x, comet.y, planet.x, planet.y) - d) < 1e-9, 'on the circle');
+    assert.ok(Math.abs(Math.hypot(comet.vx, comet.vy) - vc) < 1e-6, 'moving at circular speed');
+    for (let i = 0; i < 200; i++) game.stepOrbit(DT);
+    assert.ok(Math.abs(dist(comet.x, comet.y, planet.x, planet.y) - d) < 1e-6, 'orbit does not decay');
+    assert.equal(S.phase, 'orbit', 'still orbiting — no dust drag, no timeout');
+});
+
+test('stepOrbit sinks when the orbit skims the cup', () => {
+    game.startRun('endless');
+    const planet = { x: 50, y: 50, r: 10, m: 100, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    const d = 18;
+    game.beginOrbit(planet, { radius: d, omega: 1, ang: 0 });   // comet placed at (68,50)
+    world.blackHole = { x: 68, y: 50, r: 3.2, m: 230, type: 'hole' };
+    game.stepOrbit(DT);
+    assert.equal(S.phase, 'sink');
+    assert.equal(world.orbit, null);
+});
+
+test('launch adds the flick as an impulse to current velocity (force-push, BH-4)', () => {
+    game.startRun('endless');
+    // simulate flicking out of an orbit: comet already carries orbital velocity
+    comet.vx = 15; comet.vy = 5;
+    world.orbit = { b: { x: 0, y: 0 }, radius: 18, ang: 0, omega: 1 };
+    const ok = game.launch(0, -40, 40);            // full-power straight up: impulse (0,-120)
+    assert.equal(ok, true);
+    assert.ok(Math.abs(comet.vx - 15) < 1e-9, 'x velocity preserved (impulse added, not overwritten)');
+    assert.ok(Math.abs(comet.vy - (5 - 120)) < 1e-9, 'y velocity = prior + impulse');
+    assert.equal(world.orbit, null, 'orbit released on launch');
+    assert.equal(S.phase, 'flight');
 });
 
 /* ============================== hole generation ============================== */

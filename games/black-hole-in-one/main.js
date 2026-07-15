@@ -47,7 +47,9 @@ canvas.addEventListener('pointerdown', e => {
     audio();
     if (S.phase === 'menu' || S.phase === 'roundover') return;  // overlays own this tap
     if (S.phase === 'result') { game.advance(); return; }
-    if (S.phase !== 'rest' || drag) return;
+    // aim from rest OR from a live orbit (BH-4) — starting a drag freezes the
+    // orbit into 'aiming'; comet.vx/vy keep the orbital velocity for the impulse
+    if ((S.phase !== 'rest' && S.phase !== 'orbit') || drag) return;
     const [wx, wy] = ui.toWorld(e);
     drag = { sx: wx, sy: wy, cx: wx, cy: wy, id: e.pointerId };
     S.phase = 'aiming';
@@ -63,10 +65,10 @@ canvas.addEventListener('pointerup', e => {
     const dx = drag.sx - drag.cx, dy = drag.sy - drag.cy;
     const len = Math.hypot(dx, dy);
     drag = null;
-    if (len > 0) game.launch(dx, dy, len);
-    else S.phase = 'rest';
+    if (len > 0) game.launch(dx, dy, len);         // launch resumes the orbit itself on a weak drag
+    else S.phase = world.orbit ? 'orbit' : 'rest'; // no drag: fall back to whatever we were aiming from
 });
-canvas.addEventListener('pointercancel', () => { if (drag) { drag = null; S.phase = 'rest'; } });
+canvas.addEventListener('pointercancel', () => { if (drag) { drag = null; S.phase = world.orbit ? 'orbit' : 'rest'; } });
 
 /* ============================== OVERLAY BUTTONS ============================== */
 
@@ -152,9 +154,10 @@ function frame(now) {
     while (acc >= DT) {
         acc -= DT;
         if (S.phase === 'flight') game.stepFlight(DT);
+        else if (S.phase === 'orbit') game.stepOrbit(DT);
         else if (S.phase === 'sink') game.stepSink(DT);
     }
-    if (S.phase === 'flight') {
+    if (S.phase === 'flight' || S.phase === 'orbit') {
         world.trail.push({ x: comet.x, y: comet.y });
         if (world.trail.length > 46) world.trail.shift();
     }

@@ -148,6 +148,7 @@ export function render(drag) {
         else drawTee(b);
     }
     if (world.blackHole) drawBlackHole();
+    if (world.orbit) drawOrbitRing();
 
     if (S.phase === 'aiming' && drag) drawAim(drag);
 
@@ -235,6 +236,20 @@ function drawTee(b) {
     ctx.beginPath(); ctx.arc(b.x + b.r * 0.35, b.y - b.r * 0.25, b.r * 0.2, 0, 7); ctx.fill();
 }
 
+// Faint dashed ring on the planet the comet is orbiting — the "you're in orbit,
+// flick to break away" affordance (BH-4). Shown while orbiting and while aiming out.
+function drawOrbitRing() {
+    const o = world.orbit;
+    const pulse = 0.55 + 0.45 * Math.sin(S.time * 4);
+    ctx.globalAlpha = 0.4 * pulse;
+    ctx.strokeStyle = '#9fe3d8';
+    ctx.lineWidth = 0.3;
+    ctx.setLineDash([1.2, 1.8]);
+    ctx.beginPath(); ctx.arc(o.b.x, o.b.y, o.radius, 0, 7); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+}
+
 function drawBlackHole() {
     const b = world.blackHole;
     ctx.globalCompositeOperation = 'lighter';
@@ -294,9 +309,12 @@ function drawAim(drag) {
     const pow = Math.min(len / MAX_DRAG, 1);
     const speed = pow * MAX_LAUNCH;
 
-    // short honest preview — same integrator, ~0.55s ahead (questionnaire Q2: right as is)
+    // short honest preview — same integrator, ~0.55s ahead (questionnaire Q2: right as is).
+    // The flick is an impulse ADDED to current velocity: 0 at rest (unchanged tee
+    // preview), the orbital velocity when flicking out of an orbit (BH-4).
     if (speed >= MIN_SHOT) {
-        const ghost = { x: comet.x, y: comet.y, vx: dx / len * speed, vy: dy / len * speed };
+        const ghost = { x: comet.x, y: comet.y,
+                        vx: comet.vx + dx / len * speed, vy: comet.vy + dy / len * speed };
         ctx.fillStyle = '#ffffff';
         let alive = true;
         for (let i = 0; i < 132 && alive; i++) {
