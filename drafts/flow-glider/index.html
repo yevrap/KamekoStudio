@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Flow Glider — Kameko Lab</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            background: #0a0e2e;
+            overscroll-behavior: none;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            position: fixed;
+            inset: 0;
+            touch-action: none;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            color: #fff;
+        }
+
+        #c {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+        }
+
+        /* ---------- HUD ---------- */
+        #sun-track {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            margin-top: env(safe-area-inset-top);
+            background: rgba(255, 255, 255, 0.12);
+            z-index: 5;
+            display: none;
+        }
+        #sun-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #ff8c42, #ffd166);
+            border-radius: 0 3px 3px 0;
+            transition: width 0.3s linear;
+        }
+        #sun-track.low #sun-fill { animation: sunPulse 0.9s ease-in-out infinite; }
+        @keyframes sunPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.45; }
+        }
+
+        #hud {
+            position: absolute;
+            top: calc(14px + env(safe-area-inset-top));
+            left: 16px;
+            z-index: 5;
+            pointer-events: none;
+            display: none;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+        }
+        #score {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            line-height: 1;
+        }
+        #dist {
+            font-size: 0.78rem;
+            font-weight: 600;
+            opacity: 0.85;
+            margin-top: 4px;
+        }
+        #streak-chip {
+            display: inline-block;
+            margin-top: 7px;
+            padding: 3px 11px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.2s, transform 0.2s, background 0.3s;
+        }
+        #streak-chip.on {
+            opacity: 1;
+            transform: scale(1);
+        }
+        #streak-chip.fever {
+            background: linear-gradient(90deg, #ff8c42, #ff4f7b, #a86bff);
+            border-color: rgba(255, 255, 255, 0.5);
+            animation: feverGlow 1.1s ease-in-out infinite;
+        }
+        @keyframes feverGlow {
+            0%, 100% { box-shadow: 0 0 6px 1px rgba(255, 140, 66, 0.7); }
+            50% { box-shadow: 0 0 16px 4px rgba(255, 79, 123, 0.8); }
+        }
+
+        #btn-pause {
+            position: absolute;
+            top: calc(12px + env(safe-area-inset-top));
+            right: 14px;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(10, 14, 40, 0.35);
+            color: #fff;
+            font-size: 1.1rem;
+            z-index: 6;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        #btn-pause:active { background: rgba(255, 255, 255, 0.25); }
+
+        #coach {
+            position: absolute;
+            bottom: calc(12% + env(safe-area-inset-bottom));
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 1rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+        #coach.show {
+            opacity: 1;
+            animation: coachBob 1.4s ease-in-out infinite;
+        }
+        @keyframes coachBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-7px); }
+        }
+
+        /* ---------- Overlays ---------- */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 10;
+            padding: 24px;
+            padding-top: calc(24px + env(safe-area-inset-top));
+            padding-bottom: calc(24px + env(safe-area-inset-bottom));
+            text-align: center;
+        }
+        .overlay.show { display: flex; }
+
+        .panel {
+            background: rgba(10, 12, 34, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 22px;
+            padding: 28px 26px;
+            max-width: 340px;
+            width: 100%;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 12px 50px rgba(0, 0, 0, 0.45);
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 900;
+            letter-spacing: 0.03em;
+            background: linear-gradient(90deg, #ffd166, #ff8c42, #ff4f7b);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+        .tagline {
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.75);
+            margin-bottom: 20px;
+        }
+        .howto {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 22px;
+            font-size: 0.86rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .howto div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+        }
+        .howto .ico { font-size: 1.25rem; width: 30px; text-align: center; flex: none; }
+
+        .big-btn {
+            display: block;
+            width: 100%;
+            min-height: 56px;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1a1030;
+            background: linear-gradient(90deg, #ffd166, #ff9d5c);
+            cursor: pointer;
+            letter-spacing: 0.02em;
+        }
+        .big-btn:active { transform: scale(0.97); filter: brightness(1.1); }
+        .ghost-btn {
+            display: block;
+            width: 100%;
+            min-height: 48px;
+            margin-top: 12px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: transparent;
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .ghost-btn:active { background: rgba(255, 255, 255, 0.12); }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+        .over-sub {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.65);
+            margin-bottom: 18px;
+        }
+        .stats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.92rem;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 10px;
+        }
+        .stat-row .v { font-weight: 800; }
+        #new-best {
+            display: none;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #ffd166;
+            margin-bottom: 14px;
+            animation: feverGlow 1.1s ease-in-out infinite;
+            border-radius: 8px;
+            padding: 4px;
+        }
+        .pause-note {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.55);
+            margin-top: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="c"></canvas>
+
+    <div id="sun-track"><div id="sun-fill"></div></div>
+    <div id="hud">
+        <div id="score">0</div>
+        <div id="dist">0 m</div>
+        <div id="streak-chip">×1</div>
+    </div>
+    <button id="btn-pause" aria-label="Pause">⏸</button>
+    <div id="coach"></div>
+
+    <div id="start-overlay" class="overlay show">
+        <div class="panel">
+            <h1>Flow Glider</h1>
+            <div class="tagline">Ride the hills until the sun goes down</div>
+            <div class="howto">
+                <div><span class="ico">👇</span><span><b>Hold</b> anywhere to dive &nbsp;·&nbsp; <b>release</b> to soar</span></div>
+                <div><span class="ico">⛰️</span><span>Land smoothly on a <b>downhill slope</b> to keep your speed</span></div>
+                <div><span class="ico">☀️</span><span>Perfect landings push the <b>sunset back</b> — chain 3 for fever</span></div>
+            </div>
+            <button id="btn-start" class="big-btn">Take flight</button>
+        </div>
+    </div>
+
+    <div id="pause-overlay" class="overlay">
+        <div class="panel">
+            <h2>Paused</h2>
+            <div class="over-sub" id="pause-reason">Catch your breath.</div>
+            <button id="btn-resume" class="big-btn">Resume</button>
+            <button id="btn-restart-pause" class="ghost-btn">Restart run</button>
+            <div class="pause-note">The game auto-pauses whenever you switch away.</div>
+        </div>
+    </div>
+
+    <div id="over-overlay" class="overlay">
+        <div class="panel">
+            <h2>The night caught you 🌙</h2>
+            <div class="over-sub">Every run ends at sundown — perfect landings buy daylight.</div>
+            <div id="new-best">✨ New best flight! ✨</div>
+            <div class="stats">
+                <div class="stat-row"><span>Score</span><span class="v" id="f-score">0</span></div>
+                <div class="stat-row"><span>Distance</span><span class="v" id="f-dist">0 m</span></div>
+                <div class="stat-row"><span>Best streak</span><span class="v" id="f-streak">×0</span></div>
+                <div class="stat-row"><span>Session best</span><span class="v" id="f-best">0</span></div>
+            </div>
+            <button id="btn-again" class="big-btn">Fly again</button>
+        </div>
+    </div>
+
+    <script>
+        'use strict';
+
+        /* ================= Constants ================= */
+        const GRAV = 1250;            /* px/s^2 — soar gravity */
+        const DIVE = 3400;            /* extra gravity while holding */
+        const MAXSPEED = 2200;
+        const MIN_RUN = 270;          /* forward floor while grounded — never stall */
+        const START_SPEED = 430;
+        const R = 13;                 /* player radius */
+        const DX = 6;                 /* terrain sample spacing */
+        const STEP = 1 / 120;         /* fixed physics timestep */
+        const PERFECT_TOL = 0.45;     /* rad — landing angle forgiveness */
+        const MIN_AIR = 0.16;         /* s airborne before a landing "counts" */
+        const DAY_MAX = 90;           /* s — sun clock ceiling */
+        const DAY_START = 78;
+        const SUN_BONUS = 3;          /* s per perfect landing */
+        const SUN_BONUS_FEVER = 5;
+        const FEVER_AT = 3;           /* streak needed for fever */
+        const METERS_PER_PX = 1 / 20;
+
+        /* ================= Utils ================= */
+        const clamp = (v, a, b) => v < a ? a : (v > b ? b : v);
+        const lerp = (a, b, t) => a + (b - a) * t;
+        const smooth = t => t * t * (3 - 2 * t);
+
+        function mulberry32(seed) {
+            let a = seed >>> 0;
+            return function () {
+                a |= 0; a = (a + 0x6D2B79F5) | 0;
+                let t = Math.imul(a ^ (a >>> 15), 1 | a);
+                t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        /* deterministic 1D value noise for parallax silhouettes */
+        function hash1(i, seed) {
+            const s = Math.sin(i * 127.1 + seed * 311.7) * 43758.5453;
+            return s - Math.floor(s);
+        }
+        function noise1(x, seed) {
+            const ix = Math.floor(x);
+            const fx = smooth(x - ix);
+            return lerp(hash1(ix, seed), hash1(ix + 1, seed), fx);
+        }
+
+        function hexToRgb(h) {
+            return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+        }
+        function mixHex(h1, h2, t) {
+            const a = hexToRgb(h1), b = hexToRgb(h2);
+            const r = Math.round(lerp(a[0], b[0], t));
+            const g = Math.round(lerp(a[1], b[1], t));
+            const bl = Math.round(lerp(a[2], b[2], t));
+            return `rgb(${r},${g},${bl})`;
+        }
+        function mixRgb(c1, c2, t) {
+            const r = Math.round(lerp(c1[0], c2[0], t));
+            const g = Math.round(lerp(c1[1], c2[1], t));
+            const b = Math.round(lerp(c1[2], c2[2], t));
+            return [r, g, b];
+        }
+        const rgbStr = (c, a) => a === undefined ? `rgb(${c[0]},${c[1]},${c[2]})` : `rgba(${c[0]},${c[1]},${c[2]},${a})`;
+
+        /* ================= Day palette =================
+           Keyframed by sunT (0 = late morning, 1 = night). */
+        const PHASES = [
+            { t: 0.00, skyTop: '#3f8dd9', skyMid: '#8fc3ea', skyLow: '#ffe6b0', sun: '#ffef9a', terrA: '#58c06e', terrB: '#3d9e57', rim: '#eaffdc' },
+            { t: 0.35, skyTop: '#4a6fc0', skyMid: '#e29a7c', skyLow: '#ffc46b', sun: '#ffd166', terrA: '#4fae6b', terrB: '#35854e', rim: '#ffe9b8' },
+            { t: 0.62, skyTop: '#3b3f8f', skyMid: '#c25e84', skyLow: '#ff9350', sun: '#ff8c42', terrA: '#5f8f63', terrB: '#40694a', rim: '#ffc9a0' },
+            { t: 0.82, skyTop: '#1f2560', skyMid: '#6c4a8f', skyLow: '#d95f6b', sun: '#e0526b', terrA: '#4a6a71', terrB: '#32505c', rim: '#d9a0b8' },
+            { t: 1.00, skyTop: '#0a0e2e', skyMid: '#1c2150', skyLow: '#33305e', sun: '#b23a5e', terrA: '#24344c', terrB: '#182636', rim: '#6a7ab8' }
+        ].map(p => {
+            const o = { t: p.t };
+            for (const k in p) { if (k !== 't') o[k] = hexToRgb(p[k]); }
+            return o;
+        });
+
+        function palette(sunT) {
+            let i = 0;
+            while (i < PHASES.length - 2 && sunT > PHASES[i + 1].t) { i++; }
+            const a = PHASES[i], b = PHASES[i + 1];
+            const t = clamp((sunT - a.t) / (b.t - a.t), 0, 1);
+            const out = {};
+            for (const k in a) {
+                if (k !== 't') { out[k] = mixRgb(a[k], b[k], t); }
+            }
+            return out;
+        }
+
+        /* ================= Canvas ================= */
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let W = 0, H = 0, dpr = 1;
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width <= 0 || rect.height <= 0) { return; }
+            dpr = Math.min(window.devicePixelRatio || 1, 2);
+            W = rect.width;
+            H = rect.height;
+            canvas.width = Math.round(W * dpr);
+            canvas.height = Math.round(H * dpr);
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        /* ================= Terrain ================= */
+        const terrain = {
+            pts: [],       /* {y, band} sampled every DX px */
+            x0: 0,         /* world x of pts[0] */
+            genX: 0,
+            phase: 0,
+            wl: 340,
+            amp: 30,
+            band: 0,
+            rng: null
+        };
+
+        function terrainReset(seed) {
+            terrain.pts = [];
+            terrain.x0 = -400;
+            terrain.genX = -400;
+            terrain.phase = 0;
+            terrain.wl = 360;
+            terrain.amp = 26;
+            terrain.band = 0;
+            terrain.rng = mulberry32(seed);
+        }
+
+        function terrainGenTo(xMax) {
+            while (terrain.genX < xMax) {
+                const x = terrain.genX;
+                const prevHalf = Math.floor(terrain.phase / Math.PI);
+                terrain.phase += (DX / terrain.wl) * Math.PI * 2;
+                const half = Math.floor(terrain.phase / Math.PI);
+                if (half !== prevHalf) {
+                    /* new half-hill: re-roll shape, ramp difficulty with distance */
+                    const d = clamp(x / 26000, 0, 1);
+                    const r1 = terrain.rng(), r2 = terrain.rng();
+                    terrain.wl = lerp(300, 540, d) * (0.75 + r1 * 0.5);
+                    terrain.amp = lerp(34, 165, d) * (0.7 + r2 * 0.6);
+                    terrain.band = half;
+                }
+                const y = Math.sin(terrain.phase) * terrain.amp;
+                terrain.pts.push({ y: y, band: terrain.band });
+                terrain.genX += DX;
+            }
+        }
+
+        function terrainPrune(xMin) {
+            const drop = Math.floor((xMin - terrain.x0) / DX);
+            if (drop > 64) {
+                terrain.pts.splice(0, drop);
+                terrain.x0 += drop * DX;
+            }
+        }
+
+        function groundAt(x) {
+            terrainGenTo(x + DX * 2);
+            const f = (x - terrain.x0) / DX;
+            const i = clamp(Math.floor(f), 0, terrain.pts.length - 2);
+            const t = f - i;
+            return lerp(terrain.pts[i].y, terrain.pts[i + 1].y, t);
+        }
+
+        function tangentAt(x) {
+            const y1 = groundAt(x - DX);
+            const y2 = groundAt(x + DX);
+            const dx = DX * 2, dy = y2 - y1;
+            const len = Math.hypot(dx, dy);
+            return { x: dx / len, y: dy / len };
+        }
+
+        /* ================= State ================= */
+        const player = {
+            x: 0, y: 0, vx: 0, vy: 0,
+            grounded: true, airTime: 0,
+            squash: 0, flap: 0, dispAng: 0
+        };
+
+        const game = {
+            state: 'menu',            /* menu | playing | paused | over */
+            score: 0,
+            meters: 0,
+            streak: 0,
+            bestStreak: 0,
+            fever: false,
+            timeLeft: DAY_START,
+            sunT: 0,
+            time: 0,
+            sessionBest: 0,
+            coached: false,
+            inputSeen: false
+        };
+
+        const cam = { x: 0, y: 0, sy: 0, zoom: 1 };
+        const menuCam = { x: 0 };
+        const input = { holding: false };
+
+        const trail = [];
+        const particles = [];
+        const floats = [];
+        const winds = [];
+        const stars = [];
+        (function () {
+            const r = mulberry32(777);
+            for (let i = 0; i < 90; i++) {
+                stars.push({ x: r(), y: r() * 0.55, s: 0.6 + r() * 1.4, tw: 1 + r() * 3, ph: r() * 6.28 });
+            }
+        })();
+
+        /* ================= DOM refs ================= */
+        const el = id => document.getElementById(id);
+        const hudEl = el('hud'), scoreEl = el('score'), distEl = el('dist'), chipEl = el('streak-chip');
+        const sunTrackEl = el('sun-track'), sunFillEl = el('sun-fill');
+        const pauseBtn = el('btn-pause'), coachEl = el('coach');
+        const startOv = el('start-overlay'), pauseOv = el('pause-overlay'), overOv = el('over-overlay');
+
+        /* ================= FX ================= */
+        function addFloat(txt, color, size) {
+            floats.push({ x: player.x, y: player.y - 46, txt: txt, color: color, size: size || 20, life: 1 });
+        }
+
+        function burst(n, colorFn, speedMul, gravMul) {
+            for (let i = 0; i < n; i++) {
+                const a = Math.random() * Math.PI * 2;
+                const sp = (60 + Math.random() * 260) * (speedMul || 1);
+                particles.push({
+                    x: player.x, y: player.y,
+                    vx: Math.cos(a) * sp + player.vx * 0.25,
+                    vy: Math.sin(a) * sp - 60,
+                    life: 1, decay: 1.4 + Math.random() * 1.2,
+                    size: 2 + Math.random() * 3.5,
+                    grav: 500 * (gravMul || 1),
+                    color: colorFn(i)
+                });
+            }
+        }
+
+        /* ================= Landings ================= */
+        function perfectLanding(speed) {
+            game.streak += 1;
+            game.bestStreak = Math.max(game.bestStreak, game.streak);
+            game.fever = game.streak >= FEVER_AT;
+            const bonus = 100 * game.streak * (game.fever ? 2 : 1);
+            game.score += bonus;
+            game.timeLeft = clamp(game.timeLeft + (game.fever ? SUN_BONUS_FEVER : SUN_BONUS), 0, DAY_MAX);
+            addFloat(`PERFECT ×${game.streak}`, game.fever ? '#ff7bd5' : '#ffd166', game.fever ? 24 : 20);
+            burst(game.fever ? 22 : 13, i => (i % 2 ? '#ffd166' : (game.fever ? '#ff7bd5' : '#fff3c4')), game.fever ? 1.5 : 1, 0.7);
+            player.squash = 0.35;
+            if (navigator.vibrate) { navigator.vibrate(8); }
+        }
+
+        function thudLanding(hardness) {
+            if (game.streak >= 2) { addFloat('streak lost', 'rgba(255,255,255,0.75)', 15); }
+            game.streak = 0;
+            game.fever = false;
+            if (hardness > 300) {
+                burst(8, () => 'rgba(220,225,235,0.8)', 0.6, 1);
+                player.squash = 0.5;
+            }
+        }
+
+        /* ================= Physics ================= */
+        function physicsStep(dt) {
+            const p = player;
+            const g = GRAV + (input.holding ? DIVE : 0);
+            p.vy += g * dt;
+
+            let spd = Math.hypot(p.vx, p.vy);
+            if (spd > MAXSPEED) {
+                p.vx *= MAXSPEED / spd;
+                p.vy *= MAXSPEED / spd;
+            }
+
+            const prevX = p.x;
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+
+            const gy = groundAt(p.x);
+            if (p.y >= gy - R) {
+                const t = tangentAt(p.x);
+                const wasAir = !p.grounded;
+                let sp = p.vx * t.x + p.vy * t.y;
+
+                if (wasAir && p.airTime > MIN_AIR) {
+                    const vAng = Math.atan2(p.vy, p.vx);
+                    const sAng = Math.atan2(t.y, t.x);
+                    let diff = vAng - sAng;
+                    diff = Math.abs(((diff + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+                    const speed = Math.hypot(p.vx, p.vy);
+                    const perp = Math.abs(-p.vx * t.y + p.vy * t.x);
+
+                    /* perfect = descending onto a downslope, either angle-matched or soft impact;
+                       thud = a real slam (big perpendicular hit); anything gentler is neutral —
+                       micro-skims through valleys must never silently eat the streak */
+                    if (t.y > 0.09 && p.vy > 0 && (diff < PERFECT_TOL || perp < 300) && speed > 380) {
+                        sp = sp * 1.09 + 70;
+                        perfectLanding(speed);
+                    } else if (perp > 260) {
+                        sp *= 0.9 - Math.min(0.35, perp / 2600);
+                        thudLanding(perp);
+                    }
+                }
+
+                sp = clamp(sp, MIN_RUN, MAXSPEED);
+                p.vx = t.x * sp;
+                p.vy = t.y * sp;
+                p.y = gy - R;
+                p.grounded = true;
+                p.airTime = 0;
+            } else {
+                p.grounded = false;
+                p.airTime += dt;
+            }
+
+            /* distance + score */
+            const dm = (p.x - prevX) * METERS_PER_PX;
+            game.meters += dm;
+            game.score += dm;
+
+            /* sun clock */
+            game.timeLeft -= dt;
+            game.sunT = clamp(1 - game.timeLeft / DAY_MAX, 0, 1);
+            if (game.timeLeft <= 0) { nightFall(); return; }
+
+            /* trail */
+            const speedNow = Math.hypot(p.vx, p.vy);
+            if (speedNow > 420) {
+                trail.push({ x: p.x, y: p.y, life: 1, fever: game.fever, w: clamp(speedNow / 260, 1.5, 8) });
+                if (trail.length > 400) { trail.shift(); }
+            }
+
+            game.time += dt;
+        }
+
+        function effectsStep(dt) {
+            for (let i = trail.length - 1; i >= 0; i--) {
+                trail[i].life -= dt * 1.7;
+                if (trail[i].life <= 0) { trail.splice(i, 1); }
+            }
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const pa = particles[i];
+                pa.vy += pa.grav * dt;
+                pa.x += pa.vx * dt;
+                pa.y += pa.vy * dt;
+                pa.life -= pa.decay * dt;
+                if (pa.life <= 0) { particles.splice(i, 1); }
+            }
+            for (let i = floats.length - 1; i >= 0; i--) {
+                floats[i].y -= 55 * dt;
+                floats[i].life -= dt * 0.85;
+                if (floats[i].life <= 0) { floats.splice(i, 1); }
+            }
+            const speedNow = Math.hypot(player.vx, player.vy);
+            if (speedNow > 1150 && Math.random() < 0.5) {
+                winds.push({ x: W + 40, y: Math.random() * H, len: 40 + speedNow * 0.09, life: 1 });
+            }
+            for (let i = winds.length - 1; i >= 0; i--) {
+                winds[i].x -= (speedNow * 1.15 + 300) * cam.zoom * dt;
+                winds[i].life -= dt * 1.2;
+                if (winds[i].life <= 0 || winds[i].x < -200) { winds.splice(i, 1); }
+            }
+            player.squash = Math.max(0, player.squash - dt * 2.2);
+            player.flap += dt * (player.grounded ? 14 : 7);
+            /* smoothed display rotation — ground/air transitions never snap visually */
+            const targetAng = player.grounded
+                ? Math.atan2(tangentAt(player.x).y, 1)
+                : Math.atan2(player.vy, player.vx) * 0.85;
+            player.dispAng += (targetAng - player.dispAng) * Math.min(1, dt * 14);
+        }
+
+        /* ================= Camera ================= */
+        function updateCamera(dtFrame) {
+            const speedNow = Math.hypot(player.vx, player.vy);
+            const alt = Math.max(0, groundAt(player.x) - player.y);
+            const zt = clamp(1.05 - speedNow * 0.00028 - alt * 0.00022, 0.55, 1.05);
+            cam.zoom += (zt - cam.zoom) * Math.min(1, dtFrame * 2.2);
+
+            const targetY = player.y + clamp(player.vy * 0.13, -140, 200);
+            cam.sy += (targetY - cam.sy) * Math.min(1, dtFrame * 4);
+            cam.x = player.x - (W * 0.34) / cam.zoom;
+            cam.y = cam.sy - (H * 0.46) / cam.zoom;
+        }
+
+        /* ================= Rendering ================= */
+        const w2sx = wx => (wx - cam.x) * cam.zoom;
+        const w2sy = wy => (wy - cam.y) * cam.zoom;
+
+        function drawSky(pal) {
+            const gr = ctx.createLinearGradient(0, 0, 0, H);
+            gr.addColorStop(0, rgbStr(pal.skyTop));
+            gr.addColorStop(0.55, rgbStr(pal.skyMid));
+            gr.addColorStop(1, rgbStr(pal.skyLow));
+            ctx.fillStyle = gr;
+            ctx.fillRect(0, 0, W, H);
+
+            /* stars fade in near night */
+            const sa = smooth(clamp((game.sunT - 0.7) / 0.28, 0, 1));
+            if (sa > 0.01) {
+                for (const s of stars) {
+                    const tw = 0.55 + 0.45 * Math.sin(game.time * s.tw + s.ph);
+                    ctx.globalAlpha = sa * tw;
+                    ctx.fillStyle = '#fff';
+                    const sx = ((s.x * W * 1.3 - cam.x * 0.012) % (W * 1.3) + W * 1.3) % (W * 1.3) - W * 0.15;
+                    ctx.fillRect(sx, s.y * H, s.s, s.s);
+                }
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function drawSun(pal) {
+            const sx = W * 0.7;
+            const sy = H * (0.14 + game.sunT * 0.62);
+            const r = Math.max(30, H * 0.055);
+            const fade = 1 - smooth(clamp((game.sunT - 0.9) / 0.1, 0, 1)) * 0.6;
+
+            const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 4.5);
+            glow.addColorStop(0, rgbStr(pal.sun, 0.55 * fade));
+            glow.addColorStop(1, rgbStr(pal.sun, 0));
+            ctx.fillStyle = glow;
+            ctx.fillRect(sx - r * 4.5, sy - r * 4.5, r * 9, r * 9);
+
+            ctx.globalAlpha = fade;
+            ctx.fillStyle = rgbStr(pal.sun);
+            ctx.beginPath();
+            ctx.arc(sx, sy, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+
+        const LAYERS = [
+            { par: 0.10, amp: 0.16, freq: 0.0011, base: 0.52, mix: 0.72, seed: 11 },
+            { par: 0.26, amp: 0.14, freq: 0.0019, base: 0.62, mix: 0.48, seed: 23 },
+            { par: 0.48, amp: 0.10, freq: 0.0033, base: 0.72, mix: 0.26, seed: 37 }
+        ];
+
+        function drawParallax(pal) {
+            for (const L of LAYERS) {
+                const col = mixRgb(pal.skyLow, pal.terrB, 1 - L.mix);
+                ctx.fillStyle = rgbStr(col);
+                ctx.beginPath();
+                const baseY = H * L.base - (cam.y * cam.zoom) * L.par * 0.25;
+                const step = Math.max(14, W / 46);
+                ctx.moveTo(0, H + 2);
+                for (let sx = 0; sx <= W + step; sx += step) {
+                    const wx = cam.x * L.par + sx / cam.zoom;
+                    const y = baseY - noise1(wx * L.freq, L.seed) * H * L.amp;
+                    ctx.lineTo(sx, y);
+                }
+                ctx.lineTo(W + step, H + 2);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        function drawTerrain(pal) {
+            terrainGenTo(cam.x + W / cam.zoom + 200);
+            terrainPrune(cam.x - 400);
+
+            const i0 = clamp(Math.floor((cam.x - terrain.x0) / DX) - 2, 0, terrain.pts.length - 2);
+            const i1 = clamp(Math.ceil((cam.x + W / cam.zoom - terrain.x0) / DX) + 2, 1, terrain.pts.length - 1);
+
+            const colA = rgbStr(pal.terrA);
+            const colB = rgbStr(pal.terrB);
+            const deep = rgbStr(mixRgb(pal.terrB, [8, 12, 24], 0.55));
+
+            /* banded fill — alternating stripes per half-hill (Tiny Wings look) */
+            let segStart = i0;
+            let segBand = terrain.pts[i0].band;
+            for (let i = i0 + 1; i <= i1; i++) {
+                const last = i === i1;
+                if (terrain.pts[i].band !== segBand || last) {
+                    const end = i;
+                    const gx1 = w2sx(terrain.x0 + segStart * DX);
+                    ctx.beginPath();
+                    ctx.moveTo(w2sx(terrain.x0 + segStart * DX), w2sy(terrain.pts[segStart].y));
+                    for (let k = segStart + 1; k <= end; k++) {
+                        ctx.lineTo(w2sx(terrain.x0 + k * DX), w2sy(terrain.pts[k].y));
+                    }
+                    ctx.lineTo(w2sx(terrain.x0 + end * DX), H + 4);
+                    ctx.lineTo(gx1, H + 4);
+                    ctx.closePath();
+                    const yTopA = w2sy(terrain.pts[segStart].y);
+                    const grd = ctx.createLinearGradient(0, Math.min(yTopA, H * 0.2), 0, H);
+                    grd.addColorStop(0, segBand % 2 === 0 ? colA : colB);
+                    grd.addColorStop(1, deep);
+                    ctx.fillStyle = grd;
+                    ctx.fill();
+                    segStart = end;
+                    segBand = terrain.pts[i].band;
+                }
+            }
+
+            /* rim highlight along the crest */
+            ctx.beginPath();
+            ctx.moveTo(w2sx(terrain.x0 + i0 * DX), w2sy(terrain.pts[i0].y));
+            for (let i = i0 + 1; i <= i1; i++) {
+                ctx.lineTo(w2sx(terrain.x0 + i * DX), w2sy(terrain.pts[i].y));
+            }
+            ctx.strokeStyle = rgbStr(pal.rim, 0.9);
+            ctx.lineWidth = Math.max(2, 3 * cam.zoom);
+            ctx.lineJoin = 'round';
+            ctx.stroke();
+        }
+
+        function drawTrail() {
+            if (trail.length < 2) { return; }
+            ctx.lineCap = 'round';
+            for (let i = 1; i < trail.length; i++) {
+                const a = trail[i - 1], b = trail[i];
+                if (Math.abs(a.x - b.x) > 60) { continue; }
+                ctx.beginPath();
+                ctx.moveTo(w2sx(a.x), w2sy(a.y));
+                ctx.lineTo(w2sx(b.x), w2sy(b.y));
+                if (b.fever) {
+                    const hue = (game.time * 300 + i * 9) % 360;
+                    ctx.strokeStyle = `hsla(${hue}, 95%, 65%, ${b.life * 0.75})`;
+                } else {
+                    ctx.strokeStyle = `hsla(45, 95%, 78%, ${b.life * 0.5})`;
+                }
+                ctx.lineWidth = b.w * b.life * cam.zoom;
+                ctx.stroke();
+            }
+        }
+
+        function drawPlayer() {
+            const p = player;
+            const px = w2sx(p.x), py = w2sy(p.y);
+            const sc = cam.zoom;
+
+            /* fever aura */
+            if (game.fever) {
+                const pulse = 0.22 + 0.1 * Math.sin(game.time * 9);
+                const g = ctx.createRadialGradient(px, py, 0, px, py, 55 * sc);
+                const hue = (game.time * 240) % 360;
+                g.addColorStop(0, `hsla(${hue}, 95%, 65%, ${pulse})`);
+                g.addColorStop(1, 'hsla(0, 0%, 100%, 0)');
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                ctx.fillStyle = g;
+                ctx.fillRect(px - 55 * sc, py - 55 * sc, 110 * sc, 110 * sc);
+                ctx.restore();
+            }
+
+            ctx.save();
+            ctx.translate(px, py);
+            ctx.rotate(p.dispAng);
+            const squash = 1 - p.squash * 0.4;
+            const slim = input.holding && !p.grounded ? 0.82 : 1;
+            ctx.scale(sc * slim, sc * squash);
+
+            /* body */
+            const bodyGrad = ctx.createLinearGradient(0, -R, 0, R);
+            bodyGrad.addColorStop(0, '#ffe9c9');
+            bodyGrad.addColorStop(1, '#ff9d5c');
+            ctx.fillStyle = bodyGrad;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, R + 3, R - 1, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            /* wing — flaps gently when soaring, tucks in a dive */
+            const wingLift = input.holding && !p.grounded ? 2 : Math.sin(p.flap) * 3.5;
+            ctx.fillStyle = '#e05c3a';
+            ctx.beginPath();
+            ctx.ellipse(-2, -3 - wingLift * 0.5, 8, 4.5 + wingLift * 0.4, -0.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            /* eye + beak */
+            ctx.fillStyle = '#2a1a30';
+            ctx.beginPath();
+            ctx.arc(R - 4, -4, 2.4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ffd166';
+            ctx.beginPath();
+            ctx.moveTo(R + 2, -3);
+            ctx.lineTo(R + 9, 0);
+            ctx.lineTo(R + 2, 2.5);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function drawParticles() {
+            for (const pa of particles) {
+                ctx.globalAlpha = clamp(pa.life, 0, 1);
+                ctx.fillStyle = pa.color;
+                const s = pa.size * pa.life * cam.zoom;
+                ctx.fillRect(w2sx(pa.x) - s / 2, w2sy(pa.y) - s / 2, s, s);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawFloats() {
+            ctx.textAlign = 'center';
+            for (const f of floats) {
+                ctx.globalAlpha = clamp(f.life * 1.4, 0, 1);
+                ctx.font = `800 ${f.size * cam.zoom}px -apple-system, sans-serif`;
+                ctx.fillStyle = f.color;
+                ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                ctx.shadowBlur = 6;
+                ctx.fillText(f.txt, w2sx(f.x), w2sy(f.y));
+                ctx.shadowBlur = 0;
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawWind() {
+            ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+            ctx.lineWidth = 1.5;
+            for (const wd of winds) {
+                ctx.globalAlpha = wd.life * 0.8;
+                ctx.beginPath();
+                ctx.moveTo(wd.x, wd.y);
+                ctx.lineTo(wd.x + wd.len, wd.y);
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawDusk() {
+            const v = smooth(clamp((game.sunT - 0.72) / 0.28, 0, 1));
+            if (v < 0.01) { return; }
+            const g = ctx.createRadialGradient(W / 2, H / 2, H * 0.3, W / 2, H / 2, H * 0.85);
+            g.addColorStop(0, 'rgba(4,6,20,0)');
+            g.addColorStop(1, `rgba(4,6,20,${0.45 * v})`);
+            ctx.fillStyle = g;
+            ctx.fillRect(0, 0, W, H);
+        }
+
+        function render() {
+            if (W === 0) { resizeCanvas(); if (W === 0) { return; } }
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            const pal = palette(game.sunT);
+            drawSky(pal);
+            drawSun(pal);
+            drawParallax(pal);
+            drawTerrain(pal);
+
+            if (game.state !== 'menu') {
+                drawTrail();
+                drawParticles();
+                drawPlayer();
+                drawWind();
+                drawFloats();
+            }
+            drawDusk();
+        }
+
+        /* ================= HUD ================= */
+        let lastScoreShown = -1, lastDistShown = -1, lastStreakShown = -1;
+        function updateHUD() {
+            const s = Math.floor(game.score);
+            if (s !== lastScoreShown) {
+                scoreEl.textContent = s.toLocaleString('en-US');
+                lastScoreShown = s;
+            }
+            const m = Math.floor(game.meters);
+            if (m !== lastDistShown) {
+                distEl.textContent = m.toLocaleString('en-US') + ' m';
+                lastDistShown = m;
+            }
+            if (game.streak !== lastStreakShown) {
+                lastStreakShown = game.streak;
+                if (game.streak >= 2) {
+                    chipEl.textContent = (game.fever ? '🔥 ' : '') + '×' + game.streak;
+                    chipEl.classList.add('on');
+                    chipEl.classList.toggle('fever', game.fever);
+                } else {
+                    chipEl.classList.remove('on', 'fever');
+                }
+            }
+            sunFillEl.style.width = (game.timeLeft / DAY_MAX * 100).toFixed(1) + '%';
+            sunTrackEl.classList.toggle('low', game.timeLeft < 12);
+        }
+
+        function showCoach(msg) {
+            coachEl.textContent = msg;
+            coachEl.classList.add('show');
+        }
+        function hideCoach() {
+            coachEl.classList.remove('show');
+        }
+
+        /* ================= Game flow ================= */
+        function startRun() {
+            const seed = (Math.random() * 4294967296) >>> 0;
+            terrainReset(seed);
+            terrainGenTo(3000);
+
+            player.x = 120;
+            player.y = groundAt(120) - R;
+            const t = tangentAt(120);
+            player.vx = t.x * START_SPEED;
+            player.vy = t.y * START_SPEED;
+            player.grounded = true;
+            player.airTime = 0;
+            player.squash = 0;
+
+            game.score = 0;
+            game.meters = 0;
+            game.streak = 0;
+            game.bestStreak = 0;
+            game.fever = false;
+            game.timeLeft = DAY_START;
+            game.sunT = clamp(1 - game.timeLeft / DAY_MAX, 0, 1);
+            game.time = 0;
+            game.inputSeen = false;
+
+            trail.length = 0;
+            particles.length = 0;
+            floats.length = 0;
+            winds.length = 0;
+
+            cam.zoom = 1;
+            cam.sy = player.y;
+            cam.x = player.x - W * 0.34;
+            cam.y = cam.sy - H * 0.46;
+
+            lastScoreShown = lastDistShown = lastStreakShown = -1;
+            startOv.classList.remove('show');
+            pauseOv.classList.remove('show');
+            overOv.classList.remove('show');
+            hudEl.style.display = 'block';
+            sunTrackEl.style.display = 'block';
+            pauseBtn.style.display = 'flex';
+            hideCoach();
+
+            game.state = 'playing';
+            acc = 0;
+            lastT = performance.now();
+
+            if (!game.coached) {
+                setTimeout(() => {
+                    if (game.state === 'playing' && !game.inputSeen) {
+                        showCoach('👇 Hold to dive!');
+                    }
+                }, 2200);
+            }
+        }
+
+        function nightFall() {
+            game.state = 'over';
+            input.holding = false;
+            const s = Math.floor(game.score);
+            el('f-score').textContent = s.toLocaleString('en-US');
+            el('f-dist').textContent = Math.floor(game.meters).toLocaleString('en-US') + ' m';
+            el('f-streak').textContent = '×' + game.bestStreak;
+            const isBest = s > game.sessionBest;
+            if (isBest) { game.sessionBest = s; }
+            el('f-best').textContent = game.sessionBest.toLocaleString('en-US');
+            el('new-best').style.display = isBest && s > 0 ? 'block' : 'none';
+            pauseBtn.style.display = 'none';
+            hudEl.style.display = 'none';
+            sunTrackEl.style.display = 'none';
+            hideCoach();
+            overOv.classList.add('show');
+        }
+
+        function pauseGame(auto) {
+            if (game.state !== 'playing') { return; }
+            game.state = 'paused';
+            input.holding = false;
+            el('pause-reason').textContent = auto ? 'Auto-paused — you switched away.' : 'Catch your breath.';
+            pauseOv.classList.add('show');
+        }
+
+        function resumeGame() {
+            if (game.state !== 'paused') { return; }
+            pauseOv.classList.remove('show');
+            game.state = 'playing';
+            acc = 0;
+            lastT = performance.now();
+        }
+
+        /* ================= Input ================= */
+        canvas.addEventListener('pointerdown', e => {
+            e.preventDefault();
+            if (game.state === 'playing') {
+                input.holding = true;
+                game.inputSeen = true;
+                game.coached = true;
+                hideCoach();
+            }
+        });
+        window.addEventListener('pointerup', () => { input.holding = false; });
+        window.addEventListener('pointercancel', () => { input.holding = false; });
+
+        window.addEventListener('keydown', e => {
+            if (e.repeat) { return; }
+            if (e.code === 'Space' || e.code === 'ArrowDown') {
+                if (game.state === 'playing') {
+                    input.holding = true;
+                    game.inputSeen = true;
+                    game.coached = true;
+                    hideCoach();
+                    e.preventDefault();
+                } else if (startOv.classList.contains('show')) {
+                    startRun();
+                } else if (overOv.classList.contains('show')) {
+                    startRun();
+                }
+            }
+            if (e.code === 'KeyP' || e.code === 'Escape') {
+                if (game.state === 'playing') { pauseGame(false); }
+                else if (game.state === 'paused') { resumeGame(); }
+            }
+        });
+        window.addEventListener('keyup', e => {
+            if (e.code === 'Space' || e.code === 'ArrowDown') { input.holding = false; }
+        });
+
+        /* auto-pause the instant focus is lost — pause story for this jam */
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) { pauseGame(true); }
+        });
+        window.addEventListener('blur', () => { pauseGame(true); });
+        window.addEventListener('pagehide', () => { pauseGame(true); });
+
+        pauseBtn.addEventListener('pointerdown', e => { e.stopPropagation(); });
+        pauseBtn.addEventListener('click', () => { pauseGame(false); });
+        el('btn-start').addEventListener('click', startRun);
+        el('btn-again').addEventListener('click', startRun);
+        el('btn-resume').addEventListener('click', resumeGame);
+        el('btn-restart-pause').addEventListener('click', startRun);
+
+        /* ================= Main loop ================= */
+        let lastT = performance.now();
+        let acc = 0;
+
+        function frame(now) {
+            requestAnimationFrame(frame);
+            let dt = (now - lastT) / 1000;
+            lastT = now;
+            if (dt > 0.1) { dt = 0.1; }
+
+            if (game.state === 'playing') {
+                acc += dt;
+                while (acc >= STEP && game.state === 'playing') {
+                    physicsStep(STEP);
+                    acc -= STEP;
+                }
+                effectsStep(dt);
+                updateCamera(dt);
+                updateHUD();
+            } else if (game.state === 'menu') {
+                /* slow scenic drift behind the start panel */
+                menuCam.x += 70 * dt;
+                game.time += dt;
+                game.sunT = 0.38 + 0.06 * Math.sin(game.time * 0.11);
+                terrainGenTo(menuCam.x + W / Math.max(cam.zoom, 0.5) + 400);
+                terrainPrune(menuCam.x - 500);
+                cam.zoom = 0.85;
+                cam.x = menuCam.x;
+                cam.y = -H * 0.52 / cam.zoom;
+            }
+
+            render();
+        }
+
+        /* ================= Boot ================= */
+        terrainReset(20260714);
+        resizeCanvas();
+        if (W === 0) { requestAnimationFrame(() => resizeCanvas()); }
+        terrainGenTo(3000);
+        requestAnimationFrame(frame);
+    </script>
+</body>
+
+</html>
