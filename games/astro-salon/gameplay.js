@@ -5,8 +5,9 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { SIGNS, ELEMENTS, MODS, PLANETS, oppOf, compatible, birthdayFor, shuffle, rnd, pick } from './constants.js';
-import { HAPPY, FORTUNES } from './constants.js';
-import { G, setG, TOTAL_GUESTS, isPaused, reportSessionStars } from './state.js';
+import { HAPPY, HOUSES, CHART_GUESTS, HOUSES_PER_GUEST, BIRTH_HOURS, risingFor, houseSignId,
+         GENERIC_SIGN, todayYMD, dailyReadIndices } from './constants.js';
+import { G, setG, TOTAL_GUESTS, isPaused, reportSessionStars, getMySign } from './state.js';
 import { renderCard, updateHud, renderEnd, setWheelActive } from './ui.js';
 
 /* ---------------- scoring (pure, unit-tested) ---------------- */
@@ -32,10 +33,26 @@ export function computeScore(correct, tries, streak, bestStreak) {
 
 /* ---------------- session lifecycle ---------------- */
 
-export function newSession() {
+// Chart Reading deal (pure, unit-tested): 4 returning guests, each with a
+// birth time and 3 house questions; the 12 houses are dealt exactly once
+// across the session, so every session teaches the whole chart.
+export function buildChartGuests() {
+    const houses = shuffle(HOUSES.map(h => h.n));
+    return shuffle(SIGNS).slice(0, CHART_GUESTS).map((sign, i) => {
+        const hours = pick(BIRTH_HOURS);
+        return {
+            sign, hours,
+            rising: risingFor(sign.id, hours),
+            houses: houses.slice(i * HOUSES_PER_GUEST, (i + 1) * HOUSES_PER_GUEST),
+        };
+    });
+}
+
+export function newSession(mode = 'salon') {
     setG({
-        guests: shuffle(SIGNS).slice(0, TOTAL_GUESTS),
-        qTypes: shuffle(['element', 'modality', 'planet', 'opposite', 'compat']),
+        mode,
+        guests: mode === 'chart' ? buildChartGuests() : shuffle(SIGNS).slice(0, TOTAL_GUESTS),
+        qTypes: mode === 'chart' ? null : shuffle(['element', 'modality', 'planet', 'opposite', 'compat']),
         idx: -1,
         stars: 0, streak: 0, bestStreak: 0, firstTries: 0, questions: 0,
         phase: null, done: false,
@@ -44,9 +61,21 @@ export function newSession() {
     nextGuest();
 }
 
+export function guestTotal() {
+    return G && G.mode === 'chart' ? CHART_GUESTS : TOTAL_GUESTS;
+}
+
 export function nextGuest() {
     G.idx++;
-    if (G.idx >= TOTAL_GUESTS) return endSession();
+    if (G.idx >= guestTotal()) return endSession();
+    if (G.mode === 'chart') {
+        // returning clients arrive undisguised — the puzzle is their chart
+        G.client = G.guests[G.idx];
+        G.qi = 0;
+        G.revealed = true;
+        startQuestion('rising');
+        return;
+    }
     const sign = G.guests[G.idx];
     const [bm, bd] = birthdayFor(sign);
     G.client = { sign, bm, bd };
@@ -86,6 +115,11 @@ export function startQuestion(type) {
         G.partner = pick(SIGNS.filter(s => s.id !== c.sign.id));
         G.answer = compatible(c.sign, G.partner) ? 'yes' : 'no';
         G.chipKeys = ['yes', 'no'];
+    } else if (type === 'rising') {
+        G.answer = c.rising;
+    } else if (type === 'house') {
+        G.houseN = c.houses[G.qi - 1];
+        G.answer = houseSignId(c.rising, G.houseN);
     }
     renderCard();
 }
@@ -108,9 +142,11 @@ function resolve(correct) {
     renderCard();
 }
 
+const WHEEL_PHASES = ['sign', 'opposite', 'rising', 'house'];
+
 export function onWheelTap(sign) {
     if (!G || G.done || G.answered || isPaused()) return;
-    if (G.phase !== 'sign' && G.phase !== 'opposite') return;
+    if (!WHEEL_PHASES.includes(G.phase)) return;
     // read-then-confirm: first tap shows the sign big in the hub, second commits
     if (G.preview !== sign.id) {
         G.preview = sign.id;
@@ -148,6 +184,12 @@ export function onChipTap(key) {
 
 export function onContinue() {
     if (isPaused()) return;
+    if (G.mode === 'chart') {
+        G.qi++;
+        if (G.qi <= HOUSES_PER_GUEST) startQuestion('house');
+        else nextGuest();
+        return;
+    }
     if (G.phase === 'sign') startQuestion(G.qTypes[G.idx]);
     else nextGuest();
 }
@@ -156,8 +198,11 @@ export function onContinue() {
 
 function endSession() {
     G.done = true;
-    G.fortuneIdx = rnd(FORTUNES.en.length);
-    G.bestStars = reportSessionStars(G.stars);
+    // the fortune quotes today's read (p2-33): deterministic per day + the
+    // player's daily-horoscope sign, so it always agrees with the ✨ panel
+    const mySign = getMySign();
+    G.daily = dailyReadIndices(todayYMD(), mySign === null ? GENERIC_SIGN : mySign);
+    G.bestStars = reportSessionStars(G.stars, G.mode);
     setWheelActive(false);
     renderEnd();
 }

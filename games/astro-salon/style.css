@@ -272,6 +272,8 @@ svg.wheel.dimmed { opacity: 0.45; pointer-events: none; }
 .daily-head { font-size: 1.15rem; font-weight: 800; margin-top: 0.5rem; }
 .daily-head span { color: var(--gold); }
 .daily-date { font-size: 0.8rem; color: var(--muted); margin-top: 0.15rem; }
+.daily-year { font-size: 0.8rem; color: var(--gold); margin-top: 0.45rem; line-height: 1.45; }
+.daily-year small { color: var(--muted); font-size: 0.72rem; }
 .daily-read { text-align: left; background: var(--surface2); border-radius: 12px; padding: 0.7rem 0.8rem; margin: 0.7rem 0 0.2rem; font-size: 0.92rem; line-height: 1.6; }
 .daily-read p { color: var(--text); margin: 0.35rem 0; font-size: 0.92rem; }
 .daily-read p b { color: var(--gold); }

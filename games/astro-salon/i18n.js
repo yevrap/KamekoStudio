@@ -71,6 +71,19 @@ export const STR = {
         dailyDo: 'Today',
         dailySignOfDay: 'Sign of the day',
         bestStars: n => `Best salon: ⭐ ${n}`,
+        bestStarsChart: n => `Best chart reading: ⭐ ${n}`,
+        chartBtn: '🌅 Chart reading — rising & houses',
+        qRising: '“I came back for a deeper reading — I even looked up my birth time. Where was my <b>rising sign</b>?”',
+        promptRising: 'Work out their rising sign, then tap it on the wheel',
+        bornChart: h => h === 0 ? '🌅 Born <b>right at sunrise</b>' : `🌅 Born <b>${h} hours after sunrise</b>`,
+        risingAnchor: s => `⬆️ Rising: <b>${s.name.en} ${s.sym}</b> — their 1st house`,
+        hubRising: 'find the rising sign',
+        promptHouse: n => `Count to their ${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'} house and tap that sign`,
+        hintRising: (s, h) => h === 0
+            ? `Hint: at sunrise the rising sign is the sun sign itself — ${s.name.en} ${s.sym}.`
+            : `Hint: start at ${s.name.en} ${s.sym} and move one sign clockwise for every 2 hours: ${h} ÷ 2 = ${h / 2} signs.`,
+        hintHouse: (r, n) => `Hint: ${r.name.en} ${r.sym} is the 1st house — count ${n} wedges clockwise, starting there.`,
+        endTitleChart: '🌙 The chart is read',
     },
     ru: {
         title: '🔮 Астро <span>Салон</span>',
@@ -128,5 +141,18 @@ export const STR = {
         dailyDo: 'Сегодня',
         dailySignOfDay: 'Знак дня',
         bestStars: n => `Лучший салон: ⭐ ${n}`,
+        bestStarsChart: n => `Лучшее чтение карты: ⭐ ${n}`,
+        chartBtn: '🌅 Чтение карты — асцендент и дома',
+        qRising: '«Я вернулся за чтением поглубже — даже узнал время рождения. Где был мой <b>асцендент</b>?»',
+        promptRising: 'Вычислите асцендент и нажмите на него на колесе',
+        bornChart: h => h === 0 ? '🌅 Время рождения — <b>сам рассвет</b>' : `🌅 Время рождения — <b>рассвет + ${h} ч</b>`,
+        risingAnchor: s => `⬆️ Асцендент: <b>${s.name.ru} ${s.sym}</b> — его 1-й дом`,
+        hubRising: 'найдите асцендент',
+        promptHouse: n => `Отсчитайте до ${n}-го дома и нажмите на этот знак`,
+        hintRising: (s, h) => h === 0
+            ? `Подсказка: на рассвете асцендент — сам солнечный знак, ${s.name.ru} ${s.sym}.`
+            : `Подсказка: начните с ${s.name.ru} ${s.sym} и сдвигайтесь на знак по часовой за каждые 2 часа: ${h} ÷ 2 = ${h / 2} знаков.`,
+        hintHouse: (r, n) => `Подсказка: ${r.name.ru} ${r.sym} — это 1-й дом. Отсчитайте ${n} секторов по часовой, начиная с него.`,
+        endTitleChart: '🌙 Карта прочитана',
     },
 };

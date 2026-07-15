@@ -137,6 +137,76 @@ export const HAPPY = {
     ru: ['«Именно!»', '«Я так и знал!»', '«Это всё объясняет.»', '«Ну конечно!»'],
 };
 
+// ── Chart Reading room ──────────────────────────────────────────────────────
+// Whole-sign houses: the rising sign occupies the 1st house and each next
+// sign (zodiac order = clockwise on our wheel) takes the next house. The
+// rising sign itself uses the simplified sunrise rule: at sunrise the sun
+// sign is rising, and the ascendant advances one sign every ~2 hours.
+// Known simplifications (recorded in the vault design note): latitude,
+// season, and exact dawn time are ignored — the arithmetic is the lesson.
+
+export const CHART_GUESTS = 4;
+export const HOUSES_PER_GUEST = 3;
+
+// birth times are quantized to even hours so "÷ 2" is always whole
+export const BIRTH_HOURS = Array.from({ length: 12 }, (_, i) => i * 2);
+
+export const risingFor = (sunId, hoursAfterSunrise) => (sunId + Math.floor(hoursAfterSunrise / 2)) % 12;
+export const houseSignId = (risingId, houseN) => (risingId + houseN - 1) % 12;
+
+export const HOUSES = [
+    { n: 1,  label: { en: 'self & first impressions', ru: 'сам человек и первое впечатление' },
+      q: { en: '“People say I seem different lately. Which sign colors the face I show the world?”',
+           ru: '«Говорят, я в последнее время изменился. Какой знак красит лицо, что я показываю миру?»' } },
+    { n: 2,  label: { en: 'money & what you own', ru: 'деньги и имущество' },
+      q: { en: '“Money has been on my mind. Which sign keeps my purse?”',
+           ru: '«Всё думаю о деньгах. Какой знак стережёт мой кошелёк?»' } },
+    { n: 3,  label: { en: 'everyday talk & errands', ru: 'разговоры и повседневные дела' },
+      q: { en: '“My days are all notes and errands. Which sign runs my daily chatter?”',
+           ru: '«Мои дни — сплошные записки и поручения. Какой знак ведёт мою переписку?»' } },
+    { n: 4,  label: { en: 'home & family roots', ru: 'дом и семейные корни' },
+      q: { en: '“I want my home to feel like home again. Which sign tends my hearth?”',
+           ru: '«Хочу, чтобы дом снова был домом. Какой знак хранит мой очаг?»' } },
+    { n: 5,  label: { en: 'play, romance & creation', ru: 'игра, романтика и творчество' },
+      q: { en: '“Where did my spark go? Which sign guards my play and my art?”',
+           ru: '«Куда делась моя искра? Какой знак отвечает за игру и творчество?»' } },
+    { n: 6,  label: { en: 'work & daily health', ru: 'работа и повседневное здоровье' },
+      q: { en: '“My routines are a mess. Which sign keeps my working days in order?”',
+           ru: '«Мой распорядок развалился. Какой знак наводит порядок в буднях?»' } },
+    { n: 7,  label: { en: 'partnership', ru: 'партнёрство' },
+      q: { en: '“Tell me about the one who sits across from me. Which sign holds my partnerships?”',
+           ru: '«Расскажите о том, кто сидит напротив. Какой знак ведает моими союзами?»' } },
+    { n: 8,  label: { en: 'shared depths & change', ru: 'общие глубины и перемены' },
+      q: { en: '“Something in me is quietly changing. Which sign minds my depths?”',
+           ru: '«Что-то во мне тихо меняется. Какой знак смотрит за моими глубинами?»' } },
+    { n: 9,  label: { en: 'travel & big ideas', ru: 'дальние дороги и большие идеи' },
+      q: { en: '“I dream of far places and long books. Which sign points my compass?”',
+           ru: '«Мне снятся дальние края и толстые книги. Какой знак держит мой компас?»' } },
+    { n: 10, label: { en: 'career & reputation', ru: 'карьера и репутация' },
+      q: { en: '“What do they say about my work? Which sign sits at the top of my chart?”',
+           ru: '«Что говорят о моих делах? Какой знак стоит на вершине моей карты?»' } },
+    { n: 11, label: { en: 'friends & community', ru: 'друзья и круг общения' },
+      q: { en: '“Who are my people this season? Which sign gathers my friends?”',
+           ru: '«Кто мои люди в этом сезоне? Какой знак собирает моих друзей?»' } },
+    { n: 12, label: { en: 'rest, dreams & secrets', ru: 'отдых, сны и тайны' },
+      q: { en: '“My dreams have been loud lately. Which sign keeps what they hide?”',
+           ru: '«Сны в последнее время громкие. Какой знак хранит то, что они прячут?»' } },
+];
+
+// The year of horoscopes: one named arc colors every daily read. The whole
+// year is effectively prewritten — reads are composed deterministically from
+// (date, sign, YEAR_THEME.version), so bumping the version at an update
+// refreshes all 365 × 12 reads at once without shipping literal entries.
+export const YEAR_THEME = {
+    version: 1,
+    year: 2026,
+    title: { en: 'The Year of Quiet Momentum', ru: 'Год тихого разгона' },
+    line: {
+        en: 'Whatever you tend quietly this year keeps gathering speed.',
+        ru: 'Всё, что вы тихо растите в этом году, понемногу набирает ход.',
+    },
+};
+
 // daily horoscope phrase tables — composed deterministically from the date + sign
 export const HOROSCOPE = {
     en: {
@@ -149,7 +219,27 @@ export const HOROSCOPE = {
                  'A detail everyone missed is yours to find.',
                  'The evening turns out better than the afternoon promises.',
                  'Someone quotes you back to yourself. Listen.',
-                 'Luck hides in the errand you keep postponing.'],
+                 'Luck hides in the errand you keep postponing.',
+                 'A door you thought was closed turns out to be merely stuck.',
+                 'Today runs on borrowed confidence — borrow generously.',
+                 'The plan survives contact with the morning. Barely.',
+                 'Someone is quietly grateful for you. They may even say so.',
+                 'A small extravagance pays for itself in mood.',
+                 'What you rehearse in the shower lands perfectly by evening.',
+                 'The thing you almost cancel turns out to be the highlight.',
+                 'Your timing is off by ten minutes all day — in your favor.',
+                 'A borrowed idea works better in your hands.',
+                 'The stars recommend finishing over starting today.',
+                 'An answer arrives disguised as an interruption.',
+                 'You are the calmest person in at least one room today.',
+                 'A tiny repair — a button, a squeak, a typo — settles something bigger.',
+                 'News from far away puts the day in proportion.',
+                 'Your first instinct is right; your second guess is merely louder.',
+                 'The day asks less of you than you packed for.',
+                 'Something ordinary — bread, rain, a bus on time — feels briefly perfect.',
+                 'A younger person teaches you something without noticing.',
+                 'What goes sideways at noon rights itself by dinner.',
+                 'You find the exact word on the first try. Spend it wisely.'],
         advice: ['say the kind thing out loud.',
                  'finish the smallest task first.',
                  'drink water before deciding anything.',
@@ -157,7 +247,23 @@ export const HOROSCOPE = {
                  'write the idea down before it evaporates.',
                  'take the longer way home.',
                  'ask the question you think is too simple.',
-                 'leave ten minutes earlier than feels necessary.'],
+                 'leave ten minutes earlier than feels necessary.',
+                 'call instead of texting, just once.',
+                 'tidy one surface, not the whole room.',
+                 'say no early instead of maybe twice.',
+                 'wear the good one — that is what it is for.',
+                 'read one page before bed, not one feed.',
+                 'thank someone for a thing they did long ago.',
+                 'cook the simple dish you actually crave.',
+                 'step outside between tasks, even for a minute.',
+                 'let the phone charge in another room tonight.',
+                 'trust the list you made yesterday.',
+                 'fix the small annoying thing first.',
+                 'give the compliment out loud, not in your head.',
+                 'walk around the block before deciding.',
+                 'save the difficult email as a draft until tomorrow.',
+                 'share the last piece without being asked.',
+                 'go to bed before the second wind.'],
     },
     ru: {
         themes: ['День вознаграждает неспешное начало.',
@@ -169,7 +275,27 @@ export const HOROSCOPE = {
                  'Деталь, которую все упустили, ждёт именно вас.',
                  'Вечер окажется лучше, чем обещает день.',
                  'Кто-то процитирует вам ваши же слова. Прислушайтесь.',
-                 'Удача прячется в деле, которое вы всё откладываете.'],
+                 'Удача прячется в деле, которое вы всё откладываете.',
+                 'Дверь, что казалась запертой, на самом деле просто заедает.',
+                 'Сегодня день взятой взаймы уверенности — берите щедро.',
+                 'План переживёт встречу с утром. Еле-еле.',
+                 'Кто-то тихо вам благодарен. Может, даже скажет об этом.',
+                 'Маленькая роскошь окупится настроением.',
+                 'Отрепетированное в душе к вечеру прозвучит идеально.',
+                 'То, что вы чуть не отменили, станет лучшей частью дня.',
+                 'Весь день вы промахиваетесь минут на десять — в свою пользу.',
+                 'Чужая идея в ваших руках заработает лучше.',
+                 'Звёзды советуют сегодня заканчивать, а не начинать.',
+                 'Ответ придёт под видом того, что вас отвлекло.',
+                 'Сегодня вы — самый спокойный человек как минимум в одной комнате.',
+                 'Мелкая починка — пуговица, скрип, опечатка — уладит что-то большее.',
+                 'Новости издалека расставят день по местам.',
+                 'Первое чутьё верно; вторая догадка просто громче.',
+                 'День потребует меньше, чем вы для него собрали.',
+                 'Что-то обычное — хлеб, дождь, автобус вовремя — на миг покажется идеальным.',
+                 'Кто-то младше научит вас чему-то, сам того не заметив.',
+                 'То, что пойдёт наперекосяк в полдень, к ужину выправится.',
+                 'Точное слово найдётся с первой попытки. Потратьте его с умом.'],
         advice: ['скажите доброе вслух.',
                  'начните с самого маленького дела.',
                  'выпейте воды, прежде чем что-то решать.',
@@ -177,7 +303,23 @@ export const HOROSCOPE = {
                  'запишите идею, пока не испарилась.',
                  'вернитесь домой длинной дорогой.',
                  'задайте вопрос, который кажется слишком простым.',
-                 'выйдите на десять минут раньше, чем кажется нужным.'],
+                 'выйдите на десять минут раньше, чем кажется нужным.',
+                 'позвоните вместо сообщения — хотя бы раз.',
+                 'приберите одну поверхность, а не всю комнату.',
+                 'скажите «нет» сразу вместо двух «может быть».',
+                 'наденьте то самое, хорошее — оно для этого и лежит.',
+                 'перед сном — одна страница, а не одна лента.',
+                 'поблагодарите за давнее доброе дело.',
+                 'приготовьте то простое, чего действительно хочется.',
+                 'выходите на воздух между делами, хоть на минуту.',
+                 'пусть телефон сегодня ночует в другой комнате.',
+                 'доверьтесь вчерашнему списку.',
+                 'сначала почините мелкое и раздражающее.',
+                 'скажите комплимент вслух, а не про себя.',
+                 'пройдитесь вокруг дома, прежде чем решать.',
+                 'трудное письмо пусть полежит в черновиках до завтра.',
+                 'поделитесь последним куском, не дожидаясь просьбы.',
+                 'ложитесь до второго дыхания.'],
     },
 };
 
@@ -225,6 +367,29 @@ export function mulberry32(a) {
         let t = Math.imul(a ^ a >>> 15, 1 | a);
         t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
         return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
+// seeds a sign-agnostic read for players who haven't picked a sign yet
+export const GENERIC_SIGN = 12;
+
+// today as a yyyymmdd integer, the seed's date component
+export function todayYMD() {
+    const now = new Date();
+    return now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+}
+
+// One deterministic index bundle per (day, sign, year-theme version). The
+// daily panel and the end-screen fortune both draw from it, so the two
+// surfaces always agree; en/ru pools are length-matched, so the indices are
+// language-independent.
+export function dailyReadIndices(ymd, signId) {
+    const rng = mulberry32(ymd * 31 + signId * 7 + YEAR_THEME.version * 1009);
+    return {
+        themeIdx: Math.floor(rng() * HOROSCOPE.en.themes.length),
+        adviceIdx: Math.floor(rng() * HOROSCOPE.en.advice.length),
+        sodId: Math.floor(rng() * 12),
+        fortuneIdx: Math.floor(rng() * FORTUNES.en.length),
     };
 }
 

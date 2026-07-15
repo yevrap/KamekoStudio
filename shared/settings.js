@@ -184,7 +184,7 @@
       // High scores / progress
       'gridGameTopScoreScore', 'gridGameTopScoreSurvival',
       'riverRunHighScore', 'keypadQuestHighWave', 'blobZapperHighScore',
-      'alchemistHighScore', 'tysiachaHighScore', 'astroSalon_bestStars', 'bestScore_pachinkoBazaar',
+      'alchemistHighScore', 'tysiachaHighScore', 'astroSalon_bestStars', 'astroSalon_bestStarsChart', 'bestScore_pachinkoBazaar',
       'blackHoleInOne_bestRound',
       // Last played timestamps
       'lastPlayed_hiddenObject', 'lastPlayed_materialsRun',
@@ -585,7 +585,6 @@
       { slug: 'hidden-object',   emoji: '🔍', title: 'Hidden Object' },
       { slug: 'keypad-quest',    emoji: '⌨️', title: 'Keypad Quest' },
       { slug: 'river-run',       emoji: '🌊', title: 'River Run' },
-      { slug: 'blob-zapper',     emoji: '⚡', title: 'Blob Zapper' },
       { slug: 'materials-run',   emoji: '🏃', title: 'Materials Run' },
       { slug: 'durak',           emoji: '🃏', title: 'Durak' },
       { slug: 'tysiacha',        emoji: '🎴', title: 'Tysiacha' },

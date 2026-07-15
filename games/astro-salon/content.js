@@ -4,7 +4,7 @@
 //           gameplay.js or ui.js, so it can't create an import cycle.
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { ELEMENTS, MODS, PLANETS, oppOf, elLabel, elSpan, fmtFull, rangeShort } from './constants.js';
+import { ELEMENTS, MODS, PLANETS, SIGNS, HOUSES, oppOf, elLabel, elSpan, fmtFull, rangeShort } from './constants.js';
 import { t, getLang } from './i18n.js';
 
 export function chipLabel(phase, key) {
@@ -23,7 +23,7 @@ export function chipLabel(phase, key) {
     }
 }
 
-export function ruleText(phase, client, partner) {
+export function ruleText(phase, client, partner, houseN) {
     const s = client.sign;
     const lang = getLang();
     const en = lang === 'en';
@@ -67,16 +67,39 @@ export function ruleText(phase, client, partner) {
                     `сами собой не складываются (${elLabel(s.el, lang)} + ${elLabel(p.el, lang)})`);
             return `${A} и ${B} — ${rel}. Правило: Огонь ↔ Воздух, Земля ↔ Вода.`;
         }
+        case 'rising': {
+            const r = SIGNS[client.rising];
+            const k = client.hours / 2;
+            return en
+                ? `At sunrise <b>${s.name.en} ${s.sym}</b> itself is rising; the ascendant moves one sign every ~2 hours. ${client.hours} h ÷ 2 = ${k} signs clockwise → <b>${r.name.en} ${r.sym}</b>.`
+                : `На рассвете восходит сам знак <b>${s.name.ru} ${s.sym}</b>; асцендент сдвигается на знак каждые ~2 часа. ${client.hours} ч ÷ 2 = ${k} знаков по часовой → <b>${r.name.ru} ${r.sym}</b>.`;
+        }
+        case 'house': {
+            const r = SIGNS[client.rising];
+            const h = HOUSES[houseN - 1];
+            const a = SIGNS[(client.rising + houseN - 1) % 12];
+            return en
+                ? `Houses count clockwise from the rising sign: 1st is <b>${r.name.en} ${r.sym}</b>, so the ${houseN}${ordEn(houseN)} is <b>${a.name.en} ${a.sym}</b> — the house of ${h.label.en}.`
+                : `Дома отсчитываются по часовой от асцендента: 1-й — <b>${r.name.ru} ${r.sym}</b>, значит ${houseN}-й — <b>${a.name.ru} ${a.sym}</b>. Это дом: ${h.label.ru}.`;
+        }
     }
 }
 
-export function hintText(phase, client, seasonHint) {
+export const ordEn = n => (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
+
+export function hintText(phase, client, seasonHint, houseN) {
     const lang = getLang();
     if (phase === 'sign') {
         return t('hintSign')(fmtFull(lang, client.bm, client.bd), seasonHint);
     }
     if (phase === 'opposite') {
         return t('hintOpp')(client.sign.sym);
+    }
+    if (phase === 'rising') {
+        return t('hintRising')(client.sign, client.hours);
+    }
+    if (phase === 'house') {
+        return t('hintHouse')(SIGNS[client.rising], houseN);
     }
     return '';
 }

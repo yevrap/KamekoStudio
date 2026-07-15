@@ -4,16 +4,18 @@
 
 import { SIGNS } from './constants.js';
 import { t, getLang } from './i18n.js';
-import { setPaused, getBestStars } from './state.js';
+import { G, setPaused, getBestStars } from './state.js';
 import { newSession, onWheelTap, onChipTap, onContinue } from './gameplay.js';
 import {
     $, renderStatic, buildWheel, buildLearnTable, setHub, renderDaily, changeDailySign, applyLanguage,
 } from './ui.js';
 
-function startNewSession() {
+function startNewSession(mode = 'salon') {
     localStorage.setItem('lastPlayed_astroSalon', String(Date.now()));
-    newSession();
+    newSession(mode);
 }
+// ↻ and "open again" restart whichever room the player is in
+const currentMode = () => (G && G.mode) || 'salon';
 
 /* ---------------- boot ---------------- */
 
@@ -51,13 +53,17 @@ on('btn-start', () => {
     $('ov-start').classList.remove('show');
     startNewSession();
 });
+on('btn-start-chart', () => {
+    $('ov-start').classList.remove('show');
+    startNewSession('chart');
+});
 on('btn-again', () => {
     $('ov-end').classList.remove('show');
-    startNewSession();
+    startNewSession(currentMode());
 });
 on('btn-restart', () => {
     $('ov-end').classList.remove('show');
-    startNewSession();
+    startNewSession(currentMode());
 });
 on('btn-learn', () => $('ov-learn').classList.add('show'));
 on('btn-learn-close', () => $('ov-learn').classList.remove('show'));
@@ -102,15 +108,16 @@ function registerSettingsSection() {
     window.KamekoSettings.registerSection('astro-salon-info', {
         title: () => getLang() === 'ru' ? 'Астро Салон' : 'Astro Salon',
         render(container) {
-            const best = getBestStars();
             const div = document.createElement('div');
             // No color set: the drawer panel is always dark chrome regardless
             // of the game's own light/dark theme, so it inherits the panel's
             // own `color: white` rather than risking var(--text) flipping dark
             // (the bug that pattern has elsewhere in the studio, e.g. durak-dungeon).
             div.style.cssText = 'font-size:0.78rem;line-height:1.6';
-            div.textContent = best > 0
-                ? t('bestStars')(best)
+            const bests = [];
+            if (getBestStars('salon') > 0) bests.push(t('bestStars')(getBestStars('salon')));
+            if (getBestStars('chart') > 0) bests.push(t('bestStarsChart')(getBestStars('chart')));
+            div.textContent = bests.length ? bests.join(' · ')
                 : (getLang() === 'ru' ? 'Лучший результат пока не установлен.' : 'No best score yet.');
             container.appendChild(div);
         },

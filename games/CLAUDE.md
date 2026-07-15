@@ -50,7 +50,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 
 | Directory | Title | Renderer | Status |
 |-----------|-------|----------|--------|
-| `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Stable |
+| `blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | Lab (shelved from gallery 2026-07-15, Yev's call; controls rework p1-31 open) |
 | `durak/` | Durak | DOM | Stable |
 | `durak-alchemist/` | Durak Alchemist | DOM/CSS grid | Lab (shelved from gallery, p1-29) |
 | `durak-dungeon/` | Durak Dungeon | DOM | Lab (shelved from gallery, p1-29) |
@@ -60,7 +60,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
 | `tysiacha/` | Tysiacha (1000) | DOM | Stable |
 | `river-run/` | River Runner 3D | Three.js r128 | Stable |
-| `astro-salon/` | Astro Salon | DOM/SVG | Stable |
+| `astro-salon/` | Astro Salon | DOM/SVG | Stable — two session types: Salon and Chart Reading (rising + 12 whole-sign houses, Sprint 2 2026-07-15) |
 | `pachinko-bazaar/` | Pachinko Bazaar | Canvas 2D | Stable |
 | `black-hole-in-one/` | Black Hole in One | Canvas 2D | Stable |
 
@@ -137,7 +137,8 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `lastPlayed_astroSalon` | astro-salon | Set on session start |
 | `astroSalon_lang` | astro-salon | UI language `'en'`/`'ru'`, applies live |
 | `astroSalon_mySign` | astro-salon | Sign picked for the daily horoscope (0-11) |
-| `astroSalon_bestStars` | astro-salon | Best session star total |
+| `astroSalon_bestStars` | astro-salon | Best salon-session star total |
+| `astroSalon_bestStarsChart` | astro-salon | Best chart-reading star total |
 | `lastPlayed_pachinkoBazaar` | pachinko-bazaar | Set on session start |
 | `bestScore_pachinkoBazaar` | pachinko-bazaar | Highest run score |
 | `lastPlayed_blackHoleInOne` | black-hole-in-one | Set on session start |

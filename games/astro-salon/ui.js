@@ -6,7 +6,8 @@
 
 import {
     SIGNS, ELEMENT_COLOR, PLANETS, SEASONS, SEASON_HINTS, HAPPY, HOROSCOPE, FORTUNES, ELEMENTS,
-    nameOf, fmtShort, fmtFull, rangeShort, mulberry32,
+    HOUSES, CHART_GUESTS, YEAR_THEME, dailyReadIndices, todayYMD,
+    nameOf, fmtShort, fmtFull, rangeShort,
 } from './constants.js';
 import { t, getLang, setLang as i18nSetLang } from './i18n.js';
 import { G, TOTAL_GUESTS, getMySign, setMySign, clearMySign, getBestStars } from './state.js';
@@ -119,11 +120,28 @@ export function renderCard() {
 
     $('c-emoji').textContent = c.sign.emoji;
     $('c-name').textContent = G.revealed ? `${nameOf(c.sign, lang)} ${c.sign.sym}` : t('unknown');
-    $('c-sub').textContent = t('guestN')(G.idx + 1, TOTAL_GUESTS);
+    $('c-sub').textContent = t('guestN')(G.idx + 1, G.mode === 'chart' ? CHART_GUESTS : TOTAL_GUESTS);
 
     const bday = $('bday');
     const previewSign = !G.answered && G.preview !== null ? SIGNS[G.preview] : null;
-    if (G.phase === 'sign') {
+    if (G.phase === 'rising') {
+        $('speech').innerHTML = t('qRising');
+        bday.innerHTML = t('bornChart')(c.hours);
+        bday.classList.add('show');
+        $('prompt').innerHTML = previewSign ? t('promptConfirm')(previewSign) : t('promptRising');
+        if (previewSign) setHubSign(previewSign);
+        else if (G.answered) setHubSign(SIGNS[c.rising]);
+        else setHub('🌅', c.hours === 0 ? '' : `+ ${c.hours} ${lang === 'ru' ? 'ч' : 'h'}`, t('hubRising'));
+    } else if (G.phase === 'house') {
+        $('speech').innerHTML = HOUSES[G.houseN - 1].q[lang];
+        bday.innerHTML = t('risingAnchor')(SIGNS[c.rising]);
+        bday.classList.add('show');
+        $('prompt').innerHTML = previewSign ? t('promptConfirm')(previewSign) : t('promptHouse')(G.houseN);
+        // idle hub anchors the rising sign — "count from here"
+        if (previewSign) setHubSign(previewSign);
+        else if (G.answered) setHubSign(SIGNS[G.answer]);
+        else setHubSign(SIGNS[c.rising]);
+    } else if (G.phase === 'sign') {
         $('speech').innerHTML = c.sign.intro[lang];
         bday.innerHTML = t('born')(fmtFull(lang, c.bm, c.bd));
         bday.classList.add('show');
@@ -180,7 +198,7 @@ export function renderCard() {
     }
 
     // wheel activity + marks
-    if (G.phase === 'sign' || G.phase === 'opposite') {
+    if (['sign', 'opposite', 'rising', 'house'].includes(G.phase)) {
         setWheelActive(!G.answered);
         clearWedgeMarks();
         if (G.answered) {
@@ -197,7 +215,7 @@ export function renderCard() {
     // feedback
     const f = $('feedback');
     if (G.answered) {
-        const rule = ruleText(G.phase, c, G.partner);
+        const rule = ruleText(G.phase, c, G.partner, G.houseN);
         if (G.lastCorrect) {
             const quip = G.phase === 'sign' ? t('revealYes')(c.sign) : HAPPY[lang][G.happyIdx];
             const bonus = G.lastBonus ? ` · 🔥 +${G.lastBonus}⭐ ${t('streakBonus')}` : '';
@@ -213,7 +231,7 @@ export function renderCard() {
         f.innerHTML = t('chipHint');
     } else if (G.wheelHint) {
         f.className = 'feedback hint';
-        f.innerHTML = hintText(G.phase, c, SEASON_HINTS[lang][c.sign.id]);
+        f.innerHTML = hintText(G.phase, c, SEASON_HINTS[lang][c.sign.id], G.houseN);
     } else {
         f.className = 'feedback';
         f.innerHTML = '';
@@ -228,14 +246,16 @@ export function renderCard() {
 export function renderEnd() {
     if (!G || !G.done) return;
     const lang = getLang();
-    const max = TOTAL_GUESTS * 2 * 2;
+    const max = G.questions * 2; // 2⭐ per question, both session types
     const pct = G.stars / max;
-    $('end-title').textContent = t('endTitle');
+    $('end-title').textContent = t(G.mode === 'chart' ? 'endTitleChart' : 'endTitle');
     $('end-stars').textContent = `⭐ ${G.stars}`;
     $('end-detail').textContent = t('endDetail')(G.firstTries, G.questions, G.bestStreak);
     $('end-line').textContent =
         t('endLines')[pct >= 0.9 ? 0 : pct >= 0.7 ? 1 : pct >= 0.4 ? 2 : 3];
-    $('end-fortune').textContent = `${t('fortunePrefix')} “${FORTUNES[lang][G.fortuneIdx]}”`;
+    // quotes today's read (deterministic, agrees with the ✨ daily panel)
+    $('end-fortune').textContent =
+        `${t('fortunePrefix')} “${HOROSCOPE[lang].themes[G.daily.themeIdx]} ${FORTUNES[lang][G.daily.fortuneIdx]}”`;
     $('btn-again').textContent = t('againBtn');
     $('ov-end').classList.add('show');
 }
@@ -267,12 +287,11 @@ export function renderDaily() {
     changeBtn.style.display = '';
     const s = SIGNS[mySign];
     const now = new Date();
-    const ymd = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
-    const rng = mulberry32(ymd * 31 + mySign * 7);
+    const d = dailyReadIndices(todayYMD(), mySign);
     const H = HOROSCOPE[lang];
-    const theme = H.themes[Math.floor(rng() * H.themes.length)];
-    const advice = H.advice[Math.floor(rng() * H.advice.length)];
-    const sod = SIGNS[Math.floor(rng() * 12)];
+    const theme = H.themes[d.themeIdx];
+    const advice = H.advice[d.adviceIdx];
+    const sod = SIGNS[d.sodId];
     const pair = ELEMENTS[s.el].pair;
     const elLine = lang === 'en'
         ? `Your element is <span class="${ELEMENTS[s.el].cls}">${ELEMENTS[s.el].label.en}</span> — today pairs well with <span class="${ELEMENTS[pair].cls}">${ELEMENTS[pair].label.en}</span> company (${ELEMENTS[pair].signs}).`
@@ -280,6 +299,7 @@ export function renderDaily() {
     body.innerHTML = `
         <div class="daily-head"><span style="color:${ELEMENT_COLOR[s.el]}">${s.sym}</span> ${nameOf(s, lang)}</div>
         <div class="daily-date">${fmtFull(lang, now.getMonth() + 1, now.getDate())}</div>
+        <div class="daily-year">✨ ${YEAR_THEME.year} · ${YEAR_THEME.title[lang]}<br><small>${YEAR_THEME.line[lang]}</small></div>
         <div class="daily-read">
             <p>${theme}</p>
             <p>${elLine}</p>
@@ -314,6 +334,7 @@ export function renderStatic() {
     $('start-p2').innerHTML = t('startP2');
     $('start-p3').innerHTML = t('startP3');
     $('btn-start').textContent = t('startBtn');
+    $('btn-start-chart').textContent = t('chartBtn');
     $('btn-start-daily').textContent = t('dailyBtn');
     $('btn-start-lang').textContent = t('langOther');
     $('btn-lang').textContent = lang === 'en' ? 'RU' : 'EN';
@@ -324,8 +345,10 @@ export function renderStatic() {
     $('rule-opps').innerHTML = t('ruleOpps');
     $('btn-learn-close').textContent = t('learnClose');
     $('btn-continue').textContent = t('continueBtn');
-    const best = getBestStars();
-    $('best-line').textContent = best > 0 ? t('bestStars')(best) : '';
+    const bests = [];
+    if (getBestStars('salon') > 0) bests.push(t('bestStars')(getBestStars('salon')));
+    if (getBestStars('chart') > 0) bests.push(t('bestStarsChart')(getBestStars('chart')));
+    $('best-line').textContent = bests.join(' · ');
 }
 
 export function applyLanguage(l) {

@@ -29,13 +29,16 @@ export function clearMySign() {
     if (hasLS) localStorage.removeItem('astroSalon_mySign');
 }
 
-export function getBestStars() {
-    const n = hasLS ? parseInt(localStorage.getItem('astroSalon_bestStars'), 10) : NaN;
+// best stars are tracked per session type — the two rooms have different maxima
+const BEST_KEY = { salon: 'astroSalon_bestStars', chart: 'astroSalon_bestStarsChart' };
+
+export function getBestStars(mode = 'salon') {
+    const n = hasLS ? parseInt(localStorage.getItem(BEST_KEY[mode]), 10) : NaN;
     return Number.isFinite(n) ? n : 0;
 }
-export function reportSessionStars(stars) {
-    if (!hasLS) return getBestStars();
-    const best = Math.max(getBestStars(), stars);
-    localStorage.setItem('astroSalon_bestStars', String(best));
+export function reportSessionStars(stars, mode = 'salon') {
+    if (!hasLS) return getBestStars(mode);
+    const best = Math.max(getBestStars(mode), stars);
+    localStorage.setItem(BEST_KEY[mode], String(best));
     return best;
 }
