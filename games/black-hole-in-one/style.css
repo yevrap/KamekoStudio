@@ -180,6 +180,8 @@ body {
 }
 #modeBtns, #sc-btns, #myMaps-actions {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 12px;
     margin-top: 0.6rem;
 }
@@ -309,6 +311,7 @@ body {
 }
 .ed-tools {
     display: flex;
+    flex-wrap: wrap;
     gap: 12px;
     justify-content: center;
 }
