@@ -424,5 +424,13 @@ export function hideScorecard() {
     document.getElementById('scorecard').classList.add('hidden');
 }
 
-export function showHowto() { document.getElementById('howto').classList.remove('hidden'); }
-export function hideHowto() { document.getElementById('howto').classList.add('hidden'); }
+export function showHowto() { 
+    document.getElementById('howto').classList.remove('hidden');
+    document.getElementById('bar').classList.add('hidden');
+    document.getElementById('exploreBar').classList.add('hidden');
+}
+export function hideHowto() { 
+    document.getElementById('howto').classList.add('hidden');
+    if (S.mode === 'explore') document.getElementById('exploreBar').classList.remove('hidden');
+    else if (S.mode !== 'editor') document.getElementById('bar').classList.remove('hidden');
+}

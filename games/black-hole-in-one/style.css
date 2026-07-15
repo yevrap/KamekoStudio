@@ -161,7 +161,7 @@ body {
     z-index: 10;
     color: #e0e0ff;
 }
-#howto.hidden, #scorecard.hidden, #myMapsDrawer.hidden { display: none; }
+#howto.hidden, #scorecard.hidden, #myMapsDrawer.hidden, #bar.hidden, #exploreBar.hidden { display: none; }
 #howto h1, #scorecard h2, #myMapsDrawer h2 {
     font-size: 1.5rem;
     font-weight: 800;
