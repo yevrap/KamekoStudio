@@ -31,12 +31,12 @@ Jams happen when Yev says "jam kameko." No scheduled auto-drafts yet — revisit
 
 Q3 was answered via the vault's `Kameko Studio Questionnaire — New Game Directions.md` (nine worked-up concepts; four winners). The jam queue lives as roadmap rows **p3-06…p3-09** — a seeded jam should build from its row, not re-pitch. In queue order:
 
-1. **Flow Glider (A1, p3-06) — the next jam.** One-touch dive/soar physics (Tiny Wings energy), streak-driven visuals.
+1. ~~**Flow Glider (A1, p3-06).**~~ Jammed and **killed same day (2026-07-14)** — shipped as a Tiny Wings copy; see the no-reskins rule under Things to avoid.
 2. **Pachinko roguelike (C3, p3-07).** Peglin-style orbs-through-pegs; double-counts as physics + mechanic-blend.
 3. **One-tower roguelike + hero sortie (B1+, p3-08).** Waves converge on one tower; draft upgrades between waves; light unlocks persist across runs.
 4. **Durak-deck score-attack roguelike (C1, p3-09).** Durak's beat mechanic as Balatro's poker — scoring-layer blend, explicitly not another durak variant.
 
-Un-seeded/wildcard pitches are still welcome, but rank the queue above them. Directions considered and *not* picked (don't re-pitch without new signal): A2 flick golf, A3 3D marble slope, B2 lane TD with hero, B3 maze-builder TD, C2 scratch-card roguelike.
+Un-seeded/wildcard pitches are still welcome, but rank the queue above them. Directions considered and *not* picked (don't re-pitch without new signal): A3 3D marble slope, B2 lane TD with hero, B3 maze-builder TD, C2 scratch-card roguelike. (A2 flick golf *was* in this list until Yev asked for it directly on 2026-07-14 — exactly the new-signal path — and it jammed to the Lab as **Black Hole in One, p3-10**.)
 
 New steering from the same questionnaire:
 
@@ -53,6 +53,7 @@ New steering from the same questionnaire:
 
 ## Things to avoid
 
+- **No reskins of cited prior art (the Flow Glider lesson, 2026-07-14).** Games named in a design source ("Tiny Wings energy", "Desert Golfing proved the loop") are tone/feel references only, never blueprints. Before building, name what in the concept is genuinely new versus lifted — the core hook must be original. Flow Glider died for reproducing Tiny Wings' signature day/night-clock hook verbatim; Yev: "if I want a copy I'll ask."
 - Don't re-pitch anything with a **kill** verdict in `Kameko Playtest Log.md` (read it every jam — kills are hard constraints, mehs are iteration requests, keeps are "more of this").
 - Don't rebuild something the arcade already has (see the Games table in `CLAUDE.md`) unless the twist *is* the point.
 - Don't assume deep strategy is the draw — see Q2 above.
