@@ -343,6 +343,16 @@
                     </div>
                 </div>
 
+                <div class="game-card" style="--card-accent:#ff9a5c">
+                    <div class="game-card-body">
+                        <div class="game-emoji">⚫</div>
+                        <div class="game-title">Black Hole in One</div>
+                        <div class="game-desc">Flick golf across pocket planetary systems — the cup is a black hole</div>
+                        <div class="game-meta" id="meta-blackHoleInOne"></div>
+                        <a href="games/black-hole-in-one/" class="play-btn" style="background:#ff9a5c; color:#000;">▶ Play</a>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -359,6 +369,7 @@
             { id: 'tysiacha',     name: 'Tysiacha (1000)', emoji: '🎴', href: 'games/tysiacha/' },
             { id: 'astroSalon',   name: 'Astro Salon',   emoji: '🔮', href: 'games/astro-salon/' },
             { id: 'pachinkoBazaar', name: 'Pachinko Bazaar', emoji: '🧿', href: 'games/pachinko-bazaar/' },
+            { id: 'blackHoleInOne', name: 'Black Hole in One', emoji: '⚫', href: 'games/black-hole-in-one/' },
         ];
 
         const SCORES_META = [
@@ -455,10 +466,22 @@
                 if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: ' + pbScore + ' pts';
             }
 
+            // Black Hole in One best round is a vs-par diff: 0 (E) and negatives are
+            // valid — and better — so it can't go through the >0 filter below.
+            function fmtGolf(d) { return d === 0 ? 'E' : (d > 0 ? '+' + d : '−' + Math.abs(d)); }
+            var bhBest = localStorage.getItem('blackHoleInOne_bestRound');
+            if (bhBest !== null) {
+                var el = document.getElementById('meta-blackHoleInOne');
+                if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best round: ' + fmtGolf(parseInt(bhBest, 10));
+            }
+
             // Your Best Scores section
             var scoreItems = SCORES_META
                 .map(function(s) { return { label: s.label, suffix: s.suffix, val: parseInt(localStorage.getItem(s.key) || '0', 10) }; })
                 .filter(function(s) { return s.val > 0; });
+            if (bhBest !== null) {
+                scoreItems.push({ label: 'Black Hole in One (Round)', suffix: ' vs par', val: fmtGolf(parseInt(bhBest, 10)) });
+            }
 
             if (scoreItems.length > 0) {
                 document.getElementById('scoresGrid').innerHTML = scoreItems.map(function(s) {

@@ -63,6 +63,8 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
   tysiacha/         — index.html + style.css + ES modules (constants/state/gameplay/ai/ui/main.js)
   river-run/
   astro-salon/      — index.html + style.css + ES modules (constants/i18n/content/state/gameplay/ui/main.js)
+  pachinko-bazaar/  — index.html + style.css + ES modules (constants/state/gameplay/main.js)
+  black-hole-in-one/ — index.html + style.css + ES modules (constants/state/physics/gameplay/sfx/ui/main.js)
 ```
 
 **Per-game file convention:** Modern games use **Native ES Modules** (`type="module"`) split by concern — `constants.js`, `state.js`, `ui.js` (or equivalent), `gameplay.js`, `main.js`. See `games/CLAUDE.md` for the full file table and rationale. `games/durak-dungeon/` is the reference implementation. Older single-file `game.js` games are acceptable until they grow unwieldy; they are candidates for the module split when they exceed ~800 lines. Classic `<script>` tags (no `type="module"`) remain correct for `shared/settings.js` and `shared/utils.js`.
@@ -84,6 +86,8 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/durak-tactics/` | Durak Tactics | DOM | **Lab** (shelved from the gallery 2026-07-12, p1-29). Turn-based grid tactics using Durak card mechanics. Place cards as units on a 5×4 grid to battle enemy units. Campaign map with battles, shops, events, and bosses. Draft cards and spend gold between encounters. |
 | `games/tysiacha/` | Tysiacha | DOM | Classic trick-taking card game — bid, declare marriages, race to 1000. Built-in interactive coach, full English/Russian toggle (i18n.js string table), AI difficulty levels, renamable players, synthesized sound effects (sfx.js). Saves `tysiachaHighScore`. |
 | `games/astro-salon/` | Astro Salon | DOM/SVG | Astrology teaching game: five of the twelve zodiac signs visit in disguise each session, guessed on an SVG zodiac wheel (read-then-confirm: tap previews the sign big in the hub, tap again commits), then answer one follow-up each (element, modality, ruling planet, opposite sign, or element compatibility). Full EN/RU. ✨ Daily horoscope (date+sign seeded, deterministic). Promoted from `drafts/astro-salon` 2026-07-14. Saves `astroSalon_bestStars`. |
+| `games/pachinko-bazaar/` | Pachinko Bazaar | Canvas 2D | Peglin-style pachinko roguelike: drop orbs through the pegs, beat escalating quotas, buy items (Ghost Orb, Peg Upgrader) at the bazaar between rounds. Web-audio synthesis, screen shake/slow-mo juice. Promoted from `drafts/pachinko-bazaar` 2026-07-14. Saves `bestScore_pachinkoBazaar`. |
+| `games/black-hole-in-one/` | Black Hole in One | Canvas 2D | Flick golf across pocket planetary systems: drag-release flings a comet, planet gravity bends every shot, planets double as landable fairways (soft-catch landings make deliberate hops stick), the cup is a black hole with a capture spiral; repulsor pulsars from hole 6. Two modes — ♾ Endless and ⛳ 9-Hole Round with scorecard + best-round record. Fixed 100×170 course letterboxed into any viewport so phone and laptop play identical holes. Promoted from `drafts/black-hole-in-one` 2026-07-15. Saves `blackHoleInOne_bestRound`. |
 
 ## Shared Infrastructure: `shared/settings.js`
 
@@ -194,6 +198,12 @@ Conventions: a "Quick Actions" section first (`.settings-btn` buttons — rules,
 | `astroSalon_lang` | astro-salon | `'en'`\|`'ru'` | UI language; applies live, default `'en'` |
 | `astroSalon_mySign` | astro-salon | integer string (0-11) | Sign picked for the daily horoscope |
 | `astroSalon_bestStars` | astro-salon | integer string | Best session star total |
+| `lastPlayed_pachinkoBazaar` | pachinko-bazaar | timestamp (ms) | Set on session start |
+| `bestScore_pachinkoBazaar` | pachinko-bazaar | integer string | Highest run score |
+| `lastPlayed_blackHoleInOne` | black-hole-in-one | timestamp (ms) | Set on session start |
+| `blackHoleInOne_bestRound` | black-hole-in-one | integer string | Best 9-hole round total vs par — 0 and negatives are valid and better; don't gate on `> 0` |
+| `blackHoleInOne_mode` | black-hole-in-one | `'endless'`\|`'round'` | Last chosen mode, preselected on next visit |
+| `blackHoleInOne_muted` | black-hole-in-one | `'true'`\|`'false'` | Sound effects off/on (default on) |
 
 ## Mobile-First Patterns
 

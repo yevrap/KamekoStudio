@@ -1,0 +1,266 @@
+// Black Hole in One — game logic: hole generation, flight, scoring, rounds.
+// DOM-free: all presentation goes through the injected `hooks` object, so this
+// module (plus physics.js/constants.js) runs headless under node --test.
+'use strict';
+
+import {
+    WORLD_W as W, COURSE_H, DT, MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R,
+    OB_MARGIN, DUST_T, FLIGHT_CAP, SLING_ANG, ROUND_HOLES, PALETTES,
+    rand, dist, holeLabel,
+} from './constants.js';
+import { S, world, comet } from './state.js';
+import { stepBody, collide } from './physics.js';
+
+// Presentation hooks — main.js swaps in the real UI; defaults are no-ops.
+export let hooks = {
+    toast() {}, chip() {}, bar() {}, holeStart() {}, roundEnd() {},
+    burst() {},
+    sfx: { flick() {}, bounce() {}, sling() {}, lost() {}, land() {}, sink() {}, score() {} },
+};
+export function setHooks(h) { hooks = Object.assign(hooks, h); }
+
+let resultTimer = null;
+
+// setTimeout that doesn't hold the Node test process open (no-op in browsers)
+function schedule(fn, ms) {
+    const t = setTimeout(fn, ms);
+    if (t && typeof t.unref === 'function') t.unref();
+    return t;
+}
+
+/* ============================== HOLE GENERATION ============================== */
+
+export function genHole(n) {
+    world.bodies = [];
+    world.teeRock = { x: rand(28, 72), y: COURSE_H * rand(0.84, 0.9), r: 3.4, m: 8, type: 'tee' };
+    world.blackHole = { x: rand(18, 82), y: COURSE_H * rand(0.1, 0.17), r: 3.2, m: 230, type: 'hole' };
+    const teeRock = world.teeRock, blackHole = world.blackHole;
+
+    const nP = Math.min(1 + Math.floor(n / 2), 4);
+    let placed = 0;
+    for (let i = 0; i < nP; i++) {
+        // the guard planet (i===0 on holes 2+) sits on the tee→hole line and is a
+        // size up — it doubles as an inviting stepping stone to land on (Q4)
+        const guard = i === 0 && n >= 2;
+        const r = guard ? rand(9, 13) : rand(7, 12 + Math.min(n * 0.4, 3));
+        let ok = false, px = 0, py = 0;
+        for (let tries = 0; tries < 70 && !ok; tries++) {
+            if (guard) {
+                const t = rand(0.35, 0.65);
+                px = teeRock.x + (blackHole.x - teeRock.x) * t + rand(-9, 9);
+                py = teeRock.y + (blackHole.y - teeRock.y) * t + rand(-7, 7);
+            } else {
+                px = rand(12, 88);
+                py = rand(COURSE_H * 0.24, COURSE_H * 0.72);
+            }
+            px = Math.min(Math.max(px, r + 4), W - r - 4);
+            py = Math.min(Math.max(py, COURSE_H * 0.2), COURSE_H * 0.76);
+            ok = dist(px, py, teeRock.x, teeRock.y) > r + 15 &&
+                 dist(px, py, blackHole.x, blackHole.y) > r + 14 &&
+                 world.bodies.every(b => dist(px, py, b.x, b.y) > r + b.r + 7);
+        }
+        if (!ok) continue;
+        const pal = PALETTES[(n + i) % PALETTES.length];
+        world.bodies.push({ x: px, y: py, r, m: r * r, type: 'planet', pal, spin: rand(0, Math.PI * 2) });
+        placed++;
+    }
+
+    let pulsar = false;
+    if (n >= 6 && Math.random() < Math.min(0.15 + (n - 6) * 0.06, 0.5)) {
+        for (let tries = 0; tries < 50; tries++) {
+            const px = rand(14, 86), py = rand(COURSE_H * 0.28, COURSE_H * 0.68);
+            if (dist(px, py, blackHole.x, blackHole.y) > 26 &&
+                dist(px, py, teeRock.x, teeRock.y) > 22 &&
+                world.bodies.every(b => dist(px, py, b.x, b.y) > b.r + 11)) {
+                world.bodies.push({ x: px, y: py, r: 2.6, m: -160, type: 'pulsar' });
+                pulsar = true;
+                break;
+            }
+        }
+    }
+
+    world.bodies.push(teeRock);
+    S.par = Math.min(2 + (placed >= 3 ? 1 : 0) + (pulsar ? 1 : 0), 4);
+    S.strokes = 0;
+    S.tFlight = 0;
+    S.hopsThisHole = 0;
+
+    comet.vx = comet.vy = 0;
+    comet.rest = { b: teeRock, ang: -Math.PI / 2 };
+    placeOnRest();
+    world.lastRest = { rest: comet.rest };
+
+    world.trail = [];
+    world.slingTrack = new Map();
+    world.hoppedBodies = new Set();
+    world.sink = null;
+
+    hooks.holeStart();
+    hooks.bar();
+}
+
+export function placeOnRest() {
+    const r = comet.rest;
+    comet.x = r.b.x + Math.cos(r.ang) * (r.b.r + COMET_R + 0.25);
+    comet.y = r.b.y + Math.sin(r.ang) * (r.b.r + COMET_R + 0.25);
+}
+
+/* ============================== FLIGHT ============================== */
+
+export function launch(dx, dy, len) {
+    const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
+    if (speed < MIN_SHOT) { S.phase = 'rest'; return false; }
+    comet.vx = dx / len * speed;
+    comet.vy = dy / len * speed;
+    S.strokes++;
+    S.tFlight = 0;
+    world.trail = [];
+    world.slingTrack = new Map();
+    S.phase = 'flight';
+    hooks.sfx.flick();
+    hooks.bar();
+    return true;
+}
+
+export function stepFlight(dt) {
+    S.tFlight += dt;
+    if (S.tFlight > DUST_T) {
+        const k = Math.min((S.tFlight - DUST_T) / 3, 1);
+        const f = 1 - k * 0.0022;
+        comet.vx *= f; comet.vy *= f;
+    }
+    const res = stepBody(comet, dt, world.bodies, world.blackHole);
+
+    if (res && res.sink) { beginSink(); return; }
+
+    if (res && res.hit) {
+        const c = collide(comet, res.hit);
+        if (c.landed) { landOn(res.hit, c.ang); return; }
+        if (c.bounced) {
+            hooks.sfx.bounce(c.k);
+            hooks.burst(comet.x, comet.y, 7, res.hit.pal ? res.hit.pal.base : '#aaa', 18);
+        }
+    }
+
+    // slingshot detection — big swings around one planet get celebrated
+    for (const b of world.bodies) {
+        if (b.type !== 'planet') continue;
+        const d = dist(comet.x, comet.y, b.x, b.y);
+        let tr = world.slingTrack.get(b);
+        if (d < b.r + 16) {
+            const ang = Math.atan2(comet.y - b.y, comet.x - b.x);
+            if (!tr) { tr = { prev: ang, acc: 0, fired: false }; world.slingTrack.set(b, tr); }
+            let da = ang - tr.prev;
+            while (da > Math.PI) da -= Math.PI * 2;
+            while (da < -Math.PI) da += Math.PI * 2;
+            tr.acc += da; tr.prev = ang;
+            if (!tr.fired && Math.abs(tr.acc) > SLING_ANG) {
+                tr.fired = true;
+                hooks.toast('☄️ SLINGSHOT!');
+                hooks.sfx.sling();
+                hooks.burst(comet.x, comet.y, 14, '#ffd98a', 30);
+            }
+        } else if (tr) {
+            world.slingTrack.delete(b);
+        }
+    }
+
+    const oob = comet.x < -OB_MARGIN || comet.x > W + OB_MARGIN ||
+                comet.y < -OB_MARGIN || comet.y > COURSE_H + OB_MARGIN;
+    if (oob || S.tFlight > FLIGHT_CAP) {
+        comet.rest = world.lastRest.rest;
+        placeOnRest();
+        comet.vx = comet.vy = 0;
+        world.trail = [];
+        S.phase = 'rest';
+        hooks.sfx.lost();
+        hooks.toast(oob ? '🌌 Lost in space — replay from your last spot' : '🛰 Drifting too long — back you come');
+    }
+}
+
+export function landOn(b, ang) {
+    comet.rest = { b, ang };
+    placeOnRest();
+    comet.vx = comet.vy = 0;
+    world.lastRest = { rest: comet.rest };
+    S.phase = 'rest';
+    world.trail = [];
+    hooks.sfx.land();
+    hooks.burst(comet.x, comet.y, 5, '#fff', 10);
+    if (b.type === 'planet' && !world.hoppedBodies.has(b)) {
+        world.hoppedBodies.add(b);
+        S.hopsThisHole++;
+        if (S.hopsThisHole === 1) hooks.toast('🪐 HOP! Teed up on a planet');
+    }
+}
+
+/* ============================== SINK & SCORING ============================== */
+
+export function beginSink() {
+    const dx = comet.x - world.blackHole.x, dy = comet.y - world.blackHole.y;
+    world.sink = { r0: Math.max(Math.hypot(dx, dy), 1.5), a0: Math.atan2(dy, dx), t: 0 };
+    S.phase = 'sink';
+    hooks.sfx.sink();
+}
+
+export function stepSink(dt) {
+    const sink = world.sink;
+    sink.t += dt * 1.1;
+    const t = Math.min(sink.t, 1);
+    const r = sink.r0 * (1 - t) * (1 - t);
+    const a = sink.a0 + t * 7;
+    comet.x = world.blackHole.x + Math.cos(a) * r;
+    comet.y = world.blackHole.y + Math.sin(a) * r;
+    if (Math.random() < 0.5) hooks.burst(comet.x, comet.y, 1, '#ffd98a', 8);
+    if (sink.t >= 1) holeComplete();
+}
+
+export function holeComplete() {
+    const diff = S.strokes - S.par;
+    S.totalDiff += diff;
+    S.roundCard.push({ hole: S.hole, strokes: S.strokes, par: S.par, hopped: S.hopsThisHole > 0 });
+    const lab = holeLabel(S.strokes, S.par);
+    const hopTag = S.hopsThisHole > 0 ? ' · 🪐' : '';
+    hooks.chip(lab, `Hole ${S.hole} · ${S.strokes} flick${S.strokes === 1 ? '' : 's'} · Par ${S.par}${hopTag}`);
+    hooks.sfx.score(lab.fanfare);
+    hooks.burst(world.blackHole.x, world.blackHole.y, 36, '#ffd98a', 40);
+    S.phase = 'result';
+    hooks.bar();
+    const roundDone = S.mode === 'round' && S.roundCard.length >= ROUND_HOLES;
+    resultTimer = schedule(roundDone ? endRound : nextHole, 1900);
+}
+
+export function nextHole() {
+    if (S.phase !== 'result') return;
+    clearTimeout(resultTimer); resultTimer = null;
+    hooks.chip(null);
+    S.hole++;
+    genHole(S.hole);
+    S.phase = 'rest';
+}
+
+export function endRound() {
+    if (S.phase !== 'result') return;
+    clearTimeout(resultTimer); resultTimer = null;
+    hooks.chip(null);
+    S.phase = 'roundover';
+    hooks.roundEnd({ card: S.roundCard.slice(), total: S.totalDiff });
+}
+
+// Advance out of the result chip early (tap): last round hole → scorecard, else next hole.
+export function advance() {
+    if (S.phase !== 'result') return;
+    if (S.mode === 'round' && S.roundCard.length >= ROUND_HOLES) endRound();
+    else nextHole();
+}
+
+export function startRun(mode) {
+    clearTimeout(resultTimer); resultTimer = null;
+    hooks.chip(null);
+    S.mode = mode;
+    S.hole = 1;
+    S.totalDiff = 0;
+    S.roundCard = [];
+    genHole(1);
+    S.phase = 'rest';
+}

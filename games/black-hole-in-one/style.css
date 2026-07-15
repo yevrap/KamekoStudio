@@ -1,0 +1,243 @@
+/* Black Hole in One — styles. The playfield is diegetic deep space and stays
+   dark in both themes; only the HUD chrome adapts via custom properties. */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --panel-bg: #12122acc;
+    --panel-border: #2a2a50;
+    --panel-solid: #12122add;
+    --ink: #e0e0ff;
+    --ink-dim: #7777aa;
+    --ink-soft: #9a9ac8;
+    --ink-body: #b8b8e0;
+    --accent: #00e5a0;
+    --gold: #ffd98a;
+    --hot: #ff8a5c;
+}
+body:not(.dark-mode) {
+    --panel-bg: #e8e8f6cc;
+    --panel-border: #b5b5d5;
+    --panel-solid: #ececf8ee;
+    --ink: #22224a;
+    --ink-dim: #666690;
+    --ink-soft: #55557e;
+    --ink-body: #3c3c66;
+}
+
+html, body { height: 100%; overflow: hidden; }
+html { background: #05060f; }
+body {
+    background: #05060f;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: var(--ink);
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+#game {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    touch-action: none;
+}
+
+/* ---- top score bar ---- */
+#bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding: calc(env(safe-area-inset-top, 0px) + 10px) 60px 8px 60px;
+    pointer-events: none;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #e0e0ff;
+    text-shadow: 0 1px 6px #000;
+}
+#bar .dim { color: #7777aa; font-weight: 500; }
+#bar #strokes { color: #e0e0ff; }
+#bar #total.under { color: #00e5a0; }
+#bar #total.over  { color: #ff8a5c; }
+
+/* ---- corner buttons (right side; the settings hamburger owns top-left) ---- */
+#btns {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 44px);
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+#btns button {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--ink-soft);
+    font-size: 1.15rem;
+    cursor: pointer;
+}
+#btns button:active { filter: brightness(1.25); }
+
+/* the shared hamburger sits over the space canvas — keep it legible */
+#settings-hamburger-btn {
+    top: calc(env(safe-area-inset-top, 0px) + 6px) !important;
+}
+
+/* ---- toasts ---- */
+#toast {
+    position: fixed;
+    top: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.5rem 1.1rem;
+    border-radius: 999px;
+    background: var(--panel-solid);
+    border: 1px solid var(--panel-border);
+    color: var(--ink);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.25s;
+    pointer-events: none;
+}
+#toast.show { opacity: 1; }
+
+/* ---- hole result chip ---- */
+#chip {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    pointer-events: none;
+    text-shadow: 0 2px 18px #000;
+}
+#chip.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+#chip .big {
+    font-size: 1.7rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ffd98a;
+}
+#chip .big.ace {
+    font-size: 1.9rem;
+    color: #fff;
+    text-shadow: 0 0 22px #ffb347, 0 0 60px #ff8a5c;
+}
+#chip .sub {
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #9a9ac8;
+}
+
+/* ---- overlays (how-to + scorecard) ---- */
+#howto, #scorecard {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1.1rem;
+    padding: 2rem;
+    background: #05060fd8;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    text-align: center;
+    z-index: 10;
+    color: #e0e0ff;
+}
+#howto.hidden, #scorecard.hidden { display: none; }
+#howto h1, #scorecard h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    background: linear-gradient(180deg, #ffe9c0, #ff9a5c);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+#howto p {
+    font-size: 0.86rem;
+    line-height: 1.65;
+    color: #b8b8e0;
+    max-width: 300px;
+}
+#modeBtns, #sc-btns {
+    display: flex;
+    gap: 12px;
+    margin-top: 0.6rem;
+}
+#modeBtns button, #sc-btns button {
+    min-height: 48px;
+    padding: 0 1.3rem;
+    border-radius: 14px;
+    border: 1px solid #2a2a50;
+    background: #12122a;
+    color: #e0e0ff;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+#modeBtns button:first-child, #sc-btns button:first-child {
+    border-color: #00e5a0;
+    color: #00e5a0;
+}
+#modeBtns button:active, #sc-btns button:active { background: #1a1a3a; }
+
+/* ---- scorecard ---- */
+#sc-total {
+    font-size: 2.6rem;
+    font-weight: 800;
+    color: #ffd98a;
+}
+#sc-total.under { color: #00e5a0; }
+#sc-total.over  { color: #ff8a5c; }
+#sc-best {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #ffd98a;
+    min-height: 1em;
+}
+#sc-hops {
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: #9a9ac8;
+}
+#sc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(76px, 1fr));
+    gap: 8px;
+    max-width: 320px;
+    width: 100%;
+}
+.sc-cell {
+    background: #12122a;
+    border: 1px solid #2a2a50;
+    border-radius: 10px;
+    padding: 7px 4px;
+}
+.sc-cell .sc-h { font-size: 0.62rem; letter-spacing: 0.16em; color: #7777aa; }
+.sc-cell .sc-s { font-size: 1.15rem; font-weight: 800; color: #e0e0ff; }
+.sc-cell .sc-s.under { color: #00e5a0; }
+.sc-cell .sc-s.over  { color: #ff8a5c; }
+.sc-cell .sc-p { font-size: 0.6rem; letter-spacing: 0.1em; color: #9a9ac8; }

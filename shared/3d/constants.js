@@ -20,5 +20,7 @@ export const ARCADE_GAMES = [
     { name: "Materials Run Expanse", url: "games/materials-run/", color: 0xff8800 },
     { name: "Durak Card Arena", url: "games/durak/", color: 0xff00ff },
     { name: "Tysiacha", url: "games/tysiacha/", color: 0xffd54f },
-    { name: "Astro Salon", url: "games/astro-salon/", color: 0x6d5bd0 }
+    { name: "Astro Salon", url: "games/astro-salon/", color: 0x6d5bd0 },
+    { name: "Pachinko Bazaar", url: "games/pachinko-bazaar/", color: 0xe040fb },
+    { name: "Black Hole in One", url: "games/black-hole-in-one/", color: 0xff9a5c }
 ];

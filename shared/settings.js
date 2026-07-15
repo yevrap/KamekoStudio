@@ -185,12 +185,14 @@
       'gridGameTopScoreScore', 'gridGameTopScoreSurvival',
       'riverRunHighScore', 'keypadQuestHighWave', 'blobZapperHighScore',
       'alchemistHighScore', 'tysiachaHighScore', 'astroSalon_bestStars', 'bestScore_pachinkoBazaar',
+      'blackHoleInOne_bestRound',
       // Last played timestamps
       'lastPlayed_hiddenObject', 'lastPlayed_materialsRun',
       'lastPlayed_keypadQuest', 'lastPlayed_riverRun',
       'lastPlayed_blobZapper', 'lastPlayed_durak',
       'lastPlayed_durakDungeon', 'lastPlayed_durakTactics',
       'lastPlayed_durakAlchemist', 'lastPlayed_tysiacha', 'lastPlayed_astroSalon', 'lastPlayed_pachinkoBazaar',
+      'lastPlayed_blackHoleInOne',
       // River Run
       'riverRun_autoShoot', 'riverRun_autoAvoid',
       'riverRun_invertControls', 'muted',
@@ -213,7 +215,9 @@
       'tysiacha_lang', 'tysiacha_difficulty', 'tysiacha_muted',
       'tysiacha_settings', 'tysiacha_autoPlay', 'tysiacha_autoPlaySpeed', 'tysiacha_revealHands', 'tysiacha_autoRestart',
       // Astro Salon
-      'astroSalon_lang', 'astroSalon_mySign'
+      'astroSalon_lang', 'astroSalon_mySign',
+      // Black Hole in One
+      'blackHoleInOne_mode', 'blackHoleInOne_muted'
     ];
     // Per-seat / per-wave keys have dynamic suffixes — clear by prefix.
     const prefixesToRemove = [
@@ -585,7 +589,9 @@
       { slug: 'materials-run',   emoji: '🏃', title: 'Materials Run' },
       { slug: 'durak',           emoji: '🃏', title: 'Durak' },
       { slug: 'tysiacha',        emoji: '🎴', title: 'Tysiacha' },
-      { slug: 'astro-salon',     emoji: '🔮', title: 'Astro Salon' }
+      { slug: 'astro-salon',     emoji: '🔮', title: 'Astro Salon' },
+      { slug: 'pachinko-bazaar', emoji: '🧿', title: 'Pachinko Bazaar' },
+      { slug: 'black-hole-in-one', emoji: '⚫', title: 'Black Hole in One' }
     ];
     const currentGameMatch = location.pathname.match(/\/games\/([^/]+)/);
     const currentSlug = currentGameMatch ? currentGameMatch[1] : null;

@@ -41,6 +41,8 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `blob-zapper/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; canvas rendering tightly coupled to physics/particle state, merged into gameplay.js like durak-tactics) |
 | `river-run/` | — | ⏸ Lower priority | Three.js; complex event + audio setup; different architecture |
 | `astro-salon/` | — | ✅ Done | constants/i18n/content/state/gameplay/ui/main.js. Promoted from `drafts/astro-salon` 2026-07-14 (round-3 playtest **keep**). `content.js` holds pure text-generation (chip labels, rule/hint text) shared by `ui.js` and its tests — kept separate so `gameplay.js` → `ui.js` stays one-directional (no import cycle, same shape as tysiacha's `log.js`). |
+| `pachinko-bazaar/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; canvas rendering merged into gameplay.js like durak-tactics). Promoted from `drafts/pachinko-bazaar` 2026-07-14. |
+| `black-hole-in-one/` | — | ✅ Done | constants/state/physics/gameplay/sfx/ui/main.js. Promoted from `drafts/black-hole-in-one` 2026-07-15 (playtest **keep**). `physics.js` and `gameplay.js` are DOM-free — presentation goes through an injected `hooks` object (no-op defaults), so the whole game flow runs headless under `node --test`. `ui.js` owns canvas rendering AND the letterbox view transform (fixed 100×170 course centered in any viewport — device difficulty parity). |
 
 **When refactoring a game:** start with `durak-dungeon/` as the reference. Use `durak-tactics/` as the example for games where rendering and game logic are too tightly coupled to split into a separate `ui.js` — put both in `gameplay.js`.
 
@@ -61,6 +63,8 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `tysiacha/` | Tysiacha (1000) | DOM | Stable |
 | `river-run/` | River Runner 3D | Three.js r128 | Stable |
 | `astro-salon/` | Astro Salon | DOM/SVG | Stable |
+| `pachinko-bazaar/` | Pachinko Bazaar | Canvas 2D | Stable |
+| `black-hole-in-one/` | Black Hole in One | Canvas 2D | Stable |
 
 ## Conventions Shared Across Games
 
@@ -136,6 +140,12 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `astroSalon_lang` | astro-salon | UI language `'en'`/`'ru'`, applies live |
 | `astroSalon_mySign` | astro-salon | Sign picked for the daily horoscope (0-11) |
 | `astroSalon_bestStars` | astro-salon | Best session star total |
+| `lastPlayed_pachinkoBazaar` | pachinko-bazaar | Set on session start |
+| `bestScore_pachinkoBazaar` | pachinko-bazaar | Highest run score |
+| `lastPlayed_blackHoleInOne` | black-hole-in-one | Set on session start |
+| `blackHoleInOne_bestRound` | black-hole-in-one | Best 9-hole round total vs par (0/negative valid — lower is better) |
+| `blackHoleInOne_mode` | black-hole-in-one | Last chosen mode `'endless'`/`'round'` |
+| `blackHoleInOne_muted` | black-hole-in-one | Sound effects off/on |
 
 ## Three.js Obstacle Arrays
 
