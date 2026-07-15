@@ -226,8 +226,6 @@ export function stepOrbit(dt) {
     comet.vy =  Math.cos(o.ang) * spd;
     
     updateActiveChunks();
-    
-    updateCamera(dt);
 }
 
 function updateCamera(dt) {
