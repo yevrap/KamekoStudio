@@ -145,6 +145,23 @@ document.getElementById('modeRound').addEventListener('click', () => startRun('r
 document.getElementById('modeExplore').addEventListener('click', () => startRun('explore'));
 document.getElementById('modeEditor').addEventListener('click', () => startRun('editor'));
 
+document.getElementById('modeSharedPlay').addEventListener('click', () => {
+    audio();
+    document.getElementById('sharedMapBtns').classList.add('hidden');
+    document.getElementById('modeBtns').classList.remove('hidden');
+    if (window.pendingSharedMap) {
+        game.startCustomMap(window.pendingSharedMap);
+        window.pendingSharedMap = null;
+    }
+});
+
+document.getElementById('modeSharedMenu').addEventListener('click', () => {
+    audio();
+    document.getElementById('sharedMapBtns').classList.add('hidden');
+    document.getElementById('modeBtns').classList.remove('hidden');
+    window.pendingSharedMap = null;
+});
+
 document.getElementById('ed-test').addEventListener('click', () => editor.toggleTestPlay());
 document.getElementById('ed-add-planet').addEventListener('click', () => editor.addPlanet());
 document.getElementById('ed-add-pulsar').addEventListener('click', () => editor.addPulsar());
@@ -163,8 +180,12 @@ document.getElementById('howto').addEventListener('pointerdown', e => {
     if (e.target.closest('button')) return;
     audio();
     // tap outside the buttons: resume if a run is live, else start last-used mode
-    if (S.phase === 'menu') startRun(localStorage.getItem(LS.mode) || 'endless');
-    else ui.hideHowto();
+    if (S.phase === 'menu') {
+        if (window.pendingSharedMap) return; // force them to click a button
+        startRun(localStorage.getItem(LS.mode) || 'endless');
+    } else {
+        ui.hideHowto();
+    }
 });
 
 document.getElementById('sc-again').addEventListener('click', () => startRun('round'));
@@ -259,8 +280,13 @@ if (urlParams.has('map')) {
         url.searchParams.delete('map');
         window.history.replaceState({}, '', url);
         
-        game.startCustomMap(mapData);
-        if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); game.startCustomMap(mapData); });
+        window.pendingSharedMap = mapData;
+        document.getElementById('modeBtns').classList.add('hidden');
+        document.getElementById('sharedMapBtns').classList.remove('hidden');
+        
+        game.genHole(1);
+        S.phase = 'menu';
+        if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); game.genHole(1); S.phase = 'menu'; });
     } else {
         ui.toast('❌ Invalid map link');
         game.genHole(1);

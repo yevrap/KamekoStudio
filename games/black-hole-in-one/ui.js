@@ -428,9 +428,16 @@ export function showHowto() {
     document.getElementById('howto').classList.remove('hidden');
     document.getElementById('bar').classList.add('hidden');
     document.getElementById('exploreBar').classList.add('hidden');
+    document.getElementById('editorBar').classList.add('hidden');
+    document.getElementById('customBar').classList.add('hidden');
 }
 export function hideHowto() { 
     document.getElementById('howto').classList.add('hidden');
     if (S.mode === 'explore') document.getElementById('exploreBar').classList.remove('hidden');
-    else if (S.mode !== 'editor') document.getElementById('bar').classList.remove('hidden');
+    else if (S.mode === 'editor') document.getElementById('editorBar').classList.remove('hidden');
+    else if (S.mode === 'custom') {
+        document.getElementById('customBar').classList.remove('hidden');
+        document.getElementById('bar').classList.remove('hidden');
+    }
+    else document.getElementById('bar').classList.remove('hidden');
 }
