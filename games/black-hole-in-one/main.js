@@ -123,12 +123,17 @@ function startRun(mode) {
     document.getElementById('bar').classList.add('hidden');
     document.getElementById('exploreBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');
+    document.getElementById('customBar').classList.add('hidden');
     if (mode === 'explore') {
         document.getElementById('exploreBar').classList.remove('hidden');
         explore.startRun();
     } else if (mode === 'editor') {
         document.getElementById('editorBar').classList.remove('hidden');
         editor.startEditor();
+    } else if (mode === 'custom') {
+        document.getElementById('customBar').classList.remove('hidden');
+        document.getElementById('bar').classList.remove('hidden');
+        game.startRun(mode);
     } else {
         document.getElementById('bar').classList.remove('hidden');
         game.startRun(mode);
@@ -146,7 +151,14 @@ document.getElementById('ed-add-pulsar').addEventListener('click', () => editor.
 document.getElementById('ed-maps').addEventListener('click', () => editor.toggleMapsDrawer());
 document.getElementById('mm-saveNew').addEventListener('click', () => editor.saveCurrentMap());
 document.getElementById('mm-shareNew').addEventListener('click', () => editor.shareCurrentMap());
+document.getElementById('mm-importUrl').addEventListener('click', () => editor.importFromUrl());
 document.getElementById('mm-close').addEventListener('click', () => editor.toggleMapsDrawer());
+document.getElementById('cb-save').addEventListener('click', () => editor.saveCustomMap());
+document.getElementById('cb-menu').addEventListener('click', () => {
+    ui.showHowto();
+    if (drag) drag = null;
+    if (S.phase === 'aiming') S.phase = 'rest';
+});
 document.getElementById('howto').addEventListener('pointerdown', e => {
     if (e.target.closest('button')) return;
     audio();

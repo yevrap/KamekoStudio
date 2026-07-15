@@ -392,6 +392,7 @@ export function startCustomMap(mapData) {
     // Hide UI elements not relevant for custom
     document.getElementById('exploreBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');
+    document.getElementById('customBar').classList.remove('hidden');
     document.getElementById('bar').classList.remove('hidden');
     document.getElementById('howto').classList.add('hidden');
     document.getElementById('scorecard').classList.add('hidden');

@@ -278,7 +278,7 @@ body {
 .sc-cell .sc-s.over  { color: #ff8a5c; }
 .sc-cell .sc-p { font-size: 0.6rem; letter-spacing: 0.1em; color: #9a9ac8; }
 
-#editorBar {
+#editorBar, #customBar {
     position: fixed;
     bottom: 0; left: 0; right: 0;
     padding: 12px;
@@ -287,13 +287,21 @@ body {
     border-top: 1px solid rgba(255,255,255,0.1);
     color: #fff;
     display: flex;
-    flex-direction: column;
-    gap: 8px;
     z-index: 100;
     transition: transform 0.2s;
 }
-#editorBar.hidden { transform: translateY(110%); }
-#editorBar button {
+#editorBar {
+    flex-direction: column;
+    gap: 8px;
+}
+#customBar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+}
+#editorBar.hidden, #customBar.hidden { transform: translateY(110%); }
+#editorBar button, #customBar button {
     background: rgba(255,255,255,0.1);
     border: 1px solid rgba(255,255,255,0.2);
     color: #fff;
@@ -304,7 +312,7 @@ body {
     font-family: inherit;
     font-weight: 600;
 }
-#editorBar button:active { background: rgba(255,255,255,0.2); }
+#editorBar button:active, #customBar button:active { background: rgba(255,255,255,0.2); }
 #editorBar button.active {
     background: rgba(255,90,40,0.8);
     border-color: rgba(255,255,255,0.4);

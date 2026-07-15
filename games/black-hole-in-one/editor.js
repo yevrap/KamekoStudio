@@ -215,6 +215,58 @@ export function saveCurrentMap() {
     renderMapsList();
 }
 
+export function saveCustomMap() {
+    if (S.mode !== 'custom') return;
+    const maps = getMaps();
+    const name = prompt('Enter a name for this map:', 'Imported Map');
+    if (!name) return;
+
+    const mapData = {
+        name,
+        bodies: world.bodies.map(b => ({ ...b })),
+        teeRock: { ...world.teeRock },
+        blackHole: { ...world.blackHole }
+    };
+    maps.push(mapData);
+    saveMaps(maps);
+    hooks.toast('💾 Map saved to My Maps');
+}
+
+export function importFromUrl() {
+    const url = prompt('Paste the shared map URL here:');
+    if (!url) return;
+    try {
+        let hash = '';
+        if (url.includes('?map=')) {
+            const urlObj = new URL(url);
+            hash = urlObj.searchParams.get('map');
+        } else {
+            hash = url;
+        }
+        
+        if (!hash) {
+            hooks.toast('❌ No map found in URL');
+            return;
+        }
+        const mapData = decodeMap(hash);
+        if (!mapData) {
+            hooks.toast('❌ Invalid map data');
+            return;
+        }
+        const maps = getMaps();
+        const name = prompt('Enter a name for this imported map:', 'Imported Map');
+        if (!name) return;
+        
+        mapData.name = name;
+        maps.push(mapData);
+        saveMaps(maps);
+        hooks.toast('💾 Map imported');
+        renderMapsList();
+    } catch (e) {
+        hooks.toast('❌ Invalid URL');
+    }
+}
+
 export function encodeMap(mapData) {
     const arr = [];
     const r = (v) => Math.round(v * 10) / 10;
