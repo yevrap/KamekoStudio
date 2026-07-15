@@ -5,6 +5,7 @@ import { DT, ROUND_HOLES } from './constants.js';
 import { S, world, comet } from './state.js';
 import * as game from './gameplay.js';
 import * as explore from './explore.js';
+import * as editor from './editor.js';
 import * as ui from './ui.js';
 import { sfx, audio, setMuted, isMuted } from './sfx.js';
 
@@ -38,12 +39,21 @@ game.setHooks({
         ui.showScorecard(result, prev, isNew);
         sfx.score(result.total <= 0 ? 5 : 2);
     },
+    editorReturn() {
+        editor.stopTest();
+    },
 });
 
 explore.setHooks({
     toast: ui.toast,
     bar: ui.updateBar,
     burst: ui.burst,
+    sfx,
+});
+
+editor.setHooks({
+    toast: ui.toast,
+    bar: ui.updateBar,
     sfx,
 });
 
@@ -55,31 +65,53 @@ canvas.addEventListener('pointerdown', e => {
     audio();
     if (S.phase === 'menu' || S.phase === 'roundover') return;  // overlays own this tap
     if (S.phase === 'result') { game.advance(); return; }
+    
+    const [wx, wy] = ui.toWorld(e);
+    if (S.mode === 'editor' && S.phase === 'edit') {
+        if (editor.pointerDown(wx, wy, e.pointerId)) {
+            canvas.setPointerCapture(e.pointerId);
+        }
+        return;
+    }
+
     // aim from rest OR from a live orbit (BH-4) — starting a drag freezes the
     // orbit into 'aiming'; comet.vx/vy keep the orbital velocity for the impulse
     if ((S.phase !== 'rest' && S.phase !== 'orbit') || drag) return;
-    const [wx, wy] = ui.toWorld(e);
     drag = { sx: wx, sy: wy, cx: wx, cy: wy, id: e.pointerId };
     S.phase = 'aiming';
     canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', e => {
-    if (!drag || e.pointerId !== drag.id) return;
     const [wx, wy] = ui.toWorld(e);
+    if (S.mode === 'editor' && S.phase === 'edit') {
+        editor.pointerMove(wx, wy, e.pointerId);
+        return;
+    }
+
+    if (!drag || e.pointerId !== drag.id) return;
     drag.cx = wx; drag.cy = wy;
 });
 canvas.addEventListener('pointerup', e => {
+    const [wx, wy] = ui.toWorld(e);
+    if (S.mode === 'editor' && S.phase === 'edit') {
+        editor.pointerUp(wx, wy, e.pointerId);
+        return;
+    }
+
     if (!drag || e.pointerId !== drag.id) return;
     const dx = drag.sx - drag.cx, dy = drag.sy - drag.cy;
     const len = Math.hypot(dx, dy);
     drag = null;
     if (len > 0) {
         if (S.mode === 'explore') explore.launch(dx, dy, len);
-        else game.launch(dx, dy, len);
+        else game.launch(dx, dy, len); // Editor test play reuses game.launch
     }
     else S.phase = world.orbit ? 'orbit' : 'rest'; // no drag: fall back to whatever we were aiming from
 });
-canvas.addEventListener('pointercancel', () => { if (drag) { drag = null; S.phase = world.orbit ? 'orbit' : 'rest'; } });
+canvas.addEventListener('pointercancel', () => { 
+    if (drag) { drag = null; S.phase = world.orbit ? 'orbit' : 'rest'; } 
+    if (S.mode === 'editor' && S.phase === 'edit') editor.pointerUp(0, 0, -1); // Just to clear dragged if any
+});
 
 /* ============================== OVERLAY BUTTONS ============================== */
 
@@ -88,13 +120,17 @@ function startRun(mode) {
     localStorage.setItem(LS.mode, mode);
     ui.hideHowto();
     ui.hideScorecard();
+    document.getElementById('bar').classList.add('hidden');
+    document.getElementById('exploreBar').classList.add('hidden');
+    document.getElementById('editorBar').classList.add('hidden');
     if (mode === 'explore') {
-        document.getElementById('bar').classList.add('hidden');
         document.getElementById('exploreBar').classList.remove('hidden');
         explore.startRun();
+    } else if (mode === 'editor') {
+        document.getElementById('editorBar').classList.remove('hidden');
+        editor.startEditor();
     } else {
         document.getElementById('bar').classList.remove('hidden');
-        document.getElementById('exploreBar').classList.add('hidden');
         game.startRun(mode);
     }
 }
@@ -102,6 +138,11 @@ function startRun(mode) {
 document.getElementById('modeEndless').addEventListener('click', () => startRun('endless'));
 document.getElementById('modeRound').addEventListener('click', () => startRun('round'));
 document.getElementById('modeExplore').addEventListener('click', () => startRun('explore'));
+document.getElementById('modeEditor').addEventListener('click', () => startRun('editor'));
+
+document.getElementById('ed-test').addEventListener('click', () => editor.toggleTestPlay());
+document.getElementById('ed-add-planet').addEventListener('click', () => editor.addPlanet());
+document.getElementById('ed-add-pulsar').addEventListener('click', () => editor.addPulsar());
 document.getElementById('howto').addEventListener('pointerdown', e => {
     if (e.target.closest('button')) return;
     audio();

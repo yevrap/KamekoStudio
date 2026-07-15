@@ -14,7 +14,7 @@ import { stepBody, collide, orbitCapture } from './physics.js';
 
 // Presentation hooks — main.js swaps in the real UI; defaults are no-ops.
 export let hooks = {
-    toast() {}, chip() {}, bar() {}, holeStart() {}, roundEnd() {},
+    toast() {}, chip() {}, bar() {}, holeStart() {}, roundEnd() {}, editorReturn() {},
     burst() {},
     sfx: { flick() {}, bounce() {}, sling() {}, lost() {}, land() {}, sink() {}, score() {} },
 };
@@ -290,7 +290,8 @@ export function holeComplete() {
     S.phase = 'result';
     hooks.bar();
     const roundDone = S.mode === 'round' && S.roundCard.length >= ROUND_HOLES;
-    resultTimer = schedule(roundDone ? endRound : nextHole, 1900);
+    const isEditor = S.mode === 'editor';
+    resultTimer = schedule(roundDone ? endRound : (isEditor ? () => {} : nextHole), 1900);
 }
 
 export function nextHole() {
@@ -313,6 +314,12 @@ export function endRound() {
 // Advance out of the result chip early (tap): last round hole → scorecard, else next hole.
 export function advance() {
     if (S.phase !== 'result') return;
+    if (S.mode === 'editor') {
+        clearTimeout(resultTimer); resultTimer = null;
+        hooks.chip(null);
+        hooks.editorReturn();
+        return;
+    }
     if (S.mode === 'round' && S.roundCard.length >= ROUND_HOLES) endRound();
     else nextHole();
 }

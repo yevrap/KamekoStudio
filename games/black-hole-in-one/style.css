@@ -241,3 +241,53 @@ body {
 .sc-cell .sc-s.under { color: #00e5a0; }
 .sc-cell .sc-s.over  { color: #ff8a5c; }
 .sc-cell .sc-p { font-size: 0.6rem; letter-spacing: 0.1em; color: #9a9ac8; }
+
+#editorBar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.85));
+    border-top: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 100;
+    transition: transform 0.2s;
+}
+#editorBar.hidden { transform: translateY(110%); }
+#editorBar button {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+}
+#editorBar button:active { background: rgba(255,255,255,0.2); }
+#editorBar button.active {
+    background: rgba(255,90,40,0.8);
+    border-color: rgba(255,255,255,0.4);
+}
+.ed-tools {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+.ed-tools.disabled { opacity: 0.3; pointer-events: none; }
+#ed-test {
+    align-self: center;
+    background: rgba(0,229,160,0.2);
+    border-color: #00e5a0;
+    color: #00e5a0;
+    padding: 10px 24px;
+}
+.ed-help {
+    text-align: center;
+    font-size: 11px;
+    opacity: 0.6;
+}
