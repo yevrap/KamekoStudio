@@ -285,6 +285,16 @@ localStorage.setItem(LS.lastPlayed, String(Date.now()));
 setMuted(localStorage.getItem(LS.muted) === 'true');
 S.freezeAim = localStorage.getItem(LS.freezeAim) !== 'false'; // Default to true
 
+function bootBackground() {
+    const lastMode = localStorage.getItem(LS.mode);
+    if (lastMode === 'explore') {
+        explore.startRun();
+    } else {
+        game.genHole(1);
+    }
+    S.phase = 'menu';
+}
+
 window.addEventListener('resize', ui.resize);
 ui.resize();
 
@@ -301,19 +311,16 @@ if (urlParams.has('map')) {
         document.getElementById('modeBtns').classList.add('hidden');
         document.getElementById('sharedMapBtns').classList.remove('hidden');
         
-        game.genHole(1);
-        S.phase = 'menu';
-        if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); game.genHole(1); S.phase = 'menu'; });
+        bootBackground();
+        if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); bootBackground(); });
     } else {
         ui.toast('❌ Invalid map link');
-        game.genHole(1);
-        S.phase = 'menu';
-        if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); game.genHole(1); S.phase = 'menu'; });
+        bootBackground();
+        if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); bootBackground(); });
     }
 } else {
-    game.genHole(1);
-    S.phase = 'menu';
-    if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); game.genHole(1); S.phase = 'menu'; });
+    bootBackground();
+    if (canvas.width === 0) requestAnimationFrame(() => { ui.resize(); bootBackground(); });
 }
 
 requestAnimationFrame(t => { lastT = t; requestAnimationFrame(frame); });
