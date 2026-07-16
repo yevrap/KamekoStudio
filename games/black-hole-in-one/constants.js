@@ -1,11 +1,9 @@
 // Black Hole in One — static config + pure helpers (DOM-free, unit-tested)
 'use strict';
 
-export const WORLD_W = 100;   // course width in world units
-export const COURSE_H = 170;  // fixed course height — every device plays the SAME holes.
-                              // The draft derived height from the viewport, so laptops got a
-                              // short compressed course (too easy) while phones got a tall one
-                              // (questionnaire Q5). The course is letterboxed into the canvas.
+export const WORLD_W = 200;   // expanded from 100 for larger maps
+export const COURSE_H = 200;  // expanded from 170 for larger maps
+                              // The course is no longer letterboxed.
 
 export const G = 400;                 // gravity constant
 export const COMET_R = 1.6;

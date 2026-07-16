@@ -31,7 +31,11 @@ game.setHooks({
     chip: ui.chip,
     bar: ui.updateBar,
     burst: ui.burst,
-    holeStart: ui.clearParticles,
+    holeStart() {
+        ui.clearParticles();
+        ui.camera.x = comet.x;
+        ui.camera.y = comet.y;
+    },
     sfx,
     roundEnd(result) {
         const prev = bestRound();
@@ -144,9 +148,6 @@ function startRun(mode) {
         document.getElementById('customBar').classList.remove('hidden');
         document.getElementById('bar').classList.remove('hidden');
         game.startRun(mode);
-    } else if (mode === 'survival') {
-        document.getElementById('survivalBar').classList.remove('hidden');
-        game.startRun(mode);
     } else {
         document.getElementById('bar').classList.remove('hidden');
         game.startRun(mode);
@@ -154,8 +155,6 @@ function startRun(mode) {
 }
 
 document.getElementById('modeEndless').addEventListener('click', () => startRun('endless'));
-document.getElementById('modeRound').addEventListener('click', () => startRun('round'));
-document.getElementById('modeSurvival').addEventListener('click', () => startRun('survival'));
 document.getElementById('modeExplore').addEventListener('click', () => startRun('explore'));
 document.getElementById('modeEditor').addEventListener('click', () => startRun('editor'));
 
@@ -202,19 +201,11 @@ document.getElementById('howto').addEventListener('pointerdown', e => {
     }
 });
 
-document.getElementById('sc-again').addEventListener('click', () => startRun('round'));
 document.getElementById('sc-endless').addEventListener('click', () => startRun('endless'));
-
-document.getElementById('sg-again').addEventListener('click', () => startRun('survival'));
-document.getElementById('sg-menu').addEventListener('click', () => {
-    ui.showHowto();
-    if (drag) drag = null;
-    if (S.phase === 'aiming') S.phase = 'rest';
-});
 
 document.getElementById('restartBtn').addEventListener('click', () => {
     startRun(S.mode);
-    ui.toast(S.mode === 'round' ? '↺ New round' : '↺ Fresh start');
+    ui.toast('↺ Fresh start');
 });
 document.getElementById('helpBtn').addEventListener('click', () => {
     ui.showHowto();
@@ -294,6 +285,18 @@ function frame(now) {
         world.trail.push({ x: comet.x, y: comet.y });
         if (world.trail.length > 46) world.trail.shift();
     }
+    
+    // Update camera for golf modes (Explore mode updates its own)
+    if (S.mode !== 'explore') {
+        if (S.phase === 'orbit' && world.orbit) {
+            ui.camera.x += (world.orbit.b.x - ui.camera.x) * Math.min(1, dtRaw * 3);
+            ui.camera.y += (world.orbit.b.y - ui.camera.y) * Math.min(1, dtRaw * 3);
+        } else {
+            ui.camera.x += (comet.x - ui.camera.x) * dtRaw * 4;
+            ui.camera.y += (comet.y - ui.camera.y) * dtRaw * 4;
+        }
+    }
+    
     ui.stepParticles(dtRaw);
     ui.updateZoom(dtRaw);
     ui.render(drag);

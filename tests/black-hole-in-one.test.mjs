@@ -270,22 +270,7 @@ test('landing on a planet marks the hole as hopped', () => {
     assert.equal(S.roundCard[0].hopped, true);
 });
 
-test('a 9-hole round ends with a scorecard callback instead of hole 10', () => {
-    let roundResult = null;
-    game.setHooks({ roundEnd(r) { roundResult = r; } });
-    game.startRun('round');
-    for (let h = 1; h <= ROUND_HOLES; h++) {
-        S.strokes = S.par;              // par every hole
-        game.holeComplete();
-        if (h < ROUND_HOLES) game.nextHole();
-        else game.endRound();
-    }
-    assert.equal(S.phase, 'roundover');
-    assert.equal(roundResult.total, 0);
-    assert.equal(roundResult.card.length, ROUND_HOLES);
-    assert.ok(roundResult.card.every((c, i) => c.hole === i + 1));
-    game.setHooks({ roundEnd() {} });
-});
+
 
 test('endless mode never triggers the round end', () => {
     let ended = false;
@@ -369,6 +354,7 @@ test('a full flick off the biggest planet gets clear instead of instant re-captu
         comet.vx = comet.vy = 0;
         S.phase = 'rest';
         world.lastRest = { rest: comet.rest };
+        S.fuel = 100; // Refuel before each test flick
         // flick straight outward (away from planet centre) at full power — the drag
         // vector's length must equal `len`, so scale the unit direction by it.
         game.launch(Math.cos(restAng) * 100, Math.sin(restAng) * 100, 100);

@@ -15,6 +15,7 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 export const view = { scale: 1, dpr: 1, ox: 0, oy: 0, vw: W, vh: COURSE_H, zoom: 1 };
+export const camera = { x: 50, y: 85 };
 
 /* ============================== ZOOM (STAB-2) ============================== */
 
@@ -50,11 +51,16 @@ export function resize() {
     view.dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.round(cw * view.dpr);
     canvas.height = Math.round(chh * view.dpr);
-    view.scale = Math.min(cw / W, chh / COURSE_H);
+    // Base scale on physical inches approx, or fixed relative to mobile height.
+    // 170 units is a good height. Let's fix scale so 170 units = mobile screen height.
+    // Or just pick a fixed scale: e.g. 100 units = 375px wide.
+    view.scale = Math.min(cw / 100, chh / 170); // this keeps the same size as before but expands the viewport
+    if (cw > 500) { view.scale = chh / 170; } // on wide screens, lock vertical scale
+    
     view.vw = cw / view.scale;
     view.vh = chh / view.scale;
-    view.ox = (view.vw - W) / 2;
-    view.oy = (view.vh - COURSE_H) / 2;
+    view.ox = 0; // No letterbox
+    view.oy = 0;
     makeStars();
     makeNebula();
 }
@@ -71,7 +77,7 @@ export function toWorld(e) {
     if (S.mode === 'explore') {
         return [vx - (view.vw / 2 - explore.camera.x), vy - (view.vh / 2 - explore.camera.y)];
     }
-    return [vx - view.ox, vy - view.oy];
+    return [vx - (view.vw / 2 - camera.x), vy - (view.vh / 2 - camera.y)];
 }
 
 function makeStars() {
@@ -156,7 +162,7 @@ export function render(drag) {
     if (S.mode === 'explore') {
         ctx.translate(view.vw / 2 - explore.camera.x, view.vh / 2 - explore.camera.y);
     } else {
-        ctx.translate(view.ox, view.oy);
+        ctx.translate(view.vw / 2 - camera.x, view.vh / 2 - camera.y);
     }
 
     for (const st of stars) {
@@ -174,7 +180,14 @@ export function render(drag) {
             if (sy < 0) sy += view.vh;
             ctx.arc(px + sx, py + sy, st.r, 0, 7);
         } else {
-            ctx.arc(st.x, st.y, st.r, 0, 7); 
+            // Parallax wrapping for stars in endless mode too
+            const px = camera.x - view.vw / 2;
+            const py = camera.y - view.vh / 2;
+            let sx = (st.x - camera.x * 0.1) % view.vw;
+            if (sx < 0) sx += view.vw;
+            let sy = (st.y - camera.y * 0.1) % view.vh;
+            if (sy < 0) sy += view.vh;
+            ctx.arc(px + sx, py + sy, st.r, 0, 7);
         }
         ctx.fill();
     }
@@ -190,19 +203,10 @@ export function render(drag) {
     if (S.mode === 'explore') {
         ctx.translate(view.vw / 2 - explore.camera.x, view.vh / 2 - explore.camera.y);
     } else {
-        ctx.translate(view.ox, view.oy);
+        ctx.translate(view.vw / 2 - camera.x, view.vh / 2 - camera.y);
     }
 
-    // faint course edge on wide screens so the play area reads (only in golf mode)
-    if (view.ox > 2 && S.mode !== 'explore') {
-        ctx.globalAlpha = 0.1;
-        ctx.strokeStyle = '#8a8ac0';
-        ctx.lineWidth = 0.3;
-        ctx.setLineDash([1.4, 2.2]);
-        ctx.strokeRect(-1, -1, W + 2, COURSE_H + 2);
-        ctx.setLineDash([]);
-        ctx.globalAlpha = 1;
-    }
+    // Faint course edge removed as we use the whole screen now
 
     for (const b of world.bodies) {
         if (b.type === 'planet') drawPlanet(b);
@@ -513,12 +517,14 @@ export function chip(lab, sub) {
 }
 
 export function updateBar() {
-    if (S.mode === 'survival') {
-        document.getElementById('survLevel').textContent = 'LEVEL ' + S.hole;
-        document.getElementById('survFuel').textContent = S.fuel;
+    if (S.mode === 'explore') {
+        document.getElementById('exploreFuel').textContent = explore.fuel;
         return;
     }
-    const holeTxt = S.mode === 'round' ? `HOLE ${Math.min(S.hole, ROUND_HOLES)}/${ROUND_HOLES}` : 'HOLE ' + S.hole;
+    if (S.mode === 'endless') {
+        document.getElementById('survFuel').textContent = S.fuel;
+    }
+    const holeTxt = 'HOLE ' + S.hole;
     document.getElementById('holeNo').textContent = holeTxt;
     document.getElementById('parLbl').textContent = '· PAR ' + S.par;
     document.getElementById('strokes').textContent = S.strokes;
@@ -572,11 +578,13 @@ export function showHowto() {
 export function hideHowto() { 
     document.getElementById('howto').classList.add('hidden');
     if (S.mode === 'explore') document.getElementById('exploreBar').classList.remove('hidden');
-    else if (S.mode === 'survival') document.getElementById('survivalBar').classList.remove('hidden');
     else if (S.mode === 'editor') document.getElementById('editorBar').classList.remove('hidden');
     else if (S.mode === 'custom') {
         document.getElementById('customBar').classList.remove('hidden');
         document.getElementById('bar').classList.remove('hidden');
     }
-    else document.getElementById('bar').classList.remove('hidden');
+    else {
+        document.getElementById('bar').classList.remove('hidden');
+        if (S.mode === 'endless') document.getElementById('survivalBar').classList.remove('hidden');
+    }
 }

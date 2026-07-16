@@ -81,7 +81,7 @@ export function genHole(n) {
     }
 
     world.pickups = [];
-    if (S.mode === 'survival') {
+    if (S.mode === 'endless') {
         const nPickups = rand(1, 3);
         for (let i = 0; i < nPickups; i++) {
             for (let tries = 0; tries < 50; tries++) {
@@ -177,12 +177,12 @@ export function placeOnRest() {
 /* ============================== FLIGHT ============================== */
 
 export function launch(dx, dy, len) {
-    if (S.mode === 'survival' && S.fuel <= 0) return false;
+    if (S.mode === 'endless' && S.fuel <= 0) return false;
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
     // weak drag = cancelled shot; resume the orbit if we were flicking out of one
     if (speed < MIN_SHOT) { S.phase = world.orbit ? 'orbit' : 'rest'; return false; }
 
-    if (S.mode === 'survival') {
+    if (S.mode === 'endless') {
         S.fuel -= 15;
         if (S.fuel < 0) S.fuel = 0;
     }
@@ -211,7 +211,7 @@ export function launch(dx, dy, len) {
 }
 
 function checkSurvivalGameOver() {
-    if (S.mode === 'survival' && S.fuel <= 0) {
+    if (S.mode === 'endless' && S.fuel <= 0) {
         S.phase = 'roundover';
         hooks.showSurvivalGameOver(S.hole);
         return true;
@@ -266,7 +266,7 @@ export function stepFlight(dt) {
     const res = stepBody(comet, dt, world.bodies, world.blackHole, damp);
 
     // Pickups collision
-    if (S.mode === 'survival') {
+    if (S.mode === 'endless') {
         for (let i = world.pickups.length - 1; i >= 0; i--) {
             const p = world.pickups[i];
             if (dist(comet.x, comet.y, p.x, p.y) < COMET_R + p.r) {
@@ -435,10 +435,10 @@ export function holeComplete() {
     hooks.burst(world.blackHole.x, world.blackHole.y, 36, '#ffd98a', 40);
     S.phase = 'result';
     hooks.bar();
-    const roundDone = S.mode === 'round' && S.roundCard.length >= ROUND_HOLES;
+    hooks.bar();
     const isEditor = S.mode === 'editor';
     const isCustom = S.mode === 'custom';
-    resultTimer = schedule(roundDone ? endRound : (isEditor || isCustom ? () => {} : nextHole), 1900);
+    resultTimer = schedule((isEditor || isCustom ? () => {} : nextHole), 1900);
 }
 
 export function nextHole() {
@@ -451,11 +451,7 @@ export function nextHole() {
 }
 
 export function endRound() {
-    if (S.phase !== 'result') return;
-    clearTimeout(resultTimer); resultTimer = null;
-    hooks.chip(null);
-    S.phase = 'roundover';
-    hooks.roundEnd({ card: S.roundCard.slice(), total: S.totalDiff });
+    // legacy, unused but keeping signature for now
 }
 
 // Advance out of the result chip early (tap): last round hole → scorecard, else next hole.
@@ -484,8 +480,7 @@ export function advance() {
         hooks.bar();
         return;
     }
-    if (S.mode === 'round' && S.roundCard.length >= ROUND_HOLES) endRound();
-    else nextHole();
+    nextHole();
 }
 
 export function startRun(mode) {
@@ -495,7 +490,7 @@ export function startRun(mode) {
     S.hole = 1;
     S.totalDiff = 0;
     S.roundCard = [];
-    if (mode === 'survival') S.fuel = 100;
+    if (mode === 'endless') S.fuel = 100;
     genHole(1);
     S.phase = 'rest';
 }

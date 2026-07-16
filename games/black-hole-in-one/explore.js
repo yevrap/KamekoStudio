@@ -8,6 +8,7 @@ import { stepBody, collide, orbitCapture } from './physics.js';
 let shownPushHint = false;   // OW-0: one-time mid-flight push toast
 
 export const camera = { x: 50, y: 85 };
+export let fuel = 100;
 
 export let hooks = {
     toast() {}, bar() {}, burst() {},
@@ -34,6 +35,7 @@ export const CHUNK_SIZE = 400; // Size of a chunk in world units
 export const SECTOR_LIMIT = 3000; // Bounded sector size
 
 let activeBodies = [];
+export let pickups = [];
 let lastChunkX = null;
 let lastChunkY = null;
 
@@ -86,15 +88,33 @@ export function getChunkBodies(cx, cy, seed) {
     return bodies.filter(b => b !== null);
 }
 
+export function getChunkPickups(cx, cy, seed) {
+    if (cx < -SECTOR_LIMIT/CHUNK_SIZE - 2 || cx > SECTOR_LIMIT/CHUNK_SIZE + 2) return [];
+    if (cy < -SECTOR_LIMIT/CHUNK_SIZE - 2 || cy > SECTOR_LIMIT/CHUNK_SIZE + 2) return [];
+
+    const rng = mulberry32(seedFromString('pickups_' + seed + '_' + cx + '_' + cy));
+    const chunkPickups = [];
+    const numPickups = Math.floor(rng() * 4); // 0 to 3 pickups per chunk
+    
+    for (let i = 0; i < numPickups; i++) {
+        const px = cx * CHUNK_SIZE + rng() * CHUNK_SIZE;
+        const py = cy * CHUNK_SIZE + rng() * CHUNK_SIZE;
+        chunkPickups.push({ x: px, y: py, r: 1.8, id: `p${cx}_${cy}_${i}` });
+    }
+    return chunkPickups;
+}
+
 export function updateActiveChunks() {
     const cx = Math.floor(camera.x / CHUNK_SIZE);
     const cy = Math.floor(camera.y / CHUNK_SIZE);
     if (cx === lastChunkX && cy === lastChunkY) return;
     
     activeBodies = [];
+    pickups = [];
     for (let dx = -1; dx <= 1; dx++) {
         for (let dy = -1; dy <= 1; dy++) {
             activeBodies.push(...getChunkBodies(cx + dx, cy + dy, worldSeed));
+            pickups.push(...getChunkPickups(cx + dx, cy + dy, worldSeed));
         }
     }
     
@@ -108,6 +128,7 @@ export function updateActiveChunks() {
     }
     
     world.bodies = activeBodies;
+    world.pickups = pickups;
     lastChunkX = cx;
     lastChunkY = cy;
 }
@@ -119,6 +140,7 @@ export function startRun() {
     worldSeed = 'explore-1'; // Hardcoded for Sprint 1 until persists
     lastChunkX = null;
     lastChunkY = null;
+    fuel = 100;
     
     world.teeRock = { x: 50, y: 85, r: 3.4, m: 8, type: 'tee', id: 'tee' };
     camera.x = 50;
@@ -150,12 +172,17 @@ function placeOnRest() {
 }
 
 export function launch(dx, dy, len) {
+    if (fuel <= 0) return false;
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
     if (speed < MIN_SHOT) {
         // Cancelled shot: return to whatever we were in before aiming
         if (S.phase === 'aiming') S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
         return false;
     }
+    
+    fuel -= 15;
+    if (fuel < 0) fuel = 0;
+    hooks.bar();
     
     // OW-0: one-time mid-flight push hint
     if (S.prevPhase === 'flight' && !shownPushHint) {
@@ -196,6 +223,19 @@ export function step(dt) {
         }
     }
     
+    // Check fuel pickups
+    for (let i = world.pickups.length - 1; i >= 0; i--) {
+        const p = world.pickups[i];
+        const dx = comet.x - p.x;
+        const dy = comet.y - p.y;
+        if (Math.hypot(dx, dy) < COMET_R + p.r) {
+            world.pickups.splice(i, 1);
+            fuel = Math.min(100, fuel + 20);
+            hooks.burst(p.x, p.y, 14, '#20e657', 20);
+            hooks.bar();
+        }
+    }
+    
     if (S.orbitCooldown <= 0 && S.phase === 'flight') {
         for (const b of world.bodies) {
             const cap = orbitCapture(comet, b);
@@ -225,6 +265,25 @@ export function step(dt) {
     }
     
     updateCamera(dt);
+    
+    if (fuel <= 0 && S.phase === 'rest') {
+        respawnTown();
+    }
+}
+
+function respawnTown() {
+    hooks.toast('Empty tank! Towed back to town.');
+    fuel = 100;
+    camera.x = 50;
+    camera.y = 85;
+    comet.vx = comet.vy = 0;
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    placeOnRest();
+    world.lastRest = { rest: comet.rest };
+    world.orbit = null;
+    S.phase = 'rest';
+    world.trail = [];
+    hooks.bar();
 }
 
 export function stepOrbit(dt) {
