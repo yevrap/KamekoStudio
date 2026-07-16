@@ -5,7 +5,7 @@
 
 import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
-    ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, rand, fmtDiff,
+    ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -14,7 +14,29 @@ import * as explore from './explore.js';
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-export const view = { scale: 1, dpr: 1, ox: 0, oy: 0, vw: W, vh: COURSE_H };
+export const view = { scale: 1, dpr: 1, ox: 0, oy: 0, vw: W, vh: COURSE_H, zoom: 1 };
+
+/* ============================== ZOOM (STAB-2) ============================== */
+
+// The world-span the view should try to frame right now: the orbit diameter while
+// orbiting, or a large planet you're resting/aiming on. 0 = nothing special → no
+// zoom. Golf's bodies are small enough that fitZoom() always returns 1 here.
+function focusSpan() {
+    if (world.orbit) return 2 * world.orbit.radius + 2 * COMET_R;
+    const b = comet.rest && comet.rest.b;
+    if (b && b.type === 'planet' && (S.phase === 'rest' || S.phase === 'aiming')) {
+        return 2 * (b.r + COMET_R) * 1.4;
+    }
+    return 0;
+}
+
+// Smoothly ease view.zoom toward the current target each frame (call from the loop).
+export function updateZoom(dt) {
+    const target = fitZoom(focusSpan(), Math.min(view.vw, view.vh));
+    const k = Math.min(1, dt * ZOOM_LERP);
+    view.zoom += (target - view.zoom) * k;
+    if (Math.abs(view.zoom - target) < 0.001) view.zoom = target;
+}
 
 let stars = [];
 let nebula = null;
@@ -41,11 +63,15 @@ export function toWorld(e) {
     const rect = canvas.getBoundingClientRect();
     const sx = e.clientX - rect.left;
     const sy = e.clientY - rect.top;
+    // Invert the render transform, including the STAB-2 zoom about the screen centre,
+    // so aiming stays accurate while zoomed out.
+    const cx = view.vw / 2, cy = view.vh / 2;
+    const vx = cx + (sx / view.scale - cx) / view.zoom;
+    const vy = cy + (sy / view.scale - cy) / view.zoom;
     if (S.mode === 'explore') {
-        return explore.screenToWorld(sx, sy, view.scale, view.vw, view.vh, explore.camera.x, explore.camera.y);
+        return [vx - (view.vw / 2 - explore.camera.x), vy - (view.vh / 2 - explore.camera.y)];
     }
-    return [sx / view.scale - view.ox,
-            sy / view.scale - view.oy];
+    return [vx - view.ox, vy - view.oy];
 }
 
 function makeStars() {
@@ -153,6 +179,19 @@ export function render(drag) {
         ctx.fill();
     }
     ctx.globalAlpha = 1;
+    ctx.restore();   // end stars (drawn at true scale, not affected by the zoom-out)
+
+    // World layer — apply the STAB-2 temporary zoom-out about the screen centre.
+    // view.zoom stays 1 in golf (bodies never big enough to trigger fitZoom).
+    ctx.save();
+    ctx.translate(view.vw / 2, view.vh / 2);
+    ctx.scale(view.zoom, view.zoom);
+    ctx.translate(-view.vw / 2, -view.vh / 2);
+    if (S.mode === 'explore') {
+        ctx.translate(view.vw / 2 - explore.camera.x, view.vh / 2 - explore.camera.y);
+    } else {
+        ctx.translate(view.ox, view.oy);
+    }
 
     // faint course edge on wide screens so the play area reads (only in golf mode)
     if (view.ox > 2 && S.mode !== 'explore') {

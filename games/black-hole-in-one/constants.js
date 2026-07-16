@@ -53,6 +53,23 @@ export const ORBIT_ARM_T = 0.22;      // don't capture in the first instants of 
 export const LIFTOFF_T = 0.35;        // seconds of reduced launch-planet gravity after liftoff
 export const LIFTOFF_MIN = 0.3;       // launch-planet gravity scale at the liftoff instant (ramps to 1)
 
+// ---- Temporary zoom-out (STAB-2) ---------------------------------------------
+// While orbiting — or hugging — a body too big to read at the normal one-screen
+// scale (Explore's giant planets, r up to ~40), the view gently zooms OUT so the
+// whole orbit / planet fits, then snaps back (decision D2=b). fitZoom() is the
+// pure fit calc: how much to scale so a world-span fills ZOOM_FIT of the smaller
+// viewport dimension, clamped to [ZOOM_MIN, 1]. It returns 1 (no zoom) whenever
+// the span already fits — which is ALWAYS true for golf's small bodies, so golf
+// keeps its camera-free one-screen framing untouched.
+export const ZOOM_FIT = 0.82;         // fraction of the smaller viewport dim the focus should fill
+export const ZOOM_MIN = 0.45;         // never zoom out past this
+export const ZOOM_LERP = 4.5;         // per-second smoothing toward the target zoom
+export function fitZoom(span, viewMin) {
+    if (!(span > 0) || !(viewMin > 0)) return 1;
+    const z = (viewMin * ZOOM_FIT) / span;
+    return z >= 1 ? 1 : Math.max(z, ZOOM_MIN);
+}
+
 // Circular orbital speed at distance d from a body of mass m (v² = G·m/d, since
 // centripetal a = v²/d must equal gravity G·m/d²). Pure — unit-tested.
 export function circularSpeed(m, d) { return Math.sqrt(G * Math.abs(m) / d); }

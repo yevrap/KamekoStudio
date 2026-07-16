@@ -260,6 +260,7 @@ function frame(now) {
         if (world.trail.length > 46) world.trail.shift();
     }
     ui.stepParticles(dtRaw);
+    ui.updateZoom(dtRaw);
     ui.render(drag);
 }
 

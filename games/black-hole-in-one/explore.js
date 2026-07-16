@@ -224,7 +224,13 @@ export function stepOrbit(dt) {
     const spd = o.omega * o.radius;
     comet.vx = -Math.sin(o.ang) * spd;
     comet.vy =  Math.cos(o.ang) * spd;
-    
+
+    // Centre the camera on the orbited body (not the comet whipping around the rim)
+    // so the whole orbit is framed — this, plus the STAB-2 zoom-out, makes a giant's
+    // orbit readable instead of running off-screen. Also kills the MM-4 dizzy spin.
+    camera.x += (o.b.x - camera.x) * Math.min(1, dt * 3);
+    camera.y += (o.b.y - camera.y) * Math.min(1, dt * 3);
+
     updateActiveChunks();
 }
 

@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 
 import {
     WORLD_W, COURSE_H, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, MAX_V, DT, G,
-    ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed,
+    ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed, fitZoom, ZOOM_MIN, ZOOM_FIT,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
@@ -382,4 +382,23 @@ test('a full flick off the biggest planet gets clear instead of instant re-captu
         if (maxD > surfD + 20) clearedFor++;
     }
     assert.equal(clearedFor, tested, 'every radially-outward full flick clears the big planet');
+});
+
+/* ============================== STAB-2: temporary zoom-out ============================== */
+
+test('fitZoom returns 1 (no zoom) whenever the span already fits (STAB-2)', () => {
+    // a golf-size orbit / body span fits easily inside the viewport → never zooms
+    assert.equal(fitZoom(56, 100), 1, 'biggest golf orbit (~r28 → span56) fits at vwMin=100');
+    assert.equal(fitZoom(40, 100), 1, 'resting on a big golf planet fits');
+    assert.equal(fitZoom(0, 100), 1, 'no focus span → no zoom');
+    assert.equal(fitZoom(90, 0), 1, 'degenerate viewport → no zoom');
+});
+
+test('fitZoom zooms OUT for spans too big to fit, clamped to ZOOM_MIN (STAB-2)', () => {
+    // Explore giant: r=40 → orbit span ~90 in a ~78-unit viewport must zoom out
+    const z = fitZoom(90, 78);
+    assert.ok(z < 1 && z >= ZOOM_MIN, `giant orbit zooms out within bounds (got ${z})`);
+    assert.ok(Math.abs(z - (78 * ZOOM_FIT) / 90) < 1e-9, 'zoom equals the fit ratio when above the floor');
+    // an absurdly large span is clamped, never smaller than ZOOM_MIN
+    assert.equal(fitZoom(100000, 78), ZOOM_MIN, 'huge span clamps to the floor');
 });
