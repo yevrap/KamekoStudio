@@ -344,7 +344,7 @@ function drawBlackHole() {
 }
 
 function drawComet() {
-    if (S.phase === 'rest' || S.phase === 'aiming') {
+    if (S.phase === 'rest' || (S.phase === 'aiming' && S.prevPhase !== 'flight')) {
         const p = 0.5 + 0.5 * Math.sin(S.time * 3);
         ctx.globalAlpha = 0.25 * p;
         ctx.strokeStyle = '#00e5a0';

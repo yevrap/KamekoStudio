@@ -74,9 +74,13 @@ canvas.addEventListener('pointerdown', e => {
         return;
     }
 
-    // aim from rest OR from a live orbit (BH-4) — starting a drag freezes the
-    // orbit into 'aiming'; comet.vx/vy keep the orbital velocity for the impulse
-    if ((S.phase !== 'rest' && S.phase !== 'orbit') || drag) return;
+    // aim from rest, a live orbit (BH-4), or mid-flight in Explore (OW-0).
+    // Starting a drag enters 'aiming'; comet.vx/vy keep the current velocity
+    // for the force-push impulse. Mid-flight aiming keeps physics stepping.
+    const canAim = S.phase === 'rest' || S.phase === 'orbit'
+        || (S.phase === 'flight' && S.mode === 'explore');
+    if (!canAim || drag) return;
+    S.prevPhase = S.phase;   // remember what we came from (OW-0)
     drag = { sx: wx, sy: wy, cx: wx, cy: wy, id: e.pointerId };
     S.phase = 'aiming';
     canvas.setPointerCapture(e.pointerId);
@@ -106,10 +110,10 @@ canvas.addEventListener('pointerup', e => {
         if (S.mode === 'explore') explore.launch(dx, dy, len);
         else game.launch(dx, dy, len); // Editor test play reuses game.launch
     }
-    else S.phase = world.orbit ? 'orbit' : 'rest'; // no drag: fall back to whatever we were aiming from
+    else S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
 });
 canvas.addEventListener('pointercancel', () => {
-    if (drag) { drag = null; S.phase = world.orbit ? 'orbit' : 'rest'; }
+    if (drag) { drag = null; S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest'); }
     if (S.mode === 'editor') editor.cancelDrag(); // force-release; -1 id can't match a real drag
 });
 
@@ -247,7 +251,9 @@ function frame(now) {
     while (acc >= DT) {
         acc -= DT;
         if (S.mode === 'explore') {
-            if (S.phase === 'flight') explore.step(DT);
+            // OW-0: keep physics stepping during mid-flight aiming so the
+            // comet keeps moving while you plan your push — feels alive.
+            if (S.phase === 'flight' || (S.phase === 'aiming' && S.prevPhase === 'flight')) explore.step(DT);
             else if (S.phase === 'orbit') explore.stepOrbit(DT);
         } else {
             if (S.phase === 'flight') game.stepFlight(DT);

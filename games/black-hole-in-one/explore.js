@@ -5,6 +5,8 @@ import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN
 import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture } from './physics.js';
 
+let shownPushHint = false;   // OW-0: one-time mid-flight push toast
+
 export const camera = { x: 50, y: 85 };
 
 export let hooks = {
@@ -149,14 +151,24 @@ function placeOnRest() {
 
 export function launch(dx, dy, len) {
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
-    if (speed < MIN_SHOT) { S.phase = world.orbit ? 'orbit' : 'rest'; return false; }
+    if (speed < MIN_SHOT) {
+        // Cancelled shot: return to whatever we were in before aiming
+        if (S.phase === 'aiming') S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
+        return false;
+    }
+    
+    // OW-0: one-time mid-flight push hint
+    if (S.prevPhase === 'flight' && !shownPushHint) {
+        shownPushHint = true;
+        hooks.toast('🚀 Mid-flight push!');
+    }
     
     comet.vx += dx / len * speed;
     comet.vy += dy / len * speed;
     world.orbit = null;
     S.orbitCooldown = ORBIT_COOLDOWN;
     S.phase = 'flight';
-    world.trail = [];
+    if (S.prevPhase !== 'flight') world.trail = [];  // Keep trail on mid-flight pushes
     hooks.sfx.flick();
     return true;
 }
