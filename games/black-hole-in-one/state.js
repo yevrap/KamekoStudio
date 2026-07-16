@@ -13,6 +13,7 @@ export const S = {
     time: 0,          // cosmetic clock (twinkle, accretion spin)
     hopsThisHole: 0,  // distinct planets landed on during the current hole
     orbitCooldown: 0, // s remaining before another orbit can be captured (BH-4)
+    liftoff: 0,       // s remaining of damped launch-planet gravity after liftoff (STAB-1)
     roundCard: [],    // per finished hole: { hole, strokes, par, hopped }
 };
 
@@ -23,6 +24,7 @@ export const world = {
     lastRest: null,   // rest descriptor to return lost shots to
     sink: null,       // { r0, a0, t } while spiralling in
     orbit: null,      // { b, radius, ang, omega } while orbiting a planet (BH-4)
+    launchBody: null, // planet the comet just flicked off, for the liftoff grace (STAB-1)
     trail: [],
     slingTrack: new Map(),
     hoppedBodies: new Set(),

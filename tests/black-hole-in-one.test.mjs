@@ -313,3 +313,73 @@ test('launch: weak drags cancel, real drags spend a stroke', () => {
     assert.equal(S.phase, 'flight');
     assert.ok(comet.vy < 0, 'launched upward');
 });
+
+/* ============================== STAB-1: liftoff grace ============================== */
+
+test('gravityAt damp scales only the named body\'s pull (STAB-1)', () => {
+    const planet = { x: 50, y: 50, r: 10, m: 100, type: 'planet' };
+    const full = gravityAt([planet], null, 30, 50);
+    const half = gravityAt([planet], null, 30, 50, { body: planet, factor: 0.5 });
+    assert.ok(Math.abs(half[0] - full[0] * 0.5) < 1e-9, 'damped pull is exactly scaled');
+    // damp targeting a different object leaves the field untouched
+    const untouched = gravityAt([planet], null, 30, 50, { body: { x: 0, y: 0 }, factor: 0.1 });
+    assert.deepEqual(untouched, full);
+});
+
+test('launch off a planet surface arms the liftoff grace; tee shots do not (STAB-1)', () => {
+    game.startRun('endless');
+    // tee shot: no grace
+    game.launch(0, -1, 100);
+    assert.equal(S.liftoff, 0, 'tee launch does not arm the grace');
+    assert.equal(world.launchBody, null);
+
+    // now rest on a planet and flick off it
+    game.startRun('endless');
+    const planet = { x: 50, y: 90, r: 15, m: 225, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    world.bodies.push(planet);
+    comet.rest = { b: planet, ang: -Math.PI / 2 };  // resting on top
+    game.placeOnRest();
+    comet.vx = comet.vy = 0;
+    S.phase = 'rest';
+    game.launch(0, -100, 100);                        // full-power flick, straight up (outward)
+    assert.ok(S.liftoff > 0, 'planet launch arms the grace');
+    assert.equal(world.launchBody, planet);
+});
+
+test('a full flick off the biggest planet gets clear instead of instant re-capture (STAB-1)', () => {
+    // Regression for "some planets too big can't escape": a comet on a max-size
+    // planet, flicked radially outward at full power, must clear the surface (not
+    // be dragged straight back and re-land in place). Isolated planet so the only
+    // possible re-lander is this one.
+    game.startRun('endless');
+    world.bodies = [];
+    world.blackHole = { x: 50, y: 300, r: 3.2, m: 230, type: 'hole' }; // far away, off-course
+    const planet = { x: 50, y: 90, r: 15, m: 225, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    world.bodies.push(planet);
+    world.teeRock = { x: 50, y: 150, r: 3.4, m: 8, type: 'tee' };
+    world.bodies.push(world.teeRock);
+
+    const surfD = planet.r + COMET_R + 0.25;
+    let clearedFor = 0, tested = 0;
+    // sample rest points and flick radially outward from each
+    for (let i = 0; i < 8; i++) {
+        const restAng = (i / 8) * Math.PI * 2;
+        comet.rest = { b: planet, ang: restAng };
+        game.placeOnRest();
+        comet.vx = comet.vy = 0;
+        S.phase = 'rest';
+        world.lastRest = { rest: comet.rest };
+        // flick straight outward (away from planet centre) at full power — the drag
+        // vector's length must equal `len`, so scale the unit direction by it.
+        game.launch(Math.cos(restAng) * 100, Math.sin(restAng) * 100, 100);
+        tested++;
+        let maxD = 0;
+        for (let s = 0; s < 240 * 8 && S.phase === 'flight'; s++) {
+            game.stepFlight(DT);
+            maxD = Math.max(maxD, dist(comet.x, comet.y, planet.x, planet.y));
+        }
+        // "cleared" = got well off the surface at some point (no instant re-capture)
+        if (maxD > surfD + 20) clearedFor++;
+    }
+    assert.equal(clearedFor, tested, 'every radially-outward full flick clears the big planet');
+});

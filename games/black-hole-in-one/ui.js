@@ -5,7 +5,7 @@
 
 import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
-    ROUND_HOLES, rand, fmtDiff,
+    ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, rand, fmtDiff,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -338,10 +338,21 @@ function drawAim(drag) {
     if (speed >= MIN_SHOT) {
         const ghost = { x: comet.x, y: comet.y,
                         vx: comet.vx + dx / len * speed, vy: comet.vy + dy / len * speed };
+        // Honest preview of the STAB-1 liftoff grace: if this flick will take off
+        // from a planet surface, damp that planet's pull the same way stepFlight will.
+        const liftBody = (!world.orbit && comet.rest && comet.rest.b && comet.rest.b.type === 'planet')
+            ? comet.rest.b : null;
+        let liftT = liftBody ? LIFTOFF_T : 0;
         ctx.fillStyle = '#ffffff';
         let alive = true;
         for (let i = 0; i < 132 && alive; i++) {
-            const r = stepBody(ghost, DT, world.bodies, world.blackHole);
+            let damp = null;
+            if (liftT > 0) {
+                liftT = Math.max(0, liftT - DT);
+                const k = 1 - liftT / LIFTOFF_T;
+                damp = { body: liftBody, factor: LIFTOFF_MIN + (1 - LIFTOFF_MIN) * k };
+            }
+            const r = stepBody(ghost, DT, world.bodies, world.blackHole, damp);
             if (r) alive = false;
             if (i % 11 === 5) {
                 ctx.globalAlpha = 0.55 * (1 - i / 150);

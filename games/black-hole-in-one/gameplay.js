@@ -6,7 +6,7 @@
 import {
     WORLD_W as W, COURSE_H, DT, MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, CAPTURE_R,
     OB_MARGIN, DUST_T, FLIGHT_CAP, SLING_ANG, ROUND_HOLES, PALETTES,
-    ORBIT_COOLDOWN, ORBIT_ARM_T,
+    ORBIT_COOLDOWN, ORBIT_ARM_T, LIFTOFF_T, LIFTOFF_MIN,
     rand, dist, holeLabel,
 } from './constants.js';
 import { S, world, comet } from './state.js';
@@ -97,7 +97,9 @@ export function genHole(n) {
     world.orbitedThisHole = new Set();
     world.orbit = null;
     world.sink = null;
+    world.launchBody = null;
     S.orbitCooldown = 0;
+    S.liftoff = 0;
 
     hooks.holeStart();
     hooks.bar();
@@ -115,6 +117,12 @@ export function launch(dx, dy, len) {
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
     // weak drag = cancelled shot; resume the orbit if we were flicking out of one
     if (speed < MIN_SHOT) { S.phase = world.orbit ? 'orbit' : 'rest'; return false; }
+    // Liftoff grace (STAB-1): if we're flicking off a planet's surface (not the tee,
+    // not out of an orbit), briefly damp that planet's pull so the shot gets clear
+    // instead of being dragged straight back. Captured before world.orbit is cleared.
+    const fromPlanet = !world.orbit && comet.rest && comet.rest.b && comet.rest.b.type === 'planet';
+    world.launchBody = fromPlanet ? comet.rest.b : null;
+    S.liftoff = fromPlanet ? LIFTOFF_T : 0;
     // Force-push impulse (BH-4): ADD to current velocity, don't overwrite it. At
     // rest the comet's velocity is 0 so tee shots are unchanged; flicking out of
     // an orbit adds the impulse to the orbital velocity, bending the motion.
@@ -140,7 +148,15 @@ export function stepFlight(dt) {
         const f = 1 - k * 0.0022;
         comet.vx *= f; comet.vy *= f;
     }
-    const res = stepBody(comet, dt, world.bodies, world.blackHole);
+    // Liftoff grace (STAB-1): while the window is open, weaken the launch planet's
+    // pull, ramping from LIFTOFF_MIN back up to full over LIFTOFF_T seconds.
+    let damp = null;
+    if (S.liftoff > 0 && world.launchBody) {
+        S.liftoff = Math.max(0, S.liftoff - dt);
+        const k = 1 - S.liftoff / LIFTOFF_T;            // 0 at liftoff → 1 when the window closes
+        damp = { body: world.launchBody, factor: LIFTOFF_MIN + (1 - LIFTOFF_MIN) * k };
+    }
+    const res = stepBody(comet, dt, world.bodies, world.blackHole, damp);
 
     if (res && res.sink) { beginSink(); return; }
 
@@ -205,6 +221,7 @@ export function landOn(b, ang) {
     comet.vx = comet.vy = 0;
     world.lastRest = { rest: comet.rest };
     world.orbit = null;
+    world.launchBody = null; S.liftoff = 0;
     S.phase = 'rest';
     world.trail = [];
     hooks.sfx.land();
@@ -385,7 +402,9 @@ export function startCustomMap(mapData) {
     world.orbitedThisHole = new Set();
     world.orbit = null;
     world.sink = null;
+    world.launchBody = null;
     S.orbitCooldown = 0;
+    S.liftoff = 0;
 
     hooks.holeStart();
     

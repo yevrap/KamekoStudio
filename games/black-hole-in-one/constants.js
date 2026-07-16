@@ -42,6 +42,17 @@ export const ORBIT_SPEED_TOL = 0.42;  // tangential speed within ±this fraction
 export const ORBIT_COOLDOWN = 0.45;   // seconds after leaving an orbit before re-capture is allowed
 export const ORBIT_ARM_T = 0.22;      // don't capture in the first instants of a flick (let it leave the tee)
 
+// ---- Liftoff grace (STAB-1) --------------------------------------------------
+// A big planet's surface gravity (~G·r²/r² near the surface) can exceed a full
+// flick, so a comet resting on one gets dragged straight back and re-lands in
+// place — a soft-lock ("some planets too big can't escape"). Fix (decision D1=C:
+// keep big planets, no new mechanic): for a brief window right after flicking OFF
+// a planet surface, damp ONLY that launch planet's pull, ramping back to full, so
+// the flick reliably carries the comet clear. Every other body's gravity — the
+// "gravity is the club" feel — is untouched.
+export const LIFTOFF_T = 0.35;        // seconds of reduced launch-planet gravity after liftoff
+export const LIFTOFF_MIN = 0.3;       // launch-planet gravity scale at the liftoff instant (ramps to 1)
+
 // Circular orbital speed at distance d from a body of mass m (v² = G·m/d, since
 // centripetal a = v²/d must equal gravity G·m/d²). Pure — unit-tested.
 export function circularSpeed(m, d) { return Math.sqrt(G * Math.abs(m) / d); }

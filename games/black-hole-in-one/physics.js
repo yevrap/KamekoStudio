@@ -7,14 +7,18 @@ import {
     ORBIT_MIN_GAP, ORBIT_MAX_GAP, ORBIT_MIN_TAN, ORBIT_RADIAL_TOL, ORBIT_SPEED_TOL, circularSpeed,
 } from './constants.js';
 
-export function gravityAt(bodies, blackHole, x, y) {
+// `damp` (optional) = { body, factor }: scales that one body's pull by `factor`.
+// Used by the STAB-1 liftoff grace to briefly weaken the launch planet's gravity
+// so a flick off its surface reliably gets clear instead of being re-captured.
+export function gravityAt(bodies, blackHole, x, y, damp) {
     let ax = 0, ay = 0;
     const all = blackHole ? bodies.concat([blackHole]) : bodies;
     for (const b of all) {
         const dx = b.x - x, dy = b.y - y;
         const d2 = Math.max(dx * dx + dy * dy, (b.r * 0.8) * (b.r * 0.8));
         const d = Math.sqrt(d2);
-        const a = G * b.m / d2;
+        let a = G * b.m / d2;
+        if (damp && b === damp.body) a *= damp.factor;
         ax += a * dx / d; ay += a * dy / d;
     }
     return [ax, ay];
@@ -22,8 +26,9 @@ export function gravityAt(bodies, blackHole, x, y) {
 
 // One physics step for a body state {x,y,vx,vy}. Returns:
 // null = still flying · {hit:body} = collided · {sink:true} = captured
-export function stepBody(p, dt, bodies, blackHole) {
-    const [ax, ay] = gravityAt(bodies, blackHole, p.x, p.y);
+// `damp` is forwarded to gravityAt (see above).
+export function stepBody(p, dt, bodies, blackHole, damp) {
+    const [ax, ay] = gravityAt(bodies, blackHole, p.x, p.y, damp);
     p.vx += ax * dt; p.vy += ay * dt;
     const sp = Math.hypot(p.vx, p.vy);
     if (sp > MAX_V) { p.vx *= MAX_V / sp; p.vy *= MAX_V / sp; }
