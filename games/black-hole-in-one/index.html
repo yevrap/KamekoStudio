@@ -22,6 +22,11 @@
     <span>🌌 Explore <span class="dim">Free flight</span></span>
 </div>
 
+<div id="survivalBar" class="hidden">
+    <span><span id="survLevel">LEVEL 1</span></span>
+    <span>FUEL <span id="survFuel">100</span>%</span>
+</div>
+
 <div id="btns">
     <button id="restartBtn" aria-label="Restart">↺</button>
     <button id="helpBtn" aria-label="Menu">☰ Menu</button>
@@ -39,6 +44,7 @@
             <span class="mode-head">Play</span>
             <div class="mode-row">
                 <button id="modeRound" class="mode-go">⛳ 9-Hole Round</button>
+                <button id="modeSurvival" class="mode-go">🔋 Survival</button>
                 <button id="modeEndless" class="mode-go">♾ Endless</button>
             </div>
         </div>
@@ -68,6 +74,15 @@
     <div id="sc-btns">
         <button id="sc-again">⛳ New round</button>
         <button id="sc-endless">♾ Endless</button>
+    </div>
+</div>
+
+<div id="survGameOver" class="hidden">
+    <h2>💥 OUT OF FUEL 💥</h2>
+    <div id="sg-level">Reached Level 1</div>
+    <div id="sg-btns">
+        <button id="sg-again">🔋 Try Again</button>
+        <button id="sg-menu">☰ Menu</button>
     </div>
 </div>
 

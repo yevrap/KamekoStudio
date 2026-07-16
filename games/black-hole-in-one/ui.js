@@ -440,6 +440,11 @@ export function chip(lab, sub) {
 }
 
 export function updateBar() {
+    if (S.mode === 'survival') {
+        document.getElementById('survLevel').textContent = 'LEVEL ' + S.hole;
+        document.getElementById('survFuel').textContent = S.fuel;
+        return;
+    }
     const holeTxt = S.mode === 'round' ? `HOLE ${Math.min(S.hole, ROUND_HOLES)}/${ROUND_HOLES}` : 'HOLE ' + S.hole;
     document.getElementById('holeNo').textContent = holeTxt;
     document.getElementById('parLbl').textContent = '· PAR ' + S.par;
@@ -470,6 +475,15 @@ export function showScorecard(result, best, isNewBest) {
     el.classList.remove('hidden');
 }
 
+export function showSurvivalGameOver(level) {
+    document.getElementById('survGameOver').classList.remove('hidden');
+    document.getElementById('sg-level').textContent = 'Reached Level ' + level;
+}
+
+export function hideSurvivalGameOver() {
+    document.getElementById('survGameOver').classList.add('hidden');
+}
+
 export function hideScorecard() {
     document.getElementById('scorecard').classList.add('hidden');
 }
@@ -478,12 +492,14 @@ export function showHowto() {
     document.getElementById('howto').classList.remove('hidden');
     document.getElementById('bar').classList.add('hidden');
     document.getElementById('exploreBar').classList.add('hidden');
+    document.getElementById('survivalBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');
     document.getElementById('customBar').classList.add('hidden');
 }
 export function hideHowto() { 
     document.getElementById('howto').classList.add('hidden');
     if (S.mode === 'explore') document.getElementById('exploreBar').classList.remove('hidden');
+    else if (S.mode === 'survival') document.getElementById('survivalBar').classList.remove('hidden');
     else if (S.mode === 'editor') document.getElementById('editorBar').classList.remove('hidden');
     else if (S.mode === 'custom') {
         document.getElementById('customBar').classList.remove('hidden');

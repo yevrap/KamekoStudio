@@ -5,11 +5,12 @@ export const S = {
     phase: 'menu',    // menu | rest | aiming | flight | orbit | sink | result | roundover
     prevPhase: null,   // phase before 'aiming' started (mid-flight push return, OW-0)
     freezeAim: true,  // freeze comet during mid-flight aim (Explore)
-    mode: 'endless',  // 'endless' | 'round' | 'explore'
+    mode: 'endless',  // 'endless' | 'round' | 'explore' | 'survival'
     hole: 1,
     strokes: 0,
     totalDiff: 0,
     par: 2,
+    fuel: 100,        // Survival mode fuel
     paused: false,
     tFlight: 0,
     time: 0,          // cosmetic clock (twinkle, accretion spin)

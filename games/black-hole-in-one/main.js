@@ -40,6 +40,9 @@ game.setHooks({
         ui.showScorecard(result, prev, isNew);
         sfx.score(result.total <= 0 ? 5 : 2);
     },
+    showSurvivalGameOver(level) {
+        ui.showSurvivalGameOver(level);
+    },
     editorReturn() {
         editor.stopTest();
     },
@@ -125,8 +128,10 @@ function startRun(mode) {
     localStorage.setItem(LS.mode, mode);
     ui.hideHowto();
     ui.hideScorecard();
+    ui.hideSurvivalGameOver();
     document.getElementById('bar').classList.add('hidden');
     document.getElementById('exploreBar').classList.add('hidden');
+    document.getElementById('survivalBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');
     document.getElementById('customBar').classList.add('hidden');
     if (mode === 'explore') {
@@ -139,6 +144,9 @@ function startRun(mode) {
         document.getElementById('customBar').classList.remove('hidden');
         document.getElementById('bar').classList.remove('hidden');
         game.startRun(mode);
+    } else if (mode === 'survival') {
+        document.getElementById('survivalBar').classList.remove('hidden');
+        game.startRun(mode);
     } else {
         document.getElementById('bar').classList.remove('hidden');
         game.startRun(mode);
@@ -147,6 +155,7 @@ function startRun(mode) {
 
 document.getElementById('modeEndless').addEventListener('click', () => startRun('endless'));
 document.getElementById('modeRound').addEventListener('click', () => startRun('round'));
+document.getElementById('modeSurvival').addEventListener('click', () => startRun('survival'));
 document.getElementById('modeExplore').addEventListener('click', () => startRun('explore'));
 document.getElementById('modeEditor').addEventListener('click', () => startRun('editor'));
 
@@ -195,6 +204,13 @@ document.getElementById('howto').addEventListener('pointerdown', e => {
 
 document.getElementById('sc-again').addEventListener('click', () => startRun('round'));
 document.getElementById('sc-endless').addEventListener('click', () => startRun('endless'));
+
+document.getElementById('sg-again').addEventListener('click', () => startRun('survival'));
+document.getElementById('sg-menu').addEventListener('click', () => {
+    ui.showHowto();
+    if (drag) drag = null;
+    if (S.phase === 'aiming') S.phase = 'rest';
+});
 
 document.getElementById('restartBtn').addEventListener('click', () => {
     startRun(S.mode);

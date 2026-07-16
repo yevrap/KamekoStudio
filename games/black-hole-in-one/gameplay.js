@@ -15,7 +15,7 @@ import { stepBody, collide, orbitCapture } from './physics.js';
 // Presentation hooks — main.js swaps in the real UI; defaults are no-ops.
 export let hooks = {
     toast() {}, chip() {}, bar() {}, holeStart() {}, roundEnd() {}, editorReturn() {},
-    burst() {},
+    showSurvivalGameOver() {}, burst() {},
     sfx: { flick() {}, bounce() {}, sling() {}, lost() {}, land() {}, sink() {}, score() {} },
 };
 export function setHooks(h) { hooks = Object.assign(hooks, h); }
@@ -114,9 +114,16 @@ export function placeOnRest() {
 /* ============================== FLIGHT ============================== */
 
 export function launch(dx, dy, len) {
+    if (S.mode === 'survival' && S.fuel <= 0) return false;
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
     // weak drag = cancelled shot; resume the orbit if we were flicking out of one
     if (speed < MIN_SHOT) { S.phase = world.orbit ? 'orbit' : 'rest'; return false; }
+
+    if (S.mode === 'survival') {
+        S.fuel -= 15;
+        if (S.fuel < 0) S.fuel = 0;
+    }
+
     // Liftoff grace (STAB-1): if we're flicking off a planet's surface (not the tee,
     // not out of an orbit), briefly damp that planet's pull so the shot gets clear
     // instead of being dragged straight back. Captured before world.orbit is cleared.
@@ -138,6 +145,15 @@ export function launch(dx, dy, len) {
     hooks.sfx.flick();
     hooks.bar();
     return true;
+}
+
+function checkSurvivalGameOver() {
+    if (S.mode === 'survival' && S.fuel <= 0) {
+        S.phase = 'roundover';
+        hooks.showSurvivalGameOver(S.hole);
+        return true;
+    }
+    return false;
 }
 
 export function stepFlight(dt) {
@@ -212,6 +228,7 @@ export function stepFlight(dt) {
         S.phase = 'rest';
         hooks.sfx.lost();
         hooks.toast(oob ? '🌌 Lost in space — replay from your last spot' : '🛰 Drifting too long — back you come');
+        checkSurvivalGameOver();
     }
 }
 
@@ -231,6 +248,7 @@ export function landOn(b, ang) {
         S.hopsThisHole++;
         if (S.hopsThisHole === 1) hooks.toast('🪐 HOP! Teed up on a planet');
     }
+    checkSurvivalGameOver();
 }
 
 /* ============================== ORBIT (BH-4) ============================== */
@@ -250,6 +268,7 @@ export function beginOrbit(b, cap) {
         world.orbitedThisHole.add(b);
         hooks.toast('🛰 ORBIT! Flick to break away');
     }
+    checkSurvivalGameOver();
 }
 
 // Advance the orbit angle by omega·dt and derive the comet's position + tangential
@@ -366,6 +385,7 @@ export function startRun(mode) {
     S.hole = 1;
     S.totalDiff = 0;
     S.roundCard = [];
+    if (mode === 'survival') S.fuel = 100;
     genHole(1);
     S.phase = 'rest';
 }
