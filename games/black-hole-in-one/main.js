@@ -17,6 +17,7 @@ const LS = {
     mode: 'blackHoleInOne_mode',
     muted: 'blackHoleInOne_muted',
     freezeAim: 'blackHoleInOne_freezeAim',
+    stardust: 'blackHoleInOne_stardust',
 };
 
 function bestRound() {
@@ -50,6 +51,9 @@ game.setHooks({
     editorReturn() {
         editor.stopTest();
     },
+    stardust(total) {
+        localStorage.setItem(LS.stardust, String(total));
+    },
 });
 
 explore.setHooks({
@@ -57,6 +61,9 @@ explore.setHooks({
     bar: ui.updateBar,
     burst: ui.burst,
     sfx,
+    stardust(total) {
+        localStorage.setItem(LS.stardust, String(total));
+    },
 });
 
 editor.setHooks({
@@ -306,6 +313,7 @@ function frame(now) {
 localStorage.setItem(LS.lastPlayed, String(Date.now()));
 setMuted(localStorage.getItem(LS.muted) === 'true');
 S.freezeAim = localStorage.getItem(LS.freezeAim) !== 'false'; // Default to true
+S.stardust = parseInt(localStorage.getItem(LS.stardust), 10) || 0;
 
 function bootBackground() {
     const lastMode = localStorage.getItem(LS.mode);

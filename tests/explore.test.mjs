@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT } from '../games/black-hole-in-one/constants.js';
 
@@ -157,4 +157,16 @@ test('OW-0: launch from rest still clears trail', () => {
     launch(0, dragLen, dragLen);
 
     assert.equal(world.trail.length, 0, 'trail should be cleared on launch from rest');
+});
+
+test('EXP-1a: collecting a stardust pickup increments S.stardust and fires the persistence hook', () => {
+    startRun();
+    let persisted = null;
+    setHooks({ stardust(total) { persisted = total; } });
+    const before = S.stardust;
+    world.pickups.push({ x: comet.x, y: comet.y, r: 5, type: 'stardust' });
+    step(0);
+    assert.equal(S.stardust, before + 1);
+    assert.equal(persisted, before + 1, 'hooks.stardust should fire with the new running total');
+    setHooks({ stardust() {} });
 });

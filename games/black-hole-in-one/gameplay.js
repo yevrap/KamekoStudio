@@ -15,7 +15,7 @@ import { stepBody, collide, orbitCapture } from './physics.js';
 // Presentation hooks — main.js swaps in the real UI; defaults are no-ops.
 export let hooks = {
     toast() {}, chip() {}, bar() {}, holeStart() {}, roundEnd() {}, editorReturn() {},
-    showSurvivalGameOver() {}, burst() {},
+    showSurvivalGameOver() {}, burst() {}, stardust() {},
     sfx: { flick() {}, bounce() {}, sling() {}, lost() {}, land() {}, sink() {}, score() {} },
 };
 export function setHooks(h) { hooks = Object.assign(hooks, h); }
@@ -277,6 +277,7 @@ export function stepFlight(dt) {
                     hooks.burst(p.x, p.y, 14, '#20e657', 20);
                 } else if (p.type === 'stardust') {
                     S.stardust += 1;
+                    hooks.stardust(S.stardust);
                     hooks.burst(p.x, p.y, 8, '#ffd98a', 15);
                 }
                 hooks.bar();

@@ -286,6 +286,18 @@ test('endless mode never triggers the round end', () => {
     game.setHooks({ roundEnd() {} });
 });
 
+test('EXP-1a: collecting a stardust pickup increments S.stardust and fires the persistence hook', () => {
+    game.startRun('endless');
+    let persisted = null;
+    game.setHooks({ stardust(total) { persisted = total; } });
+    const before = S.stardust;
+    world.pickups.push({ x: comet.x, y: comet.y, r: 5, type: 'stardust' });
+    game.stepFlight(0);
+    assert.equal(S.stardust, before + 1);
+    assert.equal(persisted, before + 1, 'hooks.stardust should fire with the new running total');
+    game.setHooks({ stardust() {} });
+});
+
 test('launch: weak drags cancel, real drags spend a stroke', () => {
     game.startRun('endless');
     const ok = game.launch(0, -1, 0.5);   // tiny drag → below MIN_SHOT

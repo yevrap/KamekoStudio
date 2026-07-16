@@ -11,7 +11,7 @@ export const camera = { x: 50, y: 85 };
 export let fuel = 100;
 
 export let hooks = {
-    toast() {}, bar() {}, burst() {},
+    toast() {}, bar() {}, burst() {}, stardust() {},
     sfx: { flick() {}, bounce() {}, land() {}, sling() {} },
 };
 export function setHooks(h) { hooks = Object.assign(hooks, h); }
@@ -242,6 +242,7 @@ export function step(dt) {
                 hooks.burst(p.x, p.y, 14, '#20e657', 20);
             } else if (p.type === 'stardust') {
                 S.stardust += 1;
+                hooks.stardust(S.stardust);
                 hooks.burst(p.x, p.y, 8, '#ffd98a', 15);
             }
             hooks.bar();
