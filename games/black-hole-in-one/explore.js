@@ -279,10 +279,18 @@ export function step(dt) {
     }
     
     updateCamera(dt);
-    
-    if (fuel <= 0 && S.phase === 'rest') {
+
+    if (S.phase === 'rest' && shouldTowHome(fuel, S.inventory)) {
         respawnTown();
     }
+}
+
+// True when an empty tank at rest should force a tow back to Town — today's
+// default, unless Endless Flight (INV-1) is enabled. Pure and unit-tested;
+// `fuel` has no exported setter, so the respawnTown() wiring itself is
+// verified in-browser rather than driven through this predicate in a test.
+export function shouldTowHome(fuel, inventory) {
+    return fuel <= 0 && !inventory.endlessFlight?.enabled;
 }
 
 function respawnTown() {

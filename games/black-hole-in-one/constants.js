@@ -99,6 +99,16 @@ export function siphonGain(level) { return FUEL_SIPHON_LEVELS[Math.max(0, Math.m
 export const SENSOR_RADIUS_LEVELS = [1, 2, 3, 4];
 export function sensorChunkRadius(level) { return SENSOR_RADIUS_LEVELS[Math.max(0, Math.min(level, UPGRADE_MAX_LEVEL))]; }
 
+// ---- Inventory registry (INV-1) -----------------------------------------------
+// A mechanic testbed, not a shop: one entry per experimental gameplay modifier,
+// toggled from the settings drawer, Explore only. `owned` defaults true — there's
+// no purchase or discovery yet (deferred; see the Explore Inventory System note).
+// Adding item N+1 is one entry here plus one hook at its usage site.
+export const ITEMS = [
+    { key: 'endlessFlight', icon: '♾️', label: 'Endless Flight',
+      desc: 'Run dry and keep coasting — no tow back to Town.' },
+];
+
 export const PALETTES = [
     { base: '#e2725b', dark: '#8c3a2c', name: 'rust' },
     { base: '#57c7c2', dark: '#20635f', name: 'teal' },

@@ -1,8 +1,8 @@
 // Black Hole in One — boot, input, main loop, shared-infrastructure wiring.
 'use strict';
 
-import { DT, ROUND_HOLES } from './constants.js';
-import { S, world, comet } from './state.js';
+import { DT, ROUND_HOLES, ITEMS } from './constants.js';
+import { S, world, comet, mergeInventory } from './state.js';
 import * as game from './gameplay.js';
 import * as explore from './explore.js';
 import * as editor from './editor.js';
@@ -19,6 +19,7 @@ const LS = {
     freezeAim: 'blackHoleInOne_freezeAim',
     stardust: 'blackHoleInOne_stardust',
     upgrades: 'blackHoleInOne_upgrades',
+    inventory: 'blackHoleInOne_inventory',
 };
 
 function bestRound() {
@@ -261,6 +262,24 @@ if (window.KamekoSettings) {
             });
         },
     });
+
+    window.KamekoSettings.registerSection('black-hole-in-one-inventory', {
+        title: () => '🎒 Inventory',
+        when: () => S.mode === 'explore',
+        render(container) {
+            container.innerHTML = ITEMS.map(item => `
+                <label class="settings-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">
+                    <span>${item.icon} ${item.label}<br><small style="opacity:.65;font-weight:400">${item.desc}</small></span>
+                    <input type="checkbox" data-item="${item.key}" ${S.inventory[item.key]?.enabled ? 'checked' : ''}>
+                </label>`).join('');
+            container.querySelectorAll('input[data-item]').forEach(cb => {
+                cb.addEventListener('change', e => {
+                    S.inventory[e.target.dataset.item].enabled = e.target.checked;
+                    localStorage.setItem(LS.inventory, JSON.stringify(S.inventory));
+                });
+            });
+        },
+    });
 }
 
 /* ============================== MAIN LOOP ============================== */
@@ -322,6 +341,9 @@ try {
     const savedUpgrades = JSON.parse(localStorage.getItem(LS.upgrades));
     if (savedUpgrades && typeof savedUpgrades === 'object') Object.assign(S.upgrades, savedUpgrades);
 } catch (e) { /* corrupt/missing value — keep defaults */ }
+try {
+    S.inventory = mergeInventory(JSON.parse(localStorage.getItem(LS.inventory)));
+} catch (e) { /* corrupt value — keep defaults */ }
 
 function bootBackground() {
     const lastMode = localStorage.getItem(LS.mode);

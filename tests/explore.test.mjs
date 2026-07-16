@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade } from '../games/black-hole-in-one/explore.js';
-import { S, world, comet } from '../games/black-hole-in-one/state.js';
+import { screenToWorld, worldToScreen, getChunkBodies, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome } from '../games/black-hole-in-one/explore.js';
+import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT } from '../games/black-hole-in-one/constants.js';
 
 test('Camera math: screenToWorld', () => {
@@ -228,4 +228,47 @@ test('EXP-1b: buyUpgrade is a no-op away from Town', () => {
     assert.equal(buyUpgrade('tank'), false);
     assert.equal(S.stardust, 999);
     assert.equal(S.upgrades.tank, 0);
+});
+
+/* ============================== INV-1: Inventory / Endless Flight ============================== */
+
+test('INV-1: shouldTowHome tows home on an empty tank when Endless Flight is off (default)', () => {
+    assert.equal(shouldTowHome(0, defaultInventory()), true);
+    assert.equal(shouldTowHome(-5, defaultInventory()), true);
+});
+
+test('INV-1: shouldTowHome skips the tow-back when Endless Flight is enabled', () => {
+    const inv = defaultInventory();
+    inv.endlessFlight.enabled = true;
+    assert.equal(shouldTowHome(0, inv), false);
+});
+
+test('INV-1: shouldTowHome never tows home while fuel remains, regardless of the toggle', () => {
+    assert.equal(shouldTowHome(1, defaultInventory()), false);
+    const inv = defaultInventory();
+    inv.endlessFlight.enabled = true;
+    assert.equal(shouldTowHome(50, inv), false);
+});
+
+test('INV-1: defaultInventory owns every registry item but starts every toggle off', () => {
+    const inv = defaultInventory();
+    assert.equal(inv.endlessFlight.owned, true);
+    assert.equal(inv.endlessFlight.enabled, false);
+});
+
+test('INV-1: mergeInventory keeps defaults for items missing from a saved payload', () => {
+    // Simulates a save written before this item existed in the registry.
+    const merged = mergeInventory({});
+    assert.deepEqual(merged, defaultInventory());
+});
+
+test('INV-1: mergeInventory overlays saved values on top of defaults', () => {
+    const merged = mergeInventory({ endlessFlight: { owned: true, enabled: true } });
+    assert.equal(merged.endlessFlight.enabled, true);
+});
+
+test('INV-1: mergeInventory tolerates null, undefined, or non-object saved payloads', () => {
+    assert.deepEqual(mergeInventory(null), defaultInventory());
+    assert.deepEqual(mergeInventory(undefined), defaultInventory());
+    assert.deepEqual(mergeInventory('garbage'), defaultInventory());
 });

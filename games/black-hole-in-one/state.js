@@ -1,6 +1,25 @@
 // Black Hole in One — shared mutable state (DOM-free)
 'use strict';
 
+import { ITEMS } from './constants.js';
+
+// Fresh default inventory, derived from the ITEMS registry so a new item never
+// needs its default hand-duplicated here (INV-1).
+export function defaultInventory() {
+    const inv = {};
+    for (const item of ITEMS) inv[item.key] = { owned: true, enabled: false };
+    return inv;
+}
+
+// Merge a saved (possibly stale, corrupt, or null) inventory payload over fresh
+// defaults, so an item added after a save was written is never left `undefined`
+// at a call site — it just keeps its default until the player opts in.
+export function mergeInventory(saved) {
+    const merged = defaultInventory();
+    if (saved && typeof saved === 'object') Object.assign(merged, saved);
+    return merged;
+}
+
 export const S = {
     phase: 'menu',    // menu | rest | aiming | flight | orbit | sink | result | roundover
     prevPhase: null,   // phase before 'aiming' started (mid-flight push return, OW-0)
@@ -13,6 +32,7 @@ export const S = {
     fuel: 100,        // Survival mode fuel
     stardust: 0,      // Currency collected in Explore mode
     upgrades: { tank: 0, siphon: 0, sensor: 0 }, // Town Shop upgrade levels (EXP-1b), Explore only
+    inventory: defaultInventory(), // Item toggles (INV-1), Explore only
     paused: false,
     tFlight: 0,
     time: 0,          // cosmetic clock (twinkle, accretion spin)
