@@ -667,6 +667,22 @@ export function updateCompass() {
 
 let shopVisible = false;
 
+// One entry per purchasable upgrade. `desc(level, maxed)` renders the current-tier
+// (and next-tier, pre-max) blurb — the only part that varies per upgrade's gameplay
+// effect. renderTownShop() below maps over this with no per-upgrade markup.
+const UPGRADES = [
+    {
+        key: 'tank',
+        icon: '⛽',
+        label: 'Fuel Tank',
+        desc(level, maxed) {
+            return maxed
+                ? `Max fuel ${tankMaxFuel(level)}`
+                : `Max fuel ${tankMaxFuel(level)} → ${tankMaxFuel(level + 1)}`;
+        },
+    },
+];
+
 export function updateTownShop() {
     const el = document.getElementById('townShop');
     if (!el) return;
@@ -681,22 +697,26 @@ function renderTownShop() {
     const balEl = document.getElementById('ts-balance');
     if (balEl) balEl.textContent = S.stardust;
 
-    const level = S.upgrades.tank;
-    const cost = upgradeCost(level);
-    const maxed = cost === null;
     const itemsEl = document.getElementById('ts-items');
     if (!itemsEl) return;
-    itemsEl.innerHTML = `
+
+    itemsEl.innerHTML = UPGRADES.map(u => {
+        const level = S.upgrades[u.key] || 0;
+        const cost = upgradeCost(level);
+        const maxed = cost === null;
+        return `
         <div class="ts-item">
             <div>
-                <div class="ts-item-name">⛽ Fuel Tank<span class="ts-item-level">L${level}${maxed ? ' · MAX' : ''}</span></div>
-                <div class="ts-item-desc">${maxed ? `Max fuel ${tankMaxFuel(level)}` : `Max fuel ${tankMaxFuel(level)} → ${tankMaxFuel(level + 1)}`}</div>
+                <div class="ts-item-name">${u.icon} ${u.label}<span class="ts-item-level">L${level}${maxed ? ' · MAX' : ''}</span></div>
+                <div class="ts-item-desc">${u.desc(level, maxed)}</div>
             </div>
-            ${maxed ? '' : `<button id="ts-buy-tank" class="ts-buy" ${S.stardust < cost ? 'disabled' : ''}>✨ ${cost}</button>`}
+            ${maxed ? '' : `<button data-upgrade="${u.key}" class="ts-buy" ${S.stardust < cost ? 'disabled' : ''}>✨ ${cost}</button>`}
         </div>`;
+    }).join('');
 
-    const buyBtn = document.getElementById('ts-buy-tank');
-    if (buyBtn) buyBtn.addEventListener('click', () => {
-        if (explore.buyUpgrade('tank')) renderTownShop();
+    itemsEl.querySelectorAll('.ts-buy').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (explore.buyUpgrade(btn.dataset.upgrade)) renderTownShop();
+        });
     });
 }
