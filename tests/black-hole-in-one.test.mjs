@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
     WORLD_W, COURSE_H, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, MAX_V, DT, G,
     ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed, fitZoom, ZOOM_MIN, ZOOM_FIT,
-    upgradeCost, tankMaxFuel,
+    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
@@ -46,6 +46,24 @@ test('tankMaxFuel maps levels 0-3 to 100/130/160/200 and clamps out-of-range lev
     assert.equal(tankMaxFuel(3), 200);
     assert.equal(tankMaxFuel(-1), 100);
     assert.equal(tankMaxFuel(9), 200);
+});
+
+test('siphonGain maps levels 0-3 to 20/28/36/45 and clamps out-of-range levels (EXP-1c)', () => {
+    assert.equal(siphonGain(0), 20);
+    assert.equal(siphonGain(1), 28);
+    assert.equal(siphonGain(2), 36);
+    assert.equal(siphonGain(3), 45);
+    assert.equal(siphonGain(-1), 20);
+    assert.equal(siphonGain(9), 45);
+});
+
+test('sensorChunkRadius maps levels 0-3 to 1/2/3/4 and clamps out-of-range levels (EXP-1d)', () => {
+    assert.equal(sensorChunkRadius(0), 1);
+    assert.equal(sensorChunkRadius(1), 2);
+    assert.equal(sensorChunkRadius(2), 3);
+    assert.equal(sensorChunkRadius(3), 4);
+    assert.equal(sensorChunkRadius(-1), 1);
+    assert.equal(sensorChunkRadius(9), 4);
 });
 
 test('isBetterRound: first round always records, then lower wins', () => {

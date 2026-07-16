@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture } from './physics.js';
 
@@ -115,11 +115,12 @@ export function updateActiveChunks() {
     const cx = Math.floor(camera.x / CHUNK_SIZE);
     const cy = Math.floor(camera.y / CHUNK_SIZE);
     if (cx === lastChunkX && cy === lastChunkY) return;
-    
+
+    const radius = sensorChunkRadius(S.upgrades.sensor);
     activeBodies = [];
     pickups = [];
-    for (let dx = -1; dx <= 1; dx++) {
-        for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+        for (let dy = -radius; dy <= radius; dy++) {
             activeBodies.push(...getChunkBodies(cx + dx, cy + dy, worldSeed));
             pickups.push(...getChunkPickups(cx + dx, cy + dy, worldSeed));
         }
@@ -238,7 +239,7 @@ export function step(dt) {
         if (Math.hypot(dx, dy) < COMET_R + p.r) {
             world.pickups.splice(i, 1);
             if (p.type === 'fuel') {
-                fuel = Math.min(tankMaxFuel(S.upgrades.tank), fuel + 20);
+                fuel = Math.min(tankMaxFuel(S.upgrades.tank), fuel + siphonGain(S.upgrades.siphon));
                 hooks.burst(p.x, p.y, 14, '#20e657', 20);
             } else if (p.type === 'stardust') {
                 S.stardust += 1;
@@ -306,10 +307,10 @@ export function atTown() {
         && !!(comet.rest && comet.rest.b && comet.rest.b.type === 'tee');
 }
 
-// Buy the next level of upgrade `key` (currently only 'tank' is wired to a gameplay
-// effect). Returns false without side effects if not at Town, maxed out, or short
-// on stardust. Fuel Tank purchases add the capacity delta to the current tank
-// rather than topping it off, so buying doesn't grant a free full refill.
+// Buy the next level of upgrade `key` ('tank', 'siphon', or 'sensor'). Returns false
+// without side effects if not at Town, maxed out, or short on stardust. Fuel Tank
+// purchases add the capacity delta to the current tank rather than topping it off,
+// so buying doesn't grant a free full refill.
 export function buyUpgrade(key) {
     if (!atTown()) return false;
     const level = S.upgrades[key] || 0;
@@ -326,6 +327,16 @@ export function buyUpgrade(key) {
         const newMax = tankMaxFuel(level + 1);
         fuel = Math.min(newMax, fuel + (newMax - oldMax));
         hooks.toast(`⬆️ Fuel Tank upgraded to L${S.upgrades.tank}`);
+    } else if (key === 'siphon') {
+        hooks.toast(`⬆️ Fuel Siphon upgraded to L${S.upgrades.siphon}`);
+    } else if (key === 'sensor') {
+        // Force an immediate chunk reload so the wider net is visible right away —
+        // updateActiveChunks() otherwise only recomputes when the camera crosses
+        // into a new chunk, which won't happen while resting at Town post-purchase.
+        lastChunkX = null;
+        lastChunkY = null;
+        updateActiveChunks();
+        hooks.toast(`⬆️ Long-Range Sensor upgraded to L${S.upgrades.sensor}`);
     }
     hooks.bar();
     return true;

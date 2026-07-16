@@ -6,7 +6,7 @@
 import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
-    upgradeCost, tankMaxFuel,
+    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -679,6 +679,27 @@ const UPGRADES = [
             return maxed
                 ? `Max fuel ${tankMaxFuel(level)}`
                 : `Max fuel ${tankMaxFuel(level)} → ${tankMaxFuel(level + 1)}`;
+        },
+    },
+    {
+        key: 'siphon',
+        icon: '🌀',
+        label: 'Fuel Siphon',
+        desc(level, maxed) {
+            return maxed
+                ? `+${siphonGain(level)} fuel per pickup`
+                : `+${siphonGain(level)} → +${siphonGain(level + 1)} fuel per pickup`;
+        },
+    },
+    {
+        key: 'sensor',
+        icon: '📡',
+        label: 'Long-Range Sensor',
+        desc(level, maxed) {
+            const span = r => r * 2 + 1;
+            return maxed
+                ? `${span(sensorChunkRadius(level))}×${span(sensorChunkRadius(level))} chunk range`
+                : `${span(sensorChunkRadius(level))}×${span(sensorChunkRadius(level))} → ${span(sensorChunkRadius(level + 1))}×${span(sensorChunkRadius(level + 1))} chunk range`;
         },
     },
 ];

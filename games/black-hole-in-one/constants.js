@@ -84,6 +84,21 @@ export const FUEL_TANK_LEVELS = [100, 130, 160, 200]; // max fuel by tank level 
 export function upgradeCost(level) { return level < UPGRADE_MAX_LEVEL ? UPGRADE_COSTS[level] : null; }
 export function tankMaxFuel(level) { return FUEL_TANK_LEVELS[Math.max(0, Math.min(level, UPGRADE_MAX_LEVEL))]; }
 
+// Fuel gained per pickup by Fuel Siphon level (EXP-1c), Explore only.
+export const FUEL_SIPHON_LEVELS = [20, 28, 36, 45];
+export function siphonGain(level) { return FUEL_SIPHON_LEVELS[Math.max(0, Math.min(level, UPGRADE_MAX_LEVEL))]; }
+
+// Long-Range Sensor (EXP-1d): active-chunk load radius (in chunks) around the camera
+// in updateActiveChunks(). Base is 1 (today's fixed 3×3 window, 9 chunks); each level
+// adds one full ring (5×5, 7×7, 9×9 at L1-L3) so every purchased tier is a distinct,
+// observable improvement — the design doc's +25/50/75% framing doesn't map onto whole
+// chunks cleanly (chunk radius must be an integer), so this uses the doc's own goal
+// ("loads/renders bodies and pickups farther out") rather than the literal percentages.
+// Gravity sums over every loaded body every physics step (240 Hz), but per-body work is
+// cheap arithmetic (one sqrt), so even the L3 worst case (~400 bodies) is negligible.
+export const SENSOR_RADIUS_LEVELS = [1, 2, 3, 4];
+export function sensorChunkRadius(level) { return SENSOR_RADIUS_LEVELS[Math.max(0, Math.min(level, UPGRADE_MAX_LEVEL))]; }
+
 export const PALETTES = [
     { base: '#e2725b', dark: '#8c3a2c', name: 'rust' },
     { base: '#57c7c2', dark: '#20635f', name: 'teal' },
