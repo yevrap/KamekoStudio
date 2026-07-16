@@ -4,6 +4,7 @@
 export const S = {
     phase: 'menu',    // menu | rest | aiming | flight | orbit | sink | result | roundover
     prevPhase: null,   // phase before 'aiming' started (mid-flight push return, OW-0)
+    freezeAim: true,  // freeze comet during mid-flight aim (Explore)
     mode: 'endless',  // 'endless' | 'round' | 'explore'
     hole: 1,
     strokes: 0,

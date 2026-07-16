@@ -16,6 +16,7 @@ const LS = {
     bestRound: 'blackHoleInOne_bestRound',
     mode: 'blackHoleInOne_mode',
     muted: 'blackHoleInOne_muted',
+    freezeAim: 'blackHoleInOne_freezeAim',
 };
 
 function bestRound() {
@@ -224,6 +225,10 @@ if (window.KamekoSettings) {
                 <label class="settings-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">
                     <span>Sound effects</span>
                     <input type="checkbox" id="bh-sound" ${isMuted() ? '' : 'checked'}>
+                </label>
+                <label class="settings-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">
+                    <span>Freeze mid-flight aim (Explore)</span>
+                    <input type="checkbox" id="bh-freeze" ${S.freezeAim ? 'checked' : ''}>
                 </label>`;
             container.querySelector('#bh-howto').addEventListener('click', () => {
                 window.KamekoSettings.closeDrawer();
@@ -232,6 +237,10 @@ if (window.KamekoSettings) {
             container.querySelector('#bh-sound').addEventListener('change', e => {
                 setMuted(!e.target.checked);
                 localStorage.setItem(LS.muted, String(!e.target.checked));
+            });
+            container.querySelector('#bh-freeze').addEventListener('change', e => {
+                S.freezeAim = e.target.checked;
+                localStorage.setItem(LS.freezeAim, String(e.target.checked));
             });
         },
     });
@@ -251,9 +260,9 @@ function frame(now) {
     while (acc >= DT) {
         acc -= DT;
         if (S.mode === 'explore') {
-            // OW-0: freeze physics during mid-flight aiming so the player
-            // can aim accurately — the comet holds position until release.
-            if (S.phase === 'flight') explore.step(DT);
+            // OW-0: mid-flight aiming can be frozen (so the player can aim accurately)
+            // or continuous (so the comet keeps moving while planning the push).
+            if (S.phase === 'flight' || (!S.freezeAim && S.phase === 'aiming' && S.prevPhase === 'flight')) explore.step(DT);
             else if (S.phase === 'orbit') explore.stepOrbit(DT);
         } else {
             if (S.phase === 'flight') game.stepFlight(DT);
@@ -274,6 +283,7 @@ function frame(now) {
 
 localStorage.setItem(LS.lastPlayed, String(Date.now()));
 setMuted(localStorage.getItem(LS.muted) === 'true');
+S.freezeAim = localStorage.getItem(LS.freezeAim) !== 'false'; // Default to true
 
 window.addEventListener('resize', ui.resize);
 ui.resize();
