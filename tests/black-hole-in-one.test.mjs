@@ -402,3 +402,53 @@ test('fitZoom zooms OUT for spans too big to fit, clamped to ZOOM_MIN (STAB-2)',
     // an absurdly large span is clamped, never smaller than ZOOM_MIN
     assert.equal(fitZoom(100000, 78), ZOOM_MIN, 'huge span clamps to the floor');
 });
+
+/* ============================== STAB-3: editor drag/delete robustness ============================== */
+
+function fakeTrashEl() {
+    return { classList: { add() {}, remove() {}, contains() { return false; } },
+             getBoundingClientRect() { return { left: 0, top: 0, right: 0, bottom: 0 }; } };
+}
+
+test('editor sfx exposes pop() so add/delete never throw (STAB-3)', async () => {
+    const sfxmod = await import('../games/black-hole-in-one/sfx.js');
+    assert.equal(typeof sfxmod.sfx.pop, 'function');
+    assert.doesNotThrow(() => sfxmod.sfx.pop(), 'pop() is a safe no-op headless');
+});
+
+test('editor: a canceled drag does not wedge future drags (STAB-3)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+    world.bodies = [];   // isolate from any planet a prior test left behind
+    ed.startEditor();
+    ed.addPlanet();
+    const planet = world.bodies.find(b => b.type === 'planet');
+    assert.equal(ed.pointerDown(planet.x, planet.y, 1), true, 'first grab starts');
+    ed.cancelDrag();                                      // the pointercancel path
+    assert.equal(ed.pointerDown(planet.x, planet.y, 2), true, 'can grab again after a cancel');
+    ed.cancelDrag();
+    delete globalThis.document;
+});
+
+test('editor: deleting an object clears the drag and removes it (STAB-3)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });    // quiet during setup
+    world.bodies = [];   // isolate from any planet a prior test left behind
+    ed.startEditor();
+    ed.addPlanet();
+    const planet = world.bodies.find(b => b.type === 'planet');
+    const n0 = world.bodies.length;
+    assert.equal(ed.pointerDown(planet.x, planet.y, 5), true);
+    ed.pointerMove(-100, -100, 5);                        // drag far out of bounds
+    // now make the delete's pop() throw — proves pointerUp clears `dragged` BEFORE hooks fire
+    ed.setHooks({ sfx: { pop() { throw new Error('boom'); } } });
+    assert.throws(() => ed.pointerUp(-100, -100, 5), /boom/, 'the throwing hook still fires');
+    assert.ok(!world.bodies.includes(planet), 'object was removed before the throw');
+    assert.equal(world.bodies.length, n0 - 1);
+    // despite the hook throwing, the editor is NOT wedged — a fresh grab works
+    assert.equal(ed.pointerDown(world.teeRock.x, world.teeRock.y, 6), true, 'not wedged after delete');
+    ed.cancelDrag();
+    delete globalThis.document;
+});

@@ -35,4 +35,5 @@ export const sfx = {
     land()   { tone(320, 210, 0.09, 'sine', 0.05); },
     sink()   { tone(420, 52, 0.7, 'sine', 0.1); tone(640, 66, 0.7, 'triangle', 0.04); },
     score(n) { for (let i = 0; i < n; i++) tone(520 * Math.pow(1.335, i), 520 * Math.pow(1.335, i), 0.12, 'triangle', 0.06, 0.55 + i * 0.09); },
+    pop()    { tone(300, 200, 0.06, 'square', 0.05); },   // editor place/delete blip (STAB-3)
 };

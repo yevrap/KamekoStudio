@@ -106,28 +106,36 @@ export function pointerMove(wx, wy, id) {
 }
 
 export function pointerUp(wx, wy, id, cx, cy) {
-    if (dragged && dragged.id === id) {
-        const o = dragged.obj;
-        const trash = document.getElementById('editorTrash');
-        if (trash) trash.classList.add('hidden');
-        
-        // Delete if dragged out of bounds (except tee/hole)
-        if (o.type !== 'tee' && o.type !== 'hole') {
-            let overTrash = false;
-            if (trash && cx !== undefined && cy !== undefined) {
-                const rect = trash.getBoundingClientRect();
-                overTrash = (cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom);
-            }
-            if (overTrash || o.x < -10 || o.x > W + 10 || o.y < -10 || o.y > COURSE_H + 10) {
-                world.bodies = world.bodies.filter(b => b !== o);
-                hooks.sfx.pop();
-                hooks.toast('🗑️ Deleted');
-            }
+    if (!dragged || dragged.id !== id) return false;
+    const o = dragged.obj;
+    // Clear the drag FIRST: if any hook below throws, the editor must not be left
+    // wedged with a stuck `dragged` (that was the STAB-3 "drag/delete stops working").
+    dragged = null;
+    const trash = document.getElementById('editorTrash');
+    if (trash) trash.classList.add('hidden');
+
+    // Delete if dropped on the trash, or dragged out of bounds (except tee/hole)
+    if (o.type !== 'tee' && o.type !== 'hole') {
+        let overTrash = false;
+        if (trash && cx !== undefined && cy !== undefined) {
+            const rect = trash.getBoundingClientRect();
+            overTrash = (cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom);
         }
-        dragged = null;
-        return true;
+        if (overTrash || o.x < -10 || o.x > W + 10 || o.y < -10 || o.y > COURSE_H + 10) {
+            world.bodies = world.bodies.filter(b => b !== o);
+            hooks.sfx.pop();
+            hooks.toast('🗑️ Deleted');
+        }
     }
-    return false;
+    return true;
+}
+
+// Force-release any in-progress drag — used by the pointercancel handler, which
+// can't match a real pointer id. Without this a canceled touch wedged the editor.
+export function cancelDrag() {
+    dragged = null;
+    const trash = document.getElementById('editorTrash');
+    if (trash) trash.classList.add('hidden');
 }
 
 export function toggleTestPlay() {

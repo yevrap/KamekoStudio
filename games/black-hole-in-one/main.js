@@ -108,9 +108,9 @@ canvas.addEventListener('pointerup', e => {
     }
     else S.phase = world.orbit ? 'orbit' : 'rest'; // no drag: fall back to whatever we were aiming from
 });
-canvas.addEventListener('pointercancel', () => { 
-    if (drag) { drag = null; S.phase = world.orbit ? 'orbit' : 'rest'; } 
-    if (S.mode === 'editor' && S.phase === 'edit') editor.pointerUp(0, 0, -1); // Just to clear dragged if any
+canvas.addEventListener('pointercancel', () => {
+    if (drag) { drag = null; S.phase = world.orbit ? 'orbit' : 'rest'; }
+    if (S.mode === 'editor') editor.cancelDrag(); // force-release; -1 id can't match a real drag
 });
 
 /* ============================== OVERLAY BUTTONS ============================== */
