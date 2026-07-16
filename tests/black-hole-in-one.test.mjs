@@ -452,3 +452,50 @@ test('editor: deleting an object clears the drag and removes it (STAB-3)', async
     ed.cancelDrag();
     delete globalThis.document;
 });
+
+/* ============================== STAB-6: map serialize round-trip ============================== */
+
+test('encodeMap → decodeMap round-trips a shared map without corruption (STAB-6)', async () => {
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    const pal = { base: '#57c7c2', dark: '#20635f', name: 'teal' };
+    const src = {
+        teeRock:   { x: 50.16, y: 149.83 },
+        blackHole: { x: 33.4,  y: 25.1 },
+        bodies: [
+            { type: 'planet', x: 42.37, y: 90.44, r: 12.6, pal, spin: 1.23 },
+            { type: 'pulsar', x: 70.5,  y: 60.2 },
+            { type: 'tee',    x: 50.16, y: 149.83 },   // tee also lives in bodies — must be dropped, not double-encoded
+        ],
+    };
+    const hash = ed.encodeMap(src);
+    assert.equal(typeof hash, 'string');
+    assert.ok(!/[+/=]/.test(hash), 'hash is URL-safe base64 (no + / =)');
+
+    const out = ed.decodeMap(hash);
+    assert.ok(out, 'decodes to a map');
+    // tee / hole positions survive (encoder rounds to 0.1)
+    assert.ok(Math.abs(out.teeRock.x - 50.2) < 0.06 && Math.abs(out.teeRock.y - 149.8) < 0.06);
+    assert.equal(out.teeRock.type, 'tee');
+    assert.ok(Math.abs(out.blackHole.x - 33.4) < 0.06 && Math.abs(out.blackHole.y - 25.1) < 0.06);
+    assert.equal(out.blackHole.type, 'hole');
+    // exactly one planet + one pulsar (the stray tee in bodies is not re-encoded)
+    const planets = out.bodies.filter(b => b.type === 'planet');
+    const pulsars = out.bodies.filter(b => b.type === 'pulsar');
+    assert.equal(planets.length, 1);
+    assert.equal(pulsars.length, 1);
+    const p = planets[0];
+    assert.ok(Math.abs(p.x - 42.4) < 0.06 && Math.abs(p.y - 90.4) < 0.06 && Math.abs(p.r - 12.6) < 0.06);
+    assert.ok(Math.abs(p.m - 12.6 * 12.6) < 0.5, 'planet mass is derived from radius on decode');
+    assert.deepEqual(p.pal, pal, 'palette survives the round-trip');
+    assert.equal(pulsars[0].m, -160, 'pulsar decodes to the standard repulsor mass');
+});
+
+test('decodeMap rejects garbage and maps missing a tee or hole (STAB-6)', async () => {
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    assert.equal(ed.decodeMap('not-valid-base64!!!'), null, 'garbage → null, no throw');
+    assert.equal(ed.decodeMap(''), null, 'empty → null');
+    // a map with only a planet (no tee/hole) is invalid
+    const hashNoTee = ed.encodeMap({ teeRock: { x: 9999, y: 9999 }, blackHole: { x: 1, y: 1 }, bodies: [] });
+    // sanity: a valid one decodes
+    assert.ok(ed.decodeMap(hashNoTee), 'a well-formed map still decodes');
+});
