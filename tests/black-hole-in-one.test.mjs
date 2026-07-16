@@ -499,3 +499,24 @@ test('decodeMap rejects garbage and maps missing a tee or hole (STAB-6)', async 
     // sanity: a valid one decodes
     assert.ok(ed.decodeMap(hashNoTee), 'a well-formed map still decodes');
 });
+
+test('editor: dropping an in-bounds object on the trash zone deletes it (STAB-3 follow-up)', async () => {
+    // trash rect is measured while visible; a pointer-up inside it must delete even
+    // though the object itself is still on the board (not out of bounds).
+    globalThis.document = { getElementById: () => ({
+        classList: { add() {}, remove() {}, contains() { return false; } },
+        getBoundingClientRect() { return { left: 120, top: 700, right: 255, bottom: 760 }; },
+    }) };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+    world.bodies = [];
+    ed.startEditor();
+    ed.addPlanet();
+    const planet = world.bodies.find(b => b.type === 'planet');   // sits at (50, ~85), well in bounds
+    assert.equal(ed.pointerDown(planet.x, planet.y, 9), true);
+    ed.pointerMove(50, 85, 9);                                     // still in bounds
+    ed.pointerUp(50, 85, 9, /*cx*/ 180, /*cy*/ 730);              // release with pointer INSIDE the trash rect
+    assert.ok(!world.bodies.includes(planet), 'in-bounds object dropped on trash is deleted');
+    ed.cancelDrag();
+    delete globalThis.document;
+});

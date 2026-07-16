@@ -112,20 +112,22 @@ export function pointerUp(wx, wy, id, cx, cy) {
     // wedged with a stuck `dragged` (that was the STAB-3 "drag/delete stops working").
     dragged = null;
     const trash = document.getElementById('editorTrash');
+
+    // Decide deletion WHILE the trash is still visible. getBoundingClientRect() on a
+    // display:none element returns all-zeros, so measuring after hiding made the trash
+    // drop-zone never register a hit — the "delete box does not work" report.
+    const deletable = o.type !== 'tee' && o.type !== 'hole';
+    let overTrash = false;
+    if (deletable && trash && cx !== undefined && cy !== undefined) {
+        const rect = trash.getBoundingClientRect();
+        overTrash = (cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom);
+    }
     if (trash) trash.classList.add('hidden');
 
-    // Delete if dropped on the trash, or dragged out of bounds (except tee/hole)
-    if (o.type !== 'tee' && o.type !== 'hole') {
-        let overTrash = false;
-        if (trash && cx !== undefined && cy !== undefined) {
-            const rect = trash.getBoundingClientRect();
-            overTrash = (cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom);
-        }
-        if (overTrash || o.x < -10 || o.x > W + 10 || o.y < -10 || o.y > COURSE_H + 10) {
-            world.bodies = world.bodies.filter(b => b !== o);
-            hooks.sfx.pop();
-            hooks.toast('🗑️ Deleted');
-        }
+    if (deletable && (overTrash || o.x < -10 || o.x > W + 10 || o.y < -10 || o.y > COURSE_H + 10)) {
+        world.bodies = world.bodies.filter(b => b !== o);
+        hooks.sfx.pop();
+        hooks.toast('🗑️ Deleted');
     }
     return true;
 }
