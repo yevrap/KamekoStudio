@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome, refuelFull } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT } from '../games/black-hole-in-one/constants.js';
 
@@ -271,4 +271,43 @@ test('INV-1: mergeInventory tolerates null, undefined, or non-object saved paylo
     assert.deepEqual(mergeInventory(null), defaultInventory());
     assert.deepEqual(mergeInventory(undefined), defaultInventory());
     assert.deepEqual(mergeInventory('garbage'), defaultInventory());
+});
+
+test('INV-1: launch does not drain fuel while Endless Flight is enabled', () => {
+    S.upgrades.tank = 0;
+    startRun();
+    S.inventory = defaultInventory();
+    S.inventory.endlessFlight.enabled = true;
+
+    const before = fuel; // full L0 tank = 100
+    const dragLen = MAX_DRAG * 0.5;
+    const ok = launch(dragLen, 0, dragLen);
+
+    assert.ok(ok, 'launch should succeed');
+    assert.equal(fuel, before, 'fuel should be unchanged — the fuel-lock skips the drain entirely');
+});
+
+test('INV-1: launch drains fuel normally once Endless Flight is switched back off', () => {
+    S.upgrades.tank = 0;
+    startRun();
+    S.inventory = defaultInventory();
+    S.inventory.endlessFlight.enabled = false;
+
+    const before = fuel;
+    const dragLen = MAX_DRAG * 0.5;
+    launch(dragLen, 0, dragLen);
+
+    assert.equal(fuel, before - 15, 'today\'s default drain resumes once the toggle is off');
+});
+
+test('INV-1: refuelFull tops the tank off to the current upgrade level\'s max', () => {
+    S.upgrades.tank = 1; // 130 max
+    startRun();
+    S.inventory = defaultInventory();
+    launch(MAX_DRAG * 0.5, 0, MAX_DRAG * 0.5); // drain it below max first
+    assert.ok(fuel < 130, 'sanity: fuel was drained below the L1 max');
+
+    refuelFull();
+
+    assert.equal(fuel, 130, 'refuelFull tops off to the current tank\'s max, not a hardcoded 100');
 });

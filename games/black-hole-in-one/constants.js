@@ -106,7 +106,7 @@ export function sensorChunkRadius(level) { return SENSOR_RADIUS_LEVELS[Math.max(
 // Adding item N+1 is one entry here plus one hook at its usage site.
 export const ITEMS = [
     { key: 'endlessFlight', icon: '♾️', label: 'Endless Flight',
-      desc: 'Run dry and keep coasting — no tow back to Town.' },
+      desc: 'Full tank, forever — fuel stops draining until you switch it off.' },
 ];
 
 export const PALETTES = [

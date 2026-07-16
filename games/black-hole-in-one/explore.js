@@ -187,9 +187,13 @@ export function launch(dx, dy, len) {
         if (S.phase === 'aiming') S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
         return false;
     }
-    
-    fuel -= 15;
-    if (fuel < 0) fuel = 0;
+
+    // Endless Flight (INV-1) is a fuel-lock, not just a no-tow toggle: the tank
+    // doesn't drain at all while it's enabled.
+    if (!S.inventory.endlessFlight?.enabled) {
+        fuel -= 15;
+        if (fuel < 0) fuel = 0;
+    }
     hooks.bar();
     
     // OW-0: one-time mid-flight push hint
@@ -291,6 +295,13 @@ export function step(dt) {
 // verified in-browser rather than driven through this predicate in a test.
 export function shouldTowHome(fuel, inventory) {
     return fuel <= 0 && !inventory.endlessFlight?.enabled;
+}
+
+// Instantly tops the tank off. Endless Flight (INV-1) is a fuel-lock: switching
+// it on shouldn't require draining first, so the toggle calls this immediately.
+export function refuelFull() {
+    fuel = tankMaxFuel(S.upgrades.tank);
+    hooks.bar();
 }
 
 function respawnTown() {

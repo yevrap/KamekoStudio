@@ -274,8 +274,12 @@ if (window.KamekoSettings) {
                 </label>`).join('');
             container.querySelectorAll('input[data-item]').forEach(cb => {
                 cb.addEventListener('change', e => {
-                    S.inventory[e.target.dataset.item].enabled = e.target.checked;
+                    const key = e.target.dataset.item;
+                    S.inventory[key].enabled = e.target.checked;
                     localStorage.setItem(LS.inventory, JSON.stringify(S.inventory));
+                    // Endless Flight (INV-1) is a fuel-lock — switching it on tops the tank
+                    // off immediately rather than waiting for the next drain/pickup event.
+                    if (key === 'endlessFlight' && e.target.checked) explore.refuelFull();
                 });
             });
         },
