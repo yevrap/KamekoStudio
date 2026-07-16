@@ -94,12 +94,19 @@ export function getChunkPickups(cx, cy, seed) {
 
     const rng = mulberry32(seedFromString('pickups_' + seed + '_' + cx + '_' + cy));
     const chunkPickups = [];
-    const numPickups = Math.floor(rng() * 4); // 0 to 3 pickups per chunk
-    
-    for (let i = 0; i < numPickups; i++) {
+    // 0 to 2 fuel pickups per chunk
+    const numFuel = Math.floor(rng() * 3);
+    for (let i = 0; i < numFuel; i++) {
         const px = cx * CHUNK_SIZE + rng() * CHUNK_SIZE;
         const py = cy * CHUNK_SIZE + rng() * CHUNK_SIZE;
-        chunkPickups.push({ x: px, y: py, r: 1.8, id: `p${cx}_${cy}_${i}` });
+        chunkPickups.push({ x: px, y: py, r: 1.8, type: 'fuel', id: `pf${cx}_${cy}_${i}` });
+    }
+    // 0 to 4 stardust pickups per chunk
+    const numStardust = Math.floor(rng() * 5);
+    for (let i = 0; i < numStardust; i++) {
+        const px = cx * CHUNK_SIZE + rng() * CHUNK_SIZE;
+        const py = cy * CHUNK_SIZE + rng() * CHUNK_SIZE;
+        chunkPickups.push({ x: px, y: py, r: 1.2, type: 'stardust', id: `ps${cx}_${cy}_${i}` });
     }
     return chunkPickups;
 }
@@ -223,15 +230,20 @@ export function step(dt) {
         }
     }
     
-    // Check fuel pickups
+    // Check pickups
     for (let i = world.pickups.length - 1; i >= 0; i--) {
         const p = world.pickups[i];
         const dx = comet.x - p.x;
         const dy = comet.y - p.y;
         if (Math.hypot(dx, dy) < COMET_R + p.r) {
             world.pickups.splice(i, 1);
-            fuel = Math.min(100, fuel + 20);
-            hooks.burst(p.x, p.y, 14, '#20e657', 20);
+            if (p.type === 'fuel') {
+                fuel = Math.min(100, fuel + 20);
+                hooks.burst(p.x, p.y, 14, '#20e657', 20);
+            } else if (p.type === 'stardust') {
+                S.stardust += 1;
+                hooks.burst(p.x, p.y, 8, '#ffd98a', 15);
+            }
             hooks.bar();
         }
     }

@@ -90,7 +90,7 @@ export function genHole(n) {
                     dist(px, py, teeRock.x, teeRock.y) > 15 &&
                     world.bodies.every(b => dist(px, py, b.x, b.y) > b.r + 5) &&
                     world.pickups.every(p => dist(px, py, p.x, p.y) > 8)) {
-                    world.pickups.push({ x: px, y: py, r: 1.8 });
+                    world.pickups.push({ x: px, y: py, r: 1.8, type: 'fuel' });
                     break;
                 }
             }
@@ -269,11 +269,16 @@ export function stepFlight(dt) {
     if (S.mode === 'endless') {
         for (let i = world.pickups.length - 1; i >= 0; i--) {
             const p = world.pickups[i];
-            if (dist(comet.x, comet.y, p.x, p.y) < COMET_R + p.r) {
+            const d = dist(comet.x, comet.y, p.x, p.y);
+            if (d < COMET_R + p.r) {
                 world.pickups.splice(i, 1);
-                S.fuel = Math.min(100, S.fuel + 20);
-                hooks.sfx.score(1); // pleasant chime
-                hooks.burst(p.x, p.y, 14, '#20e657', 20);
+                if (p.type === 'fuel' || !p.type) {
+                    S.fuel = Math.min(100, S.fuel + 20);
+                    hooks.burst(p.x, p.y, 14, '#20e657', 20);
+                } else if (p.type === 'stardust') {
+                    S.stardust += 1;
+                    hooks.burst(p.x, p.y, 8, '#ffd98a', 15);
+                }
                 hooks.bar();
             }
         }

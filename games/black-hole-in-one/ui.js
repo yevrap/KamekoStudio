@@ -145,6 +145,7 @@ export function clearParticles() { particles = []; }
 /* ============================== RENDER ============================== */
 
 export function render(drag) {
+    updateCompass();
     ctx.setTransform(view.dpr * view.scale, 0, 0, view.dpr * view.scale, 0, 0);
     ctx.clearRect(0, 0, view.vw, view.vh);
 
@@ -516,13 +517,33 @@ export function chip(lab, sub) {
     el.classList.add('show');
 }
 
+function setFuelBar(id, f) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.width = Math.max(0, f) + '%';
+    el.classList.toggle('low', f <= 40 && f > 15);
+    el.classList.toggle('critical', f <= 15);
+}
+
+function getRegionName(x, y) {
+    const d = Math.hypot(x - 50, y - 85);
+    if (d < 300) return 'The Shallows';
+    if (d < 1000) return 'Asteroid Belt';
+    if (d < 2500) return 'Outer Rim';
+    return 'Deep Space';
+}
+
 export function updateBar() {
     if (S.mode === 'explore') {
-        document.getElementById('exploreFuel').textContent = explore.fuel;
+        setFuelBar('exploreFuelBar', explore.fuel);
+        document.getElementById('exploreStardust').textContent = S.stardust;
+        document.getElementById('exploreCoords').textContent = `X: ${Math.round(comet.x)} Y: ${Math.round(comet.y)}`;
+        document.getElementById('exploreRegion').textContent = getRegionName(comet.x, comet.y);
         return;
     }
     if (S.mode === 'endless') {
-        document.getElementById('survFuel').textContent = S.fuel;
+        setFuelBar('endlessFuelBar', S.fuel);
+        document.getElementById('endlessStardust').textContent = S.stardust;
     }
     const holeTxt = 'HOLE ' + S.hole;
     document.getElementById('holeNo').textContent = holeTxt;
@@ -585,6 +606,56 @@ export function hideHowto() {
     }
     else {
         document.getElementById('bar').classList.remove('hidden');
-        if (S.mode === 'endless') document.getElementById('survivalBar').classList.remove('hidden');
     }
+}
+
+export function updateCompass() {
+    const el = document.querySelector('.compass-pip');
+    const compContainer = document.getElementById('compass');
+    if (!el || !compContainer) return;
+    
+    if (S.mode !== 'explore') {
+        el.classList.add('hidden');
+        return;
+    }
+
+    const tx = 50, ty = 85;
+    const cam = explore.camera;
+    const hw = view.vw / 2;
+    const hh = view.vh / 2;
+    
+    const margin = 30;
+    const isOffScreen = tx < cam.x - hw + margin || tx > cam.x + hw - margin || 
+                        ty < cam.y - hh + margin || ty > cam.y + hh - margin;
+
+    if (!isOffScreen) {
+        el.classList.add('hidden');
+        return;
+    }
+    el.classList.remove('hidden');
+
+    const dx = tx - cam.x;
+    const dy = ty - cam.y;
+    const angle = Math.atan2(dy, dx);
+    const tanAngle = Math.tan(angle);
+    let edgeX, edgeY;
+    
+    if (Math.abs(tanAngle) < hh / hw) {
+        edgeX = (dx > 0) ? hw : -hw;
+        edgeY = edgeX * tanAngle;
+    } else {
+        edgeY = (dy > 0) ? hh : -hh;
+        edgeX = edgeY / tanAngle;
+    }
+
+    // inset by 20px
+    const insetX = (hw - 20) / hw;
+    const insetY = (hh - 20) / hh;
+    const cssX = hw + edgeX * insetX;
+    const cssY = hh + edgeY * insetY;
+
+    const rot = angle + Math.PI / 2;
+    el.style.transform = `translate(-50%, -50%) rotate(${rot}rad)`;
+    el.style.left = cssX + 'px';
+    el.style.top = cssY + 'px';
 }

@@ -11,6 +11,7 @@ export const S = {
     totalDiff: 0,
     par: 2,
     fuel: 100,        // Survival mode fuel
+    stardust: 0,      // Currency collected in Explore mode
     paused: false,
     tFlight: 0,
     time: 0,          // cosmetic clock (twinkle, accretion spin)

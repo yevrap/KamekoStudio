@@ -65,6 +65,63 @@ body {
 #bar #total.under { color: #00e5a0; }
 #bar #total.over  { color: #ff8a5c; }
 
+/* ---- HUD Flex Wrappers ---- */
+.hud-left { display: flex; align-items: center; gap: 0.8rem; }
+.hud-right { display: flex; align-items: center; gap: 1rem; }
+
+/* ---- Fuel Tank Gauge ---- */
+.fuel-tank-container {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.fuel-tank-label {
+    font-size: 0.6rem;
+    color: var(--ink-soft);
+}
+.fuel-tank-track {
+    width: 60px;
+    height: 6px;
+    background: #000;
+    border: 1px solid var(--ink-soft);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.fuel-tank-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s ease, background-color 0.3s;
+}
+.fuel-tank-fill.low { background: var(--gold); }
+.fuel-tank-fill.critical { background: var(--hot); }
+
+/* ---- Stardust HUD ---- */
+.stardust-hud {
+    color: var(--gold);
+    font-size: 0.8rem;
+    text-shadow: 0 0 4px rgba(255, 217, 138, 0.4);
+}
+
+/* ---- Town Compass Pip ---- */
+#compass {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+}
+.compass-pip {
+    position: absolute;
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 12px solid var(--accent);
+    opacity: 0.6;
+    transition: opacity 0.3s, transform 0.1s;
+    /* initial placement will be overridden by JS */
+    top: 50%; left: 50%;
+}
+.compass-pip.hidden { opacity: 0; }
+
+
 /* ---- corner buttons (right side; the settings hamburger owns top-left) ---- */
 #btns {
     position: fixed;

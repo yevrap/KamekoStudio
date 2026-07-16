@@ -13,18 +13,36 @@
 <canvas id="game"></canvas>
 
 <div id="bar" class="hidden">
-    <span><span id="holeNo">HOLE 1</span> <span class="dim" id="parLbl">· PAR 2</span></span>
-    <span class="dim">FLICKS <span id="strokes">0</span></span>
-    <span>TOTAL <span id="total">E</span></span>
+    <div class="hud-left">
+        <span><span id="holeNo">HOLE 1</span> <span class="dim" id="parLbl">· PAR 2</span></span>
+        <span class="dim">FLICKS <span id="strokes">0</span></span>
+        <span>TOTAL <span id="total">E</span></span>
+    </div>
+    <div class="hud-right">
+        <span class="stardust-hud">✨ <span id="endlessStardust">0</span></span>
+        <div class="fuel-tank-container">
+            <div class="fuel-tank-label">FUEL</div>
+            <div class="fuel-tank-track"><div id="endlessFuelBar" class="fuel-tank-fill" style="width: 100%;"></div></div>
+        </div>
+    </div>
 </div>
 
 <div id="exploreBar" class="hidden">
-    <span>🌌 Explore <span class="dim">Free flight</span></span>
-    <span>FUEL <span id="exploreFuel">100</span>%</span>
+    <div class="hud-left">
+        <span>🌌 Explore <span class="dim" id="exploreRegion">Free flight</span></span>
+        <span class="dim" id="exploreCoords">X: 0 Y: 0</span>
+    </div>
+    <div class="hud-right">
+        <span class="stardust-hud">✨ <span id="exploreStardust">0</span></span>
+        <div class="fuel-tank-container">
+            <div class="fuel-tank-label">FUEL</div>
+            <div class="fuel-tank-track"><div id="exploreFuelBar" class="fuel-tank-fill" style="width: 100%;"></div></div>
+        </div>
+    </div>
 </div>
 
-<div id="survivalBar" class="hidden">
-    <span>FUEL <span id="survFuel">100</span>%</span>
+<div id="compass" class="hidden">
+    <div class="compass-pip"></div>
 </div>
 
 <div id="btns">
