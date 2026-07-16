@@ -12,6 +12,7 @@ export const S = {
     par: 2,
     fuel: 100,        // Survival mode fuel
     stardust: 0,      // Currency collected in Explore mode
+    upgrades: { tank: 0, siphon: 0, sensor: 0 }, // Town Shop upgrade levels (EXP-1b), Explore only
     paused: false,
     tFlight: 0,
     time: 0,          // cosmetic clock (twinkle, accretion spin)

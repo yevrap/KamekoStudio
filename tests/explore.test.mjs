@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT } from '../games/black-hole-in-one/constants.js';
 
@@ -169,4 +169,63 @@ test('EXP-1a: collecting a stardust pickup increments S.stardust and fires the p
     assert.equal(S.stardust, before + 1);
     assert.equal(persisted, before + 1, 'hooks.stardust should fire with the new running total');
     setHooks({ stardust() {} });
+});
+
+/* ============================== EXP-1b: Town Shop / Fuel Tank ============================== */
+
+test('EXP-1b: atTown is true only when resting on the tee in Explore mode', () => {
+    startRun();
+    assert.equal(S.phase, 'rest');
+    assert.equal(atTown(), true, 'startRun leaves the comet resting on the tee');
+
+    S.phase = 'flight';
+    assert.equal(atTown(), false, 'not at rest');
+
+    S.phase = 'rest';
+    comet.rest = { b: { type: 'planet' }, ang: 0 };
+    assert.equal(atTown(), false, 'resting on a planet, not the tee');
+});
+
+test('EXP-1b: buyUpgrade deducts stardust, levels up the tank, and adds the capacity delta to current fuel', () => {
+    S.upgrades.tank = 0;
+    startRun();
+    S.stardust = 15;
+    let savedUpgrades = null, persistedStardust = null;
+    setHooks({ upgrades(u) { savedUpgrades = { ...u }; }, stardust(t) { persistedStardust = t; } });
+
+    const before = fuel; // full L0 tank = 100
+    const ok = buyUpgrade('tank');
+
+    assert.equal(ok, true);
+    assert.equal(S.stardust, 0);
+    assert.equal(S.upgrades.tank, 1);
+    assert.equal(fuel, before + 30, 'the L0→L1 capacity delta (100→130) is added to current fuel');
+    assert.deepEqual(savedUpgrades, { tank: 1, siphon: 0, sensor: 0 });
+    assert.equal(persistedStardust, 0);
+    setHooks({ upgrades() {}, stardust() {} });
+});
+
+test('EXP-1b: buyUpgrade refuses below cost or past L3, with no partial state change', () => {
+    S.upgrades.tank = 0;
+    startRun();
+    S.stardust = 10; // below the 15 cost for L1
+    assert.equal(buyUpgrade('tank'), false);
+    assert.equal(S.stardust, 10);
+    assert.equal(S.upgrades.tank, 0);
+
+    S.upgrades.tank = 3; // already maxed
+    S.stardust = 999;
+    assert.equal(buyUpgrade('tank'), false);
+    assert.equal(S.stardust, 999);
+    assert.equal(S.upgrades.tank, 3);
+});
+
+test('EXP-1b: buyUpgrade is a no-op away from Town', () => {
+    S.upgrades.tank = 0;
+    startRun();
+    S.phase = 'flight';
+    S.stardust = 999;
+    assert.equal(buyUpgrade('tank'), false);
+    assert.equal(S.stardust, 999);
+    assert.equal(S.upgrades.tank, 0);
 });

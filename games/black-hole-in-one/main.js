@@ -18,6 +18,7 @@ const LS = {
     muted: 'blackHoleInOne_muted',
     freezeAim: 'blackHoleInOne_freezeAim',
     stardust: 'blackHoleInOne_stardust',
+    upgrades: 'blackHoleInOne_upgrades',
 };
 
 function bestRound() {
@@ -63,6 +64,9 @@ explore.setHooks({
     sfx,
     stardust(total) {
         localStorage.setItem(LS.stardust, String(total));
+    },
+    upgrades(u) {
+        localStorage.setItem(LS.upgrades, JSON.stringify(u));
     },
 });
 
@@ -314,6 +318,10 @@ localStorage.setItem(LS.lastPlayed, String(Date.now()));
 setMuted(localStorage.getItem(LS.muted) === 'true');
 S.freezeAim = localStorage.getItem(LS.freezeAim) !== 'false'; // Default to true
 S.stardust = parseInt(localStorage.getItem(LS.stardust), 10) || 0;
+try {
+    const savedUpgrades = JSON.parse(localStorage.getItem(LS.upgrades));
+    if (savedUpgrades && typeof savedUpgrades === 'object') Object.assign(S.upgrades, savedUpgrades);
+} catch (e) { /* corrupt/missing value — keep defaults */ }
 
 function bootBackground() {
     const lastMode = localStorage.getItem(LS.mode);

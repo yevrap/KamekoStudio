@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {
     WORLD_W, COURSE_H, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, MAX_V, DT, G,
     ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed, fitZoom, ZOOM_MIN, ZOOM_FIT,
+    upgradeCost, tankMaxFuel,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
@@ -29,6 +30,22 @@ test('holeLabel covers the full golf ladder', () => {
     assert.equal(holeLabel(6, 4).label, 'DOUBLE BOGEY');
     assert.equal(holeLabel(8, 4).label, '+4');
     assert.equal(holeLabel(3, 4).ace, false);
+});
+
+test('upgradeCost follows the shared 15/35/60 curve and returns null once maxed (EXP-1b)', () => {
+    assert.equal(upgradeCost(0), 15);
+    assert.equal(upgradeCost(1), 35);
+    assert.equal(upgradeCost(2), 60);
+    assert.equal(upgradeCost(3), null);
+});
+
+test('tankMaxFuel maps levels 0-3 to 100/130/160/200 and clamps out-of-range levels (EXP-1b)', () => {
+    assert.equal(tankMaxFuel(0), 100);
+    assert.equal(tankMaxFuel(1), 130);
+    assert.equal(tankMaxFuel(2), 160);
+    assert.equal(tankMaxFuel(3), 200);
+    assert.equal(tankMaxFuel(-1), 100);
+    assert.equal(tankMaxFuel(9), 200);
 });
 
 test('isBetterRound: first round always records, then lower wins', () => {

@@ -6,6 +6,7 @@
 import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
+    upgradeCost, tankMaxFuel,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -146,6 +147,7 @@ export function clearParticles() { particles = []; }
 
 export function render(drag) {
     updateCompass();
+    updateTownShop();
     ctx.setTransform(view.dpr * view.scale, 0, 0, view.dpr * view.scale, 0, 0);
     ctx.clearRect(0, 0, view.vw, view.vh);
 
@@ -657,4 +659,44 @@ export function updateCompass() {
     el.style.transform = `translate(-50%, -50%) rotate(${rot}rad)`;
     el.style.left = cssX + 'px';
     el.style.top = cssY + 'px';
+}
+
+/* ============================== TOWN SHOP (EXP-1b) ============================== */
+// Only re-rendered on show/hide and right after a purchase — not every frame — so a
+// button never gets swapped out from under an in-progress tap.
+
+let shopVisible = false;
+
+export function updateTownShop() {
+    const el = document.getElementById('townShop');
+    if (!el) return;
+    const show = explore.atTown();
+    if (show === shopVisible) return;
+    shopVisible = show;
+    el.classList.toggle('hidden', !show);
+    if (show) renderTownShop();
+}
+
+function renderTownShop() {
+    const balEl = document.getElementById('ts-balance');
+    if (balEl) balEl.textContent = S.stardust;
+
+    const level = S.upgrades.tank;
+    const cost = upgradeCost(level);
+    const maxed = cost === null;
+    const itemsEl = document.getElementById('ts-items');
+    if (!itemsEl) return;
+    itemsEl.innerHTML = `
+        <div class="ts-item">
+            <div>
+                <div class="ts-item-name">⛽ Fuel Tank<span class="ts-item-level">L${level}${maxed ? ' · MAX' : ''}</span></div>
+                <div class="ts-item-desc">${maxed ? `Max fuel ${tankMaxFuel(level)}` : `Max fuel ${tankMaxFuel(level)} → ${tankMaxFuel(level + 1)}`}</div>
+            </div>
+            ${maxed ? '' : `<button id="ts-buy-tank" class="ts-buy" ${S.stardust < cost ? 'disabled' : ''}>✨ ${cost}</button>`}
+        </div>`;
+
+    const buyBtn = document.getElementById('ts-buy-tank');
+    if (buyBtn) buyBtn.addEventListener('click', () => {
+        if (explore.buyUpgrade('tank')) renderTownShop();
+    });
 }

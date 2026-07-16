@@ -121,6 +121,58 @@ body {
 }
 .compass-pip.hidden { opacity: 0; }
 
+/* ---- Town Shop (EXP-1b) — bottom sheet, same chrome as #editorBar/#customBar ---- */
+#townShop {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 12px;
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.85));
+    border-top: 1px solid rgba(255,255,255,0.1);
+    color: #fff;
+    z-index: 50;
+    transition: transform 0.2s;
+}
+#townShop.hidden { transform: translateY(110%); }
+.ts-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+#ts-items { display: flex; flex-direction: column; gap: 8px; max-width: 420px; margin: 0 auto; }
+.ts-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 8px 12px;
+}
+.ts-item-name { font-size: 0.85rem; font-weight: 700; }
+.ts-item-level { color: #9a9ac8; font-weight: 500; margin-left: 6px; }
+.ts-item-desc { font-size: 0.72rem; color: #9a9ac8; margin-top: 2px; }
+.ts-buy {
+    background: rgba(0,229,160,0.16);
+    border: 1px solid #00e5a0;
+    color: #00e5a0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.ts-buy:active { background: rgba(0,229,160,0.3); }
+.ts-buy:disabled { opacity: 0.4; border-color: #555; color: #999; cursor: default; }
+
 
 /* ---- corner buttons (right side; the settings hamburger owns top-left) ---- */
 #btns {

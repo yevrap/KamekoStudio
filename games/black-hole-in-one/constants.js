@@ -72,6 +72,18 @@ export function fitZoom(span, viewMin) {
 // centripetal a = v²/d must equal gravity G·m/d²). Pure — unit-tested.
 export function circularSpeed(m, d) { return Math.sqrt(G * Math.abs(m) / d); }
 
+// ---- Town Shop upgrades (EXP-1b) ---------------------------------------------
+// Permanent, stardust-bought upgrades scoped to Explore only — Endless's fuel
+// system stays untouched so its high-score runs remain comparable session to
+// session. Shared cost curve across all upgrade types (15/35/60 for L1/L2/L3).
+export const UPGRADE_MAX_LEVEL = 3;
+export const UPGRADE_COSTS = [15, 35, 60];
+export const FUEL_TANK_LEVELS = [100, 130, 160, 200]; // max fuel by tank level (0-3)
+
+// Stardust cost to buy the NEXT level above `level`; null once maxed (L3).
+export function upgradeCost(level) { return level < UPGRADE_MAX_LEVEL ? UPGRADE_COSTS[level] : null; }
+export function tankMaxFuel(level) { return FUEL_TANK_LEVELS[Math.max(0, Math.min(level, UPGRADE_MAX_LEVEL))]; }
+
 export const PALETTES = [
     { base: '#e2725b', dark: '#8c3a2c', name: 'rust' },
     { base: '#57c7c2', dark: '#20635f', name: 'teal' },

@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture } from './physics.js';
 
@@ -11,7 +11,7 @@ export const camera = { x: 50, y: 85 };
 export let fuel = 100;
 
 export let hooks = {
-    toast() {}, bar() {}, burst() {}, stardust() {},
+    toast() {}, bar() {}, burst() {}, stardust() {}, upgrades() {},
     sfx: { flick() {}, bounce() {}, land() {}, sling() {} },
 };
 export function setHooks(h) { hooks = Object.assign(hooks, h); }
@@ -147,7 +147,7 @@ export function startRun() {
     worldSeed = 'explore-1'; // Hardcoded for Sprint 1 until persists
     lastChunkX = null;
     lastChunkY = null;
-    fuel = 100;
+    fuel = tankMaxFuel(S.upgrades.tank);
     
     world.teeRock = { x: 50, y: 85, r: 3.4, m: 8, type: 'tee', id: 'tee' };
     camera.x = 50;
@@ -238,7 +238,7 @@ export function step(dt) {
         if (Math.hypot(dx, dy) < COMET_R + p.r) {
             world.pickups.splice(i, 1);
             if (p.type === 'fuel') {
-                fuel = Math.min(100, fuel + 20);
+                fuel = Math.min(tankMaxFuel(S.upgrades.tank), fuel + 20);
                 hooks.burst(p.x, p.y, 14, '#20e657', 20);
             } else if (p.type === 'stardust') {
                 S.stardust += 1;
@@ -286,7 +286,7 @@ export function step(dt) {
 
 function respawnTown() {
     hooks.toast('Empty tank! Towed back to town.');
-    fuel = 100;
+    fuel = tankMaxFuel(S.upgrades.tank);
     camera.x = 50;
     camera.y = 85;
     comet.vx = comet.vy = 0;
@@ -297,6 +297,38 @@ function respawnTown() {
     S.phase = 'rest';
     world.trail = [];
     hooks.bar();
+}
+
+// True when the comet is at rest on the Town tee rock — the Town Shop (EXP-1b)
+// is only offered here, not mid-flight or elsewhere in the sector.
+export function atTown() {
+    return S.mode === 'explore' && S.phase === 'rest'
+        && !!(comet.rest && comet.rest.b && comet.rest.b.type === 'tee');
+}
+
+// Buy the next level of upgrade `key` (currently only 'tank' is wired to a gameplay
+// effect). Returns false without side effects if not at Town, maxed out, or short
+// on stardust. Fuel Tank purchases add the capacity delta to the current tank
+// rather than topping it off, so buying doesn't grant a free full refill.
+export function buyUpgrade(key) {
+    if (!atTown()) return false;
+    const level = S.upgrades[key] || 0;
+    const cost = upgradeCost(level);
+    if (cost === null || S.stardust < cost) return false;
+
+    S.stardust -= cost;
+    S.upgrades[key] = level + 1;
+    hooks.stardust(S.stardust);
+    hooks.upgrades(S.upgrades);
+
+    if (key === 'tank') {
+        const oldMax = tankMaxFuel(level);
+        const newMax = tankMaxFuel(level + 1);
+        fuel = Math.min(newMax, fuel + (newMax - oldMax));
+        hooks.toast(`⬆️ Fuel Tank upgraded to L${S.upgrades.tank}`);
+    }
+    hooks.bar();
+    return true;
 }
 
 export function stepOrbit(dt) {
