@@ -207,6 +207,8 @@ export function render(drag) {
     for (const b of world.bodies) {
         if (b.type === 'planet') drawPlanet(b);
         else if (b.type === 'pulsar') drawPulsar(b);
+        else if (b.type === 'mine') drawMine(b);
+        else if (b.type === 'trap') drawTrap(b);
         else drawTee(b);
     }
     if (world.blackHole) drawBlackHole();
@@ -288,6 +290,48 @@ function drawPulsar(b) {
         ctx.beginPath();
         ctx.moveTo(b.x + Math.cos(a) * b.r * 1.4, b.y + Math.sin(a) * b.r * 1.4);
         ctx.lineTo(b.x + Math.cos(a) * b.r * 2.6, b.y + Math.sin(a) * b.r * 2.6);
+        ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+}
+
+function drawMine(b) {
+    ctx.fillStyle = '#cc2929';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#ff4444';
+    ctx.lineWidth = 0.4;
+    for (let i = 0; i < 8; i++) {
+        const a = i * Math.PI / 4 + S.time * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(b.x + Math.cos(a) * b.r, b.y + Math.sin(a) * b.r);
+        ctx.lineTo(b.x + Math.cos(a) * (b.r + 0.8), b.y + Math.sin(a) * (b.r + 0.8));
+        ctx.stroke();
+    }
+}
+
+function drawTrap(b) {
+    ctx.globalCompositeOperation = 'lighter';
+    const pulse = 0.7 + 0.3 * Math.sin(S.time * 4);
+    ctx.globalAlpha = 0.15 * pulse;
+    ctx.fillStyle = '#9933ff';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 5, 0, 7); ctx.fill();
+    
+    ctx.globalAlpha = 0.8;
+    const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+    g.addColorStop(0, '#000000');
+    g.addColorStop(0.7, '#4a0080');
+    g.addColorStop(1, '#9933ff');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill();
+    
+    ctx.strokeStyle = '#d480ff';
+    ctx.lineWidth = 0.4;
+    ctx.globalAlpha = 0.6 * pulse;
+    for (let i = 0; i < 3; i++) {
+        const a = -S.time * 3 + i * Math.PI * 2 / 3;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r * 1.6, a, a + Math.PI * 0.7);
         ctx.stroke();
     }
     ctx.globalCompositeOperation = 'source-over';

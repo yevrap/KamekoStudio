@@ -95,6 +95,35 @@ export function genHole(n) {
                 }
             }
         }
+
+        // Gravity Traps (0 to 1)
+        if (n >= 2 && Math.random() < 0.35) {
+            for (let tries = 0; tries < 50; tries++) {
+                const px = rand(14, 86), py = rand(COURSE_H * 0.3, COURSE_H * 0.7);
+                if (dist(px, py, blackHole.x, blackHole.y) > 22 &&
+                    dist(px, py, teeRock.x, teeRock.y) > 22 &&
+                    world.bodies.every(b => dist(px, py, b.x, b.y) > b.r + 14)) {
+                    world.bodies.push({ x: px, y: py, r: 2.8, m: 200, type: 'trap' });
+                    break;
+                }
+            }
+        }
+
+        // Mines (1 to 4)
+        const nMines = n >= 3 ? rand(1, 4) : 0;
+        for (let i = 0; i < nMines; i++) {
+            for (let tries = 0; tries < 50; tries++) {
+                const px = rand(10, 90), py = rand(COURSE_H * 0.2, COURSE_H * 0.8);
+                if (dist(px, py, blackHole.x, blackHole.y) > 15 &&
+                    dist(px, py, teeRock.x, teeRock.y) > 15 &&
+                    world.bodies.every(b => dist(px, py, b.x, b.y) > b.r + 7) &&
+                    world.pickups.every(p => dist(px, py, p.x, p.y) > 7)) {
+                    // Mines have 0 mass (no gravity)
+                    world.bodies.push({ x: px, y: py, r: 2, m: 0, type: 'mine' });
+                    break;
+                }
+            }
+        }
     }
 
     world.bodies.push(teeRock);
@@ -173,6 +202,14 @@ function checkSurvivalGameOver() {
     return false;
 }
 
+function triggerHazardDeath(hit) {
+    hooks.burst(comet.x, comet.y, 25, hit.type === 'trap' ? '#9933ff' : '#ff4444', 30);
+    hooks.sfx.lost();
+    hooks.toast(hit.type === 'trap' ? '🌀 Crushed in a Gravity Trap' : '💥 Hit a Space Mine');
+    S.fuel = 0;
+    checkSurvivalGameOver();
+}
+
 export function stepFlight(dt) {
     S.tFlight += dt;
     if (S.orbitCooldown > 0) S.orbitCooldown = Math.max(0, S.orbitCooldown - dt);
@@ -208,6 +245,11 @@ export function stepFlight(dt) {
     if (res && res.sink) { beginSink(); return; }
 
     if (res && res.hit) {
+        if (res.hit.type === 'mine' || res.hit.type === 'trap') {
+            triggerHazardDeath(res.hit);
+            return;
+        }
+
         const c = collide(comet, res.hit);
         if (c.landed) { landOn(res.hit, c.ang); return; }
         if (c.bounced) {
