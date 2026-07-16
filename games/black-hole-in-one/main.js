@@ -251,9 +251,9 @@ function frame(now) {
     while (acc >= DT) {
         acc -= DT;
         if (S.mode === 'explore') {
-            // OW-0: keep physics stepping during mid-flight aiming so the
-            // comet keeps moving while you plan your push — feels alive.
-            if (S.phase === 'flight' || (S.phase === 'aiming' && S.prevPhase === 'flight')) explore.step(DT);
+            // OW-0: freeze physics during mid-flight aiming so the player
+            // can aim accurately — the comet holds position until release.
+            if (S.phase === 'flight') explore.step(DT);
             else if (S.phase === 'orbit') explore.stepOrbit(DT);
         } else {
             if (S.phase === 'flight') game.stepFlight(DT);
