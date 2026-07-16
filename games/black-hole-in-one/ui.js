@@ -592,7 +592,6 @@ export function showHowto() {
     document.getElementById('howto').classList.remove('hidden');
     document.getElementById('bar').classList.add('hidden');
     document.getElementById('exploreBar').classList.add('hidden');
-    document.getElementById('survivalBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');
     document.getElementById('customBar').classList.add('hidden');
 }

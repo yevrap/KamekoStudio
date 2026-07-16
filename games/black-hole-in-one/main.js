@@ -135,7 +135,6 @@ function startRun(mode) {
     ui.hideSurvivalGameOver();
     document.getElementById('bar').classList.add('hidden');
     document.getElementById('exploreBar').classList.add('hidden');
-    document.getElementById('survivalBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');
     document.getElementById('customBar').classList.add('hidden');
     if (mode === 'explore') {
