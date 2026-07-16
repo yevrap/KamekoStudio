@@ -6,7 +6,7 @@
 import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
-    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius,
+    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -746,7 +746,7 @@ function renderTownShop() {
     const itemsEl = document.getElementById('ts-items');
     if (!itemsEl) return;
 
-    itemsEl.innerHTML = UPGRADES.map(u => {
+    const upgradeRows = UPGRADES.map(u => {
         const level = S.upgrades[u.key] || 0;
         const cost = upgradeCost(level);
         const maxed = cost === null;
@@ -759,6 +759,19 @@ function renderTownShop() {
             ${maxed ? '' : `<button data-upgrade="${u.key}" class="ts-buy" ${S.stardust < cost ? 'disabled' : ''}>✨ ${cost}</button>`}
         </div>`;
     }).join('');
+
+    // Inventory items (INV-2) are always owned — no purchase path yet, just a
+    // read-only "already acquired" listing that foreshadows the future buy path.
+    const inventoryRows = ITEMS.map(item => `
+        <div class="ts-item">
+            <div>
+                <div class="ts-item-name">${item.icon} ${item.label}</div>
+                <div class="ts-item-desc">${item.desc}</div>
+            </div>
+            <span class="ts-acquired">✅ Acquired</span>
+        </div>`).join('');
+
+    itemsEl.innerHTML = upgradeRows + inventoryRows;
 
     itemsEl.querySelectorAll('.ts-buy').forEach(btn => {
         btn.addEventListener('click', () => {
