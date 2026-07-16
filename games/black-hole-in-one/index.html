@@ -32,18 +32,30 @@
 
 <div id="howto">
     <h1>⚫ Black Hole in One</h1>
-    <p>Pull back anywhere on the screen and release to fling your comet.</p>
-    <p>🪐 Planets bend every shot — swing around them, or <strong>land on one</strong> to break a long hole into two easy putts. Hops are celebrated on your scorecard.</p>
-    <p>Sink the comet into the black hole in as few flicks as you can. Every hole is brand new.</p>
+    <p>Pull back anywhere and release to fling your comet. 🪐 Planets bend every shot — swing around them, or <strong>land on one</strong> to split a long hole into two easy putts.</p>
+    <p>Sink it into the black hole in as few flicks as you can. Every hole is brand new.</p>
     <div id="modeBtns">
-        <button id="modeRound">⛳ 9-Hole Round</button>
-        <button id="modeEndless">♾ Endless</button>
-        <button id="modeExplore">🌌 Explore</button>
-        <button id="modeEditor">🔨 Map Maker</button>
+        <div class="mode-section">
+            <span class="mode-head">Play</span>
+            <div class="mode-row">
+                <button id="modeRound" class="mode-go">⛳ 9-Hole Round</button>
+                <button id="modeEndless" class="mode-go">♾ Endless</button>
+            </div>
+        </div>
+        <div class="mode-section">
+            <span class="mode-head">Make &amp; explore</span>
+            <div class="mode-row">
+                <button id="modeEditor">🔨 Map Maker</button>
+                <button id="modeExplore">🌌 Explore</button>
+            </div>
+        </div>
     </div>
     <div id="sharedMapBtns" class="hidden">
-        <button id="modeSharedPlay" style="background:#ffb36b;color:#000;">▶ Play Shared Map</button>
-        <button id="modeSharedMenu">❌ Ignore & Go to Main Menu</button>
+        <p class="shared-note">🔗 Someone shared a custom map with you.</p>
+        <div class="mode-row">
+            <button id="modeSharedPlay" class="mode-go">▶ Play this map</button>
+            <button id="modeSharedMenu">No thanks</button>
+        </div>
     </div>
 </div>
 
