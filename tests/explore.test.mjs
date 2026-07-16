@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome, refuelFull } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome, refuelFull } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT } from '../games/black-hole-in-one/constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R } from '../games/black-hole-in-one/constants.js';
 
 test('Camera math: screenToWorld', () => {
     const [wx, wy] = screenToWorld(100, 200, 2, 100, 200, 50, 100);
@@ -33,6 +33,58 @@ test('Explore chunk generation is deterministic', () => {
         assert.equal(chunkA1[i].y, chunkA2[i].y);
         assert.equal(chunkA1[i].r, chunkA2[i].r);
     }
+});
+
+test('P1 · Explore — Fix Items Inside Planets: pickupBlockedByBody blocks a pickup that overlaps a planet\'s collision radius plus clearance', () => {
+    const bodies = [{ x: 0, y: 0, r: 10 }];
+    const blockedAt = 10 + COMET_R + 1.8 + 2; // planet r + comet's closest approach + pickup r + clearance
+    assert.equal(pickupBlockedByBody(0, 0, 1.8, bodies), true); // dead center
+    assert.equal(pickupBlockedByBody(blockedAt - 0.1, 0, 1.8, bodies), true); // just inside
+    assert.equal(pickupBlockedByBody(blockedAt + 0.1, 0, 1.8, bodies), false); // just outside
+});
+
+test('P1 · Explore — Fix Items Inside Planets: getChunkPickups never spawns a pickup inside a planet\'s collision radius', () => {
+    // Sweep a wide range of chunks/seeds so giants, dwarves, and binary pairs all get exercised.
+    for (const seed of ['explore-1', 'testseed', 'another-seed']) {
+        for (let cx = -6; cx <= 6; cx++) {
+            for (let cy = -6; cy <= 6; cy++) {
+                const bodies = getChunkBodies(cx, cy, seed);
+                const pickups = getChunkPickups(cx, cy, seed, bodies);
+                for (const p of pickups) {
+                    for (const b of bodies) {
+                        const d = Math.hypot(p.x - b.x, p.y - b.y);
+                        assert.ok(d >= b.r + COMET_R + p.r,
+                            `pickup ${p.id} at d=${d.toFixed(2)} overlaps body r=${b.r} (cx=${cx},cy=${cy},seed=${seed})`);
+                    }
+                }
+            }
+        }
+    }
+});
+
+test('P1 · Explore — Fix Items Inside Planets: no pickup spawns inside an active body across a wide camera sweep (cross-chunk bleed included)', () => {
+    // A binary pair's second body or a giant planet's radius can extend past its
+    // own chunk's boundary — this sweeps updateActiveChunks() (the real pipeline)
+    // rather than a single chunk in isolation, so that bleed is exercised too.
+    world.teeRock = null;
+    let totalPickups = 0;
+    for (let cx = -8; cx <= 8; cx++) {
+        for (let cy = -8; cy <= 8; cy++) {
+            camera.x = cx * CHUNK_SIZE + CHUNK_SIZE / 2;
+            camera.y = cy * CHUNK_SIZE + CHUNK_SIZE / 2;
+            updateActiveChunks();
+            for (const p of world.pickups) {
+                totalPickups++;
+                for (const b of world.bodies) {
+                    if (b.type === 'tee') continue;
+                    const d = Math.hypot(p.x - b.x, p.y - b.y);
+                    assert.ok(d >= b.r + COMET_R + p.r,
+                        `pickup ${p.id} overlaps body at cx=${cx},cy=${cy} d=${d.toFixed(2)} vs required ${(b.r + COMET_R + p.r).toFixed(2)}`);
+                }
+            }
+        }
+    }
+    assert.ok(totalPickups > 100, 'sweep should have generated a meaningful number of pickups');
 });
 
 test('Explore spatial culling only loads 3x3 grid around camera', () => {

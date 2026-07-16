@@ -88,25 +88,48 @@ export function getChunkBodies(cx, cy, seed) {
     return bodies.filter(b => b !== null);
 }
 
-export function getChunkPickups(cx, cy, seed) {
+// A pickup at (px,py) with radius `r` is unreachable if it overlaps a planet's
+// collision boundary — the comet can never get closer to a planet's center
+// than b.r + COMET_R (stepBody() stops it there), so the pickup must clear
+// that plus its own radius. PICKUP_CLEARANCE adds a small gap so pickups
+// aren't spawned flush against the boundary either.
+const PICKUP_CLEARANCE = 2;
+export function pickupBlockedByBody(px, py, r, bodies) {
+    return bodies.some(b => Math.hypot(px - b.x, py - b.y) < b.r + COMET_R + r + PICKUP_CLEARANCE);
+}
+
+export function getChunkPickups(cx, cy, seed, bodies = []) {
     if (cx < -SECTOR_LIMIT/CHUNK_SIZE - 2 || cx > SECTOR_LIMIT/CHUNK_SIZE + 2) return [];
     if (cy < -SECTOR_LIMIT/CHUNK_SIZE - 2 || cy > SECTOR_LIMIT/CHUNK_SIZE + 2) return [];
 
     const rng = mulberry32(seedFromString('pickups_' + seed + '_' + cx + '_' + cy));
     const chunkPickups = [];
+
+    // Reject-and-resample: reroll a candidate spot up to 10 times if it lands
+    // inside a planet; skip the pickup entirely if a chunk is too crowded to
+    // find a clear spot (rare — e.g. a giant planet filling most of the chunk).
+    function placeClear(r) {
+        for (let attempt = 0; attempt < 10; attempt++) {
+            const px = cx * CHUNK_SIZE + rng() * CHUNK_SIZE;
+            const py = cy * CHUNK_SIZE + rng() * CHUNK_SIZE;
+            if (!pickupBlockedByBody(px, py, r, bodies)) return [px, py];
+        }
+        return null;
+    }
+
     // 0 to 2 fuel pickups per chunk
     const numFuel = Math.floor(rng() * 3);
     for (let i = 0; i < numFuel; i++) {
-        const px = cx * CHUNK_SIZE + rng() * CHUNK_SIZE;
-        const py = cy * CHUNK_SIZE + rng() * CHUNK_SIZE;
-        chunkPickups.push({ x: px, y: py, r: 1.8, type: 'fuel', id: `pf${cx}_${cy}_${i}` });
+        const pos = placeClear(1.8);
+        if (!pos) continue;
+        chunkPickups.push({ x: pos[0], y: pos[1], r: 1.8, type: 'fuel', id: `pf${cx}_${cy}_${i}` });
     }
     // 0 to 4 stardust pickups per chunk
     const numStardust = Math.floor(rng() * 5);
     for (let i = 0; i < numStardust; i++) {
-        const px = cx * CHUNK_SIZE + rng() * CHUNK_SIZE;
-        const py = cy * CHUNK_SIZE + rng() * CHUNK_SIZE;
-        chunkPickups.push({ x: px, y: py, r: 1.2, type: 'stardust', id: `ps${cx}_${cy}_${i}` });
+        const pos = placeClear(1.2);
+        if (!pos) continue;
+        chunkPickups.push({ x: pos[0], y: pos[1], r: 1.2, type: 'stardust', id: `ps${cx}_${cy}_${i}` });
     }
     return chunkPickups;
 }
@@ -119,10 +142,32 @@ export function updateActiveChunks() {
     const radius = sensorChunkRadius(S.upgrades.sensor);
     activeBodies = [];
     pickups = [];
+
+    // Cache per-chunk bodies (pure fn of cx,cy,seed) so the 3x3 neighbor lookup
+    // below doesn't recompute chunks we've already generated.
+    const bodyCache = new Map();
+    function bodiesAt(bcx, bcy) {
+        const key = bcx + '_' + bcy;
+        let b = bodyCache.get(key);
+        if (!b) { b = getChunkBodies(bcx, bcy, worldSeed); bodyCache.set(key, b); }
+        return b;
+    }
+
     for (let dx = -radius; dx <= radius; dx++) {
         for (let dy = -radius; dy <= radius; dy++) {
-            activeBodies.push(...getChunkBodies(cx + dx, cy + dy, worldSeed));
-            pickups.push(...getChunkPickups(cx + dx, cy + dy, worldSeed));
+            const ccx = cx + dx, ccy = cy + dy;
+            activeBodies.push(...bodiesAt(ccx, ccy));
+
+            // Bodies aren't confined to their own chunk's bounds (a binary pair's
+            // second body, or a giant planet's radius, can bleed into a neighbor) —
+            // so pickup placement checks the surrounding 3x3 chunks, not just this one.
+            const neighborBodies = [];
+            for (let nx = -1; nx <= 1; nx++) {
+                for (let ny = -1; ny <= 1; ny++) {
+                    neighborBodies.push(...bodiesAt(ccx + nx, ccy + ny));
+                }
+            }
+            pickups.push(...getChunkPickups(ccx, ccy, worldSeed, neighborBodies));
         }
     }
     
