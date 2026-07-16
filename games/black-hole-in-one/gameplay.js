@@ -80,6 +80,23 @@ export function genHole(n) {
         }
     }
 
+    world.pickups = [];
+    if (S.mode === 'survival') {
+        const nPickups = rand(1, 3);
+        for (let i = 0; i < nPickups; i++) {
+            for (let tries = 0; tries < 50; tries++) {
+                const px = rand(14, 86), py = rand(COURSE_H * 0.2, COURSE_H * 0.8);
+                if (dist(px, py, blackHole.x, blackHole.y) > 15 &&
+                    dist(px, py, teeRock.x, teeRock.y) > 15 &&
+                    world.bodies.every(b => dist(px, py, b.x, b.y) > b.r + 5) &&
+                    world.pickups.every(p => dist(px, py, p.x, p.y) > 8)) {
+                    world.pickups.push({ x: px, y: py, r: 1.8 });
+                    break;
+                }
+            }
+        }
+    }
+
     world.bodies.push(teeRock);
     S.par = Math.min(2 + (placed >= 3 ? 1 : 0) + (pulsar ? 1 : 0), 4);
     S.strokes = 0;
@@ -173,6 +190,20 @@ export function stepFlight(dt) {
         damp = { body: world.launchBody, factor: LIFTOFF_MIN + (1 - LIFTOFF_MIN) * k };
     }
     const res = stepBody(comet, dt, world.bodies, world.blackHole, damp);
+
+    // Pickups collision
+    if (S.mode === 'survival') {
+        for (let i = world.pickups.length - 1; i >= 0; i--) {
+            const p = world.pickups[i];
+            if (dist(comet.x, comet.y, p.x, p.y) < COMET_R + p.r) {
+                world.pickups.splice(i, 1);
+                S.fuel = Math.min(100, S.fuel + 20);
+                hooks.sfx.score(1); // pleasant chime
+                hooks.burst(p.x, p.y, 14, '#20e657', 20);
+                hooks.bar();
+            }
+        }
+    }
 
     if (res && res.sink) { beginSink(); return; }
 

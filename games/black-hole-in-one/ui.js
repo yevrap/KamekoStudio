@@ -212,6 +212,10 @@ export function render(drag) {
     if (world.blackHole) drawBlackHole();
     if (world.orbit) drawOrbitRing();
 
+    if (world.pickups) {
+        for (const p of world.pickups) drawPickup(p);
+    }
+
     if (S.phase === 'aiming' && drag) drawAim(drag);
 
     if (world.trail.length > 1) {
@@ -296,6 +300,19 @@ function drawTee(b) {
     ctx.fillStyle = '#54546a';
     ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, b.y + b.r * 0.2, b.r * 0.3, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(b.x + b.r * 0.35, b.y - b.r * 0.25, b.r * 0.2, 0, 7); ctx.fill();
+}
+
+function drawPickup(p) {
+    const pulse = 0.7 + 0.3 * Math.sin(S.time * 6 + p.x);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.globalAlpha = 0.5 * pulse;
+    ctx.fillStyle = '#20e657';
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 2.8, 0, 7); ctx.fill();
+    ctx.globalAlpha = 0.9;
+    ctx.fillStyle = '#b3ffc7';
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill();
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
 }
 
 // Faint dashed ring on the planet the comet is orbiting — the "you're in orbit,
