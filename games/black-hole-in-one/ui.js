@@ -350,11 +350,36 @@ function drawTrap(b) {
 }
 
 function drawTee(b) {
+    // Town beacon (EXP-1e): in Explore, the tee rock is a persistent, named place
+    // (Town, the Fuel/Siphon/Sensor shop's home) rather than a fresh per-hole tee,
+    // so it gets a distinct warm glow — visible whether or not the shop panel is
+    // open, and independent of it (purely cosmetic, no state). Golf/editor tees
+    // (same drawTee, same 'tee' type) are a new spot every hole and stay plain.
+    const isTown = S.mode === 'explore';
+    if (isTown) {
+        const pulse = 0.7 + 0.3 * Math.sin(S.time * 1.4);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 0.35 * pulse;
+        const g = ctx.createRadialGradient(b.x, b.y, b.r * 0.5, b.x, b.y, b.r * 3.2);
+        g.addColorStop(0, '#ffd98a');
+        g.addColorStop(1, 'rgba(255,217,138,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 3.2, 0, 7); ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+    }
+
     ctx.fillStyle = '#6b6b80';
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill();
     ctx.fillStyle = '#54546a';
     ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, b.y + b.r * 0.2, b.r * 0.3, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(b.x + b.r * 0.35, b.y - b.r * 0.25, b.r * 0.2, 0, 7); ctx.fill();
+
+    if (isTown) {
+        ctx.strokeStyle = 'rgba(255,217,138,0.6)';
+        ctx.lineWidth = 0.35;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 0.6, 0, 7); ctx.stroke();
+    }
 }
 
 function drawAsteroid(b) {
