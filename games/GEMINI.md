@@ -147,6 +147,7 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `blackHoleInOne_bestRound` | black-hole-in-one | Best 9-hole round total vs par (0/negative valid — lower is better) |
 | `blackHoleInOne_mode` | black-hole-in-one | Last chosen mode `'endless'`/`'round'` |
 | `blackHoleInOne_muted` | black-hole-in-one | Sound effects off/on |
+| `blackHoleInOne_inventory` | black-hole-in-one | JSON `{ [itemKey]: { owned, enabled } }` — item-toggle state (INV-1), Explore only |
 
 ## Three.js Obstacle Arrays
 
