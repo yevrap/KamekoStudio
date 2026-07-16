@@ -284,6 +284,10 @@ function frame(now) {
             if (S.phase === 'flight') game.stepFlight(DT);
             else if (S.phase === 'orbit') game.stepOrbit(DT);
             else if (S.phase === 'sink') game.stepSink(DT);
+            
+            if (S.mode === 'survival' && (S.phase === 'rest' || S.phase === 'aiming' || S.phase === 'flight' || S.phase === 'orbit')) {
+                game.stepAsteroids(DT);
+            }
         }
     }
     if (S.phase === 'flight' || S.phase === 'orbit') {

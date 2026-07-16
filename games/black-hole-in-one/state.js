@@ -23,6 +23,7 @@ export const S = {
 export const world = {
     bodies: [],       // planets + tee + pulsars (black hole kept separately)
     pickups: [],      // fuel pickups (Survival mode)
+    asteroids: [],    // moving asteroids (Survival mode)
     blackHole: null,
     teeRock: null,
     lastRest: null,   // rest descriptor to return lost shots to

@@ -217,6 +217,10 @@ export function render(drag) {
     if (world.pickups) {
         for (const p of world.pickups) drawPickup(p);
     }
+    
+    if (world.asteroids) {
+        for (const a of world.asteroids) drawAsteroid(a);
+    }
 
     if (S.phase === 'aiming' && drag) drawAim(drag);
 
@@ -344,6 +348,14 @@ function drawTee(b) {
     ctx.fillStyle = '#54546a';
     ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, b.y + b.r * 0.2, b.r * 0.3, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.arc(b.x + b.r * 0.35, b.y - b.r * 0.25, b.r * 0.2, 0, 7); ctx.fill();
+}
+
+function drawAsteroid(b) {
+    ctx.fillStyle = '#806b6b';
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5c4d4d';
+    ctx.beginPath(); ctx.arc(b.x - b.r * 0.3, b.y + b.r * 0.2, b.r * 0.4, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(b.x + b.r * 0.35, b.y - b.r * 0.25, b.r * 0.3, 0, 7); ctx.fill();
 }
 
 function drawPickup(p) {

@@ -124,6 +124,23 @@ export function genHole(n) {
                 }
             }
         }
+
+        world.asteroids = [];
+        // Moving Asteroids (1 to 4) starting from hole 4
+        const nAsteroids = n >= 4 ? rand(1, 4) : 0;
+        for (let i = 0; i < nAsteroids; i++) {
+            const r = rand(1.2, 2.5);
+            // spawn them slightly off-screen or near the edge so they drift through
+            const side = Math.floor(rand(0, 4)); // 0: left, 1: right, 2: top, 3: bottom
+            let px, py, vx, vy;
+            const speed = rand(1.5, 4.5);
+            if (side === 0) { px = -10; py = rand(0, COURSE_H); vx = speed; vy = rand(-speed, speed); }
+            else if (side === 1) { px = 110; py = rand(0, COURSE_H); vx = -speed; vy = rand(-speed, speed); }
+            else if (side === 2) { px = rand(0, 100); py = -10; vx = rand(-speed, speed); vy = speed; }
+            else { px = rand(0, 100); py = COURSE_H + 10; vx = rand(-speed, speed); vy = -speed; }
+            
+            world.asteroids.push({ x: px, y: py, r, vx, vy, type: 'asteroid' });
+        }
     }
 
     world.bodies.push(teeRock);
@@ -205,9 +222,29 @@ function checkSurvivalGameOver() {
 function triggerHazardDeath(hit) {
     hooks.burst(comet.x, comet.y, 25, hit.type === 'trap' ? '#9933ff' : '#ff4444', 30);
     hooks.sfx.lost();
-    hooks.toast(hit.type === 'trap' ? '🌀 Crushed in a Gravity Trap' : '💥 Hit a Space Mine');
+    hooks.toast(hit.type === 'trap' ? '🌀 Crushed in a Gravity Trap' : (hit.type === 'asteroid' ? '☄️ Smashed by an Asteroid' : '💥 Hit a Space Mine'));
     S.fuel = 0;
     checkSurvivalGameOver();
+}
+
+export function stepAsteroids(dt) {
+    for (const a of world.asteroids) {
+        a.x += a.vx * dt;
+        a.y += a.vy * dt;
+
+        // Wrap around screen boundaries for endless drift
+        if (a.x < -15) a.x = 115;
+        if (a.x > 115) a.x = -15;
+        if (a.y < -15) a.y = COURSE_H + 15;
+        if (a.y > COURSE_H + 15) a.y = -15;
+
+        // Check collision with comet if flying/aiming/orbiting
+        if (S.phase === 'flight' || S.phase === 'orbit' || S.phase === 'aiming' || S.phase === 'rest') {
+            if (dist(comet.x, comet.y, a.x, a.y) < COMET_R + a.r) {
+                triggerHazardDeath(a);
+            }
+        }
+    }
 }
 
 export function stepFlight(dt) {
