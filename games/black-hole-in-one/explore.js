@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture } from './physics.js';
 
@@ -224,6 +224,14 @@ function placeOnRest() {
     comet.y = r.b.y + Math.sin(r.ang) * (r.b.r + COMET_R + 0.25);
 }
 
+// Spend fuel, unless Endless Flight (INV-1) has the tank locked. Every fuel cost
+// in Explore goes through here so item N+1 (the Thruster's per-second burn) gets
+// the fuel-lock interaction for free instead of re-checking it at each call site.
+function burnFuel(amount) {
+    if (S.inventory.endlessFlight?.enabled) return;
+    fuel = Math.max(0, fuel - amount);
+}
+
 export function launch(dx, dy, len) {
     if (fuel <= 0) return false;
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
@@ -233,12 +241,7 @@ export function launch(dx, dy, len) {
         return false;
     }
 
-    // Endless Flight (INV-1) is a fuel-lock, not just a no-tow toggle: the tank
-    // doesn't drain at all while it's enabled.
-    if (!S.inventory.endlessFlight?.enabled) {
-        fuel -= 15;
-        if (fuel < 0) fuel = 0;
-    }
+    burnFuel(15);
     hooks.bar();
     
     // OW-0: one-time mid-flight push hint
@@ -257,9 +260,65 @@ export function launch(dx, dy, len) {
     return true;
 }
 
+// ---- Thruster (INV-3a): keyboard input + thrust vector ---------------------
+// Transient input state, not game state — module scope, not `S` (nothing here
+// persists or serializes).
+const MOVE_KEYS = new Map([
+    ['ArrowUp', [0, -1]], ['KeyW', [0, -1]],
+    ['ArrowDown', [0, 1]], ['KeyS', [0, 1]],
+    ['ArrowLeft', [-1, 0]], ['KeyA', [-1, 0]],
+    ['ArrowRight', [1, 0]], ['KeyD', [1, 0]],
+]);
+const keys = new Set(); // held movement key codes
+
+export function keyDown(code) { if (MOVE_KEYS.has(code)) keys.add(code); }
+export function keyUp(code) { keys.delete(code); }
+export function clearKeys() { keys.clear(); }
+
+// Sum of held movement keys into a unit vector; diagonals normalized so they
+// aren't √2 faster, opposite keys cancel to zero (T7). Pure — unit-tested.
+export function keysToVector(keySet) {
+    let x = 0, y = 0;
+    for (const code of keySet) {
+        const v = MOVE_KEYS.get(code);
+        if (v) { x += v[0]; y += v[1]; }
+    }
+    const len = Math.hypot(x, y);
+    return len > 0 ? { x: x / len, y: y / len } : { x: 0, y: 0 };
+}
+
+// Deadzone-then-linear throttle ramp from stick displacement in CSS px (T5),
+// ahead of the pointer wiring (INV-3b) that will call it. Pure — unit-tested.
+export function stickThrottle(d) {
+    if (d <= STICK_DEAD_PX) return 0;
+    return Math.min((d - STICK_DEAD_PX) / (STICK_R_PX - STICK_DEAD_PX), 1);
+}
+
+// Combine keyboard (and, from INV-3b, the stick) into one thrust vector. Inert
+// unless the Thruster item is on in Explore — the single gate behind T6/T7's
+// "all of the above is inert when off."
+export function thrustVec() {
+    if (!(S.mode === 'explore' && S.inventory.thruster?.enabled)) return { x: 0, y: 0, throttle: 0 };
+    const kv = keysToVector(keys);
+    if (kv.x === 0 && kv.y === 0) return { x: 0, y: 0, throttle: 0 };
+    return { x: kv.x, y: kv.y, throttle: 1 };
+}
+
+export function hasThrust() { return thrustVec().throttle > 0; }
+
 export function step(dt) {
     if (S.orbitCooldown > 0) S.orbitCooldown = Math.max(0, S.orbitCooldown - dt);
-    
+
+    const t = thrustVec();
+    if (t.throttle > 0 && fuel > 0) {
+        // Thrust lifts off under power — no flick to leave with, so a resting
+        // comet just starts flying the instant any throttle is applied (T6).
+        if (S.phase === 'rest') S.phase = 'flight';
+        comet.vx += t.x * THRUST_A * dt;
+        comet.vy += t.y * THRUST_A * dt;
+        burnFuel(THRUST_BURN * t.throttle * dt);
+    }
+
     const res = stepBody(comet, dt, world.bodies, null);
     
     if (res && res.hit) {
@@ -299,7 +358,7 @@ export function step(dt) {
         }
     }
     
-    if (S.orbitCooldown <= 0 && S.phase === 'flight') {
+    if (S.orbitCooldown <= 0 && S.phase === 'flight' && t.throttle === 0) {
         for (const b of world.bodies) {
             const cap = orbitCapture(comet, b);
             if (cap) {
@@ -329,17 +388,22 @@ export function step(dt) {
     
     updateCamera(dt);
 
-    if (S.phase === 'rest' && shouldTowHome(fuel, S.inventory)) {
+    if (shouldTowHome(fuel, S.inventory, S.phase)) {
         respawnTown();
     }
 }
 
-// True when an empty tank at rest should force a tow back to Town — today's
-// default, unless Endless Flight (INV-1) is enabled. Pure and unit-tested;
-// `fuel` has no exported setter, so the respawnTown() wiring itself is
-// verified in-browser rather than driven through this predicate in a test.
-export function shouldTowHome(fuel, inventory) {
-    return fuel <= 0 && !inventory.endlessFlight?.enabled;
+// True when a dry tank should force a tow back to Town. Endless Flight (INV-1)
+// locks the tank so this never fires while it's on. Under the Thruster the tow
+// is immediate wherever you are (T8) — running dry mid-burn is a normal event.
+// The flick scheme keeps the rest-gated tow: a flick charges −15 at launch, so
+// flicking with 15 in the tank hits 0 mid-shot, and an immediate tow would yank
+// the player home out of the very shot they just paid for. Pure and unit-tested;
+// `fuel` has no exported setter, so the respawnTown() wiring itself is verified
+// in-browser rather than driven through this predicate in a test.
+export function shouldTowHome(fuel, inventory, phase) {
+    if (fuel > 0 || inventory.endlessFlight?.enabled) return false;
+    return inventory.thruster?.enabled || phase === 'rest';
 }
 
 // Instantly tops the tank off. Endless Flight (INV-1) is a fuel-lock: switching
@@ -408,6 +472,18 @@ export function buyUpgrade(key) {
 
 export function stepOrbit(dt) {
     if (!world.orbit) return;
+
+    // Thrust ejects out of a live orbit on any throttle (T1/table). No velocity
+    // fixup needed — the tangential velocity this function writes every tick is
+    // already correct, so live physics (step()) picks up right where station-
+    // keeping left off, one tick later.
+    if (thrustVec().throttle > 0) {
+        world.orbit = null;
+        S.orbitCooldown = ORBIT_COOLDOWN;
+        S.phase = 'flight';
+        return;
+    }
+
     const o = world.orbit;
     o.ang += o.omega * dt;
     comet.x = o.b.x + Math.cos(o.ang) * o.radius;

@@ -224,10 +224,19 @@ document.getElementById('helpBtn').addEventListener('click', () => {
     if (S.phase === 'aiming') S.phase = 'rest';
 });
 
+/* ============================== KEYBOARD (Thruster, INV-3a) ============================== */
+
+window.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.code.startsWith('Arrow')) e.preventDefault();  // don't let the page scroll under the canvas
+    explore.keyDown(e.code);
+});
+window.addEventListener('keyup', e => { explore.keyUp(e.code); });
+
 /* ============================== PAUSE ============================== */
 
 document.addEventListener('visibilitychange', () => { S.paused = document.hidden; });
-window.addEventListener('blur', () => { S.paused = true; });
+window.addEventListener('blur', () => { S.paused = true; explore.clearKeys(); });
 window.addEventListener('focus', () => { S.paused = false; });
 window.addEventListener('settingsOpened', () => { S.paused = true; });
 window.addEventListener('settingsClosed', () => { S.paused = false; });
@@ -302,7 +311,9 @@ function frame(now) {
         if (S.mode === 'explore') {
             // OW-0: mid-flight aiming can be frozen (so the player can aim accurately)
             // or continuous (so the comet keeps moving while planning the push).
-            if (S.phase === 'flight' || (!S.freezeAim && S.phase === 'aiming' && S.prevPhase === 'flight')) explore.step(DT);
+            // INV-3a: also step while resting under active thrust, so lifting off
+            // a planet (or Town) under power actually moves the comet.
+            if (S.phase === 'flight' || (!S.freezeAim && S.phase === 'aiming' && S.prevPhase === 'flight') || (S.phase === 'rest' && explore.hasThrust())) explore.step(DT);
             else if (S.phase === 'orbit') explore.stepOrbit(DT);
         } else {
             if (S.phase === 'flight') game.stepFlight(DT);

@@ -99,6 +99,18 @@ export function siphonGain(level) { return FUEL_SIPHON_LEVELS[Math.max(0, Math.m
 export const SENSOR_RADIUS_LEVELS = [1, 2, 3, 4];
 export function sensorChunkRadius(level) { return SENSOR_RADIUS_LEVELS[Math.max(0, Math.min(level, UPGRADE_MAX_LEVEL))]; }
 
+// ---- Thruster (INV-3), Explore only --------------------------------------------
+// Analog thrust stick that replaces the flick while enabled (T1/T6): direction +
+// throttle from one input, strong enough to beat every planet's surface gravity
+// (max ~370 u/s² at a giant, since G=400) so Explore becomes a flying game, not
+// just a flicking one (T2). Do NOT raise MAX_V to make thrust feel faster — it's a
+// tunneling guard (keeps per-step movement under COMET_R so collision can't skip
+// past a body), not a taste knob; raising it needs swept collision first.
+export const THRUST_A      = 400;  // world u/s² at full throttle
+export const THRUST_BURN   = 8;    // fuel/second at full throttle (× throttle)
+export const STICK_R_PX    = 46;   // CSS px from stick origin = full throttle (INV-3b)
+export const STICK_DEAD_PX = 8;    // CSS px deadzone — a tap must not fire a blip (INV-3b)
+
 // ---- Inventory registry (INV-1) -----------------------------------------------
 // A mechanic testbed, not a shop: one entry per experimental gameplay modifier,
 // toggled from the settings drawer, Explore only. `owned` defaults true — there's
@@ -107,6 +119,8 @@ export function sensorChunkRadius(level) { return SENSOR_RADIUS_LEVELS[Math.max(
 export const ITEMS = [
     { key: 'endlessFlight', icon: '♾️', label: 'Endless Flight',
       desc: 'Full tank, forever — fuel stops draining until you switch it off.' },
+    { key: 'thruster', icon: '🚀', label: 'Thruster',
+      desc: 'Fly with a stick instead of flicking. Hold to burn — fuel drains while you thrust.' },
 ];
 
 export const PALETTES = [

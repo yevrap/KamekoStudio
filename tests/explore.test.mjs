@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome, refuelFull } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome, refuelFull, stickThrottle, keysToVector } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R } from '../games/black-hole-in-one/constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX } from '../games/black-hole-in-one/constants.js';
 
 test('Camera math: screenToWorld', () => {
     const [wx, wy] = screenToWorld(100, 200, 2, 100, 200, 50, 100);
@@ -285,21 +285,21 @@ test('EXP-1b: buyUpgrade is a no-op away from Town', () => {
 /* ============================== INV-1: Inventory / Endless Flight ============================== */
 
 test('INV-1: shouldTowHome tows home on an empty tank when Endless Flight is off (default)', () => {
-    assert.equal(shouldTowHome(0, defaultInventory()), true);
-    assert.equal(shouldTowHome(-5, defaultInventory()), true);
+    assert.equal(shouldTowHome(0, defaultInventory(), 'rest'), true);
+    assert.equal(shouldTowHome(-5, defaultInventory(), 'rest'), true);
 });
 
 test('INV-1: shouldTowHome skips the tow-back when Endless Flight is enabled', () => {
     const inv = defaultInventory();
     inv.endlessFlight.enabled = true;
-    assert.equal(shouldTowHome(0, inv), false);
+    assert.equal(shouldTowHome(0, inv, 'rest'), false);
 });
 
 test('INV-1: shouldTowHome never tows home while fuel remains, regardless of the toggle', () => {
-    assert.equal(shouldTowHome(1, defaultInventory()), false);
+    assert.equal(shouldTowHome(1, defaultInventory(), 'rest'), false);
     const inv = defaultInventory();
     inv.endlessFlight.enabled = true;
-    assert.equal(shouldTowHome(50, inv), false);
+    assert.equal(shouldTowHome(50, inv, 'rest'), false);
 });
 
 test('INV-1: defaultInventory owns every registry item but starts every toggle off', () => {
@@ -362,4 +362,58 @@ test('INV-1: refuelFull tops the tank off to the current upgrade level\'s max', 
     refuelFull();
 
     assert.equal(fuel, 130, 'refuelFull tops off to the current tank\'s max, not a hardcoded 100');
+});
+
+/* ============================== INV-3a: Thruster ============================== */
+
+test('INV-3a: stickThrottle has a deadzone floor, ramps linearly, and clamps at 1', () => {
+    assert.equal(stickThrottle(0), 0, 'no displacement = no throttle');
+    assert.equal(stickThrottle(STICK_DEAD_PX), 0, 'at the deadzone edge = still zero');
+    assert.equal(stickThrottle(STICK_DEAD_PX - 1), 0, 'inside the deadzone = zero');
+    const mid = STICK_DEAD_PX + (STICK_R_PX - STICK_DEAD_PX) / 2;
+    assert.ok(Math.abs(stickThrottle(mid) - 0.5) < 1e-9, 'halfway between deadzone and full radius = 0.5');
+    assert.equal(stickThrottle(STICK_R_PX), 1, 'at the full radius = 1');
+    assert.equal(stickThrottle(STICK_R_PX * 5), 1, 'beyond the radius clamps at 1');
+});
+
+test('INV-3a: keysToVector sums held keys into a unit vector, cancels opposites, normalizes diagonals', () => {
+    assert.deepEqual(keysToVector(new Set()), { x: 0, y: 0 }, 'empty set = no vector');
+    assert.deepEqual(keysToVector(new Set(['ArrowUp'])), { x: 0, y: -1 });
+    assert.deepEqual(keysToVector(new Set(['KeyS'])), { x: 0, y: 1 });
+    assert.deepEqual(keysToVector(new Set(['KeyA'])), { x: -1, y: 0 });
+    assert.deepEqual(keysToVector(new Set(['ArrowRight'])), { x: 1, y: 0 });
+
+    const opp = keysToVector(new Set(['ArrowUp', 'ArrowDown']));
+    assert.equal(opp.x, 0); assert.equal(opp.y, 0);
+    const opp2 = keysToVector(new Set(['KeyA', 'KeyD']));
+    assert.equal(opp2.x, 0); assert.equal(opp2.y, 0);
+
+    const diag = keysToVector(new Set(['KeyW', 'KeyD']));
+    assert.ok(Math.abs(Math.hypot(diag.x, diag.y) - 1) < 1e-9, 'diagonal magnitude normalized to 1, not √2');
+});
+
+test('INV-3a: shouldTowHome matrix — fuel, Endless Flight, Thruster, and phase', () => {
+    // Thruster off (default): rest-gated, exactly today's behavior.
+    assert.equal(shouldTowHome(0, defaultInventory(), 'rest'), true);
+    assert.equal(shouldTowHome(0, defaultInventory(), 'flight'), false, 'Thruster off: mid-flight is not rest-gated');
+
+    // Thruster on: tows immediately in any phase once dry (T8).
+    const thrusterOn = defaultInventory();
+    thrusterOn.thruster.enabled = true;
+    assert.equal(shouldTowHome(0, thrusterOn, 'flight'), true, 'Thruster on: mid-flight tow');
+    assert.equal(shouldTowHome(0, thrusterOn, 'rest'), true);
+    assert.equal(shouldTowHome(1, thrusterOn, 'flight'), false, 'fuel remains');
+
+    // Endless Flight wins over everything, including the Thruster's immediate tow.
+    const endlessAndThruster = defaultInventory();
+    endlessAndThruster.endlessFlight.enabled = true;
+    endlessAndThruster.thruster.enabled = true;
+    assert.equal(shouldTowHome(0, endlessAndThruster, 'flight'), false, 'Endless Flight locks the tank regardless of Thruster or phase');
+    assert.equal(shouldTowHome(0, endlessAndThruster, 'rest'), false);
+});
+
+test('INV-3a: defaultInventory registers the Thruster item, owned but off by default', () => {
+    const inv = defaultInventory();
+    assert.equal(inv.thruster.owned, true);
+    assert.equal(inv.thruster.enabled, false);
 });
