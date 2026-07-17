@@ -696,15 +696,19 @@ export function hideScorecard() {
     document.getElementById('scorecard').classList.add('hidden');
 }
 
-export function showHowto() { 
+export function showHowto() {
     document.getElementById('howto').classList.remove('hidden');
     document.getElementById('bar').classList.add('hidden');
     document.getElementById('exploreBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');
     document.getElementById('customBar').classList.add('hidden');
+    menuOpen = true;
+    document.getElementById('townShop').classList.add('hidden');
+    shopVisible = false;
 }
-export function hideHowto() { 
+export function hideHowto() {
     document.getElementById('howto').classList.add('hidden');
+    menuOpen = false;
     if (S.mode === 'explore') document.getElementById('exploreBar').classList.remove('hidden');
     else if (S.mode === 'editor') document.getElementById('editorBar').classList.remove('hidden');
     else if (S.mode === 'custom') {
@@ -772,6 +776,9 @@ export function updateCompass() {
 // button never gets swapped out from under an in-progress tap.
 
 let shopVisible = false;
+// True while the ☰ menu (howto overlay) is open — the shop must stay hidden
+// underneath it regardless of atTown(), which only tracks physical location.
+let menuOpen = false;
 
 // One entry per purchasable upgrade. `desc(level, maxed)` renders the current-tier
 // (and next-tier, pre-max) blurb — the only part that varies per upgrade's gameplay
@@ -813,7 +820,7 @@ const UPGRADES = [
 export function updateTownShop() {
     const el = document.getElementById('townShop');
     if (!el) return;
-    const show = explore.atTown();
+    const show = explore.atTown() && !menuOpen;
     if (show === shopVisible) return;
     shopVisible = show;
     el.classList.toggle('hidden', !show);

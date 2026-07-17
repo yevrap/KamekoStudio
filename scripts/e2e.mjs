@@ -236,6 +236,40 @@ await test('gallery: Clear All Game Data completes without throwing', async page
   assert(toastShown, 'clear-data toast never appeared (KamekoTokens.toast regression?)');
 });
 
+// ── Black Hole in One ───────────────────────────────────────────────────────
+
+const BH = base + '/games/black-hole-in-one/';
+
+await test('black-hole-in-one: ☰ menu fully hides an open Town Shop, both directions', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  // Force "resting at Town" directly via the state modules (reaching the tee
+  // rock legitimately needs live flight physics) — mirrors the state-import
+  // pattern used for keypad-quest above.
+  await page.evaluate(async () => {
+    const { S, comet } = await import('/games/black-hole-in-one/state.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto(); // close the default start-screen menu so it doesn't intercept the #helpBtn click
+    S.mode = 'explore';
+    S.phase = 'rest';
+    comet.rest = { b: { type: 'tee' } };
+  });
+  await sleep(200); // render loop's updateTownShop() picks up the forced state
+  const shopVisibleBefore = await page.evaluate(() =>
+    !document.getElementById('townShop').classList.contains('hidden'));
+  assert(shopVisibleBefore, 'Town Shop never appeared after forcing atTown() state — test setup is broken');
+
+  await page.click('#helpBtn');
+  const shopHiddenWithMenuOpen = await page.evaluate(() =>
+    document.getElementById('townShop').classList.contains('hidden'));
+  assert(shopHiddenWithMenuOpen, 'Town Shop still visible behind the ☰ menu (Shop Options Bleed regression)');
+
+  await page.click('#howto h1'); // pointerdown outside any button closes the menu (S.phase !== 'menu')
+  await sleep(200);
+  const shopVisibleAfter = await page.evaluate(() =>
+    !document.getElementById('townShop').classList.contains('hidden'));
+  assert(shopVisibleAfter, 'Town Shop did not reappear after closing the menu while still at Town');
+});
+
 // ── Lab games: free to play, no token labels ────────────────────────────────
 
 await test('durak-alchemist: Play is free and starts the game', async page => {
