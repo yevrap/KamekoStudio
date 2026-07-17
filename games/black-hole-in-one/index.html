@@ -51,8 +51,23 @@
 </div>
 
 <div id="btns">
+    <button id="mapBtn" class="hidden" aria-label="Star Map">🗺️</button>
     <button id="restartBtn" aria-label="Restart">↺</button>
     <button id="helpBtn" aria-label="Menu">☰ Menu</button>
+</div>
+
+<div id="starMap" class="hidden">
+    <div class="star-map-header">
+        <span>🗺️ Star Map</span>
+        <button id="sm-close" aria-label="Close">✕</button>
+    </div>
+    <canvas id="starMapCanvas"></canvas>
+    <div class="star-map-legend">
+        <span><span class="sm-swatch sm-town"></span>Town</span>
+        <span><span class="sm-swatch sm-comet"></span>You</span>
+        <span><span class="sm-swatch sm-discovered"></span>Charted</span>
+        <span><span class="sm-swatch sm-fog"></span>Uncharted</span>
+    </div>
 </div>
 
 <div id="toast"></div>

@@ -11,7 +11,7 @@ export const camera = { x: 50, y: 85 };
 export let fuel = 100;
 
 export let hooks = {
-    toast() {}, bar() {}, burst() {}, stardust() {}, upgrades() {}, exploreHome() {},
+    toast() {}, bar() {}, burst() {}, stardust() {}, upgrades() {}, exploreHome() {}, discovery() {},
     sfx: { flick() {}, bounce() {}, land() {}, sling() {}, sink() {} },
 };
 export function setHooks(h) { hooks = Object.assign(hooks, h); }
@@ -41,6 +41,30 @@ export const SECTOR_LIMIT = 3000; // Bounded sector size
 // (same lifetime as upgrades, cleared only by "Clear All Game Data").
 export let exploreHome = null; // { blackHoleId, bhX, bhY, x, y }
 export function loadExploreHome(h) { exploreHome = (h && typeof h === 'object') ? h : null; }
+
+// OW-9: fog-of-war discovery — the set of chunk keys ("cx_cy") the comet has
+// physically flown through, backing the zoom-out star map (ui.js). Persisted
+// across reload (blackHoleInOne_discoveredChunks), same lifetime as the Return
+// Portal bookmark above — set via loadDiscoveredChunks() at boot, NOT reset by
+// startRun(), cleared only by "Clear All Game Data".
+export let discoveredChunks = new Set();
+export function loadDiscoveredChunks(arr) {
+    discoveredChunks = new Set(Array.isArray(arr) ? arr : []);
+}
+
+export function chunkKeyAt(x, y) {
+    return Math.floor(x / CHUNK_SIZE) + '_' + Math.floor(y / CHUNK_SIZE);
+}
+
+// Marks the chunk under (x,y) discovered, once. step()/stepOrbit() call this every
+// physics tick while flying/orbiting, so hooks.discovery only fires — and only then
+// persists — on an actual new discovery, not every frame.
+function markDiscovered(x, y) {
+    const key = chunkKeyAt(x, y);
+    if (discoveredChunks.has(key)) return;
+    discoveredChunks.add(key);
+    hooks.discovery(Array.from(discoveredChunks));
+}
 
 let activeBodies = [];
 export let pickups = [];
@@ -521,7 +545,8 @@ export function step(dt) {
     }
     
     updateActiveChunks();
-    
+    markDiscovered(comet.x, comet.y);
+
     // Bounded sector for OW-2
     if (comet.x < -SECTOR_LIMIT || comet.x > SECTOR_LIMIT || comet.y < -SECTOR_LIMIT || comet.y > SECTOR_LIMIT) {
         // Soft nudge back
@@ -707,6 +732,7 @@ export function stepOrbit(dt) {
     camera.y += (o.b.y - camera.y) * Math.min(1, dt * 3);
 
     updateActiveChunks();
+    markDiscovered(comet.x, comet.y);
 }
 
 function updateCamera(dt) {

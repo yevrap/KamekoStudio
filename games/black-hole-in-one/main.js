@@ -22,6 +22,7 @@ const LS = {
     upgrades: 'blackHoleInOne_upgrades',
     inventory: 'blackHoleInOne_inventory',
     exploreHome: 'blackHoleInOne_exploreHome',
+    discoveredChunks: 'blackHoleInOne_discoveredChunks',
 };
 
 function bestRound() {
@@ -73,6 +74,9 @@ explore.setHooks({
     },
     exploreHome(h) {
         localStorage.setItem(LS.exploreHome, JSON.stringify(h));
+    },
+    discovery(chunks) {
+        localStorage.setItem(LS.discoveredChunks, JSON.stringify(chunks));
     },
 });
 
@@ -175,8 +179,10 @@ function startRun(mode) {
     document.getElementById('exploreBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');
     document.getElementById('customBar').classList.add('hidden');
+    document.getElementById('mapBtn').classList.add('hidden');
     if (mode === 'explore') {
         document.getElementById('exploreBar').classList.remove('hidden');
+        document.getElementById('mapBtn').classList.remove('hidden');
         explore.startRun();
     } else if (mode === 'editor') {
         document.getElementById('editorBar').classList.remove('hidden');
@@ -249,6 +255,12 @@ document.getElementById('helpBtn').addEventListener('click', () => {
     if (drag) drag = null;
     if (S.phase === 'aiming') S.phase = 'rest';
 });
+document.getElementById('mapBtn').addEventListener('click', () => {
+    ui.toggleStarMap();
+    if (drag) drag = null;
+    if (S.phase === 'aiming') S.phase = 'rest';
+});
+document.getElementById('sm-close').addEventListener('click', () => ui.hideStarMap());
 
 /* ============================== KEYBOARD (Thruster, INV-3a) ============================== */
 
@@ -407,6 +419,9 @@ try {
 } catch (e) { /* corrupt value — keep defaults */ }
 try {
     explore.loadExploreHome(JSON.parse(localStorage.getItem(LS.exploreHome)));
+} catch (e) { /* corrupt value — keep defaults */ }
+try {
+    explore.loadDiscoveredChunks(JSON.parse(localStorage.getItem(LS.discoveredChunks)));
 } catch (e) { /* corrupt value — keep defaults */ }
 
 function bootBackground() {

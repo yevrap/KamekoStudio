@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepOrbit, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal, discoveredChunks, loadDiscoveredChunks, chunkKeyAt } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, EXPLORE_RETURN_NUDGE, exploreBlackHoleWarpR, moonPosition } from '../games/black-hole-in-one/constants.js';
 import { gravityAt } from '../games/black-hole-in-one/physics.js';
@@ -972,4 +972,80 @@ test('OW-5: moonPosition completes one full orbit every `period` seconds', () =>
     assert.ok(Math.abs(start.y - afterOnePeriod.y) < 1e-9);
     const halfway = moonPosition(0, 0, moon, 10);
     assert.ok(Math.abs(halfway.x - start.x) > 1, 'moon should have visibly moved at the half-period mark');
+});
+
+/* ============================== OW-9: zoom-out star map / fog-of-war discovery ============================== */
+
+test('OW-9: chunkKeyAt matches the floor(coord/CHUNK_SIZE) math used everywhere else in the module', () => {
+    assert.equal(chunkKeyAt(0, 0), '0_0');
+    assert.equal(chunkKeyAt(CHUNK_SIZE - 1, CHUNK_SIZE - 1), '0_0');
+    assert.equal(chunkKeyAt(CHUNK_SIZE, CHUNK_SIZE), '1_1');
+    assert.equal(chunkKeyAt(-1, -1), '-1_-1');
+    assert.equal(chunkKeyAt(-CHUNK_SIZE, 0), '-1_0');
+});
+
+test('OW-9: flying marks the current chunk discovered, once, and hooks.discovery fires only on a genuinely new chunk', () => {
+    loadDiscoveredChunks([]);
+    startRun();
+    let fired = 0, lastPayload = null;
+    setHooks({ discovery(arr) { fired++; lastPayload = arr; } });
+
+    S.phase = 'flight';
+    S.orbitCooldown = 0;
+    world.bodies = [];
+    world.pickups = [];
+    comet.vx = 10; comet.vy = 0;
+
+    step(1 / 240); // first tick in this chunk — a new discovery
+    assert.equal(fired, 1);
+    assert.ok(discoveredChunks.has(chunkKeyAt(comet.x, comet.y)));
+    assert.deepEqual(lastPayload, Array.from(discoveredChunks));
+
+    step(1 / 240); // still the same chunk — no new discovery
+    assert.equal(fired, 1, 'hooks.discovery should not refire for an already-discovered chunk');
+
+    setHooks({ discovery() {} });
+    loadDiscoveredChunks([]);
+});
+
+test('OW-9: discoveredChunks survives a run reset — startRun does not clear it (same lifetime as stardust/upgrades)', () => {
+    loadDiscoveredChunks(['5_5', '-2_3']);
+    startRun();
+    assert.ok(discoveredChunks.has('5_5'));
+    assert.ok(discoveredChunks.has('-2_3'));
+    loadDiscoveredChunks([]);
+});
+
+test('OW-9: loadDiscoveredChunks tolerates null, undefined, or non-array saved payloads', () => {
+    loadDiscoveredChunks(['a_b']);
+    assert.ok(discoveredChunks.has('a_b'));
+
+    loadDiscoveredChunks(null);
+    assert.equal(discoveredChunks.size, 0);
+
+    loadDiscoveredChunks(['a_b']);
+    loadDiscoveredChunks(undefined);
+    assert.equal(discoveredChunks.size, 0);
+
+    loadDiscoveredChunks(['a_b']);
+    loadDiscoveredChunks('garbage');
+    assert.equal(discoveredChunks.size, 0);
+
+    loadDiscoveredChunks(['a_b']);
+    loadDiscoveredChunks({ not: 'an array' });
+    assert.equal(discoveredChunks.size, 0);
+});
+
+test('OW-9: orbiting marks the orbited chunk discovered too, not just free flight', () => {
+    loadDiscoveredChunks([]);
+    startRun();
+    const body = { x: comet.x + 20, y: comet.y, r: 10, m: 100, type: 'planet' };
+    world.orbit = { b: body, radius: 20, ang: 0, omega: 1 };
+    S.phase = 'orbit';
+
+    stepOrbit(1 / 240);
+
+    assert.ok(discoveredChunks.has(chunkKeyAt(comet.x, comet.y)));
+    world.orbit = null;
+    loadDiscoveredChunks([]);
 });

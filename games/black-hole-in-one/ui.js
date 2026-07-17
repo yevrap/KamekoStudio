@@ -742,6 +742,84 @@ export function hideScorecard() {
     document.getElementById('scorecard').classList.add('hidden');
 }
 
+/* ============================== OW-9: zoom-out star map (fog-of-war) ============================== */
+// A snapshot overlay, not a per-frame render loop: showStarMap() pauses the run
+// (reusing the settingsOpened/settingsClosed contract shared/settings.js documents
+// as generic "game should pause"/"game should resume" events, already wired in
+// main.js) so nothing moves while the map is open — one renderStarMap() call at
+// open time stays accurate for as long as it's up.
+
+let starMapOpen = false;
+
+export function showStarMap() {
+    if (starMapOpen) return;
+    starMapOpen = true;
+    document.getElementById('starMap').classList.remove('hidden');
+    window.dispatchEvent(new Event('settingsOpened'));
+    renderStarMap();
+}
+
+export function hideStarMap() {
+    if (!starMapOpen) return;
+    starMapOpen = false;
+    document.getElementById('starMap').classList.add('hidden');
+    window.dispatchEvent(new Event('settingsClosed'));
+}
+
+export function toggleStarMap() {
+    if (starMapOpen) hideStarMap(); else showStarMap();
+}
+
+function renderStarMap() {
+    const cv = document.getElementById('starMapCanvas');
+    if (!cv) return;
+    const cw = cv.clientWidth, ch = cv.clientHeight;
+    if (cw <= 0 || ch <= 0) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(cw * dpr);
+    cv.height = Math.round(ch * dpr);
+    const sctx = cv.getContext('2d');
+    sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    sctx.fillStyle = '#05060f';
+    sctx.fillRect(0, 0, cw, ch);
+
+    // Grid spans the full bounded sector (OW-2's SECTOR_LIMIT) plus a chunk of
+    // margin, in chunk units — same floor(x/CHUNK_SIZE) math as explore.js.
+    const radius = Math.ceil(explore.SECTOR_LIMIT / explore.CHUNK_SIZE) + 1;
+    const cells = radius * 2 + 1;
+    const cell = Math.min(cw, ch) / cells;
+    const ox = (cw - cell * cells) / 2;
+    const oy = (ch - cell * cells) / 2;
+
+    for (let gx = -radius; gx <= radius; gx++) {
+        for (let gy = -radius; gy <= radius; gy++) {
+            const discovered = explore.discoveredChunks.has(gx + '_' + gy);
+            sctx.fillStyle = discovered ? 'rgba(154,154,200,0.45)' : 'rgba(255,255,255,0.04)';
+            sctx.fillRect(ox + (gx + radius) * cell, oy + (gy + radius) * cell, Math.max(1, cell - 1), Math.max(1, cell - 1));
+        }
+    }
+
+    // Town — a fixed landmark, always shown regardless of fog (distinct from the
+    // "chunks flown through" discovery rule below it).
+    const townGX = Math.floor(50 / explore.CHUNK_SIZE);
+    const townGY = Math.floor(85 / explore.CHUNK_SIZE);
+    sctx.fillStyle = '#ffd98a';
+    sctx.beginPath();
+    sctx.arc(ox + (townGX + radius) * cell + cell / 2, oy + (townGY + radius) * cell + cell / 2, Math.max(3, cell * 0.3), 0, 7);
+    sctx.fill();
+
+    // Comet — a snapshot of where you were the moment the map was opened (the run
+    // is paused for as long as it stays up, so this never goes stale).
+    const cometGX = Math.floor(comet.x / explore.CHUNK_SIZE);
+    const cometGY = Math.floor(comet.y / explore.CHUNK_SIZE);
+    if (Math.abs(cometGX) <= radius && Math.abs(cometGY) <= radius) {
+        sctx.fillStyle = '#00e5a0';
+        sctx.beginPath();
+        sctx.arc(ox + (cometGX + radius) * cell + cell / 2, oy + (cometGY + radius) * cell + cell / 2, Math.max(2.5, cell * 0.2), 0, 7);
+        sctx.fill();
+    }
+}
+
 export function showHowto() {
     document.getElementById('howto').classList.remove('hidden');
     document.getElementById('bar').classList.add('hidden');

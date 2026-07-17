@@ -218,6 +218,7 @@ body {
     cursor: pointer;
 }
 #btns button:active { filter: brightness(1.25); }
+#btns button.hidden { display: none; }
 #btns button.stranded {
     border-color: #ff4444;
     color: #ff4444;
@@ -227,6 +228,73 @@ body {
     0%, 100% { box-shadow: 0 0 0 0 rgba(255,68,68,.6); }
     50% { box-shadow: 0 0 16px 6px rgba(255,68,68,.85); }
 }
+
+/* ---- OW-9: zoom-out star map (fog-of-war) ---- */
+#starMap {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 2rem;
+    background: #05060fd8;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 60;
+    color: #e0e0ff;
+}
+#starMap.hidden { display: none; }
+.star-map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: min(90vmin, 460px);
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+#sm-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+#sm-close:active { filter: brightness(1.25); }
+#starMapCanvas {
+    width: min(90vmin, 460px);
+    height: min(90vmin, 460px);
+    border-radius: 16px;
+    border: 1px solid var(--panel-border);
+    background: #05060f;
+}
+.star-map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+}
+.sm-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    margin-right: 5px;
+    vertical-align: -1px;
+}
+.sm-swatch.sm-discovered { background: rgba(154,154,200,0.5); }
+.sm-swatch.sm-fog { background: rgba(255,255,255,0.06); }
+.sm-swatch.sm-town { background: #ffd98a; border-radius: 50%; }
+.sm-swatch.sm-comet { background: #00e5a0; border-radius: 50%; }
 
 /* the shared hamburger sits over the space canvas — keep it legible */
 #settings-hamburger-btn {
