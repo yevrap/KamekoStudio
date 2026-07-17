@@ -122,6 +122,12 @@ export const THRUST_BURN   = 8;    // fuel/second at full throttle (× throttle)
 export const STICK_R_PX    = 46;   // CSS px from stick origin = full throttle (INV-3b)
 export const STICK_DEAD_PX = 8;    // CSS px deadzone — a tap must not fire a blip (INV-3b)
 
+// ---- Refuel station planets (FUEL-2), Explore only -----------------------------
+// Yev's ask: "some planets should fully refuel you when you land on them... numerous
+// so exploring without unlimited fuel is possible" — common (most chunks have one),
+// landing-only (not a bounce trickle), visually distinct like the Town beacon.
+export const REFUEL_STATION_CHANCE = 0.75; // odds a chunk gets one flagged station planet
+
 // ---- Inventory registry (INV-1) -----------------------------------------------
 // A mechanic testbed, not a shop: one entry per experimental gameplay modifier,
 // toggled from the settings drawer, Explore only. `owned` defaults true — there's

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A } from '../games/black-hole-in-one/constants.js';
 import { gravityAt } from '../games/black-hole-in-one/physics.js';
@@ -363,6 +363,93 @@ test('INV-1: refuelFull tops the tank off to the current upgrade level\'s max', 
     refuelFull();
 
     assert.equal(fuel, 130, 'refuelFull tops off to the current tank\'s max, not a hardcoded 100');
+});
+
+/* ============================== FUEL-2: Refuel station planets ============================== */
+
+test('FUEL-2: getChunkBodies flags roughly 3/4 of chunks with exactly one refuelStation body', () => {
+    let flaggedChunks = 0, totalChunks = 0, doubleFlagged = 0;
+    for (let cx = -10; cx <= 10; cx++) {
+        for (let cy = -10; cy <= 10; cy++) {
+            const bodies = getChunkBodies(cx, cy, 'refuel-sample');
+            if (bodies.length === 0) continue;
+            totalChunks++;
+            const flagged = bodies.filter(b => b.refuelStation);
+            if (flagged.length > 1) doubleFlagged++;
+            if (flagged.length >= 1) flaggedChunks++;
+        }
+    }
+    assert.ok(totalChunks > 100, 'sanity: sampled a meaningful number of chunks');
+    assert.equal(doubleFlagged, 0, 'at most one refuel station per chunk');
+    const rate = flaggedChunks / totalChunks;
+    assert.ok(rate > 0.6 && rate < 0.9, `station frequency should read as "most chunks have one" (got ${rate.toFixed(2)})`);
+});
+
+test('FUEL-2: getChunkBodies\'s refuelStation roll is still deterministic for a given seed', () => {
+    const a = getChunkBodies(9, 3, 'refuel-det').map(b => !!b.refuelStation);
+    const b = getChunkBodies(9, 3, 'refuel-det').map(b => !!b.refuelStation);
+    assert.deepEqual(a, b);
+});
+
+test('FUEL-2: isRefuelStation is true only for a body explicitly flagged refuelStation', () => {
+    assert.equal(isRefuelStation({ refuelStation: true }), true);
+    assert.equal(isRefuelStation({ refuelStation: false }), false);
+    assert.equal(isRefuelStation({ type: 'planet' }), false, 'ordinary planets are not stations by default');
+    assert.equal(isRefuelStation(null), false);
+    assert.equal(isRefuelStation(undefined), false);
+});
+
+test('FUEL-2: landing on a refuel-station planet tops the tank to max and fires the refuel toast', () => {
+    S.upgrades.tank = 0; // isolate from any tank-level leak left by a prior test
+    startRun();
+    const maxFuel = fuel;
+    launch(MAX_DRAG * 0.5, 0, MAX_DRAG * 0.5); // drain fuel below max first
+    assert.ok(fuel < maxFuel, 'sanity: fuel was drained below max');
+
+    let toasted = null;
+    setHooks({ toast(msg) { toasted = msg; } });
+
+    const station = { x: comet.x + 5, y: comet.y, r: 5, m: 0, type: 'planet', refuelStation: true };
+    world.bodies = [station];
+    world.pickups = [];
+    S.phase = 'flight';
+    S.orbitCooldown = 0;
+    // Comet sits just inside the station's collision radius, to its left, moving
+    // right (+x, toward the station's center) — this is what makes it a landing.
+    comet.vx = 5; comet.vy = 0; // slow inward approach, well under REST_V — this lands, not bounces
+    comet.x = station.x - (station.r + COMET_R) + 0.05;
+    comet.y = station.y;
+
+    step(1 / 240);
+
+    assert.equal(S.phase, 'rest', 'sanity: this was actually a landing');
+    assert.equal(fuel, maxFuel, 'refuelFull ran on landing, tank is back to max');
+    assert.equal(toasted, '⛽ Refueled!');
+    setHooks({ toast() {} });
+});
+
+test('FUEL-2: bouncing off (not landing on) a refuel-station planet does nothing', () => {
+    S.upgrades.tank = 0; // isolate from any tank-level leak left by a prior test
+    startRun();
+    launch(MAX_DRAG * 0.5, 0, MAX_DRAG * 0.5); // drain fuel below max first
+    const drained = fuel;
+
+    const station = { x: comet.x + 5, y: comet.y, r: 5, m: 0, type: 'planet', refuelStation: true };
+    world.bodies = [station];
+    world.pickups = [];
+    S.phase = 'flight';
+    S.orbitCooldown = 0;
+    // Same left-of-station, moving-right geometry as the landing test, just fast
+    // enough (well over REST_V) that collide() bounces instead of landing.
+    comet.vx = 60; comet.vy = 0;
+    comet.x = station.x - (station.r + COMET_R) + 0.05;
+    comet.y = station.y;
+
+    step(1 / 240);
+
+    assert.equal(S.phase, 'flight', 'sanity: this was a bounce, not a landing');
+    assert.notEqual(comet.vx, 60, 'sanity: collide() actually ran a bounce response, not a silent no-op');
+    assert.equal(fuel, drained, 'no refuel from a bounce — only landing refuels');
 });
 
 /* ============================== INV-3a: Thruster ============================== */

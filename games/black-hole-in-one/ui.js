@@ -290,6 +290,25 @@ export function render(drag) {
 }
 
 function drawPlanet(b) {
+    // FUEL-2: refuel-station planets get a warm-green glow — same hue as the fuel
+    // pickup (distinct from Town's gold) so routing toward one reads as a real
+    // piloting choice, per Yev's "visually distinct" answer.
+    if (b.refuelStation) {
+        const pulse = 0.7 + 0.3 * Math.sin(S.time * 1.8);
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = 0.35 * pulse;
+        const g0 = ctx.createRadialGradient(b.x, b.y, b.r * 0.5, b.x, b.y, b.r * 2.6);
+        g0.addColorStop(0, '#20e657');
+        g0.addColorStop(1, 'rgba(32,230,87,0)');
+        ctx.fillStyle = g0;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r * 2.6, 0, 7); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = 1;
+        ctx.strokeStyle = 'rgba(32,230,87,0.6)';
+        ctx.lineWidth = 0.35;
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 0.6, 0, 7); ctx.stroke();
+    }
+
     ctx.globalAlpha = 0.08;
     ctx.strokeStyle = b.pal.base;
     ctx.lineWidth = 0.35;

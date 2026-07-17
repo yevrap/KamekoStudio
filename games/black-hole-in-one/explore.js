@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture } from './physics.js';
 
@@ -89,7 +89,17 @@ export function getChunkBodies(cx, cy, seed) {
             if (Math.hypot(b1.x - b2.x, b1.y - b2.y) < b1.r + b2.r + 5) bodies[j] = null;
         }
     }
-    return bodies.filter(b => b !== null);
+    const survivors = bodies.filter(b => b !== null);
+
+    // Refuel stations (FUEL-2): rolled after body generation/overlap-resolution so
+    // it never perturbs the giant/dwarf/binary/normal mix or positions above — same
+    // rng stream, just consumed last, so a chunk's body layout is unchanged whether
+    // or not it happens to get a station.
+    if (survivors.length > 0 && rng() < REFUEL_STATION_CHANCE) {
+        survivors[Math.floor(rng() * survivors.length)].refuelStation = true;
+    }
+
+    return survivors;
 }
 
 // A pickup at (px,py) with radius `r` is unreachable if it overlaps a planet's
@@ -390,6 +400,11 @@ export function step(dt) {
             world.trail = [];
             hooks.sfx.land();
             hooks.burst(comet.x, comet.y, 5, '#fff', 10);
+            if (isRefuelStation(res.hit)) {
+                refuelFull();
+                hooks.burst(comet.x, comet.y, 14, '#20e657', 24);
+                hooks.toast('⛽ Refueled!');
+            }
         } else if (c.bounced) {
             hooks.sfx.bounce(c.k);
             hooks.burst(comet.x, comet.y, 7, res.hit.pal ? res.hit.pal.base : '#aaa', 18);
@@ -444,6 +459,13 @@ export function step(dt) {
     }
     
     updateCamera(dt);
+}
+
+// True when landing on `body` should fully refuel the tank (FUEL-2) — landing only,
+// not a bounce trickle; Yev's ask was "fully refuel you when you land on them."
+// Pure — unit-tested separately from the landing side effects it gates.
+export function isRefuelStation(body) {
+    return !!(body && body.refuelStation);
 }
 
 // True when an empty tank leaves the comet stranded (FUEL-1: no auto-tow, in
