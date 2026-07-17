@@ -52,9 +52,13 @@ export function getChunkBodies(cx, cy, seed) {
         const typeRand = rng();
         let r, m;
         if (typeRand < 0.1) {
-            r = 25 + rng() * 15; m = r * r * 1.5; // Giant
+            r = 25 + rng() * 15; m = r * r; // Giant (INV-3c: dropped the 1.5x density
+            // bump — mass already scales r², so a giant is still up to 100x a dwarf's
+            // mass on size alone. The bump pushed surface gravity as high as ~555 u/s²,
+            // above any THRUST_A a "beats every planet unconditionally" guarantee could
+            // survive tuning down to. See the Thruster & Flight Controls note.
         } else if (typeRand < 0.3) {
-            r = 4 + rng() * 4; m = r * r * 2.0; // Dwarf
+            r = 4 + rng() * 4; m = r * r; // Dwarf (INV-3c: dropped the 2.0x density bump, same reason)
         } else if (typeRand < 0.4) {
             // Binary pair
             r = 10 + rng() * 8; m = r * r;
@@ -361,9 +365,12 @@ export function step(dt) {
         comet.vx += t.x * THRUST_A * dt;
         comet.vy += t.y * THRUST_A * dt;
         burnFuel(THRUST_BURN * t.throttle * dt);
-        // Exhaust (INV-3b): a few particles opposite the thrust vector each step,
-        // in the comet's own trail color (#ffcf8a) — reuses the existing burst().
-        if (Math.random() < t.throttle * 0.15) {
+        // Exhaust: a few particles opposite the thrust vector each step, in the
+        // comet's own trail color (#ffcf8a) — reuses the existing burst(). INV-3c:
+        // tuned down from 0.15 (placeholder) — at 240 steps/s and ~0.65s average
+        // particle life that was ~23 particles trailing the comet at full throttle,
+        // a dense smear rather than a wisp; 0.06 settles to ~9.
+        if (Math.random() < t.throttle * 0.06) {
             const tm = Math.hypot(t.x, t.y) || 1;
             hooks.burst(comet.x - (t.x / tm) * COMET_R, comet.y - (t.y / tm) * COMET_R, 1, '#ffcf8a', 12);
         }

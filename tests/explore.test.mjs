@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX } from '../games/black-hole-in-one/constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A } from '../games/black-hole-in-one/constants.js';
+import { gravityAt } from '../games/black-hole-in-one/physics.js';
 
 test('Camera math: screenToWorld', () => {
     const [wx, wy] = screenToWorld(100, 200, 2, 100, 200, 50, 100);
@@ -577,4 +578,40 @@ test('INV-3b: hasThrust reflects the stick', () => {
     assert.equal(hasThrust(), true);
 
     stickCancel();
+});
+
+test('INV-3c: THRUST_A beats surface gravity at every chunk-generator size class, at each type\'s r ceiling', () => {
+    // Gravity is monotonically increasing in r for fixed density (see the Thruster &
+    // Flight Controls note), so the worst case per type is at its r ceiling. Ceilings
+    // are exclusive (rng() ∈ [0,1)) — nudge to the boundary to check the true limit
+    // the generator approaches rather than relying on a sample to land near it.
+    const worstCases = [
+        { r: 40 - 1e-6, label: 'Giant' },
+        { r: 8 - 1e-6, label: 'Dwarf' },
+        { r: 18 - 1e-6, label: 'Binary' },
+        { r: 20 - 1e-6, label: 'Normal' },
+    ];
+    for (const { r, label } of worstCases) {
+        const body = { x: 0, y: 0, r, m: r * r, type: 'planet' };
+        const surfaceD = r + COMET_R; // where a landed comet actually rests
+        const [ax, ay] = gravityAt([body], null, surfaceD, 0);
+        const g = Math.hypot(ax, ay);
+        assert.ok(THRUST_A > g, `${label}: THRUST_A (${THRUST_A}) must exceed surface gravity (${g.toFixed(1)})`);
+    }
+});
+
+test('INV-3c: real chunk-generator bodies never exceed THRUST_A at their own surface, sampled widely', () => {
+    let maxG = 0, sampled = 0;
+    for (let cx = -15; cx < 15; cx++) {
+        for (let cy = -15; cy < 15; cy++) {
+            for (const b of getChunkBodies(cx, cy, 'thrust-escape-sample')) {
+                const surfaceD = b.r + COMET_R;
+                const [ax, ay] = gravityAt([b], null, b.x + surfaceD, b.y);
+                maxG = Math.max(maxG, Math.hypot(ax, ay));
+                sampled++;
+            }
+        }
+    }
+    assert.ok(sampled > 100, 'sanity: actually sampled a meaningful number of bodies');
+    assert.ok(THRUST_A > maxG, `sampled worst surface gravity ${maxG.toFixed(1)} must stay under THRUST_A (${THRUST_A})`);
 });

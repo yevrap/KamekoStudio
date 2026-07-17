@@ -15,7 +15,12 @@ export function gravityAt(bodies, blackHole, x, y, damp) {
     const all = blackHole ? bodies.concat([blackHole]) : bodies;
     for (const b of all) {
         const dx = b.x - x, dy = b.y - y;
-        const d2 = Math.max(dx * dx + dy * dy, (b.r * 0.8) * (b.r * 0.8));
+        // Floor at 1.0·r (INV-3c, was 0.8·r): a body's own surface (r + COMET_R)
+        // is always > 1.0·r, so this never touches any reachable resting/collision
+        // distance in golf, Endless, or Explore — it only guards the theoretical
+        // deep-penetration case (d < r), which normal collision detection prevents
+        // from ever occurring (see INV-3c dev notes for the tunneling-distance math).
+        const d2 = Math.max(dx * dx + dy * dy, (b.r * 1.0) * (b.r * 1.0));
         const d = Math.sqrt(d2);
         let a = G * b.m / d2;
         if (damp && b === damp.body) a *= damp.factor;

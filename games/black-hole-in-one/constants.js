@@ -102,11 +102,22 @@ export function sensorChunkRadius(level) { return SENSOR_RADIUS_LEVELS[Math.max(
 // ---- Thruster (INV-3), Explore only --------------------------------------------
 // Analog thrust stick that replaces the flick while enabled (T1/T6): direction +
 // throttle from one input, strong enough to beat every planet's surface gravity
-// (max ~370 u/s² at a giant, since G=400) so Explore becomes a flying game, not
-// just a flicking one (T2). Do NOT raise MAX_V to make thrust feel faster — it's a
-// tunneling guard (keeps per-step movement under COMET_R so collision can't skip
-// past a body), not a taste knob; raising it needs swept collision first.
-export const THRUST_A      = 400;  // world u/s² at full throttle
+// so Explore becomes a flying game, not just a flicking one (T2). Do NOT raise
+// MAX_V to make thrust feel faster — it's a tunneling guard (keeps per-step
+// movement under COMET_R so collision can't skip past a body), not a taste knob;
+// raising it needs swept collision first.
+//
+// INV-3c feel pass (2026-07-17): softened from 400 → 385 (Q3a, "less instant-on").
+// The ceiling on how low this can go is the biggest Giant's surface gravity —
+// G·r²/(r+COMET_R)² approaches G=400 asymptotically as r grows, so a giant
+// (r up to ~40) always sits close to 370 u/s² regardless of density. That's also
+// why explore.js's chunk generator lost its Giant ×1.5 / Dwarf ×2.0 mass
+// multipliers in this same pass: with them, worst-case surface gravity hit
+// ~555 u/s², which no THRUST_A this side of ~560 could unconditionally beat
+// (Q3b). At THRUST_A=385, the worst case (giant, r→40, m=r², ~369.7 u/s²)
+// still clears with ~4% margin — see the escape-guarantee test in
+// tests/explore.test.mjs, which asserts this directly against gravityAt().
+export const THRUST_A      = 385;  // world u/s² at full throttle
 export const THRUST_BURN   = 8;    // fuel/second at full throttle (× throttle)
 export const STICK_R_PX    = 46;   // CSS px from stick origin = full throttle (INV-3b)
 export const STICK_DEAD_PX = 8;    // CSS px deadzone — a tap must not fire a blip (INV-3b)
