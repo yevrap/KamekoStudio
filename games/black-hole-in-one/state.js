@@ -50,6 +50,7 @@ export const world = {
     teeRock: null,
     lastRest: null,   // rest descriptor to return lost shots to
     sink: null,       // { r0, a0, t } while spiralling in
+    warp: null,       // { b, r0, a0, t } while an Explore black-hole warp spirals to Town (OW-3)
     orbit: null,      // { b, radius, ang, omega } while orbiting a planet (BH-4)
     launchBody: null, // planet the comet just flicked off, for the liftoff grace (STAB-1)
     trail: [],

@@ -21,6 +21,7 @@ const LS = {
     stardust: 'blackHoleInOne_stardust',
     upgrades: 'blackHoleInOne_upgrades',
     inventory: 'blackHoleInOne_inventory',
+    exploreHome: 'blackHoleInOne_exploreHome',
 };
 
 function bestRound() {
@@ -69,6 +70,9 @@ explore.setHooks({
     },
     upgrades(u) {
         localStorage.setItem(LS.upgrades, JSON.stringify(u));
+    },
+    exploreHome(h) {
+        localStorage.setItem(LS.exploreHome, JSON.stringify(h));
     },
 });
 
@@ -338,6 +342,7 @@ function frame(now) {
             // a planet (or Town) under power actually moves the comet.
             if (S.phase === 'flight' || (!S.freezeAim && S.phase === 'aiming' && S.prevPhase === 'flight') || (S.phase === 'rest' && explore.hasThrust())) explore.step(DT);
             else if (S.phase === 'orbit') explore.stepOrbit(DT);
+            else if (S.phase === 'warp') explore.stepWarp(DT);
         } else {
             if (S.phase === 'flight') game.stepFlight(DT);
             else if (S.phase === 'orbit') game.stepOrbit(DT);
@@ -399,6 +404,9 @@ try {
 } catch (e) { /* corrupt/missing value — keep defaults */ }
 try {
     S.inventory = mergeInventory(JSON.parse(localStorage.getItem(LS.inventory)));
+} catch (e) { /* corrupt value — keep defaults */ }
+try {
+    explore.loadExploreHome(JSON.parse(localStorage.getItem(LS.exploreHome)));
 } catch (e) { /* corrupt value — keep defaults */ }
 
 function bootBackground() {

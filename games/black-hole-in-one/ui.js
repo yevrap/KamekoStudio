@@ -7,6 +7,7 @@ import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
+    exploreBlackHoleWarpR,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -243,6 +244,7 @@ export function render(drag) {
         else if (b.type === 'pulsar') drawPulsar(b);
         else if (b.type === 'mine') drawMine(b);
         else if (b.type === 'trap') drawTrap(b);
+        else if (b.type === 'blackhole') drawExploreBlackHole(b);
         else drawTee(b);
     }
     if (world.blackHole) drawBlackHole();
@@ -468,8 +470,12 @@ function drawOrbitRing() {
     ctx.globalAlpha = 1;
 }
 
-function drawBlackHole() {
-    const b = world.blackHole;
+// Shared black-hole render: the accretion glow/rings + event horizon + a dashed
+// capture-radius ring. `captureR` is the ring's radius, in world units — golf's
+// singleton passes CAPTURE_R (the sink radius); Explore's seeded body-list black
+// holes (OW-3) pass their own warp radius so the ring reads at the right scale for
+// a body many times CAPTURE_R's size.
+function drawBlackHoleBody(b, captureR) {
     ctx.globalCompositeOperation = 'lighter';
     const g = ctx.createRadialGradient(b.x, b.y, b.r * 0.6, b.x, b.y, b.r * 3.2);
     g.addColorStop(0, 'rgba(255,150,60,0.55)');
@@ -494,10 +500,16 @@ function drawBlackHole() {
     ctx.globalAlpha = 0.12;
     ctx.setLineDash([1, 1.6]);
     ctx.strokeStyle = '#ffd98a';
-    ctx.beginPath(); ctx.arc(b.x, b.y, CAPTURE_R, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.arc(b.x, b.y, captureR, 0, 7); ctx.stroke();
     ctx.setLineDash([]);
     ctx.globalAlpha = 1;
 }
+
+function drawBlackHole() { drawBlackHoleBody(world.blackHole, CAPTURE_R); }
+
+// OW-3: a seeded Explore black hole — same visual as golf's, ringed at its own warp
+// radius (much bigger than golf's CAPTURE_R, since this body is r=22 vs golf's r=3.2).
+function drawExploreBlackHole(b) { drawBlackHoleBody(b, exploreBlackHoleWarpR(b.r)); }
 
 function drawComet() {
     if (S.phase === 'rest' || (S.phase === 'aiming' && S.prevPhase !== 'flight')) {
@@ -834,6 +846,18 @@ function renderTownShop() {
     const itemsEl = document.getElementById('ts-items');
     if (!itemsEl) return;
 
+    // OW-3: Return Portal — only shown once a black-hole warp has left a bookmark.
+    // Separate id/handler from the generic .ts-buy loop below (data-upgrade-less,
+    // so that loop's forEach skips it) rather than routing it through buyUpgrade().
+    const returnRow = explore.exploreHome ? `
+        <div class="ts-item">
+            <div>
+                <div class="ts-item-name">🌀 Return Portal</div>
+                <div class="ts-item-desc">Warp back to the black hole you came from</div>
+            </div>
+            <button id="ts-return" class="ts-return">🌀 Go</button>
+        </div>` : '';
+
     const upgradeRows = UPGRADES.map(u => {
         const level = S.upgrades[u.key] || 0;
         const cost = upgradeCost(level);
@@ -859,9 +883,12 @@ function renderTownShop() {
             <span class="ts-acquired">✅ Acquired</span>
         </div>`).join('');
 
-    itemsEl.innerHTML = upgradeRows + inventoryRows;
+    itemsEl.innerHTML = returnRow + upgradeRows + inventoryRows;
 
-    itemsEl.querySelectorAll('.ts-buy').forEach(btn => {
+    const returnBtn = itemsEl.querySelector('#ts-return');
+    if (returnBtn) returnBtn.addEventListener('click', () => explore.useReturnPortal());
+
+    itemsEl.querySelectorAll('.ts-buy[data-upgrade]').forEach(btn => {
         btn.addEventListener('click', () => {
             if (explore.buyUpgrade(btn.dataset.upgrade)) renderTownShop();
         });

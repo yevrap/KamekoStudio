@@ -172,6 +172,18 @@ body {
 }
 .ts-buy:active { background: rgba(0,229,160,0.3); }
 .ts-buy:disabled { opacity: 0.4; border-color: #555; color: #999; cursor: default; }
+.ts-return {
+    background: rgba(255,217,138,0.16);
+    border: 1px solid #ffd98a;
+    color: #ffd98a;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.ts-return:active { background: rgba(255,217,138,0.3); }
 .ts-acquired {
     background: rgba(255,255,255,0.06);
     border: 1px solid #555;

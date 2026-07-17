@@ -218,7 +218,8 @@
       'astroSalon_lang', 'astroSalon_mySign',
       // Black Hole in One
       'blackHoleInOne_mode', 'blackHoleInOne_muted', 'blackHoleInOne_myMaps',
-      'blackHoleInOne_freezeAim', 'blackHoleInOne_stardust', 'blackHoleInOne_upgrades', 'blackHoleInOne_inventory'
+      'blackHoleInOne_freezeAim', 'blackHoleInOne_stardust', 'blackHoleInOne_upgrades', 'blackHoleInOne_inventory',
+      'blackHoleInOne_exploreHome'
     ];
     // Per-seat / per-wave keys have dynamic suffixes — clear by prefix.
     const prefixesToRemove = [

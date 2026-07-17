@@ -128,6 +128,31 @@ export const STICK_DEAD_PX = 8;    // CSS px deadzone — a tap must not fire a 
 // landing-only (not a bounce trickle), visually distinct like the Town beacon.
 export const REFUEL_STATION_CHANCE = 0.75; // odds a chunk gets one flagged station planet
 
+// ---- Explore black holes (OW-3), Explore only -----------------------------------
+// A rare seeded landmark body — flying close enough warps the comet to Town, with a
+// Return Portal back to the exact spot (see explore.js beginWarp/useReturnPortal).
+// Unlike FUEL-2's refuel flag (which marks an existing planet), this is its own body
+// so it gets independent gravity + rendering. Radius is fixed (not randomized per
+// body, unlike planets) and mass follows the same m=r² density convention as every
+// other chunk-generator body — that formula's surface gravity is monotonically
+// increasing in r and the Giant's r=40 ceiling already proves r≤40 clears THRUST_A
+// (INV-3c, ~369.7 u/s² of 385); this body's r=22 sits well inside that safe range
+// (~347.6 u/s², more margin than a Giant gets), so it stays Thruster-escapable with
+// no THRUST_A/gravity special-casing.
+export const EXPLORE_BLACKHOLE_CHANCE = 0.04;    // odds a chunk seeds one
+export const EXPLORE_BLACKHOLE_R = 22;           // fixed visual/gravity radius
+// Warp triggers at r + this margin — comfortably outside stepBody()'s r+COMET_R
+// collision radius (23.6 at R=22) so the proximity warp in explore.js always
+// preempts physics.js's normal planet-style bounce/land response for the same body;
+// physics.js itself stays completely untouched (its blackHole param backs ~300
+// golf/editor tests and is deliberately not retrofitted for this).
+export const EXPLORE_BLACKHOLE_WARP_MARGIN = 10;
+// Return Portal lands this far *outside* the warp radius (from the black hole's
+// center, along the direction the comet approached from) so arriving back doesn't
+// instantly re-trigger the same warp.
+export const EXPLORE_RETURN_NUDGE = 3;
+export function exploreBlackHoleWarpR(r) { return r + EXPLORE_BLACKHOLE_WARP_MARGIN; }
+
 // ---- Inventory registry (INV-1) -----------------------------------------------
 // A mechanic testbed, not a shop: one entry per experimental gameplay modifier,
 // toggled from the settings drawer, Explore only. `owned` defaults true — there's

@@ -146,6 +146,7 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `blackHoleInOne_mode` | black-hole-in-one | Last chosen mode `'endless'`/`'round'` |
 | `blackHoleInOne_muted` | black-hole-in-one | Sound effects off/on |
 | `blackHoleInOne_inventory` | black-hole-in-one | JSON `{ [itemKey]: { owned, enabled } }` — item-toggle state (INV-1), Explore only |
+| `blackHoleInOne_exploreHome` | black-hole-in-one | JSON `{blackHoleId,bhX,bhY,x,y}`\|`null` — Return Portal bookmark (OW-3), Explore only |
 
 ## Three.js Obstacle Arrays
 

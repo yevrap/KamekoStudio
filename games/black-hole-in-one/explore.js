@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, EXPLORE_RETURN_NUDGE, exploreBlackHoleWarpR } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture } from './physics.js';
 
@@ -11,8 +11,8 @@ export const camera = { x: 50, y: 85 };
 export let fuel = 100;
 
 export let hooks = {
-    toast() {}, bar() {}, burst() {}, stardust() {}, upgrades() {},
-    sfx: { flick() {}, bounce() {}, land() {}, sling() {} },
+    toast() {}, bar() {}, burst() {}, stardust() {}, upgrades() {}, exploreHome() {},
+    sfx: { flick() {}, bounce() {}, land() {}, sling() {}, sink() {} },
 };
 export function setHooks(h) { hooks = Object.assign(hooks, h); }
 
@@ -33,6 +33,14 @@ export function worldToScreen(wx, wy, scale, vw, vh, camX, camY) {
 export let worldSeed = 'explore-1';
 export const CHUNK_SIZE = 400; // Size of a chunk in world units
 export const SECTOR_LIMIT = 3000; // Bounded sector size
+
+// OW-3: the Return Portal's bookmark — which black hole (id, for reference) and the
+// exact world position the comet warped in from, so the portal can send it back to
+// that same spot. Persisted across reload (blackHoleInOne_exploreHome) the same way
+// as upgrades/stardust — set via loadExploreHome() at boot, NOT reset by startRun()
+// (same lifetime as upgrades, cleared only by "Clear All Game Data").
+export let exploreHome = null; // { blackHoleId, bhX, bhY, x, y }
+export function loadExploreHome(h) { exploreHome = (h && typeof h === 'object') ? h : null; }
 
 let activeBodies = [];
 export let pickups = [];
@@ -97,6 +105,25 @@ export function getChunkBodies(cx, cy, seed) {
     // or not it happens to get a station.
     if (survivors.length > 0 && rng() < REFUEL_STATION_CHANCE) {
         survivors[Math.floor(rng() * survivors.length)].refuelStation = true;
+    }
+
+    // Explore black holes (OW-3): a rare, seeded landmark — its own body (not a flag
+    // on an existing planet like the refuel roll above) so it gets independent
+    // gravity + rendering. Rolled last, after everything above, so neither the body
+    // mix nor the refuel odds for any given chunk change from adding this — same rng
+    // stream, just consumed after everything else already decided. Retries a few
+    // clear spots (reject-and-resample, same pattern as getChunkPickups' placeClear)
+    // and simply skips the chunk if none open up — rare enough that losing an
+    // occasional one to a crowded chunk doesn't matter.
+    if (rng() < EXPLORE_BLACKHOLE_CHANCE) {
+        const r = EXPLORE_BLACKHOLE_R;
+        for (let attempt = 0; attempt < 6; attempt++) {
+            const bx = cx * CHUNK_SIZE + rng() * CHUNK_SIZE;
+            const by = cy * CHUNK_SIZE + rng() * CHUNK_SIZE;
+            if (survivors.some(b => Math.hypot(b.x - bx, b.y - by) < b.r + r + 10)) continue;
+            survivors.push({ x: bx, y: by, r, m: r * r, type: 'blackhole', id: `bh${cx}_${cy}` });
+            break;
+        }
     }
 
     return survivors;
@@ -387,7 +414,21 @@ export function step(dt) {
     }
 
     const res = stepBody(comet, dt, world.bodies, null);
-    
+
+    // OW-3: seeded black holes sit in world.bodies (so they get real gravity, same
+    // m=r² convention as every other body), but flying into one should warp to Town,
+    // not bounce/land like a planet — checked before res.hit is handled below. The
+    // warp radius is comfortably bigger than stepBody()'s r+COMET_R collision radius
+    // for the same body (see exploreBlackHoleWarpR), so this always preempts a
+    // planet-style hit rather than racing it.
+    for (const b of world.bodies) {
+        if (b.type !== 'blackhole') continue;
+        if (dist(comet.x, comet.y, b.x, b.y) < exploreBlackHoleWarpR(b.r)) {
+            beginWarp(b);
+            return;
+        }
+    }
+
     if (res && res.hit) {
         const c = collide(comet, res.hit);
         if (c.landed) {
@@ -459,6 +500,87 @@ export function step(dt) {
     }
     
     updateCamera(dt);
+}
+
+/* ============================== OW-3: black-hole warp → Town → return ============================== */
+
+// Begin the warp: bookmark where we came from (persisted so the Return Portal
+// survives reload), then spiral the comet into the black hole's position over ~1s.
+// Reuses the *visual pattern* of golf's inward spiral (gameplay.js beginSink/
+// stepSink), not the functions themselves — Explore has no strokes/par/scorecard,
+// so golf's holeComplete() scoring machinery doesn't apply here.
+function beginWarp(b) {
+    exploreHome = { blackHoleId: b.id, bhX: b.x, bhY: b.y, x: comet.x, y: comet.y };
+    hooks.exploreHome(exploreHome);
+    const dx = comet.x - b.x, dy = comet.y - b.y;
+    world.warp = { b, r0: Math.max(Math.hypot(dx, dy), 1.5), a0: Math.atan2(dy, dx), t: 0 };
+    S.phase = 'warp';
+    world.trail = [];
+    hooks.sfx.sink();
+    hooks.toast('🌀 Pulled into a black hole...');
+}
+
+export function stepWarp(dt) {
+    const w = world.warp;
+    if (!w) return;
+    w.t += dt * 1.1;
+    const t = Math.min(w.t, 1);
+    const r = w.r0 * (1 - t) * (1 - t);
+    const a = w.a0 + t * 7;
+    comet.x = w.b.x + Math.cos(a) * r;
+    comet.y = w.b.y + Math.sin(a) * r;
+    if (Math.random() < 0.5) hooks.burst(comet.x, comet.y, 1, '#ffd98a', 8);
+    if (w.t >= 1) completeWarp();
+    else updateCamera(dt);
+}
+
+function completeWarp() {
+    world.warp = null;
+    if (!world.teeRock) world.teeRock = { x: 50, y: 85, r: 3.4, m: 8, type: 'tee', id: 'tee' };
+    comet.vx = comet.vy = 0;
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    placeOnRest();
+    world.lastRest = { rest: comet.rest };
+    world.trail = [];
+    camera.x = 50;
+    camera.y = 85;
+    S.phase = 'rest';
+    lastChunkX = null;
+    lastChunkY = null; // force a chunk refresh at Town, however far the warp origin was
+    updateActiveChunks();
+    hooks.burst(comet.x, comet.y, 20, '#ffd98a', 30);
+    hooks.toast('🏪 Warped to Town!');
+    hooks.bar();
+}
+
+// Return Portal: send the comet back to the exact black hole + location it warped
+// in from. No-op away from Town or before any warp has happened yet. Free (no fuel
+// cost) — it's a trip back to where you were, not a flight action. Lands the comet
+// EXPLORE_RETURN_NUDGE past the warp radius, along the same direction it approached
+// from, so arriving doesn't instantly re-trigger the same warp (the bookmarked spot
+// sits right at the trigger boundary by definition).
+export function useReturnPortal() {
+    if (!atTown() || !exploreHome) return false;
+    const { bhX, bhY, x, y } = exploreHome;
+    const dx = x - bhX, dy = y - bhY;
+    const d = Math.hypot(dx, dy) || 1;
+    const safeR = exploreBlackHoleWarpR(EXPLORE_BLACKHOLE_R) + EXPLORE_RETURN_NUDGE;
+    comet.x = bhX + (dx / d) * safeR;
+    comet.y = bhY + (dy / d) * safeR;
+    comet.vx = comet.vy = 0;
+    comet.rest = null;
+    S.phase = 'flight';
+    world.trail = [];
+    camera.x = comet.x;
+    camera.y = comet.y;
+    lastChunkX = null;
+    lastChunkY = null;
+    updateActiveChunks();
+    hooks.burst(comet.x, comet.y, 20, '#ffd98a', 30);
+    hooks.sfx.sling();
+    hooks.toast('🌀 Returned to the black hole');
+    hooks.bar();
+    return true;
 }
 
 // True when landing on `body` should fully refuel the tank (FUEL-2) — landing only,
