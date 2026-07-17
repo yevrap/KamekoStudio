@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, EXPLORE_RETURN_NUDGE, exploreBlackHoleWarpR } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, EXPLORE_RETURN_NUDGE, exploreBlackHoleWarpR, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture } from './physics.js';
 
@@ -58,8 +58,9 @@ export function getChunkBodies(cx, cy, seed) {
     
     for (let i = 0; i < numBodies; i++) {
         const typeRand = rng();
-        let r, m;
+        let r, m, isGiant = false;
         if (typeRand < 0.1) {
+            isGiant = true;
             r = 25 + rng() * 15; m = r * r; // Giant (INV-3c: dropped the 1.5x density
             // bump — mass already scales r², so a giant is still up to 100x a dwarf's
             // mass on size alone. The bump pushed surface gravity as high as ~555 u/s²,
@@ -86,7 +87,7 @@ export function getChunkBodies(cx, cy, seed) {
         const px = cx * CHUNK_SIZE + rng() * CHUNK_SIZE;
         const py = cy * CHUNK_SIZE + rng() * CHUNK_SIZE;
         const pal = PALETTES[Math.floor(rng() * PALETTES.length)];
-        bodies.push({ x: px, y: py, r, m, type: 'planet', pal, spin: rng() * Math.PI * 2, id: `c${cx}_${cy}_${i}` });
+        bodies.push({ x: px, y: py, r, m, type: 'planet', pal, spin: rng() * Math.PI * 2, id: `c${cx}_${cy}_${i}`, giant: isGiant });
     }
     
     // Intra-chunk overlap resolution (deterministic)
@@ -123,6 +124,35 @@ export function getChunkBodies(cx, cy, seed) {
             if (survivors.some(b => Math.hypot(b.x - bx, b.y - by) < b.r + r + 10)) continue;
             survivors.push({ x: bx, y: by, r, m: r * r, type: 'blackhole', id: `bh${cx}_${cy}` });
             break;
+        }
+    }
+
+    // Moons & rings (OW-5): decorative only — rolled last, after everything above,
+    // so neither the body mix nor the refuel/black-hole odds change from adding
+    // this — same rng stream, just consumed after everything else already decided.
+    // Giants only (the natural candidate per spec — big enough to carry a moon/ring
+    // without reading as clutter on a small dwarf/normal planet). Set as a property
+    // (b.moon / b.ring) on the planet object already in `survivors`, never pushed
+    // as its own entry — see constants.js's moonPosition doc for why that makes
+    // gravity/collision interaction structurally impossible, not just untested.
+    for (const b of survivors) {
+        if (!b.giant) continue;
+        if (rng() >= MOON_RING_CHANCE) continue;
+        if (rng() < MOON_VS_RING_CHANCE) {
+            b.moon = {
+                orbitR: b.r * (MOON_ORBIT_R_MIN + rng() * (MOON_ORBIT_R_MAX - MOON_ORBIT_R_MIN)),
+                size: b.r * (MOON_SIZE_MIN + rng() * (MOON_SIZE_MAX - MOON_SIZE_MIN)),
+                period: MOON_PERIOD_MIN + rng() * (MOON_PERIOD_MAX - MOON_PERIOD_MIN),
+                ang0: rng() * Math.PI * 2,
+                pal: PALETTES[Math.floor(rng() * PALETTES.length)],
+            };
+        } else {
+            b.ring = {
+                radius: b.r * (RING_RADIUS_MIN + rng() * (RING_RADIUS_MAX - RING_RADIUS_MIN)),
+                arcStart: rng() * Math.PI * 2,
+                arcLen: RING_ARC_MIN + rng() * (RING_ARC_MAX - RING_ARC_MIN),
+                tilt: RING_TILT_MIN + rng() * (RING_TILT_MAX - RING_TILT_MIN),
+            };
         }
     }
 

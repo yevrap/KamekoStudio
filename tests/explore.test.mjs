@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, EXPLORE_RETURN_NUDGE, exploreBlackHoleWarpR } from '../games/black-hole-in-one/constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, EXPLORE_RETURN_NUDGE, exploreBlackHoleWarpR, moonPosition } from '../games/black-hole-in-one/constants.js';
 import { gravityAt } from '../games/black-hole-in-one/physics.js';
 
 test('Camera math: screenToWorld', () => {
@@ -899,4 +899,77 @@ test('OW-3: loadExploreHome tolerates null, undefined, or non-object saved paylo
     loadExploreHome({ blackHoleId: 'a', bhX: 1, bhY: 2, x: 3, y: 4 });
     loadExploreHome('garbage');
     assert.equal(exploreHome, null);
+});
+
+/* ============================== OW-5: Moons & rings (decorative) ============================== */
+
+test('OW-5: only Giant planets ever get a moon or ring, and a meaningful share of them do', () => {
+    let giants = 0, decorated = 0, nonGiantDecorated = 0;
+    for (let cx = -10; cx <= 10; cx++) {
+        for (let cy = -10; cy <= 10; cy++) {
+            const bodies = getChunkBodies(cx, cy, 'moon-sample');
+            for (const b of bodies) {
+                if (b.type !== 'planet') continue;
+                if (b.moon || b.ring) {
+                    decorated++;
+                    if (!b.giant) nonGiantDecorated++;
+                }
+                if (b.giant) giants++;
+            }
+        }
+    }
+    assert.ok(giants > 20, `sanity: sampled a meaningful number of Giants (got ${giants})`);
+    assert.equal(nonGiantDecorated, 0, 'only Giants should ever carry a moon or ring');
+    const rate = decorated / giants;
+    assert.ok(rate > 0.4 && rate < 0.9, `moon/ring frequency among Giants should read as "a meaningful share" (got ${rate.toFixed(2)})`);
+});
+
+test('OW-5: a planet never gets both a moon and a ring', () => {
+    for (let cx = -10; cx <= 10; cx++) {
+        for (let cy = -10; cy <= 10; cy++) {
+            const bodies = getChunkBodies(cx, cy, 'moon-sample-2');
+            for (const b of bodies) {
+                assert.ok(!(b.moon && b.ring), `planet ${b.id} has both a moon and a ring`);
+            }
+        }
+    }
+});
+
+test('OW-5: moons and rings never appear as their own body — every returned body is a real physics type', () => {
+    for (let cx = -8; cx <= 8; cx++) {
+        for (let cy = -8; cy <= 8; cy++) {
+            const bodies = getChunkBodies(cx, cy, 'moon-sample-3');
+            for (const b of bodies) {
+                assert.ok(['planet', 'blackhole'].includes(b.type),
+                    `getChunkBodies returned an unexpected body type "${b.type}" — moons/rings must stay properties, never entries`);
+            }
+        }
+    }
+});
+
+test('OW-5: getChunkBodies\'s moon/ring roll is deterministic for a given seed', () => {
+    const a = getChunkBodies(4, -7, 'moon-det').map(b => ({ moon: b.moon, ring: b.ring }));
+    const b = getChunkBodies(4, -7, 'moon-det').map(b => ({ moon: b.moon, ring: b.ring }));
+    assert.deepEqual(a, b);
+});
+
+test('OW-5: moonPosition is deterministic and always exactly orbitR from the planet center', () => {
+    const moon = { orbitR: 12, size: 3, period: 18, ang0: 1.2 };
+    for (const t of [0, 3.7, 18, 41.25, 100]) {
+        const p1 = moonPosition(50, -20, moon, t);
+        const p2 = moonPosition(50, -20, moon, t);
+        assert.deepEqual(p1, p2, `moonPosition(t=${t}) should be deterministic`);
+        const d = Math.hypot(p1.x - 50, p1.y - (-20));
+        assert.ok(Math.abs(d - moon.orbitR) < 1e-9, `moon should stay fixed at orbitR=${moon.orbitR}, got ${d}`);
+    }
+});
+
+test('OW-5: moonPosition completes one full orbit every `period` seconds', () => {
+    const moon = { orbitR: 10, size: 2, period: 20, ang0: 0 };
+    const start = moonPosition(0, 0, moon, 0);
+    const afterOnePeriod = moonPosition(0, 0, moon, 20);
+    assert.ok(Math.abs(start.x - afterOnePeriod.x) < 1e-9);
+    assert.ok(Math.abs(start.y - afterOnePeriod.y) < 1e-9);
+    const halfway = moonPosition(0, 0, moon, 10);
+    assert.ok(Math.abs(halfway.x - start.x) > 1, 'moon should have visibly moved at the half-period mark');
 });

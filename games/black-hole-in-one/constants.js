@@ -153,6 +153,33 @@ export const EXPLORE_BLACKHOLE_WARP_MARGIN = 10;
 export const EXPLORE_RETURN_NUDGE = 3;
 export function exploreBlackHoleWarpR(r) { return r + EXPLORE_BLACKHOLE_WARP_MARGIN; }
 
+// ---- Moons & rings (OW-5), decorative only, Explore only -----------------------
+// Pure render-layer decoration attached to an existing Giant planet body (b.moon /
+// b.ring) — never a body in its own right, so it's structurally incapable of
+// exerting gravity or registering a collision: gravityAt/stepBody (physics.js)
+// only ever iterate the `bodies` array, and a moon/ring is never pushed into it,
+// just set as a property on a planet that's already there. Seeded once per planet
+// at chunk-gen time so the assignment (moon vs ring vs neither, and its exact
+// geometry) is stable across revisits — same convention as every other
+// chunk-generator roll (refuel stations, black holes).
+export const MOON_RING_CHANCE = 0.65;    // odds a Giant gets a moon or a ring
+export const MOON_VS_RING_CHANCE = 0.5;  // of those, odds it's a moon (else a ring)
+export const MOON_ORBIT_R_MIN = 1.6, MOON_ORBIT_R_MAX = 2.4;  // × planet radius
+export const MOON_SIZE_MIN = 0.14, MOON_SIZE_MAX = 0.24;      // × planet radius
+export const MOON_PERIOD_MIN = 14, MOON_PERIOD_MAX = 22;      // seconds per full orbit
+export const RING_RADIUS_MIN = 1.3, RING_RADIUS_MAX = 1.9;    // × planet radius
+export const RING_ARC_MIN = Math.PI * 0.9, RING_ARC_MAX = Math.PI * 1.8; // radians span
+export const RING_TILT_MIN = 0.32, RING_TILT_MAX = 0.54;      // y-scale (ellipse squash)
+
+// Moon world position at cosmetic time `t` (S.time). Fixed radius/period — a pure
+// circular orbit, always exactly `moon.orbitR` from the planet center regardless
+// of t. Pure — unit-tested for determinism (same t → same point) and for the
+// fixed-radius guarantee (never drifts, since nothing here reads velocity/gravity).
+export function moonPosition(planetX, planetY, moon, t) {
+    const ang = moon.ang0 + (t / moon.period) * Math.PI * 2;
+    return { x: planetX + Math.cos(ang) * moon.orbitR, y: planetY + Math.sin(ang) * moon.orbitR };
+}
+
 // ---- Inventory registry (INV-1) -----------------------------------------------
 // A mechanic testbed, not a shop: one entry per experimental gameplay modifier,
 // toggled from the settings drawer, Explore only. `owned` defaults true — there's

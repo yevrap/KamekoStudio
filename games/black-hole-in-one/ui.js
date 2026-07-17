@@ -7,7 +7,7 @@ import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
-    exploreBlackHoleWarpR,
+    exploreBlackHoleWarpR, moonPosition,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -317,6 +317,10 @@ function drawPlanet(b) {
     ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 9, 0, 7); ctx.stroke();
     ctx.globalAlpha = 1;
 
+    // OW-5: static ring arc drawn behind the body so the planet occludes its
+    // middle band, Saturn-style. Purely cosmetic — never touches physics.
+    if (b.ring) drawRing(b);
+
     const g = ctx.createRadialGradient(b.x - b.r * 0.35, b.y - b.r * 0.4, b.r * 0.15, b.x, b.y, b.r);
     g.addColorStop(0, b.pal.base);
     g.addColorStop(1, b.pal.dark);
@@ -335,6 +339,36 @@ function drawPlanet(b) {
     }
     ctx.restore();
     ctx.globalAlpha = 1;
+
+    // OW-5: moon orbiting at a fixed radius/period — position is a pure function
+    // of the cosmetic clock (S.time), not physics-stepped, so it never interacts
+    // with gravity/collision.
+    if (b.moon) drawMoon(b);
+}
+
+function drawRing(b) {
+    const ring = b.ring;
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    ctx.scale(1, ring.tilt);
+    ctx.strokeStyle = b.pal.base;
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = Math.max(0.8, b.r * 0.1);
+    ctx.beginPath();
+    ctx.arc(0, 0, ring.radius, ring.arcStart, ring.arcStart + ring.arcLen);
+    ctx.stroke();
+    ctx.restore();
+    ctx.globalAlpha = 1;
+}
+
+function drawMoon(b) {
+    const m = b.moon;
+    const pos = moonPosition(b.x, b.y, m, S.time);
+    const g = ctx.createRadialGradient(pos.x - m.size * 0.3, pos.y - m.size * 0.3, m.size * 0.15, pos.x, pos.y, m.size);
+    g.addColorStop(0, m.pal.base);
+    g.addColorStop(1, m.pal.dark);
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(pos.x, pos.y, m.size, 0, 7); ctx.fill();
 }
 
 function drawPulsar(b) {
