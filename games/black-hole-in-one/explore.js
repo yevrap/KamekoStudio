@@ -260,7 +260,7 @@ export function launch(dx, dy, len) {
     return true;
 }
 
-// ---- Thruster (INV-3a): keyboard input + thrust vector ---------------------
+// ---- Thruster (INV-3a/b): keyboard + floating-stick input, thrust vector ---
 // Transient input state, not game state — module scope, not `S` (nothing here
 // persists or serializes).
 const MOVE_KEYS = new Map([
@@ -287,21 +287,65 @@ export function keysToVector(keySet) {
     return len > 0 ? { x: x / len, y: y / len } : { x: 0, y: 0 };
 }
 
-// Deadzone-then-linear throttle ramp from stick displacement in CSS px (T5),
-// ahead of the pointer wiring (INV-3b) that will call it. Pure — unit-tested.
+// Deadzone-then-linear throttle ramp from stick displacement in CSS px (T5).
+// Pure — unit-tested.
 export function stickThrottle(d) {
     if (d <= STICK_DEAD_PX) return 0;
     return Math.min((d - STICK_DEAD_PX) / (STICK_R_PX - STICK_DEAD_PX), 1);
 }
 
-// Combine keyboard (and, from INV-3b, the stick) into one thrust vector. Inert
-// unless the Thruster item is on in Explore — the single gate behind T6/T7's
-// "all of the above is inert when off."
+// CSS-px-per-view-unit ratio (ui.js's view.scale), pushed in on every resize so
+// stickVector() below can convert the stored view-unit drag distance into the CSS
+// px stickThrottle() expects. Defaults to 1 (matches ui.js's own default) until
+// the first resize runs.
+let viewScale = 1;
+export function setViewScale(s) { viewScale = s; }
+
+// Floating stick (T5/T9): origin = the first touch point, in VIEW units — screen-
+// anchored, NOT world units, which would slide out from under the thumb as the
+// camera follows the comet and the STAB-2 zoom eases (see ui.toView()). One stick
+// at a time; a second pointer while one is already live is ignored.
+export let stick = null; // { ox, oy, cx, cy, id }
+
+export function stickDown(vx, vy, id) {
+    if (stick) return;
+    stick = { ox: vx, oy: vy, cx: vx, cy: vy, id };
+}
+export function stickMove(vx, vy, id) {
+    if (!stick || stick.id !== id) return;
+    stick.cx = vx; stick.cy = vy;
+}
+export function stickUp(id) {
+    if (stick && stick.id === id) stick = null;
+}
+export function stickCancel() { stick = null; }
+
+// Direction (unit vector) × analog throttle from the stick's displacement (T1/T9:
+// push toward, how far out = throttle). Pure given the module's own `stick` state.
+function stickVector() {
+    if (!stick) return { x: 0, y: 0 };
+    const dx = stick.cx - stick.ox, dy = stick.cy - stick.oy;
+    const d = Math.hypot(dx, dy);
+    if (d === 0) return { x: 0, y: 0 };
+    const throttle = stickThrottle(d * viewScale);
+    return throttle > 0 ? { x: dx / d * throttle, y: dy / d * throttle } : { x: 0, y: 0 };
+}
+
+// Combine keyboard and stick into one thrust vector. Keyboard alone stays exactly
+// INV-3a's behavior: a unit vector at throttle 1. The stick alone carries its own
+// analog throttle in its magnitude. Both summed and clamped to magnitude 1 so stick
+// and keys can drive at once without exceeding full thrust. Inert unless the
+// Thruster item is on in Explore — the single gate behind T6/T7's "all of the above
+// is inert when off."
 export function thrustVec() {
     if (!(S.mode === 'explore' && S.inventory.thruster?.enabled)) return { x: 0, y: 0, throttle: 0 };
     const kv = keysToVector(keys);
-    if (kv.x === 0 && kv.y === 0) return { x: 0, y: 0, throttle: 0 };
-    return { x: kv.x, y: kv.y, throttle: 1 };
+    const sv = stickVector();
+    let x = kv.x + sv.x, y = kv.y + sv.y;
+    const mag = Math.hypot(x, y);
+    if (mag > 1) { x /= mag; y /= mag; }
+    const throttle = Math.min(mag, 1);
+    return throttle > 0 ? { x, y, throttle } : { x: 0, y: 0, throttle: 0 };
 }
 
 export function hasThrust() { return thrustVec().throttle > 0; }
@@ -317,6 +361,12 @@ export function step(dt) {
         comet.vx += t.x * THRUST_A * dt;
         comet.vy += t.y * THRUST_A * dt;
         burnFuel(THRUST_BURN * t.throttle * dt);
+        // Exhaust (INV-3b): a few particles opposite the thrust vector each step,
+        // in the comet's own trail color (#ffcf8a) — reuses the existing burst().
+        if (Math.random() < t.throttle * 0.15) {
+            const tm = Math.hypot(t.x, t.y) || 1;
+            hooks.burst(comet.x - (t.x / tm) * COMET_R, comet.y - (t.y / tm) * COMET_R, 1, '#ffcf8a', 12);
+        }
     }
 
     const res = stepBody(comet, dt, world.bodies, null);

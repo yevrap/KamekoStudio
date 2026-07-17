@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome, refuelFull, stickThrottle, keysToVector } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome, refuelFull, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX } from '../games/black-hole-in-one/constants.js';
 
@@ -416,4 +416,168 @@ test('INV-3a: defaultInventory registers the Thruster item, owned but off by def
     const inv = defaultInventory();
     assert.equal(inv.thruster.owned, true);
     assert.equal(inv.thruster.enabled, false);
+});
+
+/* ============================== INV-3b: Floating stick ============================== */
+
+test('INV-3b: stickDown/Move/Up track a single pointer by id; a second pointer is ignored', () => {
+    stickCancel();
+    assert.equal(stick, null);
+
+    stickDown(10, 20, 1);
+    assert.deepEqual(stick, { ox: 10, oy: 20, cx: 10, cy: 20, id: 1 });
+
+    stickDown(99, 99, 2); // second pointer while one is live — ignored, origin keeps it
+    assert.equal(stick.id, 1);
+    assert.equal(stick.ox, 10);
+
+    stickMove(15, 28, 2); // wrong id — ignored
+    assert.deepEqual(stick, { ox: 10, oy: 20, cx: 10, cy: 20, id: 1 });
+
+    stickMove(15, 28, 1); // right id — updates the current point only
+    assert.deepEqual(stick, { ox: 10, oy: 20, cx: 15, cy: 28, id: 1 });
+
+    stickUp(2); // wrong id — ignored
+    assert.notEqual(stick, null);
+
+    stickUp(1); // right id — clears
+    assert.equal(stick, null);
+});
+
+test('INV-3b: stickCancel force-clears regardless of id', () => {
+    stickDown(0, 0, 5);
+    stickCancel();
+    assert.equal(stick, null);
+});
+
+test('INV-3b: thrustVec is inert unless Explore mode + Thruster enabled, even with stick/keys held', () => {
+    startRun();
+    S.inventory = defaultInventory(); // thruster off by default
+    setViewScale(1);
+    stickDown(0, 0, 1);
+    stickMove(STICK_R_PX, 0, 1); // full-throttle displacement
+    keyDown('KeyW');
+
+    assert.deepEqual(thrustVec(), { x: 0, y: 0, throttle: 0 }, 'Thruster off: inert despite stick+keys held');
+
+    S.mode = 'endless';
+    S.inventory.thruster.enabled = true;
+    assert.deepEqual(thrustVec(), { x: 0, y: 0, throttle: 0 }, 'not Explore mode: inert despite Thruster on');
+
+    clearKeys();
+    stickCancel();
+});
+
+test('INV-3b: thrustVec from the stick alone — direction is origin→current, throttle is analog', () => {
+    startRun();
+    S.inventory = defaultInventory();
+    S.inventory.thruster.enabled = true;
+    setViewScale(1); // view units == CSS px for this test
+    clearKeys();
+
+    stickDown(0, 0, 1);
+    stickMove(STICK_R_PX, 0, 1); // straight right, at the full-throttle radius
+    const t = thrustVec();
+    assert.ok(Math.abs(t.x - 1) < 1e-9, `x should be ~1 (full throttle right), got ${t.x}`);
+    assert.ok(Math.abs(t.y) < 1e-9);
+    assert.equal(t.throttle, 1);
+
+    const mid = STICK_DEAD_PX + (STICK_R_PX - STICK_DEAD_PX) / 2;
+    stickMove(mid, 0, 1); // halfway between deadzone and full radius
+    const t2 = thrustVec();
+    assert.ok(Math.abs(t2.throttle - 0.5) < 1e-9);
+    assert.ok(Math.abs(t2.x - 0.5) < 1e-9, 'direction vector is scaled by throttle, not just a unit vector');
+
+    stickCancel();
+});
+
+test('INV-3b: thrustVec from the stick respects the deadzone — a tap fires no thrust', () => {
+    startRun();
+    S.inventory = defaultInventory();
+    S.inventory.thruster.enabled = true;
+    setViewScale(1);
+    clearKeys();
+
+    stickDown(0, 0, 1);
+    stickMove(STICK_DEAD_PX - 1, 0, 1); // inside the deadzone
+    assert.deepEqual(thrustVec(), { x: 0, y: 0, throttle: 0 });
+
+    stickCancel();
+});
+
+test('INV-3b: thrustVec converts the stored view-unit distance to CSS px via setViewScale', () => {
+    startRun();
+    S.inventory = defaultInventory();
+    S.inventory.thruster.enabled = true;
+    clearKeys();
+
+    // Same view-unit displacement at two different scales must read as two different
+    // CSS-px distances (and therefore different throttle) — proves setViewScale()'s
+    // value is actually applied, not just the raw view-unit distance compared straight
+    // against the STICK_R_PX/STICK_DEAD_PX constants.
+    const dView = (STICK_DEAD_PX + (STICK_R_PX - STICK_DEAD_PX) / 2) / 2;
+
+    setViewScale(1);
+    stickDown(0, 0, 1);
+    stickMove(dView, 0, 1);
+    const throttleAtScale1 = thrustVec().throttle;
+    stickCancel();
+
+    setViewScale(2); // same view-unit drag now covers 2x the CSS px
+    stickDown(0, 0, 1);
+    stickMove(dView, 0, 1);
+    const throttleAtScale2 = thrustVec().throttle;
+    stickCancel();
+
+    assert.ok(throttleAtScale2 > throttleAtScale1,
+        `scale 2 should read a larger CSS-px drag than scale 1 (got ${throttleAtScale1} vs ${throttleAtScale2})`);
+
+    setViewScale(1);
+});
+
+test('INV-3b: thrustVec sums stick + keyboard and clamps magnitude to 1', () => {
+    startRun();
+    S.inventory = defaultInventory();
+    S.inventory.thruster.enabled = true;
+    setViewScale(1);
+
+    keyDown('KeyD'); // +x, magnitude 1
+    stickDown(0, 0, 1);
+    stickMove(STICK_R_PX, 0, 1); // also +x, full throttle — same direction as the key
+
+    const t = thrustVec();
+    assert.ok(Math.abs(Math.hypot(t.x, t.y) - 1) < 1e-9, 'same-direction stick+keys clamp to magnitude 1, not 2');
+    assert.equal(t.throttle, 1);
+
+    clearKeys();
+    stickCancel();
+});
+
+test('INV-3b: thrustVec keyboard-only path is unchanged by the stick (regression against INV-3a)', () => {
+    startRun();
+    S.inventory = defaultInventory();
+    S.inventory.thruster.enabled = true;
+    setViewScale(1);
+    stickCancel(); // no stick held
+
+    keyDown('ArrowUp');
+    const t = thrustVec();
+    assert.deepEqual(t, { x: 0, y: -1, throttle: 1 }, 'keyboard alone: unit vector, throttle 1, exactly as INV-3a shipped');
+
+    clearKeys();
+});
+
+test('INV-3b: hasThrust reflects the stick', () => {
+    startRun();
+    S.inventory = defaultInventory();
+    S.inventory.thruster.enabled = true;
+    setViewScale(1);
+    clearKeys();
+
+    assert.equal(hasThrust(), false);
+    stickDown(0, 0, 1);
+    stickMove(STICK_R_PX, 0, 1);
+    assert.equal(hasThrust(), true);
+
+    stickCancel();
 });

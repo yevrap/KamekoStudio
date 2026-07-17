@@ -6,7 +6,7 @@
 import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
-    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS,
+    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -40,6 +40,22 @@ export function updateZoom(dt) {
     if (Math.abs(view.zoom - target) < 0.001) view.zoom = target;
 }
 
+// ---- Thruster floating-stick fade (INV-3b) -----------------------------------
+// Eases the ring/nub's opacity in/out over ~0.12s so a quick tap doesn't strobe
+// (a tap releases well before alpha reaches 1, so it never even flashes at full
+// opacity). lastStickPos is cached so the fade-OUT after release still has a
+// point to draw at, even though explore.stick itself goes null immediately.
+let stickAlpha = 0;
+let lastStickPos = null;
+
+export function stepStick(dt) {
+    if (explore.stick) lastStickPos = explore.stick;
+    const active = S.mode === 'explore' && !!S.inventory.thruster?.enabled && !!explore.stick;
+    const target = active ? 1 : 0;
+    stickAlpha += (target - stickAlpha) * Math.min(1, dt / 0.12);
+    if (Math.abs(stickAlpha - target) < 0.01) stickAlpha = target;
+}
+
 let stars = [];
 let nebula = null;
 let particles = [];
@@ -64,6 +80,7 @@ export function resize() {
     view.oy = 0;
     makeStars();
     makeNebula();
+    explore.setViewScale(view.scale);
 }
 
 export function toWorld(e) {
@@ -79,6 +96,16 @@ export function toWorld(e) {
         return [vx - (view.vw / 2 - explore.camera.x), vy - (view.vh / 2 - explore.camera.y)];
     }
     return [vx - (view.vw / 2 - camera.x), vy - (view.vh / 2 - camera.y)];
+}
+
+// View units (screen-anchored: canvas-relative CSS px ÷ view.scale) — stops short
+// of toWorld()'s camera translate and STAB-2 zoom, which is exactly why the
+// Thruster's floating stick (INV-3b) uses this instead: a stick anchored in world
+// coordinates would slide out from under the player's thumb as the camera follows
+// the comet and the zoom eases.
+export function toView(e) {
+    const rect = canvas.getBoundingClientRect();
+    return [(e.clientX - rect.left) / view.scale, (e.clientY - rect.top) / view.scale];
 }
 
 function makeStars() {
@@ -255,6 +282,11 @@ export function render(drag) {
     if (S.phase !== 'result' && S.phase !== 'roundover') drawComet();
 
     ctx.restore();
+
+    // Drawn AFTER the world restore above: transform is back to setTransform(dpr·scale)
+    // with no camera translate and no STAB-2 zoom — exactly the screen-anchored view-unit
+    // space the floating stick wants (INV-3b), so the ring stays glued under the thumb.
+    drawThrusterStick();
 }
 
 function drawPlanet(b) {
@@ -520,6 +552,36 @@ function drawAim(drag) {
     ctx.moveTo(hx, hy);
     ctx.lineTo(hx - Math.cos(wing + 0.45) * 2.2, hy - Math.sin(wing + 0.45) * 2.2);
     ctx.stroke();
+}
+
+// Floating thrust stick (INV-3b, T5/T9/T10): a translucent ring at the touch origin
+// plus a nub at the current point, tinted green→gold→red by throttle like drawAim()'s
+// power ramp above. No aim arrow or trajectory preview here — T10 says the trail is
+// enough, and drawAim() itself never runs while the Thruster replaces the flick (see
+// main.js's canAim gating).
+function drawThrusterStick() {
+    if (stickAlpha <= 0.01 || !lastStickPos) return;
+    const { ox, oy, cx, cy } = lastStickPos;
+    const dx = cx - ox, dy = cy - oy;
+    const d = Math.hypot(dx, dy);
+    const throttle = d > 0 ? explore.stickThrottle(d * view.scale) : 0;
+    const ringR = STICK_R_PX / view.scale; // fixed CSS-px radius regardless of view.scale
+    const clamped = Math.min(d, ringR);
+    const ang = Math.atan2(dy, dx);
+    const nubX = d > 0 ? ox + Math.cos(ang) * clamped : ox;
+    const nubY = d > 0 ? oy + Math.sin(ang) * clamped : oy;
+    const cr = throttle < 0.55 ? '0,229,160' : (throttle < 0.85 ? '255,217,138' : '255,110,80');
+
+    ctx.save();
+    ctx.globalAlpha = stickAlpha * 0.6;
+    ctx.strokeStyle = `rgba(${cr},0.8)`;
+    ctx.lineWidth = 0.4;
+    ctx.beginPath(); ctx.arc(ox, oy, ringR, 0, 7); ctx.stroke();
+
+    ctx.globalAlpha = stickAlpha * 0.9;
+    ctx.fillStyle = `rgba(${cr},0.95)`;
+    ctx.beginPath(); ctx.arc(nubX, nubY, ringR * 0.32, 0, 7); ctx.fill();
+    ctx.restore();
 }
 
 /* ============================== DOM CHROME ============================== */

@@ -85,7 +85,16 @@ canvas.addEventListener('pointerdown', e => {
     audio();
     if (S.phase === 'menu' || S.phase === 'roundover') return;  // overlays own this tap
     if (S.phase === 'result') { game.advance(); return; }
-    
+
+    // INV-3b: the Thruster's floating stick takes over touch/drag entirely in
+    // Explore while the item is on (T6) — the old drag-to-flick path below never runs.
+    if (S.mode === 'explore' && S.inventory.thruster?.enabled) {
+        const [vx, vy] = ui.toView(e);
+        explore.stickDown(vx, vy, e.pointerId);
+        canvas.setPointerCapture(e.pointerId);
+        return;
+    }
+
     const [wx, wy] = ui.toWorld(e);
     if (S.mode === 'editor' && S.phase === 'edit') {
         if (editor.pointerDown(wx, wy, e.pointerId)) {
@@ -106,6 +115,12 @@ canvas.addEventListener('pointerdown', e => {
     canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', e => {
+    if (S.mode === 'explore' && S.inventory.thruster?.enabled) {
+        const [vx, vy] = ui.toView(e);
+        explore.stickMove(vx, vy, e.pointerId);
+        return;
+    }
+
     const [wx, wy] = ui.toWorld(e);
     if (S.mode === 'editor' && S.phase === 'edit') {
         editor.pointerMove(wx, wy, e.pointerId);
@@ -116,6 +131,11 @@ canvas.addEventListener('pointermove', e => {
     drag.cx = wx; drag.cy = wy;
 });
 canvas.addEventListener('pointerup', e => {
+    if (S.mode === 'explore' && S.inventory.thruster?.enabled) {
+        explore.stickUp(e.pointerId);
+        return;
+    }
+
     const [wx, wy] = ui.toWorld(e);
     if (S.mode === 'editor' && S.phase === 'edit') {
         editor.pointerUp(wx, wy, e.pointerId, e.clientX, e.clientY);
@@ -133,6 +153,7 @@ canvas.addEventListener('pointerup', e => {
     else S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
 });
 canvas.addEventListener('pointercancel', () => {
+    explore.stickCancel();
     if (drag) { drag = null; S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest'); }
     if (S.mode === 'editor') editor.cancelDrag(); // force-release; -1 id can't match a real drag
 });
@@ -343,6 +364,7 @@ function frame(now) {
     
     ui.stepParticles(dtRaw);
     ui.updateZoom(dtRaw);
+    ui.stepStick(dtRaw);
     ui.render(drag);
 }
 
