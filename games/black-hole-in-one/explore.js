@@ -437,44 +437,21 @@ export function step(dt) {
     }
     
     updateCamera(dt);
-
-    if (shouldTowHome(fuel, S.inventory, S.phase)) {
-        respawnTown();
-    }
 }
 
-// True when a dry tank should force a tow back to Town. Endless Flight (INV-1)
-// locks the tank so this never fires while it's on. Under the Thruster the tow
-// is immediate wherever you are (T8) — running dry mid-burn is a normal event.
-// The flick scheme keeps the rest-gated tow: a flick charges −15 at launch, so
-// flicking with 15 in the tank hits 0 mid-shot, and an immediate tow would yank
-// the player home out of the very shot they just paid for. Pure and unit-tested;
-// `fuel` has no exported setter, so the respawnTown() wiring itself is verified
-// in-browser rather than driven through this predicate in a test.
-export function shouldTowHome(fuel, inventory, phase) {
-    if (fuel > 0 || inventory.endlessFlight?.enabled) return false;
-    return inventory.thruster?.enabled || phase === 'rest';
+// True when an empty tank leaves the comet stranded (FUEL-1: no auto-tow, in
+// any phase, Thruster on or off — launch()/thrust already refuse to fire on an
+// empty tank on their own, so "stranded, wherever you are" needs no new physics).
+// Endless Flight (INV-1) locks the tank so this never fires while it's on.
+// Pure and unit-tested.
+export function isStranded(fuel, inventory) {
+    return fuel <= 0 && !inventory.endlessFlight?.enabled;
 }
 
 // Instantly tops the tank off. Endless Flight (INV-1) is a fuel-lock: switching
 // it on shouldn't require draining first, so the toggle calls this immediately.
 export function refuelFull() {
     fuel = tankMaxFuel(S.upgrades.tank);
-    hooks.bar();
-}
-
-function respawnTown() {
-    hooks.toast('Empty tank! Towed back to town.');
-    fuel = tankMaxFuel(S.upgrades.tank);
-    camera.x = 50;
-    camera.y = 85;
-    comet.vx = comet.vy = 0;
-    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
-    placeOnRest();
-    world.lastRest = { rest: comet.rest };
-    world.orbit = null;
-    S.phase = 'rest';
-    world.trail = [];
     hooks.bar();
 }
 

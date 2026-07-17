@@ -10,6 +10,7 @@ import * as ui from './ui.js';
 import { sfx, audio, setMuted, isMuted } from './sfx.js';
 
 const canvas = document.getElementById('game');
+const restartBtn = document.getElementById('restartBtn');
 
 const LS = {
     lastPlayed: 'lastPlayed_blackHoleInOne',
@@ -235,7 +236,7 @@ document.getElementById('howto').addEventListener('pointerdown', e => {
 
 document.getElementById('sc-endless').addEventListener('click', () => startRun('endless'));
 
-document.getElementById('restartBtn').addEventListener('click', () => {
+restartBtn.addEventListener('click', () => {
     startRun(S.mode);
     ui.toast('↺ Fresh start');
 });
@@ -319,6 +320,7 @@ if (window.KamekoSettings) {
 /* ============================== MAIN LOOP ============================== */
 
 let lastT = 0, acc = 0;
+let wasStranded = false;
 function frame(now) {
     requestAnimationFrame(frame);
     const dtRaw = Math.min((now - lastT) / 1000 || 0, 0.05);
@@ -346,6 +348,23 @@ function frame(now) {
             }
         }
     }
+
+    // FUEL-1: no auto-tow anywhere — an empty tank just leaves the comet
+    // stranded, so the restart button pulses/glows as the way out instead.
+    // Checked every frame (not just on step()) since step() doesn't run in
+    // every phase (e.g. resting with no thrust), but stranding can happen in any of them.
+    if (S.mode === 'explore') {
+        const stranded = explore.isStranded(explore.fuel, S.inventory);
+        if (stranded !== wasStranded) {
+            wasStranded = stranded;
+            restartBtn.classList.toggle('stranded', stranded);
+            if (stranded) ui.toast('🚫 Stranded — out of fuel. Hit ↺ to restart.');
+        }
+    } else if (wasStranded) {
+        wasStranded = false;
+        restartBtn.classList.remove('stranded');
+    }
+
     if (S.phase === 'flight' || S.phase === 'orbit') {
         world.trail.push({ x: comet.x, y: comet.y });
         if (world.trail.length > 46) world.trail.shift();

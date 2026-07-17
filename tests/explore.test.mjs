@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, shouldTowHome, refuelFull, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX } from '../games/black-hole-in-one/constants.js';
 
@@ -284,22 +284,22 @@ test('EXP-1b: buyUpgrade is a no-op away from Town', () => {
 
 /* ============================== INV-1: Inventory / Endless Flight ============================== */
 
-test('INV-1: shouldTowHome tows home on an empty tank when Endless Flight is off (default)', () => {
-    assert.equal(shouldTowHome(0, defaultInventory(), 'rest'), true);
-    assert.equal(shouldTowHome(-5, defaultInventory(), 'rest'), true);
+test('FUEL-1: isStranded is true on an empty tank when Endless Flight is off (default)', () => {
+    assert.equal(isStranded(0, defaultInventory()), true);
+    assert.equal(isStranded(-5, defaultInventory()), true);
 });
 
-test('INV-1: shouldTowHome skips the tow-back when Endless Flight is enabled', () => {
+test('FUEL-1: isStranded is false when Endless Flight is enabled, even at 0 fuel', () => {
     const inv = defaultInventory();
     inv.endlessFlight.enabled = true;
-    assert.equal(shouldTowHome(0, inv, 'rest'), false);
+    assert.equal(isStranded(0, inv), false);
 });
 
-test('INV-1: shouldTowHome never tows home while fuel remains, regardless of the toggle', () => {
-    assert.equal(shouldTowHome(1, defaultInventory(), 'rest'), false);
+test('FUEL-1: isStranded is false while fuel remains, regardless of the toggle', () => {
+    assert.equal(isStranded(1, defaultInventory()), false);
     const inv = defaultInventory();
     inv.endlessFlight.enabled = true;
-    assert.equal(shouldTowHome(50, inv, 'rest'), false);
+    assert.equal(isStranded(50, inv), false);
 });
 
 test('INV-1: defaultInventory owns every registry item but starts every toggle off', () => {
@@ -392,24 +392,21 @@ test('INV-3a: keysToVector sums held keys into a unit vector, cancels opposites,
     assert.ok(Math.abs(Math.hypot(diag.x, diag.y) - 1) < 1e-9, 'diagonal magnitude normalized to 1, not √2');
 });
 
-test('INV-3a: shouldTowHome matrix — fuel, Endless Flight, Thruster, and phase', () => {
-    // Thruster off (default): rest-gated, exactly today's behavior.
-    assert.equal(shouldTowHome(0, defaultInventory(), 'rest'), true);
-    assert.equal(shouldTowHome(0, defaultInventory(), 'flight'), false, 'Thruster off: mid-flight is not rest-gated');
+test('FUEL-1: isStranded is phase- and Thruster-independent — only fuel and Endless Flight matter', () => {
+    // Thruster off or on, any phase: an empty tank is stranded either way now (FUEL-1
+    // reversed T8 and removed the flick scheme's rest-gated tow — no auto-tow anywhere).
+    assert.equal(isStranded(0, defaultInventory()), true);
 
-    // Thruster on: tows immediately in any phase once dry (T8).
     const thrusterOn = defaultInventory();
     thrusterOn.thruster.enabled = true;
-    assert.equal(shouldTowHome(0, thrusterOn, 'flight'), true, 'Thruster on: mid-flight tow');
-    assert.equal(shouldTowHome(0, thrusterOn, 'rest'), true);
-    assert.equal(shouldTowHome(1, thrusterOn, 'flight'), false, 'fuel remains');
+    assert.equal(isStranded(0, thrusterOn), true);
+    assert.equal(isStranded(1, thrusterOn), false, 'fuel remains');
 
-    // Endless Flight wins over everything, including the Thruster's immediate tow.
+    // Endless Flight still locks the tank regardless of the Thruster toggle.
     const endlessAndThruster = defaultInventory();
     endlessAndThruster.endlessFlight.enabled = true;
     endlessAndThruster.thruster.enabled = true;
-    assert.equal(shouldTowHome(0, endlessAndThruster, 'flight'), false, 'Endless Flight locks the tank regardless of Thruster or phase');
-    assert.equal(shouldTowHome(0, endlessAndThruster, 'rest'), false);
+    assert.equal(isStranded(0, endlessAndThruster), false);
 });
 
 test('INV-3a: defaultInventory registers the Thruster item, owned but off by default', () => {
