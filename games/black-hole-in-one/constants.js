@@ -12,6 +12,7 @@ export const MAX_LAUNCH = 120;        // top launch speed (world units/s)
 export const MAX_V = 175;             // hard speed cap in flight
 export const MAX_DRAG = 40;           // drag length (world units) for full power
 export const MIN_SHOT = 10;           // release below this speed = cancelled shot
+export const TAP_MAX_LEN = 4;         // max drag length for a tap
 export const REST_BOUNCE = 0.38;      // normal restitution on planet impact
 export const REST_FRIC = 0.62;        // tangential keep on impact
 export const REST_V = 22;             // impact below this = comet lands (17 in the draft —
@@ -182,7 +183,7 @@ export const ITEMS = [
     { key: 'thruster', icon: '🚀', label: 'Thruster',
       desc: 'Fly with a stick instead of flicking. Hold to burn — fuel drains while you thrust.' },
     { key: 'orbitMagnet', icon: '🧲', label: 'Orbit Magnet',
-      desc: 'Planets catch you — pass close and you swing into orbit. Flick at the planet to land.',
+      desc: 'Tap a nearby planet to land. Tap it again to swing into orbit.',
       defaultOn: true },
 ];
 

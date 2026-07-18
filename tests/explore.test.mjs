@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepOrbit, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal, discoveredChunks, loadDiscoveredChunks, chunkKeyAt } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepOrbit, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal, discoveredChunks, loadDiscoveredChunks, chunkKeyAt, handleTap } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, ORBIT_MIN_GAP, ORBIT_COOLDOWN, moonPosition } from '../games/black-hole-in-one/constants.js';
 import { gravityAt } from '../games/black-hole-in-one/physics.js';
@@ -467,9 +467,9 @@ test('FUEL-2: bouncing off (not landing on) a refuel-station planet does nothing
     assert.equal(fuel, drained, 'no refuel from a bounce — only landing refuels');
 });
 
-/* ============================== ORB-1: Orbit Magnet ============================== */
+/* ============================== TAP-1: Tap gesture detection ============================== */
 
-test('ORB-1: item OFF reproduces strict orbitCapture; item ON captures the same dive that OFF rejects', () => {
+test('TAP-1: item OFF makes tap a no-op; automatic loop reproduces strict orbitCapture exactly', () => {
     startRun();
     const planet = { x: comet.x + 40, y: comet.y, r: 10, m: 100, type: 'planet', pal: { base: '#fff', dark: '#000' } };
     world.bodies = [planet];
@@ -491,47 +491,37 @@ test('ORB-1: item OFF reproduces strict orbitCapture; item ON captures the same 
     assert.equal(S.phase, 'flight', 'item OFF: a radial dive is not captured (today\'s strict behavior)');
     assert.equal(world.orbit, null);
 
-    // item ON: loose magnetCapture takes the exact same trajectory into orbit.
+    // item ON: auto-capture is retired, so a pure dive still keeps flying!
     S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
     S.orbitCooldown = 0;
     setupDive();
     step(1 / 240);
-    assert.equal(S.phase, 'orbit', 'item ON: the same dive trajectory is captured into orbit');
-    assert.ok(world.orbit);
-    assert.equal(world.orbit.b, planet);
+    assert.equal(S.phase, 'flight', 'item ON (TAP-1): auto-capture retired, dive is not captured automatically');
+    assert.equal(world.orbit, null);
 });
 
-test('ORB-1: ORBIT_COOLDOWN blocks immediate re-capture even though the loose magnet condition would otherwise fire', () => {
+test('TAP-1: handleTap detects tap if item ON, ignores if item OFF', () => {
     startRun();
     const planet = { x: comet.x + 40, y: comet.y, r: 10, m: 100, type: 'planet', pal: { base: '#fff', dark: '#000' } };
     world.bodies = [planet];
     world.pickups = [];
-    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
     S.phase = 'flight';
-
     const d = 18;
-    const setupDive = () => {
-        comet.x = planet.x - d;
-        comet.y = planet.y;
-        comet.vx = 40; comet.vy = 0;
-    };
+    comet.x = planet.x - d;
+    comet.y = planet.y;
 
-    // Just launched (cooldown running): the same qualifying trajectory does not capture.
-    setupDive();
-    S.orbitCooldown = ORBIT_COOLDOWN;
-    step(1 / 240);
-    assert.equal(S.phase, 'flight', 'still cooling down — no capture despite a qualifying trajectory');
-    assert.equal(world.orbit, null);
+    // Item OFF: handleTap does nothing
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: false } });
+    handleTap(planet.x, planet.y);
+    assert.equal(S.phase, 'flight', 'item OFF: tap does nothing');
 
-    // Cooldown expired: the identical trajectory now captures, proving the guard
-    // above was actually doing something (not just an unreachable trajectory).
-    setupDive();
-    S.orbitCooldown = 0;
-    step(1 / 240);
-    assert.equal(S.phase, 'orbit', 'cooldown expired — the same trajectory now captures');
+    // Item ON: handleTap calls stub
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
+    handleTap(planet.x, planet.y);
+    assert.equal(S.phase, 'flight', 'item ON: tap calls stub, no phase change yet');
 });
 
-test('ORB-1: the black-hole dive-warp check runs before magnet capture — capture-band distance orbits, not warps', () => {
+test('TAP-1: the black-hole dive-warp check runs before capture — capture-band distance does not orbit', () => {
     startRun();
     const bh = { x: comet.x + 60, y: comet.y, r: EXPLORE_BLACKHOLE_R, m: EXPLORE_BLACKHOLE_R * EXPLORE_BLACKHOLE_R, type: 'blackhole', id: 'test-bh-orb1' };
     world.bodies = [bh];
@@ -540,17 +530,14 @@ test('ORB-1: the black-hole dive-warp check runs before magnet capture — captu
     S.phase = 'flight';
     S.orbitCooldown = 0;
 
-    // Magnet band sits at bh.r + COMET_R + [ORBIT_MIN_GAP, ORBIT_MAX_GAP] — comfortably
-    // outside the dive-warp trigger at bh.r * 0.3 (per the build plan's "no conflict").
     const d = bh.r + COMET_R + 6; // mid-band
-    assert.ok(d > bh.r * 0.3, 'sanity: capture-band distance is well outside the dive-warp radius');
     comet.x = bh.x - d;
     comet.y = bh.y;
-    comet.vx = 30; comet.vy = 0; // radial dive — would fail orbitCapture but not magnetCapture
+    comet.vx = 30; comet.vy = 0;
 
     step(1 / 240);
 
-    assert.equal(S.phase, 'orbit', 'capture-band distance around a black hole orbits, does not warp');
+    assert.equal(S.phase, 'flight', 'capture-band distance around a black hole is just flight now (auto-magnet retired)');
 });
 
 /* ============================== INV-3a: Thruster ============================== */

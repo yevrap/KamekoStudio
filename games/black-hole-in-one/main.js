@@ -1,7 +1,7 @@
 // Black Hole in One — boot, input, main loop, shared-infrastructure wiring.
 'use strict';
 
-import { DT, ROUND_HOLES, ITEMS } from './constants.js';
+import { DT, ROUND_HOLES, ITEMS, TAP_MAX_LEN } from './constants.js';
 import { S, world, comet, mergeInventory } from './state.js';
 import * as game from './gameplay.js';
 import * as explore from './explore.js';
@@ -155,11 +155,16 @@ canvas.addEventListener('pointerup', e => {
     const dx = drag.sx - drag.cx, dy = drag.sy - drag.cy;
     const len = Math.hypot(dx, dy);
     drag = null;
-    if (len > 0) {
+
+    if (S.mode === 'explore' && len <= TAP_MAX_LEN) {
+        explore.handleTap(wx, wy);
+        if (S.phase === 'aiming') S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
+    } else if (len > 0) {
         if (S.mode === 'explore') explore.launch(dx, dy, len);
         else game.launch(dx, dy, len); // Editor test play reuses game.launch
+    } else {
+        S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
     }
-    else S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
 });
 canvas.addEventListener('pointercancel', () => {
     explore.stickCancel();
