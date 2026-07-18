@@ -574,49 +574,73 @@ export function getSnappedAim(drag, S, comet) {
     }
     const len = Math.hypot(rawDx, rawDy);
     if (len < 1) return { dx: rawDx, dy: rawDy, isOrbit: false };
-    const pow = Math.min(len / MAX_DRAG, 1);
-    const speed = pow * MAX_LAUNCH;
-    if (speed < MIN_SHOT) return { dx: rawDx, dy: rawDy, isOrbit: false };
+    
+    const basePow = Math.min(len / MAX_DRAG, 1);
+    const baseSpeed = basePow * MAX_LAUNCH;
+    if (baseSpeed < MIN_SHOT) return { dx: rawDx, dy: rawDy, isOrbit: false };
 
     const baseAng = Math.atan2(rawDy, rawDx);
-    const steps = 10;
-    const angStep = 0.15 / steps;
+    
+    const candidates = [];
+    const angSteps = 8;
+    const maxAng = 0.25; 
+    const powSteps = 5;
+    const maxPowDev = 0.25;
 
-    for (let step = 0; step <= steps; step++) {
-        const angles = step === 0 ? [baseAng] : [baseAng + step * angStep, baseAng - step * angStep];
-        for (const a of angles) {
-            const ghost = { x: comet.x, y: comet.y,
-                            vx: comet.vx + Math.cos(a) * speed, vy: comet.vy + Math.sin(a) * speed };
+    for (let a = -angSteps; a <= angSteps; a++) {
+        for (let p = -powSteps; p <= powSteps; p++) {
+            const da = (a / angSteps) * maxAng;
+            const dPow = (p / powSteps) * maxPowDev;
             
-            const liftBody = (!world.orbit && comet.rest && comet.rest.b && comet.rest.b.type === 'planet')
-                ? comet.rest.b : null;
-            let liftT = liftBody ? LIFTOFF_T : 0;
+            const testPow = basePow + dPow;
+            if (testPow <= 0 || testPow > 1.0) continue; 
             
-            let alive = true;
-            for (let i = 0; i < 120 && alive; i++) {
-                let damp = null;
-                if (liftT > 0) {
-                    liftT = Math.max(0, liftT - DT);
-                    const k = 1 - liftT / LIFTOFF_T;
-                    damp = { body: liftBody, factor: LIFTOFF_MIN + (1 - LIFTOFF_MIN) * k };
-                }
-                const r = stepBody(ghost, DT, world.bodies, world.blackHole, damp);
-                if (r) {
-                    alive = false;
-                } else {
-                    for (const b of world.bodies) {
-                        if (orbitCapture(ghost, b)) {
-                            return {
-                                dx: Math.cos(a) * len,
-                                dy: Math.sin(a) * len,
-                                isOrbit: true
-                            };
-                        }
+            const testSpeed = testPow * MAX_LAUNCH;
+            if (testSpeed < MIN_SHOT) continue;
+            
+            const penalty = (a/angSteps)*(a/angSteps) + (p/powSteps)*(p/powSteps);
+            candidates.push({ ang: baseAng + da, speed: testSpeed, pow: testPow, penalty });
+        }
+    }
+    
+    candidates.sort((c1, c2) => c1.penalty - c2.penalty);
+    const searchSpace = candidates.slice(0, 80);
+
+    const liftBody = (!world.orbit && comet.rest && comet.rest.b && comet.rest.b.type === 'planet')
+        ? comet.rest.b : null;
+
+    for (const c of searchSpace) {
+        const ghost = { x: comet.x, y: comet.y,
+                        vx: comet.vx + Math.cos(c.ang) * c.speed, 
+                        vy: comet.vy + Math.sin(c.ang) * c.speed };
+        
+        let liftT = liftBody ? LIFTOFF_T : 0;
+        
+        let alive = true;
+        for (let i = 0; i < 240 && alive; i++) {
+            let damp = null;
+            if (liftT > 0) {
+                liftT = Math.max(0, liftT - DT);
+                const k = 1 - liftT / LIFTOFF_T;
+                damp = { body: liftBody, factor: LIFTOFF_MIN + (1 - LIFTOFF_MIN) * k };
+            }
+            const r = stepBody(ghost, DT, world.bodies, world.blackHole, damp);
+            if (r) {
+                alive = false;
+            } else {
+                for (const b of world.bodies) {
+                    if (orbitCapture(ghost, b)) {
+                        return {
+                            dx: Math.cos(c.ang) * (c.pow * MAX_DRAG),
+                            dy: Math.sin(c.ang) * (c.pow * MAX_DRAG),
+                            isOrbit: true
+                        };
                     }
                 }
             }
         }
     }
+    
     return { dx: rawDx, dy: rawDy, isOrbit: false };
 }
 
