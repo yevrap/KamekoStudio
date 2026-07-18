@@ -3,7 +3,7 @@
 
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX, ORBIT_MIN_GAP, circularSpeed } from './constants.js';
 import { S, world, comet } from './state.js';
-import { stepBody, collide, orbitCapture } from './physics.js';
+import { stepBody, collide, orbitCapture, magnetCapture } from './physics.js';
 
 let shownPushHint = false;   // OW-0: one-time mid-flight push toast
 
@@ -526,8 +526,13 @@ export function step(dt) {
     }
     
     if (S.orbitCooldown <= 0 && S.phase === 'flight' && t.throttle === 0) {
+        // ORB-1: the Orbit Magnet item swaps the strict velocity-gated capture for
+        // a loose one — any entry into the band captures, no approach conditions.
+        // orbitCapture itself is untouched, so item OFF (and golf, which never
+        // reads S.inventory) reproduces today's capture exactly.
+        const capture = S.inventory.orbitMagnet?.enabled ? magnetCapture : orbitCapture;
         for (const b of world.bodies) {
-            const cap = orbitCapture(comet, b);
+            const cap = capture(comet, b);
             if (cap) {
                 world.orbit = { b, radius: cap.radius, ang: cap.ang, omega: cap.omega };
                 comet.x = b.x + Math.cos(cap.ang) * cap.radius;

@@ -7,7 +7,7 @@ import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
-    moonPosition,
+    moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -239,6 +239,10 @@ export function render(drag) {
 
     // Faint course edge removed as we use the whole screen now
 
+    // ORB-1: while flying with Orbit Magnet ON, every planet/black hole gets a
+    // faint dashed capture-band ring — "these will catch you." Gated on mode +
+    // phase + item so golf and item-OFF Explore never draw it.
+    const showCaptureRings = S.mode === 'explore' && S.phase === 'flight' && S.inventory.orbitMagnet?.enabled;
     for (const b of world.bodies) {
         if (b.type === 'planet') drawPlanet(b);
         else if (b.type === 'pulsar') drawPulsar(b);
@@ -246,6 +250,7 @@ export function render(drag) {
         else if (b.type === 'trap') drawTrap(b);
         else if (b.type === 'blackhole') drawExploreBlackHole(b);
         else drawTee(b);
+        if (showCaptureRings && (b.type === 'planet' || b.type === 'blackhole')) drawCaptureRing(b);
     }
     if (world.blackHole) drawBlackHole();
     if (world.orbit) drawOrbitRing();
@@ -500,6 +505,20 @@ function drawOrbitRing() {
     ctx.lineWidth = 0.3;
     ctx.setLineDash([1.2, 1.8]);
     ctx.beginPath(); ctx.arc(o.b.x, o.b.y, o.radius, 0, 7); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+}
+
+// ORB-1: faint dashed ring at the Orbit Magnet capture band's mid-radius, drawn
+// around every planet/black hole while flying with the item ON — "these will
+// catch you." One arc stroke per visible body; no per-body allocation.
+function drawCaptureRing(b) {
+    const r = b.r + COMET_R + (ORBIT_MIN_GAP + ORBIT_MAX_GAP) / 2;
+    ctx.globalAlpha = 0.22;
+    ctx.strokeStyle = '#9fe3d8';
+    ctx.lineWidth = 0.25;
+    ctx.setLineDash([1, 2.2]);
+    ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 7); ctx.stroke();
     ctx.setLineDash([]);
     ctx.globalAlpha = 1;
 }

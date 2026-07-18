@@ -9,7 +9,7 @@ import {
     ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed, fitZoom, ZOOM_MIN, ZOOM_FIT,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius,
 } from '../games/black-hole-in-one/constants.js';
-import { gravityAt, stepBody, collide, orbitCapture } from '../games/black-hole-in-one/physics.js';
+import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
 import * as game from '../games/black-hole-in-one/gameplay.js';
 
@@ -190,6 +190,58 @@ test('orbitCapture ignores non-planets (tee, pulsar)', () => {
     const pulsar = { x: 50, y: 50, r: 10, m: -100, type: 'pulsar' };
     assert.equal(orbitCapture({ x: 68, y: 50, vx: 0, vy: vc }, tee), null);
     assert.equal(orbitCapture({ x: 68, y: 50, vx: 0, vy: vc }, pulsar), null);
+});
+
+/* ============================== magnet capture (ORB-1) ============================== */
+
+test('magnetCapture: captures dives, slingshot-speed flybys, and near-stationary grazes that orbitCapture rejects', () => {
+    const planet = { x: 50, y: 50, r: 10, m: 100, type: 'planet' };
+    const d = 18, vc = circularSpeed(planet.m, d);
+
+    const dive = magnetCapture({ x: 50 + d, y: 50, vx: -vc, vy: 0 }, planet);
+    assert.ok(dive, 'a straight-in dive is captured');
+    assert.ok(Math.abs(dive.radius - d) < 1e-9, 'orbit hugs where it was caught');
+
+    const fast = magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: vc * 2 }, planet);
+    assert.ok(fast, 'a slingshot-speed flyby is captured');
+
+    const graze = magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: 2 }, planet);
+    assert.ok(graze, 'a near-stationary graze is captured');
+});
+
+test('magnetCapture respects the same band edges as orbitCapture (ORBIT_MIN_GAP/ORBIT_MAX_GAP)', () => {
+    const planet = { x: 50, y: 50, r: 10, m: 100, type: 'planet' };
+    // too far past the surface — outside ORBIT_MAX_GAP
+    assert.equal(magnetCapture({ x: 50 + 40, y: 50, vx: 0, vy: 1 }, planet), null);
+    // barely clear of the surface — inside ORBIT_MIN_GAP, this is a collision, not an orbit
+    assert.equal(magnetCapture({ x: 50 + planet.r + COMET_R + 0.1, y: 50, vx: 0, vy: 1 }, planet), null);
+});
+
+test('magnetCapture omega direction follows the tangential-velocity sign, and defaults +1 at zero velocity', () => {
+    const planet = { x: 50, y: 50, r: 10, m: 100, type: 'planet' };
+    const d = 18, vc = circularSpeed(planet.m, d);
+    const posDir = magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: vc }, planet);
+    assert.ok(posDir.omega > 0, 'positive tangential speed → positive omega');
+    const negDir = magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: -vc }, planet);
+    assert.ok(negDir.omega < 0, 'negative tangential speed → negative omega');
+    const zeroV = magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: 0 }, planet);
+    assert.ok(zeroV, 'a dead-stop entry into the band still captures');
+    assert.ok(zeroV.omega > 0, 'zero tangential speed falls back to the +1 direction');
+});
+
+test('magnetCapture ignores non-planets (tee, pulsar) same as orbitCapture', () => {
+    const d = 18;
+    const tee = { x: 50, y: 50, r: 10, m: 100, type: 'tee' };
+    const pulsar = { x: 50, y: 50, r: 10, m: -100, type: 'pulsar' };
+    assert.equal(magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: 1 }, tee), null);
+    assert.equal(magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: 1 }, pulsar), null);
+});
+
+test('magnetCapture accepts black holes, same body types as orbitCapture', () => {
+    const bh = { x: 50, y: 50, r: 22, m: 400, type: 'blackhole' };
+    const d = bh.r + COMET_R + 5;
+    const cap = magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: 0 }, bh);
+    assert.ok(cap, 'black holes are captured the same as planets');
 });
 
 test('beginOrbit places the comet on the circle with tangential velocity; stepOrbit keeps the radius', () => {

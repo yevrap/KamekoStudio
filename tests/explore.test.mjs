@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepOrbit, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal, discoveredChunks, loadDiscoveredChunks, chunkKeyAt } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, ORBIT_MIN_GAP, moonPosition } from '../games/black-hole-in-one/constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, ORBIT_MIN_GAP, ORBIT_COOLDOWN, moonPosition } from '../games/black-hole-in-one/constants.js';
 import { gravityAt } from '../games/black-hole-in-one/physics.js';
 
 test('Camera math: screenToWorld', () => {
@@ -326,6 +326,21 @@ test('INV-1: mergeInventory tolerates null, undefined, or non-object saved paylo
     assert.deepEqual(mergeInventory('garbage'), defaultInventory());
 });
 
+test('ORB-1: defaultInventory turns Orbit Magnet on by default (registry defaultOn)', () => {
+    const inv = defaultInventory();
+    assert.equal(inv.orbitMagnet.owned, true);
+    assert.equal(inv.orbitMagnet.enabled, true);
+});
+
+test('ORB-1: mergeInventory gives saves from before the item existed Orbit Magnet ON, no migration code needed', () => {
+    // Simulates a save written before orbitMagnet was in the registry — the key is
+    // simply absent from the saved payload, same shape as any earlier INV-1 item.
+    const preExisting = { endlessFlight: { owned: true, enabled: true }, thruster: { owned: true, enabled: false } };
+    const merged = mergeInventory(preExisting);
+    assert.equal(merged.orbitMagnet.enabled, true, 'existing players get the new item ON automatically');
+    assert.equal(merged.orbitMagnet.owned, true);
+});
+
 test('INV-1: launch does not drain fuel while Endless Flight is enabled', () => {
     S.upgrades.tank = 0;
     startRun();
@@ -450,6 +465,92 @@ test('FUEL-2: bouncing off (not landing on) a refuel-station planet does nothing
     assert.equal(S.phase, 'flight', 'sanity: this was a bounce, not a landing');
     assert.notEqual(comet.vx, 60, 'sanity: collide() actually ran a bounce response, not a silent no-op');
     assert.equal(fuel, drained, 'no refuel from a bounce — only landing refuels');
+});
+
+/* ============================== ORB-1: Orbit Magnet ============================== */
+
+test('ORB-1: item OFF reproduces strict orbitCapture; item ON captures the same dive that OFF rejects', () => {
+    startRun();
+    const planet = { x: comet.x + 40, y: comet.y, r: 10, m: 100, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    world.bodies = [planet];
+    world.pickups = [];
+    S.phase = 'flight';
+    S.orbitCooldown = 0;
+
+    const d = 18; // inside the orbit band, well outside collision range
+    const setupDive = () => {
+        comet.x = planet.x - d;
+        comet.y = planet.y;
+        comet.vx = 50; comet.vy = 0; // straight-in radial dive, no tangential component
+    };
+
+    // item OFF: strict orbitCapture rejects a pure dive — comet keeps flying.
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: false } });
+    setupDive();
+    step(1 / 240);
+    assert.equal(S.phase, 'flight', 'item OFF: a radial dive is not captured (today\'s strict behavior)');
+    assert.equal(world.orbit, null);
+
+    // item ON: loose magnetCapture takes the exact same trajectory into orbit.
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
+    S.orbitCooldown = 0;
+    setupDive();
+    step(1 / 240);
+    assert.equal(S.phase, 'orbit', 'item ON: the same dive trajectory is captured into orbit');
+    assert.ok(world.orbit);
+    assert.equal(world.orbit.b, planet);
+});
+
+test('ORB-1: ORBIT_COOLDOWN blocks immediate re-capture even though the loose magnet condition would otherwise fire', () => {
+    startRun();
+    const planet = { x: comet.x + 40, y: comet.y, r: 10, m: 100, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    world.bodies = [planet];
+    world.pickups = [];
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
+    S.phase = 'flight';
+
+    const d = 18;
+    const setupDive = () => {
+        comet.x = planet.x - d;
+        comet.y = planet.y;
+        comet.vx = 40; comet.vy = 0;
+    };
+
+    // Just launched (cooldown running): the same qualifying trajectory does not capture.
+    setupDive();
+    S.orbitCooldown = ORBIT_COOLDOWN;
+    step(1 / 240);
+    assert.equal(S.phase, 'flight', 'still cooling down — no capture despite a qualifying trajectory');
+    assert.equal(world.orbit, null);
+
+    // Cooldown expired: the identical trajectory now captures, proving the guard
+    // above was actually doing something (not just an unreachable trajectory).
+    setupDive();
+    S.orbitCooldown = 0;
+    step(1 / 240);
+    assert.equal(S.phase, 'orbit', 'cooldown expired — the same trajectory now captures');
+});
+
+test('ORB-1: the black-hole dive-warp check runs before magnet capture — capture-band distance orbits, not warps', () => {
+    startRun();
+    const bh = { x: comet.x + 60, y: comet.y, r: EXPLORE_BLACKHOLE_R, m: EXPLORE_BLACKHOLE_R * EXPLORE_BLACKHOLE_R, type: 'blackhole', id: 'test-bh-orb1' };
+    world.bodies = [bh];
+    world.pickups = [];
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
+    S.phase = 'flight';
+    S.orbitCooldown = 0;
+
+    // Magnet band sits at bh.r + COMET_R + [ORBIT_MIN_GAP, ORBIT_MAX_GAP] — comfortably
+    // outside the dive-warp trigger at bh.r * 0.3 (per the build plan's "no conflict").
+    const d = bh.r + COMET_R + 6; // mid-band
+    assert.ok(d > bh.r * 0.3, 'sanity: capture-band distance is well outside the dive-warp radius');
+    comet.x = bh.x - d;
+    comet.y = bh.y;
+    comet.vx = 30; comet.vy = 0; // radial dive — would fail orbitCapture but not magnetCapture
+
+    step(1 / 240);
+
+    assert.equal(S.phase, 'orbit', 'capture-band distance around a black hole orbits, does not warp');
 });
 
 /* ============================== INV-3a: Thruster ============================== */

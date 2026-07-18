@@ -181,6 +181,9 @@ export const ITEMS = [
       desc: 'Full tank, forever — fuel stops draining until you switch it off.' },
     { key: 'thruster', icon: '🚀', label: 'Thruster',
       desc: 'Fly with a stick instead of flicking. Hold to burn — fuel drains while you thrust.' },
+    { key: 'orbitMagnet', icon: '🧲', label: 'Orbit Magnet',
+      desc: 'Planets catch you — pass close and you swing into orbit. Flick at the planet to land.',
+      defaultOn: true },
 ];
 
 export const PALETTES = [

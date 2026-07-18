@@ -75,6 +75,26 @@ export function orbitCapture(p, b) {
     return { radius: d, omega: dir * vc / d, ang: Math.atan2(dy, dx) };
 }
 
+// Magnet capture (ORB-1). Same band as orbitCapture (must be hugging the planet,
+// gap in [ORBIT_MIN_GAP, ORBIT_MAX_GAP]) but with NO velocity conditions — any
+// entry into the band captures, regardless of approach speed/angle. Gated behind
+// the Orbit Magnet inventory item at the call site; orbitCapture itself is
+// untouched so golf and item-OFF Explore keep the strict capture exactly as
+// before. Pure — same { radius, omega, ang } shape as orbitCapture.
+export function magnetCapture(p, b) {
+    if (b.type !== 'planet' && b.type !== 'blackhole') return null;
+    const dx = p.x - b.x, dy = p.y - b.y;
+    const d = Math.hypot(dx, dy) || 1e-6;
+    const gap = d - (b.r + COMET_R);
+    if (gap < ORBIT_MIN_GAP || gap > ORBIT_MAX_GAP) return null;
+
+    const nx = dx / d, ny = dy / d;
+    const vt = p.vx * -ny + p.vy * nx;              // tangential speed (signed by travel dir)
+    const vc = circularSpeed(b.m, d);               // circular speed at this radius
+    const dir = Math.abs(vt) < 1e-6 ? 1 : (vt >= 0 ? 1 : -1);
+    return { radius: d, omega: dir * vc / d, ang: Math.atan2(dy, dx) };
+}
+
 // Collision response against body b. Repositions p onto the surface and either
 // lands it or bounces it. Landing window is wide (REST_V) and impacts just above
 // it bounce nearly dead (soft catch) so the next touch sticks — deliberate

@@ -7,7 +7,7 @@ import { ITEMS } from './constants.js';
 // needs its default hand-duplicated here (INV-1).
 export function defaultInventory() {
     const inv = {};
-    for (const item of ITEMS) inv[item.key] = { owned: true, enabled: false };
+    for (const item of ITEMS) inv[item.key] = { owned: true, enabled: item.defaultOn ?? false };
     return inv;
 }
 
