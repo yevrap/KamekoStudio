@@ -352,12 +352,23 @@ function drawPlanet(b) {
 }
 
 function drawPlanetLabel(b) {
-    if (S.mode !== 'explore' || S.phase !== 'rest' || !comet.rest || comet.rest.b !== b || !b.tapped) return;
+    if (S.mode !== 'explore' || !b.tapped) return;
     
     // Persistent on-planet label (Q5): MAP-2 style two-tap confirm chrome
-    const txt = '🪐 Tap again to orbit';
+    let txt = '';
+    let yOffset = 0;
+    if (S.phase === 'rest' && comet.rest && comet.rest.b === b) {
+        txt = '🧲 Tap to orbit';
+        yOffset = -b.r - COMET_R - 10;
+    } else if (S.phase === 'orbit' && world.orbit && world.orbit.b === b) {
+        txt = '🪐 Tap to land';
+        yOffset = -world.orbit.radius - 15;
+    } else {
+        return;
+    }
+
     ctx.save();
-    ctx.translate(b.x, b.y - b.r - COMET_R - 10); // positioned just above the comet
+    ctx.translate(b.x, b.y + yOffset); // positioned just above the comet/orbit
     
     // Since view transform includes zooming and scaling, we draw at scale but prevent it from getting too tiny
     // Actually, text should scale with the world, but let's just draw it simple

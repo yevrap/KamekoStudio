@@ -491,13 +491,13 @@ test('TAP-1: item OFF makes tap a no-op; automatic loop reproduces strict orbitC
     assert.equal(S.phase, 'flight', 'item OFF: a radial dive is not captured (today\'s strict behavior)');
     assert.equal(world.orbit, null);
 
-    // item ON: auto-capture is retired, so a pure dive still keeps flying!
+    // item ON: auto-capture is restored, so a pure dive is captured!
     S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
     S.orbitCooldown = 0;
     setupDive();
     step(1 / 240);
-    assert.equal(S.phase, 'flight', 'item ON (TAP-1): auto-capture retired, dive is not captured automatically');
-    assert.equal(world.orbit, null);
+    assert.equal(S.phase, 'orbit', 'item ON (TAP-1): auto-capture restored, dive is captured');
+    assert.ok(world.orbit, 'orbit state set');
 });
 
 test('TAP-1: handleTap detects tap if item ON, ignores if item OFF', () => {
@@ -538,7 +538,7 @@ test('TAP-1: the black-hole dive-warp check runs before capture — capture-band
 
     step(1 / 240);
 
-    assert.equal(S.phase, 'flight', 'capture-band distance around a black hole is just flight now (auto-magnet retired)');
+    assert.equal(S.phase, 'orbit', 'capture-band distance around a black hole captures (auto-magnet restored)');
 });
 
 /* ============================== INV-3a: Thruster ============================== */

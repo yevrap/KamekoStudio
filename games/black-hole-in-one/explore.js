@@ -7,6 +7,7 @@ import { stepBody, collide, orbitCapture, magnetCapture } from './physics.js';
 
 let shownPushHint = false;   // OW-0: one-time mid-flight push toast
 let shownDescentHint = false; // TAP-2: one-time tap-to-land toast
+let shownAscendHint = false; // TAP-3: one-time tap-to-orbit toast
 
 export const camera = { x: 50, y: 85 };
 export let fuel = 100;
@@ -801,7 +802,54 @@ export function beginDescentFromFlight(b) {
 }
 
 export function beginAscend(b) {
-    // Stub for TAP-3
+    b.tapped = true;
+    if (!shownAscendHint) {
+        shownAscendHint = true;
+        hooks.toast('🧲 Tap again to land');
+    }
+    
+    world.ascend = { b, r0: comet.rest.b.r + COMET_R + 0.25, a0: comet.rest.ang, t: 0 };
+    S.phase = 'ascend';
+    comet.rest = null;
+    world.orbit = null;
+    world.trail = [];
+}
+
+export function stepAscend(dt) {
+    const a = world.ascend;
+    if (!a) return;
+    
+    a.t += dt / 0.5;
+    const t = Math.min(a.t, 1);
+    
+    const targetR = a.b.r + COMET_R + (ORBIT_MIN_GAP + ORBIT_MAX_GAP) / 2;
+    const ease = t * t * (3 - 2 * t); // smoothstep ease
+    const r = a.r0 + (targetR - a.r0) * ease;
+    
+    comet.x = a.b.x + Math.cos(a.a0) * r;
+    comet.y = a.b.y + Math.sin(a.a0) * r;
+    
+    if (a.t >= 1) {
+        world.ascend = null;
+        
+        // Hand off using magnetCapture's shape
+        const cap = magnetCapture({ x: comet.x, y: comet.y, vx: 0, vy: 0 }, a.b);
+        if (cap) {
+            world.orbit = { b: a.b, radius: cap.radius, ang: cap.ang, omega: cap.omega };
+            S.phase = 'orbit';
+            comet.x = a.b.x + Math.cos(cap.ang) * cap.radius;
+            comet.y = a.b.y + Math.sin(cap.ang) * cap.radius;
+            const spd = cap.omega * cap.radius;
+            comet.vx = -Math.sin(cap.ang) * spd;
+            comet.vy = Math.cos(cap.ang) * spd;
+            hooks.sfx.sling();
+            hooks.burst(comet.x, comet.y, 12, (a.b.pal && a.b.pal.base) || '#9fe3d8', 26);
+        } else {
+            S.phase = 'flight'; // Fallback
+        }
+    } else {
+        updateCamera(dt);
+    }
 }
 
 export function beginDescentFromOrbit() {

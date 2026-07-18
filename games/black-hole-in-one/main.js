@@ -361,6 +361,7 @@ function frame(now) {
             else if (S.phase === 'orbit') explore.stepOrbit(DT);
             else if (S.phase === 'warp') explore.stepWarp(DT);
             else if (S.phase === 'descend') explore.stepDescent(DT);
+            else if (S.phase === 'ascend') explore.stepAscend(DT);
         } else {
             if (S.phase === 'flight') game.stepFlight(DT);
             else if (S.phase === 'orbit') game.stepOrbit(DT);
