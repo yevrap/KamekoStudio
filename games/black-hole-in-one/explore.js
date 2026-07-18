@@ -762,7 +762,7 @@ export function handleTap(wx, wy) {
 
     let hit = null;
     for (const b of world.bodies) {
-        if (b.type === 'planet') {
+        if (b.type === 'planet' || b.type === 'tee') {
             const d = Math.hypot(wx - b.x, wy - b.y);
             if (d < b.r + 15) {
                 hit = b;

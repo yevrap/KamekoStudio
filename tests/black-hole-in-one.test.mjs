@@ -184,11 +184,11 @@ test('orbitCapture rejects dives, escapes, and out-of-band passes', () => {
     assert.equal(orbitCapture({ x: 50 + d, y: 50, vx: 0, vy: 2 }, planet), null);
 });
 
-test('orbitCapture ignores non-planets (tee, pulsar)', () => {
+test('orbitCapture ignores non-planets except tee (pulsar)', () => {
     const d = 18, vc = circularSpeed(100, d);
     const tee = { x: 50, y: 50, r: 10, m: 100, type: 'tee' };
     const pulsar = { x: 50, y: 50, r: 10, m: -100, type: 'pulsar' };
-    assert.equal(orbitCapture({ x: 68, y: 50, vx: 0, vy: vc }, tee), null);
+    assert.ok(orbitCapture({ x: 68, y: 50, vx: 0, vy: vc }, tee), 'tee is captured');
     assert.equal(orbitCapture({ x: 68, y: 50, vx: 0, vy: vc }, pulsar), null);
 });
 
@@ -229,11 +229,11 @@ test('magnetCapture omega direction follows the tangential-velocity sign, and de
     assert.ok(zeroV.omega > 0, 'zero tangential speed falls back to the +1 direction');
 });
 
-test('magnetCapture ignores non-planets (tee, pulsar) same as orbitCapture', () => {
+test('magnetCapture ignores non-planets except tee (pulsar) same as orbitCapture', () => {
     const d = 18;
     const tee = { x: 50, y: 50, r: 10, m: 100, type: 'tee' };
     const pulsar = { x: 50, y: 50, r: 10, m: -100, type: 'pulsar' };
-    assert.equal(magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: 1 }, tee), null);
+    assert.ok(magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: 1 }, tee), 'tee is captured');
     assert.equal(magnetCapture({ x: 50 + d, y: 50, vx: 0, vy: 1 }, pulsar), null);
 });
 

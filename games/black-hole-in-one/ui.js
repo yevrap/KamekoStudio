@@ -249,8 +249,8 @@ export function render(drag) {
         else if (b.type === 'mine') drawMine(b);
         else if (b.type === 'trap') drawTrap(b);
         else if (b.type === 'blackhole') drawExploreBlackHole(b);
-        else drawTee(b);
-        if (showCaptureRings && (b.type === 'planet' || b.type === 'blackhole')) drawCaptureRing(b);
+        else { drawTee(b); drawPlanetLabel(b); }
+        if (showCaptureRings && (b.type === 'planet' || b.type === 'blackhole' || b.type === 'tee')) drawCaptureRing(b);
     }
     if (world.blackHole) drawBlackHole();
     if (world.orbit) drawOrbitRing();
@@ -352,7 +352,8 @@ function drawPlanet(b) {
 }
 
 function drawPlanetLabel(b) {
-    if (S.mode !== 'explore' || !b.tapped) return;
+    const isOrbited = S.phase === 'orbit' && world.orbit && world.orbit.b === b;
+    if (S.mode !== 'explore' || (!b.tapped && !isOrbited)) return;
     
     // Persistent on-planet label (Q5): MAP-2 style two-tap confirm chrome
     let txt = '';

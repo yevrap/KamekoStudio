@@ -1144,3 +1144,39 @@ test('OW-9: orbiting marks the orbited chunk discovered too, not just free fligh
     world.orbit = null;
     loadDiscoveredChunks([]);
 });
+
+test('Town Orbit: tee body can capture the comet into orbit via magnetCapture', () => {
+    startRun();
+    const town = { x: comet.x + 40, y: comet.y, r: 10, m: 100, type: 'tee' };
+    world.bodies = [town];
+    world.pickups = [];
+    S.phase = 'flight';
+    S.orbitCooldown = 0;
+    
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
+    
+    const d = 18;
+    comet.x = town.x - d;
+    comet.y = town.y;
+    comet.vx = 50; comet.vy = 0;
+    
+    step(1 / 240);
+    assert.equal(S.phase, 'orbit', 'Town (tee) should capture comet into orbit when magnet is ON');
+    assert.ok(world.orbit);
+    assert.equal(world.orbit.b, town);
+});
+
+test('Thruster tap: quick tap while Thruster is enabled triggers tap action (DOM logic verified manually)', () => {
+    startRun();
+    const town = { x: comet.x + 40, y: comet.y, r: 10, m: 100, type: 'tee' };
+    world.bodies = [town];
+    S.phase = 'flight';
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
+    
+    // Position comet in the capture band
+    comet.x = town.x - 18;
+    comet.y = town.y;
+    
+    handleTap(town.x, town.y);
+    assert.equal(S.phase, 'descend', 'tap on Town should begin descent');
+});

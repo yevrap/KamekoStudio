@@ -141,6 +141,14 @@ canvas.addEventListener('pointermove', e => {
 });
 canvas.addEventListener('pointerup', e => {
     if (S.mode === 'explore' && S.inventory.thruster?.enabled) {
+        if (explore.stick && explore.stick.id === e.pointerId) {
+            const dx = explore.stick.cx - explore.stick.ox;
+            const dy = explore.stick.cy - explore.stick.oy;
+            if (Math.hypot(dx, dy) <= TAP_MAX_LEN) {
+                const [wx, wy] = ui.toWorld(e);
+                explore.handleTap(wx, wy);
+            }
+        }
         explore.stickUp(e.pointerId);
         return;
     }

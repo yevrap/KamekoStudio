@@ -57,7 +57,7 @@ export function stepBody(p, dt, bodies, blackHole, damp) {
 //   omega  = angular velocity that reproduces the tangential speed at that radius
 //   ang    = current angle of the comet around b
 export function orbitCapture(p, b) {
-    if (b.type !== 'planet' && b.type !== 'blackhole') return null;
+    if (b.type !== 'planet' && b.type !== 'blackhole' && b.type !== 'tee') return null;
     const dx = p.x - b.x, dy = p.y - b.y;
     const d = Math.hypot(dx, dy) || 1e-6;
     const gap = d - (b.r + COMET_R);
@@ -82,7 +82,7 @@ export function orbitCapture(p, b) {
 // untouched so golf and item-OFF Explore keep the strict capture exactly as
 // before. Pure — same { radius, omega, ang } shape as orbitCapture.
 export function magnetCapture(p, b) {
-    if (b.type !== 'planet' && b.type !== 'blackhole') return null;
+    if (b.type !== 'planet' && b.type !== 'blackhole' && b.type !== 'tee') return null;
     const dx = p.x - b.x, dy = p.y - b.y;
     const d = Math.hypot(dx, dy) || 1e-6;
     const gap = d - (b.r + COMET_R);
