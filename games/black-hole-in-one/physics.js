@@ -41,7 +41,7 @@ export function stepBody(p, dt, bodies, blackHole, damp) {
 
     if (blackHole && dist(p.x, p.y, blackHole.x, blackHole.y) < CAPTURE_R) return { sink: true };
     for (const b of bodies) {
-        if (b.type === 'pulsar') continue;
+        if (b.type === 'pulsar' || b.type === 'blackhole') continue;
         const d = dist(p.x, p.y, b.x, b.y), rr = b.r + COMET_R;
         if (d < rr) return { hit: b, d };
     }
@@ -57,7 +57,7 @@ export function stepBody(p, dt, bodies, blackHole, damp) {
 //   omega  = angular velocity that reproduces the tangential speed at that radius
 //   ang    = current angle of the comet around b
 export function orbitCapture(p, b) {
-    if (b.type !== 'planet') return null;
+    if (b.type !== 'planet' && b.type !== 'blackhole') return null;
     const dx = p.x - b.x, dy = p.y - b.y;
     const d = Math.hypot(dx, dy) || 1e-6;
     const gap = d - (b.r + COMET_R);

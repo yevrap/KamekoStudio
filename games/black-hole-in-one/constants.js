@@ -141,17 +141,8 @@ export const REFUEL_STATION_CHANCE = 0.75; // odds a chunk gets one flagged stat
 // no THRUST_A/gravity special-casing.
 export const EXPLORE_BLACKHOLE_CHANCE = 0.04;    // odds a chunk seeds one
 export const EXPLORE_BLACKHOLE_R = 22;           // fixed visual/gravity radius
-// Warp triggers at r + this margin — comfortably outside stepBody()'s r+COMET_R
-// collision radius (23.6 at R=22) so the proximity warp in explore.js always
-// preempts physics.js's normal planet-style bounce/land response for the same body;
-// physics.js itself stays completely untouched (its blackHole param backs ~300
-// golf/editor tests and is deliberately not retrofitted for this).
-export const EXPLORE_BLACKHOLE_WARP_MARGIN = 10;
-// Return Portal lands this far *outside* the warp radius (from the black hole's
-// center, along the direction the comet approached from) so arriving back doesn't
-// instantly re-trigger the same warp.
-export const EXPLORE_RETURN_NUDGE = 3;
-export function exploreBlackHoleWarpR(r) { return r + EXPLORE_BLACKHOLE_WARP_MARGIN; }
+// Warp triggers at b.r * 0.3.
+// Return Portal lands the comet directly into orbit.
 
 // ---- Moons & rings (OW-5), decorative only, Explore only -----------------------
 // Pure render-layer decoration attached to an existing Giant planet body (b.moon /

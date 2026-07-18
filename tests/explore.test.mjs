@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepOrbit, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal, discoveredChunks, loadDiscoveredChunks, chunkKeyAt } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, EXPLORE_RETURN_NUDGE, exploreBlackHoleWarpR, moonPosition } from '../games/black-hole-in-one/constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, ORBIT_MIN_GAP, moonPosition } from '../games/black-hole-in-one/constants.js';
 import { gravityAt } from '../games/black-hole-in-one/physics.js';
 
 test('Camera math: screenToWorld', () => {
@@ -775,12 +775,6 @@ test('OW-3: real chunk-generator black holes never exceed THRUST_A at their own 
     assert.ok(sampled > 0, 'sanity: at least one black hole was sampled');
 });
 
-test('OW-3: exploreBlackHoleWarpR sits comfortably outside stepBody\'s r+COMET_R collision radius', () => {
-    const warpR = exploreBlackHoleWarpR(EXPLORE_BLACKHOLE_R);
-    const collisionR = EXPLORE_BLACKHOLE_R + COMET_R;
-    assert.ok(warpR > collisionR + 1, `warp radius (${warpR}) should clear the collision radius (${collisionR}) with real margin`);
-});
-
 test('OW-3: flying within warp range of a seeded black hole begins the warp (not a planet collision)', () => {
     startRun();
     const bh = { x: comet.x + 50, y: comet.y, r: EXPLORE_BLACKHOLE_R, m: EXPLORE_BLACKHOLE_R * EXPLORE_BLACKHOLE_R, type: 'blackhole', id: 'test-bh' };
@@ -793,7 +787,7 @@ test('OW-3: flying within warp range of a seeded black hole begins the warp (not
 
     // Just inside the warp radius, well outside the r+COMET_R collision radius —
     // proves the warp fires from proximity, not from stepBody's own hit detection.
-    const warpR = exploreBlackHoleWarpR(bh.r);
+    const warpR = bh.r * 0.3;
     comet.x = bh.x - (warpR - 0.5);
     comet.y = bh.y;
     comet.vx = 0; comet.vy = 0;
@@ -810,23 +804,22 @@ test('OW-3: flying within warp range of a seeded black hole begins the warp (not
     setHooks({ exploreHome() {} });
 });
 
-test('OW-3: the warp preempts a would-be planet-style collision even when already inside stepBody\'s collision radius', () => {
+test('OW-3: the warp triggers when penetrating deep into the event horizon', () => {
     startRun();
     const bh = { x: comet.x + 50, y: comet.y, r: EXPLORE_BLACKHOLE_R, m: EXPLORE_BLACKHOLE_R * EXPLORE_BLACKHOLE_R, type: 'blackhole', id: 'test-bh-2' };
     world.bodies = [bh];
     world.pickups = [];
     S.phase = 'flight';
     S.orbitCooldown = 0;
-    // Well inside stepBody's own r+COMET_R collision radius too — if the warp check
-    // didn't run first, collide() would land/bounce the comet off it like a planet.
-    comet.x = bh.x - (bh.r + COMET_R) * 0.5;
+    
+    // Position inside the new inner radius (0.3 * b.r)
+    comet.x = bh.x - (bh.r * 0.2);
     comet.y = bh.y;
     comet.vx = 0; comet.vy = 0;
 
     step(1 / 240);
 
     assert.equal(S.phase, 'warp');
-    assert.notEqual(S.phase, 'rest', 'must not have been treated as a landing');
 });
 
 test('OW-3: stepWarp spirals for ~1s then completes at Town, resetting camera and clearing the bookmark trigger state', () => {
@@ -836,7 +829,7 @@ test('OW-3: stepWarp spirals for ~1s then completes at Town, resetting camera an
     world.pickups = [];
     S.phase = 'flight';
     S.orbitCooldown = 0;
-    comet.x = bh.x - (exploreBlackHoleWarpR(bh.r) - 0.5);
+    comet.x = bh.x - (bh.r * 0.3 - 0.5);
     comet.y = bh.y;
     comet.vx = 0; comet.vy = 0;
 
@@ -866,23 +859,36 @@ test('OW-3: useReturnPortal is a no-op away from Town or without a bookmark', ()
     loadExploreHome(null);
 });
 
-test('OW-3: useReturnPortal sends the comet back to the bookmarked black hole, just outside its warp radius', () => {
+test('OW-3: useReturnPortal sends the comet back to the bookmarked black hole, directly into orbit', () => {
     startRun();
     assert.equal(atTown(), true, 'sanity: startRun leaves the comet at Town');
-    loadExploreHome({ blackHoleId: 'test-bh', bhX: 500, bhY: -300, x: 520, y: -300 }); // approached from +x
+    
+    // Find a real seeded black hole so updateActiveChunks() will produce it
+    let found = false, bh = null;
+    for (let cx = -20; cx <= 20 && !found; cx++) {
+        for (let cy = -20; cy <= 20 && !found; cy++) {
+            const bodies = getChunkBodies(cx, cy, 'explore-1');
+            bh = bodies.find(b => b.type === 'blackhole');
+            if (bh) found = true;
+        }
+    }
+    
+    loadExploreHome({ blackHoleId: bh.id, bhX: bh.x, bhY: bh.y, x: bh.x + 20, y: bh.y }); // approached from +x
 
     const ok = useReturnPortal();
 
     assert.equal(ok, true);
-    assert.equal(S.phase, 'flight');
+    assert.equal(S.phase, 'orbit');
     assert.equal(comet.vx, 0);
     assert.equal(comet.vy, 0);
-    const expectedR = exploreBlackHoleWarpR(EXPLORE_BLACKHOLE_R) + EXPLORE_RETURN_NUDGE;
-    const actualR = Math.hypot(comet.x - 500, comet.y - (-300));
+    assert.ok(world.orbit !== null);
+    
+    const expectedR = EXPLORE_BLACKHOLE_R + COMET_R + ORBIT_MIN_GAP + 2;
+    const actualR = Math.hypot(comet.x - bh.x, comet.y - bh.y);
     assert.ok(Math.abs(actualR - expectedR) < 1e-6, `should land exactly ${expectedR} from the black hole, got ${actualR}`);
-    // Approached from +x (bhX=500 < x=520), so should land east of the black hole.
-    assert.ok(comet.x > 500);
-    assert.ok(Math.abs(comet.y - (-300)) < 1e-6);
+    // Approached from +x (bhX < x), so should land east of the black hole.
+    assert.ok(comet.x > bh.x);
+    assert.ok(Math.abs(comet.y - bh.y) < 1e-6);
     assert.equal(atTown(), false, 'no longer at Town after returning');
 
     loadExploreHome(null);

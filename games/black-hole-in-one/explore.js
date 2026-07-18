@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, EXPLORE_RETURN_NUDGE, exploreBlackHoleWarpR, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX, ORBIT_MIN_GAP, circularSpeed } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture } from './physics.js';
 
@@ -477,7 +477,7 @@ export function step(dt) {
     // planet-style hit rather than racing it.
     for (const b of world.bodies) {
         if (b.type !== 'blackhole') continue;
-        if (dist(comet.x, comet.y, b.x, b.y) < exploreBlackHoleWarpR(b.r)) {
+        if (dist(comet.x, comet.y, b.x, b.y) < b.r * 0.3) {
             beginWarp(b);
             return;
         }
@@ -616,21 +616,35 @@ function completeWarp() {
 // sits right at the trigger boundary by definition).
 export function useReturnPortal() {
     if (!atTown() || !exploreHome) return false;
-    const { bhX, bhY, x, y } = exploreHome;
+    const { blackHoleId, bhX, bhY, x, y } = exploreHome;
     const dx = x - bhX, dy = y - bhY;
-    const d = Math.hypot(dx, dy) || 1;
-    const safeR = exploreBlackHoleWarpR(EXPLORE_BLACKHOLE_R) + EXPLORE_RETURN_NUDGE;
-    comet.x = bhX + (dx / d) * safeR;
-    comet.y = bhY + (dy / d) * safeR;
-    comet.vx = comet.vy = 0;
-    comet.rest = null;
-    S.phase = 'flight';
-    world.trail = [];
-    camera.x = comet.x;
-    camera.y = comet.y;
+
+    // Jump camera there to load chunks
+    camera.x = bhX;
+    camera.y = bhY;
     lastChunkX = null;
     lastChunkY = null;
     updateActiveChunks();
+
+    const b = world.bodies.find(body => body.id === blackHoleId);
+    if (b) {
+        const r = EXPLORE_BLACKHOLE_R + COMET_R + ORBIT_MIN_GAP + 2;
+        const ang = Math.atan2(dy, dx);
+        comet.x = bhX + Math.cos(ang) * r;
+        comet.y = bhY + Math.sin(ang) * r;
+        comet.vx = 0; comet.vy = 0; comet.rest = null;
+        world.orbit = { b, radius: r, ang, omega: circularSpeed(b.m, r) / r };
+        S.phase = 'orbit';
+    } else {
+        S.phase = 'flight'; // Fallback
+        const d = Math.hypot(dx, dy) || 1;
+        const safeR = EXPLORE_BLACKHOLE_R + 10;
+        comet.x = bhX + (dx / d) * safeR;
+        comet.y = bhY + (dy / d) * safeR;
+        comet.vx = 0; comet.vy = 0; comet.rest = null;
+    }
+    
+    world.trail = [];
     hooks.burst(comet.x, comet.y, 20, '#ffd98a', 30);
     hooks.sfx.sling();
     hooks.toast('🌀 Returned to the black hole');
