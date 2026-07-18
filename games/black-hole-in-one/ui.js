@@ -7,7 +7,7 @@ import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
-    exploreBlackHoleWarpR, moonPosition,
+    moonPosition,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -543,7 +543,7 @@ function drawBlackHole() { drawBlackHoleBody(world.blackHole, CAPTURE_R); }
 
 // OW-3: a seeded Explore black hole — same visual as golf's, ringed at its own warp
 // radius (much bigger than golf's CAPTURE_R, since this body is r=22 vs golf's r=3.2).
-function drawExploreBlackHole(b) { drawBlackHoleBody(b, exploreBlackHoleWarpR(b.r)); }
+function drawExploreBlackHole(b) { drawBlackHoleBody(b, b.r * 0.3); }
 
 function drawComet() {
     if (S.phase === 'rest' || (S.phase === 'aiming' && S.prevPhase !== 'flight')) {
