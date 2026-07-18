@@ -762,7 +762,7 @@ export function handleTap(wx, wy) {
 
     let hit = null;
     for (const b of world.bodies) {
-        if (b.type === 'planet' || b.type === 'tee') {
+        if (b.type === 'planet' || b.type === 'tee' || b.type === 'blackhole') {
             const d = Math.hypot(wx - b.x, wy - b.y);
             if (d < b.r + 15) {
                 hit = b;
@@ -780,7 +780,14 @@ export function handleTap(wx, wy) {
     } else if (S.phase === 'rest' && comet.rest?.b === hit) {
         beginAscend(hit);
     } else if (S.phase === 'orbit' && world.orbit?.b === hit) {
-        beginDescentFromOrbit();
+        // TAP-4: tapping the black hole you're orbiting warps to Town, same
+        // trigger point as landing but a different destination — the orbit
+        // never leads to a landed rest state for a black hole.
+        if (hit.type === 'blackhole') {
+            beginWarp(hit);
+        } else {
+            beginDescentFromOrbit();
+        }
     }
 }
 

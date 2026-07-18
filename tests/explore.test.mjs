@@ -541,6 +541,26 @@ test('TAP-1: the black-hole dive-warp check runs before capture — capture-band
     assert.equal(S.phase, 'orbit', 'capture-band distance around a black hole captures (auto-magnet restored)');
 });
 
+test('TAP-4: tapping the black hole you\'re orbiting warps to Town, not descend-and-land', () => {
+    startRun();
+    const bh = { x: comet.x + 40, y: comet.y, r: EXPLORE_BLACKHOLE_R, m: EXPLORE_BLACKHOLE_R * EXPLORE_BLACKHOLE_R, type: 'blackhole', id: 'test-bh-tap4' };
+    world.bodies = [bh];
+    world.pickups = [];
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
+
+    const radius = bh.r + COMET_R + 5;
+    world.orbit = { b: bh, radius, ang: 0, omega: 1 };
+    comet.x = bh.x + radius;
+    comet.y = bh.y;
+    S.phase = 'orbit';
+
+    handleTap(bh.x, bh.y);
+
+    assert.equal(S.phase, 'warp', 'tapping the orbited black hole should begin the warp (TAP-4), not descend');
+    assert.ok(world.warp, 'world.warp should be populated');
+    assert.equal(world.warp.b, bh);
+});
+
 /* ============================== INV-3a: Thruster ============================== */
 
 test('INV-3a: stickThrottle has a deadzone floor, ramps linearly, and clamps at 1', () => {
