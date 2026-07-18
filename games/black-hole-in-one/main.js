@@ -157,8 +157,8 @@ canvas.addEventListener('pointerup', e => {
     drag = null;
 
     if (S.mode === 'explore' && len <= TAP_MAX_LEN) {
-        explore.handleTap(wx, wy);
         if (S.phase === 'aiming') S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
+        explore.handleTap(wx, wy);
     } else if (len > 0) {
         if (S.mode === 'explore') explore.launch(dx, dy, len);
         else game.launch(dx, dy, len); // Editor test play reuses game.launch

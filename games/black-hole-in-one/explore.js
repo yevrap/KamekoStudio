@@ -532,7 +532,7 @@ export function step(dt) {
     }
     
     if (S.orbitCooldown <= 0 && S.phase === 'flight' && t.throttle === 0) {
-        const capture = orbitCapture;
+        const capture = S.inventory.orbitMagnet?.enabled ? magnetCapture : orbitCapture;
         for (const b of world.bodies) {
             const cap = capture(comet, b);
             if (cap) {

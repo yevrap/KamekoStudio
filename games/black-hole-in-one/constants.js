@@ -183,7 +183,7 @@ export const ITEMS = [
     { key: 'thruster', icon: '🚀', label: 'Thruster',
       desc: 'Fly with a stick instead of flicking. Hold to burn — fuel drains while you thrust.' },
     { key: 'orbitMagnet', icon: '🧲', label: 'Orbit Magnet',
-      desc: 'Tap a nearby planet to land. Tap it again to swing into orbit.',
+      desc: 'Planets catch you automatically. Tap a nearby planet to land. Tap it again to swing into orbit.',
       defaultOn: true },
 ];
 
