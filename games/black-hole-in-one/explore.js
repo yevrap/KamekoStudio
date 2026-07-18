@@ -492,6 +492,7 @@ export function step(dt) {
             world.lastRest = { rest: comet.rest };
             world.orbit = null;
             S.phase = 'rest';
+            comet.navTarget = null;
             world.trail = [];
             hooks.sfx.land();
             hooks.burst(comet.x, comet.y, 5, '#fff', 10);
@@ -536,6 +537,7 @@ export function step(dt) {
                 comet.vx = -Math.sin(cap.ang) * spd;
                 comet.vy = Math.cos(cap.ang) * spd;
                 S.phase = 'orbit';
+                comet.navTarget = null;
                 world.trail = [];
                 hooks.sfx.sling();
                 hooks.burst(comet.x, comet.y, 12, (b.pal && b.pal.base) || '#9fe3d8', 26);
@@ -635,6 +637,7 @@ export function useReturnPortal() {
         comet.vx = 0; comet.vy = 0; comet.rest = null;
         world.orbit = { b, radius: r, ang, omega: circularSpeed(b.m, r) / r };
         S.phase = 'orbit';
+        comet.navTarget = null;
     } else {
         S.phase = 'flight'; // Fallback
         const d = Math.hypot(dx, dy) || 1;
