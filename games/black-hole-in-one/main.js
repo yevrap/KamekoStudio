@@ -152,25 +152,14 @@ canvas.addEventListener('pointerup', e => {
     }
 
     if (!drag || e.pointerId !== drag.id) return;
-    let dx = drag.sx - drag.cx, dy = drag.sy - drag.cy;
-    let len = Math.hypot(dx, dy);
-    
+    const dx = drag.sx - drag.cx, dy = drag.sy - drag.cy;
+    const len = Math.hypot(dx, dy);
+    drag = null;
     if (len > 0) {
-        const aim = ui.getSnappedAim(drag, S, comet);
-        let sdx = aim.dx;
-        let sdy = aim.dy;
-        let slen = Math.hypot(sdx, sdy);
-
-        if (S.mode === 'explore') {
-            const launched = explore.launch(sdx, sdy, slen);
-            if (launched !== false) {
-                comet.navTarget = aim.isOrbit ? aim.targetId : null;
-            }
-        }
-        else game.launch(sdx, sdy, slen); // Editor test play reuses game.launch
+        if (S.mode === 'explore') explore.launch(dx, dy, len);
+        else game.launch(dx, dy, len); // Editor test play reuses game.launch
     }
     else S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
-    drag = null;
 });
 canvas.addEventListener('pointercancel', () => {
     explore.stickCancel();

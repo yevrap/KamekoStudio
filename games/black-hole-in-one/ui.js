@@ -7,10 +7,10 @@ import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
-    moonPosition,
+    exploreBlackHoleWarpR, moonPosition,
 } from './constants.js';
 import { S, world, comet } from './state.js';
-import { stepBody, orbitCapture } from './physics.js';
+import { stepBody } from './physics.js';
 import * as explore from './explore.js';
 
 const canvas = document.getElementById('game');
@@ -543,7 +543,7 @@ function drawBlackHole() { drawBlackHoleBody(world.blackHole, CAPTURE_R); }
 
 // OW-3: a seeded Explore black hole — same visual as golf's, ringed at its own warp
 // radius (much bigger than golf's CAPTURE_R, since this body is r=22 vs golf's r=3.2).
-function drawExploreBlackHole(b) { drawBlackHoleBody(b, b.r * 0.3); }
+function drawExploreBlackHole(b) { drawBlackHoleBody(b, exploreBlackHoleWarpR(b.r)); }
 
 function drawComet() {
     if (S.phase === 'rest' || (S.phase === 'aiming' && S.prevPhase !== 'flight')) {
@@ -566,87 +566,8 @@ function drawComet() {
     ctx.beginPath(); ctx.arc(comet.x, comet.y, COMET_R * 0.8, 0, 7); ctx.fill();
 }
 
-export function getSnappedAim(drag, S, comet) {
-    const rawDx = drag.sx - drag.cx;
-    const rawDy = drag.sy - drag.cy;
-    if (!S.inventory?.navComputer?.enabled) {
-        return { dx: rawDx, dy: rawDy, isOrbit: false };
-    }
-    const len = Math.hypot(rawDx, rawDy);
-    if (len < 1) return { dx: rawDx, dy: rawDy, isOrbit: false };
-    
-    const basePow = Math.min(len / MAX_DRAG, 1);
-    const baseSpeed = basePow * MAX_LAUNCH;
-    if (baseSpeed < MIN_SHOT) return { dx: rawDx, dy: rawDy, isOrbit: false };
-
-    const baseAng = Math.atan2(rawDy, rawDx);
-    
-    const candidates = [];
-    const angSteps = 8;
-    const maxAng = 0.25; 
-    const powSteps = 5;
-    const maxPowDev = 0.25;
-
-    for (let a = -angSteps; a <= angSteps; a++) {
-        for (let p = -powSteps; p <= powSteps; p++) {
-            const da = (a / angSteps) * maxAng;
-            const dPow = (p / powSteps) * maxPowDev;
-            
-            const testPow = basePow + dPow;
-            if (testPow <= 0 || testPow > 1.0) continue; 
-            
-            const testSpeed = testPow * MAX_LAUNCH;
-            if (testSpeed < MIN_SHOT) continue;
-            
-            const penalty = (a/angSteps)*(a/angSteps) + (p/powSteps)*(p/powSteps);
-            candidates.push({ ang: baseAng + da, speed: testSpeed, pow: testPow, penalty });
-        }
-    }
-    
-    candidates.sort((c1, c2) => c1.penalty - c2.penalty);
-    const searchSpace = candidates.slice(0, 80);
-
-    const liftBody = (!world.orbit && comet.rest && comet.rest.b && comet.rest.b.type === 'planet')
-        ? comet.rest.b : null;
-
-    for (const c of searchSpace) {
-        const ghost = { x: comet.x, y: comet.y,
-                        vx: comet.vx + Math.cos(c.ang) * c.speed, 
-                        vy: comet.vy + Math.sin(c.ang) * c.speed };
-        
-        let liftT = liftBody ? LIFTOFF_T : 0;
-        
-        let alive = true;
-        for (let i = 0; i < 240 && alive; i++) {
-            let damp = null;
-            if (liftT > 0) {
-                liftT = Math.max(0, liftT - DT);
-                const k = 1 - liftT / LIFTOFF_T;
-                damp = { body: liftBody, factor: LIFTOFF_MIN + (1 - LIFTOFF_MIN) * k };
-            }
-            const r = stepBody(ghost, DT, world.bodies, world.blackHole, damp);
-            if (r) {
-                alive = false;
-            } else {
-                for (const b of world.bodies) {
-                    if (orbitCapture(ghost, b)) {
-                        return {
-                            dx: Math.cos(c.ang) * (c.pow * MAX_DRAG),
-                            dy: Math.sin(c.ang) * (c.pow * MAX_DRAG),
-                            isOrbit: true
-                        };
-                    }
-                }
-            }
-        }
-    }
-    
-    return { dx: rawDx, dy: rawDy, isOrbit: false };
-}
-
-export function drawAim(drag) {
-    const aim = getSnappedAim(drag, S, comet);
-    const dx = aim.dx, dy = aim.dy;
+function drawAim(drag) {
+    const dx = drag.sx - drag.cx, dy = drag.sy - drag.cy;
     const len = Math.hypot(dx, dy);
     if (len < 1) return;
     const pow = Math.min(len / MAX_DRAG, 1);
@@ -685,8 +606,7 @@ export function drawAim(drag) {
     const ux = dx / len, uy = dy / len;
     const alen = 4 + pow * 12;
     const hx = comet.x + ux * alen, hy = comet.y + uy * alen;
-    let cr = pow < 0.55 ? '0,229,160' : (pow < 0.85 ? '255,217,138' : '255,110,80');
-    if (aim.isOrbit) cr = '77,166,255';
+    const cr = pow < 0.55 ? '0,229,160' : (pow < 0.85 ? '255,217,138' : '255,110,80');
     ctx.strokeStyle = `rgba(${cr},0.9)`;
     ctx.lineWidth = 0.7;
     ctx.beginPath(); ctx.moveTo(comet.x + ux * (COMET_R + 1), comet.y + uy * (COMET_R + 1)); ctx.lineTo(hx, hy); ctx.stroke();

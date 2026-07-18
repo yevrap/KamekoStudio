@@ -181,8 +181,6 @@ export const ITEMS = [
       desc: 'Full tank, forever — fuel stops draining until you switch it off.' },
     { key: 'thruster', icon: '🚀', label: 'Thruster',
       desc: 'Fly with a stick instead of flicking. Hold to burn — fuel drains while you thrust.' },
-    { key: 'navComputer', icon: '🧭', label: 'Nav Computer',
-      desc: 'Orbit Aim Assist' },
 ];
 
 export const PALETTES = [
