@@ -152,8 +152,16 @@ canvas.addEventListener('pointerup', e => {
     }
 
     if (!drag || e.pointerId !== drag.id) return;
-    const dx = drag.sx - drag.cx, dy = drag.sy - drag.cy;
-    const len = Math.hypot(dx, dy);
+    let dx = drag.sx - drag.cx, dy = drag.sy - drag.cy;
+    let len = Math.hypot(dx, dy);
+    
+    if (len > 0 && S.mode === 'explore') {
+        const aim = ui.getSnappedAim(drag, S, comet);
+        dx = aim.dx;
+        dy = aim.dy;
+        len = Math.hypot(dx, dy);
+    }
+
     drag = null;
     if (len > 0) {
         if (S.mode === 'explore') explore.launch(dx, dy, len);
