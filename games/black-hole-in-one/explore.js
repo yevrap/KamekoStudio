@@ -6,6 +6,7 @@ import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture, magnetCapture } from './physics.js';
 
 let shownPushHint = false;   // OW-0: one-time mid-flight push toast
+let shownDescentHint = false; // TAP-2: one-time tap-to-land toast
 
 export const camera = { x: 50, y: 85 };
 export let fuel = 100;
@@ -319,6 +320,23 @@ function placeOnRest() {
     comet.y = r.b.y + Math.sin(r.ang) * (r.b.r + COMET_R + 0.25);
 }
 
+function completeLanding(b, ang) {
+    comet.rest = { b, ang };
+    placeOnRest();
+    comet.vx = comet.vy = 0;
+    world.lastRest = { rest: comet.rest };
+    world.orbit = null;
+    S.phase = 'rest';
+    world.trail = [];
+    hooks.sfx.land();
+    hooks.burst(comet.x, comet.y, 5, '#fff', 10);
+    if (isRefuelStation(b)) {
+        refuelFull();
+        hooks.burst(comet.x, comet.y, 14, '#20e657', 24);
+        hooks.toast('⛽ Refueled!');
+    }
+}
+
 // Spend fuel, unless Endless Flight (INV-1) has the tank locked. Every fuel cost
 // in Explore goes through here so item N+1 (the Thruster's per-second burn) gets
 // the fuel-lock interaction for free instead of re-checking it at each call site.
@@ -486,20 +504,7 @@ export function step(dt) {
     if (res && res.hit) {
         const c = collide(comet, res.hit);
         if (c.landed) {
-            comet.rest = { b: res.hit, ang: c.ang };
-            placeOnRest();
-            comet.vx = comet.vy = 0;
-            world.lastRest = { rest: comet.rest };
-            world.orbit = null;
-            S.phase = 'rest';
-            world.trail = [];
-            hooks.sfx.land();
-            hooks.burst(comet.x, comet.y, 5, '#fff', 10);
-            if (isRefuelStation(res.hit)) {
-                refuelFull();
-                hooks.burst(comet.x, comet.y, 14, '#20e657', 24);
-                hooks.toast('⛽ Refueled!');
-            }
+            completeLanding(res.hit, c.ang);
         } else if (c.bounced) {
             hooks.sfx.bounce(c.k);
             hooks.burst(comet.x, comet.y, 7, res.hit.pal ? res.hit.pal.base : '#aaa', 18);
@@ -593,14 +598,9 @@ export function stepWarp(dt) {
 function completeWarp() {
     world.warp = null;
     if (!world.teeRock) world.teeRock = { x: 50, y: 85, r: 3.4, m: 8, type: 'tee', id: 'tee' };
-    comet.vx = comet.vy = 0;
-    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
-    placeOnRest();
-    world.lastRest = { rest: comet.rest };
-    world.trail = [];
+    completeLanding(world.teeRock, -Math.PI / 2);
     camera.x = 50;
     camera.y = 85;
-    S.phase = 'rest';
     lastChunkX = null;
     lastChunkY = null; // force a chunk refresh at Town, however far the warp origin was
     updateActiveChunks();
@@ -784,7 +784,20 @@ export function handleTap(wx, wy) {
 }
 
 export function beginDescentFromFlight(b) {
-    // Stub for TAP-2
+    b.tapped = true;
+    if (!shownDescentHint) {
+        shownDescentHint = true;
+        hooks.toast('🛬 Tap to land!');
+    }
+    const dx = comet.x - b.x, dy = comet.y - b.y;
+    const d = Math.hypot(dx, dy) || 1e-6;
+    const nx = dx / d, ny = dy / d;
+    const vt = comet.vx * -ny + comet.vy * nx;
+    
+    world.descent = { b, r0: d, a0: Math.atan2(dy, dx), omega0: vt / d, t: 0 };
+    S.phase = 'descend';
+    world.orbit = null;
+    world.trail = [];
 }
 
 export function beginAscend(b) {
@@ -792,5 +805,41 @@ export function beginAscend(b) {
 }
 
 export function beginDescentFromOrbit() {
-    // Stub for TAP-2
+    if (!world.orbit) return;
+    const b = world.orbit.b;
+    b.tapped = true;
+    if (!shownDescentHint) {
+        shownDescentHint = true;
+        hooks.toast('🛬 Tap to land!');
+    }
+    
+    world.descent = { b, r0: world.orbit.radius, a0: world.orbit.ang, omega0: world.orbit.omega, t: 0 };
+    S.phase = 'descend';
+    world.orbit = null;
+    world.trail = [];
+}
+
+export function stepDescent(dt) {
+    const d = world.descent;
+    if (!d) return;
+    
+    d.t += dt / 0.7;
+    const t = Math.min(d.t, 1);
+    
+    const targetR = d.b.r + COMET_R + 0.25;
+    const ease = 1 - (1 - t) * (1 - t);
+    const r = d.r0 + (targetR - d.r0) * ease;
+    
+    const omega = d.omega0 * (1 - ease);
+    d.a0 += omega * dt;
+    
+    comet.x = d.b.x + Math.cos(d.a0) * r;
+    comet.y = d.b.y + Math.sin(d.a0) * r;
+    
+    if (d.t >= 1) {
+        world.descent = null;
+        completeLanding(d.b, d.a0);
+    } else {
+        updateCamera(dt);
+    }
 }

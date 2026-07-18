@@ -515,10 +515,11 @@ test('TAP-1: handleTap detects tap if item ON, ignores if item OFF', () => {
     handleTap(planet.x, planet.y);
     assert.equal(S.phase, 'flight', 'item OFF: tap does nothing');
 
-    // Item ON: handleTap calls stub
+    // Item ON: handleTap calls beginDescentFromFlight (TAP-2)
     S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
     handleTap(planet.x, planet.y);
-    assert.equal(S.phase, 'flight', 'item ON: tap calls stub, no phase change yet');
+    assert.equal(S.phase, 'descend', 'item ON: tap begins descent (TAP-2)');
+    assert.ok(world.descent, 'descent state initialized');
 });
 
 test('TAP-1: the black-hole dive-warp check runs before capture — capture-band distance does not orbit', () => {

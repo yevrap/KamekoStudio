@@ -360,6 +360,7 @@ function frame(now) {
             if (S.phase === 'flight' || (!S.freezeAim && S.phase === 'aiming' && S.prevPhase === 'flight') || (S.phase === 'rest' && explore.hasThrust())) explore.step(DT);
             else if (S.phase === 'orbit') explore.stepOrbit(DT);
             else if (S.phase === 'warp') explore.stepWarp(DT);
+            else if (S.phase === 'descend') explore.stepDescent(DT);
         } else {
             if (S.phase === 'flight') game.stepFlight(DT);
             else if (S.phase === 'orbit') game.stepOrbit(DT);

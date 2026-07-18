@@ -244,7 +244,7 @@ export function render(drag) {
     // phase + item so golf and item-OFF Explore never draw it.
     const showCaptureRings = S.mode === 'explore' && S.phase === 'flight' && S.inventory.orbitMagnet?.enabled;
     for (const b of world.bodies) {
-        if (b.type === 'planet') drawPlanet(b);
+        if (b.type === 'planet') { drawPlanet(b); drawPlanetLabel(b); }
         else if (b.type === 'pulsar') drawPulsar(b);
         else if (b.type === 'mine') drawMine(b);
         else if (b.type === 'trap') drawTrap(b);
@@ -349,6 +349,37 @@ function drawPlanet(b) {
     // of the cosmetic clock (S.time), not physics-stepped, so it never interacts
     // with gravity/collision.
     if (b.moon) drawMoon(b);
+}
+
+function drawPlanetLabel(b) {
+    if (S.mode !== 'explore' || S.phase !== 'rest' || !comet.rest || comet.rest.b !== b || !b.tapped) return;
+    
+    // Persistent on-planet label (Q5): MAP-2 style two-tap confirm chrome
+    const txt = '🪐 Tap again to orbit';
+    ctx.save();
+    ctx.translate(b.x, b.y - b.r - COMET_R - 10); // positioned just above the comet
+    
+    // Since view transform includes zooming and scaling, we draw at scale but prevent it from getting too tiny
+    // Actually, text should scale with the world, but let's just draw it simple
+    ctx.font = '500 4px "Inter", sans-serif';
+    const m = ctx.measureText(txt);
+    const w = m.width + 6, h = 7;
+    
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.beginPath();
+    ctx.roundRect(-w/2, -h/2, w, h, 3);
+    ctx.fill();
+    
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 0.3;
+    ctx.stroke();
+    
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(txt, 0, 0.4);
+    
+    ctx.restore();
 }
 
 function drawRing(b) {
