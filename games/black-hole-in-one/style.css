@@ -145,7 +145,11 @@ body {
     text-transform: uppercase;
     margin-bottom: 10px;
 }
-#ts-items { display: flex; flex-direction: column; gap: 8px; max-width: 420px; margin: 0 auto; }
+/* max-height + scroll (same convention as #myMapsList): unbounded, this list of 3
+   upgrades + up to 3 owned items grows tall enough to cover the fixed #btns cluster
+   (Map/Restart/Menu, top-right) on short viewports — e.g. 800x600 renders it 573px
+   tall, occluding #helpBtn entirely so ☰ Menu can't be tapped while at Town. */
+#ts-items { display: flex; flex-direction: column; gap: 8px; max-width: 420px; margin: 0 auto; max-height: 40vh; overflow-y: auto; }
 /* Eyebrow labels that split ts-items into Upgrades / Owned groups, same
    uppercase-tracked convention as .mode-head on the howto screen. */
 .ts-section-label {
