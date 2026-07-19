@@ -277,6 +277,14 @@
     return '../'.repeat(depth) + 'index.html';
   }
 
+  // Kick off the settings.css fetch now instead of waiting for injectUI() at
+  // DOMContentLoaded — that deferral serialized this request behind the whole
+  // module graph (confirmed via Resource Timing on a cold load: settings.css
+  // was fetched ~450ms after settings.js itself, arriving after the hamburger
+  // button was already appended unstyled). Starting it here lets it load in
+  // parallel with everything else fetched off the initial HTML parse.
+  loadCSS();
+
   // ─── Panel open/close ────────────────────────────────────────────────────────
 
   function openSettings() {
@@ -521,8 +529,6 @@
   }
 
   function injectUI() {
-    loadCSS();
-
     // Drawer Trigger Button (Hamburger)
     const gearBtn = document.createElement('button');
     gearBtn.id = 'settings-hamburger-btn';

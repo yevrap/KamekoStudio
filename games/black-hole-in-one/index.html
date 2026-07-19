@@ -8,6 +8,18 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Black Hole in One — Kameko Studio</title>
 <link rel="stylesheet" href="style.css">
+<!-- Discovered by the HTML preload scanner so the whole ES module graph fetches
+     in one round trip instead of waiting for main.js to be parsed first (confirmed
+     via Resource Timing: without these, constants/state/gameplay/etc. formed a
+     second round and physics.js — only transitively imported — a third). -->
+<link rel="modulepreload" href="constants.js">
+<link rel="modulepreload" href="state.js">
+<link rel="modulepreload" href="physics.js">
+<link rel="modulepreload" href="gameplay.js">
+<link rel="modulepreload" href="explore.js">
+<link rel="modulepreload" href="editor.js">
+<link rel="modulepreload" href="ui.js">
+<link rel="modulepreload" href="sfx.js">
 </head>
 <body>
 <canvas id="game"></canvas>
