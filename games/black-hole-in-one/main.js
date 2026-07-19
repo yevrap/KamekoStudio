@@ -271,6 +271,13 @@ restartBtn.addEventListener('click', () => {
     startRun(S.mode);
     ui.toast('↺ Fresh start');
 });
+document.getElementById('sg-again').addEventListener('click', () => startRun(S.mode));
+document.getElementById('sg-menu').addEventListener('click', () => {
+    ui.hideSurvivalGameOver(); // same z-index as #howto, later in DOM order — stays on top otherwise
+    ui.showHowto();
+    if (drag) drag = null;
+    if (S.phase === 'aiming') S.phase = 'rest';
+});
 document.getElementById('helpBtn').addEventListener('click', () => {
     ui.showHowto();
     if (drag) drag = null;

@@ -270,6 +270,42 @@ await test('black-hole-in-one: ☰ menu fully hides an open Town Shop, both dire
   assert(shopVisibleAfter, 'Town Shop did not reappear after closing the menu while still at Town');
 });
 
+await test('black-hole-in-one: survival game-over "Try Again" and "Menu" buttons are wired', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    S.mode = 'endless';
+    ui.showSurvivalGameOver(3);
+  });
+  await sleep(100);
+
+  await page.click('#sg-again');
+  await sleep(200);
+  const restarted = await page.evaluate(() => ({
+    overlayHidden: document.getElementById('survGameOver').classList.contains('hidden'),
+    barVisible: !document.getElementById('bar').classList.contains('hidden'),
+  }));
+  assert(restarted.overlayHidden, '🔋 Try Again did not dismiss the survival game-over overlay');
+  assert(restarted.barVisible, '🔋 Try Again did not restart the run (game bar still hidden)');
+
+  await page.evaluate(async () => {
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.showSurvivalGameOver(3);
+  });
+  await sleep(100);
+  await page.click('#sg-menu');
+  await sleep(200);
+  const afterMenu = await page.evaluate(() => ({
+    menuOpened: !document.getElementById('howto').classList.contains('hidden'),
+    overlayHidden: document.getElementById('survGameOver').classList.contains('hidden'),
+  }));
+  assert(afterMenu.menuOpened, '☰ Menu did not open the howto/menu screen from the survival game-over overlay');
+  assert(afterMenu.overlayHidden,
+    '☰ Menu left the survival game-over overlay stacked on top of the menu (same z-index, later in DOM order)');
+});
+
 // ── Lab games: free to play, no token labels ────────────────────────────────
 
 await test('durak-alchemist: Play is free and starts the game', async page => {

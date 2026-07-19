@@ -415,8 +415,8 @@ body {
     color: #9a9ac8;
 }
 
-/* ---- overlays (how-to + scorecard + myMapsDrawer) ---- */
-#howto, #scorecard, #myMapsDrawer {
+/* ---- overlays (how-to + scorecard + myMapsDrawer + survival game-over) ---- */
+#howto, #scorecard, #myMapsDrawer, #survGameOver {
     position: fixed;
     inset: 0;
     display: flex;
@@ -432,11 +432,11 @@ body {
     z-index: 10;
     color: #e0e0ff;
 }
-#howto.hidden, #scorecard.hidden, #myMapsDrawer.hidden, #bar.hidden, #exploreBar.hidden { display: none; }
+#howto.hidden, #scorecard.hidden, #myMapsDrawer.hidden, #survGameOver.hidden, #bar.hidden, #exploreBar.hidden { display: none; }
 /* the shared-map arrival card had no hide rule, so it showed on the NORMAL menu —
    that's why "Play Shared Map" made no sense there. It's revealed only for ?map= links. (STAB-4) */
 #sharedMapBtns.hidden, #modeBtns.hidden { display: none; }
-#howto h1, #scorecard h2, #myMapsDrawer h2 {
+#howto h1, #scorecard h2, #myMapsDrawer h2, #survGameOver h2 {
     font-size: 1.5rem;
     font-weight: 800;
     letter-spacing: 0.12em;
@@ -452,7 +452,7 @@ body {
     color: #b8b8e0;
     max-width: 300px;
 }
-#modeBtns, #sc-btns, #myMaps-actions {
+#modeBtns, #sc-btns, #myMaps-actions, #sg-btns {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -471,7 +471,7 @@ body {
 }
 .mode-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
 .shared-note { font-size: 0.9rem; color: #ffcf8a; margin-top: 0.4rem; }
-#modeBtns button, #sc-btns button, #myMaps-actions button, #sharedMapBtns button {
+#modeBtns button, #sc-btns button, #myMaps-actions button, #sharedMapBtns button, #sg-btns button {
     min-height: 48px;
     padding: 0 1.3rem;
     border-radius: 14px;
@@ -484,11 +484,11 @@ body {
     text-transform: uppercase;
     cursor: pointer;
 }
-#modeBtns .mode-go, #sharedMapBtns .mode-go, #sc-btns button:first-child, #myMaps-actions button:first-child {
+#modeBtns .mode-go, #sharedMapBtns .mode-go, #sc-btns button:first-child, #myMaps-actions button:first-child, #sg-btns button:first-child {
     border-color: #00e5a0;
     color: #00e5a0;
 }
-#modeBtns button:active, #sc-btns button:active, #myMaps-actions button:active, #sharedMapBtns button:active { background: #1a1a3a; }
+#modeBtns button:active, #sc-btns button:active, #myMaps-actions button:active, #sharedMapBtns button:active, #sg-btns button:active { background: #1a1a3a; }
 
 /* ---- ☰ Menu tab bar (HUD-1): Play / Settings / Inventory, folded in from the
    old shared arcade-settings drawer ---- */
