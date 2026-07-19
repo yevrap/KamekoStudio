@@ -7,11 +7,12 @@ import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
-    moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP,
+    moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
 import * as explore from './explore.js';
+import { setMuted, isMuted } from './sfx.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -882,6 +883,80 @@ function renderStarMap() {
     }
 }
 
+/* ============================== ☰ MENU TABS (HUD-1) ============================== */
+// Settings + Inventory used to be sections in the shared arcade-settings drawer
+// (gear icon, cross-game chrome); HUD-1 folds them into this game's own #howto
+// overlay as tabs alongside Play, so everything specific to this game lives behind
+// the one menu button already in the gameplay HUD. Panels render lazily on tab
+// switch (same on-demand pattern as renderTownShop/renderStarMap below) rather
+// than staying live, since the overlay only opens on demand.
+
+let howtoTab = 'play';
+
+function renderHowtoTabs() {
+    // Inventory is Explore-only, matching the old drawer section's `when` gate.
+    const invBtn = document.getElementById('howtoTabInventory');
+    if (invBtn) invBtn.classList.toggle('hidden', S.mode !== 'explore');
+    if (howtoTab === 'inventory' && S.mode !== 'explore') howtoTab = 'play';
+
+    document.querySelectorAll('#howtoTabs .howto-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === howtoTab);
+    });
+    document.getElementById('howtoPanelPlay').classList.toggle('hidden', howtoTab !== 'play');
+    document.getElementById('howtoPanelSettings').classList.toggle('hidden', howtoTab !== 'settings');
+    document.getElementById('howtoPanelInventory').classList.toggle('hidden', howtoTab !== 'inventory');
+
+    if (howtoTab === 'settings') renderHowtoSettings();
+    else if (howtoTab === 'inventory') renderHowtoInventory();
+}
+
+export function showHowtoTab(tab) {
+    howtoTab = tab;
+    renderHowtoTabs();
+}
+
+export function isHowtoPlayTab() { return howtoTab === 'play'; }
+
+function renderHowtoSettings() {
+    const panel = document.getElementById('howtoPanelSettings');
+    panel.innerHTML = `
+        <label class="howto-toggle-row">
+            <span>Sound effects</span>
+            <input type="checkbox" id="bhSoundToggle" ${isMuted() ? '' : 'checked'}>
+        </label>
+        <label class="howto-toggle-row">
+            <span>Freeze mid-flight aim (Explore)</span>
+            <input type="checkbox" id="bhFreezeToggle" ${S.freezeAim ? 'checked' : ''}>
+        </label>`;
+    panel.querySelector('#bhSoundToggle').addEventListener('change', e => {
+        setMuted(!e.target.checked);
+        localStorage.setItem(LS_KEYS.muted, String(!e.target.checked));
+    });
+    panel.querySelector('#bhFreezeToggle').addEventListener('change', e => {
+        S.freezeAim = e.target.checked;
+        localStorage.setItem(LS_KEYS.freezeAim, String(e.target.checked));
+    });
+}
+
+function renderHowtoInventory() {
+    const panel = document.getElementById('howtoPanelInventory');
+    panel.innerHTML = ITEMS.map(item => `
+        <label class="howto-toggle-row">
+            <span>${item.icon} ${item.label}<br><small>${item.desc}</small></span>
+            <input type="checkbox" data-item="${item.key}" ${S.inventory[item.key]?.enabled ? 'checked' : ''}>
+        </label>`).join('');
+    panel.querySelectorAll('input[data-item]').forEach(cb => {
+        cb.addEventListener('change', e => {
+            const key = e.target.dataset.item;
+            S.inventory[key].enabled = e.target.checked;
+            localStorage.setItem(LS_KEYS.inventory, JSON.stringify(S.inventory));
+            // Endless Flight (INV-1) is a fuel-lock — switching it on tops the tank
+            // off immediately rather than waiting for the next drain/pickup event.
+            if (key === 'endlessFlight' && e.target.checked) explore.refuelFull();
+        });
+    });
+}
+
 export function showHowto() {
     document.getElementById('howto').classList.remove('hidden');
     document.getElementById('bar').classList.add('hidden');
@@ -891,6 +966,8 @@ export function showHowto() {
     menuOpen = true;
     document.getElementById('townShop').classList.add('hidden');
     shopVisible = false;
+    howtoTab = 'play'; // HUD-1: every entry point lands on Play, same as before tabs existed
+    renderHowtoTabs();
 }
 export function hideHowto() {
     document.getElementById('howto').classList.add('hidden');

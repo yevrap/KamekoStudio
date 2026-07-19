@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
     WORLD_W, COURSE_H, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, MAX_V, DT, G,
     ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed, fitZoom, ZOOM_MIN, ZOOM_FIT,
-    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius,
+    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, LS_KEYS,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
@@ -19,6 +19,12 @@ test('fmtDiff formats even, over and under par', () => {
     assert.equal(fmtDiff(0), 'E');
     assert.equal(fmtDiff(3), '+3');
     assert.equal(fmtDiff(-2), '−2');
+});
+
+test('LS_KEYS carries the muted/freezeAim/inventory localStorage keys shared between main.js (boot load) and ui.js (HUD-1 ☰ Menu Settings/Inventory tabs) (HUD-1)', () => {
+    assert.equal(LS_KEYS.muted, 'blackHoleInOne_muted');
+    assert.equal(LS_KEYS.freezeAim, 'blackHoleInOne_freezeAim');
+    assert.equal(LS_KEYS.inventory, 'blackHoleInOne_inventory');
 });
 
 test('holeLabel covers the full golf ladder', () => {

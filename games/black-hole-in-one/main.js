@@ -1,13 +1,13 @@
 // Black Hole in One — boot, input, main loop, shared-infrastructure wiring.
 'use strict';
 
-import { DT, ROUND_HOLES, ITEMS, TAP_MAX_LEN } from './constants.js';
+import { DT, ROUND_HOLES, TAP_MAX_LEN, LS_KEYS } from './constants.js';
 import { S, world, comet, mergeInventory } from './state.js';
 import * as game from './gameplay.js';
 import * as explore from './explore.js';
 import * as editor from './editor.js';
 import * as ui from './ui.js';
-import { sfx, audio, setMuted, isMuted } from './sfx.js';
+import { sfx, audio, setMuted } from './sfx.js';
 
 const canvas = document.getElementById('game');
 const restartBtn = document.getElementById('restartBtn');
@@ -16,11 +16,11 @@ const LS = {
     lastPlayed: 'lastPlayed_blackHoleInOne',
     bestRound: 'blackHoleInOne_bestRound',
     mode: 'blackHoleInOne_mode',
-    muted: 'blackHoleInOne_muted',
-    freezeAim: 'blackHoleInOne_freezeAim',
+    muted: LS_KEYS.muted,
+    freezeAim: LS_KEYS.freezeAim,
     stardust: 'blackHoleInOne_stardust',
     upgrades: 'blackHoleInOne_upgrades',
-    inventory: 'blackHoleInOne_inventory',
+    inventory: LS_KEYS.inventory,
     exploreHome: 'blackHoleInOne_exploreHome',
     discoveredChunks: 'blackHoleInOne_discoveredChunks',
 };
@@ -246,15 +246,23 @@ document.getElementById('cb-menu').addEventListener('click', () => {
     if (S.phase === 'aiming') S.phase = 'rest';
 });
 document.getElementById('howto').addEventListener('pointerdown', e => {
-    if (e.target.closest('button')) return;
+    if (e.target.closest('button, input, label')) return;
     audio();
-    // tap outside the buttons: resume if a run is live, else start last-used mode
+    // tap outside the controls: resume if a run is live, else start last-used mode.
+    // The auto-start convenience only applies from the Play tab (HUD-1) — a blank-
+    // space tap while browsing Settings/Inventory shouldn't launch a run.
     if (S.phase === 'menu') {
-        if (window.pendingSharedMap) return; // force them to click a button
+        if (!ui.isHowtoPlayTab() || window.pendingSharedMap) return; // force them to click a button
         startRun(localStorage.getItem(LS.mode) || 'endless');
     } else {
         ui.hideHowto();
     }
+});
+document.getElementById('howtoTabs').addEventListener('click', e => {
+    const btn = e.target.closest('.howto-tab');
+    if (!btn || btn.classList.contains('hidden')) return;
+    audio();
+    ui.showHowtoTab(btn.dataset.tab);
 });
 
 document.getElementById('sc-endless').addEventListener('click', () => startRun('endless'));
@@ -295,60 +303,6 @@ window.addEventListener('blur', () => { S.paused = true; explore.clearKeys(); })
 window.addEventListener('focus', () => { S.paused = false; });
 window.addEventListener('settingsOpened', () => { S.paused = true; });
 window.addEventListener('settingsClosed', () => { S.paused = false; });
-
-/* ============================== SETTINGS DRAWER ============================== */
-
-if (window.KamekoSettings) {
-    window.KamekoSettings.registerSection('black-hole-in-one-settings', {
-        title: () => '⚫ Black Hole in One',
-        render(container) {
-            container.innerHTML = `
-                <button class="settings-btn" id="bh-howto">☰ Menu</button>
-                <label class="settings-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">
-                    <span>Sound effects</span>
-                    <input type="checkbox" id="bh-sound" ${isMuted() ? '' : 'checked'}>
-                </label>
-                <label class="settings-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">
-                    <span>Freeze mid-flight aim (Explore)</span>
-                    <input type="checkbox" id="bh-freeze" ${S.freezeAim ? 'checked' : ''}>
-                </label>`;
-            container.querySelector('#bh-howto').addEventListener('click', () => {
-                window.KamekoSettings.closeDrawer();
-                ui.showHowto();
-            });
-            container.querySelector('#bh-sound').addEventListener('change', e => {
-                setMuted(!e.target.checked);
-                localStorage.setItem(LS.muted, String(!e.target.checked));
-            });
-            container.querySelector('#bh-freeze').addEventListener('change', e => {
-                S.freezeAim = e.target.checked;
-                localStorage.setItem(LS.freezeAim, String(e.target.checked));
-            });
-        },
-    });
-
-    window.KamekoSettings.registerSection('black-hole-in-one-inventory', {
-        title: () => '🎒 Inventory',
-        when: () => S.mode === 'explore',
-        render(container) {
-            container.innerHTML = ITEMS.map(item => `
-                <label class="settings-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">
-                    <span>${item.icon} ${item.label}<br><small style="opacity:.65;font-weight:400">${item.desc}</small></span>
-                    <input type="checkbox" data-item="${item.key}" ${S.inventory[item.key]?.enabled ? 'checked' : ''}>
-                </label>`).join('');
-            container.querySelectorAll('input[data-item]').forEach(cb => {
-                cb.addEventListener('change', e => {
-                    const key = e.target.dataset.item;
-                    S.inventory[key].enabled = e.target.checked;
-                    localStorage.setItem(LS.inventory, JSON.stringify(S.inventory));
-                    // Endless Flight (INV-1) is a fuel-lock — switching it on tops the tank
-                    // off immediately rather than waiting for the next drain/pickup event.
-                    if (key === 'endlessFlight' && e.target.checked) explore.refuelFull();
-                });
-            });
-        },
-    });
-}
 
 /* ============================== MAIN LOOP ============================== */
 

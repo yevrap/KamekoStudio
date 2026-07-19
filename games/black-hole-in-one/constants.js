@@ -187,6 +187,16 @@ export const ITEMS = [
       defaultOn: true },
 ];
 
+// ---- Settings persistence keys (HUD-1) ---------------------------------------
+// Shared between main.js (reads at boot) and ui.js (writes from the in-game
+// ☰ Menu's Settings/Inventory tabs, which own this UI now that it's out of the
+// shared arcade-settings drawer) so the two never drift apart on the key string.
+export const LS_KEYS = {
+    muted: 'blackHoleInOne_muted',
+    freezeAim: 'blackHoleInOne_freezeAim',
+    inventory: 'blackHoleInOne_inventory',
+};
+
 export const PALETTES = [
     { base: '#e2725b', dark: '#8c3a2c', name: 'rust' },
     { base: '#57c7c2', dark: '#20635f', name: 'teal' },

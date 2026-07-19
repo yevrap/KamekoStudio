@@ -490,6 +490,39 @@ body {
 }
 #modeBtns button:active, #sc-btns button:active, #myMaps-actions button:active, #sharedMapBtns button:active { background: #1a1a3a; }
 
+/* ---- ☰ Menu tab bar (HUD-1): Play / Settings / Inventory, folded in from the
+   old shared arcade-settings drawer ---- */
+#howtoTabs { display: flex; gap: 8px; }
+.howto-tab {
+    min-height: unset;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid #2a2a50;
+    background: transparent;
+    color: #7a7ab0;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.howto-tab.active { border-color: #00e5a0; color: #00e5a0; }
+.howto-tab.hidden { display: none; }
+.howto-panel { display: flex; flex-direction: column; align-items: center; gap: 1.1rem; width: 100%; }
+.howto-panel.hidden { display: none; }
+.howto-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    max-width: 320px;
+    text-align: left;
+    font-size: 0.85rem;
+    color: #e0e0ff;
+}
+.howto-toggle-row small { opacity: 0.65; font-weight: 400; color: #b8b8e0; }
+
 #myMapsList {
     display: flex;
     flex-direction: column;
