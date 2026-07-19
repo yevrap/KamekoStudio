@@ -185,6 +185,18 @@ export function getChunkBodies(cx, cy, seed) {
     return survivors;
 }
 
+// MAP-1: pure landmark extraction for the star map, reusing getChunkBodies'
+// seeded body list rather than tracking a parallel structure — same rng
+// stream, so a chunk's landmarks are always in lockstep with its actual bodies
+// (no separate "landmark" state to drift out of sync). Black holes and
+// refuel-station planets are the two kinds surfaced; everything else (dwarfs,
+// giants, moons/rings) is decoration, not a landmark, per the build plan.
+export function chunkLandmarks(cx, cy, seed) {
+    return getChunkBodies(cx, cy, seed)
+        .filter(b => b.type === 'blackhole' || b.refuelStation)
+        .map(b => ({ kind: b.type === 'blackhole' ? 'blackhole' : 'station', x: b.x, y: b.y, id: b.id }));
+}
+
 // A pickup at (px,py) with radius `r` is unreachable if it overlaps a planet's
 // collision boundary — the comet can never get closer to a planet's center
 // than b.r + COMET_R (stepBody() stops it there), so the pickup must clear

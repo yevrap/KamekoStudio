@@ -359,6 +359,8 @@ body {
 .sm-swatch.sm-fog { background: rgba(255,255,255,0.06); }
 .sm-swatch.sm-town { background: #ffd98a; border-radius: 50%; }
 .sm-swatch.sm-comet { background: #00e5a0; border-radius: 50%; }
+.sm-swatch.sm-blackhole { background: radial-gradient(circle, #f0e6ff 0%, #a064ff 100%); border-radius: 50%; }
+.sm-swatch.sm-station { background: #20e657; border-radius: 50%; }
 
 /* the shared hamburger sits over the space canvas — keep it legible */
 #settings-hamburger-btn {

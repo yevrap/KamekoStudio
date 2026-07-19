@@ -12,6 +12,7 @@ import {
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
 import * as game from '../games/black-hole-in-one/gameplay.js';
+import { chunkLandmarks, getChunkBodies } from '../games/black-hole-in-one/explore.js';
 
 /* ============================== constants helpers ============================== */
 
@@ -610,4 +611,42 @@ test('editor: dropping an in-bounds object on the trash zone deletes it (STAB-3 
     assert.ok(!world.bodies.includes(planet), 'in-bounds object dropped on trash is deleted');
     ed.cancelDrag();
     delete globalThis.document;
+});
+
+/* ============================== MAP-1: star map landmarks ============================== */
+
+test('chunkLandmarks is deterministic for a given cx/cy/seed', () => {
+    const a = chunkLandmarks(-5, -5, 'explore-1');
+    const b = chunkLandmarks(-5, -5, 'explore-1');
+    assert.deepEqual(a, b);
+});
+
+test('chunkLandmarks surfaces exactly the black holes and refuel-station planets getChunkBodies generated, nothing else', () => {
+    // (-5,-5) is a known black-hole chunk, (-5,-4) a known station chunk, (6,0) has neither, for seed 'explore-1'.
+    const bhBodies = getChunkBodies(-5, -5, 'explore-1');
+    const bhLandmarks = chunkLandmarks(-5, -5, 'explore-1');
+    const expectedBH = bhBodies.filter(b => b.type === 'blackhole' || b.refuelStation);
+    assert.equal(bhLandmarks.length, expectedBH.length);
+    for (const lm of bhLandmarks) {
+        const src = expectedBH.find(b => b.id === lm.id);
+        assert.ok(src, `landmark id ${lm.id} matches a real body`);
+        assert.equal(lm.x, src.x);
+        assert.equal(lm.y, src.y);
+        assert.equal(lm.kind, src.type === 'blackhole' ? 'blackhole' : 'station');
+    }
+    assert.ok(bhLandmarks.some(l => l.kind === 'blackhole'), 'known black-hole chunk actually yields one');
+
+    const stationLandmarks = chunkLandmarks(-5, -4, 'explore-1');
+    assert.ok(stationLandmarks.some(l => l.kind === 'station'), 'known station chunk actually yields one');
+    assert.ok(!stationLandmarks.some(l => l.kind === 'blackhole'), 'that chunk has no black hole');
+
+    assert.deepEqual(chunkLandmarks(6, 0, 'explore-1'), [], 'a chunk with neither still returns an empty array, not a hole');
+});
+
+test('chunkLandmarks never surfaces plain planets, moons, or rings as landmarks', () => {
+    for (const [cx, cy] of [[-5, -5], [-5, -4], [0, 0], [6, 0], [2, 3]]) {
+        for (const lm of chunkLandmarks(cx, cy, 'explore-1')) {
+            assert.ok(lm.kind === 'blackhole' || lm.kind === 'station', `unexpected landmark kind "${lm.kind}"`);
+        }
+    }
 });

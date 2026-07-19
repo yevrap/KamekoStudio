@@ -862,6 +862,44 @@ function renderStarMap() {
         }
     }
 
+    // MAP-1: landmarks (black holes + refuel stations) on every discovered chunk.
+    // Cached per-open in a plain Map, keyed by chunk, so a future interactive
+    // re-render (MAP-3's pan/zoom) doesn't re-derive the same seeded body list on
+    // every frame — this call site is still snapshot/once-per-open today, the
+    // cache just makes that guarantee cheap to keep once re-renders exist.
+    const landmarkCache = new Map();
+    for (const key of explore.discoveredChunks) {
+        const [gx, gy] = key.split('_').map(Number);
+        if (Math.abs(gx) > radius || Math.abs(gy) > radius) continue;
+        let landmarks = landmarkCache.get(key);
+        if (!landmarks) {
+            landmarks = explore.chunkLandmarks(gx, gy, explore.worldSeed);
+            landmarkCache.set(key, landmarks);
+        }
+        for (const lm of landmarks) {
+            // Sub-cell position from the landmark's actual world coords (not just
+            // the cell center) so a chunk with both kinds doesn't draw them stacked.
+            const fx = (lm.x - gx * explore.CHUNK_SIZE) / explore.CHUNK_SIZE;
+            const fy = (lm.y - gy * explore.CHUNK_SIZE) / explore.CHUNK_SIZE;
+            const px = ox + (gx + radius) * cell + fx * cell;
+            const py = oy + (gy + radius) * cell + fy * cell;
+            if (lm.kind === 'blackhole') {
+                const r = Math.max(2.4, cell * 0.24);
+                const g = sctx.createRadialGradient(px, py, 0, px, py, r * 2.4);
+                g.addColorStop(0, 'rgba(220,180,255,0.85)');
+                g.addColorStop(0.5, 'rgba(160,100,255,0.35)');
+                g.addColorStop(1, 'rgba(160,100,255,0)');
+                sctx.fillStyle = g;
+                sctx.beginPath(); sctx.arc(px, py, r * 2.4, 0, 7); sctx.fill();
+                sctx.fillStyle = '#f0e6ff';
+                sctx.beginPath(); sctx.arc(px, py, r, 0, 7); sctx.fill();
+            } else {
+                sctx.fillStyle = '#20e657';
+                sctx.beginPath(); sctx.arc(px, py, Math.max(1.6, cell * 0.14), 0, 7); sctx.fill();
+            }
+        }
+    }
+
     // Town — a fixed landmark, always shown regardless of fog (distinct from the
     // "chunks flown through" discovery rule below it).
     const townGX = Math.floor(50 / explore.CHUNK_SIZE);
