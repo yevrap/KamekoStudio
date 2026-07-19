@@ -182,7 +182,7 @@ canvas.addEventListener('pointercancel', () => {
 
 /* ============================== OVERLAY BUTTONS ============================== */
 
-function startRun(mode) {
+function startRun(mode, editorSize) {
     audio();
     localStorage.setItem(LS.mode, mode);
     ui.hideHowto();
@@ -199,7 +199,7 @@ function startRun(mode) {
         explore.startRun();
     } else if (mode === 'editor') {
         document.getElementById('editorBar').classList.remove('hidden');
-        editor.startEditor();
+        editor.startEditor(editorSize);
     } else if (mode === 'custom') {
         document.getElementById('customBar').classList.remove('hidden');
         document.getElementById('bar').classList.remove('hidden');
@@ -212,7 +212,26 @@ function startRun(mode) {
 
 document.getElementById('modeEndless').addEventListener('click', () => startRun('endless'));
 document.getElementById('modeExplore').addEventListener('click', () => startRun('explore'));
-document.getElementById('modeEditor').addEventListener('click', () => startRun('editor'));
+
+// MM-6: "🔨 Map Maker" opens a size chooser rather than starting straight into the
+// editor, since the canvas tier has to be picked before a single body is placed.
+document.getElementById('modeEditor').addEventListener('click', () => {
+    audio();
+    document.getElementById('modeBtns').classList.add('hidden');
+    document.getElementById('mapSizeBtns').classList.remove('hidden');
+});
+function pickMapSize(size) {
+    document.getElementById('mapSizeBtns').classList.add('hidden');
+    document.getElementById('modeBtns').classList.remove('hidden');
+    startRun('editor', size);
+}
+document.getElementById('mapSizeSmall').addEventListener('click', () => pickMapSize('small'));
+document.getElementById('mapSizeLarge').addEventListener('click', () => pickMapSize('large'));
+document.getElementById('mapSizeBack').addEventListener('click', () => {
+    audio();
+    document.getElementById('mapSizeBtns').classList.add('hidden');
+    document.getElementById('modeBtns').classList.remove('hidden');
+});
 
 document.getElementById('modeSharedPlay').addEventListener('click', () => {
     audio();

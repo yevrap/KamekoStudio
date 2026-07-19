@@ -6,7 +6,7 @@
 import {
     WORLD_W as W, COURSE_H, DT, MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, CAPTURE_R,
     OB_MARGIN, DUST_T, FLIGHT_CAP, SLING_ANG, ROUND_HOLES, PALETTES,
-    ORBIT_COOLDOWN, ORBIT_ARM_T, LIFTOFF_T, LIFTOFF_MIN,
+    ORBIT_COOLDOWN, ORBIT_ARM_T, LIFTOFF_T, LIFTOFF_MIN, DEFAULT_MAP_SIZE, mapBounds,
     rand, dist, holeLabel,
 } from './constants.js';
 import { S, world, comet } from './state.js';
@@ -334,8 +334,9 @@ export function stepFlight(dt) {
         }
     }
 
-    const oob = comet.x < -OB_MARGIN || comet.x > W + OB_MARGIN ||
-                comet.y < -OB_MARGIN || comet.y > COURSE_H + OB_MARGIN;
+    const bnd = mapBounds(world.mapSizeKey);
+    const oob = comet.x < -OB_MARGIN || comet.x > bnd.w + OB_MARGIN ||
+                comet.y < -OB_MARGIN || comet.y > bnd.h + OB_MARGIN;
     if (oob || S.tFlight > FLIGHT_CAP) {
         comet.rest = world.lastRest.rest;
         placeOnRest();
@@ -413,8 +414,9 @@ export function stepOrbit(dt) {
     // band outside the playfield. stepFlight has an OOB escape; stepOrbit never did,
     // so the comet was stranded off-screen forever with no way to see or flick it
     // back (GOLF-1: reads as "eaten, no way out" from the player's side).
-    const oob = comet.x < -OB_MARGIN || comet.x > W + OB_MARGIN ||
-                comet.y < -OB_MARGIN || comet.y > COURSE_H + OB_MARGIN;
+    const bnd = mapBounds(world.mapSizeKey);
+    const oob = comet.x < -OB_MARGIN || comet.x > bnd.w + OB_MARGIN ||
+                comet.y < -OB_MARGIN || comet.y > bnd.h + OB_MARGIN;
     if (oob) {
         world.orbit = null;
         comet.rest = world.lastRest.rest;
@@ -515,6 +517,7 @@ export function startRun(mode) {
     S.hole = 1;
     S.totalDiff = 0;
     S.roundCard = [];
+    world.mapSizeKey = DEFAULT_MAP_SIZE; // golf/endless always play at the default scale
     if (mode === 'endless') S.fuel = 100;
     genHole(1);
     S.phase = 'rest';
@@ -527,7 +530,10 @@ export function startCustomMap(mapData) {
     S.hole = 1;
     S.totalDiff = 0;
     S.roundCard = [];
-    
+    // Pre-sprint saved/shared maps have no `size` field — default to small so they
+    // keep exactly their current on-disk behavior (MM-6 "no silent breakage").
+    world.mapSizeKey = mapData.size === 'large' ? 'large' : DEFAULT_MAP_SIZE;
+
     world.bodies = mapData.bodies;
     world.teeRock = mapData.teeRock;
     world.blackHole = mapData.blackHole;

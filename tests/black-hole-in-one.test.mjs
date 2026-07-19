@@ -8,7 +8,7 @@ import {
     WORLD_W, COURSE_H, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, MAX_V, DT, G,
     ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed, fitZoom, ZOOM_MIN, ZOOM_FIT,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, LS_KEYS, hitTestMapTargets,
-    OB_MARGIN, ORBIT_MAX_GAP,
+    OB_MARGIN, ORBIT_MAX_GAP, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
@@ -632,6 +632,106 @@ test('decodeMap rejects garbage and maps missing a tee or hole (STAB-6)', async 
     const hashNoTee = ed.encodeMap({ teeRock: { x: 9999, y: 9999 }, blackHole: { x: 1, y: 1 }, bodies: [] });
     // sanity: a valid one decodes
     assert.ok(ed.decodeMap(hashNoTee), 'a well-formed map still decodes');
+});
+
+/* ============================== MM-6: map size chooser ============================== */
+
+test('mapBounds resolves both size tiers and falls back to small for an unknown key (MM-6)', () => {
+    assert.deepEqual(mapBounds('small'), { w: WORLD_W, h: COURSE_H });
+    assert.deepEqual(mapBounds('large'), MAP_SIZES.large);
+    assert.ok(MAP_SIZES.large.w > WORLD_W && MAP_SIZES.large.h > COURSE_H, 'large is actually bigger than one screen');
+    assert.deepEqual(mapBounds('nonsense'), MAP_SIZES[DEFAULT_MAP_SIZE]);
+    assert.deepEqual(mapBounds(undefined), MAP_SIZES[DEFAULT_MAP_SIZE]);
+});
+
+test('encodeMap → decodeMap round-trips the large size tier (MM-6)', async () => {
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    const src = {
+        teeRock: { x: 300, y: 528 },
+        blackHole: { x: 300, y: 90 },
+        bodies: [],
+        size: 'large',
+    };
+    const hash = ed.encodeMap(src);
+    const out = ed.decodeMap(hash);
+    assert.ok(out, 'decodes to a map');
+    assert.equal(out.size, 'large');
+});
+
+test('decodeMap defaults size to small when a map carries no size tag (MM-6, pre-sprint maps)', async () => {
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    // No `size` field at all — this is exactly what an already-shared pre-MM-6 link decodes from.
+    const hash = ed.encodeMap({ teeRock: { x: 50, y: 176 }, blackHole: { x: 50, y: 30 }, bodies: [] });
+    const out = ed.decodeMap(hash);
+    assert.ok(out);
+    assert.equal(out.size, 'small', 'a map with no encoded size tag defaults to small — no silent breakage');
+});
+
+test('startEditor(size) starts a fresh map sized to the chosen tier (MM-6)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+
+    ed.startEditor('small');
+    assert.equal(world.mapSizeKey, 'small');
+    assert.equal(world.teeRock.x, WORLD_W / 2);
+    assert.equal(world.blackHole.x, WORLD_W / 2);
+    assert.ok(world.teeRock.y <= COURSE_H && world.blackHole.y <= COURSE_H, 'small default tee/hole sit within the small canvas');
+
+    ed.startEditor('large');
+    assert.equal(world.mapSizeKey, 'large');
+    assert.equal(world.teeRock.x, MAP_SIZES.large.w / 2);
+    assert.equal(world.blackHole.x, MAP_SIZES.large.w / 2);
+    assert.ok(world.teeRock.y > COURSE_H, 'large default tee sits beyond the small canvas height — it is actually a bigger map');
+
+    ed.addPlanet();
+    const planet = world.bodies.find(b => b.type === 'planet');
+    assert.equal(planet.x, MAP_SIZES.large.w / 2, 'Add Planet centers on the ACTIVE map size, not the small default');
+
+    ed.startEditor(); // no args — must not throw, must default to small
+    assert.equal(world.mapSizeKey, 'small');
+    delete globalThis.document;
+});
+
+test('editor: the out-of-bounds delete threshold scales with the map\'s size tier (MM-6)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+
+    ed.startEditor('large');
+    ed.addPlanet();
+    let planet = world.bodies.find(b => b.type === 'planet');
+    assert.equal(ed.pointerDown(planet.x, planet.y, 21), true);
+    // Well past the SMALL canvas (200) but still inside the LARGE one (600) — must survive.
+    ed.pointerMove(250, 300, 21);
+    ed.pointerUp(250, 300, 21);
+    assert.ok(world.bodies.includes(planet), 'position beyond the small canvas is still in-bounds on a large map');
+
+    assert.equal(ed.pointerDown(planet.x, planet.y, 22), true);
+    ed.pointerMove(650, 650, 22); // past the large canvas + margin
+    ed.pointerUp(650, 650, 22);
+    assert.ok(!world.bodies.includes(planet), 'position beyond the large canvas is deleted');
+    delete globalThis.document;
+});
+
+test('game.startRun resets mapSizeKey to small for golf/endless, even after a large editor/custom session (MM-6)', () => {
+    world.mapSizeKey = 'large';
+    game.startRun('endless');
+    assert.equal(world.mapSizeKey, DEFAULT_MAP_SIZE, 'golf/endless always play at the default scale');
+});
+
+test('game.startCustomMap honors mapData.size and defaults missing size to small (MM-6)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const bodies = [];
+    const teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    const blackHole = { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' };
+
+    game.startCustomMap({ teeRock: { ...teeRock }, blackHole: { ...blackHole }, bodies: [...bodies] });
+    assert.equal(world.mapSizeKey, DEFAULT_MAP_SIZE, 'a pre-sprint map with no size field plays at the small default');
+
+    game.startCustomMap({ teeRock: { ...teeRock }, blackHole: { ...blackHole }, bodies: [...bodies], size: 'large' });
+    assert.equal(world.mapSizeKey, 'large');
+    delete globalThis.document;
 });
 
 test('editor: dropping an in-bounds object on the trash zone deletes it (STAB-3 follow-up)', async () => {

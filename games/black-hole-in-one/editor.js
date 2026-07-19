@@ -1,7 +1,7 @@
 // Black Hole in One — Map Maker / Editor mode
 'use strict';
 
-import { WORLD_W as W, COURSE_H, PALETTES, rand, COMET_R, CAPTURE_R } from './constants.js';
+import { WORLD_W as W, COURSE_H, PALETTES, rand, COMET_R, CAPTURE_R, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds } from './constants.js';
 import { S, world, comet } from './state.js';
 import { placeOnRest } from './gameplay.js';
 
@@ -14,25 +14,23 @@ export function setHooks(h) { hooks = Object.assign(hooks, h); }
 let dragged = null;
 let lastIdx = 0; // for palette cycling
 
-export function startEditor() {
+// sizeKey: the MM-6 canvas tier ('small' | 'large') chosen in the mode menu's size
+// chooser before entering the editor. Always starts a fresh blank map — Map Maker
+// has no separate "new map" action, so choosing a size from the menu IS starting new.
+export function startEditor(sizeKey = DEFAULT_MAP_SIZE) {
     S.mode = 'editor';
     S.phase = 'edit';
-    
-    // Create default tee and hole if they don't exist
-    if (!world.teeRock) {
-        world.teeRock = { x: 50, y: COURSE_H * 0.88, r: 3.4, m: 8, type: 'tee' };
-    }
-    if (!world.blackHole) {
-        world.blackHole = { x: 50, y: COURSE_H * 0.15, r: 3.2, m: 230, type: 'hole' };
-    }
-    
-    // Ensure world.bodies contains the tee and not the blackhole
-    world.bodies = world.bodies.filter(b => b.type !== 'tee' && b.type !== 'hole');
+    world.mapSizeKey = MAP_SIZES[sizeKey] ? sizeKey : DEFAULT_MAP_SIZE;
+    const { w, h } = mapBounds(world.mapSizeKey);
+
+    world.bodies = [];
+    world.teeRock = { x: w / 2, y: h * 0.88, r: 3.4, m: 8, type: 'tee' };
+    world.blackHole = { x: w / 2, y: h * 0.15, r: 3.2, m: 230, type: 'hole' };
     world.bodies.push(world.teeRock);
 
     S.par = 2; // Default, not strictly used in editor test play but good to have
     S.strokes = 0;
-    
+
     resetComet();
     hooks.bar();
 }
@@ -48,16 +46,18 @@ function resetComet() {
 
 export function addPlanet() {
     if (S.phase !== 'edit') return;
+    const { w, h } = mapBounds(world.mapSizeKey);
     const r = rand(9, 14);
     const pal = PALETTES[(lastIdx++) % PALETTES.length];
-    const p = { x: 50, y: COURSE_H / 2, r, m: r * r, type: 'planet', pal, spin: rand(0, Math.PI * 2) };
+    const p = { x: w / 2, y: h / 2, r, m: r * r, type: 'planet', pal, spin: rand(0, Math.PI * 2) };
     world.bodies.push(p);
     hooks.sfx.pop();
 }
 
 export function addPulsar() {
     if (S.phase !== 'edit') return;
-    const p = { x: 50, y: COURSE_H / 2, r: 2.6, m: -160, type: 'pulsar' };
+    const { w, h } = mapBounds(world.mapSizeKey);
+    const p = { x: w / 2, y: h / 2, r: 2.6, m: -160, type: 'pulsar' };
     world.bodies.push(p);
     hooks.sfx.pop();
 }
@@ -124,7 +124,8 @@ export function pointerUp(wx, wy, id, cx, cy) {
     }
     if (trash) trash.classList.add('hidden');
 
-    if (deletable && (overTrash || o.x < -10 || o.x > W + 10 || o.y < -10 || o.y > COURSE_H + 10)) {
+    const { w: mapW, h: mapH } = mapBounds(world.mapSizeKey);
+    if (deletable && (overTrash || o.x < -10 || o.x > mapW + 10 || o.y < -10 || o.y > mapH + 10)) {
         world.bodies = world.bodies.filter(b => b !== o);
         hooks.sfx.pop();
         hooks.toast('🗑️ Deleted');
@@ -217,7 +218,8 @@ export function saveCurrentMap() {
         name,
         bodies: world.bodies.map(b => ({ ...b })),
         teeRock: { ...world.teeRock },
-        blackHole: { ...world.blackHole }
+        blackHole: { ...world.blackHole },
+        size: world.mapSizeKey,
     };
     maps.push(mapData);
     saveMaps(maps);
@@ -235,7 +237,8 @@ export function saveCustomMap() {
         name,
         bodies: world.bodies.map(b => ({ ...b })),
         teeRock: { ...world.teeRock },
-        blackHole: { ...world.blackHole }
+        blackHole: { ...world.blackHole },
+        size: world.mapSizeKey,
     };
     maps.push(mapData);
     saveMaps(maps);
@@ -282,7 +285,9 @@ export function encodeMap(mapData) {
     const r = (v) => Math.round(v * 10) / 10;
     arr.push([0, r(mapData.teeRock.x), r(mapData.teeRock.y)]);
     arr.push([1, r(mapData.blackHole.x), r(mapData.blackHole.y)]);
-    
+    // Omitted for the default 'small' size so pre-sprint share links stay byte-identical.
+    if (mapData.size === 'large') arr.push([4, 1]);
+
     mapData.bodies.forEach(b => {
         if (b.type === 'planet') arr.push([2, r(b.x), r(b.y), r(b.r), b.pal, r(b.spin)]);
         else if (b.type === 'pulsar') arr.push([3, r(b.x), r(b.y)]);
@@ -300,16 +305,18 @@ export function decodeMap(hash) {
         
         let teeRock = null, blackHole = null;
         const bodies = [];
-        
+        let size = DEFAULT_MAP_SIZE; // maps encoded before MM-6 carry no size tag — default small
+
         arr.forEach(i => {
             if (i[0] === 0) teeRock = { x: i[1], y: i[2], r: 3.4, m: 8, type: 'tee' };
             else if (i[0] === 1) blackHole = { x: i[1], y: i[2], r: 3.2, m: 230, type: 'hole' };
             else if (i[0] === 2) bodies.push({ x: i[1], y: i[2], r: i[3], m: i[3]*i[3], type: 'planet', pal: i[4], spin: i[5] });
             else if (i[0] === 3) bodies.push({ x: i[1], y: i[2], r: 2.6, m: -160, type: 'pulsar' });
+            else if (i[0] === 4) size = i[1] === 1 ? 'large' : DEFAULT_MAP_SIZE;
         });
-        
+
         if (!teeRock || !blackHole) return null;
-        return { teeRock, blackHole, bodies };
+        return { teeRock, blackHole, bodies, size };
     } catch {
         return null;
     }
@@ -320,7 +327,8 @@ export function shareCurrentMap() {
     const mapData = {
         bodies: world.bodies.map(b => ({ ...b })),
         teeRock: { ...world.teeRock },
-        blackHole: { ...world.blackHole }
+        blackHole: { ...world.blackHole },
+        size: world.mapSizeKey,
     };
     const hash = encodeMap(mapData);
     copyShareLink(hash);
@@ -356,7 +364,8 @@ function loadMap(index) {
     world.bodies = m.bodies;
     world.teeRock = m.teeRock;
     world.blackHole = m.blackHole;
-    
+    world.mapSizeKey = m.size === 'large' ? 'large' : DEFAULT_MAP_SIZE;
+
     // Re-link teeRock in bodies
     world.bodies = world.bodies.filter(b => b.type !== 'tee');
     world.bodies.push(world.teeRock);

@@ -7,7 +7,7 @@ import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
-    moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS, hitTestMapTargets, OB_MARGIN,
+    moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS, hitTestMapTargets, OB_MARGIN, mapBounds,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -567,12 +567,15 @@ function drawStardustRing(b) {
 // course rect) — the boundary a flight actually gets rescued at, made legible
 // instead of invisible. See the call site for why this exists.
 function drawCourseBoundary() {
+    // MM-6: bounds follow the active map's size tier — always the small/golf default
+    // outside editor/custom modes, so golf and endless render byte-identical to before.
+    const { w: bw, h: bh } = mapBounds(world.mapSizeKey);
     const pulse = 0.5 + 0.5 * Math.sin(S.time * 1.6);
     ctx.globalAlpha = 0.1 + 0.06 * pulse;
     ctx.strokeStyle = '#9fe3d8';
     ctx.lineWidth = 0.4;
     ctx.setLineDash([2.4, 2.8]);
-    ctx.strokeRect(-OB_MARGIN, -OB_MARGIN, W + OB_MARGIN * 2, COURSE_H + OB_MARGIN * 2);
+    ctx.strokeRect(-OB_MARGIN, -OB_MARGIN, bw + OB_MARGIN * 2, bh + OB_MARGIN * 2);
     ctx.setLineDash([]);
     ctx.globalAlpha = 1;
 }

@@ -5,6 +5,19 @@ export const WORLD_W = 200;   // expanded from 100 for larger maps
 export const COURSE_H = 200;  // expanded from 170 for larger maps
                               // The course is no longer letterboxed.
 
+// Map Maker canvas tiers (MM-6). 'small' matches golf/endless's own scale — it's
+// also the default a map without a stored size falls back to on load, so pre-sprint
+// saved/shared maps keep their exact current behavior. 'large' is sized to need real
+// panning (the whole reason MM-16's overview mode exists) without being unusably huge.
+export const MAP_SIZES = {
+    small: { w: WORLD_W, h: COURSE_H },
+    large: { w: 600, h: 600 },
+};
+export const DEFAULT_MAP_SIZE = 'small';
+export function mapBounds(sizeKey) {
+    return MAP_SIZES[sizeKey] || MAP_SIZES[DEFAULT_MAP_SIZE];
+}
+
 export const G = 400;                 // gravity constant
 export const COMET_R = 1.6;
 export const DT = 1 / 240;            // physics step

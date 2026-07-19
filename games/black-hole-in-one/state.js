@@ -1,7 +1,7 @@
 // Black Hole in One — shared mutable state (DOM-free)
 'use strict';
 
-import { ITEMS } from './constants.js';
+import { ITEMS, DEFAULT_MAP_SIZE } from './constants.js';
 
 // Fresh default inventory, derived from the ITEMS registry so a new item never
 // needs its default hand-duplicated here (INV-1).
@@ -57,6 +57,8 @@ export const world = {
     slingTrack: new Map(),
     hoppedBodies: new Set(),
     orbitedThisHole: new Set(),  // planets orbited this hole (first-per-hole toast)
+    mapSizeKey: DEFAULT_MAP_SIZE, // 'small' | 'large' — current editor/custom map canvas tier (MM-6);
+                                   // always DEFAULT_MAP_SIZE outside editor/custom, so golf/endless are untouched
 };
 
 export const comet = { x: 0, y: 0, vx: 0, vy: 0, rest: null };
