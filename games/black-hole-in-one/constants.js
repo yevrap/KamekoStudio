@@ -172,6 +172,16 @@ export function moonPosition(planetX, planetY, moon, t) {
     return { x: planetX + Math.cos(ang) * moon.orbitR, y: planetY + Math.sin(ang) * moon.orbitR };
 }
 
+// ---- Stardust rings (ORB-4), Explore only ---------------------------------------
+// A seeded pickup ring inside a planet's orbit-capture band (ORBIT_MIN_GAP..
+// ORBIT_MAX_GAP past the surface) — riding the orbit (Orbit Magnet ON) sweeps
+// every dot. Black holes never get one (dots near a warp radius would read as
+// bait). Rolled last in getChunkBodies' rng stream, same convention as every
+// other chunk-generator roll.
+export const STARDUST_RING_CHANCE = 0.25;                     // odds a non-blackhole planet gets a ring
+export const STARDUST_RING_COUNT_MIN = 5, STARDUST_RING_COUNT_MAX = 8; // dots per ring
+export const STARDUST_RING_GAP_MIN = 0.3, STARDUST_RING_GAP_MAX = 0.7; // fraction of the orbit band past ORBIT_MIN_GAP
+
 // ---- Inventory registry (INV-1) -----------------------------------------------
 // A mechanic testbed, not a shop: one entry per experimental gameplay modifier,
 // toggled from the settings drawer, Explore only. `owned` defaults true — there's

@@ -252,6 +252,7 @@ export function render(drag) {
         else if (b.type === 'blackhole') drawExploreBlackHole(b);
         else { drawTee(b); drawPlanetLabel(b); }
         if (showCaptureRings && (b.type === 'planet' || b.type === 'blackhole' || b.type === 'tee')) drawCaptureRing(b);
+        if (S.mode === 'explore' && b.stardustRing) drawStardustRing(b);
     }
     if (world.blackHole) drawBlackHole();
     if (world.orbit) drawOrbitRing();
@@ -526,16 +527,34 @@ function drawAsteroid(b) {
     ctx.beginPath(); ctx.arc(b.x + b.r * 0.35, b.y - b.r * 0.25, b.r * 0.3, 0, 7); ctx.fill();
 }
 
+// ORB-4 color language: stardust reads gold (matches the stardust-burst/Town
+// glow), fuel stays green — previously every pickup drew green regardless of
+// type (the "color-code fuel vs. stardust" backlog line this item folds in).
 function drawPickup(p) {
     const pulse = 0.7 + 0.3 * Math.sin(S.time * 6 + p.x);
+    const isStardust = p.type === 'stardust';
     ctx.globalCompositeOperation = 'lighter';
     ctx.globalAlpha = 0.5 * pulse;
-    ctx.fillStyle = '#20e657';
+    ctx.fillStyle = isStardust ? '#ffd98a' : '#20e657';
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 2.8, 0, 7); ctx.fill();
     ctx.globalAlpha = 0.9;
-    ctx.fillStyle = '#b3ffc7';
+    ctx.fillStyle = isStardust ? '#fff3d0' : '#b3ffc7';
     ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 7); ctx.fill();
     ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+}
+
+// ORB-4: faint gold guide arc through a body's stardust ring, so it reads as a
+// coherent halo from a distance instead of a scatter of dots — distinct from
+// OW-5's decorative palette-colored moons/rings (drawRing/drawMoon above),
+// which are cosmetic only and never pickups. Always shown in Explore (not
+// gated on the magnet item) as the discoverability affordance for the ring.
+function drawStardustRing(b) {
+    const pulse = 0.5 + 0.3 * Math.sin(S.time * 2);
+    ctx.globalAlpha = 0.18 * pulse;
+    ctx.strokeStyle = '#ffd98a';
+    ctx.lineWidth = 0.3;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.stardustRing.radius, 0, 7); ctx.stroke();
     ctx.globalAlpha = 1;
 }
 

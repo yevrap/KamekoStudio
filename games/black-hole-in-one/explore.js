@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX, ORBIT_MIN_GAP, ORBIT_MAX_GAP, circularSpeed } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX, ORBIT_MIN_GAP, ORBIT_MAX_GAP, circularSpeed, STARDUST_RING_CHANCE, STARDUST_RING_COUNT_MIN, STARDUST_RING_COUNT_MAX, STARDUST_RING_GAP_MIN, STARDUST_RING_GAP_MAX } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody, collide, orbitCapture, magnetCapture } from './physics.js';
 
@@ -182,6 +182,23 @@ export function getChunkBodies(cx, cy, seed) {
         }
     }
 
+    // Stardust rings (ORB-4): orbitable pickup rings — rolled last, after moons/
+    // rings, same stream, so neither the body mix nor any earlier roll's odds
+    // change from adding this. Black holes never get one (dots near a warp
+    // radius would read as bait); refuel-station and Giant planets can still
+    // get one too (jackpot planets are fun). Radius sits inside the orbit
+    // capture band so magnetCapture can snap onto it (see ringSnap below).
+    for (const b of survivors) {
+        if (b.type === 'blackhole') continue;
+        if (rng() >= STARDUST_RING_CHANCE) continue;
+        const gapFrac = STARDUST_RING_GAP_MIN + rng() * (STARDUST_RING_GAP_MAX - STARDUST_RING_GAP_MIN);
+        b.stardustRing = {
+            radius: b.r + COMET_R + ORBIT_MIN_GAP + gapFrac * (ORBIT_MAX_GAP - ORBIT_MIN_GAP),
+            count: STARDUST_RING_COUNT_MIN + Math.floor(rng() * (STARDUST_RING_COUNT_MAX - STARDUST_RING_COUNT_MIN + 1)),
+            ang0: rng() * Math.PI * 2,
+        };
+    }
+
     return survivors;
 }
 
@@ -240,6 +257,27 @@ export function getChunkPickups(cx, cy, seed, bodies = []) {
         if (!pos) continue;
         chunkPickups.push({ x: pos[0], y: pos[1], r: 1.2, type: 'stardust', id: `ps${cx}_${cy}_${i}` });
     }
+
+    // Stardust ring dots (ORB-4): evenly spaced pickups on each ringed body's
+    // ring. No rng draw here — position is pure geometry from the body's
+    // already-seeded ring params (getChunkBodies), so it can't perturb the rng
+    // stream any of the rolls above rely on. Only bodies whose canonical chunk
+    // is this one (id prefix) emit dots, so the 3x3-neighbor lookup in
+    // updateActiveChunks() doesn't triple up on the same ring.
+    const chunkPrefix = `c${cx}_${cy}_`;
+    for (const b of bodies) {
+        if (!b.stardustRing || !b.id || !b.id.startsWith(chunkPrefix)) continue;
+        const ring = b.stardustRing;
+        const others = bodies.filter(o => o !== b);
+        for (let i = 0; i < ring.count; i++) {
+            const ang = ring.ang0 + i * (Math.PI * 2 / ring.count);
+            const px = b.x + Math.cos(ang) * ring.radius;
+            const py = b.y + Math.sin(ang) * ring.radius;
+            if (pickupBlockedByBody(px, py, 1.2, others)) continue;
+            chunkPickups.push({ x: px, y: py, r: 1.2, type: 'stardust', id: `pr${cx}_${cy}_${b.id}_${i}` });
+        }
+    }
+
     return chunkPickups;
 }
 
@@ -478,6 +516,43 @@ export function thrustVec() {
 
 export function hasThrust() { return thrustVec().throttle > 0; }
 
+// Shared by step() (free flight) and stepOrbit() (ORB-4: orbiting a ringed
+// planet must collect its dots too, or Orbit Magnet is dead on arrival for the
+// whole item on a ringed body — riding the orbit was the point).
+function collectPickups() {
+    for (let i = world.pickups.length - 1; i >= 0; i--) {
+        const p = world.pickups[i];
+        const dx = comet.x - p.x;
+        const dy = comet.y - p.y;
+        if (Math.hypot(dx, dy) < COMET_R + p.r) {
+            world.pickups.splice(i, 1);
+            if (p.type === 'fuel') {
+                fuel = Math.min(tankMaxFuel(S.upgrades.tank), fuel + siphonGain(S.upgrades.siphon));
+                hooks.burst(p.x, p.y, 14, '#20e657', 20);
+            } else if (p.type === 'stardust') {
+                S.stardust += 1;
+                hooks.stardust(S.stardust);
+                hooks.burst(p.x, p.y, 8, '#ffd98a', 15);
+            }
+            hooks.bar();
+        }
+    }
+}
+
+// ORB-4: when Orbit Magnet captures onto a body with a stardust ring, snap the
+// new orbit's radius to the ring radius instead of wherever the approach
+// happened to catch — "the ring is the orbit," so riding it sweeps every dot
+// in one revolution. Recomputes omega for the new radius (circular speed
+// scales with radius) but keeps the capture's direction sign. No-op (returns
+// `cap` unchanged) when the magnet is off or the body has no ring — strict
+// `orbitCapture()` grazes are untouched, per spec. Pure — unit-tested.
+export function ringSnap(cap, b, magnetOn) {
+    if (!cap || !magnetOn || !b.stardustRing) return cap;
+    const radius = b.stardustRing.radius;
+    const dir = cap.omega >= 0 ? 1 : -1;
+    return { radius, ang: cap.ang, omega: dir * circularSpeed(b.m, radius) / radius };
+}
+
 export function step(dt) {
     if (S.orbitCooldown > 0) S.orbitCooldown = Math.max(0, S.orbitCooldown - dt);
 
@@ -526,29 +601,12 @@ export function step(dt) {
         }
     }
     
-    // Check pickups
-    for (let i = world.pickups.length - 1; i >= 0; i--) {
-        const p = world.pickups[i];
-        const dx = comet.x - p.x;
-        const dy = comet.y - p.y;
-        if (Math.hypot(dx, dy) < COMET_R + p.r) {
-            world.pickups.splice(i, 1);
-            if (p.type === 'fuel') {
-                fuel = Math.min(tankMaxFuel(S.upgrades.tank), fuel + siphonGain(S.upgrades.siphon));
-                hooks.burst(p.x, p.y, 14, '#20e657', 20);
-            } else if (p.type === 'stardust') {
-                S.stardust += 1;
-                hooks.stardust(S.stardust);
-                hooks.burst(p.x, p.y, 8, '#ffd98a', 15);
-            }
-            hooks.bar();
-        }
-    }
+    collectPickups();
     
     if (S.orbitCooldown <= 0 && S.phase === 'flight' && t.throttle === 0) {
         const capture = S.inventory.orbitMagnet?.enabled ? magnetCapture : orbitCapture;
         for (const b of world.bodies) {
-            const cap = capture(comet, b);
+            const cap = ringSnap(capture(comet, b), b, !!S.inventory.orbitMagnet?.enabled);
             if (cap) {
                 world.orbit = { b, radius: cap.radius, ang: cap.ang, omega: cap.omega };
                 comet.x = b.x + Math.cos(cap.ang) * cap.radius;
@@ -764,6 +822,8 @@ export function stepOrbit(dt) {
     comet.vx = -Math.sin(o.ang) * spd;
     comet.vy =  Math.cos(o.ang) * spd;
 
+    collectPickups();
+
     // Centre the camera on the orbited body (not the comet whipping around the rim)
     // so the whole orbit is framed — this, plus the STAB-2 zoom-out, makes a giant's
     // orbit readable instead of running off-screen. Also kills the MM-4 dizzy spin.
@@ -862,8 +922,11 @@ export function stepAscend(dt) {
     if (a.t >= 1) {
         world.ascend = null;
         
-        // Hand off using magnetCapture's shape
-        const cap = magnetCapture({ x: comet.x, y: comet.y, vx: 0, vy: 0 }, a.b);
+        // Hand off using magnetCapture's shape. handleTap() only reaches beginAscend
+        // when the item is enabled, so magnetOn is always true here — ORB-4's ring
+        // snap applies the same as the in-flight capture branch (see ringSnap above),
+        // otherwise ascending onto a ringed planet would leave its dots unreachable.
+        const cap = ringSnap(magnetCapture({ x: comet.x, y: comet.y, vx: 0, vy: 0 }, a.b), a.b, true);
         if (cap) {
             world.orbit = { b: a.b, radius: cap.radius, ang: cap.ang, omega: cap.omega };
             S.phase = 'orbit';
