@@ -7,7 +7,7 @@ import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
-    moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS, hitTestMapTargets,
+    moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS, hitTestMapTargets, OB_MARGIN,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -238,7 +238,12 @@ export function render(drag) {
         ctx.translate(view.vw / 2 - camera.x, view.vh / 2 - camera.y);
     }
 
-    // Faint course edge removed as we use the whole screen now
+    // Softer "lost in space" boundary (Golf Mode Catch-Up, 2026-07-19): the old
+    // faint course-edge line was removed when the game went full-screen, leaving
+    // no on-screen cue for where a flight actually gets rescued back to rest —
+    // "unclear ... what the map size is." Golf only (Explore is an open chunked
+    // world with no such rect); shown while the comet can actually cross it.
+    if (S.mode !== 'explore' && (S.phase === 'flight' || S.phase === 'orbit')) drawCourseBoundary();
 
     // ORB-1: while flying with Orbit Magnet ON, every planet/black hole gets a
     // faint dashed capture-band ring — "these will catch you." Gated on mode +
@@ -555,6 +560,20 @@ function drawStardustRing(b) {
     ctx.strokeStyle = '#ffd98a';
     ctx.lineWidth = 0.3;
     ctx.beginPath(); ctx.arc(b.x, b.y, b.stardustRing.radius, 0, 7); ctx.stroke();
+    ctx.globalAlpha = 1;
+}
+
+// Faint dashed rect at the real out-of-bounds threshold (OB_MARGIN past the
+// course rect) — the boundary a flight actually gets rescued at, made legible
+// instead of invisible. See the call site for why this exists.
+function drawCourseBoundary() {
+    const pulse = 0.5 + 0.5 * Math.sin(S.time * 1.6);
+    ctx.globalAlpha = 0.1 + 0.06 * pulse;
+    ctx.strokeStyle = '#9fe3d8';
+    ctx.lineWidth = 0.4;
+    ctx.setLineDash([2.4, 2.8]);
+    ctx.strokeRect(-OB_MARGIN, -OB_MARGIN, W + OB_MARGIN * 2, COURSE_H + OB_MARGIN * 2);
+    ctx.setLineDash([]);
     ctx.globalAlpha = 1;
 }
 

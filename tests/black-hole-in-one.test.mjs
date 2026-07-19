@@ -280,7 +280,9 @@ test('stepOrbit sinks when the orbit skims the cup', () => {
 test('stepOrbit rescues a comet whose orbit drifts outside the course boundary (GOLF-2 regression)', () => {
     game.startRun('endless');
     const teeRock = world.teeRock;
-    const planet = { x: 5, y: COURSE_H * 0.5, r: 8, m: 64, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    // planted well past the boundary regardless of how OB_MARGIN is tuned — the
+    // orbit itself (radius = r + ORBIT_MAX_GAP) still has to land past -OB_MARGIN
+    const planet = { x: -OB_MARGIN - 10, y: COURSE_H * 0.5, r: 8, m: 64, type: 'planet', pal: { base: '#fff', dark: '#000' } };
     world.bodies.push(planet);
     world.blackHole = { x: -1000, y: -1000, r: 3.2, m: 230, type: 'hole' }; // far away, no accidental sink
     // hug the outer edge of the capture band, starting on the far (out-of-bounds) side
@@ -292,6 +294,28 @@ test('stepOrbit rescues a comet whose orbit drifts outside the course boundary (
     assert.equal(S.phase, 'rest', 'rescued back to rest instead of orbiting off-screen forever (GOLF-1: was "no way to restart")');
     assert.equal(world.orbit, null);
     assert.equal(comet.rest.b, teeRock, 'comet returned to its last rest spot (the tee)');
+});
+
+test('GOLF Mode Catch-Up: a comet past the old OB_MARGIN (14) but within the widened one stays in flight (2026-07-19)', () => {
+    game.startRun('endless');
+    world.bodies = [];
+    world.blackHole = { x: 1000, y: 1000, r: 3.2, m: 230, type: 'hole' }; // far away, no accidental sink
+    comet.x = -20; comet.y = COURSE_H * 0.5;   // past the old tight margin, inside the widened one
+    comet.vx = 5; comet.vy = 0;                // heading back toward the course
+    S.phase = 'flight'; S.tFlight = 1;
+    game.stepFlight(DT);
+    assert.equal(S.phase, 'flight', 'no longer rescued just for clearing the old ~7%-overshoot margin');
+});
+
+test('GOLF Mode Catch-Up: a genuinely escaping flight still gets rescued past the widened OB_MARGIN', () => {
+    game.startRun('endless');
+    world.bodies = [];
+    world.blackHole = { x: 1000, y: 1000, r: 3.2, m: 230, type: 'hole' };
+    comet.x = -(OB_MARGIN + 5); comet.y = COURSE_H * 0.5;
+    comet.vx = -50; comet.vy = 0;
+    S.phase = 'flight'; S.tFlight = 1;
+    game.stepFlight(DT);
+    assert.equal(S.phase, 'rest', 'still rescued once truly past the widened boundary — the safety net is wider, not gone');
 });
 
 test('launch adds the flick as an impulse to current velocity (force-push, BH-4)', () => {

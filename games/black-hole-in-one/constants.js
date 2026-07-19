@@ -21,7 +21,17 @@ export const SOFT_CATCH = 1.6;        // impacts under REST_V*SOFT_CATCH bounce 
                                       // next touch lands — "the planet catches you" (Q4)
 export const SOFT_BOUNCE = 0.16;      // restitution for a soft-catch bounce
 export const CAPTURE_R = 4.6;         // black hole sink radius
-export const OB_MARGIN = 14;          // out-of-bounds margin beyond the course rect
+// Out-of-bounds margin beyond the course rect (golf modes only — Explore is an
+// open chunked world with no such boundary). Widened from 14 (GOLF Mode
+// Catch-Up, 2026-07-19): gravity is already the only force acting on the comet
+// at any distance (gravityAt sums every body unconditionally, never clipped to
+// the course rect), so a wide eccentric arc that would curve back on its own
+// was getting killed the instant it crossed a boundary only ~7% past the
+// course edge — the rectangle check only reads position, not trajectory. 4x
+// the old margin gives gravity enough room to actually finish pulling a
+// looping shot back before the hard cutoff; FLIGHT_CAP below stays the
+// ultimate safety net for shots that are genuinely escaping.
+export const OB_MARGIN = 56;
 export const DUST_T = 9;              // seconds of flight before space dust drag ramps in
 export const FLIGHT_CAP = 24;         // absolute flight timeout
 export const SLING_ANG = 1.9;         // radians swung around one planet = SLINGSHOT!
