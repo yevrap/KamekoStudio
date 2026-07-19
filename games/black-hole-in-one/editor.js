@@ -371,6 +371,7 @@ function loadMap(index) {
     world.bodies.push(world.teeRock);
     
     resetComet();
+    hooks.bar(); // refreshes editor chrome gated on mapSizeKey (e.g. MM-16's Overview button)
     hooks.toast('📂 Map loaded');
     toggleMapsDrawer();
 }

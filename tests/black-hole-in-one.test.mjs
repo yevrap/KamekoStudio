@@ -9,6 +9,7 @@ import {
     ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed, fitZoom, ZOOM_MIN, ZOOM_FIT,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, LS_KEYS, hitTestMapTargets,
     OB_MARGIN, ORBIT_MAX_GAP, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds,
+    overviewAvailable, overviewTransform, overviewToWorld, worldToOverview,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
@@ -731,6 +732,89 @@ test('game.startCustomMap honors mapData.size and defaults missing size to small
 
     game.startCustomMap({ teeRock: { ...teeRock }, blackHole: { ...blackHole }, bodies: [...bodies], size: 'large' });
     assert.equal(world.mapSizeKey, 'large');
+    delete globalThis.document;
+});
+
+/* ============================== MM-16: editor overview mode ============================== */
+
+test('overviewAvailable gates on the large tier only (MM-16)', () => {
+    assert.equal(overviewAvailable('large'), true);
+    assert.equal(overviewAvailable('small'), false);
+    assert.equal(overviewAvailable(undefined), false);
+});
+
+test('overviewTransform fits the map to the container, centered, preserving aspect (MM-16)', () => {
+    // Square map, square canvas — scale is a simple ratio, no letterboxing either axis.
+    const t1 = overviewTransform(600, 600, 460, 460);
+    assert.equal(t1.scale, 460 / 600);
+    assert.ok(Math.abs(t1.ox) < 1e-9);
+    assert.ok(Math.abs(t1.oy) < 1e-9);
+
+    // Non-square map in a square canvas — the taller/wider axis sets scale, the
+    // other axis gets centered margin (letterboxed), matching renderStarMap's own
+    // fit-and-center convention.
+    const t2 = overviewTransform(600, 300, 460, 460);
+    assert.equal(t2.scale, 460 / 600, 'the wider dimension is the constraint');
+    assert.ok(Math.abs(t2.ox) < 1e-9, 'no horizontal margin — width fills exactly');
+    assert.ok(t2.oy > 0, 'vertical margin centers the shorter map');
+
+    // Degenerate inputs (canvas not laid out yet, e.g. clientWidth still 0) must
+    // not divide by zero or return NaN/Infinity — same defensive convention as
+    // mapBounds() falling back for an unknown size key.
+    const t3 = overviewTransform(600, 600, 0, 0);
+    assert.equal(t3.scale, 1);
+    assert.equal(t3.ox, 0);
+    assert.equal(t3.oy, 0);
+});
+
+test('overviewToWorld / worldToOverview are exact inverses across the full map (MM-16)', () => {
+    const t = overviewTransform(600, 600, 460, 460);
+    for (const [wx, wy] of [[0, 0], [600, 600], [300, 300], [17.5, 583.2]]) {
+        const screen = worldToOverview(wx, wy, t);
+        const back = overviewToWorld(screen.x, screen.y, t);
+        assert.ok(Math.abs(back.x - wx) < 1e-9, `x round-trips for (${wx},${wy})`);
+        assert.ok(Math.abs(back.y - wy) < 1e-9, `y round-trips for (${wx},${wy})`);
+    }
+});
+
+test('overviewToWorld extrapolates past the canvas edge — needed for the "drag off the edge deletes" behavior (MM-16)', () => {
+    const t = overviewTransform(600, 600, 460, 460);
+    // A pointer dragged well beyond the visible canvas must still map to a world
+    // point past the map's own bounds (+margin), not clamp to the edge — that's
+    // what lets editor.js's existing out-of-bounds delete check fire from overview
+    // exactly the way it already does from the 1:1 view.
+    const past = overviewToWorld(-50, -50, t);
+    assert.ok(past.x < 0 && past.y < 0);
+});
+
+test('overview drag repositions a body by the same world coordinates as the 1:1 editor (MM-16)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+
+    ed.startEditor('large');
+    ed.addPlanet();
+    const planet = world.bodies.find(b => b.type === 'planet');
+
+    // Simulate a drag driven through overview screen coordinates: convert the
+    // planet's current world position to an overview screen point, "drag" it to
+    // a new screen point, and confirm the body's world coords land exactly where
+    // that screen point maps back to — i.e. overview dragging is pixel-for-pixel
+    // the same world-coordinate mutation the 1:1 view already does, just fed
+    // through a different screen transform.
+    const t = overviewTransform(MAP_SIZES.large.w, MAP_SIZES.large.h, 460, 460);
+    const startScreen = worldToOverview(planet.x, planet.y, t);
+    const targetScreen = { x: startScreen.x + 40, y: startScreen.y - 25 };
+    const startWorld = overviewToWorld(startScreen.x, startScreen.y, t);
+    const targetWorld = overviewToWorld(targetScreen.x, targetScreen.y, t);
+
+    assert.equal(ed.pointerDown(startWorld.x, startWorld.y, 30), true);
+    ed.pointerMove(targetWorld.x, targetWorld.y, 30);
+    ed.pointerUp(targetWorld.x, targetWorld.y, 30);
+
+    assert.ok(Math.abs(planet.x - targetWorld.x) < 1e-9);
+    assert.ok(Math.abs(planet.y - targetWorld.y) < 1e-9);
+    assert.ok(world.bodies.includes(planet), 'stayed in-bounds, so not deleted');
     delete globalThis.document;
 });
 

@@ -219,6 +219,24 @@ export function hitTestMapTargets(mx, my, targets) {
     return best;
 }
 
+// ---- Editor overview mode (MM-16) -----------------------------------------------
+// Full-canvas coarse-placement view for the map editor — opened when a map is big
+// enough that the 1:1 view can't show it all at once (the 'large' tier MM-6
+// introduced). Pure fit-to-container + center transform, same approach as every
+// other canvas view in this game (renderStarMap's cell grid, ui.resize()'s
+// letterbox scale); kept here so the coordinate math is unit-tested without a
+// DOM canvas. Dragging in overview converts straight to/from these same world
+// coordinates, so it reuses editor.js's existing pointerDown/Move/Up unchanged —
+// overview-placed and 1:1-placed bodies are identical on the wire.
+export function overviewAvailable(sizeKey) { return sizeKey === 'large'; }
+export function overviewTransform(w, h, cw, ch) {
+    if (!(cw > 0) || !(ch > 0) || !(w > 0) || !(h > 0)) return { scale: 1, ox: 0, oy: 0 };
+    const scale = Math.min(cw / w, ch / h);
+    return { scale, ox: (cw - w * scale) / 2, oy: (ch - h * scale) / 2 };
+}
+export function overviewToWorld(px, py, t) { return { x: (px - t.ox) / t.scale, y: (py - t.oy) / t.scale }; }
+export function worldToOverview(wx, wy, t) { return { x: t.ox + wx * t.scale, y: t.oy + wy * t.scale }; }
+
 // ---- Inventory registry (INV-1) -----------------------------------------------
 // A mechanic testbed, not a shop: one entry per experimental gameplay modifier,
 // toggled from the settings drawer, Explore only. `owned` defaults true — there's

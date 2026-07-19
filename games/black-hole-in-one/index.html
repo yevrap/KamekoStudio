@@ -182,9 +182,23 @@
     <div class="ed-tools">
         <button id="ed-add-planet">🪐 Planet</button>
         <button id="ed-add-pulsar">🌟 Pulsar</button>
+        <button id="ed-overview" class="hidden">🗺️ Overview</button>
         <button id="ed-maps">📂 Maps</button>
     </div>
     <span class="dim ed-help">Drag objects to move. Drag off-screen to delete.</span>
+</div>
+
+<div id="editorOverview" class="hidden">
+    <div class="star-map-header">
+        <span>🗺️ Overview</span>
+        <button id="eo-close" aria-label="Close">✕</button>
+    </div>
+    <canvas id="editorOverviewCanvas"></canvas>
+    <div class="ed-tools">
+        <button id="eo-add-planet">🪐 Planet</button>
+        <button id="eo-add-pulsar">🌟 Pulsar</button>
+    </div>
+    <span class="dim ed-help">Drag to reposition anywhere on the map. Close to fine-tune.</span>
 </div>
 
 <div id="customBar" class="hidden">

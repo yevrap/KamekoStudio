@@ -8,6 +8,7 @@ import {
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
     moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS, hitTestMapTargets, OB_MARGIN, mapBounds,
+    overviewAvailable, overviewTransform, overviewToWorld, worldToOverview,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -792,6 +793,14 @@ function getRegionName(x, y) {
 }
 
 export function updateBar() {
+    if (S.mode === 'editor') {
+        // MM-16: the Overview control only has something to offer on a large map —
+        // on golf-scale the 1:1 view already shows the whole course, so hide rather
+        // than show a no-op button.
+        const btn = document.getElementById('ed-overview');
+        if (btn) btn.classList.toggle('hidden', !overviewAvailable(world.mapSizeKey));
+        return;
+    }
     if (S.mode === 'explore') {
         setFuelBar('exploreFuelBar', explore.fuel);
         document.getElementById('exploreStardust').textContent = S.stardust;
@@ -1043,6 +1052,117 @@ function renderStarMap() {
         }
     }
     updateStarMapPrompt();
+}
+
+/* ============================== MM-16: editor overview mode ============================== */
+// Full-canvas coarse-placement view for the map editor. Visually similar to
+// renderStarMap() (dark bg, fitted-to-container, simplified glyphs) but its own
+// function — the data source is world.bodies/world.teeRock/world.blackHole, not
+// explore's fog-of-war chunk discovery, and there's no travel/selection state.
+// Snapshot-refreshed on open and on every drag tick (not a continuous animation
+// loop) — editor 'edit' phase has nothing else moving, same rationale as the star
+// map's once-per-open render.
+
+let overviewOpen = false;
+// Cached on every render; overviewEventToWorld() uses it to convert the next
+// pointer event back to world coords, so a drag always maps through the exact
+// transform its own frame was drawn with.
+let overviewT = { scale: 1, ox: 0, oy: 0 };
+
+export function isEditorOverviewOpen() { return overviewOpen; }
+
+export function showEditorOverview() {
+    if (overviewOpen) return;
+    if (S.mode !== 'editor' || S.phase !== 'edit' || !overviewAvailable(world.mapSizeKey)) return;
+    overviewOpen = true;
+    document.getElementById('editorOverview').classList.remove('hidden');
+    window.dispatchEvent(new Event('settingsOpened'));
+    renderEditorOverview();
+}
+
+export function hideEditorOverview() {
+    if (!overviewOpen) return;
+    overviewOpen = false;
+    document.getElementById('editorOverview').classList.add('hidden');
+    window.dispatchEvent(new Event('settingsClosed'));
+}
+
+export function toggleEditorOverview() {
+    if (overviewOpen) hideEditorOverview(); else showEditorOverview();
+}
+
+// Canvas-relative CSS px → world coords, same contract as toWorld() for the main
+// canvas — used by main.js's pointer handlers on #editorOverviewCanvas so they can
+// feed editor.js's existing (world-coordinate) pointerDown/Move/Up unchanged.
+export function overviewEventToWorld(e) {
+    const cv = document.getElementById('editorOverviewCanvas');
+    const rect = cv.getBoundingClientRect();
+    const p = overviewToWorld(e.clientX - rect.left, e.clientY - rect.top, overviewT);
+    return [p.x, p.y];
+}
+
+export function renderEditorOverview() {
+    const cv = document.getElementById('editorOverviewCanvas');
+    if (!cv) return;
+    const cw = cv.clientWidth, ch = cv.clientHeight;
+    if (cw <= 0 || ch <= 0) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = Math.round(cw * dpr);
+    cv.height = Math.round(ch * dpr);
+    const octx = cv.getContext('2d');
+    octx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    octx.fillStyle = '#05060f';
+    octx.fillRect(0, 0, cw, ch);
+
+    const { w, h } = mapBounds(world.mapSizeKey);
+    overviewT = overviewTransform(w, h, cw, ch);
+    const t = overviewT;
+
+    // Fitted grid, legibility over fidelity — same call as the star map's fog grid.
+    const GRID = 20; // world units per line
+    octx.strokeStyle = 'rgba(255,255,255,0.07)';
+    octx.lineWidth = 1;
+    octx.beginPath();
+    for (let gx = 0; gx <= w; gx += GRID) {
+        const p0 = worldToOverview(gx, 0, t);
+        octx.moveTo(p0.x, t.oy); octx.lineTo(p0.x, t.oy + h * t.scale);
+    }
+    for (let gy = 0; gy <= h; gy += GRID) {
+        const p0 = worldToOverview(0, gy, t);
+        octx.moveTo(t.ox, p0.y); octx.lineTo(t.ox + w * t.scale, p0.y);
+    }
+    octx.stroke();
+    octx.strokeStyle = 'rgba(255,255,255,0.2)';
+    octx.strokeRect(t.ox, t.oy, w * t.scale, h * t.scale);
+
+    // Bodies as simplified glyphs (dot + color) at overview scale — full 1:1
+    // detail (spin shading, pulsar rays) isn't legible at this zoom anyway.
+    for (const b of world.bodies) {
+        const p = worldToOverview(b.x, b.y, t);
+        if (b.type === 'planet') {
+            octx.fillStyle = b.pal ? b.pal.base : '#e2725b';
+            octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, b.r * t.scale), 0, 7); octx.fill();
+        } else if (b.type === 'pulsar') {
+            octx.fillStyle = '#ffd24a';
+            octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, 2.6 * t.scale), 0, 7); octx.fill();
+        } else if (b.type === 'tee') {
+            octx.fillStyle = '#8fb8ff';
+            octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, b.r * t.scale), 0, 7); octx.fill();
+        }
+    }
+    if (world.blackHole) {
+        const bh = world.blackHole;
+        const p = worldToOverview(bh.x, bh.y, t);
+        const glowR = Math.max(6, bh.r * t.scale * 2.4);
+        const g = octx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowR);
+        g.addColorStop(0, 'rgba(220,180,255,0.85)');
+        g.addColorStop(0.5, 'rgba(160,100,255,0.35)');
+        g.addColorStop(1, 'rgba(160,100,255,0)');
+        octx.fillStyle = g;
+        octx.beginPath(); octx.arc(p.x, p.y, glowR, 0, 7); octx.fill();
+        octx.fillStyle = '#f0e6ff';
+        octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, bh.r * t.scale), 0, 7); octx.fill();
+    }
 }
 
 /* ============================== ☰ MENU TABS (HUD-1/HUD-2) ============================== */

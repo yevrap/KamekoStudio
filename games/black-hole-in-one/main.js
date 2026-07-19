@@ -254,6 +254,36 @@ document.getElementById('ed-test').addEventListener('click', () => editor.toggle
 document.getElementById('ed-add-planet').addEventListener('click', () => editor.addPlanet());
 document.getElementById('ed-add-pulsar').addEventListener('click', () => editor.addPulsar());
 document.getElementById('ed-maps').addEventListener('click', () => editor.toggleMapsDrawer());
+
+// MM-16: editor overview — coarse drag-placement on a large map's full canvas.
+// Pointer events convert canvas-relative px straight to world coords (ui.
+// overviewEventToWorld) and feed editor.js's existing pointerDown/Move/Up
+// unchanged — same drag/delete/out-of-bounds logic as the 1:1 editor view, just
+// fed different screen coordinates, so overview- and 1:1-placed bodies are
+// identical on the wire.
+const editorOverviewCanvas = document.getElementById('editorOverviewCanvas');
+document.getElementById('ed-overview').addEventListener('click', () => ui.showEditorOverview());
+document.getElementById('eo-close').addEventListener('click', () => ui.hideEditorOverview());
+document.getElementById('eo-add-planet').addEventListener('click', () => { editor.addPlanet(); ui.renderEditorOverview(); });
+document.getElementById('eo-add-pulsar').addEventListener('click', () => { editor.addPulsar(); ui.renderEditorOverview(); });
+editorOverviewCanvas.addEventListener('pointerdown', e => {
+    const [wx, wy] = ui.overviewEventToWorld(e);
+    if (editor.pointerDown(wx, wy, e.pointerId)) editorOverviewCanvas.setPointerCapture(e.pointerId);
+});
+editorOverviewCanvas.addEventListener('pointermove', e => {
+    const [wx, wy] = ui.overviewEventToWorld(e);
+    editor.pointerMove(wx, wy, e.pointerId);
+    ui.renderEditorOverview();
+});
+editorOverviewCanvas.addEventListener('pointerup', e => {
+    const [wx, wy] = ui.overviewEventToWorld(e);
+    editor.pointerUp(wx, wy, e.pointerId, e.clientX, e.clientY);
+    ui.renderEditorOverview();
+});
+editorOverviewCanvas.addEventListener('pointercancel', () => {
+    editor.cancelDrag();
+    ui.renderEditorOverview();
+});
 document.getElementById('mm-saveNew').addEventListener('click', () => editor.saveCurrentMap());
 document.getElementById('mm-shareNew').addEventListener('click', () => editor.shareCurrentMap());
 document.getElementById('mm-importUrl').addEventListener('click', () => editor.importFromUrl());

@@ -334,7 +334,7 @@ body {
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
-#sm-close {
+#sm-close, #eo-close {
     width: 34px;
     height: 34px;
     border-radius: 10px;
@@ -344,7 +344,7 @@ body {
     font-size: 0.9rem;
     cursor: pointer;
 }
-#sm-close:active { filter: brightness(1.25); }
+#sm-close:active, #eo-close:active { filter: brightness(1.25); }
 #starMapCanvas {
     width: min(90vmin, 460px);
     height: min(90vmin, 460px);
@@ -405,6 +405,32 @@ body {
 .sm-swatch.sm-comet { background: #00e5a0; border-radius: 50%; }
 .sm-swatch.sm-blackhole { background: radial-gradient(circle, #f0e6ff 0%, #a064ff 100%); border-radius: 50%; }
 .sm-swatch.sm-station { background: #20e657; border-radius: 50%; }
+
+/* ---- MM-16: editor overview (map-maker minimap) ---- */
+#editorOverview {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 2rem;
+    background: #05060fd8;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 110; /* above #editorBar (100), which stays put underneath */
+    color: #e0e0ff;
+}
+#editorOverview.hidden { display: none; }
+#editorOverviewCanvas {
+    width: min(90vmin, 460px);
+    height: min(90vmin, 460px);
+    border-radius: 16px;
+    border: 1px solid var(--panel-border);
+    background: #05060f;
+    touch-action: none;
+}
 
 /* the shared hamburger sits over the space canvas — keep it legible */
 #settings-hamburger-btn {
@@ -747,6 +773,7 @@ body {
     justify-content: center;
 }
 .ed-tools.disabled { opacity: 0.3; pointer-events: none; }
+#ed-overview.hidden { display: none; }
 #ed-test {
     align-self: center;
     background: rgba(0,229,160,0.2);
