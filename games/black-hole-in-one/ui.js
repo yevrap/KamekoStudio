@@ -1025,8 +1025,9 @@ function renderTownShop() {
     // so that loop's forEach skips it) rather than routing it through buyUpgrade().
     const returnRow = explore.exploreHome ? `
         <div class="ts-item">
-            <div>
-                <div class="ts-item-name">🌀 Return Portal</div>
+            <div class="ts-item-icon">🌀</div>
+            <div class="ts-item-main">
+                <div class="ts-item-name">Return Portal</div>
                 <div class="ts-item-desc">Warp back to the black hole you came from</div>
             </div>
             <button id="ts-return" class="ts-return">🌀 Go</button>
@@ -1038,8 +1039,9 @@ function renderTownShop() {
         const maxed = cost === null;
         return `
         <div class="ts-item">
-            <div>
-                <div class="ts-item-name">${u.icon} ${u.label}<span class="ts-item-level">L${level}${maxed ? ' · MAX' : ''}</span></div>
+            <div class="ts-item-icon">${u.icon}</div>
+            <div class="ts-item-main">
+                <div class="ts-item-name">${u.label}<span class="ts-item-level">L${level}${maxed ? ' · MAX' : ''}</span></div>
                 <div class="ts-item-desc">${u.desc(level, maxed)}</div>
             </div>
             ${maxed ? '' : `<button data-upgrade="${u.key}" class="ts-buy" ${S.stardust < cost ? 'disabled' : ''}>✨ ${cost}</button>`}
@@ -1050,14 +1052,17 @@ function renderTownShop() {
     // read-only "already acquired" listing that foreshadows the future buy path.
     const inventoryRows = ITEMS.map(item => `
         <div class="ts-item">
-            <div>
-                <div class="ts-item-name">${item.icon} ${item.label}</div>
+            <div class="ts-item-icon">${item.icon}</div>
+            <div class="ts-item-main">
+                <div class="ts-item-name">${item.label}</div>
                 <div class="ts-item-desc">${item.desc}</div>
             </div>
             <span class="ts-acquired">✅ Acquired</span>
         </div>`).join('');
 
-    itemsEl.innerHTML = returnRow + upgradeRows + inventoryRows;
+    itemsEl.innerHTML = returnRow
+        + `<div class="ts-section-label">Upgrades</div>` + upgradeRows
+        + `<div class="ts-section-label">Owned</div>` + inventoryRows;
 
     const returnBtn = itemsEl.querySelector('#ts-return');
     if (returnBtn) returnBtn.addEventListener('click', () => explore.useReturnPortal());

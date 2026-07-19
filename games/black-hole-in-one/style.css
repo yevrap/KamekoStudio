@@ -146,20 +146,57 @@ body {
     margin-bottom: 10px;
 }
 #ts-items { display: flex; flex-direction: column; gap: 8px; max-width: 420px; margin: 0 auto; }
+/* Eyebrow labels that split ts-items into Upgrades / Owned groups, same
+   uppercase-tracked convention as .mode-head on the howto screen. */
+.ts-section-label {
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #7a7ab0;
+    padding: 2px 4px 0;
+}
 .ts-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.12);
     border-radius: 12px;
     padding: 8px 12px;
 }
-.ts-item-name { font-size: 0.85rem; font-weight: 700; }
-.ts-item-level { color: #9a9ac8; font-weight: 500; margin-left: 6px; }
+.ts-item-icon {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+.ts-item-main { flex: 1; min-width: 0; }
+.ts-item-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+.ts-item-level {
+    background: rgba(255,255,255,0.08);
+    color: #b8b8e0;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    padding: 2px 6px;
+    border-radius: 6px;
+}
 .ts-item-desc { font-size: 0.72rem; color: #9a9ac8; margin-top: 2px; }
 .ts-buy {
+    flex-shrink: 0;
     background: rgba(0,229,160,0.16);
     border: 1px solid #00e5a0;
     color: #00e5a0;
@@ -173,6 +210,7 @@ body {
 .ts-buy:active { background: rgba(0,229,160,0.3); }
 .ts-buy:disabled { opacity: 0.4; border-color: #555; color: #999; cursor: default; }
 .ts-return {
+    flex-shrink: 0;
     background: rgba(255,217,138,0.16);
     border: 1px solid #ffd98a;
     color: #ffd98a;
@@ -185,6 +223,7 @@ body {
 }
 .ts-return:active { background: rgba(255,217,138,0.3); }
 .ts-acquired {
+    flex-shrink: 0;
     background: rgba(255,255,255,0.06);
     border: 1px solid #555;
     color: #999;
@@ -193,6 +232,24 @@ body {
     font-size: 0.8rem;
     font-weight: 700;
     white-space: nowrap;
+}
+/* Static caption (not re-rendered per frame) telling the player the same
+   pull-back-and-release fling they already know doubles as "leave Town". */
+.ts-launch-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ffd98a;
+    text-align: center;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 
