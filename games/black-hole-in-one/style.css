@@ -137,7 +137,7 @@ body {
 .ts-header {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
     gap: 10px;
     font-size: 0.8rem;
     font-weight: 800;
@@ -145,6 +145,19 @@ body {
     text-transform: uppercase;
     margin-bottom: 10px;
 }
+/* HUD-3b: same close-button chrome as #sm-close */
+#ts-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+#ts-close:active { filter: brightness(1.25); }
 /* max-height + scroll (same convention as #myMapsList): unbounded, this list of 3
    upgrades + up to 3 owned items grows tall enough to cover the fixed #btns cluster
    (Map/Restart/Menu, top-right) on short viewports — e.g. 800x600 renders it 573px
@@ -421,8 +434,8 @@ body {
     color: #9a9ac8;
 }
 
-/* ---- overlays (how-to + scorecard + myMapsDrawer + survival game-over) ---- */
-#howto, #scorecard, #myMapsDrawer, #survGameOver {
+/* ---- overlays (scorecard + myMapsDrawer + survival game-over) ---- */
+#scorecard, #myMapsDrawer, #survGameOver {
     position: fixed;
     inset: 0;
     display: flex;
@@ -437,6 +450,60 @@ body {
     text-align: center;
     z-index: 10;
     color: #e0e0ff;
+}
+/* ---- ☰ Menu (HUD-2): header pinned at a fixed top offset instead of the
+   justify-content:center layout above — the Play/Settings panels differ enough
+   in height that centering the whole overlay visibly re-centered (moved) the tab
+   bar and close button on every switch. Anchoring to the top keeps the header's
+   on-screen position constant regardless of panel height; #howto-body reserves a
+   min-height sized to the taller Play panel so the box doesn't visibly collapse
+   on the short Settings tab, and scrolls instead of growing past that for the
+   Explore-only inventory rows. ---- */
+#howto {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+    padding-top: calc(env(safe-area-inset-top, 0px) + 2rem);
+    background: #05060fd8;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    text-align: center;
+    z-index: 10;
+    color: #e0e0ff;
+}
+#howto-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    width: min(90vmin, 460px);
+    flex-shrink: 0;
+    margin-bottom: 1.1rem;
+}
+#howto-close {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--panel-border);
+    background: var(--panel-bg);
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+#howto-close:active { filter: brightness(1.25); }
+#howto-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    width: 100%;
+    min-height: min(60vh, 420px);
+    max-height: calc(100vh - 160px);
+    overflow-y: auto;
 }
 #howto.hidden, #scorecard.hidden, #myMapsDrawer.hidden, #survGameOver.hidden, #bar.hidden, #exploreBar.hidden { display: none; }
 /* the shared-map arrival card had no hide rule, so it showed on the NORMAL menu —

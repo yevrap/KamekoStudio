@@ -264,6 +264,7 @@ document.getElementById('howtoTabs').addEventListener('click', e => {
     audio();
     ui.showHowtoTab(btn.dataset.tab);
 });
+document.getElementById('howto-close').addEventListener('click', () => ui.hideHowto());
 
 document.getElementById('sc-endless').addEventListener('click', () => startRun('endless'));
 
@@ -283,6 +284,13 @@ document.getElementById('helpBtn').addEventListener('click', () => {
     if (drag) drag = null;
     if (S.phase === 'aiming') S.phase = 'rest';
 });
+document.getElementById('settingsBtn').addEventListener('click', () => {
+    // HUD-2: straight to Settings, no detour through Play.
+    ui.showHowto();
+    ui.showHowtoTab('settings');
+    if (drag) drag = null;
+    if (S.phase === 'aiming') S.phase = 'rest';
+});
 document.getElementById('mapBtn').addEventListener('click', () => {
     ui.toggleStarMap();
     if (drag) drag = null;
@@ -293,6 +301,7 @@ document.getElementById('ts-launch').addEventListener('click', () => {
     explore.launchFromTown();
     ui.updateTownShop();
 });
+document.getElementById('ts-close').addEventListener('click', () => ui.closeTownShop());
 
 /* ============================== KEYBOARD (Thruster, INV-3a) ============================== */
 

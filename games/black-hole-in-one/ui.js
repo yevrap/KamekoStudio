@@ -921,31 +921,25 @@ function renderStarMap() {
     }
 }
 
-/* ============================== ☰ MENU TABS (HUD-1) ============================== */
+/* ============================== ☰ MENU TABS (HUD-1/HUD-2) ============================== */
 // Settings + Inventory used to be sections in the shared arcade-settings drawer
-// (gear icon, cross-game chrome); HUD-1 folds them into this game's own #howto
-// overlay as tabs alongside Play, so everything specific to this game lives behind
-// the one menu button already in the gameplay HUD. Panels render lazily on tab
-// switch (same on-demand pattern as renderTownShop/renderStarMap below) rather
-// than staying live, since the overlay only opens on demand.
+// (gear icon, cross-game chrome); HUD-1 folded them into this game's own #howto
+// overlay as tabs alongside Play. HUD-2 merged the separate Settings/Inventory
+// tabs into a single Settings tab — inventory rows still gate on S.mode ===
+// 'explore', just as a section within Settings rather than their own tab — and
+// gave #howto a fixed-position header (see style.css) so switching tabs never
+// visibly moves the tab bar or close button.
 
 let howtoTab = 'play';
 
 function renderHowtoTabs() {
-    // Inventory is Explore-only, matching the old drawer section's `when` gate.
-    const invBtn = document.getElementById('howtoTabInventory');
-    if (invBtn) invBtn.classList.toggle('hidden', S.mode !== 'explore');
-    if (howtoTab === 'inventory' && S.mode !== 'explore') howtoTab = 'play';
-
     document.querySelectorAll('#howtoTabs .howto-tab').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === howtoTab);
     });
     document.getElementById('howtoPanelPlay').classList.toggle('hidden', howtoTab !== 'play');
     document.getElementById('howtoPanelSettings').classList.toggle('hidden', howtoTab !== 'settings');
-    document.getElementById('howtoPanelInventory').classList.toggle('hidden', howtoTab !== 'inventory');
 
-    if (howtoTab === 'settings') renderHowtoSettings();
-    else if (howtoTab === 'inventory') renderHowtoInventory();
+    if (howtoTab === 'settings') renderHowtoSettingsPanel();
 }
 
 export function showHowtoTab(tab) {
@@ -955,8 +949,16 @@ export function showHowtoTab(tab) {
 
 export function isHowtoPlayTab() { return howtoTab === 'play'; }
 
-function renderHowtoSettings() {
+function renderHowtoSettingsPanel() {
     const panel = document.getElementById('howtoPanelSettings');
+    // Inventory is Explore-only, matching the old drawer section's `when` gate.
+    const inventoryRows = S.mode === 'explore' ? `
+        <span class="mode-head">🎒 Inventory</span>
+        ${ITEMS.map(item => `
+        <label class="howto-toggle-row">
+            <span>${item.icon} ${item.label}<br><small>${item.desc}</small></span>
+            <input type="checkbox" data-item="${item.key}" ${S.inventory[item.key]?.enabled ? 'checked' : ''}>
+        </label>`).join('')}` : '';
     panel.innerHTML = `
         <label class="howto-toggle-row">
             <span>Sound effects</span>
@@ -965,7 +967,8 @@ function renderHowtoSettings() {
         <label class="howto-toggle-row">
             <span>Freeze mid-flight aim (Explore)</span>
             <input type="checkbox" id="bhFreezeToggle" ${S.freezeAim ? 'checked' : ''}>
-        </label>`;
+        </label>
+        ${inventoryRows}`;
     panel.querySelector('#bhSoundToggle').addEventListener('change', e => {
         setMuted(!e.target.checked);
         localStorage.setItem(LS_KEYS.muted, String(!e.target.checked));
@@ -974,15 +977,6 @@ function renderHowtoSettings() {
         S.freezeAim = e.target.checked;
         localStorage.setItem(LS_KEYS.freezeAim, String(e.target.checked));
     });
-}
-
-function renderHowtoInventory() {
-    const panel = document.getElementById('howtoPanelInventory');
-    panel.innerHTML = ITEMS.map(item => `
-        <label class="howto-toggle-row">
-            <span>${item.icon} ${item.label}<br><small>${item.desc}</small></span>
-            <input type="checkbox" data-item="${item.key}" ${S.inventory[item.key]?.enabled ? 'checked' : ''}>
-        </label>`).join('');
     panel.querySelectorAll('input[data-item]').forEach(cb => {
         cb.addEventListener('change', e => {
             const key = e.target.dataset.item;
@@ -1004,7 +998,7 @@ export function showHowto() {
     menuOpen = true;
     document.getElementById('townShop').classList.add('hidden');
     shopVisible = false;
-    howtoTab = 'play'; // HUD-1: every entry point lands on Play, same as before tabs existed
+    howtoTab = 'play'; // every entry point but the dedicated ⚙️ button lands on Play
     renderHowtoTabs();
 }
 export function hideHowto() {
@@ -1080,6 +1074,10 @@ let shopVisible = false;
 // True while the ☰ menu (howto overlay) is open — the shop must stay hidden
 // underneath it regardless of atTown(), which only tracks physical location.
 let menuOpen = false;
+// HUD-3b: true after the player taps #ts-close while still physically at Town —
+// atTown() alone can't drive visibility anymore once there's an explicit close
+// action. Reset the moment you leave Town so the shop greets you again next visit.
+let shopClosedByUser = false;
 
 // One entry per purchasable upgrade. `desc(level, maxed)` renders the current-tier
 // (and next-tier, pre-max) blurb — the only part that varies per upgrade's gameplay
@@ -1121,11 +1119,20 @@ const UPGRADES = [
 export function updateTownShop() {
     const el = document.getElementById('townShop');
     if (!el) return;
-    const show = explore.atTown() && !menuOpen;
+    const atTown = explore.atTown();
+    if (!atTown) shopClosedByUser = false; // leaving Town clears the manual close
+    const show = atTown && !menuOpen && !shopClosedByUser;
     if (show === shopVisible) return;
     shopVisible = show;
     el.classList.toggle('hidden', !show);
     if (show) renderTownShop();
+}
+
+// HUD-3b: explicit ✕ exit, alongside the existing "🛫 Launch" CTA (which leaves by
+// physically flying away, so atTown() naturally goes false rather than needing this flag).
+export function closeTownShop() {
+    shopClosedByUser = true;
+    updateTownShop();
 }
 
 function renderTownShop() {

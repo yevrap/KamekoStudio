@@ -58,7 +58,10 @@
 </div>
 
 <div id="townShop" class="hidden">
-    <div class="ts-header">🏪 Town Shop <span class="stardust-hud">✨ <span id="ts-balance">0</span></span></div>
+    <div class="ts-header">
+        <span>🏪 Town Shop <span class="stardust-hud">✨ <span id="ts-balance">0</span></span></span>
+        <button id="ts-close" aria-label="Close">✕</button>
+    </div>
     <div id="ts-items"></div>
     <button id="ts-launch" class="ts-launch-btn">🛫 Launch — Leave Town</button>
 </div>
@@ -67,6 +70,7 @@
     <button id="mapBtn" class="hidden" aria-label="Star Map">🗺️</button>
     <button id="restartBtn" aria-label="Restart">↺</button>
     <button id="helpBtn" aria-label="Menu">☰ Menu</button>
+    <button id="settingsBtn" aria-label="Settings">⚙️</button>
 </div>
 
 <div id="starMap" class="hidden">
@@ -89,40 +93,43 @@
 <div id="chip"><div class="big"></div><div class="sub"></div></div>
 
 <div id="howto">
-    <div id="howtoTabs">
-        <button class="howto-tab active" data-tab="play">Play</button>
-        <button class="howto-tab" data-tab="settings">Settings</button>
-        <button class="howto-tab hidden" id="howtoTabInventory" data-tab="inventory">🎒 Inventory</button>
+    <div id="howto-header">
+        <div id="howtoTabs">
+            <button class="howto-tab active" data-tab="play">Play</button>
+            <button class="howto-tab" data-tab="settings">Settings</button>
+        </div>
+        <button id="howto-close" aria-label="Close">✕</button>
     </div>
-    <div id="howtoPanelPlay" class="howto-panel">
-        <h1>⚫ Black Hole in One</h1>
-        <p>Pull back anywhere and release to fling your comet. 🪐 Planets bend every shot — swing around them, or <strong>land on one</strong> to split a long hole into two easy putts.</p>
-        <p>Sink it into the black hole in as few flicks as you can. Every hole is brand new.</p>
-        <div id="modeBtns">
-            <div class="mode-section">
-                <span class="mode-head">Play</span>
-                <div class="mode-row">
-                    <button id="modeEndless" class="mode-go">⛳ Endless Golf</button>
+    <div id="howto-body">
+        <div id="howtoPanelPlay" class="howto-panel">
+            <h1>⚫ Black Hole in One</h1>
+            <p>Pull back anywhere and release to fling your comet. 🪐 Planets bend every shot — swing around them, or <strong>land on one</strong> to split a long hole into two easy putts.</p>
+            <p>Sink it into the black hole in as few flicks as you can. Every hole is brand new.</p>
+            <div id="modeBtns">
+                <div class="mode-section">
+                    <span class="mode-head">Play</span>
+                    <div class="mode-row">
+                        <button id="modeEndless" class="mode-go">⛳ Endless Golf</button>
+                    </div>
+                </div>
+                <div class="mode-section">
+                    <span class="mode-head">Make &amp; explore</span>
+                    <div class="mode-row">
+                        <button id="modeEditor">🔨 Map Maker</button>
+                        <button id="modeExplore">🌌 Explore</button>
+                    </div>
                 </div>
             </div>
-            <div class="mode-section">
-                <span class="mode-head">Make &amp; explore</span>
+            <div id="sharedMapBtns" class="hidden">
+                <p class="shared-note">🔗 Someone shared a custom map with you.</p>
                 <div class="mode-row">
-                    <button id="modeEditor">🔨 Map Maker</button>
-                    <button id="modeExplore">🌌 Explore</button>
+                    <button id="modeSharedPlay" class="mode-go">▶ Play this map</button>
+                    <button id="modeSharedMenu">No thanks</button>
                 </div>
             </div>
         </div>
-        <div id="sharedMapBtns" class="hidden">
-            <p class="shared-note">🔗 Someone shared a custom map with you.</p>
-            <div class="mode-row">
-                <button id="modeSharedPlay" class="mode-go">▶ Play this map</button>
-                <button id="modeSharedMenu">No thanks</button>
-            </div>
-        </div>
+        <div id="howtoPanelSettings" class="howto-panel hidden"></div>
     </div>
-    <div id="howtoPanelSettings" class="howto-panel hidden"></div>
-    <div id="howtoPanelInventory" class="howto-panel hidden"></div>
 </div>
 
 <div id="scorecard" class="hidden">
