@@ -684,6 +684,15 @@ export function atTown() {
         && !!(comet.rest && comet.rest.b && comet.rest.b.type === 'tee');
 }
 
+// Launch button (Town Shop): scripted alternative to the ambient drag-flick for
+// leaving Town. Reuses the same beginAscend() the tap-to-orbit system already
+// uses to leave any planet — no new physics.
+export function launchFromTown() {
+    if (!atTown()) return false;
+    beginAscend(comet.rest.b);
+    return true;
+}
+
 // Buy the next level of upgrade `key` ('tank', 'siphon', or 'sensor'). Returns false
 // without side effects if not at Town, maxed out, or short on stardust. Fuel Tank
 // purchases add the capacity delta to the current tank rather than topping it off,

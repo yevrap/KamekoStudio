@@ -274,6 +274,10 @@ document.getElementById('mapBtn').addEventListener('click', () => {
     if (S.phase === 'aiming') S.phase = 'rest';
 });
 document.getElementById('sm-close').addEventListener('click', () => ui.hideStarMap());
+document.getElementById('ts-launch').addEventListener('click', () => {
+    explore.launchFromTown();
+    ui.updateTownShop();
+});
 
 /* ============================== KEYBOARD (Thruster, INV-3a) ============================== */
 

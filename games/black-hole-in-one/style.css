@@ -233,24 +233,27 @@ body {
     font-weight: 700;
     white-space: nowrap;
 }
-/* Static caption (not re-rendered per frame) telling the player the same
-   pull-back-and-release fling they already know doubles as "leave Town". */
-.ts-launch-hint {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255,255,255,0.1);
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #ffd98a;
-    text-align: center;
+/* Static CTA (not re-rendered per frame) — scripted alternative to the ambient
+   drag-flick for leaving Town. Same accent-green weight as the mode-select
+   screen's "mode-go" button so it reads as the primary action here too. */
+.ts-launch-btn {
+    display: block;
+    width: 100%;
     max-width: 420px;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 10px auto 0;
+    padding: 13px 14px;
+    min-height: 48px;
+    background: rgba(0,229,160,0.16);
+    border: 1px solid #00e5a0;
+    border-radius: 20px;
+    color: #00e5a0;
+    font-size: 0.85rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-align: center;
+    cursor: pointer;
 }
+.ts-launch-btn:active { background: rgba(0,229,160,0.3); }
 
 
 /* ---- corner buttons (right side; the settings hamburger owns top-left) ---- */
