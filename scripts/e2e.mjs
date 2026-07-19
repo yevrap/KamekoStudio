@@ -308,6 +308,65 @@ await test('black-hole-in-one: survival game-over "Try Again" and "Menu" buttons
 
 // ── Lab games: free to play, no token labels ────────────────────────────────
 
+await test('black-hole-in-one: running out of fuel mid-flight while aiming does not permanently freeze the comet (FUEL-3)', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const { S, comet } = await import('/games/black-hole-in-one/state.js');
+    const explore = await import('/games/black-hole-in-one/explore.js');
+    const { MAX_DRAG } = await import('/games/black-hole-in-one/constants.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    S.mode = 'explore';
+    explore.startRun();
+    // Freeze mid-flight aim is ON by default (localStorage default) — left untouched.
+    S.phase = 'flight';
+    S.prevPhase = 'flight';
+    comet.vx = 20; comet.vy = -10;
+    // Drain the tank to exactly 0 via real launches, same as repeated flicks.
+    const dragLen = MAX_DRAG * 0.5;
+    while (explore.fuel > 0) explore.launch(dragLen, 0, dragLen);
+    // Simulate starting a mid-flight aim (main.js's pointerdown sets exactly
+    // this on a real drag) and releasing a real, non-tap drag with no fuel left.
+    S.phase = 'aiming';
+    S.prevPhase = 'flight';
+    explore.launch(dragLen, 0, dragLen);
+  });
+
+  const phaseAfterFailedAim = await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    return S.phase;
+  });
+  assert(phaseAfterFailedAim === 'flight',
+    'phase stuck at "' + phaseAfterFailedAim + '" instead of returning to flight — comet is frozen (FUEL-3 regression)');
+
+  const posBefore = await page.evaluate(async () => {
+    const { comet } = await import('/games/black-hole-in-one/state.js');
+    return { x: comet.x, y: comet.y };
+  });
+  await sleep(400);
+  const posAfter = await page.evaluate(async () => {
+    const { comet } = await import('/games/black-hole-in-one/state.js');
+    return { x: comet.x, y: comet.y };
+  });
+  const moved = Math.hypot(posAfter.x - posBefore.x, posAfter.y - posBefore.y) > 0.01;
+  assert(moved, 'comet did not drift after running out of fuel mid-aim — it is frozen, not stranded');
+
+  const strandedPulsing = await page.evaluate(() =>
+    document.getElementById('restartBtn').classList.contains('stranded'));
+  assert(strandedPulsing, 'restart button should pulse red once the tank is empty (FUEL-1 contract)');
+
+  await page.click('#restartBtn');
+  await sleep(200);
+  const recovered = await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    const explore = await import('/games/black-hole-in-one/explore.js');
+    return { phase: S.phase, fuel: explore.fuel, stranded: document.getElementById('restartBtn').classList.contains('stranded') };
+  });
+  assert(recovered.phase === 'rest', 'restart did not put the comet back to rest at Town, got "' + recovered.phase + '"');
+  assert(recovered.fuel > 0, 'restart did not refuel the tank');
+  assert(!recovered.stranded, 'restart button is still pulsing after a fresh start');
+});
+
 await test('durak-alchemist: Play is free and starts the game', async page => {
   await page.goto(base + '/games/durak-alchemist/', { waitUntil: 'load' });
   const label = await page.$eval('#start-btn', b => b.textContent);

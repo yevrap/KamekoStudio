@@ -359,10 +359,12 @@ function burnFuel(amount) {
 }
 
 export function launch(dx, dy, len) {
-    if (fuel <= 0) return false;
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
-    if (speed < MIN_SHOT) {
-        // Cancelled shot: return to whatever we were in before aiming
+    // Cancelled shot (drag too weak, or no fuel to spend): return to whatever
+    // we were in before aiming. FUEL-3: the no-fuel case used to return early
+    // without this reset, leaving S.phase stuck at 'aiming' forever — the comet
+    // would never step again and the player could never start another drag.
+    if (fuel <= 0 || speed < MIN_SHOT) {
         if (S.phase === 'aiming') S.phase = world.orbit ? 'orbit' : (S.prevPhase === 'flight' ? 'flight' : 'rest');
         return false;
     }

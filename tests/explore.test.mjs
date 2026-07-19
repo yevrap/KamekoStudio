@@ -198,6 +198,29 @@ test('OW-0: cancelled mid-flight drag (below MIN_SHOT) returns to flight', () =>
     assert.equal(S.phase, 'flight', 'phase should return to flight, not rest');
 });
 
+test('FUEL-3: running out of fuel mid-flight and attempting to aim returns to flight instead of freezing (regression)', () => {
+    startRun();
+    S.phase = 'flight';
+    S.prevPhase = 'flight';
+    comet.vx = 20;
+    comet.vy = -10;
+
+    // Drain the tank to exactly 0 via real launches, same as a player flicking
+    // repeatedly (each burns 15 from a max-100 tank).
+    const dragLen = MAX_DRAG * 0.5;
+    while (fuel > 0) launch(dragLen, 0, dragLen);
+    assert.equal(fuel, 0, 'sanity: tank is empty');
+
+    // Simulate starting a mid-flight aim (main.js's pointerdown sets exactly
+    // this on a real drag) and then releasing a real, non-tap drag.
+    S.phase = 'aiming';
+    S.prevPhase = 'flight';
+    const ok = launch(dragLen, 0, dragLen);
+
+    assert.equal(ok, false, 'launch should fail — no fuel to spend');
+    assert.equal(S.phase, 'flight', 'phase should return to flight, not get stuck at aiming');
+});
+
 test('OW-0: launch from rest still clears trail', () => {
     startRun();
     S.phase = 'rest';
