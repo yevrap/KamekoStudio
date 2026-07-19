@@ -682,6 +682,21 @@ function completeWarp() {
     hooks.bar();
 }
 
+// MAP-2: puts the comet into a stable orbit around black hole `b`, at the given
+// approach angle (world radians). Extracted from useReturnPortal's orbit-injection
+// below so fast travel can reuse the exact same "arrive safely outside the dive-warp
+// radius" math instead of re-deriving it — proven safe there: EXPLORE_BLACKHOLE_R +
+// COMET_R + ORBIT_MIN_GAP + 2 sits comfortably outside b.r * 0.3 (step()'s dive-warp
+// trigger), so an arrival can never immediately re-trigger the warp it just left.
+export function arriveInOrbit(b, ang = 0) {
+    const r = EXPLORE_BLACKHOLE_R + COMET_R + ORBIT_MIN_GAP + 2;
+    comet.x = b.x + Math.cos(ang) * r;
+    comet.y = b.y + Math.sin(ang) * r;
+    comet.vx = 0; comet.vy = 0; comet.rest = null;
+    world.orbit = { b, radius: r, ang, omega: circularSpeed(b.m, r) / r };
+    S.phase = 'orbit';
+}
+
 // Return Portal: send the comet back to the exact black hole + location it warped
 // in from. No-op away from Town or before any warp has happened yet. Free (no fuel
 // cost) — it's a trip back to where you were, not a flight action. Lands the comet
@@ -702,13 +717,7 @@ export function useReturnPortal() {
 
     const b = world.bodies.find(body => body.id === blackHoleId);
     if (b) {
-        const r = EXPLORE_BLACKHOLE_R + COMET_R + ORBIT_MIN_GAP + 2;
-        const ang = Math.atan2(dy, dx);
-        comet.x = bhX + Math.cos(ang) * r;
-        comet.y = bhY + Math.sin(ang) * r;
-        comet.vx = 0; comet.vy = 0; comet.rest = null;
-        world.orbit = { b, radius: r, ang, omega: circularSpeed(b.m, r) / r };
-        S.phase = 'orbit';
+        arriveInOrbit(b, Math.atan2(dy, dx));
     } else {
         S.phase = 'flight'; // Fallback
         const d = Math.hypot(dx, dy) || 1;
@@ -717,11 +726,43 @@ export function useReturnPortal() {
         comet.y = bhY + (dy / d) * safeR;
         comet.vx = 0; comet.vy = 0; comet.rest = null;
     }
-    
+
     world.trail = [];
     hooks.burst(comet.x, comet.y, 20, '#ffd98a', 30);
     hooks.sfx.sling();
     hooks.toast('🌀 Returned to the black hole');
+    hooks.bar();
+    return true;
+}
+
+// MAP-2: fast travel from the star map. Town arrives via the same contract as a
+// black-hole warp's landing (tee rock rest, camera snap, chunk refresh, refuel-if-
+// station) — reuses completeWarp() itself since warp state is already null outside
+// an actual warp, so calling it directly is safe. Black hole targets arrive in a
+// stable orbit via arriveInOrbit() above, at a fixed default angle (unlike the
+// Return Portal, fast travel has no remembered approach direction to reuse). Both
+// are free, work in any phase (including 0 fuel — this is the point per the build
+// plan's "self-rescue" call), and jump the camera/active chunks to the destination
+// first so the target body actually exists in world.bodies to look up.
+export function arriveAtTown() {
+    completeWarp();
+}
+
+export function travelToBlackHole(id, wx, wy) {
+    camera.x = wx;
+    camera.y = wy;
+    lastChunkX = null;
+    lastChunkY = null;
+    updateActiveChunks();
+
+    const b = world.bodies.find(body => body.id === id);
+    if (!b) return false; // defensive — the star map only offers ids it just derived from this same seed
+
+    arriveInOrbit(b);
+    world.trail = [];
+    hooks.burst(comet.x, comet.y, 20, '#ffd98a', 30);
+    hooks.sfx.sling();
+    hooks.toast('🌀 Fast-traveled to the black hole');
     hooks.bar();
     return true;
 }

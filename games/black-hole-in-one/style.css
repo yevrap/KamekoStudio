@@ -352,6 +352,37 @@ body {
     border: 1px solid var(--panel-border);
     background: #05060f;
 }
+/* MAP-2: two-tap confirm prompt — first tap on a landmark selects it (highlight
+   ring on the canvas), which reveals this row; second tap or the Go button travels. */
+#sm-travel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: min(90vmin, 460px);
+    padding: 8px 14px;
+    border-radius: 14px;
+    background: rgba(0,229,160,0.1);
+    border: 1px solid #00e5a0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #e0e0ff;
+}
+#sm-travel.hidden { display: none; }
+#sm-travel-go {
+    padding: 8px 18px;
+    min-height: 44px;
+    border-radius: 14px;
+    border: 1px solid #00e5a0;
+    background: rgba(0,229,160,0.22);
+    color: #00e5a0;
+    font-size: 0.8rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+}
+#sm-travel-go:active { background: rgba(0,229,160,0.4); }
+
 .star-map-legend {
     display: flex;
     flex-wrap: wrap;

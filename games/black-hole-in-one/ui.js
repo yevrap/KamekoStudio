@@ -7,7 +7,7 @@ import {
     WORLD_W as W, COURSE_H, COMET_R, CAPTURE_R, DT, MAX_DRAG, MAX_LAUNCH, MIN_SHOT,
     ROUND_HOLES, LIFTOFF_T, LIFTOFF_MIN, ZOOM_LERP, fitZoom, rand, fmtDiff,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
-    moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS,
+    moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS, hitTestMapTargets,
 } from './constants.js';
 import { S, world, comet } from './state.js';
 import { stepBody } from './physics.js';
@@ -833,9 +833,17 @@ export function hideScorecard() {
 
 let starMapOpen = false;
 
+// MAP-2: fast travel. `mapTargets` is the screen-space hit list the last
+// renderStarMap() call produced (Town + discovered black holes only — stations are
+// informational, not travel targets); `selectedTarget` drives the two-tap confirm
+// (first tap selects, second tap or the Go button travels).
+let mapTargets = [];
+let selectedTarget = null;
+
 export function showStarMap() {
     if (starMapOpen) return;
     starMapOpen = true;
+    selectedTarget = null;
     document.getElementById('starMap').classList.remove('hidden');
     window.dispatchEvent(new Event('settingsOpened'));
     renderStarMap();
@@ -844,12 +852,52 @@ export function showStarMap() {
 export function hideStarMap() {
     if (!starMapOpen) return;
     starMapOpen = false;
+    selectedTarget = null;
     document.getElementById('starMap').classList.add('hidden');
     window.dispatchEvent(new Event('settingsClosed'));
 }
 
 export function toggleStarMap() {
     if (starMapOpen) hideStarMap(); else showStarMap();
+}
+
+function travelToTarget(t) {
+    hideStarMap();
+    if (t.kind === 'town') explore.arriveAtTown();
+    else explore.travelToBlackHole(t.id, t.wx, t.wy);
+}
+
+// Canvas tap handler (screen-space CSS px, same coordinate system renderStarMap()
+// draws in). A tap that misses every target deselects. A tap on the currently
+// selected target travels; any other tap (including a different target) selects it —
+// this is the "no accidental warps" guard the build plan calls for.
+export function handleStarMapTap(mx, my) {
+    const hit = hitTestMapTargets(mx, my, mapTargets);
+    if (!hit) {
+        selectedTarget = null;
+        renderStarMap();
+        return;
+    }
+    if (selectedTarget && selectedTarget.id === hit.id) {
+        travelToTarget(hit);
+        return;
+    }
+    selectedTarget = hit;
+    renderStarMap();
+}
+
+// Wired to the #sm-travel-go button — same action as a confirming second tap.
+export function confirmStarMapTravel() {
+    if (selectedTarget) travelToTarget(selectedTarget);
+}
+
+function updateStarMapPrompt() {
+    const el = document.getElementById('sm-travel');
+    if (!el) return;
+    if (!selectedTarget) { el.classList.add('hidden'); return; }
+    const label = selectedTarget.kind === 'town' ? '⌂ Town' : '⚫ Black hole';
+    el.querySelector('.sm-travel-label').textContent = `${label} — Travel?`;
+    el.classList.remove('hidden');
 }
 
 function renderStarMap() {
@@ -864,6 +912,12 @@ function renderStarMap() {
     sctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     sctx.fillStyle = '#05060f';
     sctx.fillRect(0, 0, cw, ch);
+
+    // MAP-2: rebuilt fresh on every render — this IS the render, so any target
+    // whose position moved or discovery state changed (e.g. a chunk loaded between
+    // opens) is never stale by construction.
+    mapTargets = [];
+    const MIN_HIT_R = 22; // CSS px — minimum touch target, per the build plan
 
     // Grid spans the full bounded sector (OW-2's SECTOR_LIMIT) plus a chunk of
     // margin, in chunk units — same floor(x/CHUNK_SIZE) math as explore.js.
@@ -912,6 +966,10 @@ function renderStarMap() {
                 sctx.beginPath(); sctx.arc(px, py, r * 2.4, 0, 7); sctx.fill();
                 sctx.fillStyle = '#f0e6ff';
                 sctx.beginPath(); sctx.arc(px, py, r, 0, 7); sctx.fill();
+                // MAP-2: only discovered black holes reach here (this loop only runs
+                // over explore.discoveredChunks) — stations stay informational-only,
+                // never pushed as a travel target.
+                mapTargets.push({ kind: 'blackhole', id: lm.id, x: px, y: py, r: Math.max(MIN_HIT_R, r * 2.4), wx: lm.x, wy: lm.y });
             } else {
                 sctx.fillStyle = '#20e657';
                 sctx.beginPath(); sctx.arc(px, py, Math.max(1.6, cell * 0.14), 0, 7); sctx.fill();
@@ -923,10 +981,14 @@ function renderStarMap() {
     // "chunks flown through" discovery rule below it).
     const townGX = Math.floor(50 / explore.CHUNK_SIZE);
     const townGY = Math.floor(85 / explore.CHUNK_SIZE);
+    const townPX = ox + (townGX + radius) * cell + cell / 2;
+    const townPY = oy + (townGY + radius) * cell + cell / 2;
+    const townR = Math.max(3, cell * 0.3);
     sctx.fillStyle = '#ffd98a';
     sctx.beginPath();
-    sctx.arc(ox + (townGX + radius) * cell + cell / 2, oy + (townGY + radius) * cell + cell / 2, Math.max(3, cell * 0.3), 0, 7);
+    sctx.arc(townPX, townPY, townR, 0, 7);
     sctx.fill();
+    mapTargets.push({ kind: 'town', id: 'town', x: townPX, y: townPY, r: Math.max(MIN_HIT_R, townR) });
 
     // Comet — a snapshot of where you were the moment the map was opened (the run
     // is paused for as long as it stays up, so this never goes stale).
@@ -938,6 +1000,27 @@ function renderStarMap() {
         sctx.arc(ox + (cometGX + radius) * cell + cell / 2, oy + (cometGY + radius) * cell + cell / 2, Math.max(2.5, cell * 0.2), 0, 7);
         sctx.fill();
     }
+
+    // MAP-2: selection highlight — re-find the freshly-rebuilt target matching the
+    // previously selected id/kind (not the stale object itself, in case its screen
+    // position moved between renders) so re-selecting after a redraw still rings
+    // the right spot.
+    if (selectedTarget) {
+        const current = mapTargets.find(t => t.kind === selectedTarget.kind && t.id === selectedTarget.id);
+        if (current) {
+            selectedTarget = current;
+            sctx.strokeStyle = '#00e5a0';
+            sctx.lineWidth = 2;
+            sctx.setLineDash([5, 4]);
+            sctx.beginPath();
+            sctx.arc(current.x, current.y, current.r, 0, 7);
+            sctx.stroke();
+            sctx.setLineDash([]);
+        } else {
+            selectedTarget = null; // target vanished (shouldn't happen mid-open, but don't point at nothing)
+        }
+    }
+    updateStarMapPrompt();
 }
 
 /* ============================== ☰ MENU TABS (HUD-1/HUD-2) ============================== */

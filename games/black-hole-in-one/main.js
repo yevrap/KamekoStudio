@@ -297,6 +297,10 @@ document.getElementById('mapBtn').addEventListener('click', () => {
     if (S.phase === 'aiming') S.phase = 'rest';
 });
 document.getElementById('sm-close').addEventListener('click', () => ui.hideStarMap());
+document.getElementById('starMapCanvas').addEventListener('pointerdown', e => {
+    ui.handleStarMapTap(e.offsetX, e.offsetY);
+});
+document.getElementById('sm-travel-go').addEventListener('click', () => ui.confirmStarMapTravel());
 document.getElementById('ts-launch').addEventListener('click', () => {
     explore.launchFromTown();
     ui.updateTownShop();

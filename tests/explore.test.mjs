@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepOrbit, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal, discoveredChunks, loadDiscoveredChunks, chunkKeyAt, handleTap, ringSnap } from '../games/black-hole-in-one/explore.js';
+import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepOrbit, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal, discoveredChunks, loadDiscoveredChunks, chunkKeyAt, handleTap, ringSnap, arriveInOrbit, travelToBlackHole, arriveAtTown } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, ORBIT_MIN_GAP, ORBIT_MAX_GAP, ORBIT_COOLDOWN, moonPosition, circularSpeed, STARDUST_RING_CHANCE, STARDUST_RING_COUNT_MIN, STARDUST_RING_COUNT_MAX } from '../games/black-hole-in-one/constants.js';
 import { gravityAt } from '../games/black-hole-in-one/physics.js';
@@ -1451,7 +1451,94 @@ test('Thruster tap: quick tap while Thruster is enabled triggers tap action (DOM
     // Position comet in the capture band
     comet.x = town.x - 18;
     comet.y = town.y;
-    
+
     handleTap(town.x, town.y);
     assert.equal(S.phase, 'descend', 'tap on Town should begin descent');
+});
+
+/* ============================== MAP-2: star map fast travel ============================== */
+
+function findRealBlackHole(seed = 'explore-1') {
+    for (let cx = -20; cx <= 20; cx++) {
+        for (let cy = -20; cy <= 20; cy++) {
+            const bh = getChunkBodies(cx, cy, seed).find(b => b.type === 'blackhole');
+            if (bh) return bh;
+        }
+    }
+    return null;
+}
+
+test('MAP-2: arriveInOrbit places the comet in a stable orbit clear of the dive-warp trigger radius', () => {
+    startRun();
+    const bh = { x: 500, y: 500, r: EXPLORE_BLACKHOLE_R, m: EXPLORE_BLACKHOLE_R * EXPLORE_BLACKHOLE_R, type: 'blackhole', id: 'synthetic-bh' };
+
+    arriveInOrbit(bh, Math.PI / 4);
+
+    assert.equal(S.phase, 'orbit');
+    assert.equal(world.orbit.b, bh);
+    assert.equal(comet.vx, 0);
+    assert.equal(comet.vy, 0);
+    const expectedR = EXPLORE_BLACKHOLE_R + COMET_R + ORBIT_MIN_GAP + 2;
+    const actualR = Math.hypot(comet.x - bh.x, comet.y - bh.y);
+    assert.ok(Math.abs(actualR - expectedR) < 1e-9, `orbit radius should be exactly ${expectedR}, got ${actualR}`);
+    assert.ok(actualR > bh.r * 0.3, 'arrival radius clears the dive-warp trigger (b.r * 0.3) with room to spare');
+});
+
+test('MAP-2: arriveInOrbit defaults to angle 0 (due east of the body) when no angle is given', () => {
+    startRun();
+    const bh = { x: 200, y: 200, r: EXPLORE_BLACKHOLE_R, m: EXPLORE_BLACKHOLE_R * EXPLORE_BLACKHOLE_R, type: 'blackhole', id: 'synthetic-bh-2' };
+    arriveInOrbit(bh);
+    assert.ok(comet.x > bh.x);
+    assert.ok(Math.abs(comet.y - bh.y) < 1e-9);
+});
+
+test('MAP-2: travelToBlackHole jumps to a real seeded black hole\'s chunk and arrives in a stable orbit around it', () => {
+    startRun();
+    const bh = findRealBlackHole();
+    assert.ok(bh, 'sanity: seed "explore-1" has at least one seeded black hole within the swept range');
+
+    // Start from an unrelated phase/location, mid-flight — fast travel should work
+    // from any phase, not just rest/orbit.
+    S.phase = 'flight';
+    comet.x = 9999; comet.y = -9999;
+
+    const ok = travelToBlackHole(bh.id, bh.x, bh.y);
+
+    assert.equal(ok, true);
+    assert.equal(S.phase, 'orbit');
+    assert.equal(world.orbit.b.id, bh.id);
+    const expectedR = EXPLORE_BLACKHOLE_R + COMET_R + ORBIT_MIN_GAP + 2;
+    const actualR = Math.hypot(comet.x - bh.x, comet.y - bh.y);
+    assert.ok(Math.abs(actualR - expectedR) < 1e-6);
+    assert.equal(camera.x, bh.x);
+    assert.equal(camera.y, bh.y);
+});
+
+test('MAP-2: travelToBlackHole returns false and never touches phase/comet state if the id can\'t be resolved at those coords', () => {
+    startRun();
+    S.phase = 'rest';
+    const prevPhase = S.phase;
+    const prevX = comet.x, prevY = comet.y;
+
+    const ok = travelToBlackHole('no-such-id', 3000, 3000); // far chunk, definitely no matching id
+
+    assert.equal(ok, false);
+    assert.equal(S.phase, prevPhase);
+    assert.equal(comet.x, prevX);
+    assert.equal(comet.y, prevY);
+});
+
+test('MAP-2: arriveAtTown lands on the tee rock and resets the camera, free and from any phase', () => {
+    startRun();
+    S.phase = 'flight';
+    comet.x = 5000; comet.y = -5000;
+    world.teeRock = { x: 50, y: 85, r: 3.4, m: 8, type: 'tee', id: 'tee' };
+
+    arriveAtTown();
+
+    assert.equal(S.phase, 'rest');
+    assert.ok(comet.rest && comet.rest.b && comet.rest.b.type === 'tee', 'should land on the tee rock');
+    assert.equal(camera.x, 50);
+    assert.equal(camera.y, 85);
+    assert.equal(atTown(), true);
 });

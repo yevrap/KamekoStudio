@@ -182,6 +182,20 @@ export const STARDUST_RING_CHANCE = 0.25;                     // odds a non-blac
 export const STARDUST_RING_COUNT_MIN = 5, STARDUST_RING_COUNT_MAX = 8; // dots per ring
 export const STARDUST_RING_GAP_MIN = 0.3, STARDUST_RING_GAP_MAX = 0.7; // fraction of the orbit band past ORBIT_MIN_GAP
 
+// ---- Star map fast travel (MAP-2) -----------------------------------------------
+// Picks the closest hit target within its own radius of (mx,my), else null. Targets
+// carry their own screen coords + hit radius — set by ui.js's renderStarMap() at
+// draw time for Town + each discovered black hole — so this needs no canvas/DOM
+// access itself and is unit-tested directly, same as every other pure helper here.
+export function hitTestMapTargets(mx, my, targets) {
+    let best = null, bestD = Infinity;
+    for (const t of targets) {
+        const d = Math.hypot(mx - t.x, my - t.y);
+        if (d <= t.r && d < bestD) { best = t; bestD = d; }
+    }
+    return best;
+}
+
 // ---- Inventory registry (INV-1) -----------------------------------------------
 // A mechanic testbed, not a shop: one entry per experimental gameplay modifier,
 // toggled from the settings drawer, Explore only. `owned` defaults true — there's

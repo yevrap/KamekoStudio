@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {
     WORLD_W, COURSE_H, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, MAX_V, DT, G,
     ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed, fitZoom, ZOOM_MIN, ZOOM_FIT,
-    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, LS_KEYS,
+    upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, LS_KEYS, hitTestMapTargets,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
@@ -649,4 +649,30 @@ test('chunkLandmarks never surfaces plain planets, moons, or rings as landmarks'
             assert.ok(lm.kind === 'blackhole' || lm.kind === 'station', `unexpected landmark kind "${lm.kind}"`);
         }
     }
+});
+
+/* ============================== MAP-2: star map hit-testing ============================== */
+
+test('hitTestMapTargets picks the target whose radius contains the point', () => {
+    const targets = [
+        { kind: 'town', id: 'town', x: 100, y: 100, r: 22 },
+        { kind: 'blackhole', id: 'bh1', x: 250, y: 250, r: 30 },
+    ];
+    assert.equal(hitTestMapTargets(100, 100, targets), targets[0], 'dead center hits');
+    assert.equal(hitTestMapTargets(110, 100, targets), targets[0], 'within radius hits');
+    assert.equal(hitTestMapTargets(260, 245, targets), targets[1]);
+    assert.equal(hitTestMapTargets(500, 500, targets), null, 'far from everything misses');
+    assert.equal(hitTestMapTargets(100, 123, targets), null, 'just outside the radius misses');
+});
+
+test('hitTestMapTargets breaks overlapping-radius ties in favor of the closer center', () => {
+    const targets = [
+        { kind: 'town', id: 'far', x: 0, y: 0, r: 50 },
+        { kind: 'blackhole', id: 'near', x: 10, y: 0, r: 50 },
+    ];
+    assert.equal(hitTestMapTargets(9, 0, targets).id, 'near');
+});
+
+test('hitTestMapTargets returns null for an empty target list', () => {
+    assert.equal(hitTestMapTargets(0, 0, []), null);
 });
