@@ -299,7 +299,7 @@ if (window.KamekoSettings) {
         title: () => '⚫ Black Hole in One',
         render(container) {
             container.innerHTML = `
-                <button class="settings-btn" id="bh-howto">❓ How to play</button>
+                <button class="settings-btn" id="bh-howto">☰ Menu</button>
                 <label class="settings-row" style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px">
                     <span>Sound effects</span>
                     <input type="checkbox" id="bh-sound" ${isMuted() ? '' : 'checked'}>
