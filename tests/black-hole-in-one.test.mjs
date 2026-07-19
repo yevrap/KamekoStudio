@@ -8,6 +8,7 @@ import {
     WORLD_W, COURSE_H, CAPTURE_R, COMET_R, REST_V, SOFT_CATCH, MAX_V, DT, G,
     ROUND_HOLES, fmtDiff, holeLabel, isBetterRound, dist, circularSpeed, fitZoom, ZOOM_MIN, ZOOM_FIT,
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, LS_KEYS, hitTestMapTargets,
+    OB_MARGIN, ORBIT_MAX_GAP,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet } from '../games/black-hole-in-one/state.js';
@@ -274,6 +275,23 @@ test('stepOrbit sinks when the orbit skims the cup', () => {
     game.stepOrbit(DT);
     assert.equal(S.phase, 'sink');
     assert.equal(world.orbit, null);
+});
+
+test('stepOrbit rescues a comet whose orbit drifts outside the course boundary (GOLF-2 regression)', () => {
+    game.startRun('endless');
+    const teeRock = world.teeRock;
+    const planet = { x: 5, y: COURSE_H * 0.5, r: 8, m: 64, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    world.bodies.push(planet);
+    world.blackHole = { x: -1000, y: -1000, r: 3.2, m: 230, type: 'hole' }; // far away, no accidental sink
+    // hug the outer edge of the capture band, starting on the far (out-of-bounds) side
+    const d = planet.r + ORBIT_MAX_GAP;
+    const vc = circularSpeed(planet.m, d);
+    game.beginOrbit(planet, { radius: d, omega: vc / d, ang: Math.PI });
+    assert.ok(comet.x < -OB_MARGIN, 'sanity: this orbit starts outside the course boundary');
+    game.stepOrbit(DT);
+    assert.equal(S.phase, 'rest', 'rescued back to rest instead of orbiting off-screen forever (GOLF-1: was "no way to restart")');
+    assert.equal(world.orbit, null);
+    assert.equal(comet.rest.b, teeRock, 'comet returned to its last rest spot (the tee)');
 });
 
 test('launch adds the flick as an impulse to current velocity (force-push, BH-4)', () => {

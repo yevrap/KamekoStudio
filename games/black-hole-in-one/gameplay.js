@@ -406,6 +406,25 @@ export function stepOrbit(dt) {
     if (world.blackHole && dist(comet.x, comet.y, world.blackHole.x, world.blackHole.y) < CAPTURE_R) {
         world.orbit = null;
         beginSink();
+        return;
+    }
+    // GOLF-2: a planet placed near the course edge (reachable via Map Maker/custom
+    // maps — the editor only auto-deletes past W+10/COURSE_H+10) can carry its orbit
+    // band outside the playfield. stepFlight has an OOB escape; stepOrbit never did,
+    // so the comet was stranded off-screen forever with no way to see or flick it
+    // back (GOLF-1: reads as "eaten, no way out" from the player's side).
+    const oob = comet.x < -OB_MARGIN || comet.x > W + OB_MARGIN ||
+                comet.y < -OB_MARGIN || comet.y > COURSE_H + OB_MARGIN;
+    if (oob) {
+        world.orbit = null;
+        comet.rest = world.lastRest.rest;
+        placeOnRest();
+        comet.vx = comet.vy = 0;
+        world.trail = [];
+        S.phase = 'rest';
+        hooks.sfx.lost();
+        hooks.toast('🌌 Lost in space — replay from your last spot');
+        checkSurvivalGameOver();
     }
 }
 
