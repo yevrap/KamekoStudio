@@ -1,5 +1,5 @@
 import { state, getPlayer } from './state.js';
-import { displayValue } from './constants.js';
+import { t, cardText } from './i18n.js';
 
 export function logEvent(type, data = {}) {
     const entry = { type, bout: state.boutNum, ...data };
@@ -7,34 +7,33 @@ export function logEvent(type, data = {}) {
     return entry;
 }
 
-const suitSymbols = { '1': '♠', '2': '♣', '3': '♥', '4': '♦' };
-
 function formatCard(card) {
     if (!card) return 'a card';
-    return displayValue(card.value) + suitSymbols[card.suit];
+    return cardText(card);
 }
 
 export function eventText(e) {
     const p = e.seat !== undefined ? getPlayer(e.seat) : null;
     const name = p ? p.name : 'Unknown';
-    
+    const ctx = { name, cardText: formatCard(e.card) };
+
     switch (e.type) {
         case 'attack':
-            return `${name} attacks with ${formatCard(e.card)}`;
+            return t('log.attack', ctx);
         case 'defend':
-            return `${name} defends with ${formatCard(e.card)}`;
+            return t('log.defend', ctx);
         case 'transfer':
-            return `${name} transfers the attack with ${formatCard(e.card)}`;
+            return t('log.transfer', ctx);
         case 'take':
-            return `${name} takes the cards`;
+            return t('log.take', ctx);
         case 'pass':
-            return `${name} passes`;
+            return t('log.pass', ctx);
         case 'bout_defended':
-            return `Bout defended, cards discarded`;
+            return t('log.boutDefended');
         case 'bout_taken':
-            return `Bout taken by ${name}`;
+            return t('log.boutTaken', ctx);
         case 'coach_hint':
-            return `Coach suggests: ${e.text}`;
+            return t('log.coachHint', { text: e.text });
         default:
             return '';
     }

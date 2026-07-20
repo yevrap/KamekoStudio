@@ -407,7 +407,7 @@ export function checkGameOver() {
   if (n > 1) return false;
   state.phase = 'gameover';
   if (n === 0) {
-    state.winnerText = 'Draw!';
+    state.winnerOutcome = { kind: 'draw' };
     recordMatchResult('draw');
   } else {
     // The single remaining player holding cards is the Durak.
@@ -419,13 +419,13 @@ export function checkGameOver() {
       state.finishOrder.push(durak.seat);
     }
     if (durak && durak.isHuman && durak.seat === 0) {
-      state.winnerText = 'You are the Durak!';
+      state.winnerOutcome = { kind: 'durak', isYou: true };
       recordMatchResult('loss');
     } else if (durak) {
-      state.winnerText = durak.name + ' is the Durak!';
+      state.winnerOutcome = { kind: 'durak', isYou: false, name: durak.name };
       recordMatchResult('win');
     } else {
-      state.winnerText = 'Game over';
+      state.winnerOutcome = { kind: 'gameover' };
     }
   }
 

@@ -5,10 +5,11 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
-import { suitEmoji, suitName, displayValue, cardStrength } from './constants.js';
+import { suitEmoji, suitName, cardStrength } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 import { getHardAiMove } from './ai.js';
 import { logEvent } from './log.js';
+import { t, cardText } from './i18n.js';
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
     $statusDisplay, $trumpDisplay, $deckCount, $discardZone, $discardStack, $discardCount,
@@ -159,13 +160,16 @@ export function createCardBackEl(keyId) {
 
 // ── Role chips ─────────────────────────────────────────────────────────────
 
+// Returns the language-neutral role key (used for the CSS class); the
+// display label is localized separately via t('role.' + key) so the chip's
+// color-coding doesn't depend on which language is active.
 function roleFor(seat) {
   var p = state.players[seat];
   if (!p) return '';
-  if (p.isOut) return 'Out';
-  if (seat === state.attackerSeat) return 'Attacker';
-  if (seat === state.defenderSeat) return 'Defender';
-  if (adjacentContributors().indexOf(seat) !== -1) return 'Thrower';
+  if (p.isOut) return 'out';
+  if (seat === state.attackerSeat) return 'attacker';
+  if (seat === state.defenderSeat) return 'defender';
+  if (adjacentContributors().indexOf(seat) !== -1) return 'thrower';
   return '';
 }
 
@@ -218,12 +222,13 @@ function buildOpponentTile(seat) {
   nameEl.textContent = p.name;
   tile.appendChild(nameEl);
 
-  var role = roleFor(seat);
-  if (role) {
+  var roleKey = roleFor(seat);
+  if (roleKey) {
     var chip = document.createElement('div');
-    chip.className = 'seat-role role-' + role.toLowerCase();
+    chip.className = 'seat-role role-' + roleKey;
+    var roleLabel = t('role.' + roleKey);
     var abbreviate = state.players.length >= 5 && window.innerWidth < 420;
-    chip.textContent = abbreviate ? role.slice(0, 3).toUpperCase() : role;
+    chip.textContent = abbreviate ? roleLabel.slice(0, 3).toUpperCase() : roleLabel;
     tile.appendChild(chip);
   }
   return tile;
@@ -396,20 +401,21 @@ function updateActionButtons() {
     if (isCoach && hasPriority && state.phase !== 'start' && state.phase !== 'gameover') {
       var move = getHardAiMove(viewer);
       if (move) {
-        var text = 'Coach: ';
+        var text = t('coach.prefix') + ' ';
         var logText = '';
         if (move.action === 'pass') {
-          text += 'Pass';
-          logText = 'Pass';
+          text += t('coach.pass');
+          logText = t('coach.pass');
         } else if (move.action === 'take') {
-          text += 'Take';
-          logText = 'Take';
+          text += t('coach.take');
+          logText = t('coach.take');
         } else if (move.card) {
-          var actName = move.action === 'transfer' ? 'Transfer' : (move.action === 'defend' ? 'Defend' : 'Play');
+          var actName = move.action === 'transfer' ? t('coach.transfer') : (move.action === 'defend' ? t('coach.defend') : t('coach.play'));
           var isRed = (move.card.suit === 3 || move.card.suit === 4);
-          var cSpan = `<span class="${isRed ? 'suit-red' : 'suit-black'}">${displayValue(move.card.value)}${suitEmoji(move.card.suit)}</span>`;
+          var cText = cardText(move.card);
+          var cSpan = `<span class="${isRed ? 'suit-red' : 'suit-black'}">${cText}</span>`;
           text += actName + ' ' + cSpan;
-          logText = actName + ' ' + displayValue(move.card.value) + suitEmoji(move.card.suit);
+          logText = actName + ' ' + cText;
         }
         window.$coachBanner.innerHTML = text;
         window.$coachBanner.classList.remove('hidden');
@@ -431,27 +437,27 @@ function updateActionButtons() {
 
 function getStatusText() {
   if (state.phase === 'start' || state.phase === 'gameover') return '';
-  if (state.phase === 'paused') return 'Paused';
-  if (state.phase === 'passDevice') return 'Pass device';
+  if (state.phase === 'paused') return t('status.paused');
+  if (state.phase === 'passDevice') return t('status.passDevice');
 
   var viewer = currentViewerSeat();
   var priorityP = state.players[state.prioritySeat];
   var pName = priorityP ? priorityP.name : '';
 
   if (state.phase === 'pileOn') {
-    if (state.prioritySeat === viewer) return 'Pile on or tap Done';
-    return pName + ' may throw on';
+    if (state.prioritySeat === viewer) return t('status.pileOnSelf');
+    return t('status.pileOnOther', pName);
   }
 
   // 'playing'
   if (state.prioritySeat === viewer) {
-    if (viewer === state.defenderSeat) return 'Defend \u2014 play a higher card or Take';
-    if (state.field.attacks.length === 0) return 'Your attack \u2014 play a card';
-    return 'Throw on or Pass';
+    if (viewer === state.defenderSeat) return t('status.defend');
+    if (state.field.attacks.length === 0) return t('status.yourAttack');
+    return t('status.throwOrPass');
   }
   if (!priorityP) return '';
-  if (state.prioritySeat === state.defenderSeat) return pName + ' defending\u2026';
-  return pName + ' attacking\u2026';
+  if (state.prioritySeat === state.defenderSeat) return t('status.defending', pName);
+  return t('status.attacking', pName);
 }
 
 // ── Main render ────────────────────────────────────────────────────────────
@@ -613,6 +619,56 @@ export function renderAll() {
   }
 }
 
+// ── Static chrome ───────────────────────────────────────────────────────────
+// Re-labels everything that lives in index.html rather than in renderAll().
+// Called at boot and whenever the language changes. Must never abort on a
+// missing element (mirrors games/tysiacha/ui.js's localizeStatic).
+
+const setText = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+const setHTML = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+
+export function localizeStatic() {
+  if (typeof document === 'undefined') return;
+  document.title = t('title');
+  setText('game-title', t('title'));
+  setText('start-title', t('title'));
+  setText('start-subtitle', t('subtitle'));
+  setText('start-rules-blurb', t('rulesBlurb'));
+  setText('setup-mode-label', t('setup.modeLabel'));
+  setText('setup-players-label', t('setup.playersLabel'));
+  setText('setup-rules-label', t('setup.rulesLabel'));
+  setText('mode-btn-ai', t('setup.mode.ai'));
+  setText('mode-btn-hotseat', t('setup.mode.hotseat'));
+  setText('btn-edit-names', t('setup.editNames'));
+  setText('setup-perevodnoy-label', t('setup.perevodnoy'));
+  setText('setup-first-transfer-label', t('setup.firstTransferAllow'));
+  setText('btn-play', t('setup.play'));
+  setText('btn-watch', t('setup.watch'));
+
+  setText('btn-take', t('coach.take'));
+  setText('btn-pass', t('coach.pass'));
+  setText('btn-done', t('names.done'));
+
+  setText('pass-device-title', t('passDevice.title'));
+  setText('pass-device-hint', t('passDevice.hint'));
+
+  setText('btn-choice-transfer', t('choice.transfer'));
+  setText('btn-choice-beat', t('choice.beat'));
+  setText('choice-hint', t('choice.hint'));
+
+  setText('btn-replay', t('gameover.playAgain'));
+
+  setText('names-title', t('names.title'));
+  setText('btn-names-done', t('names.done'));
+  setText('btn-names-reset', t('names.reset'));
+
+  setText('log-title', t('act.log'));
+  setText('rules-title', t('act.rules'));
+  setHTML('rules-body', t('howto').map(([title, body]) => `<h3>${title}</h3>${body}`).join(''));
+
+  setText('pile-banner', t('pileBanner.text'));
+}
+
 // ── Overlays ───────────────────────────────────────────────────────────────
 
 export function hideOverlays() {
@@ -623,14 +679,6 @@ export function hideOverlays() {
   if (namesOverlay) namesOverlay.classList.add('hidden');
   var choiceOverlay = document.getElementById('choice-overlay');
   if (choiceOverlay) choiceOverlay.classList.add('hidden');
-}
-
-// Ordinal for finishing places: 1st, 2nd, 3rd, 4th…
-function ordinal(n) {
-  if (n === 1) return '1st';
-  if (n === 2) return '2nd';
-  if (n === 3) return '3rd';
-  return n + 'th';
 }
 
 function renderPlacements() {
@@ -657,7 +705,7 @@ function renderPlacements() {
     nameEl.textContent = p.name;
     var rankEl = document.createElement('span');
     rankEl.className = 'placement-rank';
-    rankEl.textContent = isDurak ? 'Durak' : ordinal(i + 1);
+    rankEl.textContent = isDurak ? t('gameover.durak') : t('gameover.place', i + 1);
 
     row.appendChild(nameEl);
     row.appendChild(rankEl);
@@ -666,10 +714,10 @@ function renderPlacements() {
   $box.classList.remove('hidden');
 }
 
-export function showGameOver(msg, stats) {
-  $winnerText.textContent = msg;
+export function showGameOver(outcome, stats) {
+  $winnerText.textContent = t('gameover.msg', outcome);
   if ($gameoverStats && stats) {
-    $gameoverStats.textContent = 'Record: ' + stats.wins + 'W · ' + stats.losses + 'L · ' + stats.draws + 'D';
+    $gameoverStats.textContent = t('gameover.record', stats.wins, stats.losses, stats.draws);
   }
   renderPlacements();
   $gameoverOverlay.classList.remove('hidden');

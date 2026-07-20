@@ -2,6 +2,8 @@
 // CARDS — SVG face and back generator
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { rankText } from './i18n.js';
+
 // Standard suit ID mapping: 1=Spades, 2=Clubs, 3=Diamonds, 4=Hearts
 const SUIT_PATHS = {
   1: 'M50,75 C50,75 25,100 25,60 C25,25 50,15 50,15 C50,15 75,25 75,60 C75,100 50,75 50,75 Z M50,75 L40,95 L60,95 Z', // Spades (stubbed, will refine)
@@ -36,8 +38,6 @@ const PIP_LAYOUT = {
   10: [{x:30,y:25}, {x:70,y:25}, {x:50,y:40}, {x:30,y:53}, {x:70,y:53}, {x:30,y:87, flip:1}, {x:70,y:87, flip:1}, {x:50,y:100, flip:1}, {x:30,y:115, flip:1}, {x:70,y:115, flip:1}],
 };
 
-const FACE_LABELS = { 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
-
 function buildPip(suitId, x, y, scale = 0.22, flip = false) {
   const rotation = flip ? 'rotate(180 50 50)' : '';
   const path = PIPS[suitId];
@@ -63,7 +63,7 @@ function buildCourtFigure(rank, suitId) {
   
   // J, Q, K
   // Diagonal split line inside a rounded rect 
-  let letters = `<text x="50" y="80" font-family="system-ui, sans-serif" font-weight="900" font-size="40" text-anchor="middle" fill="currentColor" opacity="0.15">${FACE_LABELS[rank]}</text>`;
+  let letters = `<text x="50" y="80" font-family="system-ui, sans-serif" font-weight="900" font-size="40" text-anchor="middle" fill="currentColor" opacity="0.15">${rankText(rank)}</text>`;
   
   return `
     <rect x="25" y="30" width="50" height="80" rx="8" fill="none" stroke="currentColor" stroke-width="2" opacity="0.3"/>
@@ -75,7 +75,7 @@ function buildCourtFigure(rank, suitId) {
 }
 
 export function buildCardFaceSvg(suitId, rank) {
-  const label = FACE_LABELS[rank] || String(rank);
+  const label = rankText(rank);
 
   // Massive watermark in the center
   const centerWatermark = `

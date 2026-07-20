@@ -7,7 +7,7 @@ import { suitName } from './constants.js';
 import { buildCardFaceSvg } from './cards.js';
 import {
   renderAll, hideOverlays, showGameOver, cacheDom,
-  showPassDevice, hidePassDevice
+  showPassDevice, hidePassDevice, localizeStatic
 } from './ui.js';
 import {
   playAttack, playDefense, passAttack, declareTake,
@@ -15,6 +15,7 @@ import {
   legalTransfer, playTransfer
 } from './gameplay.js';
 import { scheduleAiAction, clearAiTimeout } from './ai.js';
+import { t, getLang, setLang, defaultPlayerName } from './i18n.js';
 
 // ── Persisted setup ────────────────────────────────────────────────────────
 
@@ -27,6 +28,7 @@ var setupMode  = savedMode;
 var setupCount = savedCount;
 
 cacheDom();
+localizeStatic();
 
 // Keep iOS PWA status-bar / Android theme-color in sync with the in-game
 // light/dark toggle (settings.js mutates body.dark-mode without firing an event).
@@ -130,21 +132,18 @@ var $btnNamesReset = document.getElementById('btn-names-reset');
 function populateNamesModal() {
   if (!$namesGrid) return;
   $namesGrid.innerHTML = '';
-  var modeStr = setupMode === 'hotseat' ? 'Hot-seat' : 'vs Computer';
-  $namesSubtitle.textContent = modeStr + ' — ' + setupCount + ' players';
+  $namesSubtitle.textContent = t('names.subtitle', setupMode, setupCount);
 
   for (var i = 0; i < setupCount; i++) {
-    var defName;
-    if (i === 0) defName = (setupMode === 'hotseat') ? 'Player 1' : 'You';
-    else defName = (setupMode === 'hotseat') ? ('Player ' + (i + 1)) : ('CPU ' + i);
+    var defName = defaultPlayerName(setupMode, i);
 
     var custom = localStorage.getItem('durak_name_' + setupMode + '_' + i) || '';
-    
+
     var group = document.createElement('div');
     group.className = 'name-input-group';
-    
+
     var lbl = document.createElement('label');
-    lbl.textContent = 'Seat ' + (i + 1);
+    lbl.textContent = t('names.seat', i + 1);
     
     var inp = document.createElement('input');
     inp.type = 'text';
@@ -195,13 +194,24 @@ if ($btnNamesReset) {
   });
 }
 
+// Seat names are assigned once at newGame() time (defaultPlayerName), so a
+// mid-match language switch would otherwise leave already-seated default
+// names in the old language while everything rendered around them updates
+// live. Re-derive any name that hasn't been overridden by the player.
+function refreshDefaultPlayerNames() {
+  for (var i = 0; i < state.players.length; i++) {
+    var custom = localStorage.getItem('durak_name_' + state.mode + '_' + i);
+    if (!custom) state.players[i].name = defaultPlayerName(state.mode, i);
+  }
+}
+
 // ── Tick ───────────────────────────────────────────────────────────────────
 
 function tick() {
   renderAll();
   if (checkGameOver()) {
     clearAiTimeout();
-    showGameOver(state.winnerText, getMatchStats());
+    showGameOver(state.winnerOutcome, getMatchStats());
     renderAll();
     if (localStorage.getItem('durak_autoRestart') === 'true') {
       setTimeout(function() {
@@ -434,11 +444,11 @@ function injectDurakSettings() {
   if (!window.KamekoSettings) return;
 
   window.KamekoSettings.registerSection('durak-quick-actions', {
-    title: 'Quick Actions',
+    title: function() { return t('set.quickActions'); },
     render: function(container) {
       var btnRules = document.createElement('button');
       btnRules.className = 'settings-btn';
-      btnRules.textContent = '❓ Rules of Durak';
+      btnRules.textContent = t('act.rules');
       btnRules.addEventListener('click', function() {
         window.KamekoSettings.closeDrawer();
         window.$rulesOverlay.classList.remove('hidden');
@@ -447,7 +457,7 @@ function injectDurakSettings() {
 
       var btnLog = document.createElement('button');
       btnLog.className = 'settings-btn';
-      btnLog.textContent = '📜 Game Log';
+      btnLog.textContent = t('act.log');
       btnLog.addEventListener('click', function() {
         window.KamekoSettings.closeDrawer();
         import('./log.js').then(logModule => {
@@ -456,7 +466,7 @@ function injectDurakSettings() {
           for (var i = 0; i < state.log.length; i++) {
             var e = state.log[i];
             if (e.bout !== lastBout) {
-              html += `<div style="margin-top:12px; font-weight:bold; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px; margin-bottom:4px;">Bout ${e.bout}</div>`;
+              html += `<div style="margin-top:12px; font-weight:bold; color:var(--text-muted); border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px; margin-bottom:4px;">${t('log.bout', e.bout)}</div>`;
               lastBout = e.bout;
             }
             html += `<div style="padding:4px 0;">${logModule.eventText(e)}</div>`;
@@ -471,7 +481,7 @@ function injectDurakSettings() {
       var btnCoach = document.createElement('button');
       btnCoach.className = 'settings-btn';
       function coachLabel() {
-        return localStorage.getItem('durak_coach') === 'true' ? '🧭 Turn off Coach Hints' : '🧭 Turn on Coach Hints';
+        return localStorage.getItem('durak_coach') === 'true' ? t('act.coachOff') : t('act.coachOn');
       }
       btnCoach.textContent = coachLabel();
       btnCoach.addEventListener('click', function() {
@@ -481,6 +491,33 @@ function injectDurakSettings() {
         renderAll();
       });
       container.appendChild(btnCoach);
+
+      // Language — persistent preference, not match-scoped, so it lives in
+      // this always-visible section (tysiacha's set-lang placement).
+      var langRow = document.createElement('div');
+      langRow.className = 'settings-row';
+      var langLabel = document.createElement('label');
+      langLabel.textContent = 'Language / Язык';
+      var langSelect = document.createElement('select');
+      langSelect.style.cssText = 'background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25); border-radius:8px; padding:6px 10px; font-size:0.9em;';
+      ['en', 'ru'].forEach(function(l) {
+        var opt = document.createElement('option');
+        opt.value = l;
+        opt.textContent = l === 'en' ? 'English' : 'Русский';
+        langSelect.appendChild(opt);
+      });
+      langSelect.value = getLang();
+      langSelect.addEventListener('change', function() {
+        setLang(langSelect.value);
+        refreshDefaultPlayerNames();
+        localizeStatic();
+        renderAll();
+        if (state.phase === 'gameover') showGameOver(state.winnerOutcome, getMatchStats());
+        injectDurakSettings();
+      });
+      langRow.appendChild(langLabel);
+      langRow.appendChild(langSelect);
+      container.appendChild(langRow);
     }
   });
 
@@ -491,7 +528,7 @@ function injectDurakSettings() {
   // the setup screen itself (drawer-UX p1-18).
   window.KamekoSettings.registerSection('durak', {
     title: function() {
-      return 'Current Match: ' + (state.mode === 'hotseat' ? 'Hot-seat' : 'vs Computer') + ' (' + state.playerCount + ' players)';
+      return t('setup.matchTitle', state.mode, state.playerCount);
     },
     when: function() {
       return state.phase !== 'start' && state.phase !== 'gameover';
@@ -500,13 +537,13 @@ function injectDurakSettings() {
       if (state.mode === 'ai') {
         var diffLabel = document.createElement('div');
         diffLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin-bottom:6px;';
-        diffLabel.textContent = 'AI Difficulty';
+        diffLabel.textContent = t('set.aiDifficulty');
         container.appendChild(diffLabel);
 
         var diffToggle = document.createElement('div');
         diffToggle.className = 'mode-toggle';
         var diffs = ['easy', 'normal', 'hard'];
-        var diffNames = ['Easy', 'Normal', 'Hard'];
+        var diffNames = [t('set.diffEasy'), t('set.diffNormal'), t('set.diffHard')];
         var currentDiff = localStorage.getItem('durak_difficulty') || 'normal';
 
         for (var i = 0; i < diffs.length; i++) {
@@ -532,13 +569,13 @@ function injectDurakSettings() {
 
       var sortLabel = document.createElement('div');
       sortLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin:12px 0 6px;';
-      sortLabel.textContent = 'Hand Sort';
+      sortLabel.textContent = t('set.handSort');
       container.appendChild(sortLabel);
 
       var sortToggle = document.createElement('div');
       sortToggle.className = 'mode-toggle';
       var sorts = ['none', 'suit', 'strength'];
-      var sortNames = ['Off', 'Suit', 'Strength'];
+      var sortNames = [t('set.sortOff'), t('set.sortSuit'), t('set.sortStrength')];
       var currentSort = localStorage.getItem('durak_sort') || 'none';
 
       for (var s = 0; s < sorts.length; s++) {
@@ -565,7 +602,7 @@ function injectDurakSettings() {
       var btnEnd = document.createElement('button');
       btnEnd.className = 'settings-danger-btn';
       btnEnd.style.marginTop = '12px';
-      btnEnd.textContent = 'End round & back to menu';
+      btnEnd.textContent = t('act.endRound');
       btnEnd.addEventListener('click', function(e) {
         e.preventDefault();
         window.KamekoSettings.closeDrawer();

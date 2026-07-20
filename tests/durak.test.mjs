@@ -370,7 +370,7 @@ test('elimination: empty hand + empty deck → isOut; last standing is Durak', (
   // Seat 1 now has [7♠, 14♠], seat 0 has 0 cards and deck empty → isOut
   assert.equal(state.players[0].isOut, true);
   assert.equal(state.phase, 'gameover');
-  assert.match(state.winnerText, /Durak/i);
+  assert.equal(state.winnerOutcome.kind, 'durak');
 });
 
 // ─── isTrump ────────────────────────────────────────────────────────────────

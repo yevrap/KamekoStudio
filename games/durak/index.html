@@ -56,17 +56,17 @@
 
   <!-- Start screen -->
   <div id="start-overlay" class="overlay scrollable-modal">
-    <div class="g-title">DURAK</div>
-    <div class="g-sub">Classic Russian card game, 2&ndash;6 players</div>
-    <div class="g-rules">Attack with pairs, defend with higher cards of the same suit or trumps. The last player still holding cards is the Durak!</div>
+    <div class="g-title" id="start-title">DURAK</div>
+    <div class="g-sub" id="start-subtitle">Classic Russian card game, 2&ndash;6 players</div>
+    <div class="g-rules" id="start-rules-blurb">Attack with pairs, defend with higher cards of the same suit or trumps. The last player still holding cards is the Durak!</div>
 
-    <div class="setup-label">Mode</div>
+    <div class="setup-label" id="setup-mode-label">Mode</div>
     <div class="mode-toggle" id="mode-toggle">
-      <button class="mode-btn active" type="button" data-mode="ai">vs Computer</button>
-      <button class="mode-btn" type="button" data-mode="hotseat">Hot-seat</button>
+      <button class="mode-btn active" type="button" data-mode="ai" id="mode-btn-ai">vs Computer</button>
+      <button class="mode-btn" type="button" data-mode="hotseat" id="mode-btn-hotseat">Hot-seat</button>
     </div>
 
-    <div class="setup-label">Players</div>
+    <div class="setup-label" id="setup-players-label">Players</div>
     <div class="count-toggle" id="count-toggle">
       <button class="count-btn" type="button" data-count="2">2</button>
       <button class="count-btn" type="button" data-count="3">3</button>
@@ -76,13 +76,13 @@
     </div>
     <button class="mbtn outline" id="btn-edit-names" type="button" style="padding: 8px 16px; min-height: 38px; font-size: 0.8rem; margin-top: -4px; border-radius: 8px;">&#9998; Edit Names</button>
 
-    <div class="setup-label">Rules</div>
+    <div class="setup-label" id="setup-rules-label">Rules</div>
     <div class="setup-rule-row">
-      <span>Perevodnoy (Transfers)</span>
+      <span id="setup-perevodnoy-label">Perevodnoy (Transfers)</span>
       <label class="kameko-switch"><input type="checkbox" id="setup-perevodnoy"><span class="kameko-slider"></span></label>
     </div>
     <div class="setup-rule-row" id="setup-first-transfer-row">
-      <span>Allow First-Turn Transfer</span>
+      <span id="setup-first-transfer-label">Allow First-Turn Transfer</span>
       <label class="kameko-switch"><input type="checkbox" id="setup-first-transfer"><span class="kameko-slider"></span></label>
     </div>
 
@@ -94,9 +94,9 @@
 
   <!-- Pass device cover (hot-seat only) -->
   <div id="pass-device-overlay" class="overlay hidden">
-    <div class="g-sub">Pass device to</div>
+    <div class="g-sub" id="pass-device-title">Pass device to</div>
     <div class="g-title" id="pass-device-name"></div>
-    <div class="g-rules">Tap anywhere when ready.</div>
+    <div class="g-rules" id="pass-device-hint">Tap anywhere when ready.</div>
   </div>
 
   <!-- Transfer-or-beat choice (perevodnoy: tapped card can do both) -->
@@ -107,7 +107,7 @@
         <button class="action-btn choice-transfer" type="button" id="btn-choice-transfer">&#8644; Transfer</button>
         <button class="action-btn choice-beat" type="button" id="btn-choice-beat">&#128737;&#65039; Beat</button>
       </div>
-      <div class="choice-hint">Tap outside to cancel</div>
+      <div class="choice-hint" id="choice-hint">Tap outside to cancel</div>
     </div>
   </div>
 
@@ -121,7 +121,7 @@
 
   <!-- Edit Names screen -->
   <div id="names-overlay" class="overlay hidden scrollable-modal">
-    <div class="g-title" style="font-size: clamp(1.5rem, 6vw, 2.5rem);">PLAYER NAMES</div>
+    <div class="g-title" id="names-title" style="font-size: clamp(1.5rem, 6vw, 2.5rem);">PLAYER NAMES</div>
     <div class="g-sub" id="names-subtitle"></div>
     <div id="names-grid" class="names-grid"></div>
     <div class="names-actions">
@@ -133,7 +133,7 @@
   <!-- Game Log screen -->
   <div id="log-overlay" class="overlay hidden scrollable-modal" style="justify-content: flex-start; padding-top: 40px; background: rgba(10,10,20,0.95);">
     <div style="display:flex; justify-content:space-between; width:100%; max-width:400px; margin-bottom:16px;">
-      <div class="g-title" style="font-size: 1.5rem;">📜 Game Log</div>
+      <div class="g-title" id="log-title" style="font-size: 1.5rem;">📜 Game Log</div>
       <button id="btn-close-log" style="background:transparent; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">✕</button>
     </div>
     <div id="log-body" style="width:100%; max-width:400px; display:flex; flex-direction:column; gap:8px; font-size:0.9rem; color:var(--text);"></div>
@@ -142,7 +142,7 @@
   <!-- Rules screen -->
   <div id="rules-overlay" class="overlay hidden scrollable-modal" style="justify-content: flex-start; padding-top: 40px; background: rgba(10,10,20,0.95);">
     <div style="display:flex; justify-content:space-between; width:100%; max-width:400px; margin-bottom:16px;">
-      <div class="g-title" style="font-size: 1.5rem;">❓ Rules of Durak</div>
+      <div class="g-title" id="rules-title" style="font-size: 1.5rem;">❓ Rules of Durak</div>
       <button id="btn-close-rules" style="background:transparent; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">✕</button>
     </div>
     <div id="rules-body" style="width:100%; max-width:400px; display:flex; flex-direction:column; gap:12px; font-size:0.9rem; color:var(--text); text-align:left; line-height:1.4;">

@@ -3,6 +3,7 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { buildDeck } from './constants.js';
+import { defaultPlayerName } from './i18n.js';
 
 export var state = {
   players: [],        // [{ seat, name, isHuman, hand, isOut }]
@@ -25,7 +26,7 @@ export var state = {
   pendingReveal: null, // { seat } during passDevice
   mode: 'ai',         // 'ai' | 'hotseat'
   playerCount: 2,
-  winnerText: ''
+  winnerOutcome: null // { kind: 'draw' | 'durak' | 'gameover', isYou, name } — localized at render time
 };
 
 // ── Query helpers ──────────────────────────────────────────────────────────
@@ -100,10 +101,8 @@ export function setupPlayers(mode, count) {
   state.players = [];
   for (var i = 0; i < count; i++) {
     var isHuman = (mode === 'hotseat') ? true : (i === 0);
-    var name;
-    if (i === 0) name = (mode === 'hotseat') ? 'Player 1' : 'You';
-    else name = (mode === 'hotseat') ? ('Player ' + (i + 1)) : ('CPU ' + i);
-    
+    var name = defaultPlayerName(mode, i);
+
     var custom = localStorage.getItem('durak_name_' + mode + '_' + i);
     if (custom && custom.trim() !== '') name = custom.trim().substring(0, 15);
 
@@ -134,7 +133,7 @@ export function newGame(mode, count) {
   state.prioritySeat = 0;
   state.phase = 'playing';
   state.pendingReveal = null;
-  state.winnerText = '';
+  state.winnerOutcome = null;
 
   state.variantPerevodnoy = localStorage.getItem('durak_perevodnoy') === 'true';
   state.variantFirstTransfer = localStorage.getItem('durak_first_transfer') === 'true';
