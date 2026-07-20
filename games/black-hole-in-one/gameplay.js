@@ -203,12 +203,16 @@ export function placeOnRest() {
 /* ============================== FLIGHT ============================== */
 
 export function launch(dx, dy, len) {
-    if (S.mode === 'endless' && S.fuel <= 0) return false;
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
-    // weak drag = cancelled shot; resume the orbit if we were flicking out of one
-    if (speed < MIN_SHOT) { S.phase = world.orbit ? 'orbit' : 'rest'; return false; }
+    // Cancelled shot (drag too weak, or no fuel to spend): restore S.phase from
+    // 'aiming' the same way for both cases (FUEL-3/FUEL-6) — an early return on
+    // the no-fuel guard alone used to strand S.phase at 'aiming' forever.
+    if (((S.mode === 'endless' || S.mode === 'custom') && S.fuel <= 0) || speed < MIN_SHOT) {
+        S.phase = world.orbit ? 'orbit' : 'rest';
+        return false;
+    }
 
-    if (S.mode === 'endless') {
+    if (S.mode === 'endless' || S.mode === 'custom') {
         S.fuel -= 15;
         if (S.fuel < 0) S.fuel = 0;
     }
@@ -577,6 +581,8 @@ export function startCustomMap(mapData) {
     S.hole = 1;
     S.totalDiff = 0;
     S.roundCard = [];
+    S.fuel = 100; // FUEL-8: mirror golf's startRun('endless') reset — otherwise
+    // leftover golf/prior-custom fuel carries into every custom map, including restarts.
     // Retain the source mapData so a later restart (main.js's startRun('custom'))
     // can reload this same map instead of falling through to genHole() (FUEL-4).
     world.activeMapData = mapData;

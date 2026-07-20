@@ -827,8 +827,12 @@ export function updateBar() {
         document.getElementById('exploreRegion').textContent = getRegionName(comet.x, comet.y);
         return;
     }
-    if (S.mode === 'endless') {
+    if (S.mode === 'endless' || S.mode === 'custom') {
+        // FUEL-7: custom play unhides the same #endlessFuelBar but was never
+        // told to move it — the stardust HUD stays endless-only, unchanged.
         setFuelBar('endlessFuelBar', S.fuel);
+    }
+    if (S.mode === 'endless') {
         document.getElementById('endlessStardust').textContent = S.stardust;
     }
     // MM-13: only 'custom' reaches this shared endless/custom block without an

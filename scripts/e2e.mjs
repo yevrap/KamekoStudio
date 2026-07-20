@@ -405,6 +405,48 @@ await test('black-hole-in-one: restarting a custom/shared map reloads that same 
     'restart did not reset the map\'s pickups back to their original layout, got ' + after.pickupCount);
 });
 
+await test('black-hole-in-one: fuel bar visibly ticks down while flying a custom map (FUEL-6/7/8)', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const game = await import('/games/black-hole-in-one/gameplay.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    // Leave leftover golf fuel behind, same as a real player switching from
+    // Endless into a custom map — FUEL-8 must still reset to full on entry.
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    S.fuel = 7;
+    game.startCustomMap({
+      teeRock: { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' },
+      blackHole: { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' },
+      bodies: [], pickups: [],
+    });
+    ui.updateBar();
+  });
+
+  const beforeLaunch = await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    return { fuel: S.fuel, barWidth: document.getElementById('endlessFuelBar').style.width };
+  });
+  assert(beforeLaunch.fuel === 100, 'FUEL-8: custom map must start at full fuel, not the leftover golf value');
+  assert(beforeLaunch.barWidth === '100%', 'FUEL-7: fuel bar must render the reset fuel value, got ' + beforeLaunch.barWidth);
+
+  const afterLaunch = await page.evaluate(async () => {
+    const { S, world, comet } = await import('/games/black-hole-in-one/state.js');
+    const game = await import('/games/black-hole-in-one/gameplay.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    game.placeOnRest();
+    comet.vx = comet.vy = 0;
+    S.phase = 'rest';
+    game.launch(0, -1, 100); // full-power drag
+    ui.updateBar();
+    return { fuel: S.fuel, barWidth: document.getElementById('endlessFuelBar').style.width };
+  });
+  assert(afterLaunch.fuel < 100, 'FUEL-6: fuel must drain on a custom-map launch, got ' + afterLaunch.fuel);
+  assert(afterLaunch.barWidth === afterLaunch.fuel + '%',
+    'FUEL-7: fuel bar DOM width must track S.fuel in custom mode, got width ' + afterLaunch.barWidth + ' for fuel ' + afterLaunch.fuel);
+});
+
 await test('durak-alchemist: Play is free and starts the game', async page => {
   await page.goto(base + '/games/durak-alchemist/', { waitUntil: 'load' });
   const label = await page.$eval('#start-btn', b => b.textContent);

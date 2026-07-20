@@ -453,6 +453,45 @@ test('launch: weak drags cancel, real drags spend a stroke', () => {
     assert.ok(comet.vy < 0, 'launched upward');
 });
 
+test('launch spends fuel and blocks flight past 0 in Custom Map mode (FUEL-6)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    game.startCustomMap({
+        teeRock: { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' },
+        blackHole: { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' },
+        bodies: [], pickups: [],
+    });
+    assert.equal(S.fuel, 100);
+    const ok = game.launch(0, -1, 100);   // full-power drag
+    assert.equal(ok, true, 'a real drag must still launch in custom mode');
+    assert.equal(S.fuel, 85, 'custom-map fuel must drain per flick, same as endless (FUEL-6 root cause)');
+
+    S.fuel = 0;
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    game.placeOnRest();
+    comet.vx = comet.vy = 0;
+    S.phase = 'rest';
+    const blocked = game.launch(0, -1, 100);
+    assert.equal(blocked, false, 'a custom map must not be flyable past 0 fuel');
+    assert.equal(S.phase, 'rest', 'phase must not stay stuck at "aiming" on a failed 0-fuel launch attempt');
+    delete globalThis.document;
+});
+
+test('launch restores S.phase from "aiming" on a failed 0-fuel attempt in Custom Map mode, mirroring the FUEL-3 fix (FUEL-6)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    game.startCustomMap({
+        teeRock: { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' },
+        blackHole: { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' },
+        bodies: [], pickups: [],
+    });
+    S.fuel = 0;
+    S.phase = 'aiming';   // main.js's pointerdown sets this when a drag starts
+    const ok = game.launch(0, -1, 100);
+    assert.equal(ok, false);
+    assert.equal(S.phase, 'rest',
+        'a 0-fuel aim in custom mode used to strand S.phase at "aiming" forever (same softlock class as FUEL-3)');
+    delete globalThis.document;
+});
+
 /* ============================== STAB-1: liftoff grace ============================== */
 
 test('gravityAt damp scales only the named body\'s pull (STAB-1)', () => {
@@ -1339,6 +1378,22 @@ test('startCustomMap retains the source mapData on world.activeMapData so a rest
     assert.equal(world.pickups.length, 1, 'restarting a custom map must reset pickups back to the map\'s original layout');
     assert.equal(world.bodies.some(b => b.type === 'planet'), true,
         'restarting a custom map must reload its authored bodies, not a freshly generated hole (FUEL-4)');
+    delete globalThis.document;
+});
+
+test('startCustomMap resets S.fuel to full, so leftover golf/prior-custom fuel never carries over (FUEL-8)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    const blackHole = { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' };
+    const mapData = { teeRock, blackHole, bodies: [], pickups: [] };
+
+    S.fuel = 12; // leftover from a prior golf/endless round
+    game.startCustomMap(mapData);
+    assert.equal(S.fuel, 100, 'entering a custom map must start at full fuel, not inherit leftover golf fuel');
+
+    S.fuel = 0; // drained mid-play
+    game.startCustomMap(world.activeMapData); // restarting the same map (FUEL-4's reload path)
+    assert.equal(S.fuel, 100, 'restarting a custom map must also top the tank back up');
     delete globalThis.document;
 });
 
