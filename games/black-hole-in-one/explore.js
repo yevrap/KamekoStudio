@@ -587,6 +587,7 @@ export function step(dt) {
         comet.vx += t.x * THRUST_A * dt;
         comet.vy += t.y * THRUST_A * dt;
         burnFuel(THRUST_BURN * t.throttle * dt);
+        hooks.bar();
         // Exhaust: a few particles opposite the thrust vector each step, in the
         // comet's own trail color (#ffcf8a) — reuses the existing burst(). INV-3c:
         // tuned down from 0.15 (placeholder) — at 240 steps/s and ~0.65s average

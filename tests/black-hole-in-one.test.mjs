@@ -18,6 +18,7 @@ import * as game from '../games/black-hole-in-one/gameplay.js';
 import {
     chunkLandmarks, getChunkBodies, CHUNK_SIZE, camera as exploreCamera,
     updateActiveChunks, startRun as exploreStartRun,
+    step as exploreStep, setHooks as setExploreHooks, keyDown as exploreKeyDown, clearKeys as exploreClearKeys, fuel as exploreFuel,
 } from '../games/black-hole-in-one/explore.js';
 
 /* ============================== constants helpers ============================== */
@@ -1063,6 +1064,29 @@ test('updateActiveChunks marks refuelStation/moonRing/stardustRing once their ch
         loadChunkFresh(found[0], found[1], false);
         assert.equal(S.glossarySeen[key], true, `real load of a ${key} chunk marks it seen`);
     }
+});
+
+test("explore step() calls hooks.bar() every frame while thrust drains fuel, so the HUD fuel bar visibly ticks down instead of only refreshing on the next unrelated event (FUEL-5)", () => {
+    S.mode = 'explore';
+    S.phase = 'flight';
+    S.inventory.thruster = { owned: true, enabled: true };
+    world.bodies = [];
+    world.pickups = [];
+    comet.x = 0; comet.y = 0; comet.vx = 0; comet.vy = 0;
+    exploreClearKeys();
+    exploreKeyDown('KeyW'); // hold thrust
+
+    let barCalls = 0;
+    setExploreHooks({ bar() { barCalls++; } });
+
+    const fuelBefore = exploreFuel;
+    exploreStep(1 / 60);
+
+    assert.ok(barCalls > 0, 'hooks.bar() must fire while thrust is burning fuel, or the fuel bar never visually updates until an unrelated event redraws it');
+    assert.ok(exploreFuel < fuelBefore, 'thrusting should have burned fuel this frame');
+
+    exploreClearKeys();
+    setExploreHooks({ bar() {} });
 });
 
 /* ============================== MM-15: planet size + all object types ============================== */
