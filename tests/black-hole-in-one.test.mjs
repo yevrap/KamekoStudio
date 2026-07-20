@@ -1441,6 +1441,66 @@ test('a mine hit in Endless mode still zeroes fuel and can trigger game over (pr
     assert.equal(S.fuel, 0, 'Endless hazard death still zeroes fuel exactly as before');
 });
 
+test('♾️ Endless Flight stops launch() from spending fuel in Golf (endless mode) (FUEL-10)', () => {
+    game.startRun('endless');
+    S.inventory.endlessFlight.enabled = true;
+    S.fuel = 40;
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    world.orbit = null;
+    game.launch(1, -1, 100);
+    assert.equal(S.fuel, 40, 'fuel must not drain from a Golf launch while Endless Flight is enabled');
+    S.inventory.endlessFlight.enabled = false;
+});
+
+test('♾️ Endless Flight lets Golf keep launching at 0 fuel instead of blocking the shot (FUEL-10)', () => {
+    game.startRun('endless');
+    S.inventory.endlessFlight.enabled = true;
+    S.fuel = 0;
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    world.orbit = null;
+    const launched = game.launch(1, -1, 100);
+    assert.equal(launched, true, 'a 0-fuel launch must succeed in Golf while Endless Flight is enabled');
+    assert.equal(S.phase, 'flight');
+    S.inventory.endlessFlight.enabled = false;
+});
+
+test('without ♾️ Endless Flight, Golf still blocks launching at 0 fuel (FUEL-10 regression guard)', () => {
+    game.startRun('endless');
+    S.inventory.endlessFlight.enabled = false;
+    S.fuel = 0;
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    world.orbit = null;
+    const launched = game.launch(1, -1, 100);
+    assert.equal(launched, false, 'a 0-fuel launch must still be blocked in Golf without the item');
+});
+
+test('♾️ Endless Flight stops launch() from spending fuel in Custom Map too (FUEL-10)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    const blackHole = { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' };
+    game.startCustomMap({ teeRock, blackHole, bodies: [], pickups: [] });
+    S.inventory.endlessFlight.enabled = true;
+    S.fuel = 40;
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    world.orbit = null;
+    game.launch(1, -1, 100);
+    assert.equal(S.fuel, 40, 'fuel must not drain from a Custom Map launch while Endless Flight is enabled');
+    S.inventory.endlessFlight.enabled = false;
+    delete globalThis.document;
+});
+
+test('a mine hit in Golf (endless mode) still ends the run even with ♾️ Endless Flight enabled — no hazard immunity (FUEL-10)', () => {
+    game.startRun('endless');
+    S.inventory.endlessFlight.enabled = true;
+    S.fuel = 40;
+    world.bodies = [world.teeRock, { x: comet.x, y: comet.y, r: 2, m: 0, type: 'mine' }];
+    S.phase = 'flight';
+    game.stepFlight(DT);
+    assert.equal(S.fuel, 0, 'a hazard kill still zeroes fuel with Endless Flight enabled');
+    assert.equal(S.phase, 'roundover', 'a hazard kill still ends the round with Endless Flight enabled — the item is not hazard immunity');
+    S.inventory.endlessFlight.enabled = false;
+});
+
 test('pickup collection now applies in custom mode too, not just endless (MM-15)', () => {
     S.mode = 'custom';
     S.phase = 'flight';

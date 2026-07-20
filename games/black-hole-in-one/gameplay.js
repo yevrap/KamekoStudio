@@ -204,15 +204,19 @@ export function placeOnRest() {
 
 export function launch(dx, dy, len) {
     const speed = Math.min(len / MAX_DRAG, 1) * MAX_LAUNCH;
+    // FUEL-10: ♾️ Endless Flight (Explore's item) also gates Golf/Custom's fuel
+    // spend here, mirroring explore.js's burnFuel() exactly — Golf/Custom never
+    // routed through burnFuel(), they spend S.fuel directly in this function.
+    const endlessFlight = !!S.inventory.endlessFlight?.enabled;
     // Cancelled shot (drag too weak, or no fuel to spend): restore S.phase from
     // 'aiming' the same way for both cases (FUEL-3/FUEL-6) — an early return on
     // the no-fuel guard alone used to strand S.phase at 'aiming' forever.
-    if (((S.mode === 'endless' || S.mode === 'custom') && S.fuel <= 0) || speed < MIN_SHOT) {
+    if (((S.mode === 'endless' || S.mode === 'custom') && S.fuel <= 0 && !endlessFlight) || speed < MIN_SHOT) {
         S.phase = world.orbit ? 'orbit' : 'rest';
         return false;
     }
 
-    if (S.mode === 'endless' || S.mode === 'custom') {
+    if ((S.mode === 'endless' || S.mode === 'custom') && !endlessFlight) {
         S.fuel -= 15;
         if (S.fuel < 0) S.fuel = 0;
     }
@@ -241,10 +245,17 @@ export function launch(dx, dy, len) {
     return true;
 }
 
+function endSurvivalRound() {
+    S.phase = 'roundover';
+    hooks.showSurvivalGameOver(S.hole);
+}
+
+// FUEL-10: gated by ♾️ Endless Flight — organic fuel-out only, never a hazard kill.
+// triggerHazardDeath below calls endSurvivalRound() directly instead of going
+// through this check, so a mine/trap always ends the run regardless of the item.
 function checkSurvivalGameOver() {
-    if (S.mode === 'endless' && S.fuel <= 0) {
-        S.phase = 'roundover';
-        hooks.showSurvivalGameOver(S.hole);
+    if (S.mode === 'endless' && S.fuel <= 0 && !S.inventory.endlessFlight?.enabled) {
+        endSurvivalRound();
         return true;
     }
     return false;
@@ -256,7 +267,7 @@ function triggerHazardDeath(hit) {
     hooks.toast(hit.type === 'trap' ? '🌀 Crushed in a Gravity Trap' : (hit.type === 'asteroid' ? '☄️ Smashed by an Asteroid' : '💥 Hit a Space Mine'));
     if (S.mode === 'endless') {
         S.fuel = 0;
-        checkSurvivalGameOver();
+        endSurvivalRound();
         return;
     }
     // MM-15: traps/mines used to only ever spawn in Endless, so nothing outside
