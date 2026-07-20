@@ -9,16 +9,36 @@ import {
     ORBIT_COOLDOWN, ORBIT_ARM_T, LIFTOFF_T, LIFTOFF_MIN, DEFAULT_MAP_SIZE, mapBounds,
     rand, dist, holeLabel,
 } from './constants.js';
-import { S, world, comet } from './state.js';
+import { S, world, comet, markGlossarySeen } from './state.js';
 import { stepBody, collide, orbitCapture } from './physics.js';
 
 // Presentation hooks — main.js swaps in the real UI; defaults are no-ops.
 export let hooks = {
     toast() {}, chip() {}, bar() {}, holeStart() {}, roundEnd() {}, editorReturn() {},
-    showSurvivalGameOver() {}, burst() {}, stardust() {},
+    showSurvivalGameOver() {}, burst() {}, stardust() {}, glossary() {},
     sfx: { flick() {}, bounce() {}, sling() {}, lost() {}, land() {}, sink() {}, score() {} },
 };
 export function setHooks(h) { hooks = Object.assign(hooks, h); }
+
+// MM-18: mark every object type actually present in a hole/custom map you're about
+// to play as "seen" — genHole()/startCustomMap() call this once their world is
+// built. NOT called for the decorative background hole main.js generates behind
+// the boot menu (genHole's `silent` param) — that's never actually played.
+function markPresentObjects() {
+    let changed = false;
+    if (markGlossarySeen('tee')) changed = true;
+    for (const b of world.bodies) {
+        if (b.type === 'planet') { if (markGlossarySeen('planet')) changed = true; }
+        else if (b.type === 'pulsar') { if (markGlossarySeen('pulsar')) changed = true; }
+        else if (b.type === 'trap') { if (markGlossarySeen('trap')) changed = true; }
+        else if (b.type === 'mine') { if (markGlossarySeen('mine')) changed = true; }
+    }
+    if (world.asteroids.length && markGlossarySeen('asteroid')) changed = true;
+    for (const p of world.pickups) {
+        if (p.type === 'fuel' && markGlossarySeen('fuel')) changed = true;
+    }
+    if (changed) hooks.glossary();
+}
 
 let resultTimer = null;
 
@@ -31,7 +51,7 @@ function schedule(fn, ms) {
 
 /* ============================== HOLE GENERATION ============================== */
 
-export function genHole(n) {
+export function genHole(n, silent = false) {
     world.bodies = [];
     world.teeRock = { x: rand(28, 72), y: COURSE_H * rand(0.84, 0.9), r: 3.4, m: 8, type: 'tee' };
     world.blackHole = { x: rand(18, 82), y: COURSE_H * rand(0.1, 0.17), r: 3.2, m: 230, type: 'hole' };
@@ -164,6 +184,7 @@ export function genHole(n) {
     S.orbitCooldown = 0;
     S.liftoff = 0;
 
+    if (!silent) markPresentObjects();
     hooks.holeStart();
     hooks.bar();
 }
@@ -207,6 +228,7 @@ export function launch(dx, dy, len) {
     S.phase = 'flight';
     hooks.sfx.flick();
     hooks.bar();
+    if (markGlossarySeen('flick')) hooks.glossary();
     return true;
 }
 
@@ -275,6 +297,7 @@ export function stepFlight(dt) {
                 if (p.type === 'fuel' || !p.type) {
                     S.fuel = Math.min(100, S.fuel + 20);
                     hooks.burst(p.x, p.y, 14, '#20e657', 20);
+                    if (markGlossarySeen('refueling')) hooks.glossary();
                 } else if (p.type === 'stardust') {
                     S.stardust += 1;
                     hooks.stardust(S.stardust);
@@ -365,6 +388,7 @@ export function landOn(b, ang) {
         S.hopsThisHole++;
         if (S.hopsThisHole === 1) hooks.toast('🪐 HOP! Teed up on a planet');
     }
+    if (markGlossarySeen('landing')) hooks.glossary();
     checkSurvivalGameOver();
 }
 
@@ -385,6 +409,7 @@ export function beginOrbit(b, cap) {
         world.orbitedThisHole.add(b);
         hooks.toast('🛰 ORBIT! Flick to break away');
     }
+    if (markGlossarySeen('orbitCapture')) hooks.glossary();
     checkSurvivalGameOver();
 }
 
@@ -452,6 +477,7 @@ export function stepSink(dt) {
 }
 
 export function holeComplete() {
+    if (markGlossarySeen('hole')) hooks.glossary();
     const diff = S.strokes - S.par;
     S.totalDiff += diff;
     S.roundCard.push({ hole: S.hole, strokes: S.strokes, par: S.par, hopped: S.hopsThisHole > 0 });
@@ -562,8 +588,9 @@ export function startCustomMap(mapData) {
     S.orbitCooldown = 0;
     S.liftoff = 0;
 
+    markPresentObjects();
     hooks.holeStart();
-    
+
     // Hide UI elements not relevant for custom
     document.getElementById('exploreBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');

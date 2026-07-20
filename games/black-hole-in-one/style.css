@@ -656,6 +656,33 @@ body {
 }
 .howto-toggle-row small { opacity: 0.65; font-weight: 400; color: #b8b8e0; }
 
+/* ---- Object glossary / play guide (MM-18) ---- */
+.glossary-progress { font-size: 0.72rem; color: #7a7ab0; letter-spacing: 0.06em; text-align: center; }
+.glossary-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    max-width: 320px;
+    text-align: left;
+    font-size: 0.85rem;
+    color: #e0e0ff;
+}
+.glossary-row small { display: block; opacity: 0.65; font-weight: 400; color: #b8b8e0; margin-top: 2px; }
+.glossary-badge {
+    flex-shrink: 0;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.glossary-badge.seen { color: #00e5a0; border: 1px solid #00e5a0; }
+.glossary-badge.unseen { color: #7a7ab0; border: 1px solid #2a2a50; }
+
 #myMapsList {
     display: flex;
     flex-direction: column;

@@ -2,7 +2,7 @@
 'use strict';
 
 import { DT, ROUND_HOLES, TAP_MAX_LEN, LS_KEYS } from './constants.js';
-import { S, world, comet, mergeInventory } from './state.js';
+import { S, world, comet, mergeInventory, mergeGlossarySeen } from './state.js';
 import * as game from './gameplay.js';
 import * as explore from './explore.js';
 import * as editor from './editor.js';
@@ -23,6 +23,7 @@ const LS = {
     inventory: LS_KEYS.inventory,
     exploreHome: 'blackHoleInOne_exploreHome',
     discoveredChunks: 'blackHoleInOne_discoveredChunks',
+    glossarySeen: LS_KEYS.glossarySeen,
 };
 
 function bestRound() {
@@ -59,6 +60,9 @@ game.setHooks({
     stardust(total) {
         localStorage.setItem(LS.stardust, String(total));
     },
+    glossary() {
+        localStorage.setItem(LS.glossarySeen, JSON.stringify(S.glossarySeen));
+    },
 });
 
 explore.setHooks({
@@ -77,6 +81,9 @@ explore.setHooks({
     },
     discovery(chunks) {
         localStorage.setItem(LS.discoveredChunks, JSON.stringify(chunks));
+    },
+    glossary() {
+        localStorage.setItem(LS.glossarySeen, JSON.stringify(S.glossarySeen));
     },
 });
 
@@ -476,13 +483,18 @@ try {
 try {
     explore.loadDiscoveredChunks(JSON.parse(localStorage.getItem(LS.discoveredChunks)));
 } catch (e) { /* corrupt value — keep defaults */ }
+try {
+    S.glossarySeen = mergeGlossarySeen(JSON.parse(localStorage.getItem(LS.glossarySeen)));
+} catch (e) { /* corrupt value — keep defaults */ }
 
+// MM-18: silent=true — this generates the decorative hole/chunk behind the boot
+// menu, never actually played, so it must not mark anything in the glossary as seen.
 function bootBackground() {
     const lastMode = localStorage.getItem(LS.mode);
     if (lastMode === 'explore') {
-        explore.startRun();
+        explore.startRun(true);
     } else {
-        game.genHole(1);
+        game.genHole(1, true);
     }
     S.phase = 'menu';
 }

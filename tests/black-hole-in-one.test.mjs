@@ -10,11 +10,15 @@ import {
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, LS_KEYS, hitTestMapTargets,
     OB_MARGIN, ORBIT_MAX_GAP, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds,
     overviewAvailable, overviewTransform, overviewToWorld, worldToOverview,
+    GLOSSARY_OBJECTS, GLOSSARY_MECHANICS, ITEMS,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
-import { S, world, comet } from '../games/black-hole-in-one/state.js';
+import { S, world, comet, defaultGlossarySeen, mergeGlossarySeen, markGlossarySeen } from '../games/black-hole-in-one/state.js';
 import * as game from '../games/black-hole-in-one/gameplay.js';
-import { chunkLandmarks, getChunkBodies } from '../games/black-hole-in-one/explore.js';
+import {
+    chunkLandmarks, getChunkBodies, CHUNK_SIZE, camera as exploreCamera,
+    updateActiveChunks, startRun as exploreStartRun,
+} from '../games/black-hole-in-one/explore.js';
 
 /* ============================== constants helpers ============================== */
 
@@ -901,4 +905,162 @@ test('hitTestMapTargets breaks overlapping-radius ties in favor of the closer ce
 
 test('hitTestMapTargets returns null for an empty target list', () => {
     assert.equal(hitTestMapTargets(0, 0, []), null);
+});
+
+/* ============================== MM-18: object glossary ============================== */
+
+test('GLOSSARY_OBJECTS and GLOSSARY_MECHANICS each have a unique key, icon, label, and desc', () => {
+    for (const list of [GLOSSARY_OBJECTS, GLOSSARY_MECHANICS]) {
+        const keys = new Set();
+        for (const e of list) {
+            assert.ok(e.key && typeof e.key === 'string');
+            assert.ok(e.icon && typeof e.icon === 'string');
+            assert.ok(e.label && typeof e.label === 'string');
+            assert.ok(e.desc && typeof e.desc === 'string');
+            assert.ok(!keys.has(e.key), `duplicate key ${e.key}`);
+            keys.add(e.key);
+        }
+    }
+});
+
+test('LS_KEYS carries the glossarySeen localStorage key (MM-18)', () => {
+    assert.equal(LS_KEYS.glossarySeen, 'blackHoleInOne_glossarySeen');
+});
+
+test('defaultGlossarySeen covers every GLOSSARY_OBJECTS/GLOSSARY_MECHANICS/ITEMS key, all false', () => {
+    const seen = defaultGlossarySeen();
+    for (const e of [...GLOSSARY_OBJECTS, ...GLOSSARY_MECHANICS, ...ITEMS]) {
+        assert.equal(seen[e.key], false, `${e.key} defaults to unseen`);
+    }
+});
+
+test('markGlossarySeen flips a key true once and reports whether it was a new discovery', () => {
+    S.glossarySeen = defaultGlossarySeen();
+    assert.equal(markGlossarySeen('planet'), true, 'first mark is new');
+    assert.equal(S.glossarySeen.planet, true);
+    assert.equal(markGlossarySeen('planet'), false, 'already seen — not new again');
+});
+
+test('mergeGlossarySeen carries over only known true keys, drops unknown ones, keeps the rest false', () => {
+    const merged = mergeGlossarySeen({ planet: true, mine: false, notARealKey: true });
+    assert.equal(merged.planet, true);
+    assert.equal(merged.mine, false);
+    assert.equal(merged.notARealKey, undefined);
+    assert.equal(merged.tee, false);
+});
+
+test('mergeGlossarySeen tolerates null/corrupt saved data and returns all-false defaults', () => {
+    assert.deepEqual(mergeGlossarySeen(null), defaultGlossarySeen());
+    assert.deepEqual(mergeGlossarySeen('garbage'), defaultGlossarySeen());
+});
+
+test('genHole marks tee/planet as seen and fires the glossary hook; a silent genHole (boot background) marks nothing (MM-18)', () => {
+    S.glossarySeen = defaultGlossarySeen();
+    let calls = 0;
+    game.setHooks({ glossary() { calls++; } });
+    game.genHole(9); // late hole — near-guaranteed to place at least one planet
+    assert.equal(S.glossarySeen.tee, true);
+    assert.equal(S.glossarySeen.planet, true);
+    assert.ok(calls > 0, 'hooks.glossary fired on real discovery');
+
+    S.glossarySeen = defaultGlossarySeen();
+    calls = 0;
+    game.genHole(9, true); // silent — the decorative boot-background hole
+    assert.equal(S.glossarySeen.tee, false, 'silent genHole marks nothing');
+    assert.equal(calls, 0, 'silent genHole never calls hooks.glossary');
+    game.setHooks({ glossary() {} });
+});
+
+test('launch marks "flick", landOn marks "landing", beginOrbit marks "orbitCapture", holeComplete marks "hole" (MM-18)', () => {
+    game.startRun('endless');
+    S.glossarySeen = defaultGlossarySeen(); // startRun's own genHole already marked tee/planet; reset for a clean check
+
+    game.launch(0, -40, 40);
+    assert.equal(S.glossarySeen.flick, true);
+
+    const planet = { x: comet.x, y: comet.y + 20, r: 8, m: 64, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    game.landOn(planet, 0);
+    assert.equal(S.glossarySeen.landing, true);
+
+    game.beginOrbit(planet, { radius: 12, ang: 0, omega: 1 });
+    assert.equal(S.glossarySeen.orbitCapture, true);
+
+    S.strokes = 1;
+    game.holeComplete();
+    assert.equal(S.glossarySeen.hole, true);
+});
+
+test('a fuel pickup collected in flight marks "refueling" (MM-18)', () => {
+    game.startRun('endless');
+    S.glossarySeen = defaultGlossarySeen();
+    S.fuel = 50;
+    world.bodies = [world.teeRock];
+    world.pickups = [{ x: comet.x, y: comet.y, r: 1.8, type: 'fuel' }];
+    game.stepFlight(DT);
+    assert.equal(S.glossarySeen.refueling, true);
+});
+
+test('startCustomMap marks the objects present in the loaded map as seen (MM-18)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    S.glossarySeen = defaultGlossarySeen();
+    const teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    const blackHole = { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' };
+    const planet = { x: 50, y: 90, r: 8, m: 64, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    game.startCustomMap({ teeRock, blackHole, bodies: [planet] });
+    assert.equal(S.glossarySeen.tee, true);
+    assert.equal(S.glossarySeen.planet, true);
+    delete globalThis.document;
+});
+
+/* ---- MM-18, Explore-side marking ---- */
+
+function findChunkWithBody(predicate, seed = 'explore-1', range = 10) {
+    for (let cx = -range; cx <= range; cx++) {
+        for (let cy = -range; cy <= range; cy++) {
+            if (cx === 0 && cy === 0) continue; // Town's own chunk — keep the fixture away from it
+            if (getChunkBodies(cx, cy, seed).some(predicate)) return [cx, cy];
+        }
+    }
+    return null;
+}
+
+// Loads chunk (cx,cy) "fresh" — first parks the camera a few chunks away so
+// updateActiveChunks' own "already active" cache can't skip the real scan below.
+function loadChunkFresh(cx, cy, silent = false) {
+    exploreCamera.x = (cx + 5) * CHUNK_SIZE + CHUNK_SIZE / 2;
+    exploreCamera.y = (cy + 5) * CHUNK_SIZE + CHUNK_SIZE / 2;
+    updateActiveChunks(true);
+    exploreCamera.x = cx * CHUNK_SIZE + CHUNK_SIZE / 2;
+    exploreCamera.y = cy * CHUNK_SIZE + CHUNK_SIZE / 2;
+    updateActiveChunks(silent);
+}
+
+test('explore.startRun(true) is silent (boot background); a real startRun marks the tee (MM-18)', () => {
+    S.glossarySeen = defaultGlossarySeen();
+    exploreStartRun(true);
+    assert.equal(S.glossarySeen.tee, false, 'silent startRun marks nothing');
+
+    S.glossarySeen = defaultGlossarySeen();
+    exploreStartRun();
+    assert.equal(S.glossarySeen.tee, true, 'a real startRun marks the tee rock as seen');
+});
+
+test('updateActiveChunks marks refuelStation/moonRing/stardustRing once their chunk is actually (non-silently) loaded, and stays silent when asked (MM-18)', () => {
+    const cases = [
+        ['refuelStation', b => b.refuelStation],
+        ['moonRing', b => b.moon || b.ring],
+        ['stardustRing', b => b.stardustRing],
+    ];
+    for (const [key, predicate] of cases) {
+        const found = findChunkWithBody(predicate);
+        assert.ok(found, `fixture assumption: some chunk has a ${key} body for this seed`);
+
+        S.glossarySeen = defaultGlossarySeen();
+        loadChunkFresh(found[0], found[1], true);
+        assert.equal(S.glossarySeen[key], false, `silent load of a ${key} chunk marks nothing`);
+
+        S.glossarySeen = defaultGlossarySeen();
+        loadChunkFresh(found[0], found[1], false);
+        assert.equal(S.glossarySeen[key], true, `real load of a ${key} chunk marks it seen`);
+    }
 });

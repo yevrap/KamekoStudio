@@ -9,8 +9,9 @@ import {
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
     moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS, hitTestMapTargets, OB_MARGIN, mapBounds,
     overviewAvailable, overviewTransform, overviewToWorld, worldToOverview,
+    GLOSSARY_OBJECTS, GLOSSARY_MECHANICS,
 } from './constants.js';
-import { S, world, comet } from './state.js';
+import { S, world, comet, markGlossarySeen } from './state.js';
 import { stepBody } from './physics.js';
 import * as explore from './explore.js';
 import { setMuted, isMuted } from './sfx.js';
@@ -1186,8 +1187,10 @@ function renderHowtoTabs() {
     });
     document.getElementById('howtoPanelPlay').classList.toggle('hidden', howtoTab !== 'play');
     document.getElementById('howtoPanelSettings').classList.toggle('hidden', howtoTab !== 'settings');
+    document.getElementById('howtoPanelGlossary').classList.toggle('hidden', howtoTab !== 'glossary');
 
     if (howtoTab === 'settings') renderHowtoSettingsPanel();
+    else if (howtoTab === 'glossary') renderHowtoGlossaryPanel();
 }
 
 export function showHowtoTab(tab) {
@@ -1233,8 +1236,41 @@ function renderHowtoSettingsPanel() {
             // Endless Flight (INV-1) is a fuel-lock — switching it on tops the tank
             // off immediately rather than waiting for the next drain/pickup event.
             if (key === 'endlessFlight' && e.target.checked) explore.refuelFull();
+            // MM-18: a modifier counts as "encountered" once actually turned on.
+            if (e.target.checked && markGlossarySeen(key)) {
+                localStorage.setItem(LS_KEYS.glossarySeen, JSON.stringify(S.glossarySeen));
+            }
         });
     });
+}
+
+/* ============================== GLOSSARY (MM-18) ============================== */
+
+function glossaryRow(entry) {
+    const seen = !!S.glossarySeen[entry.key];
+    return `
+        <div class="glossary-row">
+            <span class="glossary-main">${entry.icon} ${entry.label}<br><small>${entry.desc}</small></span>
+            <span class="glossary-badge ${seen ? 'seen' : 'unseen'}">${seen ? '✅ Seen' : '❔ Not yet'}</span>
+        </div>`;
+}
+
+function renderHowtoGlossaryPanel() {
+    const panel = document.getElementById('howtoPanelGlossary');
+    const allKeys = [
+        ...GLOSSARY_OBJECTS.map(e => e.key),
+        ...GLOSSARY_MECHANICS.map(e => e.key),
+        ...ITEMS.map(i => i.key),
+    ];
+    const seenCount = allKeys.filter(k => S.glossarySeen[k]).length;
+    panel.innerHTML = `
+        <p class="glossary-progress">${seenCount} / ${allKeys.length} encountered — your play guide fills in as you go</p>
+        <span class="mode-head">🪐 Objects</span>
+        ${GLOSSARY_OBJECTS.map(glossaryRow).join('')}
+        <span class="mode-head">⚙️ Mechanics</span>
+        ${GLOSSARY_MECHANICS.map(glossaryRow).join('')}
+        <span class="mode-head">🎛️ Modifiers</span>
+        ${ITEMS.map(glossaryRow).join('')}`;
 }
 
 export function showHowto() {
@@ -1373,7 +1409,10 @@ export function updateTownShop() {
     if (show === shopVisible) return;
     shopVisible = show;
     el.classList.toggle('hidden', !show);
-    if (show) renderTownShop();
+    if (show) {
+        renderTownShop();
+        if (markGlossarySeen('town')) localStorage.setItem(LS_KEYS.glossarySeen, JSON.stringify(S.glossarySeen));
+    }
 }
 
 // HUD-3b: explicit ✕ exit, alongside the existing "🛫 Launch" CTA (which leaves by

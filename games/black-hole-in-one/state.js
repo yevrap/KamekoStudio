@@ -1,7 +1,7 @@
 // Black Hole in One — shared mutable state (DOM-free)
 'use strict';
 
-import { ITEMS, DEFAULT_MAP_SIZE } from './constants.js';
+import { ITEMS, DEFAULT_MAP_SIZE, GLOSSARY_OBJECTS, GLOSSARY_MECHANICS } from './constants.js';
 
 // Fresh default inventory, derived from the ITEMS registry so a new item never
 // needs its default hand-duplicated here (INV-1).
@@ -20,6 +20,29 @@ export function mergeInventory(saved) {
     return merged;
 }
 
+// ---- Object glossary "seen" tracking (MM-18) -----------------------------------
+// One boolean per GLOSSARY_OBJECTS/GLOSSARY_MECHANICS/ITEMS key, flipped true the
+// first time a player actually encounters that thing in play (see markGlossarySeen
+// call sites in gameplay.js/explore.js/ui.js) — a play-guide, not a flat list.
+export function defaultGlossarySeen() {
+    const seen = {};
+    for (const e of GLOSSARY_OBJECTS) seen[e.key] = false;
+    for (const e of GLOSSARY_MECHANICS) seen[e.key] = false;
+    for (const item of ITEMS) seen[item.key] = false;
+    return seen;
+}
+
+// Merge a saved (possibly stale, corrupt, or null) seen-map over fresh defaults —
+// only known keys are carried over, so a glossary entry removed later can't leave
+// a phantom `true` behind, and one added later starts unseen until earned.
+export function mergeGlossarySeen(saved) {
+    const merged = defaultGlossarySeen();
+    if (saved && typeof saved === 'object') {
+        for (const k of Object.keys(merged)) if (saved[k]) merged[k] = true;
+    }
+    return merged;
+}
+
 export const S = {
     phase: 'menu',    // menu | rest | aiming | flight | orbit | sink | result | roundover
     prevPhase: null,   // phase before 'aiming' started (mid-flight push return, OW-0)
@@ -33,6 +56,7 @@ export const S = {
     stardust: 0,      // Currency collected in Explore mode
     upgrades: { tank: 0, siphon: 0, sensor: 0 }, // Town Shop upgrade levels (EXP-1b), Explore only
     inventory: defaultInventory(), // Item toggles (INV-1), Explore only
+    glossarySeen: defaultGlossarySeen(), // Object glossary "seen" flags (MM-18)
     paused: false,
     tFlight: 0,
     time: 0,          // cosmetic clock (twinkle, accretion spin)
@@ -62,3 +86,12 @@ export const world = {
 };
 
 export const comet = { x: 0, y: 0, vx: 0, vy: 0, rest: null };
+
+// Flip one glossary key true the first time it's earned; returns whether it was
+// newly set (false if already seen) so callers only re-persist/re-hook on an
+// actual change, same convention as explore.js's markDiscovered.
+export function markGlossarySeen(key) {
+    if (S.glossarySeen[key]) return false;
+    S.glossarySeen[key] = true;
+    return true;
+}

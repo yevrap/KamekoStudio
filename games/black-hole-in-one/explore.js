@@ -2,7 +2,7 @@
 'use strict';
 
 import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX, ORBIT_MIN_GAP, ORBIT_MAX_GAP, circularSpeed, STARDUST_RING_CHANCE, STARDUST_RING_COUNT_MIN, STARDUST_RING_COUNT_MAX, STARDUST_RING_GAP_MIN, STARDUST_RING_GAP_MAX } from './constants.js';
-import { S, world, comet } from './state.js';
+import { S, world, comet, markGlossarySeen } from './state.js';
 import { stepBody, collide, orbitCapture, magnetCapture } from './physics.js';
 
 let shownPushHint = false;   // OW-0: one-time mid-flight push toast
@@ -14,6 +14,7 @@ export let fuel = 100;
 
 export let hooks = {
     toast() {}, bar() {}, burst() {}, stardust() {}, upgrades() {}, exploreHome() {}, discovery() {},
+    glossary() {},
     sfx: { flick() {}, bounce() {}, land() {}, sling() {}, sink() {} },
 };
 export function setHooks(h) { hooks = Object.assign(hooks, h); }
@@ -281,7 +282,26 @@ export function getChunkPickups(cx, cy, seed, bodies = []) {
     return chunkPickups;
 }
 
-export function updateActiveChunks() {
+// MM-18: mark every object type actually active around the comet as "seen". Not
+// called for the decorative boot-background call (main.js passes silent=true
+// through startRun()) — that chunk was never actually played, just rendered.
+function markPresentObjects(bodies, pk) {
+    let changed = false;
+    for (const b of bodies) {
+        if (b.type === 'tee') { if (markGlossarySeen('tee')) changed = true; }
+        else if (b.type === 'planet') { if (markGlossarySeen('planet')) changed = true; }
+        if (b.refuelStation && markGlossarySeen('refuelStation')) changed = true;
+        if ((b.moon || b.ring) && markGlossarySeen('moonRing')) changed = true;
+        if (b.stardustRing && markGlossarySeen('stardustRing')) changed = true;
+    }
+    for (const p of pk) {
+        if (p.type === 'fuel') { if (markGlossarySeen('fuel')) changed = true; }
+        else if (p.type === 'stardust') { if (markGlossarySeen('stardust')) changed = true; }
+    }
+    if (changed) hooks.glossary();
+}
+
+export function updateActiveChunks(silent = false) {
     const cx = Math.floor(camera.x / CHUNK_SIZE);
     const cy = Math.floor(camera.y / CHUNK_SIZE);
     if (cx === lastChunkX && cy === lastChunkY) return;
@@ -329,25 +349,26 @@ export function updateActiveChunks() {
     
     world.bodies = activeBodies;
     world.pickups = pickups;
+    if (!silent) markPresentObjects(activeBodies, pickups);
     lastChunkX = cx;
     lastChunkY = cy;
 }
 
-export function startRun() {
+export function startRun(silent = false) {
     S.mode = 'explore';
     S.phase = 'rest';
-    
+
     worldSeed = 'explore-1'; // Hardcoded for Sprint 1 until persists
     lastChunkX = null;
     lastChunkY = null;
     fuel = tankMaxFuel(S.upgrades.tank);
-    
+
     world.teeRock = { x: 50, y: 85, r: 3.4, m: 8, type: 'tee', id: 'tee' };
     camera.x = 50;
     camera.y = 85;
-    
-    updateActiveChunks();
-    
+
+    updateActiveChunks(silent);
+
     world.blackHole = null;
     
     comet.vx = comet.vy = 0;
@@ -386,6 +407,7 @@ function completeLanding(b, ang) {
         hooks.burst(comet.x, comet.y, 14, '#20e657', 24);
         hooks.toast('⛽ Refueled!');
     }
+    if (markGlossarySeen('landing')) hooks.glossary();
 }
 
 // Spend fuel, unless Endless Flight (INV-1) has the tank locked. Every fuel cost
@@ -423,6 +445,7 @@ export function launch(dx, dy, len) {
     S.phase = 'flight';
     if (S.prevPhase !== 'flight') world.trail = [];  // Keep trail on mid-flight pushes
     hooks.sfx.flick();
+    if (markGlossarySeen('flick')) hooks.glossary();
     return true;
 }
 
@@ -618,6 +641,7 @@ export function step(dt) {
                 world.trail = [];
                 hooks.sfx.sling();
                 hooks.burst(comet.x, comet.y, 12, (b.pal && b.pal.base) || '#9fe3d8', 26);
+                if (markGlossarySeen('orbitCapture')) hooks.glossary();
                 break;
             }
         }
@@ -652,6 +676,7 @@ function beginWarp(b) {
     world.trail = [];
     hooks.sfx.sink();
     hooks.toast('🌀 Pulled into a black hole...');
+    if (markGlossarySeen('warp')) hooks.glossary();
 }
 
 export function stepWarp(dt) {

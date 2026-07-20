@@ -260,7 +260,59 @@ export const LS_KEYS = {
     muted: 'blackHoleInOne_muted',
     freezeAim: 'blackHoleInOne_freezeAim',
     inventory: 'blackHoleInOne_inventory',
+    glossarySeen: 'blackHoleInOne_glossarySeen',
 };
+
+// ---- Object glossary (MM-18) ---------------------------------------------------
+// One entry per object/pickup/hazard type a player can actually run into, keyed to
+// match the `type` tag (or body flag, for refuelStation/moonRing/stardustRing) each
+// one carries in gameplay.js/explore.js — see markGlossarySeen() call sites for how
+// "seen" gets flipped. Content must stay accurate to the current tap-to-land/orbit
+// model (BH-4/ORB-1), not the old auto-capture one.
+export const GLOSSARY_OBJECTS = [
+    { key: 'tee', icon: '🪨', label: 'Tee Rock',
+      desc: 'Where you start each hole — and where a lost shot returns to. Rest here to aim your next flick.' },
+    { key: 'hole', icon: '⚫', label: 'Black Hole (the cup)',
+      desc: 'Sink your comet here to finish the hole — its own gravity pulls close shots in for a spiral finish. One flick in: BLACK HOLE IN ONE!' },
+    { key: 'planet', icon: '🪐', label: 'Planet',
+      desc: 'Bends your shot with real gravity. Land on one — a slow enough impact — to tee up your next flick from there instead of the start.' },
+    { key: 'pulsar', icon: '🌟', label: 'Pulsar',
+      desc: 'A repulsor star — pushes the comet away instead of pulling it in. Appears from hole 6 on; use the push to bend a shot around a blocker.' },
+    { key: 'refuelStation', icon: '⛽', label: 'Refuel Station',
+      desc: 'A planet with a green glow, Explore only. Land on one and your tank fills all the way back up.' },
+    { key: 'stardust', icon: '✨', label: 'Stardust',
+      desc: 'Currency for the Town Shop, Explore only. Fly through it or sweep it up in orbit to collect.' },
+    { key: 'stardustRing', icon: '💫', label: 'Stardust Ring',
+      desc: "A ring of stardust sitting in a planet's orbit-capture band. With 🧲 Orbit Magnet on, snap into orbit near one and riding it out sweeps every dot in a single loop." },
+    { key: 'fuel', icon: '🟢', label: 'Fuel Pickup',
+      desc: 'Tops up your tank on contact. Running dry strands you in place — no auto-tow home, so watch the gauge.' },
+    { key: 'mine', icon: '💥', label: 'Space Mine',
+      desc: 'No gravity, but any contact drains your tank to zero on the spot. Endless mode only, from hole 3 on.' },
+    { key: 'trap', icon: '🌀', label: 'Gravity Trap',
+      desc: 'Heavy pull and no safe landing — touching one ends your run same as a mine. Endless mode only, from hole 2 on.' },
+    { key: 'asteroid', icon: '☄️', label: 'Asteroid',
+      desc: 'Drifts across the course on its own path. A direct hit is instant fuel-zero, same as a mine. Endless mode only, from hole 4 on.' },
+    { key: 'moonRing', icon: '🌙', label: 'Moon / Ring (decorative)',
+      desc: 'Some giant planets in Explore carry a moon or a painted ring. Purely cosmetic — despite how it looks, neither has gravity or collision; you can fly straight through.' },
+];
+
+// One entry per core action/mechanic that isn't a placeable object but still
+// confuses newcomers the same way — how flicking, landing, orbiting, refueling,
+// warping, and Town actually work.
+export const GLOSSARY_MECHANICS = [
+    { key: 'flick', icon: '🎯', label: 'Flick & Gravity Aim',
+      desc: 'Drag anywhere and release — direction and pull-back length set your launch. You rarely aim straight at the target; aim where gravity will carry the shot.' },
+    { key: 'landing', icon: '🪂', label: 'Landing (Hop-and-Putt)',
+      desc: 'A slow enough impact on a planet sticks instead of bouncing. You tee up from there for your next flick — a long hole becomes two easy putts.' },
+    { key: 'orbitCapture', icon: '🛰', label: 'Orbit Capture',
+      desc: "Swing around a planet near-circularly and you're caught into a live orbit instead of landing or bouncing off. Flick to break out — the impulse adds to your orbital speed, so a good release slings you off for free. In Explore, 🧲 Orbit Magnet also lets you tap the planet you're orbiting to land, or tap a black hole you're orbiting to warp to Town." },
+    { key: 'refueling', icon: '⛽', label: 'Refueling',
+      desc: "Fuel drains as you fly, flick, or thrust. Fuel pickups, refuel stations, and (in Explore) the Fuel Siphon/Tank upgrades all top the tank back up — hit zero and you're stranded, restart button pulsing, no auto-tow home." },
+    { key: 'warp', icon: '🌀', label: 'Wormhole Warp',
+      desc: "Rare wild black holes dot Explore's open world. Fly close and you're captured into orbit; dive in tight and you warp straight to Town, with a Return Portal there to send you right back to the same spot." },
+    { key: 'town', icon: '🏪', label: 'Town',
+      desc: 'Your home base in Explore — reach it by landing on the tee rock or warping through a wormhole. Opens a shop where stardust buys permanent upgrades, plus a Launch button when you’re ready to head back out.' },
+];
 
 export const PALETTES = [
     { base: '#e2725b', dark: '#8c3a2c', name: 'rust' },
