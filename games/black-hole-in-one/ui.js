@@ -812,6 +812,10 @@ export function updateBar() {
         setFuelBar('endlessFuelBar', S.fuel);
         document.getElementById('endlessStardust').textContent = S.stardust;
     }
+    // MM-13: only 'custom' reaches this shared endless/custom block without an
+    // early return above — badge identifies custom/shared-link play so it's never
+    // mistaken for standard Endless.
+    document.getElementById('customMapBadge').classList.toggle('hidden', S.mode !== 'custom');
     const holeTxt = 'HOLE ' + S.hole;
     document.getElementById('holeNo').textContent = holeTxt;
     document.getElementById('parLbl').textContent = '· PAR ' + S.par;

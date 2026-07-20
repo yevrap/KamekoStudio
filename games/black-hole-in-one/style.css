@@ -64,6 +64,8 @@ body {
 #bar #strokes { color: #e0e0ff; }
 #bar #total.under { color: #00e5a0; }
 #bar #total.over  { color: #ff8a5c; }
+#customMapBadge { color: #caa8ff; }
+#customMapBadge.hidden { display: none; }
 
 /* ---- HUD Flex Wrappers ---- */
 .hud-left { display: flex; align-items: center; gap: 0.8rem; }
@@ -563,6 +565,7 @@ body {
     overflow-y: auto;
 }
 #howto.hidden, #scorecard.hidden, #myMapsDrawer.hidden, #survGameOver.hidden, #bar.hidden, #exploreBar.hidden { display: none; }
+#mm-saveNew.hidden, #mm-shareNew.hidden { display: none; }
 /* the shared-map arrival card had no hide rule, so it showed on the NORMAL menu —
    that's why "Play Shared Map" made no sense there. It's revealed only for ?map= links. (STAB-4) */
 #sharedMapBtns.hidden, #modeBtns.hidden, #mapSizeBtns.hidden { display: none; }

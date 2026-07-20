@@ -243,6 +243,17 @@ document.getElementById('modeSharedPlay').addEventListener('click', () => {
     }
 });
 
+// New note (July 2026): "My Maps" as a top-level menu option, not just an
+// in-editor drawer — #howto stays open underneath (its own full-screen overlay
+// already gets fully covered by myMapsDrawer's own opaque backdrop) so tapping
+// Close returns to the main menu with no extra state to restore. ▶ Play already
+// hides #howto itself (startCustomMap), and ✎ Edit now does the same
+// (editor.js's loadMap), so both leave the menu correctly once acted on.
+document.getElementById('modeMyMaps').addEventListener('click', () => {
+    audio();
+    editor.toggleMapsDrawer();
+});
+
 document.getElementById('modeSharedMenu').addEventListener('click', () => {
     audio();
     document.getElementById('sharedMapBtns').classList.add('hidden');

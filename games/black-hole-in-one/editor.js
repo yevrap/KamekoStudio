@@ -202,6 +202,12 @@ export function toggleMapsDrawer() {
     const drawer = document.getElementById('myMapsDrawer');
     if (drawer.classList.contains('hidden')) {
         renderMapsList();
+        // "Save/Share Current Map" only make sense when a map is actually open in
+        // the 1:1 editor — opened from the main menu's top-level "My Maps" entry
+        // there is no current map to act on, so hide rather than leave a dead tap.
+        const hasCurrentMap = S.mode === 'editor' && S.phase === 'edit';
+        document.getElementById('mm-saveNew').classList.toggle('hidden', !hasCurrentMap);
+        document.getElementById('mm-shareNew').classList.toggle('hidden', !hasCurrentMap);
         drawer.classList.remove('hidden');
     } else {
         drawer.classList.add('hidden');
@@ -351,15 +357,18 @@ function copyShareLink(hash) {
     });
 }
 
+// "✎ Edit" — unconditionally enters editor mode with this map, rather than
+// assuming (as it used to) that the caller is already mid-edit: the My Maps
+// drawer is now reachable from the main menu's top-level "📂 My Maps" entry too,
+// not just editorBar's, so this can't rely on ambient editor state anymore.
 function loadMap(index) {
     const maps = getMaps();
     const m = maps[index];
     if (!m) return;
 
-    // Stop test if we were in it
-    if (S.phase === 'rest' || S.phase === 'aiming' || S.phase === 'orbit' || S.phase === 'flight' || S.phase === 'sink') {
-        stopTest();
-    }
+    S.mode = 'editor';
+    S.phase = 'edit';
+    world.editorBackup = null;
 
     world.bodies = m.bodies;
     world.teeRock = m.teeRock;
@@ -371,6 +380,17 @@ function loadMap(index) {
     world.bodies.push(world.teeRock);
 
     resetComet();
+
+    document.getElementById('bar').classList.add('hidden');
+    document.getElementById('exploreBar').classList.add('hidden');
+    document.getElementById('customBar').classList.add('hidden');
+    document.getElementById('howto').classList.add('hidden');
+    document.getElementById('scorecard').classList.add('hidden');
+    document.getElementById('editorBar').classList.remove('hidden');
+    document.getElementById('ed-test').textContent = '▶ Test Play';
+    document.getElementById('ed-test').classList.remove('active');
+    document.querySelector('.ed-tools').classList.remove('disabled');
+
     hooks.bar(); // refreshes editor chrome gated on mapSizeKey (e.g. MM-16's Overview button)
     hooks.toast('📂 Map loaded');
     toggleMapsDrawer();
