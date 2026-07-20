@@ -309,9 +309,8 @@ test('stepOrbit sinks when the orbit skims the cup', () => {
     assert.equal(world.orbit, null);
 });
 
-test('stepOrbit rescues a comet whose orbit drifts outside the course boundary (GOLF-2 regression)', () => {
+test('stepOrbit breaks an orbit that drifts outside the course boundary into free flight, not an instant teleport (GOLF-1/2 + GOLF-8)', () => {
     game.startRun('endless');
-    const teeRock = world.teeRock;
     // planted well past the boundary regardless of how OB_MARGIN is tuned — the
     // orbit itself (radius = r + ORBIT_MAX_GAP) still has to land past -OB_MARGIN
     const planet = { x: -OB_MARGIN - 10, y: COURSE_H * 0.5, r: 8, m: 64, type: 'planet', pal: { base: '#fff', dark: '#000' } };
@@ -323,31 +322,62 @@ test('stepOrbit rescues a comet whose orbit drifts outside the course boundary (
     game.beginOrbit(planet, { radius: d, omega: vc / d, ang: Math.PI });
     assert.ok(comet.x < -OB_MARGIN, 'sanity: this orbit starts outside the course boundary');
     game.stepOrbit(DT);
-    assert.equal(S.phase, 'rest', 'rescued back to rest instead of orbiting off-screen forever (GOLF-1: was "no way to restart")');
+    assert.equal(S.phase, 'flight', 'GOLF-8: hands off to free flight (and its return-pull) instead of an instant teleport to rest (GOLF-1: was "no way to restart")');
     assert.equal(world.orbit, null);
-    assert.equal(comet.rest.b, teeRock, 'comet returned to its last rest spot (the tee)');
+    assert.ok(S.orbitCooldown > 0, 're-capture cooldown armed, same as breaking an orbit via a normal flick — the same band should not immediately recapture it');
 });
 
-test('GOLF Mode Catch-Up: a comet past the old OB_MARGIN (14) but within the widened one stays in flight (2026-07-19)', () => {
-    game.startRun('endless');
+// The three tests below deliberately avoid game.startRun() (unlike most tests in
+// this file) — it calls genHole(), which draws from the shared, unseeded
+// Math.random() stream a variable number of times depending on the procedural
+// result. These tests immediately discard the generated hole (world.bodies = [])
+// anyway, so skipping it keeps this suite's total random-draw count unchanged
+// and avoids nondeterministically shifting a later, unrelated test's seed
+// (observed: it flipped the Explore chunk-content fixture in the MM-18 test).
+function resetForBoundaryTest() {
+    S.mode = 'endless';
+    world.mapSizeKey = DEFAULT_MAP_SIZE;
     world.bodies = [];
-    world.blackHole = { x: 1000, y: 1000, r: 3.2, m: 230, type: 'hole' }; // far away, no accidental sink
-    comet.x = -20; comet.y = COURSE_H * 0.5;   // past the old tight margin, inside the widened one
-    comet.vx = 5; comet.vy = 0;                // heading back toward the course
-    S.phase = 'flight'; S.tFlight = 1;
-    game.stepFlight(DT);
-    assert.equal(S.phase, 'flight', 'no longer rescued just for clearing the old ~7%-overshoot margin');
-});
+    world.blackHole = null;
+    world.orbit = null;
+    world.pickups = [];
+}
 
-test('GOLF Mode Catch-Up: a genuinely escaping flight still gets rescued past the widened OB_MARGIN', () => {
-    game.startRun('endless');
-    world.bodies = [];
-    world.blackHole = { x: 1000, y: 1000, r: 3.2, m: 230, type: 'hole' };
+test('GOLF-8: a comet just past OB_MARGIN is not rescued instantly — the return-pull decelerates it instead of teleporting', () => {
+    resetForBoundaryTest();
     comet.x = -(OB_MARGIN + 5); comet.y = COURSE_H * 0.5;
-    comet.vx = -50; comet.vy = 0;
+    comet.vx = -50; comet.vy = 0;                // still heading further out
     S.phase = 'flight'; S.tFlight = 1;
     game.stepFlight(DT);
-    assert.equal(S.phase, 'rest', 'still rescued once truly past the widened boundary — the safety net is wider, not gone');
+    assert.equal(S.phase, 'flight', 'no instant teleport to rest just for clearing OB_MARGIN');
+    assert.ok(comet.vx > -50, 'the return-pull decelerated the outward velocity this frame instead of snapping position');
+});
+
+test('GOLF-8: deep inside the recoverable zone, no return-pull is applied — gravity alone gets the first, uninterrupted chance', () => {
+    resetForBoundaryTest();
+    comet.x = -(OB_MARGIN - 20); comet.y = COURSE_H * 0.5;   // outside the course, well inside OB_MARGIN
+    comet.vx = -5; comet.vy = 0;
+    S.phase = 'flight'; S.tFlight = 1;
+    game.stepFlight(DT);
+    assert.equal(comet.vx, -5, 'velocity untouched by the return-pull while still within the recoverable zone');
+});
+
+test('GOLF-8: a genuinely escaping flight still curves back — no bodies, no teleport, well under FLIGHT_CAP', () => {
+    resetForBoundaryTest();
+    comet.x = 5; comet.y = COURSE_H * 0.5;
+    comet.vx = -120; comet.vy = 0;               // a max-power shot straight out
+    S.phase = 'flight'; S.tFlight = 0;
+    const bnd = mapBounds(DEFAULT_MAP_SIZE);
+    let steps = 0;
+    const capSteps = Math.floor(20 / DT);        // well under FLIGHT_CAP (24s) — must return before this
+    while (steps < capSteps) {
+        game.stepFlight(DT);
+        steps++;
+        assert.equal(S.phase, 'flight', 'never rescued to rest by position — only the return-pull moves it');
+        const tx = Math.max(0, Math.min(bnd.w, comet.x)), ty = Math.max(0, Math.min(bnd.h, comet.y));
+        if (Math.hypot(tx - comet.x, ty - comet.y) === 0) break;   // back inside the course rect
+    }
+    assert.ok(steps < capSteps, `comet curved back inside the course within ${(steps * DT).toFixed(1)}s, well under FLIGHT_CAP`);
 });
 
 test('launch adds the flick as an impulse to current velocity (force-push, BH-4)', () => {

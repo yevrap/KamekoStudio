@@ -41,16 +41,24 @@ export const PLANET_R_MIN = 4;
 export const PLANET_R_MAX = 22;
 export const PLANET_R_STEP = 1.5;
 // Out-of-bounds margin beyond the course rect (golf modes only — Explore is an
-// open chunked world with no such boundary). Widened from 14 (GOLF Mode
-// Catch-Up, 2026-07-19): gravity is already the only force acting on the comet
-// at any distance (gravityAt sums every body unconditionally, never clipped to
-// the course rect), so a wide eccentric arc that would curve back on its own
-// was getting killed the instant it crossed a boundary only ~7% past the
-// course edge — the rectangle check only reads position, not trajectory. 4x
-// the old margin gives gravity enough room to actually finish pulling a
-// looping shot back before the hard cutoff; FLIGHT_CAP below stays the
-// ultimate safety net for shots that are genuinely escaping.
-export const OB_MARGIN = 56;
+// open chunked world with no such boundary) — the recoverable zone where real
+// planet gravity alone (gravityAt sums every body unconditionally, never
+// clipped to the course rect) gets a real, uninterrupted chance to curve a
+// comet back. Widened from 14 (GOLF Mode Catch-Up, 2026-07-19), then again
+// from 56 (GOLF-8, 2026-07-20 — the shipped 56 fix still handed off to an
+// instant teleport + a visible boundary line at this threshold; Yev's
+// follow-up wanted neither). Past this margin, stepFlight/stepOrbit add
+// RETURN_PULL_K's assist instead of rescuing on the spot — see there.
+export const OB_MARGIN = 130;
+// GOLF-8: acceleration (world units/s² per unit of distance past OB_MARGIN)
+// pulling a comet that's drifted beyond the recoverable zone back toward the
+// nearest point of the course rect. Grows with distance (unlike real gravity,
+// which weakens with it) so a return is inevitable without a hard teleport —
+// the further out, the harder gravity "reasserts itself," reading as one
+// continuous curve rather than a snap. Tuned via headless simulation across
+// launch speeds/angles (including MAX_LAUNCH-speed straight-out shots) to
+// return within ~4-6s, well under FLIGHT_CAP below.
+export const RETURN_PULL_K = 1.5;
 export const DUST_T = 9;              // seconds of flight before space dust drag ramps in
 export const FLIGHT_CAP = 24;         // absolute flight timeout
 export const SLING_ANG = 1.9;         // radians swung around one planet = SLINGSHOT!

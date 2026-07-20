@@ -5,7 +5,7 @@
 
 import {
     WORLD_W as W, COURSE_H, DT, MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, CAPTURE_R,
-    OB_MARGIN, DUST_T, FLIGHT_CAP, SLING_ANG, ROUND_HOLES, PALETTES,
+    OB_MARGIN, RETURN_PULL_K, DUST_T, FLIGHT_CAP, SLING_ANG, ROUND_HOLES, PALETTES,
     ORBIT_COOLDOWN, ORBIT_ARM_T, LIFTOFF_T, LIFTOFF_MIN, DEFAULT_MAP_SIZE, mapBounds,
     rand, dist, holeLabel,
 } from './constants.js';
@@ -286,6 +286,24 @@ export function stepAsteroids(dt) {
     }
 }
 
+// GOLF-8: once a comet drifts past the recoverable OB_MARGIN zone, curve it back
+// toward the nearest point of the course rect instead of teleporting it. The pull
+// grows with distance past the margin (unlike real body gravity, which weakens
+// with distance) so a return is inevitable — no hard cutoff needed. Shared by
+// stepFlight (direct integration) and stepOrbit (via the break-into-flight below),
+// so every "too far" case in golf gets the same continuous recovery.
+function applyReturnPull(dt) {
+    const bnd = mapBounds(world.mapSizeKey);
+    const tx = Math.max(0, Math.min(bnd.w, comet.x));
+    const ty = Math.max(0, Math.min(bnd.h, comet.y));
+    const dx = tx - comet.x, dy = ty - comet.y;
+    const overDist = Math.hypot(dx, dy);
+    if (overDist <= OB_MARGIN) return;
+    const pull = RETURN_PULL_K * (overDist - OB_MARGIN);
+    comet.vx += (dx / overDist) * pull * dt;
+    comet.vy += (dy / overDist) * pull * dt;
+}
+
 export function stepFlight(dt) {
     S.tFlight += dt;
     if (S.orbitCooldown > 0) S.orbitCooldown = Math.max(0, S.orbitCooldown - dt);
@@ -376,17 +394,18 @@ export function stepFlight(dt) {
         }
     }
 
-    const bnd = mapBounds(world.mapSizeKey);
-    const oob = comet.x < -OB_MARGIN || comet.x > bnd.w + OB_MARGIN ||
-                comet.y < -OB_MARGIN || comet.y > bnd.h + OB_MARGIN;
-    if (oob || S.tFlight > FLIGHT_CAP) {
+    // GOLF-8: no more instant "lost in space" rescue at OB_MARGIN — see
+    // applyReturnPull(). FLIGHT_CAP stays as a last-resort timeout, unrelated to
+    // position, for a flight that still hasn't landed after genuinely a long time.
+    applyReturnPull(dt);
+    if (S.tFlight > FLIGHT_CAP) {
         comet.rest = world.lastRest.rest;
         placeOnRest();
         comet.vx = comet.vy = 0;
         world.trail = [];
         S.phase = 'rest';
         hooks.sfx.lost();
-        hooks.toast(oob ? '🌌 Lost in space — replay from your last spot' : '🛰 Drifting too long — back you come');
+        hooks.toast('🛰 Drifting too long — back you come');
     }
 }
 
@@ -459,14 +478,16 @@ export function stepOrbit(dt) {
     const oob = comet.x < -OB_MARGIN || comet.x > bnd.w + OB_MARGIN ||
                 comet.y < -OB_MARGIN || comet.y > bnd.h + OB_MARGIN;
     if (oob) {
+        // GOLF-8: break into free flight instead of teleporting straight to rest —
+        // applyReturnPull() in stepFlight then curves it back the same continuous
+        // way any other "too far" flight gets rescued, instead of a second,
+        // orbit-only teleport path. Mirrors launch()'s own break-out-of-orbit
+        // bookkeeping (cooldown so the same band doesn't immediately recapture it).
         world.orbit = null;
-        comet.rest = world.lastRest.rest;
-        placeOnRest();
-        comet.vx = comet.vy = 0;
+        S.orbitCooldown = ORBIT_COOLDOWN;
+        S.tFlight = 0;
         world.trail = [];
-        S.phase = 'rest';
-        hooks.sfx.lost();
-        hooks.toast('🌌 Lost in space — replay from your last spot');
+        S.phase = 'flight';
     }
 }
 
