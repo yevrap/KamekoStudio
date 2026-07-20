@@ -28,7 +28,11 @@ function markPresentObjects() {
     let changed = false;
     if (markGlossarySeen('tee')) changed = true;
     for (const b of world.bodies) {
-        if (b.type === 'planet') { if (markGlossarySeen('planet')) changed = true; }
+        if (b.type === 'planet') {
+            if (markGlossarySeen('planet')) changed = true;
+            // MM-15: refuel-station planets are now author-placeable outside Explore.
+            if (b.refuelStation && markGlossarySeen('refuelStation')) changed = true;
+        }
         else if (b.type === 'pulsar') { if (markGlossarySeen('pulsar')) changed = true; }
         else if (b.type === 'trap') { if (markGlossarySeen('trap')) changed = true; }
         else if (b.type === 'mine') { if (markGlossarySeen('mine')) changed = true; }
@@ -36,6 +40,7 @@ function markPresentObjects() {
     if (world.asteroids.length && markGlossarySeen('asteroid')) changed = true;
     for (const p of world.pickups) {
         if (p.type === 'fuel' && markGlossarySeen('fuel')) changed = true;
+        else if (p.type === 'stardust' && markGlossarySeen('stardust')) changed = true;
     }
     if (changed) hooks.glossary();
 }
@@ -245,8 +250,22 @@ function triggerHazardDeath(hit) {
     hooks.burst(comet.x, comet.y, 25, hit.type === 'trap' ? '#9933ff' : '#ff4444', 30);
     hooks.sfx.lost();
     hooks.toast(hit.type === 'trap' ? '🌀 Crushed in a Gravity Trap' : (hit.type === 'asteroid' ? '☄️ Smashed by an Asteroid' : '💥 Hit a Space Mine'));
-    S.fuel = 0;
-    checkSurvivalGameOver();
+    if (S.mode === 'endless') {
+        S.fuel = 0;
+        checkSurvivalGameOver();
+        return;
+    }
+    // MM-15: traps/mines used to only ever spawn in Endless, so nothing outside
+    // it exercised this path — hitting one just left the comet's phase/position
+    // untouched forever (no fuel meter to zero out, no round-end to trigger),
+    // an invisible softlock. Now Map Maker can place them on any map/mode, so
+    // golf/editor/custom respawn at the last safe rest spot instead — the same
+    // recovery an out-of-bounds shot already gets.
+    comet.rest = world.lastRest.rest;
+    placeOnRest();
+    comet.vx = comet.vy = 0;
+    world.trail = [];
+    S.phase = 'rest';
 }
 
 export function stepAsteroids(dt) {
@@ -287,8 +306,10 @@ export function stepFlight(dt) {
     }
     const res = stepBody(comet, dt, world.bodies, world.blackHole, damp);
 
-    // Pickups collision
-    if (S.mode === 'endless') {
+    // Pickups collision. MM-15: widened from Endless-only so fuel/stardust
+    // placed via Map Maker actually do something when a custom/shared map is
+    // played, or during editor Test Play — otherwise they'd be inert decoration.
+    if (S.mode === 'endless' || S.mode === 'custom' || S.mode === 'editor') {
         for (let i = world.pickups.length - 1; i >= 0; i--) {
             const p = world.pickups[i];
             const d = dist(comet.x, comet.y, p.x, p.y);
@@ -563,7 +584,13 @@ export function startCustomMap(mapData) {
     world.bodies = mapData.bodies;
     world.teeRock = mapData.teeRock;
     world.blackHole = mapData.blackHole;
-    
+    // MM-15: pickups are now part of a saved/shared map; pre-MM-15 maps carry
+    // none. Asteroids are never author-placed via Map Maker, and this mode's
+    // own pickup/hazard state must not inherit whatever golf/endless left in
+    // these module-level singletons before the player jumped to a custom map.
+    world.pickups = mapData.pickups || [];
+    world.asteroids = [];
+
     // Ensure tee is in bodies
     world.bodies = world.bodies.filter(b => b.type !== 'tee');
     world.bodies.push(world.teeRock);

@@ -9,11 +9,12 @@ import {
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, ITEMS, STICK_R_PX,
     moonPosition, ORBIT_MIN_GAP, ORBIT_MAX_GAP, LS_KEYS, hitTestMapTargets, OB_MARGIN, mapBounds,
     overviewAvailable, overviewTransform, overviewToWorld, worldToOverview,
-    GLOSSARY_OBJECTS, GLOSSARY_MECHANICS,
+    GLOSSARY_OBJECTS, GLOSSARY_MECHANICS, PLANET_R_MIN, PLANET_R_MAX,
 } from './constants.js';
 import { S, world, comet, markGlossarySeen } from './state.js';
 import { stepBody } from './physics.js';
 import * as explore from './explore.js';
+import * as editor from './editor.js';
 import { setMuted, isMuted } from './sfx.js';
 
 const canvas = document.getElementById('game');
@@ -800,6 +801,23 @@ export function updateBar() {
         // than show a no-op button.
         const btn = document.getElementById('ed-overview');
         if (btn) btn.classList.toggle('hidden', !overviewAvailable(world.mapSizeKey));
+
+        // MM-15: the selected-planet property panel (size stepper + refuel toggle).
+        // 1:1 edit view only — sizing is a fine-adjustment op, not an overview one.
+        const sel = editor.getSelected();
+        const panel = document.getElementById('ed-selected');
+        if (panel) {
+            const show = !!(sel && sel.type === 'planet' && S.phase === 'edit' && !overviewOpen);
+            panel.classList.toggle('hidden', !show);
+            if (show) {
+                document.getElementById('ed-size-val').textContent = (Math.round(sel.r * 10) / 10) + '';
+                document.getElementById('ed-size-dec').disabled = sel.r <= PLANET_R_MIN;
+                document.getElementById('ed-size-inc').disabled = sel.r >= PLANET_R_MAX;
+                const refuelBtn = document.getElementById('ed-refuel-toggle');
+                refuelBtn.classList.toggle('active', !!sel.refuelStation);
+                refuelBtn.textContent = sel.refuelStation ? '⛽ Refuel ✓' : '⛽ Refuel';
+            }
+        }
         return;
     }
     if (S.mode === 'explore') {
@@ -1090,6 +1108,9 @@ export function hideEditorOverview() {
     overviewOpen = false;
     document.getElementById('editorOverview').classList.add('hidden');
     window.dispatchEvent(new Event('settingsClosed'));
+    // MM-15: a planet tapped/moved in overview stays selected — surface its
+    // size/refuel panel the instant the 1:1 view is back, no re-tap needed.
+    updateBar();
 }
 
 export function toggleEditorOverview() {
@@ -1142,18 +1163,36 @@ export function renderEditorOverview() {
 
     // Bodies as simplified glyphs (dot + color) at overview scale — full 1:1
     // detail (spin shading, pulsar rays) isn't legible at this zoom anyway.
+    // Colors match each object's own drawX() function (drawMine/drawTrap/
+    // drawPickup) so the same object reads as the same thing in both views.
     for (const b of world.bodies) {
         const p = worldToOverview(b.x, b.y, t);
         if (b.type === 'planet') {
             octx.fillStyle = b.pal ? b.pal.base : '#e2725b';
             octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, b.r * t.scale), 0, 7); octx.fill();
+            if (b.refuelStation) { // FUEL-2's warm-green accent, simplified to a ring at this scale
+                octx.strokeStyle = '#20e657';
+                octx.lineWidth = 1;
+                octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, b.r * t.scale) + 2, 0, 7); octx.stroke();
+            }
         } else if (b.type === 'pulsar') {
             octx.fillStyle = '#ffd24a';
             octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, 2.6 * t.scale), 0, 7); octx.fill();
         } else if (b.type === 'tee') {
             octx.fillStyle = '#8fb8ff';
             octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, b.r * t.scale), 0, 7); octx.fill();
+        } else if (b.type === 'trap') {
+            octx.fillStyle = '#9933ff';
+            octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, b.r * t.scale), 0, 7); octx.fill();
+        } else if (b.type === 'mine') {
+            octx.fillStyle = '#cc2929';
+            octx.beginPath(); octx.arc(p.x, p.y, Math.max(3, b.r * t.scale), 0, 7); octx.fill();
         }
+    }
+    for (const pk of world.pickups) {
+        const p = worldToOverview(pk.x, pk.y, t);
+        octx.fillStyle = pk.type === 'stardust' ? '#ffd98a' : '#20e657';
+        octx.beginPath(); octx.arc(p.x, p.y, Math.max(2.5, pk.r * t.scale), 0, 7); octx.fill();
     }
     if (world.blackHole) {
         const bh = world.blackHole;

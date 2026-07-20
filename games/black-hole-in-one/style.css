@@ -817,6 +817,54 @@ body {
     opacity: 0.6;
 }
 
+/* MM-15: grouping labels above each toolbar row, so a growing object palette
+   ("Add object") still reads at a glance instead of one flat wall of buttons. */
+.ed-group-label {
+    text-align: center;
+    font-size: 11px;
+    opacity: 0.5;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+}
+
+/* MM-15: selected-planet property panel — size stepper + refuel toggle.
+   Sits above the Add-object row so it appears right where a builder just tapped. */
+#ed-selected {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 6px 10px;
+    align-self: center;
+}
+#ed-selected.hidden { display: none; }
+.ed-selected-label {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-right: 2px;
+    white-space: nowrap;
+}
+#ed-size-val {
+    min-width: 1.6em;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+#ed-selected button { padding: 6px 12px; }
+#ed-refuel-toggle.active {
+    background: rgba(32,230,87,0.22);
+    border-color: #20e657;
+    color: #20e657;
+}
+#editorBar button:disabled, #customBar button:disabled {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
 #editorTrash {
     position: absolute;
     bottom: 80px;

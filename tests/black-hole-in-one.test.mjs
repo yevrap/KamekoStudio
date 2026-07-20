@@ -10,7 +10,7 @@ import {
     upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, LS_KEYS, hitTestMapTargets,
     OB_MARGIN, ORBIT_MAX_GAP, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds,
     overviewAvailable, overviewTransform, overviewToWorld, worldToOverview,
-    GLOSSARY_OBJECTS, GLOSSARY_MECHANICS, ITEMS,
+    GLOSSARY_OBJECTS, GLOSSARY_MECHANICS, ITEMS, PLANET_R_MIN, PLANET_R_MAX, PLANET_R_STEP,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet, defaultGlossarySeen, mergeGlossarySeen, markGlossarySeen } from '../games/black-hole-in-one/state.js';
@@ -1063,4 +1063,284 @@ test('updateActiveChunks marks refuelStation/moonRing/stardustRing once their ch
         loadChunkFresh(found[0], found[1], false);
         assert.equal(S.glossarySeen[key], true, `real load of a ${key} chunk marks it seen`);
     }
+});
+
+/* ============================== MM-15: planet size + all object types ============================== */
+
+test('addPlanet default radius is reduced and within the stepper range (MM-15)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+    ed.startEditor();
+    for (let i = 0; i < 30; i++) {
+        world.bodies = world.bodies.filter(b => b.type !== 'planet');
+        ed.addPlanet();
+        const p = world.bodies.find(b => b.type === 'planet');
+        assert.ok(p.r >= 6 && p.r < 10, `default Add Planet radius ${p.r} sits in the reduced 6-10 range`);
+        assert.ok(p.r >= PLANET_R_MIN && p.r <= PLANET_R_MAX, 'still within the overall stepper bounds');
+    }
+    delete globalThis.document;
+});
+
+test('growSelectedPlanet/shrinkSelectedPlanet clamp to PLANET_R_MIN/MAX and keep mass = r*r (MM-15)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+    ed.startEditor();
+    world.bodies = world.bodies.filter(b => b.type !== 'planet');
+    ed.addPlanet();
+    const p = world.bodies.find(b => b.type === 'planet');
+    p.r = PLANET_R_MAX - 0.5;
+    ed.growSelectedPlanet(); // addPlanet() already selected it
+    assert.equal(p.r, PLANET_R_MAX, 'growing clamps at the ceiling instead of overshooting');
+    assert.equal(p.m, PLANET_R_MAX * PLANET_R_MAX, 'mass stays derived from radius');
+
+    p.r = PLANET_R_MIN + 0.5;
+    ed.shrinkSelectedPlanet();
+    assert.equal(p.r, PLANET_R_MIN, 'shrinking clamps at the floor');
+    assert.equal(p.m, PLANET_R_MIN * PLANET_R_MIN);
+
+    // no selection (or a non-planet selection) is a safe no-op
+    ed.deselectBody();
+    const rBefore = p.r;
+    ed.growSelectedPlanet();
+    assert.equal(p.r, rBefore, 'grow/shrink no-op once deselected');
+    delete globalThis.document;
+});
+
+test('toggleSelectedRefuel flips refuelStation only on the selected planet (MM-15)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+    ed.startEditor();
+    world.bodies = world.bodies.filter(b => b.type !== 'planet');
+    ed.addPlanet();
+    const p = world.bodies.find(b => b.type === 'planet');
+    assert.ok(!p.refuelStation);
+    ed.toggleSelectedRefuel();
+    assert.equal(p.refuelStation, true);
+    ed.toggleSelectedRefuel();
+    assert.equal(p.refuelStation, false);
+    delete globalThis.document;
+});
+
+test('addTrap/addMine/addFuelPickup/addStardustPickup push canonically-shaped objects (MM-15)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+    ed.startEditor();
+    world.bodies = world.bodies.filter(b => b.type === 'tee');
+    world.pickups = [];
+
+    ed.addTrap();
+    ed.addMine();
+    ed.addFuelPickup();
+    ed.addStardustPickup();
+
+    const trap = world.bodies.find(b => b.type === 'trap');
+    const mine = world.bodies.find(b => b.type === 'mine');
+    assert.deepEqual([trap.r, trap.m], [2.8, 200], 'trap matches gameplay.js\'s canonical shape');
+    assert.deepEqual([mine.r, mine.m], [2, 0], 'mine matches gameplay.js\'s canonical shape (no gravity)');
+
+    assert.equal(world.pickups.length, 2, 'pickups live in world.pickups, not world.bodies');
+    const fuel = world.pickups.find(p => p.type === 'fuel');
+    const stardust = world.pickups.find(p => p.type === 'stardust');
+    assert.equal(fuel.r, 1.8);
+    assert.equal(stardust.r, 1.2);
+    delete globalThis.document;
+});
+
+test('pointerDown selects a planet for the property panel, and deselects on empty space / non-planet taps (MM-15)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+    ed.startEditor();
+    world.bodies = world.bodies.filter(b => b.type === 'tee');
+    ed.addPlanet();
+    const planet = world.bodies.find(b => b.type === 'planet');
+    assert.equal(ed.getSelected(), planet, 'addPlanet auto-selects the new planet');
+    planet.x = 60; planet.y = 60; // move off the map-center default so the pulsar below doesn't stack on it
+    ed.deselectBody();
+    ed.addPulsar();
+    const pulsar = world.bodies.find(b => b.type === 'pulsar');
+    assert.equal(ed.getSelected(), null, 'addPulsar does not auto-select');
+
+    ed.pointerDown(planet.x, planet.y, 1);
+    assert.equal(ed.getSelected(), planet, 'tapping a planet selects it');
+    ed.cancelDrag();
+
+    ed.pointerDown(pulsar.x, pulsar.y, 2);
+    assert.equal(ed.getSelected(), null, 'tapping a pulsar clears the planet selection');
+    ed.cancelDrag();
+
+    ed.pointerDown(planet.x, planet.y, 3);
+    assert.equal(ed.getSelected(), planet);
+    ed.cancelDrag();
+    ed.pointerDown(-500, -500, 4); // empty canvas
+    assert.equal(ed.getSelected(), null, 'tapping empty space clears the selection');
+    delete globalThis.document;
+});
+
+test('deleting the selected planet clears the selection (MM-15)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+    ed.startEditor();
+    world.bodies = world.bodies.filter(b => b.type === 'tee');
+    ed.addPlanet();
+    const planet = world.bodies.find(b => b.type === 'planet');
+    assert.equal(ed.getSelected(), planet);
+    ed.pointerDown(planet.x, planet.y, 1);
+    ed.pointerMove(-9999, -9999, 1); // drag out of bounds
+    ed.pointerUp(-9999, -9999, 1);
+    assert.ok(!world.bodies.includes(planet), 'planet was deleted');
+    assert.equal(ed.getSelected(), null, 'selection cleared along with the deleted body');
+    delete globalThis.document;
+});
+
+test('a fuel/stardust pickup can be grabbed, dragged, and deleted like any other editor object (MM-15)', async () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    ed.setHooks({ toast() {}, bar() {}, sfx: { pop() {} } });
+    ed.startEditor();
+    world.pickups = [];
+    ed.addStardustPickup();
+    const dust = world.pickups[0];
+    const x0 = dust.x, y0 = dust.y;
+
+    assert.equal(ed.pointerDown(dust.x, dust.y, 1), true, 'pickup is grabbable at its center');
+    ed.pointerMove(x0 + 20, y0 + 5, 1);
+    ed.pointerUp(x0 + 20, y0 + 5, 1);
+    assert.equal(world.pickups.length, 1, 'drag alone does not delete it');
+    assert.equal(world.pickups[0], dust, 'still the same object');
+    assert.ok(Math.abs(dust.x - (x0 + 20)) < 1e-6 && Math.abs(dust.y - (y0 + 5)) < 1e-6, 'dragged to the release point');
+
+    ed.pointerDown(world.pickups[0].x, world.pickups[0].y, 2);
+    ed.pointerMove(-9999, -9999, 2);
+    ed.pointerUp(-9999, -9999, 2);
+    assert.equal(world.pickups.length, 0, 'dragging a pickup off-map deletes it from world.pickups, not world.bodies');
+    delete globalThis.document;
+});
+
+test('encodeMap -> decodeMap round-trips trap, mine, pickups, and a refuel-station planet (MM-15)', async () => {
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    const pal = { base: '#57c7c2', dark: '#20635f', name: 'teal' };
+    const src = {
+        teeRock: { x: 50, y: 176 },
+        blackHole: { x: 50, y: 30 },
+        bodies: [
+            { type: 'planet', x: 40, y: 90, r: 10, pal, spin: 0.5, refuelStation: true },
+            { type: 'trap', x: 60, y: 70 },
+            { type: 'mine', x: 20, y: 60 },
+        ],
+        pickups: [
+            { type: 'fuel', x: 33, y: 44 },
+            { type: 'stardust', x: 55, y: 66 },
+        ],
+    };
+    const hash = ed.encodeMap(src);
+    const out = ed.decodeMap(hash);
+    assert.ok(out, 'decodes to a map');
+
+    const planet = out.bodies.find(b => b.type === 'planet');
+    assert.equal(planet.refuelStation, true, 'refuelStation flag survives the round-trip');
+
+    const trap = out.bodies.find(b => b.type === 'trap');
+    const mine = out.bodies.find(b => b.type === 'mine');
+    assert.ok(trap && Math.abs(trap.x - 60) < 0.06 && Math.abs(trap.y - 70) < 0.06);
+    assert.ok(mine && Math.abs(mine.x - 20) < 0.06 && Math.abs(mine.y - 60) < 0.06);
+    assert.deepEqual([trap.r, trap.m], [2.8, 200]);
+    assert.deepEqual([mine.r, mine.m], [2, 0]);
+
+    assert.equal(out.pickups.length, 2);
+    const fuel = out.pickups.find(p => p.type === 'fuel');
+    const stardust = out.pickups.find(p => p.type === 'stardust');
+    assert.ok(fuel && Math.abs(fuel.x - 33) < 0.06);
+    assert.ok(stardust && Math.abs(stardust.x - 55) < 0.06);
+});
+
+test('decodeMap defaults refuelStation to false and pickups to [] for pre-MM-15 share links', async () => {
+    const ed = await import('../games/black-hole-in-one/editor.js');
+    const pal = { base: '#fff', dark: '#000', name: 'x' };
+    // Simulate a pre-MM-15 hash: encode a planet the OLD way (no 7th field) by
+    // hand rather than via today's encodeMap, which always appends the flag now.
+    const arr = [[0, 50, 176], [1, 50, 30], [2, 40, 90, 10, pal, 0.5]];
+    const hash = btoa(JSON.stringify(arr)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const out = ed.decodeMap(hash);
+    assert.ok(out);
+    assert.equal(out.bodies[0].refuelStation, false, 'a missing 7th field decodes to a falsy flag, not a crash');
+    assert.deepEqual(out.pickups, [], 'a pre-MM-15 hash with no pickup tags decodes to an empty array');
+});
+
+test('startCustomMap carries pickups from the loaded map and clears any leftover asteroid swarm (MM-15)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    const blackHole = { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' };
+    world.asteroids = [{ x: 10, y: 10, r: 2, vx: 1, vy: 1, type: 'asteroid' }]; // stale from a prior endless run
+    game.startCustomMap({
+        teeRock, blackHole, bodies: [],
+        pickups: [{ x: 40, y: 40, r: 1.2, type: 'stardust' }],
+    });
+    assert.equal(world.pickups.length, 1);
+    assert.equal(world.pickups[0].type, 'stardust');
+    assert.equal(world.asteroids.length, 0, 'custom maps never carry over a stale asteroid swarm');
+    delete globalThis.document;
+});
+
+test('markPresentObjects (via startCustomMap) marks refuelStation and stardust as seen (MM-15)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    S.glossarySeen = defaultGlossarySeen();
+    const teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    const blackHole = { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' };
+    const planet = { x: 50, y: 90, r: 8, m: 64, type: 'planet', pal: { base: '#fff', dark: '#000' }, refuelStation: true };
+    game.startCustomMap({
+        teeRock, blackHole, bodies: [planet],
+        pickups: [{ x: 40, y: 40, r: 1.2, type: 'stardust' }],
+    });
+    assert.equal(S.glossarySeen.refuelStation, true);
+    assert.equal(S.glossarySeen.stardust, true);
+    delete globalThis.document;
+});
+
+test('a mine hit outside Endless mode respawns at last rest instead of leaving the comet stuck (MM-15 hazard-death fix)', () => {
+    // Custom-map play, the mode that motivated this fix — Map Maker can now place mines here.
+    S.mode = 'custom';
+    S.phase = 'flight';
+    world.teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    world.blackHole = { x: -9999, y: -9999, r: 3.2, m: 230, type: 'hole' }; // isolate from any prior test's position
+    world.bodies = [world.teeRock, { x: 50, y: 100, r: 2, m: 0, type: 'mine' }];
+    comet.x = 50; comet.y = 100; comet.vx = 5; comet.vy = 0;
+    comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
+    world.lastRest = { rest: comet.rest };
+    world.trail = [{ x: 1, y: 1 }];
+
+    game.stepFlight(DT);
+
+    assert.equal(S.phase, 'rest', 'phase recovers to rest instead of staying stuck in flight forever');
+    assert.equal(comet.vx, 0);
+    assert.equal(comet.vy, 0);
+    assert.equal(world.trail.length, 0);
+});
+
+test('a mine hit in Endless mode still zeroes fuel and can trigger game over (pre-existing behavior unchanged)', () => {
+    game.startRun('endless');
+    S.fuel = 40;
+    world.bodies = [world.teeRock, { x: comet.x, y: comet.y, r: 2, m: 0, type: 'mine' }];
+    S.phase = 'flight';
+    game.stepFlight(DT);
+    assert.equal(S.fuel, 0, 'Endless hazard death still zeroes fuel exactly as before');
+});
+
+test('pickup collection now applies in custom mode too, not just endless (MM-15)', () => {
+    S.mode = 'custom';
+    S.phase = 'flight';
+    S.stardust = 0;
+    world.teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    world.blackHole = { x: -9999, y: -9999, r: 3.2, m: 230, type: 'hole' }; // isolate from any prior test's position
+    world.bodies = [world.teeRock];
+    comet.x = 60; comet.y = 60; comet.vx = 0; comet.vy = 0;
+    world.pickups = [{ x: comet.x, y: comet.y, r: 1.2, type: 'stardust' }];
+    game.stepFlight(DT);
+    assert.equal(world.pickups.length, 0, 'the pickup was collected during custom-mode flight');
+    assert.equal(S.stardust, 1);
 });

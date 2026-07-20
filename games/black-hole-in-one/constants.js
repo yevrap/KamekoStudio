@@ -34,6 +34,12 @@ export const SOFT_CATCH = 1.6;        // impacts under REST_V*SOFT_CATCH bounce 
                                       // next touch lands — "the planet catches you" (Q4)
 export const SOFT_BOUNCE = 0.16;      // restitution for a soft-catch bounce
 export const CAPTURE_R = 4.6;         // black hole sink radius
+// MM-15: Map Maker's planet-size stepper range. MIN sits below the old
+// rand(9,14) floor so builders can genuinely make tighter, more solvable
+// holes; MAX is a headroom bump above the old ceiling, not a huge new giant.
+export const PLANET_R_MIN = 4;
+export const PLANET_R_MAX = 22;
+export const PLANET_R_STEP = 1.5;
 // Out-of-bounds margin beyond the course rect (golf modes only — Explore is an
 // open chunked world with no such boundary). Widened from 14 (GOLF Mode
 // Catch-Up, 2026-07-19): gravity is already the only force acting on the comet

@@ -188,13 +188,30 @@
 <div id="editorBar" class="hidden">
     <div id="editorTrash" class="hidden">🗑️ Drag here to delete</div>
     <button id="ed-test">▶ Test Play</button>
+
+    <div id="ed-selected" class="hidden">
+        <span class="ed-selected-label">🪐 Planet</span>
+        <button id="ed-size-dec" aria-label="Smaller">➖</button>
+        <span id="ed-size-val">8</span>
+        <button id="ed-size-inc" aria-label="Larger">➕</button>
+        <button id="ed-refuel-toggle">⛽ Refuel</button>
+        <button id="ed-deselect" aria-label="Done">✕</button>
+    </div>
+
+    <span class="ed-group-label">Add object</span>
     <div class="ed-tools">
         <button id="ed-add-planet">🪐 Planet</button>
         <button id="ed-add-pulsar">🌟 Pulsar</button>
+        <button id="ed-add-trap">🌀 Trap</button>
+        <button id="ed-add-mine">💥 Mine</button>
+        <button id="ed-add-fuel">🟢 Fuel</button>
+        <button id="ed-add-stardust">✨ Stardust</button>
+    </div>
+    <div class="ed-tools">
         <button id="ed-overview" class="hidden">🗺️ Overview</button>
         <button id="ed-maps">📂 Maps</button>
     </div>
-    <span class="dim ed-help">Drag objects to move. Drag off-screen to delete.</span>
+    <span class="dim ed-help">Drag objects to move. Drag off-screen to delete. Tap a planet to resize.</span>
 </div>
 
 <div id="editorOverview" class="hidden">
@@ -206,6 +223,10 @@
     <div class="ed-tools">
         <button id="eo-add-planet">🪐 Planet</button>
         <button id="eo-add-pulsar">🌟 Pulsar</button>
+        <button id="eo-add-trap">🌀 Trap</button>
+        <button id="eo-add-mine">💥 Mine</button>
+        <button id="eo-add-fuel">🟢 Fuel</button>
+        <button id="eo-add-stardust">✨ Stardust</button>
     </div>
     <span class="dim ed-help">Drag to reposition anywhere on the map. Close to fine-tune.</span>
 </div>

@@ -271,7 +271,17 @@ document.getElementById('modeSharedMenu').addEventListener('click', () => {
 document.getElementById('ed-test').addEventListener('click', () => editor.toggleTestPlay());
 document.getElementById('ed-add-planet').addEventListener('click', () => editor.addPlanet());
 document.getElementById('ed-add-pulsar').addEventListener('click', () => editor.addPulsar());
+document.getElementById('ed-add-trap').addEventListener('click', () => editor.addTrap());
+document.getElementById('ed-add-mine').addEventListener('click', () => editor.addMine());
+document.getElementById('ed-add-fuel').addEventListener('click', () => editor.addFuelPickup());
+document.getElementById('ed-add-stardust').addEventListener('click', () => editor.addStardustPickup());
 document.getElementById('ed-maps').addEventListener('click', () => editor.toggleMapsDrawer());
+
+// MM-15: selected-planet property panel (size stepper + refuel toggle).
+document.getElementById('ed-size-dec').addEventListener('click', () => editor.shrinkSelectedPlanet());
+document.getElementById('ed-size-inc').addEventListener('click', () => editor.growSelectedPlanet());
+document.getElementById('ed-refuel-toggle').addEventListener('click', () => editor.toggleSelectedRefuel());
+document.getElementById('ed-deselect').addEventListener('click', () => editor.deselectBody());
 
 // MM-16: editor overview — coarse drag-placement on a large map's full canvas.
 // Pointer events convert canvas-relative px straight to world coords (ui.
@@ -284,6 +294,10 @@ document.getElementById('ed-overview').addEventListener('click', () => ui.showEd
 document.getElementById('eo-close').addEventListener('click', () => ui.hideEditorOverview());
 document.getElementById('eo-add-planet').addEventListener('click', () => { editor.addPlanet(); ui.renderEditorOverview(); });
 document.getElementById('eo-add-pulsar').addEventListener('click', () => { editor.addPulsar(); ui.renderEditorOverview(); });
+document.getElementById('eo-add-trap').addEventListener('click', () => { editor.addTrap(); ui.renderEditorOverview(); });
+document.getElementById('eo-add-mine').addEventListener('click', () => { editor.addMine(); ui.renderEditorOverview(); });
+document.getElementById('eo-add-fuel').addEventListener('click', () => { editor.addFuelPickup(); ui.renderEditorOverview(); });
+document.getElementById('eo-add-stardust').addEventListener('click', () => { editor.addStardustPickup(); ui.renderEditorOverview(); });
 editorOverviewCanvas.addEventListener('pointerdown', e => {
     const [wx, wy] = ui.overviewEventToWorld(e);
     if (editor.pointerDown(wx, wy, e.pointerId)) editorOverviewCanvas.setPointerCapture(e.pointerId);

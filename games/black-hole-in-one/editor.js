@@ -1,7 +1,7 @@
 // Black Hole in One — Map Maker / Editor mode
 'use strict';
 
-import { WORLD_W as W, COURSE_H, PALETTES, rand, COMET_R, CAPTURE_R, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds } from './constants.js';
+import { WORLD_W as W, COURSE_H, PALETTES, rand, COMET_R, CAPTURE_R, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds, PLANET_R_MIN, PLANET_R_MAX, PLANET_R_STEP } from './constants.js';
 import { S, world, comet } from './state.js';
 import { placeOnRest, startCustomMap } from './gameplay.js';
 
@@ -13,6 +13,13 @@ export function setHooks(h) { hooks = Object.assign(hooks, h); }
 
 let dragged = null;
 let lastIdx = 0; // for palette cycling
+
+// MM-15: the one planet a builder is currently fine-tuning in the 1:1 view —
+// property panel (size stepper, refuel toggle) reads/writes through this.
+// Only ever a planet (per the sprint doc: sizing is a fine-adjustment
+// operation, not something the overview canvas exposes).
+let selected = null;
+export function getSelected() { return selected; }
 
 // sizeKey: the MM-6 canvas tier ('small' | 'large') chosen in the mode menu's size
 // chooser before entering the editor. Always starts a fresh blank map — Map Maker
@@ -27,6 +34,14 @@ export function startEditor(sizeKey = DEFAULT_MAP_SIZE) {
     world.teeRock = { x: w / 2, y: h * 0.88, r: 3.4, m: 8, type: 'tee' };
     world.blackHole = { x: w / 2, y: h * 0.15, r: 3.2, m: 230, type: 'hole' };
     world.bodies.push(world.teeRock);
+    // MM-15: pickups are now placeable in the editor — start every fresh map
+    // clean rather than inheriting whatever golf/endless/explore left behind
+    // in this module-level singleton. Asteroids stay out of Map Maker
+    // entirely (see addTrap/addMine comment below) but are cleared too so a
+    // stray leftover swarm never renders as confusing background clutter.
+    world.pickups = [];
+    world.asteroids = [];
+    selected = null;
 
     S.par = 2; // Default, not strictly used in editor test play but good to have
     S.strokes = 0;
@@ -47,11 +62,16 @@ function resetComet() {
 export function addPlanet() {
     if (S.phase !== 'edit') return;
     const { w, h } = mapBounds(world.mapSizeKey);
-    const r = rand(9, 14);
+    // MM-15: reduced from rand(9,14) — tighter, more solvable holes by
+    // default; the size stepper covers the rest of the range (PLANET_R_MIN
+    // to PLANET_R_MAX) once a builder wants something bigger.
+    const r = rand(6, 10);
     const pal = PALETTES[(lastIdx++) % PALETTES.length];
     const p = { x: w / 2, y: h / 2, r, m: r * r, type: 'planet', pal, spin: rand(0, Math.PI * 2) };
     world.bodies.push(p);
+    selected = p; // MM-15: select it immediately so the size/refuel panel is one tap away, not two
     hooks.sfx.pop();
+    hooks.bar();
 }
 
 export function addPulsar() {
@@ -60,6 +80,71 @@ export function addPulsar() {
     const p = { x: w / 2, y: h / 2, r: 2.6, m: -160, type: 'pulsar' };
     world.bodies.push(p);
     hooks.sfx.pop();
+}
+
+// MM-15 scope expansion (Yev, 2026-07-19: "I want all of the current object
+// types available"). Trap/Mine reuse world.bodies and the generic hit-test/
+// drag/delete loops below unchanged — same as Pulsar always has. Made safe to
+// place outside Endless by gameplay.js's triggerHazardDeath fix (see that
+// file): hitting one no longer softlocks golf/editor Test Play/custom play.
+export function addTrap() {
+    if (S.phase !== 'edit') return;
+    const { w, h } = mapBounds(world.mapSizeKey);
+    world.bodies.push({ x: w / 2, y: h / 2, r: 2.8, m: 200, type: 'trap' });
+    hooks.sfx.pop();
+}
+
+export function addMine() {
+    if (S.phase !== 'edit') return;
+    const { w, h } = mapBounds(world.mapSizeKey);
+    world.bodies.push({ x: w / 2, y: h / 2, r: 2, m: 0, type: 'mine' });
+    hooks.sfx.pop();
+}
+
+// Fuel/Stardust pickups live in world.pickups, not world.bodies — same
+// canonical r/type as gameplay.js's genHole/explore.js spawn them with. Made
+// non-inert outside Endless by widening gameplay.js's pickup-collision gate.
+export function addFuelPickup() {
+    if (S.phase !== 'edit') return;
+    const { w, h } = mapBounds(world.mapSizeKey);
+    world.pickups.push({ x: w / 2, y: h / 2, r: 1.8, type: 'fuel' });
+    hooks.sfx.pop();
+}
+
+export function addStardustPickup() {
+    if (S.phase !== 'edit') return;
+    const { w, h } = mapBounds(world.mapSizeKey);
+    world.pickups.push({ x: w / 2, y: h / 2, r: 1.2, type: 'stardust' });
+    hooks.sfx.pop();
+}
+
+// MM-15: fine-adjustment controls for the currently selected planet (1:1 view
+// only — the overview canvas never calls these, per the sprint doc's own
+// "sizing is a fine-adjustment operation, not an overview one").
+export function growSelectedPlanet() {
+    if (!selected || selected.type !== 'planet') return;
+    selected.r = Math.min(PLANET_R_MAX, Math.round((selected.r + PLANET_R_STEP) * 10) / 10);
+    selected.m = selected.r * selected.r;
+    hooks.bar();
+}
+
+export function shrinkSelectedPlanet() {
+    if (!selected || selected.type !== 'planet') return;
+    selected.r = Math.max(PLANET_R_MIN, Math.round((selected.r - PLANET_R_STEP) * 10) / 10);
+    selected.m = selected.r * selected.r;
+    hooks.bar();
+}
+
+export function toggleSelectedRefuel() {
+    if (!selected || selected.type !== 'planet') return;
+    selected.refuelStation = !selected.refuelStation;
+    hooks.bar();
+}
+
+export function deselectBody() {
+    if (!selected) return;
+    selected = null;
+    hooks.bar();
 }
 
 export function pointerDown(wx, wy, id) {
@@ -74,7 +159,7 @@ export function pointerDown(wx, wy, id) {
     }
     
     if (!found) {
-        // Check bodies (planets, pulsars, tee)
+        // Check bodies (planets, pulsars, tee, trap, mine)
         // Reverse order to grab top-most
         for (let i = world.bodies.length - 1; i >= 0; i--) {
             const b = world.bodies[i];
@@ -85,7 +170,26 @@ export function pointerDown(wx, wy, id) {
             }
         }
     }
-    
+
+    // MM-15: fuel/stardust pickups — generous flat margin, same rationale as
+    // pulsar's special case above (their true radius is too small to be a
+    // fair touch target on its own).
+    if (!found) {
+        for (let i = world.pickups.length - 1; i >= 0; i--) {
+            const p = world.pickups[i];
+            if (Math.hypot(p.x - wx, p.y - wy) <= p.r + 6) {
+                found = p;
+                break;
+            }
+        }
+    }
+
+    // MM-15: tapping a planet selects it for the size/refuel panel; tapping
+    // anything else (or empty canvas) clears the selection so the panel
+    // never shows stale data for an object no longer under the cursor.
+    selected = (found && found.type === 'planet') ? found : null;
+    hooks.bar();
+
     if (found) {
         dragged = { id, obj: found, ox: found.x - wx, oy: found.y - wy };
         if (found.type !== 'tee' && found.type !== 'hole') {
@@ -126,9 +230,17 @@ export function pointerUp(wx, wy, id, cx, cy) {
 
     const { w: mapW, h: mapH } = mapBounds(world.mapSizeKey);
     if (deletable && (overTrash || o.x < -10 || o.x > mapW + 10 || o.y < -10 || o.y > mapH + 10)) {
-        world.bodies = world.bodies.filter(b => b !== o);
+        // MM-15: pickups live in world.pickups, not world.bodies — everything
+        // else (planet/pulsar/trap/mine) still comes from the bodies array.
+        if (o.type === 'fuel' || o.type === 'stardust') {
+            world.pickups = world.pickups.filter(p => p !== o);
+        } else {
+            world.bodies = world.bodies.filter(b => b !== o);
+        }
+        if (selected === o) { selected = null; }
         hooks.sfx.pop();
         hooks.toast('🗑️ Deleted');
+        hooks.bar();
     }
     return true;
 }
@@ -147,16 +259,20 @@ export function toggleTestPlay() {
         world.editorBackup = {
             bodies: world.bodies.map(b => ({ ...b })),
             teeRock: { ...world.teeRock },
-            blackHole: { ...world.blackHole }
+            blackHole: { ...world.blackHole },
+            pickups: world.pickups.map(p => ({ ...p })), // MM-15: pickups can now be consumed mid-test
         };
         S.phase = 'rest';
         S.strokes = 0;
         S.totalDiff = 0;
+        selected = null; // the size/refuel panel has nothing to do mid-test
         resetComet();
         hooks.toast('▶ Test Play');
         document.getElementById('ed-test').textContent = '⏹ Stop Test';
         document.getElementById('ed-test').classList.add('active');
-        document.querySelector('.ed-tools').classList.add('disabled');
+        // MM-15: the toolbar is now two `.ed-tools` rows (Add object / Overview+Maps),
+        // not one — both must lock during Test Play, not just the first match.
+        document.querySelectorAll('.ed-tools').forEach(el => el.classList.add('disabled'));
     } else {
         // Exit test mode
         stopTest();
@@ -169,17 +285,19 @@ export function stopTest() {
         world.bodies = world.editorBackup.bodies;
         world.teeRock = world.editorBackup.teeRock;
         world.blackHole = world.editorBackup.blackHole;
-        
+        world.pickups = world.editorBackup.pickups || [];
+
         // Re-link teeRock in bodies to ensure identity matches
         world.bodies = world.bodies.filter(b => b.type !== 'tee');
         world.bodies.push(world.teeRock);
     }
     S.phase = 'edit';
+    selected = null;
     resetComet();
     hooks.toast('🔨 Map Maker');
     document.getElementById('ed-test').textContent = '▶ Test Play';
     document.getElementById('ed-test').classList.remove('active');
-    document.querySelector('.ed-tools').classList.remove('disabled');
+    document.querySelectorAll('.ed-tools').forEach(el => el.classList.remove('disabled'));
 }
 
 /* ============================== MY MAPS ============================== */
@@ -226,6 +344,7 @@ export function saveCurrentMap() {
         teeRock: { ...world.teeRock },
         blackHole: { ...world.blackHole },
         size: world.mapSizeKey,
+        pickups: world.pickups.map(p => ({ ...p })), // MM-15
     };
     maps.push(mapData);
     saveMaps(maps);
@@ -245,6 +364,7 @@ export function saveCustomMap() {
         teeRock: { ...world.teeRock },
         blackHole: { ...world.blackHole },
         size: world.mapSizeKey,
+        pickups: world.pickups.map(p => ({ ...p })), // MM-15
     };
     maps.push(mapData);
     saveMaps(maps);
@@ -295,10 +415,19 @@ export function encodeMap(mapData) {
     if (mapData.size === 'large') arr.push([4, 1]);
 
     mapData.bodies.forEach(b => {
-        if (b.type === 'planet') arr.push([2, r(b.x), r(b.y), r(b.r), b.pal, r(b.spin)]);
+        // MM-15: 7th planet field is the refuelStation flag (0/1) — appended
+        // rather than inserted, so every pre-MM-15 share link still decodes
+        // byte-for-byte identically (decode reads a missing i[6] as falsy).
+        if (b.type === 'planet') arr.push([2, r(b.x), r(b.y), r(b.r), b.pal, r(b.spin), b.refuelStation ? 1 : 0]);
         else if (b.type === 'pulsar') arr.push([3, r(b.x), r(b.y)]);
+        else if (b.type === 'trap') arr.push([5, r(b.x), r(b.y)]);
+        else if (b.type === 'mine') arr.push([6, r(b.x), r(b.y)]);
     });
-    
+    (mapData.pickups || []).forEach(p => {
+        if (p.type === 'fuel') arr.push([7, r(p.x), r(p.y)]);
+        else if (p.type === 'stardust') arr.push([8, r(p.x), r(p.y)]);
+    });
+
     const str = JSON.stringify(arr);
     return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -308,21 +437,26 @@ export function decodeMap(hash) {
         let b64 = hash.replace(/-/g, '+').replace(/_/g, '/');
         while (b64.length % 4) b64 += '=';
         const arr = JSON.parse(atob(b64));
-        
+
         let teeRock = null, blackHole = null;
         const bodies = [];
+        const pickups = [];
         let size = DEFAULT_MAP_SIZE; // maps encoded before MM-6 carry no size tag — default small
 
         arr.forEach(i => {
             if (i[0] === 0) teeRock = { x: i[1], y: i[2], r: 3.4, m: 8, type: 'tee' };
             else if (i[0] === 1) blackHole = { x: i[1], y: i[2], r: 3.2, m: 230, type: 'hole' };
-            else if (i[0] === 2) bodies.push({ x: i[1], y: i[2], r: i[3], m: i[3]*i[3], type: 'planet', pal: i[4], spin: i[5] });
+            else if (i[0] === 2) bodies.push({ x: i[1], y: i[2], r: i[3], m: i[3]*i[3], type: 'planet', pal: i[4], spin: i[5], refuelStation: !!i[6] });
             else if (i[0] === 3) bodies.push({ x: i[1], y: i[2], r: 2.6, m: -160, type: 'pulsar' });
             else if (i[0] === 4) size = i[1] === 1 ? 'large' : DEFAULT_MAP_SIZE;
+            else if (i[0] === 5) bodies.push({ x: i[1], y: i[2], r: 2.8, m: 200, type: 'trap' });
+            else if (i[0] === 6) bodies.push({ x: i[1], y: i[2], r: 2, m: 0, type: 'mine' });
+            else if (i[0] === 7) pickups.push({ x: i[1], y: i[2], r: 1.8, type: 'fuel' });
+            else if (i[0] === 8) pickups.push({ x: i[1], y: i[2], r: 1.2, type: 'stardust' });
         });
 
         if (!teeRock || !blackHole) return null;
-        return { teeRock, blackHole, bodies, size };
+        return { teeRock, blackHole, bodies, size, pickups };
     } catch {
         return null;
     }
@@ -335,6 +469,7 @@ export function shareCurrentMap() {
         teeRock: { ...world.teeRock },
         blackHole: { ...world.blackHole },
         size: world.mapSizeKey,
+        pickups: world.pickups.map(p => ({ ...p })), // MM-15
     };
     const hash = encodeMap(mapData);
     copyShareLink(hash);
@@ -374,6 +509,9 @@ function loadMap(index) {
     world.teeRock = m.teeRock;
     world.blackHole = m.blackHole;
     world.mapSizeKey = m.size === 'large' ? 'large' : DEFAULT_MAP_SIZE;
+    world.pickups = m.pickups || []; // MM-15: pre-MM-15 saved maps carry no pickups field
+    world.asteroids = []; // Map Maker doesn't author asteroids — never carry a stale swarm in
+    selected = null;
 
     // Re-link teeRock in bodies
     world.bodies = world.bodies.filter(b => b.type !== 'tee');
@@ -389,7 +527,7 @@ function loadMap(index) {
     document.getElementById('editorBar').classList.remove('hidden');
     document.getElementById('ed-test').textContent = '▶ Test Play';
     document.getElementById('ed-test').classList.remove('active');
-    document.querySelector('.ed-tools').classList.remove('disabled');
+    document.querySelectorAll('.ed-tools').forEach(el => el.classList.remove('disabled'));
 
     hooks.bar(); // refreshes editor chrome gated on mapSizeKey (e.g. MM-16's Overview button)
     hooks.toast('📂 Map loaded');
