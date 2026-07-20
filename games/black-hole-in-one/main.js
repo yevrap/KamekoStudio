@@ -11,6 +11,7 @@ import { sfx, audio, setMuted } from './sfx.js';
 
 const canvas = document.getElementById('game');
 const restartBtn = document.getElementById('restartBtn');
+const newMapBtn = document.getElementById('newMapBtn');
 
 const LS = {
     lastPlayed: 'lastPlayed_blackHoleInOne',
@@ -200,6 +201,8 @@ function startRun(mode, editorSize) {
     document.getElementById('editorBar').classList.add('hidden');
     document.getElementById('customBar').classList.add('hidden');
     document.getElementById('mapBtn').classList.add('hidden');
+    // GEN-1: reroll has nothing to reroll while authoring a map in the editor.
+    newMapBtn.classList.toggle('hidden', mode === 'editor');
     if (mode === 'explore') {
         document.getElementById('exploreBar').classList.remove('hidden');
         document.getElementById('mapBtn').classList.remove('hidden');
@@ -362,6 +365,23 @@ document.getElementById('sc-endless').addEventListener('click', () => startRun('
 restartBtn.addEventListener('click', () => {
     startRun(S.mode);
     ui.toast('↺ Fresh start');
+});
+// GEN-1: 🔄 New Map — reroll the current level with a fresh seed, keeping
+// hole count/fuel/score (unlike Restart, which resets the whole run). Custom
+// Map has no procedural generator to reroll, so it falls back to a fresh
+// Endless round — same fallback FUEL-4 established for a missing map.
+newMapBtn.addEventListener('click', () => {
+    audio();
+    if (S.mode === 'explore') {
+        explore.rerollWorld();
+        ui.toast('🔄 New region');
+    } else if (S.mode === 'custom') {
+        startRun('endless');
+        ui.toast('🔄 New map — Endless');
+    } else {
+        game.rerollHole();
+        ui.toast('🔄 New hole');
+    }
 });
 document.getElementById('sg-again').addEventListener('click', () => startRun(S.mode));
 document.getElementById('sg-menu').addEventListener('click', () => {

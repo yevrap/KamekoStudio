@@ -354,14 +354,13 @@ export function updateActiveChunks(silent = false) {
     lastChunkY = cy;
 }
 
-export function startRun(silent = false) {
-    S.mode = 'explore';
-    S.phase = 'rest';
-
-    worldSeed = 'explore-1'; // Hardcoded for Sprint 1 until persists
+// Shared by startRun() and rerollWorld() (GEN-1) — regenerates the home chunk
+// and everything around it under the given seed, without touching fuel or the
+// persistent stardust/upgrades/inventory state (those live outside this reset).
+function resetWorld(seed, silent) {
+    worldSeed = seed;
     lastChunkX = null;
     lastChunkY = null;
-    fuel = tankMaxFuel(S.upgrades.tank);
 
     world.teeRock = { x: 50, y: 85, r: 3.4, m: 8, type: 'tee', id: 'tee' };
     camera.x = 50;
@@ -370,19 +369,34 @@ export function startRun(silent = false) {
     updateActiveChunks(silent);
 
     world.blackHole = null;
-    
+
     comet.vx = comet.vy = 0;
     comet.rest = { b: world.teeRock, ang: -Math.PI / 2 };
     placeOnRest();
     world.lastRest = { rest: comet.rest };
-    
+
     world.trail = [];
     world.slingTrack = new Map();
     world.hoppedBodies = new Set();
     world.orbitedThisHole = new Set();
     world.orbit = null;
     S.orbitCooldown = 0;
-    
+}
+
+export function startRun(silent = false) {
+    S.mode = 'explore';
+    S.phase = 'rest';
+    fuel = tankMaxFuel(S.upgrades.tank);
+    resetWorld('explore-1', silent); // Hardcoded for Sprint 1 until persists
+    hooks.bar();
+}
+
+// GEN-1: 🔄 New Map reroll — regenerate the explore world under a fresh seed,
+// same as startRun() but leaves fuel/hole-equivalent progress untouched (a
+// reroll, not a restart). Usable mid-run from any phase, same as Restart.
+export function rerollWorld() {
+    S.phase = 'rest';
+    resetWorld('explore-' + Math.random().toString(36).slice(2), false);
     hooks.bar();
 }
 

@@ -11,14 +11,16 @@ import {
     OB_MARGIN, ORBIT_MAX_GAP, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds,
     overviewAvailable, overviewTransform, overviewToWorld, worldToOverview,
     GLOSSARY_OBJECTS, GLOSSARY_MECHANICS, ITEMS, PLANET_R_MIN, PLANET_R_MAX, PLANET_R_STEP,
+    MAX_DRAG,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet, defaultGlossarySeen, mergeGlossarySeen, markGlossarySeen } from '../games/black-hole-in-one/state.js';
 import * as game from '../games/black-hole-in-one/gameplay.js';
 import {
     chunkLandmarks, getChunkBodies, CHUNK_SIZE, camera as exploreCamera,
-    updateActiveChunks, startRun as exploreStartRun,
+    updateActiveChunks, startRun as exploreStartRun, rerollWorld as exploreRerollWorld,
     step as exploreStep, setHooks as setExploreHooks, keyDown as exploreKeyDown, clearKeys as exploreClearKeys, fuel as exploreFuel,
+    worldSeed as exploreWorldSeed, launch as exploreLaunch,
 } from '../games/black-hole-in-one/explore.js';
 
 /* ============================== constants helpers ============================== */
@@ -382,6 +384,40 @@ test('startRun resets state for the chosen mode', () => {
     assert.equal(S.totalDiff, 0);
     assert.deepEqual(S.roundCard, []);
     assert.equal(S.phase, 'rest');
+});
+
+test('GEN-1: rerollHole regenerates the current hole but leaves run progress untouched', () => {
+    game.startRun('endless');
+    S.hole = 4;
+    game.genHole(4);
+    S.strokes = 2;
+    S.fuel = 63;
+    S.totalDiff = 5;
+    S.roundCard = [{ hole: 1, strokes: 3, par: 2, hopped: false }];
+    S.phase = 'flight'; // reroll must work mid-flight, not just from rest
+
+    game.rerollHole();
+
+    assert.equal(S.hole, 4, 'hole number is unchanged — a reroll, not a restart');
+    assert.equal(S.fuel, 63, 'fuel is untouched by a reroll');
+    assert.equal(S.totalDiff, 5, 'run total is untouched by a reroll');
+    assert.deepEqual(S.roundCard, [{ hole: 1, strokes: 3, par: 2, hopped: false }], 'scorecard so far is untouched');
+    assert.equal(S.strokes, 0, 'the rerolled hole starts fresh, like any new hole');
+    assert.equal(S.phase, 'rest', 'reroll always lands the comet back at rest, from any phase');
+});
+
+test('GEN-1: rerollHole clears a pending result timer/chip (same guard as nextHole)', () => {
+    game.startRun('endless');
+    let chipCalls = 0;
+    game.setHooks({ chip() { chipCalls++; } });
+    S.strokes = S.par;
+    game.holeComplete(); // enters 'result' phase, schedules the auto-advance timer
+    assert.equal(S.phase, 'result');
+    const holeBefore = S.hole;
+    game.rerollHole();
+    assert.equal(S.hole, holeBefore, 'rerolling mid-result does not advance the hole number');
+    assert.equal(S.phase, 'rest');
+    game.setHooks({ chip() {} });
 });
 
 test('holeComplete records the scorecard line and totals vs par', () => {
@@ -1083,6 +1119,29 @@ test('explore.startRun(true) is silent (boot background); a real startRun marks 
     S.glossarySeen = defaultGlossarySeen();
     exploreStartRun();
     assert.equal(S.glossarySeen.tee, true, 'a real startRun marks the tee rock as seen');
+});
+
+test('GEN-1: rerollWorld regenerates the explore world under a fresh seed without touching fuel/progress', () => {
+    exploreStartRun();
+    const seedBefore = exploreWorldSeed;
+    const upgradesBefore = { ...S.upgrades };
+    const stardustBefore = S.stardust;
+
+    // Drain the tank with a real shot — a reroll should preserve the drained
+    // fuel, unlike startRun()/Restart, which always tops the tank back to full.
+    exploreLaunch(0, -1, MAX_DRAG);
+    const fuelBefore = exploreFuel;
+    assert.ok(fuelBefore < 100, 'the test shot actually spent fuel');
+    S.phase = 'flight'; // reroll must work mid-flight, not just from rest
+
+    exploreRerollWorld();
+
+    assert.notEqual(exploreWorldSeed, seedBefore, 'a reroll picks a fresh world seed, unlike a restart');
+    assert.equal(exploreFuel, fuelBefore, 'fuel is untouched by a reroll');
+    assert.equal(S.phase, 'rest', 'reroll always lands the comet back at rest, from any phase');
+    assert.equal(comet.rest && comet.rest.b, world.teeRock, 'comet is placed back on the home tee in the new world');
+    assert.deepEqual(S.upgrades, upgradesBefore, 'upgrades are untouched by a reroll');
+    assert.equal(S.stardust, stardustBefore, 'stardust wallet is untouched by a reroll');
 });
 
 test('updateActiveChunks marks refuelStation/moonRing/stardustRing once their chunk is actually (non-silently) loaded, and stays silent when asked (MM-18)', () => {

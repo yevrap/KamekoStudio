@@ -447,6 +447,111 @@ await test('black-hole-in-one: fuel bar visibly ticks down while flying a custom
     'FUEL-7: fuel bar DOM width must track S.fuel in custom mode, got width ' + afterLaunch.barWidth + ' for fuel ' + afterLaunch.fuel);
 });
 
+await test('black-hole-in-one: 🔄 New Map rerolls the current hole in Golf, keeping hole/fuel/score (GEN-1)', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    const game = await import('/games/black-hole-in-one/gameplay.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    game.startRun('endless');
+    S.hole = 4;
+    game.genHole(4);
+    S.fuel = 63;
+    S.totalDiff = 5;
+    S.phase = 'flight'; // reroll must work mid-flight
+  });
+
+  const visible = await page.evaluate(() =>
+    !document.getElementById('newMapBtn').classList.contains('hidden'));
+  assert(visible, '🔄 New Map button should be visible in Golf/Endless mode');
+
+  await page.click('#newMapBtn');
+  await sleep(200);
+
+  const after = await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    return { hole: S.hole, fuel: S.fuel, totalDiff: S.totalDiff, phase: S.phase, strokes: S.strokes };
+  });
+  assert(after.hole === 4, 'New Map changed the hole number — should reroll the same hole, not advance/restart, got ' + after.hole);
+  assert(after.fuel === 63, 'New Map should not touch fuel, got ' + after.fuel);
+  assert(after.totalDiff === 5, 'New Map should not touch the run total, got ' + after.totalDiff);
+  assert(after.phase === 'rest', 'New Map should land the comet back at rest, got "' + after.phase + '"');
+  assert(after.strokes === 0, 'the rerolled hole should start with a clean stroke count, got ' + after.strokes);
+});
+
+await test('black-hole-in-one: 🔄 New Map regenerates the Explore world under a fresh seed, keeping fuel (GEN-1)', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    const explore = await import('/games/black-hole-in-one/explore.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    explore.startRun();
+    S.mode = 'explore';
+    explore.launch(0, -1, 40); // spend some fuel with a real shot
+  });
+
+  const before = await page.evaluate(async () => {
+    const explore = await import('/games/black-hole-in-one/explore.js');
+    return { seed: explore.worldSeed, fuel: explore.fuel };
+  });
+  assert(before.fuel < 100, 'test shot did not actually spend fuel, got ' + before.fuel);
+
+  await page.click('#newMapBtn');
+  await sleep(200);
+
+  const after = await page.evaluate(async () => {
+    const { S, comet, world } = await import('/games/black-hole-in-one/state.js');
+    const explore = await import('/games/black-hole-in-one/explore.js');
+    return { seed: explore.worldSeed, fuel: explore.fuel, phase: S.phase, restsOnTee: comet.rest && comet.rest.b === world.teeRock };
+  });
+  assert(after.seed !== before.seed, 'New Map did not change the explore world seed');
+  assert(after.fuel === before.fuel, 'New Map should not touch fuel in Explore, got ' + after.fuel + ' vs ' + before.fuel);
+  assert(after.phase === 'rest', 'New Map should land the comet back at rest, got "' + after.phase + '"');
+  assert(after.restsOnTee, 'New Map should place the comet back on the home tee in the regenerated world');
+});
+
+await test('black-hole-in-one: 🔄 New Map falls back to a fresh Endless round in Custom Map (GEN-1, same fallback as FUEL-4)', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const game = await import('/games/black-hole-in-one/gameplay.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    game.startCustomMap({
+      teeRock: { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' },
+      blackHole: { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' },
+      bodies: [], pickups: [],
+    });
+  });
+
+  await page.click('#newMapBtn');
+  await sleep(200);
+
+  const after = await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    return {
+      mode: S.mode,
+      barHidden: document.getElementById('customBar').classList.contains('hidden'),
+      endlessBarVisible: !document.getElementById('bar').classList.contains('hidden'),
+    };
+  });
+  assert(after.mode === 'endless', 'New Map in Custom Map should fall back to Endless, got mode "' + after.mode + '"');
+  assert(after.barHidden, 'the custom-map HUD bar should be hidden after falling back to Endless');
+  assert(after.endlessBarVisible, 'the endless HUD bar should be visible after falling back to Endless');
+});
+
+await test('black-hole-in-one: 🔄 New Map is hidden while authoring a map in the editor (GEN-1)', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.click('#modeEditor');
+  await page.click('#mapSizeSmall');
+  await sleep(200);
+
+  const hidden = await page.evaluate(() =>
+    document.getElementById('newMapBtn').classList.contains('hidden'));
+  assert(hidden, '🔄 New Map should be hidden in the Map Maker editor — nothing procedural to reroll');
+});
+
 await test('durak-alchemist: Play is free and starts the game', async page => {
   await page.goto(base + '/games/durak-alchemist/', { waitUntil: 'load' });
   const label = await page.$eval('#start-btn', b => b.textContent);

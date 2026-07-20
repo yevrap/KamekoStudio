@@ -539,6 +539,18 @@ export function nextHole() {
     S.phase = 'rest';
 }
 
+// GEN-1: 🔄 New Map reroll — regenerate the *current* hole with a fresh RNG
+// seed, same hole number/difficulty. Unlike startRun(), doesn't touch S.hole,
+// S.fuel, S.totalDiff, or S.roundCard — a reroll, not a run restart. Usable
+// mid-flight/mid-orbit too, same as Restart, so any pending result chip/timer
+// from a hole that just completed needs clearing first (nextHole()'s pattern).
+export function rerollHole() {
+    clearTimeout(resultTimer); resultTimer = null;
+    hooks.chip(null);
+    genHole(S.hole);
+    S.phase = 'rest';
+}
+
 export function endRound() {
     // legacy, unused but keeping signature for now
 }
