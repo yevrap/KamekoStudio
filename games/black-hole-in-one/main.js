@@ -1,7 +1,7 @@
 // Black Hole in One — boot, input, main loop, shared-infrastructure wiring.
 'use strict';
 
-import { DT, ROUND_HOLES, TAP_MAX_LEN, LS_KEYS } from './constants.js';
+import { DT, ROUND_HOLES, TAP_MAX_LEN, LS_KEYS, isStranded } from './constants.js';
 import { S, world, comet, mergeInventory, mergeGlossarySeen } from './state.js';
 import * as game from './gameplay.js';
 import * as explore from './explore.js';
@@ -52,8 +52,8 @@ game.setHooks({
         ui.showScorecard(result, prev, isNew);
         sfx.score(result.total <= 0 ? 5 : 2);
     },
-    showSurvivalGameOver(level) {
-        ui.showSurvivalGameOver(level);
+    roundOver(level) {
+        ui.showRoundOverSummary(level);
     },
     editorReturn() {
         editor.stopTest();
@@ -100,7 +100,7 @@ let drag = null;   // {sx, sy, cx, cy, id} in world coords
 
 canvas.addEventListener('pointerdown', e => {
     audio();
-    if (S.phase === 'menu' || S.phase === 'roundover') return;  // overlays own this tap
+    if (S.phase === 'menu') return;  // the ☰ menu overlay owns this tap
     if (S.phase === 'result') { game.advance(); return; }
 
     // INV-3b: the Thruster's floating stick takes over touch/drag entirely in
@@ -195,7 +195,7 @@ function startRun(mode, editorSize) {
     localStorage.setItem(LS.mode, mode);
     ui.hideHowto();
     ui.hideScorecard();
-    ui.hideSurvivalGameOver();
+    ui.hideRoundOverSummary();
     document.getElementById('bar').classList.add('hidden');
     document.getElementById('exploreBar').classList.add('hidden');
     document.getElementById('editorBar').classList.add('hidden');
@@ -362,16 +362,21 @@ document.getElementById('howto-close').addEventListener('click', () => ui.hideHo
 
 document.getElementById('sc-endless').addEventListener('click', () => startRun('endless'));
 
-restartBtn.addEventListener('click', () => {
+// FUEL-9/GOLF-7: named so the always-on ↺/🔄 buttons and the non-blocking
+// round-over panel's Restart/New Map buttons share one code path each — the
+// stranded state reuses these exact recovery actions rather than inventing its
+// own, per Yev's "one reroll control, less code paths to get confused" answer.
+function doRestart() {
     startRun(S.mode);
     ui.toast('↺ Fresh start');
-});
+}
 // GEN-1: 🔄 New Map — reroll the current level with a fresh seed, keeping
 // hole count/fuel/score (unlike Restart, which resets the whole run). Custom
 // Map has no procedural generator to reroll, so it falls back to a fresh
 // Endless round — same fallback FUEL-4 established for a missing map.
-newMapBtn.addEventListener('click', () => {
+function doNewMap() {
     audio();
+    ui.hideRoundOverSummary();
     if (S.mode === 'explore') {
         explore.rerollWorld();
         ui.toast('🔄 New region');
@@ -382,14 +387,12 @@ newMapBtn.addEventListener('click', () => {
         game.rerollHole();
         ui.toast('🔄 New hole');
     }
-});
-document.getElementById('sg-again').addEventListener('click', () => startRun(S.mode));
-document.getElementById('sg-menu').addEventListener('click', () => {
-    ui.hideSurvivalGameOver(); // same z-index as #howto, later in DOM order — stays on top otherwise
-    ui.showHowto();
-    if (drag) drag = null;
-    if (S.phase === 'aiming') S.phase = 'rest';
-});
+}
+restartBtn.addEventListener('click', doRestart);
+newMapBtn.addEventListener('click', doNewMap);
+document.getElementById('ro-restart').addEventListener('click', doRestart);
+document.getElementById('ro-newmap').addEventListener('click', doNewMap);
+document.getElementById('ro-dismiss').addEventListener('click', () => ui.hideRoundOverSummary());
 document.getElementById('helpBtn').addEventListener('click', () => {
     ui.showHowto();
     if (drag) drag = null;
@@ -470,20 +473,27 @@ function frame(now) {
         }
     }
 
-    // FUEL-1: no auto-tow anywhere — an empty tank just leaves the comet
-    // stranded, so the restart button pulses/glows as the way out instead.
-    // Checked every frame (not just on step()) since step() doesn't run in
-    // every phase (e.g. resting with no thrust), but stranding can happen in any of them.
-    if (S.mode === 'explore') {
-        const stranded = explore.isStranded(explore.fuel, S.inventory);
-        if (stranded !== wasStranded) {
-            wasStranded = stranded;
-            restartBtn.classList.toggle('stranded', stranded);
-            if (stranded) ui.toast('🚫 Stranded — out of fuel. Hit ↺ to restart.');
+    // FUEL-1/FUEL-9/GOLF-7: no auto-tow anywhere, in any mode — an empty tank just
+    // leaves the comet stranded, restart button pulsing, no mode ever force-blocking
+    // the screen. Checked every frame (not just on step()) since step() doesn't run
+    // in every phase (e.g. resting with no thrust), but stranding can happen in any
+    // of them — this also means toggling ♾️ Endless Flight on mid-strand clears the
+    // glow/summary the very next frame, no special-case rescue code needed.
+    // Golf/Endless additionally gets a dismissible round-over summary (its
+    // scorecard equivalent); Explore/Custom have no round concept, so glow+toast
+    // is their whole treatment, unchanged.
+    let stranded = false;
+    if (S.mode === 'explore') stranded = explore.isStranded(explore.fuel, S.inventory);
+    else if (S.mode === 'endless' || S.mode === 'custom') stranded = isStranded(S.fuel, S.inventory);
+    if (stranded !== wasStranded) {
+        wasStranded = stranded;
+        restartBtn.classList.toggle('stranded', stranded);
+        if (stranded) {
+            ui.toast('🚫 Stranded — out of fuel. Hit ↺ to restart.');
+            if (S.mode === 'endless') ui.showRoundOverSummary(S.hole);
+        } else if (S.mode === 'endless') {
+            ui.hideRoundOverSummary();
         }
-    } else if (wasStranded) {
-        wasStranded = false;
-        restartBtn.classList.remove('stranded');
     }
 
     if (S.phase === 'flight' || S.phase === 'orbit') {

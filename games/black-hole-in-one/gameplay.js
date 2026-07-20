@@ -15,7 +15,7 @@ import { stepBody, collide, orbitCapture } from './physics.js';
 // Presentation hooks — main.js swaps in the real UI; defaults are no-ops.
 export let hooks = {
     toast() {}, chip() {}, bar() {}, holeStart() {}, roundEnd() {}, editorReturn() {},
-    showSurvivalGameOver() {}, burst() {}, stardust() {}, glossary() {},
+    roundOver() {}, burst() {}, stardust() {}, glossary() {},
     sfx: { flick() {}, bounce() {}, sling() {}, lost() {}, land() {}, sink() {}, score() {} },
 };
 export function setHooks(h) { hooks = Object.assign(hooks, h); }
@@ -245,42 +245,25 @@ export function launch(dx, dy, len) {
     return true;
 }
 
-function endSurvivalRound() {
-    S.phase = 'roundover';
-    hooks.showSurvivalGameOver(S.hole);
-}
-
-// FUEL-10: gated by ♾️ Endless Flight — organic fuel-out only, never a hazard kill.
-// triggerHazardDeath below calls endSurvivalRound() directly instead of going
-// through this check, so a mine/trap always ends the run regardless of the item.
-function checkSurvivalGameOver() {
-    if (S.mode === 'endless' && S.fuel <= 0 && !S.inventory.endlessFlight?.enabled) {
-        endSurvivalRound();
-        return true;
-    }
-    return false;
-}
-
+// FUEL-9/GOLF-7: hazard kills always end a Golf round, even with ♾️ Endless Flight
+// enabled — mines/traps aren't fuel, and the item is specifically about drain, not
+// hazard immunity (FUEL-10). So this calls hooks.roundOver() unconditionally rather
+// than through the shared fuel-based isStranded() check main.js's frame loop uses
+// for organic fuel-out. The comet always settles back at its last rest spot first,
+// in every mode — MM-15 let Map Maker place mines/traps outside Endless too, and
+// leaving the comet's phase/position untouched (the pre-MM-15 behavior) would be
+// an invisible softlock now that nothing force-blocks the screen to mask it.
 function triggerHazardDeath(hit) {
     hooks.burst(comet.x, comet.y, 25, hit.type === 'trap' ? '#9933ff' : '#ff4444', 30);
     hooks.sfx.lost();
     hooks.toast(hit.type === 'trap' ? '🌀 Crushed in a Gravity Trap' : (hit.type === 'asteroid' ? '☄️ Smashed by an Asteroid' : '💥 Hit a Space Mine'));
-    if (S.mode === 'endless') {
-        S.fuel = 0;
-        endSurvivalRound();
-        return;
-    }
-    // MM-15: traps/mines used to only ever spawn in Endless, so nothing outside
-    // it exercised this path — hitting one just left the comet's phase/position
-    // untouched forever (no fuel meter to zero out, no round-end to trigger),
-    // an invisible softlock. Now Map Maker can place them on any map/mode, so
-    // golf/editor/custom respawn at the last safe rest spot instead — the same
-    // recovery an out-of-bounds shot already gets.
+    if (S.mode === 'endless') S.fuel = 0;
     comet.rest = world.lastRest.rest;
     placeOnRest();
     comet.vx = comet.vy = 0;
     world.trail = [];
     S.phase = 'rest';
+    if (S.mode === 'endless') hooks.roundOver(S.hole);
 }
 
 export function stepAsteroids(dt) {
@@ -404,7 +387,6 @@ export function stepFlight(dt) {
         S.phase = 'rest';
         hooks.sfx.lost();
         hooks.toast(oob ? '🌌 Lost in space — replay from your last spot' : '🛰 Drifting too long — back you come');
-        checkSurvivalGameOver();
     }
 }
 
@@ -425,7 +407,6 @@ export function landOn(b, ang) {
         if (S.hopsThisHole === 1) hooks.toast('🪐 HOP! Teed up on a planet');
     }
     if (markGlossarySeen('landing')) hooks.glossary();
-    checkSurvivalGameOver();
 }
 
 /* ============================== ORBIT (BH-4) ============================== */
@@ -446,7 +427,6 @@ export function beginOrbit(b, cap) {
         hooks.toast('🛰 ORBIT! Flick to break away');
     }
     if (markGlossarySeen('orbitCapture')) hooks.glossary();
-    checkSurvivalGameOver();
 }
 
 // Advance the orbit angle by omega·dt and derive the comet's position + tangential
@@ -487,7 +467,6 @@ export function stepOrbit(dt) {
         S.phase = 'rest';
         hooks.sfx.lost();
         hooks.toast('🌌 Lost in space — replay from your last spot');
-        checkSurvivalGameOver();
     }
 }
 

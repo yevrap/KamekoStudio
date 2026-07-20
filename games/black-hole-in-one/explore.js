@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX, ORBIT_MIN_GAP, ORBIT_MAX_GAP, circularSpeed, STARDUST_RING_CHANCE, STARDUST_RING_COUNT_MIN, STARDUST_RING_COUNT_MAX, STARDUST_RING_GAP_MIN, STARDUST_RING_GAP_MAX } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX, ORBIT_MIN_GAP, ORBIT_MAX_GAP, circularSpeed, STARDUST_RING_CHANCE, STARDUST_RING_COUNT_MIN, STARDUST_RING_COUNT_MAX, STARDUST_RING_GAP_MIN, STARDUST_RING_GAP_MAX, isStranded as sharedIsStranded } from './constants.js';
 import { S, world, comet, markGlossarySeen } from './state.js';
 import { stepBody, collide, orbitCapture, magnetCapture } from './physics.js';
 
@@ -818,9 +818,11 @@ export function isRefuelStation(body) {
 // any phase, Thruster on or off — launch()/thrust already refuse to fire on an
 // empty tank on their own, so "stranded, wherever you are" needs no new physics).
 // Endless Flight (INV-1) locks the tank so this never fires while it's on.
+// FUEL-9/GOLF-7: delegates to the shared definition in constants.js so Golf/Custom
+// (main.js's frame loop, reading S.fuel) can never drift onto a different rule.
 // Pure and unit-tested.
 export function isStranded(fuel, inventory) {
-    return fuel <= 0 && !inventory.endlessFlight?.enabled;
+    return sharedIsStranded(fuel, inventory);
 }
 
 // Instantly tops the tank off. Endless Flight (INV-1) is a fuel-lock: switching

@@ -166,12 +166,15 @@
     </div>
 </div>
 
-<div id="survGameOver" class="hidden">
-    <h2>💥 OUT OF FUEL 💥</h2>
-    <div id="sg-level">Reached Level 1</div>
-    <div id="sg-btns">
-        <button id="sg-again">🔋 Try Again</button>
-        <button id="sg-menu">☰ Menu</button>
+<!-- FUEL-9/GOLF-7: non-blocking Golf/Endless fuel-out summary — a small dismissible
+     card, not a full-screen modal. Never covers the canvas; Restart/New Map/Dismiss
+     are the only actions, matching the always-on ↺/🔄 buttons in #btns. -->
+<div id="roundOverPanel" class="hidden">
+    <div id="ro-title">💥 Out of fuel — <span id="ro-hole">Hole 1</span></div>
+    <div id="ro-btns">
+        <button id="ro-restart">↺ Restart</button>
+        <button id="ro-newmap">🔄 New Map</button>
+        <button id="ro-dismiss" aria-label="Dismiss">✕</button>
     </div>
 </div>
 

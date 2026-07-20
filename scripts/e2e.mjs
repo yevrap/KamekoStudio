@@ -270,40 +270,160 @@ await test('black-hole-in-one: ☰ menu fully hides an open Town Shop, both dire
   assert(shopVisibleAfter, 'Town Shop did not reappear after closing the menu while still at Town');
 });
 
-await test('black-hole-in-one: survival game-over "Try Again" and "Menu" buttons are wired', async page => {
+await test('black-hole-in-one: Golf running out of fuel shows a non-blocking round-over summary, never a full-screen modal (FUEL-9/GOLF-7)', async page => {
   await page.goto(BH, { waitUntil: 'load' });
   await page.evaluate(async () => {
     const { S } = await import('/games/black-hole-in-one/state.js');
     const ui = await import('/games/black-hole-in-one/ui.js');
     ui.hideHowto();
     S.mode = 'endless';
-    ui.showSurvivalGameOver(3);
+    S.hole = 3;
+    S.fuel = 0;
   });
-  await sleep(100);
+  await sleep(200); // next frame's central stranded check (main.js) picks this up
 
-  await page.click('#sg-again');
-  await sleep(200);
-  const restarted = await page.evaluate(() => ({
-    overlayHidden: document.getElementById('survGameOver').classList.contains('hidden'),
-    barVisible: !document.getElementById('bar').classList.contains('hidden'),
+  const stranded = await page.evaluate(() => ({
+    glow: document.getElementById('restartBtn').classList.contains('stranded'),
+    panelHidden: document.getElementById('roundOverPanel').classList.contains('hidden'),
+    holeText: document.getElementById('ro-hole').textContent,
+    canvasVisible: getComputedStyle(document.getElementById('game')).display !== 'none',
   }));
-  assert(restarted.overlayHidden, '🔋 Try Again did not dismiss the survival game-over overlay');
-  assert(restarted.barVisible, '🔋 Try Again did not restart the run (game bar still hidden)');
+  assert(stranded.glow, 'restart button should pulse red once Golf is out of fuel (FUEL-1 contract extended to Golf)');
+  assert(!stranded.panelHidden, 'Golf should show the non-blocking round-over summary on fuel-out');
+  assert(stranded.holeText.includes('3'), 'round-over summary should show the hole reached, got "' + stranded.holeText + '"');
+  assert(stranded.canvasVisible, 'the game canvas must stay visible — no mode may ever force-block the screen on fuel-out (FUEL-9/GOLF-7)');
 
+  // ✕ Dismiss only hides the card — it's not a recovery action, so the player
+  // stays stranded (glow persists) until Restart, New Map, or the item toggle.
+  await page.click('#ro-dismiss');
+  await sleep(100);
+  const afterDismiss = await page.evaluate(() => ({
+    panelHidden: document.getElementById('roundOverPanel').classList.contains('hidden'),
+    glow: document.getElementById('restartBtn').classList.contains('stranded'),
+  }));
+  assert(afterDismiss.panelHidden, '✕ Dismiss did not hide the round-over summary');
+  assert(afterDismiss.glow, 'dismissing the summary must not by itself un-strand the player — restart button should still pulse');
+});
+
+await test("black-hole-in-one: the round-over summary's own ↺ Restart button recovers exactly like the persistent button (FUEL-9/GOLF-7)", async page => {
+  await page.goto(BH, { waitUntil: 'load' });
   await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
     const ui = await import('/games/black-hole-in-one/ui.js');
-    ui.showSurvivalGameOver(3);
+    ui.hideHowto();
+    S.mode = 'endless';
+    S.hole = 3;
+    S.fuel = 0;
   });
-  await sleep(100);
-  await page.click('#sg-menu');
   await sleep(200);
-  const afterMenu = await page.evaluate(() => ({
-    menuOpened: !document.getElementById('howto').classList.contains('hidden'),
-    overlayHidden: document.getElementById('survGameOver').classList.contains('hidden'),
+  await page.click('#ro-restart');
+  await sleep(200);
+  const after = await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    return {
+      fuel: S.fuel, hole: S.hole,
+      glow: document.getElementById('restartBtn').classList.contains('stranded'),
+      panelHidden: document.getElementById('roundOverPanel').classList.contains('hidden'),
+    };
+  });
+  assert(after.fuel > 0, "the summary's ↺ Restart did not refuel the tank");
+  assert(after.hole === 1, "the summary's ↺ Restart did not reset to hole 1");
+  assert(!after.glow, "the summary's ↺ Restart did not clear the stranded glow");
+  assert(after.panelHidden, "the summary's ↺ Restart did not hide itself");
+});
+
+await test("black-hole-in-one: the round-over summary's own 🔄 New Map button rerolls and hides the card (fuel is untouched, same reroll-not-restart contract as GEN-1) (FUEL-9/GOLF-7)", async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    S.mode = 'endless';
+    S.hole = 3;
+    S.fuel = 0;
+  });
+  await sleep(200);
+  await page.click('#ro-newmap');
+  await sleep(150);
+  const after = await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    return { fuel: S.fuel, hole: S.hole, panelHidden: document.getElementById('roundOverPanel').classList.contains('hidden') };
+  });
+  assert(after.hole === 3, "the summary's 🔄 New Map should reroll the SAME hole number, not advance it (GEN-1 contract)");
+  assert(after.fuel === 0, "the summary's 🔄 New Map leaves fuel untouched, same as GEN-1's existing reroll-not-restart contract");
+  assert(after.panelHidden, "the summary's 🔄 New Map did not hide the card");
+});
+
+await test('black-hole-in-one: the ☰ Settings Inventory section is reachable in Golf (not just Explore), and toggling ♾️ Endless Flight on while stranded instantly clears the stranded state (FUEL-9/GOLF-7)', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    S.mode = 'endless';
+    S.hole = 2;
+    S.fuel = 0;
+  });
+  await sleep(200);
+  const strandedBefore = await page.evaluate(() => ({
+    glow: document.getElementById('restartBtn').classList.contains('stranded'),
+    panelHidden: document.getElementById('roundOverPanel').classList.contains('hidden'),
   }));
-  assert(afterMenu.menuOpened, '☰ Menu did not open the howto/menu screen from the survival game-over overlay');
-  assert(afterMenu.overlayHidden,
-    '☰ Menu left the survival game-over overlay stacked on top of the menu (same z-index, later in DOM order)');
+  assert(strandedBefore.glow && !strandedBefore.panelHidden, 'test setup: Golf should be stranded before the rescue toggle');
+
+  // Real click through the ☰ menu, same path a stranded player would use —
+  // not a direct state poke — since FUEL-9/GOLF-7 specifically requires the
+  // toggle be reachable "via the ☰ menu, reachable from any mode."
+  await page.click('#settingsBtn');
+  await sleep(100);
+  const checkboxVisible = await page.evaluate(() =>
+    !!document.querySelector('input[data-item="endlessFlight"]'));
+  assert(checkboxVisible, '♾️ Endless Flight checkbox is not reachable from Golf\'s ☰ Settings tab — the rescue toggle has nothing to click');
+  await page.click('input[data-item="endlessFlight"]');
+  await sleep(100);
+  await page.click('#howto-close');
+  await sleep(200);
+
+  const rescued = await page.evaluate(async () => {
+    const { S } = await import('/games/black-hole-in-one/state.js');
+    return {
+      fuel: S.fuel,
+      enabled: S.inventory.endlessFlight.enabled,
+      glow: document.getElementById('restartBtn').classList.contains('stranded'),
+      panelHidden: document.getElementById('roundOverPanel').classList.contains('hidden'),
+    };
+  });
+  assert(rescued.enabled, 'clicking the checkbox did not enable Endless Flight');
+  assert(!rescued.glow, 'toggling Endless Flight on did not clear the stranded glow');
+  assert(rescued.panelHidden, 'toggling Endless Flight on did not hide the round-over summary');
+  assert(rescued.fuel > 0, 'toggling Endless Flight on should also top off the Golf tank (mirrors Explore\'s refuelFull() on the same toggle)');
+
+  // The checkbox click persists blackHoleInOne_inventory to localStorage, which
+  // survives a page.goto reload (same origin) — clear it so this doesn't leak
+  // Endless Flight into every other black-hole-in-one test that runs after this
+  // one in the same e2e pass.
+  await page.evaluate(() => localStorage.clear());
+});
+
+await test('black-hole-in-one: Custom Map running out of fuel gets glow+toast but never the Golf round-over summary (no scorecard concept) (FUEL-9/GOLF-7)', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const { S, world } = await import('/games/black-hole-in-one/state.js');
+    const game = await import('/games/black-hole-in-one/gameplay.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    const teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    const blackHole = { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' };
+    game.startCustomMap({ teeRock, blackHole, bodies: [], pickups: [] });
+    S.fuel = 0;
+  });
+  await sleep(200);
+  const stranded = await page.evaluate(() => ({
+    glow: document.getElementById('restartBtn').classList.contains('stranded'),
+    panelHidden: document.getElementById('roundOverPanel').classList.contains('hidden'),
+  }));
+  assert(stranded.glow, 'restart button should pulse red once Custom Map is out of fuel');
+  assert(stranded.panelHidden, 'Custom Map must never show the Golf-only round-over summary — it has no round/scorecard concept');
 });
 
 // ── Lab games: free to play, no token labels ────────────────────────────────

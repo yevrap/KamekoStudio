@@ -44,7 +44,7 @@ export function mergeGlossarySeen(saved) {
 }
 
 export const S = {
-    phase: 'menu',    // menu | rest | aiming | flight | orbit | sink | result | roundover
+    phase: 'menu',    // menu | rest | aiming | flight | orbit | sink | result
     prevPhase: null,   // phase before 'aiming' started (mid-flight push return, OW-0)
     freezeAim: true,  // freeze comet during mid-flight aim (Explore)
     mode: 'endless',  // 'endless' | 'round' | 'explore' | 'survival'

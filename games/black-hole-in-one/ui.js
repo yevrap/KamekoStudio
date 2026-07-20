@@ -296,7 +296,7 @@ export function render(drag) {
     ctx.globalCompositeOperation = 'source-over';
     ctx.globalAlpha = 1;
 
-    if (S.phase !== 'result' && S.phase !== 'roundover') drawComet();
+    if (S.phase !== 'result') drawComet();
 
     ctx.restore();
 
@@ -869,13 +869,17 @@ export function showScorecard(result, best, isNewBest) {
     el.classList.remove('hidden');
 }
 
-export function showSurvivalGameOver(level) {
-    document.getElementById('survGameOver').classList.remove('hidden');
-    document.getElementById('sg-level').textContent = 'Reached Level ' + level;
+// FUEL-9/GOLF-7: non-blocking replacement for the old modal survival game-over —
+// a small dismissible card, Golf/Endless only (Explore/Custom have no round to
+// summarize, so they get only the glow-pulse restart button + toast, wired in
+// main.js's frame loop).
+export function showRoundOverSummary(level) {
+    document.getElementById('roundOverPanel').classList.remove('hidden');
+    document.getElementById('ro-hole').textContent = 'Hole ' + level;
 }
 
-export function hideSurvivalGameOver() {
-    document.getElementById('survGameOver').classList.add('hidden');
+export function hideRoundOverSummary() {
+    document.getElementById('roundOverPanel').classList.add('hidden');
 }
 
 export function hideScorecard() {
@@ -1245,10 +1249,19 @@ export function isHowtoPlayTab() { return howtoTab === 'play'; }
 
 function renderHowtoSettingsPanel() {
     const panel = document.getElementById('howtoPanelSettings');
-    // Inventory is Explore-only, matching the old drawer section's `when` gate.
-    const inventoryRows = S.mode === 'explore' ? `
+    // Inventory is Explore-only, matching the old drawer section's `when` gate —
+    // EXCEPT ♾️ Endless Flight (FUEL-9/GOLF-7): it's the one item Golf/Custom's
+    // fuel system already gates on (FUEL-10), and the stranded-state rescue this
+    // spec asks for ("toggle it on via the ☰ menu, reachable from any mode")
+    // has nothing to reach without this. Thruster/Orbit Magnet stay Explore-only
+    // per Yev's narrower item-parity answer — they have no Golf/Custom control
+    // surface yet (Thruster split out; Orbit Magnet is the separate PARITY-1).
+    const items = S.mode === 'explore' ? ITEMS
+        : (S.mode === 'endless' || S.mode === 'custom') ? ITEMS.filter(i => i.key === 'endlessFlight')
+        : [];
+    const inventoryRows = items.length ? `
         <span class="mode-head">🎒 Inventory</span>
-        ${ITEMS.map(item => `
+        ${items.map(item => `
         <label class="howto-toggle-row">
             <span>${item.icon} ${item.label}<br><small>${item.desc}</small></span>
             <input type="checkbox" data-item="${item.key}" ${S.inventory[item.key]?.enabled ? 'checked' : ''}>
@@ -1278,7 +1291,14 @@ function renderHowtoSettingsPanel() {
             localStorage.setItem(LS_KEYS.inventory, JSON.stringify(S.inventory));
             // Endless Flight (INV-1) is a fuel-lock — switching it on tops the tank
             // off immediately rather than waiting for the next drain/pickup event.
-            if (key === 'endlessFlight' && e.target.checked) explore.refuelFull();
+            // FUEL-9/GOLF-7: tops off both fuel systems (Explore's own `fuel` var
+            // and Golf/Custom's S.fuel) so toggling it back off later never leaves
+            // a mid-strand rescue instantly re-stranded.
+            if (key === 'endlessFlight' && e.target.checked) {
+                explore.refuelFull();
+                S.fuel = 100;
+                updateBar();
+            }
             // MM-18: a modifier counts as "encountered" once actually turned on.
             if (e.target.checked && markGlossarySeen(key)) {
                 localStorage.setItem(LS_KEYS.glossarySeen, JSON.stringify(S.glossarySeen));

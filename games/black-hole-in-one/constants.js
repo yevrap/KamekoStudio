@@ -370,3 +370,11 @@ export function holeLabel(strokes, par) {
 export function isBetterRound(prevBest, total) {
     return prevBest === null || prevBest === undefined || total < prevBest;
 }
+
+// FUEL-9/GOLF-7: one shared "stranded" rule for organic fuel-out, so Golf/Custom's
+// S.fuel and Explore's own `fuel` module var can never drift onto different
+// definitions of "out of fuel." Endless Flight (INV-1) is a fuel-lock — stranded
+// never fires while it's enabled, in any mode.
+export function isStranded(fuel, inventory) {
+    return fuel <= 0 && !inventory.endlessFlight?.enabled;
+}

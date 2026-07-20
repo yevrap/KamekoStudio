@@ -11,7 +11,7 @@ import {
     OB_MARGIN, ORBIT_MAX_GAP, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds,
     overviewAvailable, overviewTransform, overviewToWorld, worldToOverview,
     GLOSSARY_OBJECTS, GLOSSARY_MECHANICS, ITEMS, PLANET_R_MIN, PLANET_R_MAX, PLANET_R_STEP,
-    MAX_DRAG,
+    MAX_DRAG, isStranded,
 } from '../games/black-hole-in-one/constants.js';
 import { gravityAt, stepBody, collide, orbitCapture, magnetCapture } from '../games/black-hole-in-one/physics.js';
 import { S, world, comet, defaultGlossarySeen, mergeGlossarySeen, markGlossarySeen } from '../games/black-hole-in-one/state.js';
@@ -20,7 +20,7 @@ import {
     chunkLandmarks, getChunkBodies, CHUNK_SIZE, camera as exploreCamera,
     updateActiveChunks, startRun as exploreStartRun, rerollWorld as exploreRerollWorld,
     step as exploreStep, setHooks as setExploreHooks, keyDown as exploreKeyDown, clearKeys as exploreClearKeys, fuel as exploreFuel,
-    worldSeed as exploreWorldSeed, launch as exploreLaunch,
+    worldSeed as exploreWorldSeed, launch as exploreLaunch, isStranded as exploreIsStranded,
 } from '../games/black-hole-in-one/explore.js';
 
 /* ============================== constants helpers ============================== */
@@ -29,6 +29,30 @@ test('fmtDiff formats even, over and under par', () => {
     assert.equal(fmtDiff(0), 'E');
     assert.equal(fmtDiff(3), '+3');
     assert.equal(fmtDiff(-2), '−2');
+});
+
+test('isStranded (FUEL-9/GOLF-7 shared helper): 0 fuel without Endless Flight is stranded', () => {
+    assert.equal(isStranded(0, {}), true);
+    assert.equal(isStranded(-5, {}), true, 'defensively treats negative fuel as stranded too');
+});
+
+test('isStranded: any positive fuel is not stranded', () => {
+    assert.equal(isStranded(1, {}), false);
+    assert.equal(isStranded(100, {}), false);
+});
+
+test('isStranded: 0 fuel with Endless Flight enabled is never stranded', () => {
+    assert.equal(isStranded(0, { endlessFlight: { enabled: true } }), false);
+});
+
+test('isStranded: 0 fuel with Endless Flight present but disabled is stranded', () => {
+    assert.equal(isStranded(0, { endlessFlight: { enabled: false } }), true);
+});
+
+test("explore.js's isStranded delegates to the shared constants.js definition (FUEL-9/GOLF-7)", () => {
+    assert.equal(exploreIsStranded(0, {}), isStranded(0, {}));
+    assert.equal(exploreIsStranded(0, { endlessFlight: { enabled: true } }), isStranded(0, { endlessFlight: { enabled: true } }));
+    assert.equal(exploreIsStranded(5, {}), isStranded(5, {}));
 });
 
 test('LS_KEYS carries the muted/freezeAim/inventory localStorage keys shared between main.js (boot load) and ui.js (HUD-1 ☰ Menu Settings/Inventory tabs) (HUD-1)', () => {
@@ -1548,16 +1572,51 @@ test('♾️ Endless Flight stops launch() from spending fuel in Custom Map too 
     delete globalThis.document;
 });
 
-test('a mine hit in Golf (endless mode) still ends the run even with ♾️ Endless Flight enabled — no hazard immunity (FUEL-10)', () => {
+test('a mine hit in Golf (endless mode) still ends the run even with ♾️ Endless Flight enabled — no hazard immunity (FUEL-10/FUEL-9/GOLF-7)', () => {
     game.startRun('endless');
     S.inventory.endlessFlight.enabled = true;
     S.fuel = 40;
     world.bodies = [world.teeRock, { x: comet.x, y: comet.y, r: 2, m: 0, type: 'mine' }];
     S.phase = 'flight';
+    let roundOverLevel = null;
+    game.setHooks({ roundOver(level) { roundOverLevel = level; } });
     game.stepFlight(DT);
     assert.equal(S.fuel, 0, 'a hazard kill still zeroes fuel with Endless Flight enabled');
-    assert.equal(S.phase, 'roundover', 'a hazard kill still ends the round with Endless Flight enabled — the item is not hazard immunity');
+    assert.equal(roundOverLevel, S.hole, 'a hazard kill still fires hooks.roundOver with Endless Flight enabled — the item is not hazard immunity');
+    assert.equal(S.phase, 'rest', 'the comet settles back at rest — never left mid-flight with an empty tank guard now that the blocking modal is retired (FUEL-9/GOLF-7)');
+    game.setHooks({ roundOver() {} });
     S.inventory.endlessFlight.enabled = false;
+});
+
+test('a mine hit in Golf without Endless Flight also fires hooks.roundOver (FUEL-9/GOLF-7)', () => {
+    game.startRun('endless');
+    S.fuel = 40;
+    world.bodies = [world.teeRock, { x: comet.x, y: comet.y, r: 2, m: 0, type: 'mine' }];
+    S.phase = 'flight';
+    let roundOverLevel = null;
+    game.setHooks({ roundOver(level) { roundOverLevel = level; } });
+    game.stepFlight(DT);
+    assert.equal(S.fuel, 0, 'a hazard kill zeroes fuel in Golf');
+    assert.equal(roundOverLevel, S.hole, 'a hazard kill fires hooks.roundOver in Golf');
+    game.setHooks({ roundOver() {} });
+});
+
+test('a mine hit in Custom Map does not fire hooks.roundOver — Custom has no round/scorecard concept (FUEL-9/GOLF-7)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    const blackHole = { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' };
+    game.startCustomMap({ teeRock, blackHole, bodies: [], pickups: [] });
+    S.fuel = 40;
+    world.bodies = [world.teeRock, { x: comet.x, y: comet.y, r: 2, m: 0, type: 'mine' }];
+    S.phase = 'flight';
+    let roundOverCalled = false;
+    game.setHooks({ roundOver() { roundOverCalled = true; } });
+    game.stepFlight(DT);
+    assert.equal(S.fuel, 40, 'Custom Map fuel is untouched by a hazard kill (matches pre-existing behavior)');
+    assert.equal(roundOverCalled, false, 'Custom Map never fires hooks.roundOver — it has no scorecard/round concept');
+    assert.equal(S.phase, 'rest', 'the comet still respawns at last rest in Custom Map');
+    game.setHooks({ roundOver() {} });
+    delete globalThis.document;
 });
 
 test('pickup collection now applies in custom mode too, not just endless (MM-15)', () => {
