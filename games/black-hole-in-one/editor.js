@@ -3,7 +3,7 @@
 
 import { WORLD_W as W, COURSE_H, PALETTES, rand, COMET_R, CAPTURE_R, MAP_SIZES, DEFAULT_MAP_SIZE, mapBounds } from './constants.js';
 import { S, world, comet } from './state.js';
-import { placeOnRest } from './gameplay.js';
+import { placeOnRest, startCustomMap } from './gameplay.js';
 
 export let hooks = {
     toast() {}, bar() {},
@@ -355,12 +355,12 @@ function loadMap(index) {
     const maps = getMaps();
     const m = maps[index];
     if (!m) return;
-    
+
     // Stop test if we were in it
     if (S.phase === 'rest' || S.phase === 'aiming' || S.phase === 'orbit' || S.phase === 'flight' || S.phase === 'sink') {
         stopTest();
     }
-    
+
     world.bodies = m.bodies;
     world.teeRock = m.teeRock;
     world.blackHole = m.blackHole;
@@ -369,11 +369,29 @@ function loadMap(index) {
     // Re-link teeRock in bodies
     world.bodies = world.bodies.filter(b => b.type !== 'tee');
     world.bodies.push(world.teeRock);
-    
+
     resetComet();
     hooks.bar(); // refreshes editor chrome gated on mapSizeKey (e.g. MM-16's Overview button)
     hooks.toast('📂 Map loaded');
     toggleMapsDrawer();
+}
+
+// MM-11: play a saved map end-to-end (custom mode's rest phase) without detouring
+// through the 1:1 editor first. gameplay.js's startCustomMap already does everything
+// a shared-link arrival does — hides editor/explore chrome, shows customBar, sets
+// S.mode='custom'/S.phase='rest' — so this is just the drawer's own hand-off to it.
+function playMap(index) {
+    const maps = getMaps();
+    const m = maps[index];
+    if (!m) return;
+
+    // Stop test if we were in it (mirrors loadMap's defensive guard).
+    if (S.phase === 'rest' || S.phase === 'aiming' || S.phase === 'orbit' || S.phase === 'flight' || S.phase === 'sink') {
+        stopTest();
+    }
+
+    startCustomMap(m);
+    toggleMapsDrawer(); // close the drawer, revealing the now-playable map underneath
 }
 
 function deleteMap(index) {
@@ -416,22 +434,27 @@ function renderMapsList() {
         actions.className = 'mm-map-actions';
         
         const playBtn = document.createElement('button');
-        playBtn.textContent = '▶ Load';
-        playBtn.onclick = () => loadMap(idx);
-        
+        playBtn.textContent = '▶ Play';
+        playBtn.onclick = () => playMap(idx);
+
+        const editBtn = document.createElement('button');
+        editBtn.textContent = '✎ Edit';
+        editBtn.onclick = () => loadMap(idx);
+
         const renameBtn = document.createElement('button');
-        renameBtn.textContent = '✎';
+        renameBtn.textContent = '✏️ Rename';
         renameBtn.onclick = () => renameMap(idx);
-        
+
         const shareBtn = document.createElement('button');
         shareBtn.textContent = '🔗 Share';
         shareBtn.onclick = () => shareMap(idx);
-        
+
         const delBtn = document.createElement('button');
         delBtn.textContent = '🗑';
         delBtn.onclick = () => deleteMap(idx);
-        
+
         actions.appendChild(playBtn);
+        actions.appendChild(editBtn);
         actions.appendChild(renameBtn);
         actions.appendChild(shareBtn);
         actions.appendChild(delBtn);
