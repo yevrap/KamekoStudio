@@ -83,6 +83,9 @@ export const world = {
     orbitedThisHole: new Set(),  // planets orbited this hole (first-per-hole toast)
     mapSizeKey: DEFAULT_MAP_SIZE, // 'small' | 'large' — current editor/custom map canvas tier (MM-6);
                                    // always DEFAULT_MAP_SIZE outside editor/custom, so golf/endless are untouched
+    activeMapData: null, // the mapData object last passed to startCustomMap(), so a
+                          // restart while S.mode === 'custom' can reload the same map
+                          // instead of falling through to golf's genHole() (FUEL-4)
 };
 
 export const comet = { x: 0, y: 0, vx: 0, vy: 0, rest: null };

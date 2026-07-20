@@ -577,6 +577,9 @@ export function startCustomMap(mapData) {
     S.hole = 1;
     S.totalDiff = 0;
     S.roundCard = [];
+    // Retain the source mapData so a later restart (main.js's startRun('custom'))
+    // can reload this same map instead of falling through to genHole() (FUEL-4).
+    world.activeMapData = mapData;
     // Pre-sprint saved/shared maps have no `size` field — default to small so they
     // keep exactly their current on-disk behavior (MM-6 "no silent breakage").
     world.mapSizeKey = mapData.size === 'large' ? 'large' : DEFAULT_MAP_SIZE;
@@ -588,7 +591,10 @@ export function startCustomMap(mapData) {
     // none. Asteroids are never author-placed via Map Maker, and this mode's
     // own pickup/hazard state must not inherit whatever golf/endless left in
     // these module-level singletons before the player jumped to a custom map.
-    world.pickups = mapData.pickups || [];
+    // Cloned (not the same array/objects as mapData.pickups): play splices
+    // world.pickups in place as they're collected, which would otherwise
+    // permanently deplete the retained activeMapData a restart reloads from (FUEL-4).
+    world.pickups = (mapData.pickups || []).map(p => ({ ...p }));
     world.asteroids = [];
 
     // Ensure tee is in bodies

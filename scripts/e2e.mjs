@@ -367,6 +367,44 @@ await test('black-hole-in-one: running out of fuel mid-flight while aiming does 
   assert(!recovered.stranded, 'restart button is still pulsing after a fresh start');
 });
 
+await test('black-hole-in-one: restarting a custom/shared map reloads that same map instead of a random golf hole (FUEL-4)', async page => {
+  await page.goto(BH, { waitUntil: 'load' });
+  await page.evaluate(async () => {
+    const { world } = await import('/games/black-hole-in-one/state.js');
+    const game = await import('/games/black-hole-in-one/gameplay.js');
+    const ui = await import('/games/black-hole-in-one/ui.js');
+    ui.hideHowto();
+    // A hand-authored map with a distinctive marker planet + one fuel pickup —
+    // real custom-map play (My Maps ▶ Play / a ?map= share link) hands
+    // startCustomMap() an object shaped exactly like this.
+    game.startCustomMap({
+      teeRock: { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' },
+      blackHole: { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' },
+      bodies: [{ x: 50, y: 90, r: 8, m: 64, type: 'planet', pal: { base: '#fff', dark: '#000' }, marker: 'fuel-4-e2e' }],
+      pickups: [{ x: 40, y: 40, r: 1.2, type: 'fuel' }],
+    });
+    // Simulate having collected the pickup mid-play, same as flying through it.
+    world.pickups.length = 0;
+  });
+
+  await page.click('#restartBtn');
+  await sleep(200);
+
+  const after = await page.evaluate(async () => {
+    const { S, world } = await import('/games/black-hole-in-one/state.js');
+    return {
+      mode: S.mode,
+      hasMarkerPlanet: world.bodies.some(b => b.marker === 'fuel-4-e2e'),
+      pickupCount: world.pickups.length,
+    };
+  });
+  assert(after.mode === 'custom', 'restart dropped the player out of custom mode entirely, got mode "' + after.mode + '"');
+  assert(after.hasMarkerPlanet,
+    'restart discarded the custom map and generated a random golf hole instead (FUEL-4 regression) — marker planet is gone');
+  assert(after.pickupCount === 1,
+    'restart did not reset the map\'s pickups back to their original layout, got ' + after.pickupCount);
+});
+
 await test('durak-alchemist: Play is free and starts the game', async page => {
   await page.goto(base + '/games/durak-alchemist/', { waitUntil: 'load' });
   const label = await page.$eval('#start-btn', b => b.textContent);

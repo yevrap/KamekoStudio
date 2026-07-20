@@ -210,7 +210,17 @@ function startRun(mode, editorSize) {
     } else if (mode === 'custom') {
         document.getElementById('customBar').classList.remove('hidden');
         document.getElementById('bar').classList.remove('hidden');
-        game.startRun(mode);
+        if (world.activeMapData) {
+            // FUEL-4: reload the same custom/shared map fresh rather than
+            // falling through to golf's genHole() below.
+            game.startCustomMap(world.activeMapData);
+        } else {
+            // No map retained in memory (e.g. a fresh page load resuming a
+            // stale 'custom' last-played mode) — nothing to reload, so fall
+            // back to Endless instead of crashing on a missing map.
+            localStorage.setItem(LS.mode, 'endless');
+            game.startRun('endless');
+        }
     } else {
         document.getElementById('bar').classList.remove('hidden');
         game.startRun(mode);

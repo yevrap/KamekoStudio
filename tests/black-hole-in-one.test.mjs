@@ -1287,6 +1287,37 @@ test('startCustomMap carries pickups from the loaded map and clears any leftover
     delete globalThis.document;
 });
 
+test('startCustomMap retains the source mapData on world.activeMapData so a restart can reload it (FUEL-4)', () => {
+    globalThis.document = { getElementById: () => fakeTrashEl() };
+    const teeRock = { x: 50, y: 176, r: 3.4, m: 8, type: 'tee' };
+    const blackHole = { x: 50, y: 30, r: 3.2, m: 230, type: 'hole' };
+    const planet = { x: 50, y: 90, r: 8, m: 64, type: 'planet', pal: { base: '#fff', dark: '#000' } };
+    const mapData = {
+        teeRock, blackHole, bodies: [planet],
+        pickups: [{ x: 40, y: 40, r: 1.2, type: 'fuel' }],
+    };
+    game.startCustomMap(mapData);
+    assert.equal(world.activeMapData, mapData,
+        'the loaded mapData must be retained on world so a restart has something to reload (FUEL-4 root cause)');
+
+    // Collecting the fuel pickup mid-play splices world.pickups in place; that
+    // must not silently deplete the retained source mapData too, or a "reload"
+    // would restart with the previous playthrough's leftover state instead of
+    // the map's original layout.
+    world.pickups.splice(0, 1);
+    assert.equal(world.pickups.length, 0);
+    assert.equal(mapData.pickups.length, 1,
+        'world.pickups must be a clone, not the same array as mapData.pickups');
+
+    // Reloading the retained mapData (what a fixed restart does) must bring
+    // the pickup back, not stay depleted.
+    game.startCustomMap(world.activeMapData);
+    assert.equal(world.pickups.length, 1, 'restarting a custom map must reset pickups back to the map\'s original layout');
+    assert.equal(world.bodies.some(b => b.type === 'planet'), true,
+        'restarting a custom map must reload its authored bodies, not a freshly generated hole (FUEL-4)');
+    delete globalThis.document;
+});
+
 test('markPresentObjects (via startCustomMap) marks refuelStation and stardust as seen (MM-15)', () => {
     globalThis.document = { getElementById: () => fakeTrashEl() };
     S.glossarySeen = defaultGlossarySeen();
