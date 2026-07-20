@@ -219,6 +219,21 @@ export const STARDUST_RING_CHANCE = 0.25;                     // odds a non-blac
 export const STARDUST_RING_COUNT_MIN = 5, STARDUST_RING_COUNT_MAX = 8; // dots per ring
 export const STARDUST_RING_GAP_MIN = 0.3, STARDUST_RING_GAP_MAX = 0.7; // fraction of the orbit band past ORBIT_MIN_GAP
 
+// ---- Fuel rings (ORB-3b), Explore only ------------------------------------------
+// Same pattern as the stardust ring above, applied to fuel instead — "orbit and
+// collect fuel like with the stardust" (Yev's ask, superseding ORB-3's slow
+// trickle-while-orbiting). Rolled in getChunkBodies right after stardust rings,
+// same rng-stream convention (existing chunks stay byte-identical). A body keeps
+// at most one ring type: stardustRing XOR fuelRing, never both — ringSnap's "the
+// ring is the orbit" contract only makes sense for one radius per body, and two
+// overlapping rings at different radii would mean orbiting only ever sweeps one
+// of them clean. Same numeric tuning as stardust for now (no reason yet to make
+// fuel rings rarer or denser); kept as its own constant set so that can change
+// independently later.
+export const FUEL_RING_CHANCE = 0.25;                       // odds an unringed, non-blackhole planet gets a fuel ring
+export const FUEL_RING_COUNT_MIN = 5, FUEL_RING_COUNT_MAX = 8; // dots per ring
+export const FUEL_RING_GAP_MIN = 0.3, FUEL_RING_GAP_MAX = 0.7; // fraction of the orbit band past ORBIT_MIN_GAP
+
 // ---- Star map fast travel (MAP-2) -----------------------------------------------
 // Picks the closest hit target within its own radius of (mx,my), else null. Targets
 // carry their own screen coords + hit radius — set by ui.js's renderStarMap() at
@@ -300,6 +315,8 @@ export const GLOSSARY_OBJECTS = [
       desc: "A ring of stardust sitting in a planet's orbit-capture band. With 🧲 Orbit Magnet on, snap into orbit near one and riding it out sweeps every dot in a single loop." },
     { key: 'fuel', icon: '🟢', label: 'Fuel Pickup',
       desc: 'Tops up your tank on contact. Running dry strands you in place — no auto-tow home, so watch the gauge.' },
+    { key: 'fuelRing', icon: '🟢', label: 'Fuel Ring',
+      desc: "A ring of fuel pickups sitting in a planet's orbit-capture band — same idea as a Stardust Ring, but tops up your tank instead. With 🧲 Orbit Magnet on, snap into orbit near one and riding it out sweeps every dot in a single loop." },
     { key: 'mine', icon: '💥', label: 'Space Mine',
       desc: 'No gravity, but any contact drains your tank to zero on the spot. Endless mode only, from hole 3 on.' },
     { key: 'trap', icon: '🌀', label: 'Gravity Trap',

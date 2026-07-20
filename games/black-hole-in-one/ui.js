@@ -259,6 +259,7 @@ export function render(drag) {
         else { drawTee(b); drawPlanetLabel(b); }
         if (showCaptureRings && (b.type === 'planet' || b.type === 'blackhole' || b.type === 'tee')) drawCaptureRing(b);
         if (S.mode === 'explore' && b.stardustRing) drawStardustRing(b);
+        if (S.mode === 'explore' && b.fuelRing) drawFuelRing(b);
     }
     if (world.blackHole) drawBlackHole();
     if (world.orbit) drawOrbitRing();
@@ -561,6 +562,17 @@ function drawStardustRing(b) {
     ctx.strokeStyle = '#ffd98a';
     ctx.lineWidth = 0.3;
     ctx.beginPath(); ctx.arc(b.x, b.y, b.stardustRing.radius, 0, 7); ctx.stroke();
+    ctx.globalAlpha = 1;
+}
+
+// ORB-3b: faint green guide arc through a body's fuel ring — same treatment as
+// drawStardustRing above, in the fuel color instead of the stardust one.
+function drawFuelRing(b) {
+    const pulse = 0.5 + 0.3 * Math.sin(S.time * 2);
+    ctx.globalAlpha = 0.18 * pulse;
+    ctx.strokeStyle = '#20e657';
+    ctx.lineWidth = 0.3;
+    ctx.beginPath(); ctx.arc(b.x, b.y, b.fuelRing.radius, 0, 7); ctx.stroke();
     ctx.globalAlpha = 1;
 }
 

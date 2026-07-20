@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { screenToWorld, worldToScreen, getChunkBodies, getChunkPickups, pickupBlockedByBody, updateActiveChunks, CHUNK_SIZE, camera, launch, startRun, step, stepOrbit, stepWarp, setHooks, fuel, atTown, buyUpgrade, isStranded, refuelFull, isRefuelStation, stickThrottle, keysToVector, stickDown, stickMove, stickUp, stickCancel, setViewScale, stick, thrustVec, hasThrust, keyDown, clearKeys, exploreHome, loadExploreHome, useReturnPortal, discoveredChunks, loadDiscoveredChunks, chunkKeyAt, handleTap, ringSnap, arriveInOrbit, travelToBlackHole, arriveAtTown } from '../games/black-hole-in-one/explore.js';
 import { S, world, comet, defaultInventory, mergeInventory } from '../games/black-hole-in-one/state.js';
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, ORBIT_MIN_GAP, ORBIT_MAX_GAP, ORBIT_COOLDOWN, moonPosition, circularSpeed, STARDUST_RING_CHANCE, STARDUST_RING_COUNT_MIN, STARDUST_RING_COUNT_MAX } from '../games/black-hole-in-one/constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, COMET_R, STICK_R_PX, STICK_DEAD_PX, THRUST_A, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, ORBIT_MIN_GAP, ORBIT_MAX_GAP, ORBIT_COOLDOWN, moonPosition, circularSpeed, STARDUST_RING_CHANCE, STARDUST_RING_COUNT_MIN, STARDUST_RING_COUNT_MAX, FUEL_RING_CHANCE, FUEL_RING_COUNT_MIN, FUEL_RING_COUNT_MAX } from '../games/black-hole-in-one/constants.js';
 import { gravityAt } from '../games/black-hole-in-one/physics.js';
 
 test('Camera math: screenToWorld', () => {
@@ -1338,6 +1338,178 @@ test('ORB-4: strict capture (Orbit Magnet OFF) never snaps to a ring — grazing
         assert.ok(Math.abs(world.orbit.radius - body.stardustRing.radius) > 1,
             'strict capture should never land on the ring radius when the magnet is off');
     }
+
+    world.bodies = [];
+    world.pickups = [];
+    world.orbit = null;
+});
+
+/* ============================== ORB-3b: fuel rings (orbitable pickups) ============================== */
+
+test('ORB-3b: getChunkBodies never gives a black hole a fuel ring', () => {
+    for (let cx = -10; cx <= 10; cx++) {
+        for (let cy = -10; cy <= 10; cy++) {
+            for (const b of getChunkBodies(cx, cy, 'fuel-ring-no-blackhole')) {
+                if (b.type === 'blackhole') assert.ok(!b.fuelRing, `black hole ${b.id} should never carry a fuel ring`);
+            }
+        }
+    }
+});
+
+test('ORB-3b: a planet never gets both a stardust ring and a fuel ring', () => {
+    for (let cx = -10; cx <= 10; cx++) {
+        for (let cy = -10; cy <= 10; cy++) {
+            for (const b of getChunkBodies(cx, cy, 'fuel-ring-exclusivity')) {
+                assert.ok(!(b.stardustRing && b.fuelRing), `planet ${b.id} has both a stardust ring and a fuel ring`);
+            }
+        }
+    }
+});
+
+test('ORB-3b: a meaningful share of ring-eligible planets get a fuel ring, close to FUEL_RING_CHANCE', () => {
+    let eligible = 0, ringed = 0;
+    for (let cx = -12; cx <= 12; cx++) {
+        for (let cy = -12; cy <= 12; cy++) {
+            for (const b of getChunkBodies(cx, cy, 'fuel-ring-rate')) {
+                if (b.type === 'blackhole' || b.stardustRing) continue;
+                eligible++;
+                if (b.fuelRing) ringed++;
+            }
+        }
+    }
+    assert.ok(eligible > 200, `sanity: sampled a meaningful number of planets (got ${eligible})`);
+    const rate = ringed / eligible;
+    assert.ok(Math.abs(rate - FUEL_RING_CHANCE) < 0.1, `ring frequency should read close to FUEL_RING_CHANCE=${FUEL_RING_CHANCE} (got ${rate.toFixed(2)})`);
+});
+
+test('ORB-3b: fuel ring geometry sits inside the orbit capture band and has 5-8 dots', () => {
+    let checked = 0;
+    for (let cx = -10; cx <= 10; cx++) {
+        for (let cy = -10; cy <= 10; cy++) {
+            for (const b of getChunkBodies(cx, cy, 'fuel-ring-geo')) {
+                if (!b.fuelRing) continue;
+                checked++;
+                const gap = b.fuelRing.radius - (b.r + COMET_R);
+                assert.ok(gap >= ORBIT_MIN_GAP - 1e-9 && gap <= ORBIT_MAX_GAP + 1e-9,
+                    `ring gap ${gap} on ${b.id} should sit inside [${ORBIT_MIN_GAP}, ${ORBIT_MAX_GAP}]`);
+                assert.ok(b.fuelRing.count >= FUEL_RING_COUNT_MIN && b.fuelRing.count <= FUEL_RING_COUNT_MAX,
+                    `ring count should be ${FUEL_RING_COUNT_MIN}-${FUEL_RING_COUNT_MAX}, got ${b.fuelRing.count}`);
+            }
+        }
+    }
+    assert.ok(checked > 20, `sanity: sampled a meaningful number of rings (got ${checked})`);
+});
+
+test('ORB-3b: getChunkBodies\'s fuel ring roll is deterministic for a given seed', () => {
+    const a = getChunkBodies(6, -3, 'fuel-ring-det').map(b => b.fuelRing);
+    const b = getChunkBodies(6, -3, 'fuel-ring-det').map(b => b.fuelRing);
+    assert.deepEqual(a, b);
+});
+
+test('ORB-3b: getChunkPickups emits evenly-spaced fuel dots on a body\'s fuel ring, exactly at the ring radius', () => {
+    let checked = 0;
+    for (let cx = -10; cx <= 10 && checked < 5; cx++) {
+        for (let cy = -10; cy <= 10 && checked < 5; cy++) {
+            const bodies = getChunkBodies(cx, cy, 'fuel-ring-pickups');
+            const ringed = bodies.filter(b => b.fuelRing && b.id.startsWith(`c${cx}_${cy}_`));
+            if (!ringed.length) continue;
+            const pickups = getChunkPickups(cx, cy, 'fuel-ring-pickups', bodies);
+            for (const b of ringed) {
+                const dots = pickups.filter(p => p.id.startsWith(`fr${cx}_${cy}_${b.id}_`));
+                assert.ok(dots.length > 0, `ringed body ${b.id} should emit at least one ring dot`);
+                assert.ok(dots.length <= b.fuelRing.count, 'should never emit more dots than the ring\'s count');
+                for (const p of dots) {
+                    const d = Math.hypot(p.x - b.x, p.y - b.y);
+                    assert.ok(Math.abs(d - b.fuelRing.radius) < 1e-9, `dot should sit exactly at ring radius, got ${d} vs ${b.fuelRing.radius}`);
+                    assert.equal(p.type, 'fuel');
+                    assert.equal(p.r, 1.8);
+                }
+            }
+            checked++;
+        }
+    }
+    assert.ok(checked > 0, 'sanity: sampled at least one ringed chunk');
+});
+
+test('ORB-3b: getChunkPickups\' fuel ring dot layout is deterministic for a given seed', () => {
+    let checked = false;
+    for (let cx = -10; cx <= 10 && !checked; cx++) {
+        for (let cy = -10; cy <= 10 && !checked; cy++) {
+            const bodies = getChunkBodies(cx, cy, 'fuel-ring-layout-det');
+            if (!bodies.some(b => b.fuelRing)) continue;
+            const a = getChunkPickups(cx, cy, 'fuel-ring-layout-det', bodies).filter(p => p.id.startsWith('fr'));
+            const b = getChunkPickups(cx, cy, 'fuel-ring-layout-det', bodies).filter(p => p.id.startsWith('fr'));
+            assert.deepEqual(a, b);
+            checked = true;
+        }
+    }
+    assert.ok(checked, 'sanity: sampled at least one ringed chunk');
+});
+
+test('ORB-3b: getChunkPickups only emits a fuel-ringed body\'s dots from its own canonical chunk, never a neighbor\'s (no 3x3 duplication)', () => {
+    let found = false;
+    for (let cx = -10; cx <= 10 && !found; cx++) {
+        for (let cy = -10; cy <= 10 && !found; cy++) {
+            const bodies = getChunkBodies(cx, cy, 'fuel-ring-dup');
+            const ringed = bodies.find(b => b.fuelRing);
+            if (!ringed) continue;
+            found = true;
+            const neighborPickups = getChunkPickups(cx + 1, cy, 'fuel-ring-dup', bodies);
+            const leaked = neighborPickups.filter(p => p.id.startsWith(`fr${cx}_${cy}_`));
+            assert.equal(leaked.length, 0, 'a neighboring chunk must never emit another chunk\'s ring dots');
+        }
+    }
+    assert.ok(found, 'sanity: sampled at least one ringed chunk');
+});
+
+test('ORB-3b: ringSnap snaps onto a fuel ring exactly like a stardust ring', () => {
+    const b = { x: 0, y: 0, r: 10, m: 400, type: 'planet', fuelRing: { radius: 20, count: 6, ang0: 0 } };
+    const cap = { radius: 15, ang: 0.7, omega: 3 };
+    const snapped = ringSnap(cap, b, true);
+    assert.equal(snapped.radius, 20);
+    assert.equal(snapped.ang, cap.ang, 'angle carries over unchanged');
+    const expected = circularSpeed(b.m, 20) / 20;
+    assert.ok(Math.abs(snapped.omega - expected) < 1e-9, `omega should be circular speed at the ring radius, got ${snapped.omega} vs ${expected}`);
+});
+
+test('ORB-3b: capturing onto a fuel-ringed planet with Orbit Magnet ON orbits at the ring radius and sweeps every dot within one revolution', () => {
+    startRun();
+    S.inventory = mergeInventory({ orbitMagnet: { owned: true, enabled: true } });
+
+    const body = { x: comet.x + 40, y: comet.y, r: 10, m: 400, type: 'planet', id: 'test-fuel-ring-planet' };
+    const ringRadius = body.r + COMET_R + ORBIT_MIN_GAP + 3;
+    const count = 6;
+    body.fuelRing = { radius: ringRadius, count, ang0: 0 };
+    world.bodies = [body];
+    world.pickups = [];
+    for (let i = 0; i < count; i++) {
+        const ang = i * (Math.PI * 2 / count);
+        world.pickups.push({
+            x: body.x + Math.cos(ang) * ringRadius, y: body.y + Math.sin(ang) * ringRadius,
+            r: 1.8, type: 'fuel', id: `fuel-ring-dot-${i}`,
+        });
+    }
+
+    const approachGap = ORBIT_MIN_GAP + 0.3;
+    comet.x = body.x - (body.r + COMET_R + approachGap);
+    comet.y = body.y;
+    comet.vx = 40; comet.vy = 30;
+    S.phase = 'flight';
+    S.orbitCooldown = 0;
+
+    step(1 / 240);
+
+    assert.equal(S.phase, 'orbit', 'should have captured into orbit');
+    assert.ok(world.orbit, 'world.orbit should be set');
+    assert.equal(world.orbit.b, body);
+    assert.ok(Math.abs(world.orbit.radius - ringRadius) < 1e-9,
+        `orbit radius should snap to the ring radius, got ${world.orbit.radius} vs ${ringRadius}`);
+
+    const period = 2 * Math.PI / Math.abs(world.orbit.omega);
+    const dt = 1 / 240;
+    for (let t = 0; t < period * 1.05; t += dt) stepOrbit(dt);
+
+    assert.equal(world.pickups.length, 0, 'orbiting a fuel-ringed planet for one revolution should collect every dot on the ring');
 
     world.bodies = [];
     world.pickups = [];

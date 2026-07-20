@@ -1,7 +1,7 @@
 // Black Hole in One — Explore mode (OW-1)
 'use strict';
 
-import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX, ORBIT_MIN_GAP, ORBIT_MAX_GAP, circularSpeed, STARDUST_RING_CHANCE, STARDUST_RING_COUNT_MIN, STARDUST_RING_COUNT_MAX, STARDUST_RING_GAP_MIN, STARDUST_RING_GAP_MAX, isStranded as sharedIsStranded } from './constants.js';
+import { MAX_LAUNCH, MAX_DRAG, MIN_SHOT, rand, dist, PALETTES, COMET_R, ORBIT_COOLDOWN, mulberry32, seedFromString, upgradeCost, tankMaxFuel, siphonGain, sensorChunkRadius, THRUST_A, THRUST_BURN, STICK_R_PX, STICK_DEAD_PX, REFUEL_STATION_CHANCE, EXPLORE_BLACKHOLE_CHANCE, EXPLORE_BLACKHOLE_R, MOON_RING_CHANCE, MOON_VS_RING_CHANCE, MOON_ORBIT_R_MIN, MOON_ORBIT_R_MAX, MOON_SIZE_MIN, MOON_SIZE_MAX, MOON_PERIOD_MIN, MOON_PERIOD_MAX, RING_RADIUS_MIN, RING_RADIUS_MAX, RING_ARC_MIN, RING_ARC_MAX, RING_TILT_MIN, RING_TILT_MAX, ORBIT_MIN_GAP, ORBIT_MAX_GAP, circularSpeed, STARDUST_RING_CHANCE, STARDUST_RING_COUNT_MIN, STARDUST_RING_COUNT_MAX, STARDUST_RING_GAP_MIN, STARDUST_RING_GAP_MAX, FUEL_RING_CHANCE, FUEL_RING_COUNT_MIN, FUEL_RING_COUNT_MAX, FUEL_RING_GAP_MIN, FUEL_RING_GAP_MAX, isStranded as sharedIsStranded } from './constants.js';
 import { S, world, comet, markGlossarySeen } from './state.js';
 import { stepBody, collide, orbitCapture, magnetCapture } from './physics.js';
 
@@ -200,6 +200,22 @@ export function getChunkBodies(cx, cy, seed) {
         };
     }
 
+    // Fuel rings (ORB-3b): same pattern as stardust rings above, applied to fuel —
+    // rolled last, after stardust rings, same rng stream, so neither this nor
+    // anything earlier perturbs each other's odds. A body that already got a
+    // stardust ring is skipped (never rolled, so it costs no rng() call) — see
+    // constants.js's FUEL_RING_CHANCE doc for why a body keeps at most one ring.
+    for (const b of survivors) {
+        if (b.type === 'blackhole' || b.stardustRing) continue;
+        if (rng() >= FUEL_RING_CHANCE) continue;
+        const gapFrac = FUEL_RING_GAP_MIN + rng() * (FUEL_RING_GAP_MAX - FUEL_RING_GAP_MIN);
+        b.fuelRing = {
+            radius: b.r + COMET_R + ORBIT_MIN_GAP + gapFrac * (ORBIT_MAX_GAP - ORBIT_MIN_GAP),
+            count: FUEL_RING_COUNT_MIN + Math.floor(rng() * (FUEL_RING_COUNT_MAX - FUEL_RING_COUNT_MIN + 1)),
+            ang0: rng() * Math.PI * 2,
+        };
+    }
+
     return survivors;
 }
 
@@ -279,6 +295,21 @@ export function getChunkPickups(cx, cy, seed, bodies = []) {
         }
     }
 
+    // Fuel ring dots (ORB-3b): same geometry-only pattern as stardust ring dots
+    // above, pure function of the body's already-seeded fuelRing — no rng draw.
+    for (const b of bodies) {
+        if (!b.fuelRing || !b.id || !b.id.startsWith(chunkPrefix)) continue;
+        const ring = b.fuelRing;
+        const others = bodies.filter(o => o !== b);
+        for (let i = 0; i < ring.count; i++) {
+            const ang = ring.ang0 + i * (Math.PI * 2 / ring.count);
+            const px = b.x + Math.cos(ang) * ring.radius;
+            const py = b.y + Math.sin(ang) * ring.radius;
+            if (pickupBlockedByBody(px, py, 1.8, others)) continue;
+            chunkPickups.push({ x: px, y: py, r: 1.8, type: 'fuel', id: `fr${cx}_${cy}_${b.id}_${i}` });
+        }
+    }
+
     return chunkPickups;
 }
 
@@ -293,6 +324,7 @@ function markPresentObjects(bodies, pk) {
         if (b.refuelStation && markGlossarySeen('refuelStation')) changed = true;
         if ((b.moon || b.ring) && markGlossarySeen('moonRing')) changed = true;
         if (b.stardustRing && markGlossarySeen('stardustRing')) changed = true;
+        if (b.fuelRing && markGlossarySeen('fuelRing')) changed = true;
     }
     for (const p of pk) {
         if (p.type === 'fuel') { if (markGlossarySeen('fuel')) changed = true; }
@@ -576,16 +608,19 @@ function collectPickups() {
     }
 }
 
-// ORB-4: when Orbit Magnet captures onto a body with a stardust ring, snap the
-// new orbit's radius to the ring radius instead of wherever the approach
-// happened to catch — "the ring is the orbit," so riding it sweeps every dot
-// in one revolution. Recomputes omega for the new radius (circular speed
-// scales with radius) but keeps the capture's direction sign. No-op (returns
-// `cap` unchanged) when the magnet is off or the body has no ring — strict
-// `orbitCapture()` grazes are untouched, per spec. Pure — unit-tested.
+// ORB-4/ORB-3b: when Orbit Magnet captures onto a body with a stardust or fuel
+// ring, snap the new orbit's radius to the ring radius instead of wherever the
+// approach happened to catch — "the ring is the orbit," so riding it sweeps
+// every dot in one revolution. Recomputes omega for the new radius (circular
+// speed scales with radius) but keeps the capture's direction sign. No-op
+// (returns `cap` unchanged) when the magnet is off or the body has no ring —
+// strict `orbitCapture()` grazes are untouched, per spec. A body carries at
+// most one ring type (see constants.js's FUEL_RING_CHANCE doc), so which one
+// wins here never actually has to arbitrate. Pure — unit-tested.
 export function ringSnap(cap, b, magnetOn) {
-    if (!cap || !magnetOn || !b.stardustRing) return cap;
-    const radius = b.stardustRing.radius;
+    const ring = b.stardustRing || b.fuelRing;
+    if (!cap || !magnetOn || !ring) return cap;
+    const radius = ring.radius;
     const dir = cap.omega >= 0 ? 1 : -1;
     return { radius, ang: cap.ang, omega: dir * circularSpeed(b.m, radius) / radius };
 }
