@@ -36,7 +36,7 @@ Q3 was answered via the vault's `Kameko Studio Questionnaire — New Game Direct
 3. **One-tower roguelike + hero sortie (B1+, p3-08).** Waves converge on one tower; draft upgrades between waves; light unlocks persist across runs.
 4. **Durak-deck score-attack roguelike (C1, p3-09).** Durak's beat mechanic as Balatro's poker — scoring-layer blend, explicitly not another durak variant.
 
-Un-seeded/wildcard pitches are still welcome, but rank the queue above them. Directions considered and *not* picked (don't re-pitch without new signal): A3 3D marble slope, B2 lane TD with hero, B3 maze-builder TD, C2 scratch-card roguelike. (A2 flick golf *was* in this list until Yev asked for it directly on 2026-07-14 — exactly the new-signal path — and it jammed to the Lab as **Black Hole in One, p3-10**.)
+Un-seeded/wildcard pitches are still welcome, but rank the queue above them. Directions considered and *not* picked (don't re-pitch without new signal): A3 3D marble slope, B2 lane TD with hero, C2 scratch-card roguelike. (A2 flick golf *was* in this list until Yev asked for it directly on 2026-07-14 — exactly the new-signal path — and it jammed to the Lab as **Black Hole in One, p3-10**. B3 maze-builder TD *was* in this list too until Yev's 2026-07-21 ask for "tower defense with maze building elements" — un-benched via the same new-signal path, fused with a deeper Hades-style meta layer than p3-08's light unlocks, and jammed to the Lab as **Maze Warden, p3-22** — iteration 1 is core-loop-only, the meta layer is iteration 2.)
 
 New steering from the same questionnaire:
 

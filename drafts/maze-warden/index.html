@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Maze Warden — Kameko Studio Lab</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overscroll-behavior: none; }
+  body {
+    background: #05050d;
+    color: #eef0ff;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+  }
+
+  #app {
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ---- Top bar ---- */
+  #topbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 0.7rem;
+    background: #0a0a18;
+    border-bottom: 1px solid #1c1c34;
+    font-size: 0.8rem;
+    z-index: 5;
+  }
+  .stat { display: flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
+  .stat b { font-variant-numeric: tabular-nums; }
+  #goldStat b { color: #ffd54a; }
+  #waveStat b { color: #2fe6ff; }
+  #hpWrap { display: flex; align-items: center; gap: 0.35rem; flex: 1; min-width: 0; }
+  #hpBarOuter {
+    flex: 1;
+    max-width: 120px;
+    height: 9px;
+    border-radius: 5px;
+    background: #1c1c34;
+    overflow: hidden;
+    border: 1px solid #2a2a4a;
+  }
+  #hpBarInner {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #7d5bff, #ff4d6a 220%);
+    transition: width 0.25s ease;
+  }
+  .iconbtn {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: 1px solid #2a2a4a;
+    background: #12122a;
+    color: #eef0ff;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .iconbtn:active { background: #1c1c3a; }
+
+  /* ---- Board ---- */
+  #boardWrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.4rem;
+    touch-action: none;
+    position: relative;
+  }
+  #board {
+    display: block;
+    touch-action: none;
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px #1c1c34, 0 0 40px rgba(47,230,255,0.06);
+  }
+
+  /* ---- Bottom bar ---- */
+  #bottombar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.6rem 0.8rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
+    background: #0a0a18;
+    border-top: 1px solid #1c1c34;
+    min-height: 52px;
+    z-index: 5;
+  }
+  #waveStatusText {
+    font-size: 0.78rem;
+    color: #8a8ab0;
+    letter-spacing: 0.02em;
+  }
+  #startWaveBtn {
+    display: none;
+    width: 100%;
+    max-width: 360px;
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(90deg, #2fe6ff, #7d5bff);
+    color: #05050d;
+    font-weight: 700;
+    font-size: 0.92rem;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+  }
+  #startWaveBtn:active { filter: brightness(0.9); }
+
+  /* ---- Toast ---- */
+  #toast {
+    position: absolute;
+    left: 50%;
+    top: 10px;
+    transform: translateX(-50%) translateY(-8px);
+    background: rgba(20,10,10,0.92);
+    border: 1px solid #ff4d6a55;
+    color: #ffb3c0;
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    pointer-events: none;
+    z-index: 20;
+    white-space: nowrap;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ---- Bottom sheet panel (build / tower actions) ---- */
+  #sheetBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+    z-index: 30;
+  }
+  #sheetBackdrop.show { opacity: 1; pointer-events: auto; }
+  #sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    transform: translateY(100%);
+    transition: transform 0.2s ease;
+    background: #0e0e22;
+    border-top: 1px solid #2a2a4a;
+    border-radius: 16px 16px 0 0;
+    padding: 0.9rem 1rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+    z-index: 31;
+  }
+  #sheet.show { transform: translateY(0); }
+  #sheetTitle { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.65rem; color: #cfd0ff; }
+  .sheetRow { display: flex; flex-direction: column; gap: 0.5rem; }
+  .sheetBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid #2a2a4a;
+    background: #14142c;
+    color: #eef0ff;
+    font-size: 0.82rem;
+    cursor: pointer;
+  }
+  .sheetBtn:active:not(:disabled) { background: #1c1c3a; }
+  .sheetBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .sheetBtn .sbEmoji { font-size: 1.3rem; flex: 0 0 auto; }
+  .sheetBtn .sbBody { flex: 1; min-width: 0; }
+  .sheetBtn .sbName { font-weight: 700; display: block; }
+  .sheetBtn .sbDesc { display: block; font-size: 0.7rem; color: #8a8ab0; margin-top: 0.1rem; }
+  .sheetBtn .sbCost { font-weight: 700; white-space: nowrap; }
+  .sheetBtn.sell .sbCost { color: #6dff9a; }
+  .sheetBtn.upgrade .sbCost { color: #ffd54a; }
+  .sheetCancel {
+    margin-top: 0.6rem;
+    width: 100%;
+    padding: 0.5rem;
+    border-radius: 10px;
+    border: 1px solid #2a2a4a;
+    background: transparent;
+    color: #8a8ab0;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+
+  /* ---- Full overlays (howto / pause / gameover) ---- */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4,4,10,0.86);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 40;
+    padding: 1rem;
+  }
+  .overlay.show { display: flex; }
+  .card {
+    background: #0e0e22;
+    border: 1px solid #2a2a4a;
+    border-radius: 16px;
+    padding: 1.3rem 1.4rem;
+    max-width: 380px;
+    width: 100%;
+    max-height: 86vh;
+    overflow-y: auto;
+  }
+  .card h2 { font-size: 1.1rem; margin-bottom: 0.7rem; color: #eef0ff; }
+  .card p, .card li { font-size: 0.82rem; color: #b8b8d8; line-height: 1.5; }
+  .card ul { margin: 0.5rem 0 0.9rem 1.1rem; }
+  .card .bigStat { font-size: 1.6rem; font-weight: 700; color: #2fe6ff; margin: 0.4rem 0; }
+  .primaryBtn {
+    display: block;
+    width: 100%;
+    margin-top: 0.9rem;
+    padding: 0.65rem;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(90deg, #2fe6ff, #7d5bff);
+    color: #05050d;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  .primaryBtn:active { filter: brightness(0.9); }
+  .legend { display: flex; align-items: center; gap: 0.5rem; margin: 0.35rem 0; }
+  .legend .swatch { width: 16px; height: 16px; border-radius: 4px; flex: 0 0 auto; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="stat" id="goldStat">💰 <b id="goldVal">0</b></div>
+    <div id="hpWrap">
+      <span>❤️</span>
+      <div id="hpBarOuter"><div id="hpBarInner"></div></div>
+      <b id="hpVal">0</b>
+    </div>
+    <div class="stat" id="waveStat">🌊 <b id="waveVal">1</b></div>
+    <button class="iconbtn" id="pauseBtn" title="Pause">⏸</button>
+    <button class="iconbtn" id="helpBtn" title="How to play">❓</button>
+  </div>
+
+  <div id="boardWrap">
+    <canvas id="board"></canvas>
+    <div id="toast"></div>
+  </div>
+
+  <div id="bottombar">
+    <button id="startWaveBtn">▶ Start Wave 1</button>
+    <div id="waveStatusText">Tap an open cell to build.</div>
+  </div>
+</div>
+
+<div id="sheetBackdrop"></div>
+<div id="sheet">
+  <div id="sheetTitle">Build</div>
+  <div class="sheetRow" id="sheetRow"></div>
+  <button class="sheetCancel" id="sheetCancel">Cancel</button>
+</div>
+
+<div class="overlay" id="howtoOverlay">
+  <div class="card">
+    <h2>🗼 Maze Warden</h2>
+    <p><b>Your towers ARE the walls.</b> Tap an empty cell to build one — enemies always take the shortest <em>open</em> path from the top to your core, so where you build shapes their route.</p>
+    <ul>
+      <li>You can never fully seal off the core — a path must always stay open.</li>
+      <li>Tap a built tower to upgrade or sell it.</li>
+      <li>Clear a wave, spend your gold, then start the next. Waves get tougher forever — how long can you hold?</li>
+    </ul>
+    <div class="legend"><div class="swatch" style="background:#2fe6ff;"></div><span>Pulse Spire — single-target, longer range</span></div>
+    <div class="legend"><div class="swatch" style="background:#c04bff;"></div><span>Frost Prism — splash damage + slows a group</span></div>
+    <button class="primaryBtn" id="howtoCloseBtn">Let's go</button>
+  </div>
+</div>
+
+<div class="overlay" id="pauseOverlay">
+  <div class="card">
+    <h2>⏸ Paused</h2>
+    <p>The board is frozen. Resume when you're ready.</p>
+    <button class="primaryBtn" id="resumeBtn">▶ Resume</button>
+  </div>
+</div>
+
+<div class="overlay" id="gameoverOverlay">
+  <div class="card">
+    <h2>💀 Core Breached</h2>
+    <p>Wave reached</p>
+    <div class="bigStat" id="goWave">1</div>
+    <p id="goStats"></p>
+    <button class="primaryBtn" id="restartBtn">↻ Play Again</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ------------------------------------------------------------------
+  // Constants
+  // ------------------------------------------------------------------
+  var COLS = 8, ROWS = 14; // aspect ~0.57, close to a phone's usable portrait area — minimizes letterbox matte
+  var SPAWN = { col: 4, row: 0 };
+  var CORE = { col: 4, row: ROWS - 1 };
+  var START_GOLD = 120;
+  var START_CORE_HP = 20;
+  var LEAK_DAMAGE = 1;
+  var SELL_REFUND_RATIO = 0.6;
+
+  var TOWER_DEFS = {
+    spire: {
+      key: 'spire', name: 'Pulse Spire', emoji: '🟦', color: '#2fe6ff', glow: 'rgba(47,230,255,0.55)',
+      desc: 'Single target, longer range',
+      levels: [
+        { cost: 25, range: 1.7, rate: 2.2, dmg: 4 },
+        { cost: 20, range: 1.8, rate: 2.3, dmg: 7 },
+        { cost: 35, range: 2.0, rate: 2.5, dmg: 11 }
+      ]
+    },
+    prism: {
+      key: 'prism', name: 'Frost Prism', emoji: '🟪', color: '#c04bff', glow: 'rgba(192,75,255,0.55)',
+      desc: 'Splash damage, slows a group',
+      levels: [
+        { cost: 40, range: 1.4, rate: 0.9, dmg: 5, radius: 0.95, slow: 0.45, slowDur: 1.4 },
+        { cost: 30, range: 1.45, rate: 0.95, dmg: 8, radius: 1.05, slow: 0.5, slowDur: 1.5 },
+        { cost: 45, range: 1.55, rate: 1.0, dmg: 12, radius: 1.15, slow: 0.55, slowDur: 1.6 }
+      ]
+    }
+  };
+
+  function waveEnemyCount(n) { return 6 + Math.floor(n * 1.5); }
+  function waveEnemyHp(n) { return 9 + Math.round(n * 3.3); }
+  function waveEnemySpeed(n) { return Math.min(1.1 + n * 0.035, 2.4); } // cells/sec
+  function waveSpawnInterval(n) { return Math.max(0.9 - n * 0.02, 0.28); } // seconds
+  function killReward(n) { return 3 + Math.floor(n / 4); }
+  function waveClearBonus(n) { return 10 + n * 2; }
+
+  // ------------------------------------------------------------------
+  // Audio (tiny WebAudio synth, no assets)
+  // ------------------------------------------------------------------
+  var audio = (function () {
+    var ctx = null;
+    function ensure() {
+      if (!ctx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) ctx = new AC();
+      }
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+    function blip(freq, dur, type, vol, glideTo) {
+      var c = ensure();
+      if (!c) return;
+      var t0 = c.currentTime;
+      var osc = c.createOscillator();
+      var gain = c.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.setValueAtTime(freq, t0);
+      if (glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, t0 + dur);
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.exponentialRampToValueAtTime(vol || 0.18, t0 + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      osc.connect(gain).connect(c.destination);
+      osc.start(t0);
+      osc.stop(t0 + dur + 0.02);
+    }
+    return {
+      unlock: ensure,
+      build: function () { blip(520, 0.09, 'square', 0.12, 720); },
+      upgrade: function () { blip(440, 0.14, 'triangle', 0.14, 880); },
+      sell: function () { blip(340, 0.1, 'sine', 0.1, 200); },
+      shootSpire: function () { blip(900, 0.05, 'square', 0.05, 700); },
+      shootPrism: function () { blip(260, 0.12, 'sawtooth', 0.06, 160); },
+      hit: function () { blip(180, 0.05, 'square', 0.04, 90); },
+      death: function () { blip(300, 0.12, 'sine', 0.09, 60); },
+      leak: function () { blip(150, 0.2, 'sawtooth', 0.12, 60); },
+      waveStart: function () { blip(500, 0.18, 'triangle', 0.13, 900); },
+      waveClear: function () { blip(660, 0.22, 'triangle', 0.14, 1100); },
+      reject: function () { blip(180, 0.12, 'square', 0.08, 120); },
+      gameover: function () { blip(220, 0.5, 'sawtooth', 0.14, 40); }
+    };
+  })();
+
+  // ------------------------------------------------------------------
+  // State
+  // ------------------------------------------------------------------
+  var state = null;
+
+  function freshState() {
+    return {
+      gold: START_GOLD,
+      coreHp: START_CORE_HP,
+      wave: 1,
+      phase: 'build', // 'build' | 'wave' | 'gameover'
+      paused: false,
+      towers: {}, // key `${col},${row}` -> {def, level, col, row, cooldown, spentGold}
+      enemies: [],
+      particles: [],
+      projectiles: [],
+      distField: null,
+      spawnQueue: 0,
+      spawnTimer: 0,
+      enemiesToSpawn: 0,
+      killedThisRun: 0,
+      selectedCell: null,
+      time: 0
+    };
+  }
+
+  function cellKey(col, row) { return col + ',' + row; }
+  function inBounds(col, row) { return col >= 0 && col < COLS && row >= 0 && row < ROWS; }
+  function isSpecialCell(col, row) {
+    return (col === SPAWN.col && row === SPAWN.row) || (col === CORE.col && row === CORE.row);
+  }
+
+  // BFS distance field from core through open (non-tower) cells.
+  function computeDistField(towersMap) {
+    var field = [];
+    for (var r = 0; r < ROWS; r++) { field.push(new Array(COLS).fill(Infinity)); }
+    var qCol = [CORE.col], qRow = [CORE.row];
+    field[CORE.row][CORE.col] = 0;
+    var head = 0;
+    while (head < qCol.length) {
+      var c = qCol[head], r = qRow[head]; head++;
+      var d = field[r][c];
+      var neighbors = [[c + 1, r], [c - 1, r], [c, r + 1], [c, r - 1]];
+      for (var i = 0; i < 4; i++) {
+        var nc = neighbors[i][0], nr = neighbors[i][1];
+        if (!inBounds(nc, nr)) continue;
+        if (field[nr][nc] !== Infinity) continue;
+        if (towersMap[cellKey(nc, nr)] && !(nc === SPAWN.col && nr === SPAWN.row)) continue;
+        field[nr][nc] = d + 1;
+        qCol.push(nc); qRow.push(nr);
+      }
+    }
+    return field;
+  }
+
+  function cellOccupiedActiveEnemies() {
+    var cells = [];
+    for (var i = 0; i < state.enemies.length; i++) {
+      var e = state.enemies[i];
+      cells.push({ col: Math.round(e.pos.x / cellSize - 0.5), row: Math.round(e.pos.y / cellSize - 0.5) });
+    }
+    return cells;
+  }
+
+  // Would placing a tower at (col,row) seal off spawn or any active enemy from the core?
+  function wouldSeal(col, row) {
+    var testMap = {};
+    for (var k in state.towers) testMap[k] = true;
+    testMap[cellKey(col, row)] = true;
+    var field = computeDistField(testMap);
+    if (field[SPAWN.row][SPAWN.col] === Infinity) return true;
+    var enemyCells = cellOccupiedActiveEnemies();
+    for (var i = 0; i < enemyCells.length; i++) {
+      var ec = enemyCells[i];
+      if (!inBounds(ec.col, ec.row)) continue;
+      if (field[ec.row][ec.col] === Infinity) return true;
+    }
+    return false;
+  }
+
+  function rebuildDistField() {
+    state.distField = computeDistField(state.towers);
+  }
+
+  // ------------------------------------------------------------------
+  // Canvas / sizing
+  // ------------------------------------------------------------------
+  var canvas = document.getElementById('board');
+  var ctx = canvas.getContext('2d');
+  var boardWrap = document.getElementById('boardWrap');
+  var cellSize = 40;
+  var dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  function resizeCanvas() {
+    var w = boardWrap.clientWidth, h = boardWrap.clientHeight;
+    if (w <= 0 || h <= 0) { requestAnimationFrame(resizeCanvas); return; }
+    var padding = 8;
+    w -= padding; h -= padding;
+    cellSize = Math.floor(Math.min(w / COLS, h / ROWS));
+    if (cellSize < 10) cellSize = 10;
+    var cw = cellSize * COLS, ch = cellSize * ROWS;
+    dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.style.width = cw + 'px';
+    canvas.style.height = ch + 'px';
+    canvas.width = Math.round(cw * dpr);
+    canvas.height = Math.round(ch * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (state && state.enemies) { /* positions are cell-based, no rescale needed */ }
+  }
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('orientationchange', function () { setTimeout(resizeCanvas, 60); });
+
+  // ------------------------------------------------------------------
+  // Enemies
+  // ------------------------------------------------------------------
+  function cellCenterPx(col, row) { return { x: col * cellSize + cellSize / 2, y: row * cellSize + cellSize / 2 }; }
+
+  function spawnEnemy() {
+    var hp = waveEnemyHp(state.wave);
+    var tier = Math.floor((state.wave - 1) / 5);
+    var pos = cellCenterPx(SPAWN.col, SPAWN.row);
+    state.enemies.push({
+      col: SPAWN.col, row: SPAWN.row,
+      pos: { x: pos.x, y: pos.y },
+      hp: hp, maxHp: hp,
+      baseSpeed: waveEnemySpeed(state.wave) * cellSize,
+      slowUntil: 0, slowFactor: 1,
+      tier: tier,
+      targetCol: SPAWN.col, targetRow: SPAWN.row,
+      alive: true
+    });
+    pickNextTarget(state.enemies[state.enemies.length - 1]);
+  }
+
+  function pickNextTarget(e) {
+    var col = Math.round(e.pos.x / cellSize - 0.5);
+    var row = Math.round(e.pos.y / cellSize - 0.5);
+    var field = state.distField;
+    var curD = (field[row] && field[row][col] !== undefined) ? field[row][col] : Infinity;
+    if (curD === 0) { e.targetCol = col; e.targetRow = row; e.arrived = true; return; }
+    var best = null, bestD = curD;
+    var cands = [[col + 1, row], [col - 1, row], [col, row + 1], [col, row - 1]];
+    for (var i = 0; i < cands.length; i++) {
+      var nc = cands[i][0], nr = cands[i][1];
+      if (!inBounds(nc, nr)) continue;
+      var d = field[nr][nc];
+      if (d < bestD) { bestD = d; best = { col: nc, row: nr }; }
+    }
+    if (best) { e.targetCol = best.col; e.targetRow = best.row; }
+    else { e.targetCol = col; e.targetRow = row; }
+  }
+
+  function updateEnemies(dt) {
+    for (var i = state.enemies.length - 1; i >= 0; i--) {
+      var e = state.enemies[i];
+      var speed = e.baseSpeed * (state.time < e.slowUntil ? e.slowFactor : 1);
+      var target = cellCenterPx(e.targetCol, e.targetRow);
+      var dx = target.x - e.pos.x, dy = target.y - e.pos.y;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      var step = speed * dt;
+      if (dist <= step || dist < 0.5) {
+        e.pos.x = target.x; e.pos.y = target.y;
+        var col = e.targetCol, row = e.targetRow;
+        if (col === CORE.col && row === CORE.row) {
+          state.coreHp = Math.max(0, state.coreHp - LEAK_DAMAGE);
+          spawnBurst(e.pos.x, e.pos.y, '#ff4d6a', 10);
+          audio.leak();
+          state.enemies.splice(i, 1);
+          updateHud();
+          if (state.coreHp <= 0) { triggerGameOver(); return; }
+          continue;
+        }
+        pickNextTarget(e);
+      } else {
+        e.pos.x += (dx / dist) * step;
+        e.pos.y += (dy / dist) * step;
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Towers / combat
+  // ------------------------------------------------------------------
+  function towerAt(col, row) { return state.towers[cellKey(col, row)]; }
+
+  function placeTower(col, row, key) {
+    var def = TOWER_DEFS[key];
+    var lvl = def.levels[0];
+    if (state.gold < lvl.cost) return false;
+    if (wouldSeal(col, row)) return false;
+    state.gold -= lvl.cost;
+    state.towers[cellKey(col, row)] = { defKey: key, level: 0, col: col, row: row, cooldown: 0, spent: lvl.cost };
+    rebuildDistField();
+    for (var i = 0; i < state.enemies.length; i++) pickNextTarget(state.enemies[i]);
+    audio.build();
+    updateHud();
+    return true;
+  }
+
+  function upgradeTower(col, row) {
+    var t = towerAt(col, row);
+    if (!t) return false;
+    var def = TOWER_DEFS[t.defKey];
+    if (t.level >= def.levels.length - 1) return false;
+    var nextLvl = def.levels[t.level + 1];
+    if (state.gold < nextLvl.cost) return false;
+    state.gold -= nextLvl.cost;
+    t.spent += nextLvl.cost;
+    t.level += 1;
+    audio.upgrade();
+    updateHud();
+    return true;
+  }
+
+  function sellTower(col, row) {
+    var t = towerAt(col, row);
+    if (!t) return false;
+    var refund = Math.round(t.spent * SELL_REFUND_RATIO);
+    state.gold += refund;
+    delete state.towers[cellKey(col, row)];
+    rebuildDistField();
+    for (var i = 0; i < state.enemies.length; i++) pickNextTarget(state.enemies[i]);
+    audio.sell();
+    updateHud();
+    return true;
+  }
+
+  function updateTowers(dt) {
+    for (var key in state.towers) {
+      var t = state.towers[key];
+      t.cooldown -= dt;
+      var def = TOWER_DEFS[t.defKey];
+      var lvl = def.levels[t.level];
+      if (t.cooldown > 0) continue;
+      var center = cellCenterPx(t.col, t.row);
+      var rangePx = lvl.range * cellSize;
+      var target = null, bestD = Infinity;
+      for (var i = 0; i < state.enemies.length; i++) {
+        var e = state.enemies[i];
+        var dx = e.pos.x - center.x, dy = e.pos.y - center.y;
+        var d2 = dx * dx + dy * dy;
+        if (d2 <= rangePx * rangePx) {
+          var progress = state.distField[Math.max(0, Math.min(ROWS - 1, e.targetRow))][Math.max(0, Math.min(COLS - 1, e.targetCol))];
+          if (progress < bestD) { bestD = progress; target = e; }
+        }
+      }
+      if (!target) continue;
+      t.cooldown = 1 / lvl.rate;
+      if (t.defKey === 'spire') {
+        fireSpire(t, target, lvl, center);
+      } else {
+        firePrism(t, target, lvl, center);
+      }
+    }
+  }
+
+  function fireSpire(t, target, lvl, center) {
+    audio.shootSpire();
+    state.projectiles.push({
+      kind: 'spire', x: center.x, y: center.y, target: target,
+      speed: 900, color: TOWER_DEFS.spire.color, dmg: lvl.dmg
+    });
+  }
+
+  function firePrism(t, target, lvl, center) {
+    audio.shootPrism();
+    state.projectiles.push({
+      kind: 'prism', x: center.x, y: center.y,
+      tx: target.pos.x, ty: target.pos.y,
+      progress: 0, dur: 0.28,
+      color: TOWER_DEFS.prism.color, dmg: lvl.dmg, radius: lvl.radius * cellSize,
+      slow: lvl.slow, slowDur: lvl.slowDur
+    });
+  }
+
+  function damageEnemy(e, dmg) {
+    e.hp -= dmg;
+    audio.hit();
+    if (e.hp <= 0) {
+      killEnemy(e);
+    }
+  }
+
+  function killEnemy(e) {
+    var idx = state.enemies.indexOf(e);
+    if (idx === -1) return;
+    state.enemies.splice(idx, 1);
+    state.gold += killReward(state.wave);
+    state.killedThisRun += 1;
+    spawnBurst(e.pos.x, e.pos.y, tierColor(e.tier), 14);
+    audio.death();
+    updateHud();
+  }
+
+  function tierColor(tier) {
+    var colors = ['#ffb020', '#ff8a3d', '#ff5a4d', '#ff3050'];
+    return colors[Math.min(tier, colors.length - 1)];
+  }
+
+  function updateProjectiles(dt) {
+    for (var i = state.projectiles.length - 1; i >= 0; i--) {
+      var p = state.projectiles[i];
+      if (p.kind === 'spire') {
+        if (!p.target || state.enemies.indexOf(p.target) === -1) { state.projectiles.splice(i, 1); continue; }
+        var dx = p.target.pos.x - p.x, dy = p.target.pos.y - p.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        var step = p.speed * dt;
+        if (dist <= step) {
+          damageEnemy(p.target, p.dmg);
+          state.projectiles.splice(i, 1);
+        } else {
+          p.x += (dx / dist) * step; p.y += (dy / dist) * step;
+        }
+      } else {
+        p.progress += dt / p.dur;
+        if (p.progress >= 1) {
+          spawnBurst(p.tx, p.ty, p.color, 16);
+          for (var j = state.enemies.length - 1; j >= 0; j--) {
+            var e = state.enemies[j];
+            var edx = e.pos.x - p.tx, edy = e.pos.y - p.ty;
+            if (edx * edx + edy * edy <= p.radius * p.radius) {
+              damageEnemy(e, p.dmg);
+              if (state.enemies.indexOf(e) !== -1) { e.slowUntil = state.time + p.slowDur; e.slowFactor = 1 - p.slow; }
+            }
+          }
+          state.projectiles.splice(i, 1);
+        } else {
+          p.x = p.x + (p.tx - p.x) * dt / (p.dur * (1 - p.progress + 0.0001));
+          p.y = p.y + (p.ty - p.y) * dt / (p.dur * (1 - p.progress + 0.0001));
+        }
+      }
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Particles
+  // ------------------------------------------------------------------
+  function spawnBurst(x, y, color, count) {
+    for (var i = 0; i < count; i++) {
+      var ang = Math.random() * Math.PI * 2;
+      var spd = 40 + Math.random() * 90;
+      state.particles.push({
+        x: x, y: y, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd,
+        life: 0.4 + Math.random() * 0.3, age: 0, color: color, size: 1.5 + Math.random() * 2
+      });
+    }
+  }
+  function updateParticles(dt) {
+    for (var i = state.particles.length - 1; i >= 0; i--) {
+      var p = state.particles[i];
+      p.age += dt;
+      if (p.age >= p.life) { state.particles.splice(i, 1); continue; }
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      p.vx *= 0.94; p.vy *= 0.94;
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Waves
+  // ------------------------------------------------------------------
+  function startWave() {
+    if (state.phase !== 'build') return;
+    state.phase = 'wave';
+    state.enemiesToSpawn = waveEnemyCount(state.wave);
+    state.spawnTimer = 0;
+    audio.waveStart();
+    updateHud();
+  }
+
+  function updateSpawning(dt) {
+    if (state.phase !== 'wave') return;
+    if (state.enemiesToSpawn > 0) {
+      state.spawnTimer -= dt;
+      if (state.spawnTimer <= 0) {
+        spawnEnemy();
+        state.enemiesToSpawn -= 1;
+        state.spawnTimer = waveSpawnInterval(state.wave);
+      }
+    } else if (state.enemies.length === 0) {
+      var bonus = waveClearBonus(state.wave);
+      state.gold += bonus;
+      showToast('🌊 Wave ' + state.wave + ' cleared +' + bonus + 'g');
+      audio.waveClear();
+      state.wave += 1;
+      state.phase = 'build';
+      updateHud();
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Rendering
+  // ------------------------------------------------------------------
+  var stars = [];
+  function initStars() {
+    stars = [];
+    for (var i = 0; i < 40; i++) {
+      stars.push({ x: Math.random(), y: Math.random(), r: 0.4 + Math.random() * 1.1, tw: Math.random() * Math.PI * 2 });
+    }
+  }
+  initStars();
+
+  function draw() {
+    var w = cellSize * COLS, h = cellSize * ROWS;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#070712';
+    ctx.fillRect(0, 0, w, h);
+
+    // starfield
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      var tw = 0.5 + 0.5 * Math.sin(state.time * 1.4 + s.tw);
+      ctx.fillStyle = 'rgba(160,170,255,' + (0.15 + tw * 0.25) + ')';
+      ctx.beginPath();
+      ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+    ctx.lineWidth = 1;
+    for (var c = 0; c <= COLS; c++) {
+      ctx.beginPath(); ctx.moveTo(c * cellSize, 0); ctx.lineTo(c * cellSize, h); ctx.stroke();
+    }
+    for (var r = 0; r <= ROWS; r++) {
+      ctx.beginPath(); ctx.moveTo(0, r * cellSize), ctx.lineTo(w, r * cellSize); ctx.stroke();
+    }
+
+    // selected cell highlight
+    if (state.selectedCell) {
+      var sc = state.selectedCell;
+      var pulse = 0.5 + 0.5 * Math.sin(state.time * 6);
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.35 + pulse * 0.3) + ')';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(sc.col * cellSize + 2, sc.row * cellSize + 2, cellSize - 4, cellSize - 4);
+    }
+
+    // spawn marker
+    drawSpawnMarker();
+    // core
+    drawCore();
+    // towers
+    for (var key in state.towers) drawTower(state.towers[key]);
+    // projectiles
+    for (var pi = 0; pi < state.projectiles.length; pi++) drawProjectile(state.projectiles[pi]);
+    // enemies
+    for (var ei = 0; ei < state.enemies.length; ei++) drawEnemy(state.enemies[ei]);
+    // particles
+    for (var qi = 0; qi < state.particles.length; qi++) drawParticle(state.particles[qi]);
+  }
+
+  function drawSpawnMarker() {
+    var p = cellCenterPx(SPAWN.col, SPAWN.row);
+    var pulse = 0.5 + 0.5 * Math.sin(state.time * 3);
+    ctx.save();
+    ctx.globalAlpha = 0.55 + pulse * 0.25;
+    ctx.fillStyle = '#3a3a66';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, cellSize * 0.32, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = '#7a7ab8';
+    ctx.font = (cellSize * 0.4) + 'px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('▼', p.x, p.y);
+  }
+
+  function drawCore() {
+    var p = cellCenterPx(CORE.col, CORE.row);
+    var pulse = 0.5 + 0.5 * Math.sin(state.time * 2.5);
+    var hpFrac = state.coreHp / START_CORE_HP;
+    var r = cellSize * 0.4;
+    var grad = ctx.createRadialGradient(p.x, p.y, 2, p.x, p.y, r * (1.5 + pulse * 0.3));
+    grad.addColorStop(0, 'rgba(125,91,255,0.55)');
+    grad.addColorStop(1, 'rgba(125,91,255,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r * 2, 0, Math.PI * 2); ctx.fill();
+
+    ctx.fillStyle = hpFrac > 0.4 ? '#7d5bff' : '#ff4d6a';
+    drawHexagon(p.x, p.y, r);
+    ctx.fillStyle = '#0b0b1a';
+    ctx.font = 'bold ' + (cellSize * 0.36) + 'px sans-serif';
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('◆', p.x, p.y);
+  }
+
+  function drawHexagon(cx, cy, r) {
+    ctx.beginPath();
+    for (var i = 0; i < 6; i++) {
+      var ang = Math.PI / 6 + i * Math.PI / 3;
+      var x = cx + r * Math.cos(ang), y = cy + r * Math.sin(ang);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawTower(t) {
+    var def = TOWER_DEFS[t.defKey];
+    var p = cellCenterPx(t.col, t.row);
+    var r = cellSize * (0.28 + t.level * 0.05);
+    ctx.save();
+    ctx.shadowColor = def.glow;
+    ctx.shadowBlur = cellSize * 0.35;
+    ctx.fillStyle = def.color;
+    if (t.defKey === 'spire') {
+      ctx.beginPath();
+      var n = 4;
+      for (var i = 0; i < n; i++) {
+        var ang = state.time * 0.6 + i * (Math.PI * 2 / n);
+        var x = p.x + r * Math.cos(ang), y = p.y + r * Math.sin(ang);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.closePath(); ctx.fill();
+    } else {
+      ctx.beginPath();
+      for (var j = 0; j < 3; j++) {
+        var a = -Math.PI / 2 + j * (Math.PI * 2 / 3);
+        var xx = p.x + r * Math.cos(a), yy = p.y + r * Math.sin(a);
+        if (j === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+      }
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+    if (t.level > 0) {
+      ctx.fillStyle = '#05050d';
+      ctx.font = 'bold ' + (cellSize * 0.22) + 'px sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(String(t.level + 1), p.x, p.y);
+    }
+  }
+
+  function drawProjectile(p) {
+    ctx.save();
+    if (p.kind === 'spire') {
+      ctx.strokeStyle = p.color; ctx.lineWidth = 2; ctx.globalAlpha = 0.9;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2); ctx.fillStyle = p.color; ctx.fill();
+    } else {
+      var rad = p.radius * Math.min(1, p.progress + 0.15);
+      ctx.strokeStyle = p.color; ctx.globalAlpha = 0.5 * (1 - p.progress) + 0.15;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(p.tx, p.ty, rad, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = p.color; ctx.globalAlpha = 0.9;
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawEnemy(e) {
+    var r = cellSize * (0.16 + Math.min(e.tier, 3) * 0.02);
+    var color = tierColor(e.tier);
+    ctx.save();
+    ctx.shadowColor = color; ctx.shadowBlur = cellSize * 0.25;
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.arc(e.pos.x, e.pos.y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    if (state.time < e.slowUntil) {
+      ctx.strokeStyle = '#c04bff'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(e.pos.x, e.pos.y, r + 2, 0, Math.PI * 2); ctx.stroke();
+    }
+    var barW = cellSize * 0.5, barH = 3;
+    var frac = Math.max(0, e.hp / e.maxHp);
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(e.pos.x - barW / 2, e.pos.y - r - 8, barW, barH);
+    ctx.fillStyle = frac > 0.4 ? '#6dff9a' : '#ff4d6a';
+    ctx.fillRect(e.pos.x - barW / 2, e.pos.y - r - 8, barW * frac, barH);
+  }
+
+  function drawParticle(p) {
+    var frac = 1 - p.age / p.life;
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, frac);
+    ctx.fillStyle = p.color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  // ------------------------------------------------------------------
+  // HUD
+  // ------------------------------------------------------------------
+  var goldVal = document.getElementById('goldVal');
+  var hpVal = document.getElementById('hpVal');
+  var hpBarInner = document.getElementById('hpBarInner');
+  var waveVal = document.getElementById('waveVal');
+  var startWaveBtn = document.getElementById('startWaveBtn');
+  var waveStatusText = document.getElementById('waveStatusText');
+
+  function updateHud() {
+    goldVal.textContent = state.gold;
+    hpVal.textContent = state.coreHp;
+    hpBarInner.style.width = Math.max(0, (state.coreHp / START_CORE_HP) * 100) + '%';
+    waveVal.textContent = state.wave;
+    if (state.phase === 'build') {
+      startWaveBtn.style.display = 'block';
+      startWaveBtn.textContent = '▶ Start Wave ' + state.wave;
+      waveStatusText.style.display = 'none';
+    } else if (state.phase === 'wave') {
+      startWaveBtn.style.display = 'none';
+      waveStatusText.style.display = 'block';
+      waveStatusText.textContent = 'Wave ' + state.wave + ' in progress — ' + state.enemies.length + ' + ' + state.enemiesToSpawn + ' left';
+    }
+  }
+
+  // ------------------------------------------------------------------
+  // Toast
+  // ------------------------------------------------------------------
+  var toastEl = document.getElementById('toast');
+  var toastTimer = null;
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1600);
+  }
+
+  // ------------------------------------------------------------------
+  // Sheet (build / tower action panel)
+  // ------------------------------------------------------------------
+  var sheetBackdrop = document.getElementById('sheetBackdrop');
+  var sheet = document.getElementById('sheet');
+  var sheetTitle = document.getElementById('sheetTitle');
+  var sheetRow = document.getElementById('sheetRow');
+  var sheetCancel = document.getElementById('sheetCancel');
+
+  function closeSheet() {
+    sheetBackdrop.classList.remove('show');
+    sheet.classList.remove('show');
+    state.selectedCell = null;
+  }
+  sheetBackdrop.addEventListener('click', closeSheet);
+  sheetCancel.addEventListener('click', closeSheet);
+
+  function openBuildSheet(col, row) {
+    state.selectedCell = { col: col, row: row };
+    sheetTitle.textContent = 'Build here';
+    sheetRow.innerHTML = '';
+    ['spire', 'prism'].forEach(function (key) {
+      var def = TOWER_DEFS[key];
+      var lvl = def.levels[0];
+      var btn = document.createElement('button');
+      btn.className = 'sheetBtn';
+      var afford = state.gold >= lvl.cost;
+      btn.disabled = !afford;
+      btn.innerHTML = '<span class="sbEmoji">' + def.emoji + '</span>' +
+        '<span class="sbBody"><span class="sbName">' + def.name + '</span>' +
+        '<span class="sbDesc">' + def.desc + '</span></span>' +
+        '<span class="sbCost">' + lvl.cost + 'g</span>';
+      btn.addEventListener('click', function (k) {
+        return function () {
+          if (placeTower(col, row, k)) closeSheet();
+        };
+      }(key));
+      sheetRow.appendChild(btn);
+    });
+    sheetBackdrop.classList.add('show');
+    sheet.classList.add('show');
+  }
+
+  function openTowerSheet(col, row) {
+    var t = towerAt(col, row);
+    if (!t) return;
+    state.selectedCell = { col: col, row: row };
+    var def = TOWER_DEFS[t.defKey];
+    sheetTitle.textContent = def.emoji + ' ' + def.name + ' — Lv ' + (t.level + 1);
+    sheetRow.innerHTML = '';
+
+    var maxed = t.level >= def.levels.length - 1;
+    var upBtn = document.createElement('button');
+    upBtn.className = 'sheetBtn upgrade';
+    if (maxed) {
+      upBtn.disabled = true;
+      upBtn.innerHTML = '<span class="sbEmoji">⬆️</span><span class="sbBody"><span class="sbName">Max Level</span></span>';
+    } else {
+      var nextLvl = def.levels[t.level + 1];
+      var afford = state.gold >= nextLvl.cost;
+      upBtn.disabled = !afford;
+      upBtn.innerHTML = '<span class="sbEmoji">⬆️</span><span class="sbBody"><span class="sbName">Upgrade to Lv ' + (t.level + 2) + '</span>' +
+        '<span class="sbDesc">+dmg / +range</span></span><span class="sbCost">' + nextLvl.cost + 'g</span>';
+      upBtn.addEventListener('click', function () { if (upgradeTower(col, row)) openTowerSheet(col, row); });
+    }
+    sheetRow.appendChild(upBtn);
+
+    var refund = Math.round(t.spent * SELL_REFUND_RATIO);
+    var sellBtn = document.createElement('button');
+    sellBtn.className = 'sheetBtn sell';
+    sellBtn.innerHTML = '<span class="sbEmoji">💱</span><span class="sbBody"><span class="sbName">Sell</span></span><span class="sbCost">+' + refund + 'g</span>';
+    sellBtn.addEventListener('click', function () { sellTower(col, row); closeSheet(); });
+    sheetRow.appendChild(sellBtn);
+
+    sheetBackdrop.classList.add('show');
+    sheet.classList.add('show');
+  }
+
+  // ------------------------------------------------------------------
+  // Input
+  // ------------------------------------------------------------------
+  canvas.addEventListener('pointerdown', function (ev) {
+    audio.unlock();
+    if (state.paused || state.phase === 'gameover') return;
+    var rect = canvas.getBoundingClientRect();
+    var x = ev.clientX - rect.left, y = ev.clientY - rect.top;
+    var col = Math.floor(x / cellSize), row = Math.floor(y / cellSize);
+    if (!inBounds(col, row)) return;
+    if (isSpecialCell(col, row)) return;
+    var existing = towerAt(col, row);
+    if (existing) {
+      openTowerSheet(col, row);
+    } else {
+      if (wouldSeal(col, row)) {
+        showToast('🚧 Path must stay open');
+        audio.reject();
+        return;
+      }
+      openBuildSheet(col, row);
+    }
+  });
+
+  // ------------------------------------------------------------------
+  // Pause / overlays
+  // ------------------------------------------------------------------
+  var pauseOverlay = document.getElementById('pauseOverlay');
+  var howtoOverlay = document.getElementById('howtoOverlay');
+  var gameoverOverlay = document.getElementById('gameoverOverlay');
+
+  function pauseGame() {
+    if (state.phase === 'gameover') return;
+    state.paused = true;
+    pauseOverlay.classList.add('show');
+  }
+  function resumeGame() {
+    state.paused = false;
+    pauseOverlay.classList.remove('show');
+  }
+  document.getElementById('pauseBtn').addEventListener('click', pauseGame);
+  document.getElementById('resumeBtn').addEventListener('click', resumeGame);
+  document.getElementById('helpBtn').addEventListener('click', function () {
+    pauseGame();
+    howtoOverlay.classList.add('show');
+  });
+  document.getElementById('howtoCloseBtn').addEventListener('click', function () {
+    howtoOverlay.classList.remove('show');
+    resumeGame();
+  });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) pauseGame(); });
+  window.addEventListener('blur', pauseGame);
+  window.addEventListener('pagehide', pauseGame);
+
+  function triggerGameOver() {
+    state.phase = 'gameover';
+    audio.gameover();
+    document.getElementById('goWave').textContent = state.wave;
+    document.getElementById('goStats').textContent = 'Enemies defeated: ' + state.killedThisRun;
+    gameoverOverlay.classList.add('show');
+  }
+  document.getElementById('restartBtn').addEventListener('click', function () {
+    gameoverOverlay.classList.remove('show');
+    resetGame();
+  });
+
+  // ------------------------------------------------------------------
+  // Main loop
+  // ------------------------------------------------------------------
+  var lastT = null;
+  function loop(ts) {
+    requestAnimationFrame(loop);
+    if (lastT === null) lastT = ts;
+    var dt = Math.min((ts - lastT) / 1000, 0.05);
+    lastT = ts;
+    if (state.paused || state.phase === 'gameover') { draw(); return; }
+    state.time += dt;
+    updateSpawning(dt);
+    updateEnemies(dt);
+    if (state.phase === 'gameover') { draw(); return; }
+    updateTowers(dt);
+    updateProjectiles(dt);
+    updateParticles(dt);
+    draw();
+  }
+
+  startWaveBtn.addEventListener('click', startWave);
+
+  function resetGame() {
+    state = freshState();
+    rebuildDistField();
+    updateHud();
+    lastT = null;
+  }
+
+  // ------------------------------------------------------------------
+  // Boot
+  // ------------------------------------------------------------------
+  resetGame();
+  resizeCanvas();
+  requestAnimationFrame(function () { if (state.enemies) { /* noop, ensures sized before first paint */ } });
+  requestAnimationFrame(loop);
+  howtoOverlay.classList.add('show');
+  state.paused = true;
+})();
+</script>
+</body>
+</html>
