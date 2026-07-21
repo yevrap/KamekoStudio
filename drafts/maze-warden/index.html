@@ -179,6 +179,8 @@
   #sheet {
     position: fixed;
     left: 0; right: 0; bottom: 0;
+    max-width: 420px;
+    margin: 0 auto;
     transform: translateY(100%);
     transition: transform 0.2s ease;
     background: #0e0e22;
@@ -309,7 +311,7 @@
     </div>
     <div class="stat" id="waveStat">🌊 <b id="waveVal">1</b></div>
     <button class="iconbtn" id="speedBtn" title="Game speed">1x</button>
-    <button class="iconbtn" id="mirrorBtn" title="Mirror — permanent upgrades">🔮</button>
+    <button class="iconbtn" id="mirrorBtn" title="Upgrades — permanent boosts">⬡</button>
     <button class="iconbtn" id="pauseBtn" title="Pause">⏸</button>
     <button class="iconbtn" id="helpBtn" title="How to play">❓</button>
   </div>
@@ -342,7 +344,7 @@
     <ul>
       <li>Tap an empty cell to build, a built tower to upgrade/sell.</li>
       <li>Clear waves for gold. They escalate forever.</li>
-      <li>💀 Death banks ⚡ Essence — spend it in the 🔮 Mirror for permanent upgrades.</li>
+      <li>💀 Death banks ⚡ Essence — spend it in ⬡ Upgrades for permanent boosts.</li>
     </ul>
     <div id="towerLegend"></div>
     <button class="primaryBtn" id="howtoCloseBtn">Let's go</button>
@@ -365,13 +367,13 @@
     <p id="goStats"></p>
     <p id="goEssence"></p>
     <button class="primaryBtn" id="restartBtn">↻ Play Again</button>
-    <button class="primaryBtn" id="goMirrorBtn" style="background:linear-gradient(90deg,#7d5bff,#c04bff); margin-top:0.6rem;">🔮 Open the Mirror</button>
+    <button class="primaryBtn" id="goMirrorBtn" style="background:linear-gradient(90deg,#7d5bff,#c04bff); margin-top:0.6rem;">⬡ Open Upgrades</button>
   </div>
 </div>
 
 <div class="overlay" id="mirrorOverlay">
   <div class="card" style="max-width:420px;">
-    <h2>🔮 Mirror of the Warden</h2>
+    <h2>⬡ Upgrades</h2>
     <p>Spend banked <b>Essence</b> on permanent upgrades — every future run starts stronger.</p>
     <p class="bigStat" id="mirrorEssence" style="font-size:1.3rem;">0 ⚡</p>
     <div id="mirrorNodes"></div>
@@ -1230,9 +1232,9 @@
         btn.classList.add('locked');
         btn.innerHTML = '<span class="sbEmoji">🔒</span>' +
           '<span class="sbBody"><span class="sbName">' + def.name + '</span>' +
-          '<span class="sbDesc">Unlock in the 🔮 Mirror</span></span>';
+          '<span class="sbDesc">Unlock in ⬡ Upgrades</span></span>';
         btn.addEventListener('click', function () {
-          showToast('🔒 Unlock Volt Coil in the Mirror');
+          showToast('🔒 Unlock Volt Coil in ⬡ Upgrades');
           audio.reject();
         });
       } else {
@@ -1347,7 +1349,7 @@
       var row = document.createElement('div');
       row.className = 'legend';
       if (locked) {
-        row.innerHTML = '<div class="swatch" style="background:#3a3a4a;"></div><span>🔒 ' + def.name + ' — unlock in the 🔮 Mirror</span>';
+        row.innerHTML = '<div class="swatch" style="background:#3a3a4a;"></div><span>🔒 ' + def.name + ' — unlock in ⬡ Upgrades</span>';
       } else {
         row.innerHTML = '<div class="swatch" style="background:' + def.color + ';"></div><span>' + def.name + ' — ' + def.desc + '</span>';
       }
@@ -1366,19 +1368,30 @@
   }
   document.getElementById('pauseBtn').addEventListener('click', pauseGame);
   document.getElementById('resumeBtn').addEventListener('click', resumeGame);
-  document.getElementById('helpBtn').addEventListener('click', function () {
-    pauseGame();
+
+  // Help opens the card directly — no intermediate pauseOverlay screen underneath it.
+  // Tracks whether the run was actually live so closing only resumes if it was.
+  var helpWasRunning = false;
+  function openHelp() {
+    helpWasRunning = state.phase !== 'gameover' && !state.paused;
+    if (helpWasRunning) state.paused = true;
     renderTowerLegend();
     howtoOverlay.classList.add('show');
-  });
+  }
+  function closeHelp() {
+    howtoOverlay.classList.remove('show');
+    if (helpWasRunning) state.paused = false;
+    helpWasRunning = false;
+  }
+  document.getElementById('helpBtn').addEventListener('click', openHelp);
   speedBtn.addEventListener('click', function () {
     speedIndex = (speedIndex + 1) % SPEED_LEVELS.length;
     try { localStorage.setItem(SPEED_KEY, String(speedIndex)); } catch (e) {}
     updateSpeedBtn();
   });
-  document.getElementById('howtoCloseBtn').addEventListener('click', function () {
-    howtoOverlay.classList.remove('show');
-    resumeGame();
+  document.getElementById('howtoCloseBtn').addEventListener('click', closeHelp);
+  howtoOverlay.addEventListener('click', function (ev) {
+    if (ev.target === howtoOverlay) closeHelp();
   });
   // Iteration 1 auto-paused on blur/hidden/pagehide (Flow Glider precedent). Q8 feedback:
   // the run should keep going in the background — pause only via the explicit ⏸ button
@@ -1486,8 +1499,7 @@
   renderTowerLegend();
   requestAnimationFrame(function () { if (state.enemies) { /* noop, ensures sized before first paint */ } });
   requestAnimationFrame(loop);
-  howtoOverlay.classList.add('show');
-  state.paused = true;
+  openHelp();
 })();
 </script>
 </body>
