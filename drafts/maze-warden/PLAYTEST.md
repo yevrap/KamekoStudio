@@ -12,27 +12,42 @@
 - **Fixed the "can't build during a run" root cause (Q8).** Not actually phase-gated — `placeTower`/`upgradeTower`/`sellTower` never blocked on `phase==='wave'`. The real bug: the build/tower-action sheet's full-screen backdrop absorbed the *next* tap when switching to a different cell while a sheet was already open (closing the old sheet but eating the tap meant for the new cell), forcing a tap-to-close-then-tap-again pattern that felt like broken input, especially reacting fast mid-wave. Fixed by routing a backdrop tap that lands over the board straight into the same cell-selection handler instead of only closing.
 - **Harness note:** the local preview pane doesn't deliver real `pointerdown` events to the canvas (`document.hidden` reads `true` even though the tab is frontmost — the same rAF-throttling artifact iteration 1 hit, not a game bug). Verified via a temporary debug hook driving `placeTower`/`upgradeTower`/`sellTower`/`triggerGameOver`/`buyNode` directly (removed before commit): mid-wave build/upgrade/sell all succeed, cost/damage scaling match the formulas above, essence awards and persists across reload, rank caps enforced. Visually confirmed the Mirror and updated game-over screen render correctly.
 
+**Iteration 3 (2026-07-21, same day — verdict was Keep):** per [[30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/Maze Warden/Maze Warden Questionnaire — Iteration 2 Verdict & Direction|Maze Warden Questionnaire — Iteration 2 Verdict & Direction]], a legibility/UI-polish pass — Yev's own words: "more industry standard polish and patterns that make it easy to understand what is going on, it feels a bit wordy." The Q5 picks (second enemy type, further Mirror/balance tuning) stay queued for a later iteration per the vault's tight-iteration convention; this pass is scoped to presentation only, no economy/combat numbers changed.
+
+- **Game speed toggle (0.5x/1x/2x/3x).** Directly answers Yev's Q6 free-space ask ("a speed setting so I can speed up or slow down the mobs"). Topbar icon cycles through `SPEED_LEVELS`, persisted in `localStorage` (`mazeWarden_speed`). Scales the simulation `dt` uniformly (enemies, towers, projectiles, particle/animation timing) — a standard Bloons TD/Kingdom Rush-style fast-forward pattern.
+- **Locked-tower discoverability (Volt Coil).** Q3 free-text flagged "I don't see the new tower type" — not a bug: Volt Coil is Mirror-gated and iteration 2 simply omitted it from the build sheet until unlocked, which read as broken/missing rather than "not yet". Iteration 3 always lists it, greyed out with a 🔒 lock icon and a direct "Unlock in the 🔮 Mirror" hint; tapping it shows a toast instead of silently doing nothing. The howto overlay's tower legend is now rendered from `TOWER_DEFS` at open time (single source of truth) and reflects the same locked/unlocked state live.
+- **Range-ring preview on tapped towers.** Selecting a built tower (opening its action sheet) now draws a dashed range ring on the board in the tower's own color — the classic "what can this actually hit" TD legibility pattern, previously absent (flagged in Improvements.md as a future cheap addition).
+- **Wave-progress bar replaces the ambiguous "N + M left" text.** The old `waveStatusText` read "Wave 3 in progress — 2 + 5 left" (alive vs. queued split that isn't a meaningful distinction to a player). Now a slim progress bar (resolved/total this wave) plus a single "👾 N left" remaining count — computed from the existing `waveEnemyCount(wave)` formula, no new state needed.
+- **Copy trim across the board.** Howto overlay collapsed from a paragraph + 3-sentence bullet list to 2 short bullets + 1 status bullet; tower sheet descriptions shortened (e.g. "Single target, long range, high focus-fire damage" → "Long range, single target"); Mirror node descriptions dropped the repeated "— applies immediately" / "— starting next run" suffix on every row in favor of a single compact "NOW" / "NEXT RUN" badge next to the node name.
+
 **Grid:** 8×14 square grid (portrait), chosen to closely match a phone's usable board-area aspect ratio (minimizes empty matte). Same board is centered/letterboxed on desktop — matches Black Hole in One's fixed-course-letterboxed-into-any-viewport precedent.
 
 **Look/tech (Q9=D, abstract/neon geometric):** 2D canvas, dark void background with a subtle twinkling starfield, glowing neon shapes (no sprites/art dependency) — cyan diamond (Pulse Spire), violet triangle (Frost Prism), amber six-point spark (Volt Coil), amber→red enemies escalating by tier, a pulsing violet hexagon core. Tiny WebAudio synth blips for build/upgrade/sell/shoot/hit/death/leak/wave events — no audio assets.
 
-## What this playtest should evaluate (iteration 2)
+## What this playtest should evaluate (iteration 3)
 
-1. **Does the Mirror's "stronger every run" loop land?** Does spending Essence between runs feel meaningful, or too slow/fast to matter over a handful of runs?
-2. **Do Spire vs. Prism feel meaningfully different now?** Long-range focus fire vs. short-range crowd control — is the tradeoff legible in actual placement decisions? Where does Volt Coil fit once unlocked?
-3. **Does removing auto-pause and fixing the sheet-switching bug actually resolve the "can't build during a run" feeling?** Confirm on a real phone and laptop, not just this harness.
-4. **Mobile vs. laptop parity** — unchanged from iteration 1, re-confirm it still holds with the new topbar icon and Mirror overlay.
+1. **Does the game read more clearly now?** Less wordy, easier to tell what's going on at a glance — the actual ask this iteration was scoped to.
+2. **Does the speed toggle solve the "stuck waiting" complaint?** Try 2x/3x during a wave and 0.5x if you want to watch combat more closely.
+3. **Is the locked Volt Coil slot clear now?** Does seeing it greyed-out with a lock read as "not unlocked yet" rather than "broken"?
+4. **Is the range ring useful, or does it get in the way?** Shown only when a built tower's action sheet is open.
+5. **Mobile vs. laptop parity** — re-confirm the wave-progress bar and speed button both read fine on a phone.
+
+### Evaluated in iteration 2 (carried context, not re-asked)
+
+1. Does the Mirror's "stronger every run" loop land? — answered Q2=A (yes) in the iteration 2 verdict questionnaire.
+2. Do Spire vs. Prism feel meaningfully different now? — answered (yes, better differentiated); Volt Coil visibility was the open thread, addressed above.
+3. Does removing auto-pause and fixing the sheet-switching bug resolve "can't build during a run"? — answered Q4=A (yes).
 
 **Tuning knobs flagged (numbers are first-guess, easy to retune):** base start gold 120, base start core HP 20, leak damage 1/enemy, wave enemy count `6 + 1.5n`, wave enemy HP `9 + 3.3n`, wave enemy speed `min(1.1 + 0.035n, 2.4)` cells/sec, kill reward `3 + floor(n/4)`, wave-clear bonus `10 + 2n`, tower costs 25/40/15g (spire/prism/volt), sell refund 60%, essence reward `floor(wave/2) + floor(kills/10)`, Mirror node costs (3 ranks) `[3,5,8]` or `[4,6,9]` essence, Volt Coil unlock 6 essence.
 
 ## Known simplifications / cut scope (still open)
 
-No draft-1-of-3, no best-score/high-wave tracking, no hero ability, no Heat/Pact difficulty knob, no hex grid, no second enemy type (only tier-based color/size escalation), no lane offset for overlapping enemies on the same corridor, EN-only. Wall-migrates difficulty framing (design Q6 first half) still needs a real playtest read now that the tree exists. All captured in [[30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/Maze Warden/Improvements|Improvements]].
+No draft-1-of-3, no best-score/high-wave tracking, no hero ability, no Heat/Pact difficulty knob, no hex grid, no second enemy type (only tier-based color/size escalation), no lane offset for overlapping enemies on the same corridor, EN-only. Wall-migrates difficulty framing (design Q6 first half) still needs a real playtest read now that the tree exists. Range-ring preview is shown only for already-built towers, not while choosing what to build in the build sheet (would need a hover/preview interaction model, deferred). All captured in [[30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/Maze Warden/Improvements|Improvements]].
 
 ## Verdict line for the vault log
 
 ```
-YYYY-MM-DD — maze-warden (iteration 2) — keep|meh|kill — <why>
+YYYY-MM-DD — maze-warden (iteration 3) — keep|meh|kill — <why>
 ```
 
-Then fill the iteration-2 verdict questionnaire (to be created in the vault) — it decides iteration 3's direction (Heat knob, second enemy type, chambered runs, hex mode, theme pass, or further balance work).
+Then fill the iteration-3 verdict questionnaire (to be created in the vault) — it decides iteration 4's direction (the deferred Q5 picks — second enemy type, further Mirror/balance tuning — plus a Heat knob, chambered runs, hex mode, or theme pass).

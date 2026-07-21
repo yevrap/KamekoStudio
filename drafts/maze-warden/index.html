@@ -70,6 +70,7 @@
     cursor: pointer;
   }
   .iconbtn:active { background: #1c1c3a; }
+  #speedBtn { width: auto; min-width: 34px; padding: 0 6px; font-size: 0.72rem; font-weight: 700; }
 
   /* ---- Board ---- */
   #boardWrap {
@@ -101,10 +102,31 @@
     min-height: 52px;
     z-index: 5;
   }
+  #waveProgress {
+    display: none;
+    width: 100%;
+    max-width: 360px;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  #waveProgressOuter {
+    height: 6px;
+    border-radius: 3px;
+    background: #1c1c34;
+    overflow: hidden;
+    border: 1px solid #2a2a4a;
+  }
+  #waveProgressInner {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2fe6ff, #7d5bff);
+    transition: width 0.2s ease;
+  }
   #waveStatusText {
     font-size: 0.78rem;
     color: #8a8ab0;
     letter-spacing: 0.02em;
+    text-align: center;
   }
   #startWaveBtn {
     display: none;
@@ -184,6 +206,8 @@
   }
   .sheetBtn:active:not(:disabled) { background: #1c1c3a; }
   .sheetBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .sheetBtn.locked { opacity: 0.55; border-style: dashed; }
+  .sheetBtn.locked .sbName { color: #8a8ab0; }
   .sheetBtn .sbEmoji { font-size: 1.3rem; flex: 0 0 auto; }
   .sheetBtn .sbBody { flex: 1; min-width: 0; }
   .sheetBtn .sbName { font-weight: 700; display: block; }
@@ -254,7 +278,14 @@
   }
   .mirrorNode .mnEmoji { font-size: 1.25rem; flex: 0 0 auto; }
   .mirrorNode .mnBody { flex: 1; min-width: 0; }
-  .mirrorNode .mnName { font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; }
+  .mirrorNode .mnName { font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+  .mnWhen {
+    font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 0.1rem 0.35rem; border-radius: 5px;
+    background: #1c1c34; color: #8a8ab0;
+  }
+  .mnWhen.now { color: #6dff9a; background: #10331f; }
+  .mnWhen.next { color: #ffd54a; background: #33290f; }
   .mirrorNode .mnDesc { font-size: 0.72rem; color: #8a8ab0; margin-top: 0.1rem; }
   .mirrorNode .mnPips { display: flex; gap: 3px; margin-top: 0.3rem; }
   .mirrorNode .mnPip { width: 14px; height: 6px; border-radius: 3px; background: #2a2a4a; }
@@ -277,6 +308,7 @@
       <b id="hpVal">0</b>
     </div>
     <div class="stat" id="waveStat">🌊 <b id="waveVal">1</b></div>
+    <button class="iconbtn" id="speedBtn" title="Game speed">1x</button>
     <button class="iconbtn" id="mirrorBtn" title="Mirror — permanent upgrades">🔮</button>
     <button class="iconbtn" id="pauseBtn" title="Pause">⏸</button>
     <button class="iconbtn" id="helpBtn" title="How to play">❓</button>
@@ -289,7 +321,10 @@
 
   <div id="bottombar">
     <button id="startWaveBtn">▶ Start Wave 1</button>
-    <div id="waveStatusText">Tap an open cell to build.</div>
+    <div id="waveProgress">
+      <div id="waveProgressOuter"><div id="waveProgressInner"></div></div>
+      <div id="waveStatusText"></div>
+    </div>
   </div>
 </div>
 
@@ -303,15 +338,13 @@
 <div class="overlay" id="howtoOverlay">
   <div class="card">
     <h2>🗼 Maze Warden</h2>
-    <p><b>Your towers ARE the walls.</b> Tap an empty cell to build one — enemies always take the shortest <em>open</em> path from the top to your core, so where you build shapes their route.</p>
+    <p><b>Your towers ARE the walls.</b> Build to steer enemies — a path to the core must always stay open.</p>
     <ul>
-      <li>You can never fully seal off the core — a path must always stay open.</li>
-      <li>Tap a built tower to upgrade or sell it.</li>
-      <li>Clear a wave, spend your gold, then start the next. Waves get tougher forever — how long can you hold?</li>
+      <li>Tap an empty cell to build, a built tower to upgrade/sell.</li>
+      <li>Clear waves for gold. They escalate forever.</li>
+      <li>💀 Death banks ⚡ Essence — spend it in the 🔮 Mirror for permanent upgrades.</li>
     </ul>
-    <div class="legend"><div class="swatch" style="background:#2fe6ff;"></div><span>Pulse Spire — long range, single-target focus fire</span></div>
-    <div class="legend"><div class="swatch" style="background:#c04bff;"></div><span>Frost Prism — short range, big splash + heavy slow</span></div>
-    <p>🔮 Dying banks <b>Essence</b> — spend it in the Mirror (topbar) on permanent upgrades for future runs.</p>
+    <div id="towerLegend"></div>
     <button class="primaryBtn" id="howtoCloseBtn">Let's go</button>
   </div>
 </div>
@@ -367,7 +400,7 @@
   var TOWER_DEFS = {
     spire: {
       key: 'spire', name: 'Pulse Spire', emoji: '🟦', color: '#2fe6ff', glow: 'rgba(47,230,255,0.55)',
-      desc: 'Single target, long range, high focus-fire damage',
+      desc: 'Long range, single target',
       levels: [
         { cost: 25, range: 2.1, rate: 2.4, dmg: 5 },
         { cost: 20, range: 2.3, rate: 2.5, dmg: 9 },
@@ -376,7 +409,7 @@
     },
     prism: {
       key: 'prism', name: 'Frost Prism', emoji: '🟪', color: '#c04bff', glow: 'rgba(192,75,255,0.55)',
-      desc: 'Short range, big splash, heavy slow on a group',
+      desc: 'Short range, big splash + slow',
       levels: [
         { cost: 40, range: 1.15, rate: 0.85, dmg: 4, radius: 1.25, slow: 0.55, slowDur: 1.7 },
         { cost: 30, range: 1.2, rate: 0.9, dmg: 6, radius: 1.4, slow: 0.6, slowDur: 1.8 },
@@ -385,7 +418,7 @@
     },
     volt: {
       key: 'volt', name: 'Volt Coil', emoji: '🟡', color: '#ffd54a', glow: 'rgba(255,213,74,0.55)',
-      desc: 'Cheap, rapid chip damage, short range',
+      desc: 'Cheap, rapid, low damage',
       levels: [
         { cost: 15, range: 1.3, rate: 4.2, dmg: 2 },
         { cost: 15, range: 1.4, rate: 4.6, dmg: 3 },
@@ -400,11 +433,11 @@
   // ------------------------------------------------------------------
   var META_KEY = 'mazeWarden_meta';
   var META_NODES = {
-    deepPockets: { name: 'Deep Pockets', emoji: '💰', desc: '+10 starting gold — starting next run', maxRank: 3, cost: [3, 5, 8] },
-    fortifiedCore: { name: 'Fortified Core', emoji: '❤️', desc: '+3 starting core HP — starting next run', maxRank: 3, cost: [3, 5, 8] },
-    cheapWalls: { name: 'Cheap Walls', emoji: '🔨', desc: '-10% tower build/upgrade cost — applies immediately', maxRank: 3, cost: [4, 6, 9] },
-    overcharge: { name: 'Overcharge', emoji: '⚡', desc: '+15% tower damage — applies immediately', maxRank: 3, cost: [4, 6, 9] },
-    thirdTower: { name: 'Volt Coil', emoji: '🟡', desc: 'Unlocks a 3rd tower: cheap, rapid chip damage — applies immediately', maxRank: 1, cost: [6] }
+    deepPockets: { name: 'Deep Pockets', emoji: '💰', desc: '+10 starting gold / rank', when: 'next', maxRank: 3, cost: [3, 5, 8] },
+    fortifiedCore: { name: 'Fortified Core', emoji: '❤️', desc: '+3 starting core HP / rank', when: 'next', maxRank: 3, cost: [3, 5, 8] },
+    cheapWalls: { name: 'Cheap Walls', emoji: '🔨', desc: '-10% tower cost / rank', when: 'now', maxRank: 3, cost: [4, 6, 9] },
+    overcharge: { name: 'Overcharge', emoji: '⚡', desc: '+15% tower damage / rank', when: 'now', maxRank: 3, cost: [4, 6, 9] },
+    thirdTower: { name: 'Volt Coil', emoji: '🟡', desc: 'Unlocks Volt Coil, a cheap rapid-chip tower', when: 'now', maxRank: 1, cost: [6] }
   };
 
   function defaultMeta() {
@@ -428,6 +461,21 @@
   function effectiveCost(baseCost) { return Math.max(1, Math.round(baseCost * (1 - meta.cheapWalls * 0.1))); }
   function effectiveDmg(baseDmg) { return baseDmg * (1 + meta.overcharge * 0.15); }
   function essenceReward(waveReached, kills) { return Math.floor(waveReached / 2) + Math.floor(kills / 10); }
+
+  // Iteration 3: player-facing simulation speed toggle (industry-standard TD pattern —
+  // Bloons TD / Kingdom Rush style fast-forward), persisted across sessions.
+  var SPEED_LEVELS = [0.5, 1, 2, 3];
+  var SPEED_KEY = 'mazeWarden_speed';
+  function loadSpeedIndex() {
+    try {
+      var raw = localStorage.getItem(SPEED_KEY);
+      var idx = raw !== null ? parseInt(raw, 10) : 1;
+      if (isNaN(idx) || idx < 0 || idx >= SPEED_LEVELS.length) idx = 1;
+      return idx;
+    } catch (e) { return 1; }
+  }
+  var speedIndex = loadSpeedIndex();
+  function currentSpeed() { return SPEED_LEVELS[speedIndex]; }
 
   function waveEnemyCount(n) { return 6 + Math.floor(n * 1.5); }
   function waveEnemyHp(n) { return 9 + Math.round(n * 3.3); }
@@ -928,6 +976,24 @@
       ctx.strokeStyle = 'rgba(255,255,255,' + (0.35 + pulse * 0.3) + ')';
       ctx.lineWidth = 2;
       ctx.strokeRect(sc.col * cellSize + 2, sc.row * cellSize + 2, cellSize - 4, cellSize - 4);
+
+      // range ring for a tapped built tower — standard TD legibility pattern
+      // (what can this thing actually hit?)
+      var selT = towerAt(sc.col, sc.row);
+      if (selT) {
+        var selDef = TOWER_DEFS[selT.defKey];
+        var selLvl = selDef.levels[selT.level];
+        var selCenter = cellCenterPx(sc.col, sc.row);
+        ctx.save();
+        ctx.strokeStyle = selDef.color;
+        ctx.globalAlpha = 0.4;
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 4]);
+        ctx.beginPath();
+        ctx.arc(selCenter.x, selCenter.y, selLvl.range * cellSize, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
     }
 
     // spawn marker
@@ -1088,7 +1154,12 @@
   var hpBarInner = document.getElementById('hpBarInner');
   var waveVal = document.getElementById('waveVal');
   var startWaveBtn = document.getElementById('startWaveBtn');
+  var waveProgress = document.getElementById('waveProgress');
+  var waveProgressInner = document.getElementById('waveProgressInner');
   var waveStatusText = document.getElementById('waveStatusText');
+  var speedBtn = document.getElementById('speedBtn');
+
+  function updateSpeedBtn() { speedBtn.textContent = currentSpeed() + 'x'; }
 
   function updateHud() {
     goldVal.textContent = state.gold;
@@ -1098,11 +1169,15 @@
     if (state.phase === 'build') {
       startWaveBtn.style.display = 'block';
       startWaveBtn.textContent = '▶ Start Wave ' + state.wave;
-      waveStatusText.style.display = 'none';
+      waveProgress.style.display = 'none';
     } else if (state.phase === 'wave') {
       startWaveBtn.style.display = 'none';
-      waveStatusText.style.display = 'block';
-      waveStatusText.textContent = 'Wave ' + state.wave + ' in progress — ' + state.enemies.length + ' + ' + state.enemiesToSpawn + ' left';
+      waveProgress.style.display = 'flex';
+      var total = waveEnemyCount(state.wave);
+      var remaining = state.enemies.length + state.enemiesToSpawn;
+      var resolved = Math.max(0, total - remaining);
+      waveProgressInner.style.width = Math.min(100, (resolved / total) * 100) + '%';
+      waveStatusText.textContent = '👾 ' + remaining + ' left';
     }
   }
 
@@ -1143,24 +1218,38 @@
     state.selectedCell = { col: col, row: row };
     sheetTitle.textContent = 'Build here';
     sheetRow.innerHTML = '';
-    var keys = meta.thirdTower > 0 ? ['spire', 'prism', 'volt'] : ['spire', 'prism'];
+    var keys = ['spire', 'prism', 'volt'];
     keys.forEach(function (key) {
       var def = TOWER_DEFS[key];
-      var lvl = def.levels[0];
-      var cost = effectiveCost(lvl.cost);
+      var locked = key === 'volt' && meta.thirdTower <= 0;
       var btn = document.createElement('button');
       btn.className = 'sheetBtn';
-      var afford = state.gold >= cost;
-      btn.disabled = !afford;
-      btn.innerHTML = '<span class="sbEmoji">' + def.emoji + '</span>' +
-        '<span class="sbBody"><span class="sbName">' + def.name + '</span>' +
-        '<span class="sbDesc">' + def.desc + '</span></span>' +
-        '<span class="sbCost">' + cost + 'g</span>';
-      btn.addEventListener('click', function (k) {
-        return function () {
-          if (placeTower(col, row, k)) closeSheet();
-        };
-      }(key));
+      if (locked) {
+        // Shown greyed-out with a lock rather than hidden — an invisible 3rd tower
+        // read as "missing/broken" in iteration 2 playtesting; a locked slot reads as "not yet".
+        btn.classList.add('locked');
+        btn.innerHTML = '<span class="sbEmoji">🔒</span>' +
+          '<span class="sbBody"><span class="sbName">' + def.name + '</span>' +
+          '<span class="sbDesc">Unlock in the 🔮 Mirror</span></span>';
+        btn.addEventListener('click', function () {
+          showToast('🔒 Unlock Volt Coil in the Mirror');
+          audio.reject();
+        });
+      } else {
+        var lvl = def.levels[0];
+        var cost = effectiveCost(lvl.cost);
+        var afford = state.gold >= cost;
+        btn.disabled = !afford;
+        btn.innerHTML = '<span class="sbEmoji">' + def.emoji + '</span>' +
+          '<span class="sbBody"><span class="sbName">' + def.name + '</span>' +
+          '<span class="sbDesc">' + def.desc + '</span></span>' +
+          '<span class="sbCost">' + cost + 'g</span>';
+        btn.addEventListener('click', function (k) {
+          return function () {
+            if (placeTower(col, row, k)) closeSheet();
+          };
+        }(key));
+      }
       sheetRow.appendChild(btn);
     });
     sheetBackdrop.classList.add('show');
@@ -1245,7 +1334,26 @@
   var mirrorOverlay = document.getElementById('mirrorOverlay');
   var mirrorNodesEl = document.getElementById('mirrorNodes');
   var mirrorEssenceEl = document.getElementById('mirrorEssence');
+  var towerLegendEl = document.getElementById('towerLegend');
   var mirrorOpenedFromGameOver = false;
+
+  // Single source of truth for tower copy (TOWER_DEFS) instead of hand-duplicated
+  // howto-overlay prose — also lets the legend reflect Volt Coil's unlock state live.
+  function renderTowerLegend() {
+    towerLegendEl.innerHTML = '';
+    ['spire', 'prism', 'volt'].forEach(function (key) {
+      var def = TOWER_DEFS[key];
+      var locked = key === 'volt' && meta.thirdTower <= 0;
+      var row = document.createElement('div');
+      row.className = 'legend';
+      if (locked) {
+        row.innerHTML = '<div class="swatch" style="background:#3a3a4a;"></div><span>🔒 ' + def.name + ' — unlock in the 🔮 Mirror</span>';
+      } else {
+        row.innerHTML = '<div class="swatch" style="background:' + def.color + ';"></div><span>' + def.name + ' — ' + def.desc + '</span>';
+      }
+      towerLegendEl.appendChild(row);
+    });
+  }
 
   function pauseGame() {
     if (state.phase === 'gameover') return;
@@ -1260,7 +1368,13 @@
   document.getElementById('resumeBtn').addEventListener('click', resumeGame);
   document.getElementById('helpBtn').addEventListener('click', function () {
     pauseGame();
+    renderTowerLegend();
     howtoOverlay.classList.add('show');
+  });
+  speedBtn.addEventListener('click', function () {
+    speedIndex = (speedIndex + 1) % SPEED_LEVELS.length;
+    try { localStorage.setItem(SPEED_KEY, String(speedIndex)); } catch (e) {}
+    updateSpeedBtn();
   });
   document.getElementById('howtoCloseBtn').addEventListener('click', function () {
     howtoOverlay.classList.remove('show');
@@ -1283,8 +1397,11 @@
       var maxed = rank >= node.maxRank;
       var cost = maxed ? null : node.cost[rank];
       var afford = !maxed && meta.essence >= cost;
+      var whenLabel = node.when === 'now' ? 'Now' : 'Next run';
       row.innerHTML = '<span class="mnEmoji">' + node.emoji + '</span>' +
-        '<span class="mnBody"><span class="mnName">' + node.name + (node.maxRank > 1 ? ' <span class="mnPips">' + pips + '</span>' : '') + '</span>' +
+        '<span class="mnBody"><span class="mnName">' + node.name +
+        '<span class="mnWhen ' + node.when + '">' + whenLabel + '</span>' +
+        (node.maxRank > 1 ? '<span class="mnPips">' + pips + '</span>' : '') + '</span>' +
         '<span class="mnDesc">' + node.desc + '</span></span>' +
         '<button class="mnBuy" ' + (maxed || !afford ? 'disabled' : '') + '>' + (maxed ? 'Maxed' : cost + ' ⚡') + '</button>';
       if (!maxed) {
@@ -1338,7 +1455,7 @@
   function loop(ts) {
     requestAnimationFrame(loop);
     if (lastT === null) lastT = ts;
-    var dt = Math.min((ts - lastT) / 1000, 0.05);
+    var dt = Math.min((ts - lastT) / 1000, 0.05) * currentSpeed();
     lastT = ts;
     if (state.paused || state.phase === 'gameover') { draw(); return; }
     state.time += dt;
@@ -1365,6 +1482,8 @@
   // ------------------------------------------------------------------
   resetGame();
   resizeCanvas();
+  updateSpeedBtn();
+  renderTowerLegend();
   requestAnimationFrame(function () { if (state.enemies) { /* noop, ensures sized before first paint */ } });
   requestAnimationFrame(loop);
   howtoOverlay.classList.add('show');
