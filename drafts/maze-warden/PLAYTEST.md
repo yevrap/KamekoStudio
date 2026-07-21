@@ -20,34 +20,43 @@
 - **Wave-progress bar replaces the ambiguous "N + M left" text.** The old `waveStatusText` read "Wave 3 in progress — 2 + 5 left" (alive vs. queued split that isn't a meaningful distinction to a player). Now a slim progress bar (resolved/total this wave) plus a single "👾 N left" remaining count — computed from the existing `waveEnemyCount(wave)` formula, no new state needed.
 - **Copy trim across the board.** Howto overlay collapsed from a paragraph + 3-sentence bullet list to 2 short bullets + 1 status bullet; tower sheet descriptions shortened (e.g. "Single target, long range, high focus-fire damage" → "Long range, single target"); Mirror node descriptions dropped the repeated "— applies immediately" / "— starting next run" suffix on every row in favor of a single compact "NOW" / "NEXT RUN" badge next to the node name.
 
+**Iteration 4 (2026-07-21, same day):** per [[30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/Maze Warden/Maze Warden Questionnaire — Iteration 4 Direction|Maze Warden Questionnaire — Iteration 4 Direction]] Q1=A (three individually-verdicted passes), this is pass 1 of 3 — a bugfix/wording pass. No economy/combat numbers touched.
+
+- **Help/pause modal fix (Q2=A).** `helpBtn`'s click handler called the same `pauseGame()` as the explicit ⏸ button, which shows `pauseOverlay` — then `howtoOverlay` was shown on top, so the "Paused / Resume" card was what the player actually saw first, not the help content. Replaced with dedicated `openHelp()`/`closeHelp()` functions: they set `state.paused` directly (no `pauseOverlay`), tracked via a `helpWasRunning` flag so closing only resumes a run that was genuinely live when help opened (not one already paused via ⏸, and not double-triggering on the initial-boot howto card, which now also routes through `openHelp()`). Added a `click` listener on `howtoOverlay` itself (`ev.target === howtoOverlay`) so any backdrop tap closes+resumes, matching the existing `sheetBackdrop` pattern.
+- **Laptop tower-picker width fix (Q3=A).** `#sheet` had no `max-width`, so `left:0; right:0` stretched it full-bleed on desktop. Added `max-width: 420px; margin: 0 auto;` — stays bottom-anchored and centered at any viewport width, matching mobile's column proportions per Yev's pick (over a bottom-bar redesign or a lighter padding-only touch).
+- **"Mirror" → "Upgrades" rename (Q4=A).** All player-facing "🔮 Mirror (of the Warden)" text replaced with "⬡ Upgrades": topbar button title/icon, howto-overlay bullet, game-over button, overlay heading, locked-tower build-sheet row + toast, tower-legend row (7 strings total). `localStorage` key/variable/function/DOM-id names (`META_KEY`, `meta`, `META_NODES`, `mirrorBtn`, `mirrorOverlay`, `openMirror`/`closeMirror`, `renderMirrorNodes`) intentionally unchanged — internal, not player-facing.
+- **Verified in-browser** (real Chromium via the preview pane's `arcade` dev-server config, not the file:// static-snapshot path that failed): boot howto card shows with no separate pause screen; tapping ❓ mid-wave (wave running, enemy mid-board) shows only the help card with the board frozen underneath; tapping the backdrop closes it and the enemy resumes moving; the explicit ⏸ button still shows the "Paused" card as before (unaffected by the refactor); at a 1280×800 viewport, `getComputedStyle(#sheet)` confirms `width: 420px` with `430px` margins on each side (centered, not full-bleed); `⬡ Upgrades` heading and all 5 node rows render correctly with no leftover "Mirror" text; `#goMirrorBtn.textContent` confirmed as `"⬡ Open Upgrades"`. Full `node --test tests/` suite (439/439) green — no existing modules touched, this file has no dedicated test file yet (still in `drafts/`).
+
 **Grid:** 8×14 square grid (portrait), chosen to closely match a phone's usable board-area aspect ratio (minimizes empty matte). Same board is centered/letterboxed on desktop — matches Black Hole in One's fixed-course-letterboxed-into-any-viewport precedent.
 
 **Look/tech (Q9=D, abstract/neon geometric):** 2D canvas, dark void background with a subtle twinkling starfield, glowing neon shapes (no sprites/art dependency) — cyan diamond (Pulse Spire), violet triangle (Frost Prism), amber six-point spark (Volt Coil), amber→red enemies escalating by tier, a pulsing violet hexagon core. Tiny WebAudio synth blips for build/upgrade/sell/shoot/hit/death/leak/wave events — no audio assets.
 
-## What this playtest should evaluate (iteration 3)
+## What this playtest should evaluate (iteration 4)
 
-1. **Does the game read more clearly now?** Less wordy, easier to tell what's going on at a glance — the actual ask this iteration was scoped to.
-2. **Does the speed toggle solve the "stuck waiting" complaint?** Try 2x/3x during a wave and 0.5x if you want to watch combat more closely.
-3. **Is the locked Volt Coil slot clear now?** Does seeing it greyed-out with a lock read as "not unlocked yet" rather than "broken"?
-4. **Is the range ring useful, or does it get in the way?** Shown only when a built tower's action sheet is open.
-5. **Mobile vs. laptop parity** — re-confirm the wave-progress bar and speed button both read fine on a phone.
+1. **Does ❓ now open straight to the help card?** Tap it mid-wave — you should see only the help content, board frozen underneath, no "Paused / Resume" screen to dismiss first.
+2. **Does tapping the backdrop close and resume correctly?** Should feel identical to closing via "Let's go," and the wave should keep moving right after.
+3. **Does the explicit ⏸ button still work as before?** Should still show the "Paused / Resume" card — this pass shouldn't have touched that path.
+4. **Does the build sheet read as a mobile-width column on a laptop now?** Should look like a centered card, not a bar stretching the full window width.
+5. **Any leftover "Mirror" text anywhere?** Topbar tooltip, howto bullet, game-over button, overlay heading, locked Volt Coil hint/toast, legend row — all should read "Upgrades" now.
 
-### Evaluated in iteration 2 (carried context, not re-asked)
+### Evaluated in iteration 3 (carried context, not re-asked)
 
-1. Does the Mirror's "stronger every run" loop land? — answered Q2=A (yes) in the iteration 2 verdict questionnaire.
-2. Do Spire vs. Prism feel meaningfully different now? — answered (yes, better differentiated); Volt Coil visibility was the open thread, addressed above.
-3. Does removing auto-pause and fixing the sheet-switching bug resolve "can't build during a run"? — answered Q4=A (yes).
+1. Does the game read more clearly now? — landed (Keep verdict).
+2. Does the speed toggle solve the "stuck waiting" complaint? — landed.
+3. Is the locked Volt Coil slot clear now? — landed.
+4. Is the range ring useful? — landed.
+5. Mobile vs. laptop parity — the laptop tower-picker width gap it surfaced is exactly what iteration 4 fixes.
 
-**Tuning knobs flagged (numbers are first-guess, easy to retune):** base start gold 120, base start core HP 20, leak damage 1/enemy, wave enemy count `6 + 1.5n`, wave enemy HP `9 + 3.3n`, wave enemy speed `min(1.1 + 0.035n, 2.4)` cells/sec, kill reward `3 + floor(n/4)`, wave-clear bonus `10 + 2n`, tower costs 25/40/15g (spire/prism/volt), sell refund 60%, essence reward `floor(wave/2) + floor(kills/10)`, Mirror node costs (3 ranks) `[3,5,8]` or `[4,6,9]` essence, Volt Coil unlock 6 essence.
+**Tuning knobs flagged (numbers are first-guess, easy to retune — unchanged by iteration 4):** base start gold 120, base start core HP 20, leak damage 1/enemy, wave enemy count `6 + 1.5n`, wave enemy HP `9 + 3.3n`, wave enemy speed `min(1.1 + 0.035n, 2.4)` cells/sec, kill reward `3 + floor(n/4)`, wave-clear bonus `10 + 2n`, tower costs 25/40/15g (spire/prism/volt), sell refund 60%, essence reward `floor(wave/2) + floor(kills/10)`, Upgrades node costs (3 ranks) `[3,5,8]` or `[4,6,9]` essence, Volt Coil unlock 6 essence — retuning these is iteration 6's job.
 
 ## Known simplifications / cut scope (still open)
 
-No draft-1-of-3, no best-score/high-wave tracking, no hero ability, no Heat/Pact difficulty knob, no hex grid, no second enemy type (only tier-based color/size escalation), no lane offset for overlapping enemies on the same corridor, EN-only. Wall-migrates difficulty framing (design Q6 first half) still needs a real playtest read now that the tree exists. Range-ring preview is shown only for already-built towers, not while choosing what to build in the build sheet (would need a hover/preview interaction model, deferred). All captured in [[30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/Maze Warden/Improvements|Improvements]].
+No draft-1-of-3, no best-score/high-wave tracking, no hero ability, no Heat/Pact difficulty knob, no hex grid, no second enemy type yet (Breaker scoped for iteration 5; only tier-based color/size escalation so far), no lane offset for overlapping enemies on the same corridor, EN-only. Wall-migrates difficulty framing (design Q6 first half) still needs a real playtest read now that the tree exists. Range-ring preview is shown only for already-built towers, not while choosing what to build in the build sheet (would need a hover/preview interaction model, deferred). Upgrades tree still maxes out in well under 10 runs (~70 essence total) — deepening it is iteration 6's job. All captured in [[30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/Maze Warden/Improvements|Improvements]].
 
 ## Verdict line for the vault log
 
 ```
-YYYY-MM-DD — maze-warden (iteration 3) — keep|meh|kill — <why>
+YYYY-MM-DD — maze-warden (iteration 4) — keep|meh|kill — <why>
 ```
 
-Then fill the iteration-3 verdict questionnaire (to be created in the vault) — it decides iteration 4's direction (the deferred Q5 picks — second enemy type, further Mirror/balance tuning — plus a Heat knob, chambered runs, hex mode, or theme pass).
+Per [[30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/Maze Warden/Maze Warden Questionnaire — Iteration 4 Direction|Iteration 4 Direction]] Q1=A, iterations 5 (Breaker enemy) and 6 (Upgrades depth + wave-scaling retune) are already scoped — no new verdict questionnaire is needed to start them, just a quick playtest read confirming iteration 4 didn't regress anything before iteration 5 begins.
