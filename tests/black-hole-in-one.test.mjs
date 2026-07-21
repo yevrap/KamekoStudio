@@ -1199,6 +1199,11 @@ test('GEN-1: rerollWorld regenerates the explore world under a fresh seed withou
 });
 
 test('updateActiveChunks marks refuelStation/moonRing/stardustRing once their chunk is actually (non-silently) loaded, and stays silent when asked (MM-18)', () => {
+    // Pin worldSeed back to 'explore-1' — findChunkWithBody's fixture search always
+    // uses that seed, but a prior test (GEN-1) may have left the module's worldSeed
+    // on rerollWorld()'s Math.random() seed, which would search one seed's chunks
+    // while loadChunkFresh generates another's, flaking depending on test order/luck.
+    exploreStartRun(true);
     const cases = [
         ['refuelStation', b => b.refuelStation],
         ['moonRing', b => b.moon || b.ring],
