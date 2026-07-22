@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skazka Trail — Vasilisa the Beautiful</title>
+<style>
+  * { box-sizing: border-box; }
+
+  :root {
+    --bg: #fbfaf7;
+    --text: #1c1a17;
+    --text-muted: #6b665e;
+    --border: #d8d3c8;
+    --surface: #ffffff;
+    --accent: #3a3530;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16140f;
+      --text: #eae6dd;
+      --text-muted: #9b9488;
+      --border: #3a352c;
+      --surface: #1f1c16;
+      --accent: #eae6dd;
+    }
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  #app {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 1rem 1.1rem 3rem;
+  }
+
+  .st-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding-bottom: 0.85rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding-top: 0.85rem;
+  }
+
+  .st-tale-title {
+    font-weight: bold;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+
+  .st-toolbar-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .st-btn {
+    font-family: inherit;
+    font-size: 0.78rem;
+    padding: 0.5rem 0.7rem;
+    min-height: 40px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .st-btn-ghost { background: transparent; }
+  .st-btn-ghost:active { background: var(--surface); }
+
+  .st-scene p {
+    margin: 0 0 1.1em;
+    font-size: 1.05rem;
+  }
+
+  .st-ending-eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin: 0 0 0.3em;
+  }
+
+  .st-ending-title {
+    font-size: 1.5rem;
+    margin: 0 0 0.6em;
+  }
+
+  .st-moral {
+    font-style: italic;
+    color: var(--text-muted);
+    border-left: 2px solid var(--border);
+    padding-left: 0.9em;
+  }
+
+  .st-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 1.4rem;
+  }
+
+  .st-choice {
+    width: 100%;
+    text-align: left;
+    padding: 0.85rem 1rem;
+    min-height: 44px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.98rem;
+    cursor: pointer;
+  }
+  .st-choice:active { background: var(--border); }
+
+  .st-btn-primary {
+    width: 100%;
+    justify-content: center;
+    padding: 0.9rem 1rem;
+    min-height: 44px;
+    font-size: 1rem;
+    font-weight: bold;
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+
+  .st-recap-block {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .st-recap-block h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin: 0 0 0.6em;
+  }
+
+  .st-recap-list, .st-debug-choices {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .st-recap-list li {
+    font-size: 0.85rem;
+    padding: 0.4em 0;
+    border-bottom: 1px dashed var(--border);
+  }
+  .st-recap-scene { display: block; color: var(--text-muted); }
+  .st-recap-choice { display: block; }
+  .st-recap-empty { color: var(--text-muted); font-size: 0.85rem; }
+
+  .st-panel {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    overflow-y: auto;
+    z-index: 10;
+  }
+  .st-panel-inner {
+    max-width: 620px;
+    margin: 0 auto;
+    padding: 1rem 1.1rem 3rem;
+  }
+  .st-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .st-panel-header h2 { font-size: 1.1rem; margin: 0; }
+
+  /* Debug view — plain, dense, functional; not part of the play experience */
+  .st-debug { font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace; font-size: 0.8rem; }
+  .st-debug-issues { color: #b3261e; border: 1px solid #b3261e; padding: 0.6em 0.8em; border-radius: 6px; margin: 0.8em 0; }
+  .st-debug-ok { color: #2e7d32; }
+  .st-debug-node { border: 1px solid var(--border); border-radius: 6px; padding: 0.7em 0.9em; margin-bottom: 0.7em; }
+  .st-debug-ending { border-color: var(--accent); }
+  .st-debug-tag { font-size: 0.65rem; background: var(--accent); color: var(--bg); padding: 0.1em 0.4em; border-radius: 4px; }
+  .st-debug-text { color: var(--text-muted); }
+  .st-debug-choices li { padding: 0.15em 0; }
+</style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="engine.js"></script>
+  <script src="tales/vasilisa.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var root = document.getElementById('app');
+      SkazkaEngine.mount(root, window.SKAZKA_TALES.vasilisa);
+    });
+  </script>
+</body>
+</html>
