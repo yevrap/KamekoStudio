@@ -454,17 +454,26 @@
   // Meta-progression (iteration 2) — permanent upgrade tree, Q5=A / Q7=A.
   // Bank Essence on death, spend on nodes; persists across runs in localStorage.
   // ------------------------------------------------------------------
+  // Iteration 6 (Q6=A): rank caps raised 3→5 and costs extended for ranks 4-5, on the
+  // same growth ratio the original 3 ranks already used — ranks 1-3 keep their exact
+  // original cost/effect so existing banked progress isn't retroactively changed, ranks
+  // 4-5 are new tiers on top. Total essence to max the whole tree goes from ~76 to ~266,
+  // pushing max-out from well-under-10 runs to several dozen. Reinforced Walls is a new
+  // node (tower HP, mirroring the existing effectiveDmg/effectiveCost multiplier pattern)
+  // — the tree's first defensive lever, previously flagged as a gap once Bombers made
+  // tower HP a real stat.
   var META_KEY = 'mazeWarden_meta';
   var META_NODES = {
-    deepPockets: { name: 'Deep Pockets', emoji: '💰', desc: '+10 starting gold / rank', when: 'next', maxRank: 3, cost: [3, 5, 8] },
-    fortifiedCore: { name: 'Fortified Core', emoji: '❤️', desc: '+3 starting core HP / rank', when: 'next', maxRank: 3, cost: [3, 5, 8] },
-    cheapWalls: { name: 'Cheap Walls', emoji: '🔨', desc: '-10% tower cost / rank', when: 'now', maxRank: 3, cost: [4, 6, 9] },
-    overcharge: { name: 'Overcharge', emoji: '⚡', desc: '+15% tower damage / rank', when: 'now', maxRank: 3, cost: [4, 6, 9] },
+    deepPockets: { name: 'Deep Pockets', emoji: '💰', desc: '+10 starting gold / rank', when: 'next', maxRank: 5, cost: [3, 5, 8, 13, 20] },
+    fortifiedCore: { name: 'Fortified Core', emoji: '❤️', desc: '+3 starting core HP / rank', when: 'next', maxRank: 5, cost: [3, 5, 8, 13, 20] },
+    cheapWalls: { name: 'Cheap Walls', emoji: '🔨', desc: '-10% tower cost / rank', when: 'now', maxRank: 5, cost: [4, 6, 9, 14, 21] },
+    overcharge: { name: 'Overcharge', emoji: '⚡', desc: '+15% tower damage / rank', when: 'now', maxRank: 5, cost: [4, 6, 9, 14, 21] },
+    reinforcedWalls: { name: 'Reinforced Walls', emoji: '🛡️', desc: '+12% tower HP / rank', when: 'now', maxRank: 5, cost: [4, 6, 9, 14, 21] },
     thirdTower: { name: 'Volt Coil', emoji: '🟡', desc: 'Unlocks Volt Coil, a cheap rapid-chip tower', when: 'now', maxRank: 1, cost: [6] }
   };
 
   function defaultMeta() {
-    return { essence: 0, deepPockets: 0, fortifiedCore: 0, cheapWalls: 0, overcharge: 0, thirdTower: 0 };
+    return { essence: 0, deepPockets: 0, fortifiedCore: 0, cheapWalls: 0, overcharge: 0, reinforcedWalls: 0, thirdTower: 0 };
   }
   function loadMeta() {
     try {
@@ -483,6 +492,7 @@
   function metaStartCoreHp() { return BASE_START_CORE_HP + meta.fortifiedCore * 3; }
   function effectiveCost(baseCost) { return Math.max(1, Math.round(baseCost * (1 - meta.cheapWalls * 0.1))); }
   function effectiveDmg(baseDmg) { return baseDmg * (1 + meta.overcharge * 0.15); }
+  function effectiveHp(baseHp) { return Math.round(baseHp * (1 + meta.reinforcedWalls * 0.12)); }
   function essenceReward(waveReached, kills) { return Math.floor(waveReached / 2) + Math.floor(kills / 10); }
 
   // Iteration 3: player-facing simulation speed toggle (industry-standard TD pattern —
@@ -500,9 +510,30 @@
   var speedIndex = loadSpeedIndex();
   function currentSpeed() { return SPEED_LEVELS[speedIndex]; }
 
-  function waveEnemyCount(n) { return 6 + Math.floor(n * 1.5); }
-  function waveEnemyHp(n) { return 9 + Math.round(n * 3.3); }
-  function waveEnemySpeed(n) { return Math.min(1.1 + n * 0.035, 2.4); } // cells/sec
+  // Iteration 6 (Q6=C): the old waveEnemySpeed hard-capped at 2.4 cells/sec around wave
+  // 37 ((2.4-1.1)/0.035), and count/hp's growth rate never picked up the slack — so total
+  // pressure flattened right where the run is deepest. LATE_WAVE_START pins that same
+  // wave as a single shared breakpoint: past it, count and hp growth accelerate and speed
+  // keeps climbing (much more slowly) instead of going flat, so late waves keep getting
+  // harder instead of plateauing. Waves 1-37 are untouched — only the tail changes.
+  var LATE_WAVE_START = Math.round((2.4 - 1.1) / 0.035); // 37
+  function waveEnemyCount(n) {
+    var count = 6 + Math.floor(n * 1.5);
+    if (n > LATE_WAVE_START) count += Math.floor((n - LATE_WAVE_START) * 0.4);
+    return count;
+  }
+  function waveEnemyHp(n) {
+    var hp = 9 + Math.round(n * 3.3);
+    if (n > LATE_WAVE_START) {
+      var over = n - LATE_WAVE_START;
+      hp += Math.round(over * over * 0.12); // accelerating, not linear — keeps outpacing tower dps growth
+    }
+    return hp;
+  }
+  function waveEnemySpeed(n) { // cells/sec
+    if (n <= LATE_WAVE_START) return 1.1 + n * 0.035;
+    return 2.4 + (n - LATE_WAVE_START) * 0.01; // no hard ceiling — eases off rather than flattening
+  }
   function waveSpawnInterval(n) { return Math.max(0.9 - n * 0.02, 0.28); } // seconds
   function killReward(n) { return 3 + Math.floor(n / 4); }
   function waveClearBonus(n) { return 10 + n * 2; }
@@ -799,7 +830,8 @@
     if (state.gold < cost) return false;
     if (wouldSeal(col, row)) return false;
     state.gold -= cost;
-    state.towers[cellKey(col, row)] = { defKey: key, level: 0, col: col, row: row, cooldown: 0, spent: cost, hp: lvl.hp, maxHp: lvl.hp };
+    var startHp = effectiveHp(lvl.hp);
+    state.towers[cellKey(col, row)] = { defKey: key, level: 0, col: col, row: row, cooldown: 0, spent: cost, hp: startHp, maxHp: startHp };
     rebuildDistField();
     for (var i = 0; i < state.enemies.length; i++) pickNextTarget(state.enemies[i]);
     audio.build();
@@ -818,8 +850,9 @@
     state.gold -= cost;
     t.spent += cost;
     t.level += 1;
-    t.hp = nextLvl.hp;
-    t.maxHp = nextLvl.hp;
+    var newHp = effectiveHp(nextLvl.hp);
+    t.hp = newHp;
+    t.maxHp = newHp;
     audio.upgrade();
     updateHud();
     return true;
