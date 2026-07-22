@@ -490,7 +490,19 @@
 
   function metaStartGold() { return BASE_START_GOLD + meta.deepPockets * 10; }
   function metaStartCoreHp() { return BASE_START_CORE_HP + meta.fortifiedCore * 3; }
-  function effectiveCost(baseCost) { return Math.max(1, Math.round(baseCost * (1 - meta.cheapWalls * 0.1))); }
+  // Iteration 7 (Q2=A): every tower placed this run makes the next tower's construction
+  // cost progressively more — a gold sink for the late-game surplus a maxed maze
+  // otherwise has nothing to spend on. First-guess formula, same category as the
+  // Bomber's own numbers, flagged for a future retune pass once fresh playtest data
+  // lands. Applies ONLY at initial placement (isInitialBuild=true) — upgrading an
+  // already-placed tower keeps its existing per-level TOWER_DEFS cost untouched,
+  // matching iteration 6's "don't retroactively change what's already banked" precedent.
+  function towerInflationMultiplier() { return 1 + 0.05 * state.towersBuiltThisRun; }
+  function effectiveCost(baseCost, isInitialBuild) {
+    var cost = baseCost * (1 - meta.cheapWalls * 0.1);
+    if (isInitialBuild) cost *= towerInflationMultiplier();
+    return Math.max(1, Math.round(cost));
+  }
   function effectiveDmg(baseDmg) { return baseDmg * (1 + meta.overcharge * 0.15); }
   function effectiveHp(baseHp) { return Math.round(baseHp * (1 + meta.reinforcedWalls * 0.12)); }
   function essenceReward(waveReached, kills) { return Math.floor(waveReached / 2) + Math.floor(kills / 10); }
@@ -609,7 +621,8 @@
       enemiesToSpawn: 0,
       killedThisRun: 0,
       selectedCell: null,
-      time: 0
+      time: 0,
+      towersBuiltThisRun: 0
     };
   }
 
@@ -826,10 +839,11 @@
   function placeTower(col, row, key) {
     var def = TOWER_DEFS[key];
     var lvl = def.levels[0];
-    var cost = effectiveCost(lvl.cost);
+    var cost = effectiveCost(lvl.cost, true);
     if (state.gold < cost) return false;
     if (wouldSeal(col, row)) return false;
     state.gold -= cost;
+    state.towersBuiltThisRun += 1;
     var startHp = effectiveHp(lvl.hp);
     state.towers[cellKey(col, row)] = { defKey: key, level: 0, col: col, row: row, cooldown: 0, spent: cost, hp: startHp, maxHp: startHp };
     rebuildDistField();
@@ -1444,7 +1458,7 @@
         });
       } else {
         var lvl = def.levels[0];
-        var cost = effectiveCost(lvl.cost);
+        var cost = effectiveCost(lvl.cost, true);
         var afford = state.gold >= cost;
         btn.disabled = !afford;
         btn.innerHTML = '<span class="sbEmoji">' + def.emoji + '</span>' +
