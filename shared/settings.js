@@ -192,7 +192,7 @@
       'lastPlayed_blobZapper', 'lastPlayed_durak',
       'lastPlayed_durakDungeon', 'lastPlayed_durakTactics',
       'lastPlayed_durakAlchemist', 'lastPlayed_tysiacha', 'lastPlayed_astroSalon', 'lastPlayed_pachinkoBazaar',
-      'lastPlayed_blackHoleInOne',
+      'lastPlayed_blackHoleInOne', 'lastPlayed_mazeWarden',
       // River Run
       'riverRun_autoShoot', 'riverRun_autoAvoid',
       'riverRun_invertControls', 'muted',
@@ -225,7 +225,7 @@
     // Per-seat / per-wave keys have dynamic suffixes — clear by prefix.
     const prefixesToRemove = [
       'tysiacha_name_', 'durak_name_ai_', 'durak_name_hotseat_',
-      'keypadQuestBestTime_', 'materialsRun_'
+      'keypadQuestBestTime_', 'materialsRun_', 'mazeWarden_'
     ];
 
     let clearedCount = 0;
@@ -599,7 +599,8 @@
       { slug: 'tysiacha',        emoji: '🎴', title: 'Tysiacha' },
       { slug: 'astro-salon',     emoji: '🔮', title: 'Astro Salon' },
       { slug: 'pachinko-bazaar', emoji: '🧿', title: 'Pachinko Bazaar' },
-      { slug: 'black-hole-in-one', emoji: '⚫', title: 'Black Hole in One' }
+      { slug: 'black-hole-in-one', emoji: '⚫', title: 'Black Hole in One' },
+      { slug: 'maze-warden',     emoji: '🗼', title: 'Maze Warden' }
     ];
     const currentGameMatch = location.pathname.match(/\/games\/([^/]+)/);
     const currentSlug = currentGameMatch ? currentGameMatch[1] : null;

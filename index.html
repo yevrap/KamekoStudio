@@ -343,6 +343,16 @@
                     </div>
                 </div>
 
+                <div class="game-card" style="--card-accent:#2fe6ff">
+                    <div class="game-card-body">
+                        <div class="game-emoji">🗼</div>
+                        <div class="game-title">Maze Warden</div>
+                        <div class="game-desc">Maze-building tower defense — your towers ARE the walls</div>
+                        <div class="game-meta" id="meta-mazeWarden"></div>
+                        <a href="games/maze-warden/" class="play-btn" style="background:#2fe6ff; color:#000;">▶ Play</a>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -359,6 +369,7 @@
             { id: 'astroSalon',   name: 'Astro Salon',   emoji: '🔮', href: 'games/astro-salon/' },
             { id: 'pachinkoBazaar', name: 'Pachinko Bazaar', emoji: '🧿', href: 'games/pachinko-bazaar/' },
             { id: 'blackHoleInOne', name: 'Black Hole in One', emoji: '⚫', href: 'games/black-hole-in-one/' },
+            { id: 'mazeWarden',   name: 'Maze Warden',   emoji: '🗼', href: 'games/maze-warden/' },
         ];
 
         const SCORES_META = [
@@ -370,6 +381,7 @@
             { label: 'Astro Salon',              key: 'astroSalon_bestStars',     suffix: ' ⭐' },
             { label: 'Astro Salon (Chart)',      key: 'astroSalon_bestStarsChart', suffix: ' ⭐' },
             { label: 'Pachinko Bazaar',          key: 'bestScore_pachinkoBazaar', suffix: ' pts' },
+            { label: 'Maze Warden',              key: 'mazeWarden_bestWave',      suffix: ' waves' },
         ];
 
         function timeAgo(ts) {
@@ -454,6 +466,12 @@
             if (pbScore > 0) {
                 var el = document.getElementById('meta-pachinkoBazaar');
                 if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: ' + pbScore + ' pts';
+            }
+
+            var mwWave = parseInt(localStorage.getItem('mazeWarden_bestWave') || '0', 10);
+            if (mwWave > 0) {
+                var el = document.getElementById('meta-mazeWarden');
+                if (el) el.textContent = (el.textContent ? el.textContent + ' · ' : '') + 'Best: Wave ' + mwWave;
             }
 
             // Black Hole in One best round is a vs-par diff: 0 (E) and negatives are

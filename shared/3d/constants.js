@@ -22,5 +22,6 @@ export const ARCADE_GAMES = [
     { name: "Tysiacha", url: "games/tysiacha/", color: 0xffd54f },
     { name: "Astro Salon", url: "games/astro-salon/", color: 0x6d5bd0 },
     { name: "Pachinko Bazaar", url: "games/pachinko-bazaar/", color: 0xe040fb },
-    { name: "Black Hole in One", url: "games/black-hole-in-one/", color: 0xff9a5c }
+    { name: "Black Hole in One", url: "games/black-hole-in-one/", color: 0xff9a5c },
+    { name: "Maze Warden", url: "games/maze-warden/", color: 0x2fe6ff }
 ];

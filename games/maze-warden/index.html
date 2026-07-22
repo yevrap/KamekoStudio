@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#05050d">
+<title>Maze Warden — Kameko Studio</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="stat" id="goldStat">💰 <b id="goldVal">0</b></div>
+    <div id="hpWrap">
+      <span>❤️</span>
+      <div id="hpBarOuter"><div id="hpBarInner"></div></div>
+      <b id="hpVal">0</b>
+    </div>
+    <div class="stat" id="waveStat">🌊 <b id="waveVal">1</b></div>
+    <button class="iconbtn" id="speedBtn" title="Game speed">1x</button>
+    <button class="iconbtn" id="mirrorBtn" title="Upgrades — permanent boosts">⬡</button>
+    <button class="iconbtn" id="pauseBtn" title="Pause">⏸</button>
+    <button class="iconbtn" id="helpBtn" title="How to play">❓</button>
+  </div>
+
+  <div id="boardWrap">
+    <canvas id="board"></canvas>
+    <div id="toast"></div>
+  </div>
+
+  <div id="bottombar">
+    <button id="startWaveBtn">▶ Start Wave 1</button>
+    <div id="waveProgress">
+      <div id="waveProgressOuter"><div id="waveProgressInner"></div></div>
+      <div id="waveStatusText"></div>
+    </div>
+  </div>
+</div>
+
+<div id="sheetBackdrop"></div>
+<div id="sheet">
+  <div id="sheetTitle">Build</div>
+  <div class="sheetRow" id="sheetRow"></div>
+  <button class="sheetCancel" id="sheetCancel">Cancel</button>
+</div>
+
+<div class="overlay" id="howtoOverlay">
+  <div class="card">
+    <h2>🗼 Maze Warden</h2>
+    <p><b>Your towers ARE the walls.</b> Build to steer enemies — a path to the core must always stay open.</p>
+    <ul>
+      <li>Tap an empty cell to build, a built tower to upgrade/sell.</li>
+      <li>Clear waves for gold. They escalate forever.</li>
+      <li>💣 A Bomber's fuse is burning — kill it fast, or it detonates and damages every tower nearby.</li>
+      <li>💀 Death banks ⚡ Essence — spend it in ⬡ Upgrades for permanent boosts.</li>
+    </ul>
+    <div id="towerLegend"></div>
+    <button class="primaryBtn" id="howtoCloseBtn">Let's go</button>
+  </div>
+</div>
+
+<div class="overlay" id="pauseOverlay">
+  <div class="card">
+    <h2>⏸ Paused</h2>
+    <p>The board is frozen. Resume when you're ready.</p>
+    <button class="primaryBtn" id="resumeBtn">▶ Resume</button>
+  </div>
+</div>
+
+<div class="overlay" id="gameoverOverlay">
+  <div class="card">
+    <h2>💀 Core Breached</h2>
+    <p>Wave reached</p>
+    <div class="bigStat" id="goWave">1</div>
+    <p id="goStats"></p>
+    <p id="goEssence"></p>
+    <button class="primaryBtn" id="restartBtn">↻ Play Again</button>
+    <button class="primaryBtn" id="goMirrorBtn" style="background:linear-gradient(90deg,#7d5bff,#c04bff); margin-top:0.6rem;">⬡ Open Upgrades</button>
+  </div>
+</div>
+
+<div class="overlay" id="mirrorOverlay">
+  <div class="card" style="max-width:420px;">
+    <h2>⬡ Upgrades</h2>
+    <p>Spend banked <b>Essence</b> on permanent upgrades — every future run starts stronger.</p>
+    <p class="bigStat" id="mirrorEssence" style="font-size:1.3rem;">0 ⚡</p>
+    <div id="mirrorNodes"></div>
+    <button class="primaryBtn" id="mirrorCloseBtn">Close</button>
+  </div>
+</div>
+
+<script src="../../shared/settings.js" data-gallery-depth="2"></script>
+<script type="module" src="main.js"></script>
+</body>
+</html>

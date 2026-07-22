@@ -43,6 +43,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `astro-salon/` | — | ✅ Done | constants/i18n/content/state/gameplay/ui/main.js. Promoted from `drafts/astro-salon` 2026-07-14 (round-3 playtest **keep**). `content.js` holds pure text-generation (chip labels, rule/hint text) shared by `ui.js` and its tests — kept separate so `gameplay.js` → `ui.js` stays one-directional (no import cycle, same shape as tysiacha's `log.js`). |
 | `pachinko-bazaar/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; canvas rendering merged into gameplay.js like durak-tactics). Promoted from `drafts/pachinko-bazaar` 2026-07-14. |
 | `black-hole-in-one/` | — | ✅ Done | constants/state/physics/gameplay/sfx/ui/main.js. Promoted from `drafts/black-hole-in-one` 2026-07-15 (playtest **keep**). `physics.js` and `gameplay.js` are DOM-free — presentation goes through an injected `hooks` object (no-op defaults), so the whole game flow runs headless under `node --test`. `ui.js` owns canvas rendering AND the letterbox view transform (fixed 100×170 course centered in any viewport — device difficulty parity). |
+| `maze-warden/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; canvas rendering reads directly from live state every frame, merged into gameplay.js like durak-tactics/materials-run/blob-zapper). Promoted from `drafts/maze-warden` 2026-07-21 (iteration 7 playtest **keep**). `dom` object (in `state.js`) is populated by `main.js` after DOMContentLoaded rather than grabbed at module load, so `gameplay.js` stays importable with no DOM present — `tests/maze-warden.test.mjs` covers BFS pathfinding/`wouldSeal()`, wave scaling (incl. the iteration-6 `LATE_WAVE_START` breakpoint), the iteration-7 tower-cost inflation multiplier, and the Bomber/essence/gold formulas. |
 
 **When refactoring a game:** start with `durak-dungeon/` as the reference. Use `durak-tactics/` as the example for games where rendering and game logic are too tightly coupled to split into a separate `ui.js` — put both in `gameplay.js`.
 
@@ -65,6 +66,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `astro-salon/` | Astro Salon | DOM/SVG | Stable — two session types: Salon and Chart Reading (rising + 12 whole-sign houses, Sprint 2 2026-07-15) |
 | `pachinko-bazaar/` | Pachinko Bazaar | Canvas 2D | Stable |
 | `black-hole-in-one/` | Black Hole in One | Canvas 2D | Stable |
+| `maze-warden/` | Maze Warden | Canvas 2D | Stable |
 
 ## Conventions Shared Across Games
 
@@ -149,6 +151,10 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `blackHoleInOne_muted` | black-hole-in-one | Sound effects off/on |
 | `blackHoleInOne_inventory` | black-hole-in-one | JSON `{ [itemKey]: { owned, enabled } }` — item-toggle state (INV-1), Explore only |
 | `blackHoleInOne_exploreHome` | black-hole-in-one | JSON `{blackHoleId,bhX,bhY,x,y}`\|`null` — Return Portal bookmark (OW-3), Explore only |
+| `lastPlayed_mazeWarden` | maze-warden | Set on session start |
+| `mazeWarden_bestWave` | maze-warden | Highest wave reached across runs |
+| `mazeWarden_meta` | maze-warden | JSON meta-progression tree state (essence + per-node ranks), persists across runs |
+| `mazeWarden_speed` | maze-warden | Simulation speed toggle index (0.5x/1x/2x/3x) |
 
 ## Three.js Obstacle Arrays
 

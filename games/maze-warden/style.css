@@ -1,0 +1,348 @@
+/* Maze Warden — the board is diegetic deep space and stays dark in both themes
+   (drawn in JS with fixed colors, like Black Hole in One's playfield); only the
+   HUD chrome (topbar/bottombar/sheet/overlays) adapts via custom properties. */
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --chrome-bg: #0a0a18;
+  --panel-bg: #0e0e22;
+  --border: #2a2a4a;
+  --border-soft: #1c1c34;
+  --ink: #eef0ff;
+  --ink-dim: #8a8ab0;
+  --ink-soft: #cfd0ff;
+  --btn-bg: #12122a;
+  --sheet-btn-bg: #14142c;
+  --sheet-btn-bg-active: #1c1c3a;
+}
+body:not(.dark-mode) {
+  --chrome-bg: #eef0fa;
+  --panel-bg: #ffffff;
+  --border: #c7cae6;
+  --border-soft: #d7d9ef;
+  --ink: #171933;
+  --ink-dim: #6b6f96;
+  --ink-soft: #3c3f66;
+  --btn-bg: #f4f5fb;
+  --sheet-btn-bg: #f4f5fb;
+  --sheet-btn-bg-active: #e5e7f6;
+}
+
+html, body { height: 100%; overscroll-behavior: none; }
+html { background: #05050d; }
+body {
+  background: var(--chrome-bg);
+  color: var(--ink);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Top bar ---- */
+#topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: calc(env(safe-area-inset-top, 0px) + 0.45rem) 0.4rem 0.45rem calc(env(safe-area-inset-left, 0px) + 44px);
+  background: var(--chrome-bg);
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 0.78rem;
+  z-index: 5;
+}
+.stat { display: flex; align-items: center; gap: 0.25rem; white-space: nowrap; }
+.stat b { font-variant-numeric: tabular-nums; }
+#goldStat b { color: #ffd54a; }
+#waveStat b { color: #2fe6ff; }
+#hpWrap { display: flex; align-items: center; gap: 0.3rem; flex: 1; min-width: 30px; }
+#hpBarOuter {
+  flex: 1;
+  min-width: 20px;
+  max-width: 120px;
+  height: 9px;
+  border-radius: 5px;
+  background: var(--border-soft);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+#hpBarInner {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #7d5bff, #ff4d6a 220%);
+  transition: width 0.25s ease;
+}
+.iconbtn {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--btn-bg);
+  color: var(--ink);
+  font-size: 0.92rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.iconbtn:active { background: var(--sheet-btn-bg-active); }
+#speedBtn { width: auto; min-width: 34px; padding: 0 5px; font-size: 0.7rem; font-weight: 700; }
+
+/* Reserve room for the shared settings hamburger inside the header row, then
+   pin it there (iOS PWA-safe-area pattern — see games/durak/, root CLAUDE.md). */
+#settings-hamburger-btn {
+  position: fixed !important;
+  top: calc(env(safe-area-inset-top, 0px) + 5px) !important;
+  left: calc(env(safe-area-inset-left, 0px) + 6px) !important;
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 9px !important;
+}
+
+/* ---- Board ---- */
+#boardWrap {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  touch-action: none;
+  position: relative;
+}
+#board {
+  display: block;
+  touch-action: none;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px var(--border-soft), 0 0 40px rgba(47,230,255,0.06);
+}
+
+/* ---- Bottom bar ---- */
+#bottombar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 0.8rem calc(0.6rem + env(safe-area-inset-bottom, 0px));
+  background: var(--chrome-bg);
+  border-top: 1px solid var(--border-soft);
+  min-height: 52px;
+  z-index: 5;
+}
+#waveProgress {
+  display: none;
+  width: 100%;
+  max-width: 360px;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+#waveProgressOuter {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-soft);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+#waveProgressInner {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #2fe6ff, #7d5bff);
+  transition: width 0.2s ease;
+}
+#waveStatusText {
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+#startWaveBtn {
+  display: none;
+  width: 100%;
+  max-width: 360px;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(90deg, #2fe6ff, #7d5bff);
+  color: #05050d;
+  font-weight: 700;
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  min-height: 44px;
+}
+#startWaveBtn:active { filter: brightness(0.9); }
+
+/* ---- Toast ---- */
+#toast {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%) translateY(-8px);
+  background: rgba(20,10,10,0.92);
+  border: 1px solid #ff4d6a55;
+  color: #ffb3c0;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+  z-index: 20;
+  white-space: nowrap;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ---- Bottom sheet panel (build / tower actions) ---- */
+#sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  z-index: 30;
+}
+#sheetBackdrop.show { opacity: 1; pointer-events: auto; }
+#sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  max-width: 420px;
+  margin: 0 auto;
+  transform: translateY(100%);
+  transition: transform 0.2s ease;
+  background: var(--panel-bg);
+  border-top: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  padding: 0.9rem 1rem calc(0.9rem + env(safe-area-inset-bottom, 0px));
+  z-index: 31;
+}
+#sheet.show { transform: translateY(0); }
+#sheetTitle { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.65rem; color: var(--ink-soft); }
+.sheetRow { display: flex; flex-direction: column; gap: 0.5rem; }
+.sheetBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--sheet-btn-bg);
+  color: var(--ink);
+  font-size: 0.82rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.sheetBtn:active:not(:disabled) { background: var(--sheet-btn-bg-active); }
+.sheetBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+.sheetBtn.locked { opacity: 0.55; border-style: dashed; }
+.sheetBtn.locked .sbName { color: var(--ink-dim); }
+.sheetBtn .sbEmoji { font-size: 1.3rem; flex: 0 0 auto; }
+.sheetBtn .sbBody { flex: 1; min-width: 0; }
+.sheetBtn .sbName { font-weight: 700; display: block; }
+.sheetBtn .sbDesc { display: block; font-size: 0.7rem; color: var(--ink-dim); margin-top: 0.1rem; }
+.sheetBtn .sbCost { font-weight: 700; white-space: nowrap; }
+.sheetBtn.sell .sbCost { color: #6dff9a; }
+.sheetBtn.upgrade .sbCost { color: #ffd54a; }
+.sheetCancel {
+  margin-top: 0.6rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-dim);
+  font-size: 0.78rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* ---- Full overlays (howto / pause / gameover) ---- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(4,4,10,0.86);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  padding: 1rem;
+}
+.overlay.show { display: flex; }
+.card {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.3rem 1.4rem;
+  max-width: 380px;
+  width: 100%;
+  max-height: 86vh;
+  overflow-y: auto;
+}
+.card h2 { font-size: 1.1rem; margin-bottom: 0.7rem; color: var(--ink); }
+.card p, .card li { font-size: 0.82rem; color: var(--ink-soft); line-height: 1.5; }
+.card ul { margin: 0.5rem 0 0.9rem 1.1rem; }
+.card .bigStat { font-size: 1.6rem; font-weight: 700; color: #2fe6ff; margin: 0.4rem 0; }
+.primaryBtn {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 0.9rem;
+  padding: 0.65rem;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(90deg, #2fe6ff, #7d5bff);
+  color: #05050d;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.primaryBtn:active { filter: brightness(0.9); }
+.legend { display: flex; align-items: center; gap: 0.5rem; margin: 0.35rem 0; }
+.legend .swatch { width: 16px; height: 16px; border-radius: 4px; flex: 0 0 auto; }
+
+/* ---- Upgrades (meta-progression) ---- */
+.mirrorNode {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.55rem 0.6rem; margin: 0.4rem 0;
+  border-radius: 10px; border: 1px solid var(--border); background: var(--sheet-btn-bg);
+}
+.mirrorNode .mnEmoji { font-size: 1.25rem; flex: 0 0 auto; }
+.mirrorNode .mnBody { flex: 1; min-width: 0; }
+.mirrorNode .mnName { font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; color: var(--ink); }
+.mnWhen {
+  font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  padding: 0.1rem 0.35rem; border-radius: 5px;
+  background: var(--border-soft); color: var(--ink-dim);
+}
+.mnWhen.now { color: #6dff9a; background: #10331f; }
+.mnWhen.next { color: #ffd54a; background: #33290f; }
+.mirrorNode .mnDesc { font-size: 0.72rem; color: var(--ink-dim); margin-top: 0.1rem; }
+.mirrorNode .mnPips { display: flex; gap: 3px; margin-top: 0.3rem; }
+.mirrorNode .mnPip { width: 14px; height: 6px; border-radius: 3px; background: var(--border); }
+.mirrorNode .mnPip.filled { background: #7d5bff; }
+.mirrorNode .mnBuy {
+  flex: 0 0 auto; min-height: 44px; padding: 0.45rem 0.7rem; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--panel-bg); color: #ffd54a; font-weight: 700; font-size: 0.78rem; cursor: pointer; white-space: nowrap;
+  touch-action: manipulation;
+}
+.mirrorNode .mnBuy:disabled { opacity: 0.4; cursor: not-allowed; }
+.mirrorNode .mnBuy:active:not(:disabled) { background: var(--sheet-btn-bg-active); }
