@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skazka Trail — Vasilisa the Beautiful</title>
+<title>Skazka Trail</title>
 <style>
   * { box-sizing: border-box; }
 
@@ -199,6 +199,23 @@
   }
   .st-panel-header h2 { font-size: 1.1rem; margin: 0; }
 
+  /* Tale-select screen */
+  .st-select-intro { color: var(--text-muted); font-size: 0.95rem; margin: 0 0 0.4rem; }
+  .st-select-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .st-select-row:last-child { border-bottom: none; }
+  .st-select-info { display: flex; flex-direction: column; gap: 0.15rem; }
+  .st-select-title { font-weight: bold; font-size: 1.05rem; }
+  .st-select-subtitle { color: var(--text-muted); font-size: 0.85rem; }
+  .st-select-actions { display: flex; gap: 0.5rem; }
+
   /* Debug view — plain, dense, functional; not part of the play experience */
   .st-debug { font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace; font-size: 0.8rem; }
   .st-debug-issues { color: #b3261e; border: 1px solid #b3261e; padding: 0.6em 0.8em; border-radius: 6px; margin: 0.8em 0; }
@@ -215,10 +232,48 @@
 
   <script src="engine.js"></script>
   <script src="tales/vasilisa.js"></script>
+  <script src="tales/morozko.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var root = document.getElementById('app');
-      SkazkaEngine.mount(root, window.SKAZKA_TALES.vasilisa);
+
+      function esc(s) {
+        return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      // Tale-select screen — bare text, same bar as the story screens.
+      // Selecting a tale is a real link to ?tale=<id>, so ?tale=<id>&debug=1
+      // reaches the debug view per tale (see engine.js's own debug=1 check)
+      // and the browser Back button returns here, with no engine changes.
+      function renderSelect() {
+        var ids = Object.keys(window.SKAZKA_TALES || {});
+        var html = '';
+        html += '<div class="st-toolbar"><span class="st-tale-title">Skazka Trail</span></div>';
+        html += '<p class="st-select-intro">Choose a tale.</p>';
+        ids.forEach(function (id) {
+          var tale = window.SKAZKA_TALES[id];
+          html += '<div class="st-select-row">';
+          html += '<div class="st-select-info">';
+          html += '<span class="st-select-title">' + esc(tale.title) + '</span>';
+          if (tale.subtitle) html += '<span class="st-select-subtitle">' + esc(tale.subtitle) + '</span>';
+          html += '</div>';
+          html += '<div class="st-select-actions">';
+          html += '<a class="st-btn" href="?tale=' + encodeURIComponent(id) + '">Play</a>';
+          html += '<a class="st-btn st-btn-ghost" href="?tale=' + encodeURIComponent(id) + '&debug=1">Debug</a>';
+          html += '</div>';
+          html += '</div>';
+        });
+        root.innerHTML = html;
+      }
+
+      var taleId = new URLSearchParams(location.search).get('tale');
+      if (taleId && window.SKAZKA_TALES && window.SKAZKA_TALES[taleId]) {
+        SkazkaEngine.mount(root, window.SKAZKA_TALES[taleId]);
+      } else {
+        renderSelect();
+      }
     });
   </script>
 </body>
