@@ -344,7 +344,7 @@
     <ul>
       <li>Tap an empty cell to build, a built tower to upgrade/sell.</li>
       <li>Clear waves for gold. They escalate forever.</li>
-      <li>🧨 A sealed-in Breaker starts smashing an adjacent tower until a path reopens.</li>
+      <li>💣 A Bomber's fuse is burning — kill it fast, or it detonates and damages every tower nearby.</li>
       <li>💀 Death banks ⚡ Essence — spend it in ⬡ Upgrades for permanent boosts.</li>
     </ul>
     <div id="towerLegend"></div>
@@ -435,18 +435,20 @@
   };
 
   // ------------------------------------------------------------------
-  // Breaker enemy (iteration 5) — Q5=C, the pick that answers "too easy":
-  // a finished maze was previously a permanent safe solution. A Breaker that gets
-  // sealed off mid-wave (see wouldSeal()'s Breaker exemption below) starts chipping
-  // an adjacent tower down instead of just being neutralized by the maze forever.
+  // Bomber enemy (iteration 5 revision) — Q5=C, the pick that answers "too easy":
+  // a finished maze was previously a permanent safe solution. Supersedes the original
+  // blocked-detection Breaker (unreachable without a redundant loop/fork maze) with a
+  // fuse-based self-destruct that doesn't depend on maze topology at all: left alone
+  // long enough, a Bomber detonates and damages every tower in its blast radius.
   // ------------------------------------------------------------------
-  var BREAKER_START_WAVE = 6; // a few build-only waves first before Breakers mix in
-  function breakerChance(n) {
-    if (n < BREAKER_START_WAVE) return 0;
-    return Math.min(0.15 + (n - BREAKER_START_WAVE) * 0.03, 0.5);
+  var BOMBER_START_WAVE = 6; // a few build-only waves first before Bombers mix in
+  function bomberChance(n) {
+    if (n < BOMBER_START_WAVE) return 0;
+    return Math.min(0.15 + (n - BOMBER_START_WAVE) * 0.03, 0.5);
   }
-  var BREAKER_BLOCK_DELAY = 2.5; // seconds fully blocked before it starts attacking a wall
-  var BREAKER_DPS = 14; // tower damage per second while attacking
+  function bomberFuseSeconds(n) { return Math.max(4, 9 - (n - BOMBER_START_WAVE) * 0.15); }
+  var BOMBER_EXPLOSION_RADIUS = 1.5; // cells
+  var BOMBER_EXPLOSION_DMG = 30; // flat, no falloff, towers only
 
   // ------------------------------------------------------------------
   // Meta-progression (iteration 2) — permanent upgrade tree, Q5=A / Q7=A.
@@ -545,6 +547,7 @@
       death: function () { blip(300, 0.12, 'sine', 0.09, 60); },
       leak: function () { blip(150, 0.2, 'sawtooth', 0.12, 60); },
       towerBreak: function () { blip(140, 0.28, 'sawtooth', 0.17, 35); },
+      explosion: function () { blip(70, 0.5, 'sine', 0.24, 28); blip(280, 0.24, 'sawtooth', 0.18, 35); },
       waveStart: function () { blip(500, 0.18, 'triangle', 0.13, 900); },
       waveClear: function () { blip(660, 0.22, 'triangle', 0.14, 1100); },
       reject: function () { blip(180, 0.12, 'square', 0.08, 120); },
@@ -567,6 +570,7 @@
       towers: {}, // key `${col},${row}` -> {def, level, col, row, cooldown, spentGold}
       enemies: [],
       particles: [],
+      blasts: [], // Bomber detonation radius-flashes
       projectiles: [],
       distField: null,
       spawnQueue: 0,
@@ -607,30 +611,26 @@
     return field;
   }
 
-  // excludeBreakers: Breakers are deliberately allowed to be sealed off (that's their
-  // whole mechanic — see wouldSeal() below), so they're left out of this list when
-  // validating a build.
-  function cellOccupiedActiveEnemies(excludeBreakers) {
+  function cellOccupiedActiveEnemies() {
     var cells = [];
     for (var i = 0; i < state.enemies.length; i++) {
       var e = state.enemies[i];
-      if (excludeBreakers && e.kind === 'breaker') continue;
       cells.push({ col: Math.round(e.pos.x / cellSize - 0.5), row: Math.round(e.pos.y / cellSize - 0.5) });
     }
     return cells;
   }
 
-  // Would placing a tower at (col,row) seal off spawn or any active non-Breaker enemy
-  // from the core? Breakers are exempt on purpose (iteration 5) — sealing one in is
-  // exactly what makes it start attacking a wall; every other enemy keeps the original
-  // "always has an open path" guarantee.
+  // Would placing a tower at (col,row) seal off spawn or any active enemy from the
+  // core? Every active enemy — Bombers included (iteration 5 revision reverted their
+  // old seal exemption) — always keeps an open path; a Bomber's threat comes from its
+  // fuse, not from being trapped.
   function wouldSeal(col, row) {
     var testMap = {};
     for (var k in state.towers) testMap[k] = true;
     testMap[cellKey(col, row)] = true;
     var field = computeDistField(testMap);
     if (field[SPAWN.row][SPAWN.col] === Infinity) return true;
-    var enemyCells = cellOccupiedActiveEnemies(true);
+    var enemyCells = cellOccupiedActiveEnemies();
     for (var i = 0; i < enemyCells.length; i++) {
       var ec = enemyCells[i];
       if (!inBounds(ec.col, ec.row)) continue;
@@ -681,9 +681,9 @@
     var tier = Math.floor((state.wave - 1) / 5);
     var pos = cellCenterPx(SPAWN.col, SPAWN.row);
     // Same wall/pathing rules and same HP/speed profile as the grunt (Q5=C picked the
-    // Breaker for its new *interaction*, not a reskinned stat profile) — the only
-    // difference is the block-then-attack behavior handled in updateBreakers().
-    var kind = Math.random() < breakerChance(state.wave) ? 'breaker' : 'grunt';
+    // Bomber for its new *interaction*, not a reskinned stat profile) — the only
+    // difference is the fuse-driven self-destruct handled in updateBombers().
+    var kind = Math.random() < bomberChance(state.wave) ? 'bomber' : 'grunt';
     var enemy = {
       kind: kind,
       col: SPAWN.col, row: SPAWN.row,
@@ -695,10 +695,10 @@
       targetCol: SPAWN.col, targetRow: SPAWN.row,
       alive: true
     };
-    if (kind === 'breaker') {
-      enemy.blockedTime = 0;
-      enemy.attackKey = null;
-      enemy.hitSoundCd = 0;
+    if (kind === 'bomber') {
+      var fuseMax = bomberFuseSeconds(state.wave);
+      enemy.fuse = fuseMax;
+      enemy.fuseMax = fuseMax;
     }
     state.enemies.push(enemy);
     pickNextTarget(state.enemies[state.enemies.length - 1]);
@@ -750,70 +750,41 @@
     }
   }
 
-  // Breaker block-detection + wall-attack (iteration 5). A Breaker is "blocked" when
-  // its own cell has gone unreachable in the flow field — which, thanks to wouldSeal()'s
-  // Breaker exemption, can only happen if towers built (or rebuilt) around it after it
-  // was already standing there. Reuses the same BFS distance field the rest of the
-  // pathfinding already maintains; no separate blocked-detection system needed.
-  function updateBreakers(dt) {
-    for (var i = 0; i < state.enemies.length; i++) {
+  // Bomber fuse countdown + detonation (iteration 5 revision). Unlike the abandoned
+  // blocked-detection design, this doesn't care about maze topology at all — a Bomber
+  // ticks down from spawn and detonates on a fixed timer regardless of whether it ever
+  // gets stuck.
+  function updateBombers(dt) {
+    for (var i = state.enemies.length - 1; i >= 0; i--) {
       var e = state.enemies[i];
-      if (e.kind !== 'breaker') continue;
-      var col = Math.round(e.pos.x / cellSize - 0.5);
-      var row = Math.round(e.pos.y / cellSize - 0.5);
-      var blocked = inBounds(col, row) && state.distField[row][col] === Infinity;
-      if (!blocked) {
-        e.blockedTime = 0;
-        e.attackKey = null;
-        continue;
-      }
-      e.blockedTime += dt;
-      if (e.blockedTime < BREAKER_BLOCK_DELAY) continue;
-      if (e.attackKey && !state.towers[e.attackKey]) e.attackKey = null;
-      if (!e.attackKey) {
-        var tw = findAdjacentTowerToAttack(col, row);
-        if (!tw) continue; // sealed pocket has no bordering tower yet (shouldn't normally happen)
-        e.attackKey = cellKey(tw.col, tw.row);
-      }
-      var target = state.towers[e.attackKey];
-      if (!target) { e.attackKey = null; continue; }
-      target.hp -= BREAKER_DPS * dt;
-      e.hitSoundCd -= dt;
-      if (e.hitSoundCd <= 0) { audio.hit(); e.hitSoundCd = 0.3; }
-      if (Math.random() < dt * 6) {
-        var tp = cellCenterPx(target.col, target.row);
-        spawnBurst(tp.x, tp.y, '#ff4d6a', 2);
-      }
-      if (target.hp <= 0) {
-        destroyTower(target.col, target.row);
-        e.attackKey = null;
-        e.blockedTime = 0;
-      }
+      if (e.kind !== 'bomber') continue;
+      e.fuse -= dt;
+      if (e.fuse <= 0) detonateBomber(e, i);
     }
   }
 
-  // BFS out from a blocked Breaker's cell through open (non-tower) cells, looking for
-  // the nearest tower forming the boundary of its sealed pocket — handles both the
-  // direct-adjacent case and a Breaker stuck a few cells deep in a larger dead-end.
-  function findAdjacentTowerToAttack(col, row) {
-    var visited = {};
-    visited[cellKey(col, row)] = true;
-    var qCol = [col], qRow = [row], head = 0;
-    while (head < qCol.length) {
-      var c = qCol[head], r = qRow[head]; head++;
-      var neighbors = [[c + 1, r], [c - 1, r], [c, r + 1], [c, r - 1]];
-      for (var i = 0; i < 4; i++) {
-        var nc = neighbors[i][0], nr = neighbors[i][1];
-        if (!inBounds(nc, nr)) continue;
-        var k = cellKey(nc, nr);
-        if (visited[k]) continue;
-        visited[k] = true;
-        var tw = state.towers[k];
-        if (tw) return tw;
-        qCol.push(nc); qRow.push(nr);
-      }
+  // Collects every tower within BOMBER_EXPLOSION_RADIUS before damaging/destroying any
+  // of them, so destroyTower() removing entries from state.towers mid-scan can't skip a
+  // neighbor. Only towers take damage — enemies and the core are untouched, and a
+  // Bomber with nothing nearby just fizzles.
+  function detonateBomber(e, index) {
+    var hitList = [];
+    for (var key in state.towers) {
+      var t = state.towers[key];
+      var tp = cellCenterPx(t.col, t.row);
+      var dx = tp.x - e.pos.x, dy = tp.y - e.pos.y;
+      if (Math.sqrt(dx * dx + dy * dy) <= BOMBER_EXPLOSION_RADIUS * cellSize) hitList.push(t);
     }
-    return null;
+    audio.explosion();
+    spawnBurst(e.pos.x, e.pos.y, BOMBER_COLOR, 30);
+    spawnBlast(e.pos.x, e.pos.y, BOMBER_EXPLOSION_RADIUS * cellSize);
+    state.enemies.splice(index, 1);
+    for (var i = 0; i < hitList.length; i++) {
+      var target = hitList[i];
+      if (!state.towers[cellKey(target.col, target.row)]) continue; // already destroyed by an earlier hit this same blast
+      target.hp -= BOMBER_EXPLOSION_DMG;
+      if (target.hp <= 0) destroyTower(target.col, target.row);
+    }
   }
 
   // ------------------------------------------------------------------
@@ -867,8 +838,9 @@
     return true;
   }
 
-  // A tower chipped down to 0 hp by a Breaker (iteration 5) — no gold refund (that's
-  // sellTower's deal, a deliberate player choice), just gone, forcing a rebuild/reroute.
+  // A tower reduced to 0 hp by a Bomber's blast (iteration 5 revision) — no gold refund
+  // (that's sellTower's deal, a deliberate player choice), just gone, forcing a
+  // rebuild/reroute.
   function destroyTower(col, row) {
     var key = cellKey(col, row);
     var t = state.towers[key];
@@ -1023,6 +995,19 @@
     }
   }
 
+  // Brief radius-flash on a Bomber detonation — a fast-expanding, fading ring showing
+  // which towers were in range of the blast.
+  function spawnBlast(x, y, radiusPx) {
+    state.blasts.push({ x: x, y: y, radius: radiusPx, life: 0.35, age: 0 });
+  }
+  function updateBlasts(dt) {
+    for (var i = state.blasts.length - 1; i >= 0; i--) {
+      var b = state.blasts[i];
+      b.age += dt;
+      if (b.age >= b.life) state.blasts.splice(i, 1);
+    }
+  }
+
   // ------------------------------------------------------------------
   // Waves
   // ------------------------------------------------------------------
@@ -1132,6 +1117,8 @@
     for (var ei = 0; ei < state.enemies.length; ei++) drawEnemy(state.enemies[ei]);
     // particles
     for (var qi = 0; qi < state.particles.length; qi++) drawParticle(state.particles[qi]);
+    // bomber detonation flashes
+    for (var bi = 0; bi < state.blasts.length; bi++) drawBlast(state.blasts[bi]);
   }
 
   function drawSpawnMarker() {
@@ -1196,7 +1183,7 @@
     var def = TOWER_DEFS[t.defKey];
     var p = cellCenterPx(t.col, t.row);
     var r = cellSize * (0.28 + t.level * 0.05);
-    // Damaged-tower visual state (iteration 5, Breaker attacks) — tint toward a
+    // Damaged-tower visual state (iteration 5, Bomber blasts) — tint toward a
     // scorched red as hp drops, plus an hp bar once it's actually taken damage
     // (kept hidden at full hp so undamaged towers don't get visual clutter).
     var dmgFrac = t.maxHp ? 1 - Math.max(0, t.hp) / t.maxHp : 0;
@@ -1264,15 +1251,15 @@
     ctx.restore();
   }
 
-  var BREAKER_COLOR = '#ff5a1f';
+  var BOMBER_COLOR = '#ff5a1f';
   function drawEnemy(e) {
-    var isBreaker = e.kind === 'breaker';
+    var isBomber = e.kind === 'bomber';
     var r = cellSize * (0.16 + Math.min(e.tier, 3) * 0.02);
-    var color = isBreaker ? BREAKER_COLOR : tierColor(e.tier);
+    var color = isBomber ? BOMBER_COLOR : tierColor(e.tier);
     ctx.save();
-    ctx.shadowColor = color; ctx.shadowBlur = cellSize * (isBreaker ? 0.3 : 0.25);
+    ctx.shadowColor = color; ctx.shadowBlur = cellSize * (isBomber ? 0.3 : 0.25);
     ctx.fillStyle = color;
-    if (isBreaker) {
+    if (isBomber) {
       // Spiky diamond, distinct from the round grunt at a glance.
       var br = r * 1.3;
       ctx.beginPath();
@@ -1297,24 +1284,16 @@
     ctx.fillStyle = frac > 0.4 ? '#6dff9a' : '#ff4d6a';
     ctx.fillRect(e.pos.x - barW / 2, e.pos.y - r - 8, barW * frac, barH);
 
-    if (isBreaker && e.attackKey && state.towers[e.attackKey]) {
-      // Actively chipping a wall — pulsing line to the tower under attack.
-      var tw = state.towers[e.attackKey];
-      var tp = cellCenterPx(tw.col, tw.row);
-      var pulse = 0.5 + 0.5 * Math.sin(state.time * 10);
+    if (isBomber) {
+      // Fuse telegraph: a filling ring that reads increasingly urgent as detonation
+      // nears — both the fill and the pulse rate track fuse/fuseMax.
+      var urgency = 1 - Math.max(0, e.fuse) / e.fuseMax; // 0 → just spawned, 1 → about to blow
+      var pulse = 0.5 + 0.5 * Math.sin(state.time * (2 + urgency * 14));
       ctx.save();
       ctx.strokeStyle = '#ff4d6a';
-      ctx.globalAlpha = 0.5 + pulse * 0.4;
+      ctx.globalAlpha = 0.3 + urgency * 0.5 + pulse * 0.2;
       ctx.lineWidth = 2;
-      ctx.setLineDash([4, 3]);
-      ctx.beginPath(); ctx.moveTo(e.pos.x, e.pos.y); ctx.lineTo(tp.x, tp.y); ctx.stroke();
-      ctx.restore();
-    } else if (isBreaker && e.blockedTime > 0) {
-      // Winding up before it commits to a wall — a filling warning ring.
-      var bp = Math.min(1, e.blockedTime / BREAKER_BLOCK_DELAY);
-      ctx.save();
-      ctx.strokeStyle = '#ff4d6a'; ctx.globalAlpha = 0.25 + bp * 0.5; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(e.pos.x, e.pos.y, r + 4, -Math.PI / 2, -Math.PI / 2 + bp * Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(e.pos.x, e.pos.y, r + 4, -Math.PI / 2, -Math.PI / 2 + urgency * Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
   }
@@ -1325,6 +1304,19 @@
     ctx.globalAlpha = Math.max(0, frac);
     ctx.fillStyle = p.color;
     ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawBlast(b) {
+    var frac = b.age / b.life;
+    var rad = b.radius * (0.4 + frac * 0.6);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, 0.6 * (1 - frac));
+    ctx.strokeStyle = '#ff4d6a';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(b.x, b.y, rad, 0, Math.PI * 2); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,90,31,' + (0.25 * (1 - frac)) + ')';
+    ctx.beginPath(); ctx.arc(b.x, b.y, rad, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 
@@ -1655,10 +1647,11 @@
     updateSpawning(dt);
     updateEnemies(dt);
     if (state.phase === 'gameover') { draw(); return; }
-    updateBreakers(dt);
+    updateBombers(dt);
     updateTowers(dt);
     updateProjectiles(dt);
     updateParticles(dt);
+    updateBlasts(dt);
     draw();
   }
 
