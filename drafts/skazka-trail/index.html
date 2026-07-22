@@ -14,6 +14,9 @@
     --border: #d8d3c8;
     --surface: #ffffff;
     --accent: #3a3530;
+    --tale-accent: var(--accent);
+    --tale-wash: transparent;
+    --display-font: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -25,6 +28,21 @@
       --surface: #1f1c16;
       --accent: #eae6dd;
     }
+  }
+
+  /* Per-tale accent (Q1=C / Q6=B): one consistent frame + type, accent color
+     shifts per tale. Scoped via the data-tale attribute the bootstrap script
+     sets on #app and on each tale-select card — no engine.js or content-pack
+     changes. --tale-wash is a low-alpha rgba used only for the background
+     treatment (Q2), never for text/borders. */
+  [data-tale="morozko"]     { --tale-accent: #2f5f8a; --tale-wash: rgba(47, 95, 138, 0.08); }
+  [data-tale="vasilisa"]    { --tale-accent: #9a5b1f; --tale-wash: rgba(154, 91, 31, 0.09); }
+  [data-tale="geese-swans"] { --tale-accent: #3c7a5c; --tale-wash: rgba(60, 122, 92, 0.09); }
+
+  @media (prefers-color-scheme: dark) {
+    [data-tale="morozko"]     { --tale-accent: #8ec4ea; --tale-wash: rgba(142, 196, 234, 0.14); }
+    [data-tale="vasilisa"]    { --tale-accent: #e0a458; --tale-wash: rgba(224, 164, 88, 0.16); }
+    [data-tale="geese-swans"] { --tale-accent: #7fd0ab; --tale-wash: rgba(127, 208, 171, 0.15); }
   }
 
   html, body {
@@ -39,12 +57,29 @@
     line-height: 1.6;
     min-height: 100vh;
     min-height: 100dvh;
+    /* Q2=D: deliberate background treatment instead of blank void — a soft
+       per-tale wash (transparent when no tale is active) over the base bg. */
+    background-image: radial-gradient(ellipse 1100px 700px at 50% -8%, var(--tale-wash), transparent 70%);
+    background-color: var(--bg);
+    background-attachment: fixed;
   }
 
   #app {
     max-width: 620px;
     margin: 0 auto;
     padding: 1rem 1.1rem 3rem;
+  }
+
+  @media (min-width: 900px) {
+    /* Q2=D: widen the reading column and bump type slightly instead of
+       centering the same narrow mobile column in empty space. */
+    #app, .st-panel-inner {
+      max-width: 780px;
+    }
+    .st-scene p {
+      font-size: 1.12rem;
+      line-height: 1.7;
+    }
   }
 
   .st-toolbar {
@@ -66,6 +101,13 @@
     font-weight: bold;
     font-size: 1rem;
     letter-spacing: 0.02em;
+  }
+
+  /* Q5=B: display face for the tale title + ending titles only, body stays
+     Georgia. Q7=B: excluded from the debug view via data-debug on #app. */
+  #app:not([data-debug]) .st-tale-title,
+  #app:not([data-debug]) .st-ending-title {
+    font-family: var(--display-font);
   }
 
   .st-toolbar-actions {
@@ -96,6 +138,18 @@
     font-size: 1.05rem;
   }
 
+  /* Q4=C: a short fade/rise on every scene render — engine.js fully replaces
+     #app's innerHTML per render(), so a fresh .st-scene element is created
+     each time and the animation replays automatically with no engine hook. */
+  .st-scene { animation: st-scene-in 220ms ease-out; }
+  @keyframes st-scene-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .st-scene { animation: none; }
+  }
+
   .st-ending-eyebrow {
     text-transform: uppercase;
     letter-spacing: 0.14em;
@@ -107,12 +161,13 @@
   .st-ending-title {
     font-size: 1.5rem;
     margin: 0 0 0.6em;
+    color: var(--tale-accent, var(--text));
   }
 
   .st-moral {
     font-style: italic;
     color: var(--text-muted);
-    border-left: 2px solid var(--border);
+    border-left: 2px solid var(--tale-accent, var(--border));
     padding-left: 0.9em;
   }
 
@@ -135,8 +190,10 @@
     font-family: inherit;
     font-size: 0.98rem;
     cursor: pointer;
+    transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease, background-color 120ms ease;
   }
-  .st-choice:active { background: var(--border); }
+  .st-choice:hover { border-color: var(--tale-accent, var(--accent)); box-shadow: 0 0 0 1px var(--tale-accent, var(--accent)) inset; }
+  .st-choice:active { background: var(--border); transform: scale(0.98); }
 
   .st-btn-primary {
     width: 100%;
@@ -145,9 +202,17 @@
     min-height: 44px;
     font-size: 1rem;
     font-weight: bold;
-    background: var(--accent);
+    background: var(--tale-accent, var(--accent));
     color: var(--bg);
-    border-color: var(--accent);
+    border-color: var(--tale-accent, var(--accent));
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+  .st-btn-primary:hover { box-shadow: 0 0 0 3px var(--tale-wash); }
+  .st-btn-primary:active { transform: scale(0.98); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .st-choice, .st-btn-primary { transition: none; }
+    .st-choice:active, .st-btn-primary:active { transform: none; }
   }
 
   .st-recap-block {
@@ -199,30 +264,39 @@
   }
   .st-panel-header h2 { font-size: 1.1rem; margin: 0; }
 
-  /* Tale-select screen */
-  .st-select-intro { color: var(--text-muted); font-size: 0.95rem; margin: 0 0 0.4rem; }
-  .st-select-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  /* Tale-select screen — Q3=B: card grid, one column on mobile, each card
+     carries its own data-tale so the swatch/border pick up that tale's
+     --tale-accent the same way the play screen does. */
+  .st-select-intro { color: var(--text-muted); font-size: 0.95rem; margin: 0 0 0.4rem 0; padding-bottom: 0.4rem; }
+  .st-tale-grid {
+    display: grid;
+    grid-template-columns: 1fr;
     gap: 1rem;
-    flex-wrap: wrap;
-    padding: 1rem 0;
-    border-bottom: 1px solid var(--border);
   }
-  .st-select-row:last-child { border-bottom: none; }
-  .st-select-info { display: flex; flex-direction: column; gap: 0.15rem; }
+  @media (min-width: 640px) {
+    .st-tale-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+  }
+  .st-tale-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .st-tale-swatch { height: 6px; background: var(--tale-accent, var(--accent)); }
+  .st-tale-card-body { display: flex; flex-direction: column; gap: 0.2rem; padding: 1rem 1.1rem 0.5rem; flex: 1; }
   .st-select-title { font-weight: bold; font-size: 1.05rem; }
   .st-select-subtitle { color: var(--text-muted); font-size: 0.85rem; }
-  .st-select-actions { display: flex; gap: 0.5rem; }
+  .st-tale-card .st-select-actions { display: flex; gap: 0.5rem; padding: 0.9rem 1.1rem 1.1rem; }
 
   /* Debug view — plain, dense, functional; not part of the play experience */
   .st-debug { font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace; font-size: 0.8rem; }
   .st-debug-issues { color: #b3261e; border: 1px solid #b3261e; padding: 0.6em 0.8em; border-radius: 6px; margin: 0.8em 0; }
   .st-debug-ok { color: #2e7d32; }
   .st-debug-node { border: 1px solid var(--border); border-radius: 6px; padding: 0.7em 0.9em; margin-bottom: 0.7em; }
-  .st-debug-ending { border-color: var(--accent); }
-  .st-debug-tag { font-size: 0.65rem; background: var(--accent); color: var(--bg); padding: 0.1em 0.4em; border-radius: 4px; }
+  .st-debug-ending { border-color: var(--tale-accent, var(--accent)); }
+  .st-debug-tag { font-size: 0.65rem; background: var(--tale-accent, var(--accent)); color: var(--bg); padding: 0.1em 0.4em; border-radius: 4px; }
   .st-debug-text { color: var(--text-muted); }
   .st-debug-choices li { padding: 0.15em 0; }
 </style>
@@ -253,10 +327,12 @@
         var html = '';
         html += '<div class="st-toolbar"><span class="st-tale-title">Skazka Trail</span></div>';
         html += '<p class="st-select-intro">Choose a tale.</p>';
+        html += '<div class="st-tale-grid">';
         ids.forEach(function (id) {
           var tale = window.SKAZKA_TALES[id];
-          html += '<div class="st-select-row">';
-          html += '<div class="st-select-info">';
+          html += '<div class="st-tale-card" data-tale="' + esc(id) + '">';
+          html += '<div class="st-tale-swatch"></div>';
+          html += '<div class="st-tale-card-body">';
           html += '<span class="st-select-title">' + esc(tale.title) + '</span>';
           if (tale.subtitle) html += '<span class="st-select-subtitle">' + esc(tale.subtitle) + '</span>';
           html += '</div>';
@@ -266,13 +342,23 @@
           html += '</div>';
           html += '</div>';
         });
+        html += '</div>';
         root.innerHTML = html;
       }
 
+      // Q1/Q5/Q7 CSS hooks — read-only, presentation-only reads of the URL
+      // (data-tale mirrors the tale id already read below; data-debug mirrors
+      // engine.js's own debug=1 check) so engine.js and the content packs
+      // never need to know about either attribute.
       var taleId = new URLSearchParams(location.search).get('tale');
+      var isDebug = /(?:^|[?&])debug=1(?:&|$)/.test(location.search);
+      if (isDebug) root.setAttribute('data-debug', '1'); else root.removeAttribute('data-debug');
+
       if (taleId && window.SKAZKA_TALES && window.SKAZKA_TALES[taleId]) {
+        root.setAttribute('data-tale', taleId);
         SkazkaEngine.mount(root, window.SKAZKA_TALES[taleId]);
       } else {
+        root.removeAttribute('data-tale');
         renderSelect();
       }
     });
