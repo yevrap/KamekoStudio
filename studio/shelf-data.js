@@ -13,9 +13,9 @@
  * iterations ship past it.
  */
 export const PULSE = {
-  iteration: '01',
+  iteration: '02',
   shipped: '2026-09-20',
-  summary: 'Gave the realm its Backstage identity and this shelf, and restored two arcade games that the 3D landing page had been silently dropping.'
+  summary: 'Built the studio\'s first experiment, Overtighten, and gave every page in the realm a boot check that opens it in a real browser — the eight mutations the old suite survived all fail it now.'
 };
 
 /**
