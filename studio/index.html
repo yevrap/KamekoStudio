@@ -9,56 +9,44 @@
 </head>
 <body>
 
+<header class="chrome">
+  <a class="back" href="../">← Arcade</a>
+  <p class="wordmark">Shadow Studio</p>
+</header>
+
 <main>
-  <p class="eyebrow">Kameko Studio</p>
-  <h1>Shadow Studio</h1>
-  <p class="lede">
-    An experimental realm, built and run by a small simulated engineering team that plans,
-    tests, documents and reviews its own work in bounded iterations.
+  <section class="pulse" id="pulse" aria-label="What the studio is doing"></section>
+
+  <section aria-labelledby="shelf-heading">
+    <h2 class="section-title" id="shelf-heading">The shelf</h2>
+    <div id="shelf-region"></div>
+  </section>
+
+  <section class="card learned" aria-labelledby="learned-heading">
+    <h2 id="learned-heading">What the team changed about itself</h2>
+    <p id="learned"></p>
+  </section>
+
+  <p class="how">
+    <a href="https://github.com/yevrap/KamekoStudio/tree/main/docs/studio">How it works →</a>
+    <span class="how-note">the team's handbook: process, guardrails, decisions, self-checks.</span>
   </p>
 
-  <div class="card">
-    <h2><span class="status">Iteration 00</span> Nothing to play yet</h2>
-    <p>
-      The first iteration built the team, the paper trail and the self-checks — not a game.
-      This page exists to prove the realm deploys, loads cleanly and inherits the arcade's
-      light and dark themes. The gallery that will replace it is still being designed.
+  <noscript>
+    <p class="empty">
+      This page builds its shelf from a data file in the browser, so it needs JavaScript.
+      The team's handbook needs none:
+      <a href="https://github.com/yevrap/KamekoStudio/tree/main/docs/studio">read it on GitHub</a>.
     </p>
-    <p><a class="pill" href="../">← Back to the arcade</a></p>
-  </div>
-
-  <div class="card">
-    <h2>How the team works</h2>
-    <ul>
-      <li>One run is one iteration: plan, build, test, review, retro, stop.</li>
-      <li>It may only write inside <code>studio/</code>, <code>docs/studio/</code> and
-          <code>tests/studio/</code>. Everything else is out of bounds.</li>
-      <li><code>npm run studio:check</code> enforces that, plus the storage namespace,
-          public-repo hygiene, and the honesty of the documents.</li>
-      <li>Every check reports pass, fail or <em>not run</em>. Nothing is skipped quietly.</li>
-    </ul>
-    <p>
-      The handbook is in the repository under
-      <code>docs/studio/</code>, starting with its README.
-    </p>
-  </div>
-
-  <div class="card" id="visits-card" hidden>
-    <h2>Your visits</h2>
-    <p id="visits-text"></p>
-    <p>
-      Stored locally as <code>studio_firstVisit</code> and <code>studio_visitCount</code>.
-      Nothing here leaves the browser. Every key the realm's own code touches carries the
-      <code>studio_</code> prefix, because this page shares an origin with the arcade; the
-      arcade's shared settings script, which this page deliberately inherits for the
-      light/dark toggle, owns <code>theme</code> and <code>devMode</code>.
-    </p>
-  </div>
+  </noscript>
 </main>
 
 <footer>
-  Part of <a href="../">Kameko Studio</a> · source and engineering docs on
-  <a href="https://github.com/yevrap/KamekoStudio">GitHub</a>
+  <p id="visits" class="mono" hidden></p>
+  <p>
+    Part of <a href="../">Kameko Studio</a> · source and engineering docs on
+    <a href="https://github.com/yevrap/KamekoStudio">GitHub</a>
+  </p>
 </footer>
 
 <script src="main.js" type="module"></script>

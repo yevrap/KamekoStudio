@@ -12,9 +12,26 @@ This file covers what is in this folder and the rules that apply to its code.
 
 | Path | What it is |
 |---|---|
-| `index.html` | The realm's landing page. Currently a placeholder — iteration 00 built the team, not a game. |
+| `index.html` | The realm's home page: the chrome, the pulse line, the shelf and the handbook link. |
 | `style.css` | The Backstage identity: tokens, layout, light/dark. Warm ground, one amber worklight for status, one teal reserved for interactive elements. |
-| `main.js` | Placeholder behavior, and the first real exercise of the storage rule. |
+| `shelf-data.js` | The only place a shelf entry, the pulse line or the retro line is declared. Adding a game is one entry here. |
+| `shelf.js` | Pure functions from that data to markup. No DOM, so every rendered state is unit-tested without a browser. |
+| `main.js` | The only file that touches the document, plus the visit logbook that exercises the storage rule. |
+
+The shelf is empty today: the realm has no games yet, and an empty shelf renders as an
+empty shelf. Nothing on this page is invented to fill it.
+
+### The status tags
+
+| Tag | What it means |
+|---|---|
+| `PROTOTYPE` | A first build. It may be unfinished, and that is the point of the realm. |
+| `ITERATING` | Being worked on across iterations. |
+| `KILLED` | Stopped. It stays on the shelf, recessed and unplayable — visible as history, absent as an offer. |
+| `PROMOTED` | Graduated into the production arcade. See [`promotion.md`](../docs/studio/promotion.md). |
+
+Any other value is rendered as written, outlined in the worklight colour, rather than
+dropped: a mistake in the data belongs on the page where it can be seen.
 
 Games will live in `studio/games/<name>/`, one directory each, following the same
 convention as the production arcade: native ES modules split by concern
