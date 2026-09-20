@@ -19,6 +19,7 @@ An iteration that cannot be reconstructed from its own folder did not really hap
 - [x] `review.md` lists the demo, every check with a real result, and a verdict from the Independent Reviewer.
 - [x] `retro.md` names what changed about how the team works, and whether the reserved capacity was used.
 - [x] Any deviation from the process is recorded as a deviation, not smoothed over.
+- [x] The explicit `--base` this iteration's checks require is written down, since iteration 00 has no previous tag to default to.
 
 ## Evidence plan
 
@@ -33,9 +34,13 @@ Nothing.
 
 ## Result
 
-- **What changed:** `docs/studio/iterations/00/` — plan, log, nine tickets, review, retro.
+- **What changed:** `docs/studio/iterations/00/` — plan, log, eleven tickets, review, retro.
+  The base ref for this iteration's checks is `697385f`, recorded in `plan.md` and
+  `review.md`; from iteration 01 the `studio-iteration-00` tag makes it the default.
 - **Tested by:** the closeout and gate stages of `studio:check`, which verify exactly these
   documents and would fail on a ticket left Ready, an unticked criterion, a missing evidence
   line or an absent reviewer verdict.
 - **Deferred:** nothing.
-- **Fix rounds used:** 0 / 2
+- **Fix rounds used:** 1 / 2 — the first version of this ticket ticked the `review.md` and
+  `retro.md` criteria before either document existed. Both reviewers caught it. The
+  criteria are ticked now because the documents exist now; the lesson is in the retro.

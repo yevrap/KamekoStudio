@@ -17,9 +17,30 @@ page live — no games.
 | SS-008 | The three skills | M | Scrum Master |
 | SS-009 | This iteration record | S | Scrum Master |
 
-Nine tickets is more than the standing cap of 2–3. Iteration 00's scope is the setup
+Added mid-iteration, from the independent review (see `review.md`):
+
+| ID | Title | Size | Role lead |
+|---|---|---|---|
+| SS-010 | Close the holes the independent review found | L | Tech Lead |
+| SS-011 | Scope the storage claim to studio code | M | Data & Systems Dev |
+
+Eleven tickets is far more than the standing cap of 2–3. Iteration 00's scope is the setup
 brief's, not the Product Owner's, and every ticket is a named deliverable of it. The cap
 applies from iteration 01. Recorded here rather than quietly exceeded.
+
+## The base ref
+
+Iteration 00 has no previous `studio-iteration-*` tag, so the checks cannot default to one,
+and `origin/main` is behind the repository's current state by one pre-existing non-studio
+commit. Every check in this iteration therefore runs against **`697385f`** — the last commit
+before the studio existed:
+
+```
+npm run studio:check -- --stage=gate --base=697385f
+```
+
+From iteration 01 the `studio-iteration-00` tag makes this the default and the flag is
+unnecessary.
 
 ## Reserved capacity
 
