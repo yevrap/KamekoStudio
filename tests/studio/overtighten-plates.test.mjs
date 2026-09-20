@@ -1,16 +1,29 @@
-// Every shipped plate, proved reachable and proved non-trivial.
+// Every shipped plate: what it can be cleared by, stated rather than hoped for.
 //
-// Two claims, and the second is the one worth having. A solver shows each plate
-// can be cleared from zero without stripping, so no plate ships that cannot be
-// finished. The naive test shows each plate *cannot* be cleared by holding each
-// bolt once, which is the design hypothesis — that the coupling is the game,
-// not the timing — written as a check that would fail if it stopped being true.
+// The design hypothesis was that the coupling makes a plate an ordering puzzle.
+// **It is false for every plate that ships**, and this file is where that is
+// recorded so it cannot be quietly re-claimed. Two independent reviews found it;
+// the test that was supposed to catch it could not fail.
+//
+// What went wrong is worth keeping. The original test held each bolt once *to
+// the middle of its band* and concluded "not solvable in one pass". The hold
+// amount is a free variable and fixing it removed the only degree of freedom
+// that mattered: because `turn()` clamps at zero, a bolt sitting at zero absorbs
+// no loosening, so in a single pass a bolt is only reduced by neighbours turned
+// *after* it. That makes the plate a back-substitution — overshoot each bolt by
+// `coupling × Σ(later neighbours' amounts)` — and every plate falls to one hold
+// per bolt, with 6 to 38 units of strip headroom to spare.
+//
+// So the assertions below say what is true: each plate is reachable, and each
+// plate is also trivial in two different ways. `onePass` and `roundRobin` are
+// exported shapes a redesigned mechanic must *fail*, and the tests that assert
+// they succeed are the ones a real fix will flip.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { COUPLING, PLATES, couplingFor } from '../../studio/games/overtighten/constants.js';
 import {
-  asymmetricLinks, couplingLoad, initialTorque, isStripped, plateState, turn
+  asymmetricLinks, boltById, couplingLoad, initialTorque, isStripped, plateState, turn
 } from '../../studio/games/overtighten/gameplay.js';
 
 const mid = bolt => (bolt.lo + bolt.hi) / 2;
@@ -36,14 +49,53 @@ function solve(plate, coupling, budget = 400) {
   return { solved: false, steps: budget, torque, reason: 'ran out of budget' };
 }
 
-/** Hold each bolt once, in the order they are listed, to the middle of its band. */
-function naive(plate, coupling) {
-  let torque = initialTorque(plate);
-  for (const bolt of plate.bolts) {
-    const amount = mid(bolt) - torque[bolt.id];
-    if (amount > 0) torque = turn(plate, torque, bolt.id, amount, coupling);
+/**
+ * One hold per bolt, in `order`, with the amount chosen by back-substitution.
+ *
+ * A bolt starts at zero and stays there until it is turned, because loosening
+ * clamps at zero — so its final value is its own amount minus what the
+ * neighbours turned *after* it take off. Walk the order backwards and every
+ * amount is determined. This is the strategy the design hypothesis said should
+ * not exist.
+ */
+function onePass(plate, coupling, order = plate.bolts.map(b => b.id)) {
+  const amounts = {};
+  for (let i = order.length - 1; i >= 0; i--) {
+    const bolt = boltById(plate, order[i]);
+    const later = bolt.links.filter(id => order.indexOf(id) > i);
+    amounts[bolt.id] = mid(bolt) + coupling * later.reduce((sum, id) => sum + (amounts[id] ?? 0), 0);
   }
-  return torque;
+  let torque = initialTorque(plate);
+  let strippedEnRoute = false;
+  for (const id of order) {
+    torque = turn(plate, torque, id, amounts[id], coupling);
+    if (plateState(plate, torque).stripped) strippedEnRoute = true;
+  }
+  return { torque, amounts, strippedEnRoute, solved: plateState(plate, torque).solved && !strippedEnRoute };
+}
+
+/**
+ * Go round the plate in `order`, topping each bolt up to the middle of its band,
+ * and repeat. The dumbest strategy there is: it looks at nothing and plans
+ * nothing. It never exceeds a band, so it can never strip.
+ */
+function roundRobin(plate, coupling, order, maxPasses = 20) {
+  let torque = initialTorque(plate);
+  for (let pass = 0; pass < maxPasses; pass++) {
+    if (plateState(plate, torque).solved) return { solved: true, passes: pass };
+    for (const id of order) {
+      const amount = mid(boltById(plate, id)) - torque[id];
+      if (amount > 0) torque = turn(plate, torque, id, amount, coupling);
+    }
+  }
+  return { solved: plateState(plate, torque).solved, passes: maxPasses };
+}
+
+/** Every ordering of a plate's bolts. Three bolts to five is 6 to 120 orders. */
+function permutations(items) {
+  if (items.length <= 1) return [items];
+  return items.flatMap((item, i) =>
+    permutations([...items.slice(0, i), ...items.slice(i + 1)]).map(rest => [item, ...rest]));
 }
 
 test('there are plates to play', () => {
@@ -80,10 +132,58 @@ for (const plate of PLATES) {
     }
   });
 
-  test(`${plate.id}: is not solved by holding each bolt once — the coupling is the game`, () => {
-    const state = plateState(plate, naive(plate, coupling));
-    assert.equal(state.solved, false,
-      `${plate.id} falls to the naive strategy: its coupling is decoration, not a mechanic`);
+  test(`${plate.id}: FALLS to one hold per bolt — the design hypothesis is false here`, () => {
+    // Asserted as a fact about what shipped, not as a thing that is wanted. A
+    // redesign that restores the ordering puzzle flips this to `false` and this
+    // test, with its name, is what will have to be rewritten to say so.
+    const result = onePass(plate, coupling);
+    assert.equal(result.solved, true,
+      `${plate.id} no longer falls to one hold per bolt — if that is deliberate, this test is the one to invert`);
+    assert.equal(result.strippedEnRoute, false, 'and it does so without stripping a thread');
+    for (const bolt of plate.bolts) {
+      assert.ok(result.amounts[bolt.id] <= bolt.strip,
+        `${plate.id}/${bolt.id} would have to be turned past its own strip point`);
+    }
+  });
+
+  test(`${plate.id}: falls to one hold per bolt in almost every order, not just the listed one`, () => {
+    // The plan's falsifier was "cleared by holding each bolt once in *any*
+    // order". The original test tried one order; this tries all of them.
+    // Measured across the three plates: 142 of 146 orderings fall.
+    const orders = permutations(plate.bolts.map(b => b.id));
+    const fell = orders.filter(order => onePass(plate, coupling, order).solved);
+    assert.ok(fell.length / orders.length >= 0.8,
+      `only ${fell.length} of ${orders.length} orders fall to one hold per bolt`);
+  });
+
+  test(`${plate.id}: the orders that resist one pass resist on a ceiling, not on a puzzle`, () => {
+    // Four orderings of the face plate do not fall, and it is worth being exact
+    // about why: one bolt would have to be turned 0.2 to 2.8 units past its own
+    // strip point. That is a tuning accident, not something a player could
+    // reason about — nothing on the plate tells them which orders those are.
+    // If a redesign ever makes an order fail for a *structural* reason, this
+    // test fails and says so, which is the point of writing it down.
+    const orders = permutations(plate.bolts.map(b => b.id));
+    for (const order of orders) {
+      const result = onePass(plate, coupling, order);
+      if (result.solved) continue;
+      const overshooting = plate.bolts.filter(b => result.amounts[b.id] > b.strip);
+      assert.ok(overshooting.length > 0,
+        `${plate.id}: ${order.join('→')} fails for a structural reason, not a strip ceiling — the mechanic may have changed`);
+      for (const bolt of overshooting) {
+        assert.ok(result.amounts[bolt.id] - bolt.strip < 5,
+          `${plate.id}/${bolt.id}: misses by ${(result.amounts[bolt.id] - bolt.strip).toFixed(1)}, which is a margin, not a wall`);
+      }
+    }
+  });
+
+  test(`${plate.id}: falls to blind round-robin in every order, so there is nothing to order`, () => {
+    const orders = permutations(plate.bolts.map(b => b.id));
+    const worst = orders
+      .map(order => roundRobin(plate, coupling, order))
+      .reduce((a, b) => (b.passes > a.passes ? b : a));
+    assert.equal(worst.solved, true);
+    assert.ok(worst.passes <= 4, `worst case ${worst.passes} passes`);
   });
 }
 
@@ -99,12 +199,28 @@ test('a plate may only lower the coupling, never raise it', () => {
   assert.equal(couplingFor(undefined), COUPLING);
 });
 
-test('the solver needs more moves than there are bolts, on every plate', () => {
-  // The companion to the naive test, stated positively: if a plate took one
-  // move per bolt it would be the naive strategy under another name.
+test('the reference solver takes more moves than one per bolt, which proves only that it is not the clever strategy', () => {
+  // Kept, demoted, and relabelled. It says the "fix the worst bolt" loop is not
+  // a single pass. It was read as evidence that a single pass does not exist,
+  // which is a different claim and a false one.
   for (const plate of PLATES) {
     const { steps } = solve(plate, couplingFor(plate));
     assert.ok(steps > plate.bolts.length,
       `${plate.id} solved in ${steps} moves for ${plate.bolts.length} bolts`);
   }
+});
+
+test('the strategies used here are distinct, so agreeing proves something', () => {
+  // A guard on the file itself: if `onePass` and `roundRobin` ever became the
+  // same walk, every assertion above would agree for the wrong reason.
+  const plate = PLATES[1];
+  const coupling = couplingFor(plate);
+  const one = onePass(plate, coupling);
+  assert.equal(Object.keys(one.amounts).length, plate.bolts.length);
+  assert.ok(
+    plate.bolts.some(b => one.amounts[b.id] > b.hi),
+    'one-pass must overshoot at least one bolt past its band; round-robin never does'
+  );
+  assert.ok(roundRobin(plate, coupling, plate.bolts.map(b => b.id)).passes >= 2,
+    'round-robin must take more than one pass, or it would be the one-pass strategy');
 });

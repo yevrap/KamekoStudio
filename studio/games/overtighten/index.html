@@ -51,19 +51,27 @@
   </section>
 
   <section class="card notes">
-    <h2>What this is</h2>
+    <h2>What this is, and what it turned out to be</h2>
     <p>
-      The first experiment built by the studio's own team. It exists to find out whether one
-      idea holds up: that the interesting part of tightening a plate is the <em>coupling</em>
-      between bolts, not the timing of a release. Torque only goes onto a bolt directly, and
-      only comes off it by turning one of its neighbours — so an overshoot is recoverable,
-      but never for free.
+      The first experiment built by the studio's own team. It was made to test one idea:
+      that the interesting part of tightening a plate is the <em>coupling</em> between
+      bolts, not the timing of a release — that working out the order would be the game.
     </p>
     <p>
-      Each plate's bolts, bands and couplings are one entry in a data file, and a solver
-      proves every shipped plate can be cleared from zero without stripping a thread. A
-      second test proves the opposite of the lazy case: none of them can be cleared by
-      holding each bolt once. If that test ever passes, the coupling has become decoration.
+      <strong>It isn't, and the experiment is on the shelf saying so.</strong> Two
+      independent reviews took the plates apart. Because loosening stops at zero, a bolt
+      sitting at zero absorbs nothing, so in a single pass a bolt is only reduced by the
+      neighbours turned after it — which makes each plate a back-substitution. Overshoot
+      each bolt by the right amount and one hold per bolt clears it. Of the 146 ways to
+      order the bolts across the three plates, 142 work; the four that don't miss a strip
+      point by less than three units, which is a tuning accident rather than a puzzle.
+      Going round the plate topping every bolt up, planning nothing at all, also clears
+      every plate in at most four passes.
+    </p>
+    <p>
+      So what is here is a tactile convergence toy rather than the ordering puzzle it was
+      meant to be. That is a real result, and the tests now assert it rather than the thing
+      that was hoped for: a redesign is the work that flips them back.
     </p>
     <p class="how">
       <a href="https://github.com/yevrap/KamekoStudio/tree/main/studio/games/overtighten">Source →</a>

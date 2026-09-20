@@ -1,10 +1,14 @@
 // Overtighten — tuning and plates.
 //
 // Everything a designer would want to change lives here, and nothing here
-// touches the document. The plates are hand-authored; each one is proved
-// solvable from zero by a solver in tests/studio/overtighten-plates.test.mjs,
-// and proved *not* solvable by holding each bolt once, which is the design
-// hypothesis stated as a check. A plate that fails either test does not ship.
+// touches the document. The plates are hand-authored and every one is proved
+// reachable from zero by a solver in tests/studio/overtighten-plates.test.mjs.
+//
+// That file also records what these plates turned out to be: each one falls to
+// one hold per bolt, in almost any order, and to blind round-robin topping-up.
+// The design hypothesis — that the coupling makes a plate an ordering puzzle —
+// is false here. Tuning these numbers will not fix it; the mechanic needs a
+// state the player cannot undo. See docs/studio/iterations/02/review.md.
 
 /** Torque units added per second of holding. One "unit" has no meaning beyond the bands. */
 export const TURN_RATE = 42;

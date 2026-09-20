@@ -54,10 +54,12 @@ the strip point a thread is ruined and the plate is lost.
 | `main.js` | The only file that touches the document: input, the turn loop, storage. |
 | `sfx.js` | Synthesized audio. No context exists until a user gesture creates one. |
 
-Two properties of every shipped plate are tested rather than assumed: a solver proves each
-one can be cleared from zero without stripping a thread, and a second test proves none of
-them can be cleared by holding each bolt once — which is the design hypothesis, that the
-coupling is the mechanic and not decoration. A plate that fails either does not ship.
+Every shipped plate is proved reachable from zero without stripping a thread. The tests
+also record what the plates turned out to be, which is not what they were designed to be:
+each one falls to a single hold per bolt in almost any order, and to blind round-robin
+topping-up. The hypothesis that the coupling makes a plate an ordering puzzle is **false**
+for this build, and the tests assert that rather than the intention. See
+[`../docs/studio/iterations/02/review.md`](../docs/studio/iterations/02/review.md).
 
 ## Rules for code in this folder
 
