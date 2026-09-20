@@ -58,7 +58,7 @@ export const docsCurrent = {
       }
     }
     return problems.length
-      ? { status: 'fail', detail: problems.join('\n  ') }
+      ? { status: 'fail', detail: problems.join('\n') }
       : { status: 'pass', detail: `${files.length} ticket(s) complete` };
   }
 };

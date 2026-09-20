@@ -19,13 +19,14 @@ unless it is a **recorded exception** below.
 ### Recorded exceptions
 
 An exception is a path outside the list that the executive has explicitly approved, for a
-stated reason, once. Each one is listed here and in the guard script itself
-(`tests/studio/checks/path-guard.mjs`), so an approved exception is visible both to a
-reader and to the check. The check reports an exception as *used*, never silently.
+stated reason, once. Each one is listed here and in the guard itself
+(`tests/studio/lib/rules.mjs`), so an approved exception is visible both to a reader and to
+the check. The check reports an exception as *used*, never silently, and verifies the file's
+**content** against the base revision rather than trusting the path.
 
 | Path | Scope of the exception | Approved |
 |---|---|---|
-| `package.json` | The single `"studio:check"` entry in `scripts`. No other key. | Iteration 00 brief, deliverable 4 |
+| `package.json` | The single `"studio:check"` entry in `scripts`, with exactly the value `node tests/studio/check.mjs`. No other key, and no other value. | Iteration 00 brief, deliverable 4 |
 
 ### Pending, not yet approved
 

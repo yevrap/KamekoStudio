@@ -2,46 +2,72 @@
 //
 // The studio shares a deployment with production, so "our tests pass" is not
 // the bar; the bar is that the whole repository is still green.
+//
+// The three suites are not equivalent: `npm test` is pure Node, while smoke and
+// e2e drive a real Chrome and load three.js from a CDN. When those two cannot
+// run, saying so is the honest answer — reporting them as failures would be
+// indistinguishable from a real regression.
 
+import { existsSync } from 'node:fs';
 import { attempt } from '../lib/shell.mjs';
 
+const DEFAULT_CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+
 const SUITES = [
-  { name: 'npm test', args: ['test', '--silent'] },
-  { name: 'npm run smoke', args: ['run', '--silent', 'smoke'] },
-  { name: 'npm run e2e', args: ['run', '--silent', 'e2e'] }
+  { name: 'npm test', args: ['test', '--silent'], needsBrowser: false },
+  { name: 'npm run smoke', args: ['run', '--silent', 'smoke'], needsBrowser: true },
+  { name: 'npm run e2e', args: ['run', '--silent', 'e2e'], needsBrowser: true }
 ];
 
-function runSuites(ctx, suites) {
-  if (ctx.skipSlow) return { status: 'skip', detail: '--skip-slow was passed' };
-
-  const failures = [];
-  const ran = [];
-  for (const suite of suites) {
-    const r = attempt('npm', suite.args, { cwd: ctx.root });
-    ran.push(suite.name);
-    if (!r.ok) failures.push(`${suite.name} exited ${r.code}\n${tail(r.out, 25)}`);
-  }
-  return failures.length
-    ? { status: 'fail', detail: failures.join('\n\n') }
-    : { status: 'pass', detail: `${ran.join(', ')} green` };
+function chromePath() {
+  return process.env.CHROME_PATH || DEFAULT_CHROME;
 }
 
 function tail(text, lines) {
   return text.split('\n').slice(-lines).map(l => '    ' + l).join('\n');
 }
 
+function runSuites(ctx) {
+  if (ctx.skipSlow) return { status: 'skip', detail: '--skip-slow was passed' };
+
+  const browserAvailable = existsSync(chromePath());
+  const failures = [];
+  const ran = [];
+  const skipped = [];
+
+  for (const suite of SUITES) {
+    if (suite.needsBrowser && ctx.offline) {
+      skipped.push(`${suite.name} (needs a browser and the three.js CDN; --offline was passed)`);
+      continue;
+    }
+    if (suite.needsBrowser && !browserAvailable) {
+      skipped.push(`${suite.name} (no Chrome at ${chromePath()}; set CHROME_PATH)`);
+      continue;
+    }
+    const r = attempt('npm', suite.args, { cwd: ctx.root });
+    ran.push(suite.name);
+    if (!r.ok) failures.push(`${suite.name} exited ${r.code}\n${tail(r.out, 25)}`);
+  }
+
+  if (failures.length) return { status: 'fail', detail: failures.join('\n\n') };
+  if (skipped.length) {
+    return { status: 'skip', detail: `${ran.join(', ') || 'nothing'} green; not run: ${skipped.join('; ')}` };
+  }
+  return { status: 'pass', detail: `${ran.join(', ')} green` };
+}
+
 export const baselineSuites = {
   id: 'baseline-suites',
   stages: ['preflight'],
   description: 'The repo was already green before the studio touched it',
-  run: ctx => runSuites(ctx, SUITES)
+  run: runSuites
 };
 
 export const fullSuites = {
   id: 'full-suites',
   stages: ['gate'],
   description: 'npm test, smoke and e2e are green — production included',
-  run: ctx => runSuites(ctx, SUITES)
+  run: runSuites
 };
 
 export const studioTests = {

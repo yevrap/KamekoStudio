@@ -14,7 +14,7 @@
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CHECKS, STAGES, checksForStage } from './checks/index.mjs';
+import { STAGES, checksForStage } from './checks/index.mjs';
 import { latestIterationTag } from './lib/shell.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -24,7 +24,9 @@ const DEFAULTS = {
   siteUrl: 'https://yevrap.github.io/KamekoStudio',
   productionPages: ['/', '/games/durak/'],
   pollAttempts: 12,
-  stopFileRoots: [ROOT, process.cwd()]
+  // INIT_CWD is where `npm run` was invoked from; process.cwd() under npm is
+  // always the package root, so on its own it could never differ from ROOT.
+  stopFileRoots: [...new Set([ROOT, process.cwd(), process.env.INIT_CWD].filter(Boolean))]
 };
 
 function parseArgs(argv) {
@@ -33,8 +35,14 @@ function parseArgs(argv) {
     base: null, iteration: null, previousTag: null, deployMarker: null,
     extraDocRoots: []
   };
+  const needsValue = new Set(['stage', 'stages', 'base', 'iteration', 'previous-tag', 'marker', 'docs-root']);
   for (const arg of argv) {
     const [key, value] = arg.startsWith('--') ? arg.slice(2).split('=') : [null, null];
+    if (needsValue.has(key) && (value === undefined || value === '')) {
+      console.error(`--${key} needs a value, as --${key}=<value>`);
+      usage();
+      process.exit(2);
+    }
     switch (key) {
       case 'stage': case 'stages': opts.stages = value.split(','); break;
       case 'list': opts.list = true; break;

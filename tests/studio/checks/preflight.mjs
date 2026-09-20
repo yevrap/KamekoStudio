@@ -5,8 +5,11 @@ import { attempt, git, gitPath, exists } from '../lib/shell.mjs';
 
 export const treeClean = {
   id: 'tree-clean',
-  stages: ['preflight'],
-  description: 'No uncommitted work is about to be swept into the iteration',
+  // Also at the gate: the document checks read the filesystem, so a clean tree
+  // is what makes them statements about what will actually be pushed. Iteration
+  // 00's review caught a green gate sitting on nine untracked ticket files.
+  stages: ['preflight', 'gate'],
+  description: 'No uncommitted work is about to be swept into the iteration, or missed by it',
   run(ctx) {
     const dirty = git(ctx.root, 'status', '--porcelain');
     return dirty

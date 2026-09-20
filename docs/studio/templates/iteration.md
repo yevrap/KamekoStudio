@@ -1,7 +1,8 @@
 # Iteration NN — <goal in one line>
 
-Copy this folder's four files into `docs/studio/iterations/NN/` at the start of an
-iteration: `plan.md`, `log.md`, `review.md`, `retro.md`. Tickets go in `tickets/`.
+At the start of an iteration, create `docs/studio/iterations/NN/` with the four documents
+below — `plan.md`, `log.md`, `review.md`, `retro.md` — plus a `tickets/` directory whose
+files come from [`ticket.md`](ticket.md).
 
 ## plan.md
 

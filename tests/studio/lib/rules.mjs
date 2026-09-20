@@ -17,6 +17,17 @@ export const ALLOWED_PREFIXES = [
  * file and returns null when the change is within the exception, or a string
  * explaining why it is not.
  */
+export const EXPECTED_STUDIO_SCRIPT = 'node tests/studio/check.mjs';
+
+/**
+ * Paths outside the allowed list that the executive has approved, each narrowed
+ * to a specific content change. `allow(before, after)` receives the file's text
+ * at the base revision and its text now, and returns null when the change is
+ * within the exception or a string explaining why it is not.
+ *
+ * Content, not diff text: an earlier version parsed `+`/`-` lines, which meant
+ * it saw nothing at all once the change was committed and the tree was clean.
+ */
 export const PATH_EXCEPTIONS = [
   {
     path: 'package.json',
@@ -25,38 +36,44 @@ export const PATH_EXCEPTIONS = [
   }
 ];
 
+/** Every dotted key path at which two JSON values differ. */
+export function jsonDiffPaths(before, after, prefix = '') {
+  const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+  if (!plain(before) || !plain(after)) {
+    return JSON.stringify(before) === JSON.stringify(after) ? [] : [prefix || '(root)'];
+  }
+  const paths = [];
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    paths.push(...jsonDiffPaths(before[key], after[key], prefix ? `${prefix}.${key}` : key));
+  }
+  return paths;
+}
+
 /**
- * The package.json exception, content-checked rather than path-checked.
+ * The package.json exception, checked against the parsed file rather than the
+ * diff: the only difference permitted between the base revision and now is
+ * scripts["studio:check"], and its value must be exactly the expected command.
  *
- * Adding a key to a JSON object also puts a comma on the line above it, so the
- * diff always contains one line that is removed and re-added unchanged except
- * for that comma. Those pairs are cancelled out first; whatever is left must be
- * the studio:check entry and nothing else.
+ * Checking the value matters as much as the key — "studio:check" is a script
+ * this repository runs, so an arbitrary command smuggled into it would execute.
  */
-export function allowOnlyStudioCheckScript(diff) {
-  const norm = l => l.slice(1).trim().replace(/,$/, '');
-  const removed = [];
-  const added = [];
-  for (const line of diff.split('\n')) {
-    if (/^(\+\+\+|---)/.test(line)) continue;
-    if (line.startsWith('+')) added.push(line);
-    else if (line.startsWith('-')) removed.push(line);
+export function allowOnlyStudioCheckScript(before, after) {
+  let base, now;
+  try {
+    base = JSON.parse(before && before.trim() ? before : '{}');
+    now = JSON.parse(after && after.trim() ? after : '{}');
+  } catch (err) {
+    return `package.json is not parseable JSON: ${err.message}`;
   }
 
-  const removedRest = removed.map(norm);
-  const leftovers = [];
-  for (const line of added) {
-    const key = norm(line);
-    const i = removedRest.indexOf(key);
-    if (i !== -1) { removedRest.splice(i, 1); continue; } // comma-only churn
-    leftovers.push(key);
-  }
-  leftovers.push(...removedRest.map(l => `removed: ${l}`));
+  const offending = jsonDiffPaths(base, now).filter(p => p !== 'scripts.studio:check');
+  if (offending.length) return `changes beyond scripts["studio:check"]: ${offending.join(', ')}`;
 
-  const offending = leftovers.filter(l => l !== '' && !/"studio:check"\s*:/.test(l));
-  return offending.length
-    ? `changes beyond the studio:check entry: ${offending.join(' | ')}`
-    : null;
+  const value = now.scripts && now.scripts['studio:check'];
+  if (value !== undefined && value !== EXPECTED_STUDIO_SCRIPT) {
+    return `scripts["studio:check"] must be exactly "${EXPECTED_STUDIO_SCRIPT}", found "${value}"`;
+  }
+  return null;
 }
 
 /**
@@ -79,40 +96,95 @@ export function classifyPaths(paths) {
 /**
  * Storage keys used in a source file.
  *
- * Handles the three shapes that appear in this codebase: a plain literal, a
- * literal concatenated with a variable (`'prefix_' + id`), and a template
- * literal with an interpolation (`` `prefix_${id}` ``). For the latter two the
- * key recorded is the static prefix, which is what a namespace rule cares about.
+ * Handles the shapes that appear in this codebase: a plain literal, a literal
+ * concatenated with a variable (`'prefix_' + id`), and a template literal with
+ * an interpolation (`` `prefix_${id}` ``). For the latter two the key recorded
+ * is the static prefix, which is what a namespace rule cares about.
  *
- * @returns {{key: string, dynamic: boolean}[]} unique by key
+ * Each result carries the kind of expression it came from, which is what the
+ * namespace rule needs: a literal prefix really is in the source and can be
+ * trusted, while a computed expression cannot be, however it happens to read.
+ *
+ * @returns {{key: string, kind: 'literal'|'prefix'|'computed', dynamic: boolean}[]} unique by key
  */
 export function extractStorageKeys(code) {
   const found = new Map();
-  const call = /(?:localStorage|sessionStorage)\.(?:getItem|setItem|removeItem)\(\s*([^,)]+)/g;
+  const call = /(?:window\s*\.\s*)?(?:local|session)Storage\s*\??\.\s*(?:getItem|setItem|removeItem)\s*\(\s*([^,)]+)/g;
 
   for (const m of code.matchAll(call)) {
     const arg = m[1].trim();
-    let key = null;
-    let dynamic = false;
 
     const concatenated = arg.match(/^['"]([^'"]*)['"]\s*\+/);
     const interpolated = arg.match(/^`([^`$]*)\$\{/);
     const literal = arg.match(/^'([^']*)'$|^"([^"]*)"$|^`([^`$]*)`$/);
 
-    if (concatenated) { key = concatenated[1]; dynamic = true; }
-    else if (interpolated) { key = interpolated[1]; dynamic = true; }
-    else if (literal) { key = literal[1] ?? literal[2] ?? literal[3]; }
+    let key, kind;
+    if (literal) { key = literal[1] ?? literal[2] ?? literal[3]; kind = 'literal'; }
+    else if (concatenated) { key = concatenated[1]; kind = 'prefix'; }
+    else if (interpolated) { key = interpolated[1]; kind = 'prefix'; }
+    else { key = arg.slice(0, 40); kind = 'computed'; }
 
-    // Anything else is a fully computed key — a variable, a function call. The
-    // rule cannot see through it, so it is reported as an unnameable key.
-    else { key = arg.slice(0, 40); dynamic = true; }
-
-    if (key !== null && !found.has(key)) found.set(key, { key, dynamic });
+    if (!found.has(key)) found.set(key, { key, kind, dynamic: kind !== 'literal' });
   }
   return [...found.values()];
 }
 
-/** Keys that do not carry the studio namespace. */
+/**
+ * Every way studio code could reach the shared storage, and whether the rule
+ * can verify it.
+ *
+ * The prefix rule is only as good as this list. Three of these were found by an
+ * adversarial review of iteration 00's first version, which checked the three
+ * named methods and nothing else: `localStorage['key'] = v` and
+ * `delete localStorage.key` both slipped through, and `localStorage.clear()` —
+ * which wipes every production save, since the studio shares one origin with
+ * the arcade — was reported as compliant.
+ *
+ * @returns {string[]} one message per violation; empty means compliant
+ */
+export function findStorageViolations(code, prefix = 'studio_') {
+  const violations = [];
+  const add = m => { if (!violations.includes(m)) violations.push(m); };
+  const store = '(?:window\\s*\\.\\s*)?(?:local|session)Storage';
+
+  // 1. The three named accessors, whose key the extractor can read.
+  for (const { key, kind } of extractStorageKeys(code)) {
+    if (kind === 'computed') {
+      add(`key is computed, so the rule cannot see its value: \`${key}\` — build it from a literal "${prefix}" prefix instead`);
+    } else if (!key.startsWith(prefix)) {
+      add(`key without the ${prefix} prefix: "${key}"`);
+    }
+  }
+
+  // 2. Bracket access: localStorage['key'] / localStorage[expr]
+  for (const m of code.matchAll(new RegExp(`${store}\\s*\\??\\[\\s*([^\\]]+)\\]`, 'g'))) {
+    const arg = m[1].trim();
+    const literal = arg.match(/^'([^']*)'$|^"([^"]*)"$|^`([^`$]*)`$/);
+    const key = literal ? (literal[1] ?? literal[2] ?? literal[3]) : null;
+    if (key === null) add(`bracket access with a computed key: \`${arg.slice(0, 40)}\` — the rule cannot see its value`);
+    else if (!key.startsWith(prefix)) add(`bracket access to a key without the ${prefix} prefix: "${key}"`);
+  }
+
+  // 3. delete localStorage.key / delete localStorage['key']
+  for (const m of code.matchAll(new RegExp(`delete\\s+${store}\\s*(?:\\.\\s*([\\w$]+)|\\[\\s*['"\`]([^'"\`]*)['"\`]\\s*\\])`, 'g'))) {
+    const key = m[1] ?? m[2] ?? '';
+    if (!key.startsWith(prefix)) add(`delete of a key without the ${prefix} prefix: "${key}"`);
+  }
+
+  // 4. clear() empties the whole origin, production saves included. Never allowed.
+  if (new RegExp(`${store}\\s*\\??\\.\\s*clear\\s*\\(`).test(code)) {
+    add('clear() wipes the whole origin, production saves included — never permitted in studio code');
+  }
+
+  // 5. Aliasing hides everything above from a static rule.
+  for (const m of code.matchAll(new RegExp(`(?:const|let|var)\\s+([\\w$]+)\\s*=\\s*${store}\\s*[;,\\n]`, 'g'))) {
+    add(`storage aliased to \`${m[1]}\` — the rule cannot follow the alias; call the accessor directly`);
+  }
+
+  return violations;
+}
+
+/** Literal keys that do not carry the studio namespace. Kept for the key-level tests. */
 export function badStorageKeys(code, prefix = 'studio_') {
   return extractStorageKeys(code)
     .filter(k => !k.key.startsWith(prefix))
@@ -162,7 +234,7 @@ export function scanHygiene(text) {
  * Decision records are exempt from the superseded-status wording, because
  * recording that a decision was superseded is exactly their job.
  */
-const STALE_HEADING = /^#{1,6}\s+.*\b(superseded|revision history|change history|old version|previous version|deprecated|outdated|v\d+\s*\(old\)|archive[d]?)\b/i;
+const STALE_HEADING = /^#{1,6}\s+(?:v\d+\b|.*\b(?:superseded|revision history|change history|old version|previous version|deprecated|outdated|v\d+\s*\(old\)|archive[d]?)\b)/i;
 const STACKED_NOTE = /^\s*(?:>\s*)?(?:\*\*)?(?:UPDATE|EDIT|CORRECTION|NOTE TO SELF|SUPERSEDED|WAS|OLD)\b\s*(?:\(|:|\*\*)/i;
 
 export function scanDocCleanliness(text, { isDecisionRecord = false } = {}) {
@@ -181,12 +253,17 @@ export function scanDocCleanliness(text, { isDecisionRecord = false } = {}) {
 
 /**
  * Commit-message lint. Studio commits are conventional, scoped `studio`, and
- * name their ticket. Merge commits are exempt — git writes those.
+ * name their ticket.
+ *
+ * Merge commits are exempt because git writes them — but that is decided by the
+ * commit having more than one parent, not by its subject starting with "Merge".
+ * Subject matching made the whole lint opt-out: any message could begin with
+ * that word.
  */
 export const COMMIT_RE = /^(feat|fix|docs|test|refactor|chore|perf|style|build)\(studio\): (SS-\d{3}) .+/;
 
-export function lintCommitSubject(subject) {
-  if (/^Merge /.test(subject)) return null;
+export function lintCommitSubject(subject, { parentCount = 1 } = {}) {
+  if (parentCount > 1) return null;
   if (!COMMIT_RE.test(subject)) {
     return 'expected "type(studio): SS-NNN description"';
   }

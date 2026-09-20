@@ -19,8 +19,18 @@ outside all three. So the required deliverable and the guard contradict each oth
 ```
 
 The exception is listed in `../guardrails.md` and encoded in the guard itself
-(`tests/studio/checks/path-guard.mjs`), which reports it as *used* whenever the file is
-touched, and fails if the diff to `package.json` contains anything but that line.
+(`tests/studio/lib/rules.mjs`), which reports it as *used* whenever the file is touched.
+Enforcement compares the **parsed file** at the base revision with the parsed file now:
+the only permitted difference is `scripts["studio:check"]`, and its value must be exactly
+`node tests/studio/check.mjs`. The value is checked as strictly as the key, because
+`studio:check` is a script this repository runs — an arbitrary command appended to it would
+execute.
+
+An earlier version of this check read the diff text instead, which meant it saw nothing at
+all once the change was committed and the working tree was clean: any committed change to
+`package.json` was waved through while the check printed a reassuring "exception used".
+Found by the independent review of iteration 00, and the reason the rule now works on
+content rather than on diffs.
 
 ## Consequences
 

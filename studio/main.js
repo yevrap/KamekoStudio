@@ -21,9 +21,19 @@ function write(name, value) {
   try { localStorage.setItem('studio_' + name, value); return true; } catch { return false; }
 }
 
+/**
+ * A stored value can be absent, stale, hand-edited or nonsense. Coerce to a
+ * sane integer rather than trusting it: "3.7" produced "Visit number 4.7", and
+ * "1e999" produced "Visit number Infinity".
+ */
+function wholeNumber(value, fallback) {
+  const n = Math.floor(Number(value));
+  return Number.isSafeInteger(n) && n >= 0 ? n : fallback;
+}
+
 function recordVisit(now = Date.now()) {
-  const first = Number(read(FIRST_VISIT)) || now;
-  const count = (Number(read(VISIT_COUNT)) || 0) + 1;
+  const first = wholeNumber(read(FIRST_VISIT), now) || now;
+  const count = wholeNumber(read(VISIT_COUNT), 0) + 1;
   const stored = write(FIRST_VISIT, String(first)) && write(VISIT_COUNT, String(count));
   return { first, count, stored };
 }
@@ -48,4 +58,4 @@ function render() {
 // Guarded so the pure helper can be imported by the unit tests, which have no DOM.
 if (typeof document !== 'undefined') render();
 
-export { describeVisit };
+export { describeVisit, wholeNumber };

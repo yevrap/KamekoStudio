@@ -112,8 +112,9 @@ Placed last, it lands in the twelfth slot — the centre of the front wall, dire
 the player's spawn point at `z = 5`, facing them when they turn around. That is a good
 place for an experimental door: found deliberately, not walked into.
 
-The colour is the studio's warm accent (`--accent-warm`, `#f0a84c`), which is the one hue
-not already used by a game portal — the nearest are Black Hole in One's `0xff9a5c` and
+The colour is the studio's warm accent as it appears on a dark ground — `--accent-warm`
+is `#f0a84c` under `body.dark-mode` and `#a25c14` in light mode, and the 3D landing page is
+always dark — which is the one hue not already used by a game portal — the nearest are Black Hole in One's `0xff9a5c` and
 Tysiacha's `0xffd54f`. If the realm's identity changes colour, this changes with it.
 
 ### What this does not need
