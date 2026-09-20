@@ -40,19 +40,27 @@ const session = {
   previous: null,
   finished: false,
   held: null,
+  // Everything currently holding the bolt — pointer ids and keys — because more
+  // than one thing can. One slot held the bolt and nothing held the cause: a
+  // second finger froze the first bolt mid-turn, lifting either finger stopped
+  // everything, and tapping Enter while Space was down ended a hold Space was
+  // still making. A turn ends when the last of these lets go.
+  causes: new Set(),
   lastFrame: 0,
-  clickAccrued: 0
+  clickAccrued: 0,
+  lastStatus: null
 };
 
 const el = id => document.getElementById(id);
 
-function loadPlate(index) {
+function loadPlate(index, options = {}) {
   session.index = index;
   session.plate = PLATES[index];
   session.coupling = couplingFor(session.plate);
   session.torque = initialTorque(session.plate);
   session.previous = null;
   session.finished = false;
+  session.lastStatus = null;
   release();
   el('plate').style.setProperty('--plate-aspect', plateAspect(session.plate));
   el('plate').innerHTML = plateMarkup(session.plate, plateState(session.plate, session.torque));
@@ -62,6 +70,27 @@ function loadPlate(index) {
   el('plate').classList.remove('is-finished');
   paint();
   renderPicker();
+  showBench(options);
+}
+
+/**
+ * Put the plate you just chose on screen, and leave focus somewhere usable.
+ *
+ * Both are consequences of the picker sitting after the bench in the document:
+ * clicking a plate scrolls the picker into view, which pushed every bolt off
+ * the top of the screen — on a phone there was nothing playable visible at all.
+ * And advancing hides the button that had focus, which dropped focus to the
+ * body and sent a keyboard player back to the top of the document.
+ *
+ * Not done on first load: arriving at the top of a page you have not read is
+ * correct, and moving focus there would be taking it for no reason.
+ */
+function showBench({ scroll = false, focus = false } = {}) {
+  if (scroll) {
+    const bench = document.querySelector('.bench');
+    if (bench) bench.scrollIntoView({ block: 'start', behavior: 'auto' });
+  }
+  if (focus) el('plate').querySelector('[data-bolt]')?.focus();
 }
 
 function renderPicker() {
@@ -100,7 +129,14 @@ function paint() {
     }
   }
 
-  el('status').textContent = statusLine(session.plate, state);
+  // Assigned only when the string changes. This is an aria-live region and
+  // paint() runs every frame: a one-second hold re-stuffed the polite queue 62
+  // times with the same sentence.
+  const line = statusLine(session.plate, state);
+  if (line !== session.lastStatus) {
+    el('status').textContent = line;
+    session.lastStatus = line;
+  }
   session.previous = state;
 
   if (state.outcome && !session.finished) finish(state.outcome);
@@ -139,21 +175,50 @@ function finish(outcome) {
 
 // --- Holding a bolt ----------------------------------------------------------
 
-function hold(boltId) {
-  if (session.finished || session.held === boltId) return;
+/**
+ * Start turning `boltId`. `cause` identifies one thing holding it — a pointer
+ * id, or the key that went down — so that releasing a *different* input does not
+ * stop this one.
+ *
+ * The previous bolt is always released first. Without that, a second input left
+ * the first bolt marked `is-turning` for the rest of the plate, its head lit,
+ * with nothing holding it.
+ */
+function hold(boltId, cause) {
+  if (session.finished) return;
+  if (session.held === boltId) {
+    // A key that repeats, or a second finger on the same bolt. Both join the
+    // hold; neither restarts it and neither replaces what is already holding it.
+    session.causes.add(cause);
+    return;
+  }
+  release();
   unlock();
   session.held = boltId;
+  session.causes = new Set([cause]);
   session.lastFrame = performance.now();
   session.clickAccrued = 0;
   el('plate').querySelector(`[data-bolt="${boltId}"]`)?.classList.add('is-turning');
   requestAnimationFrame(step);
 }
 
-function release() {
+/**
+ * One input lets go. The turn stops only when nothing is holding the bolt any
+ * more: pressing Enter while Space is down, or lifting a second finger, must not
+ * stop a turn another input is still making. Called with no cause it stops
+ * unconditionally, which is what focus loss, a finished plate and a new plate
+ * all want.
+ */
+function release(cause) {
+  if (cause !== undefined) {
+    session.causes.delete(cause);
+    if (session.held && session.causes.size > 0) return;
+  }
   if (session.held) {
     el('plate').querySelector(`[data-bolt="${session.held}"]`)?.classList.remove('is-turning');
   }
   session.held = null;
+  session.causes.clear();
 }
 
 /** One frame of turning. Elapsed time, not frame count, so the rate is the same everywhere. */
@@ -197,16 +262,22 @@ function wire() {
   const plate = el('plate');
 
   plate.addEventListener('pointerdown', event => {
-    const boltId = boltUnder(event.target);
-    if (!boltId) return;
+    const button = event.target instanceof Element ? event.target.closest('[data-bolt]') : null;
+    if (!button) return;
     event.preventDefault();
+    // preventDefault suppresses the browser's own focus, so it is done by hand.
+    // Without this a player who clicked a bolt could not then use the keyboard:
+    // activeElement was the body and holding a key did nothing.
+    button.focus();
     // Capture keeps the turn going if the finger slides off the bolt head, and
-    // guarantees the matching pointerup arrives here even so.
-    event.target.closest('[data-bolt]')?.setPointerCapture?.(event.pointerId);
-    hold(boltId);
+    // guarantees the matching pointerup arrives here even so. It is specified to
+    // throw when the pointer is already gone, and an exception here would abort
+    // the handler before the turn ever started.
+    try { button.setPointerCapture(event.pointerId); } catch { /* the turn does not depend on it */ }
+    hold(button.dataset.bolt, `pointer:${event.pointerId}`);
   });
   for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) {
-    plate.addEventListener(type, release);
+    plate.addEventListener(type, event => release(`pointer:${event.pointerId}`));
   }
 
   // A key that repeats holds; the first repeat is not waited for, so a single
@@ -216,27 +287,29 @@ function wire() {
     const boltId = boltUnder(event.target);
     if (!boltId) return;
     event.preventDefault();
-    hold(boltId);
+    hold(boltId, `key:${event.key}`);
   });
-  plate.addEventListener('keyup', event => {
-    if (event.key === ' ' || event.key === 'Enter') release();
-  });
-  // Tabbing away mid-hold, or the window losing focus, must stop the turn.
-  plate.addEventListener('focusout', release);
-  window.addEventListener('blur', release);
+  // Only the key that started the hold ends it. Tapping Enter while Space was
+  // down used to stop the turn with Space still physically pressed, and the only
+  // way back was to release and press again.
+  plate.addEventListener('keyup', event => release(`key:${event.key}`));
+  // Tabbing away mid-hold, or the window losing focus, must stop the turn —
+  // unconditionally, because there is no input left to attribute it to.
+  plate.addEventListener('focusout', () => release());
+  window.addEventListener('blur', () => release());
   document.addEventListener('visibilitychange', () => { if (document.hidden) release(); });
 
   el('picker').addEventListener('click', event => {
     const button = event.target.closest('[data-plate]');
     if (!button || button.disabled) return;
     unlock();
-    loadPlate(Number(button.dataset.plate));
+    loadPlate(Number(button.dataset.plate), { scroll: true, focus: true });
   });
 
-  el('restart').addEventListener('click', () => { unlock(); loadPlate(session.index); });
+  el('restart').addEventListener('click', () => { unlock(); loadPlate(session.index, { focus: true }); });
   el('advance').addEventListener('click', () => {
     unlock();
-    if (session.index + 1 < PLATES.length) loadPlate(session.index + 1);
+    if (session.index + 1 < PLATES.length) loadPlate(session.index + 1, { scroll: true, focus: true });
   });
 
   const mute = el('mute');
