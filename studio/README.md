@@ -17,9 +17,7 @@ This file covers what is in this folder and the rules that apply to its code.
 | `shelf-data.js` | The only place a shelf entry, the pulse line or the retro line is declared. Adding a game is one entry here. |
 | `shelf.js` | Pure functions from that data to markup. No DOM, so every rendered state is unit-tested without a browser. |
 | `main.js` | The only file that touches the document, plus the visit logbook that exercises the storage rule. |
-
-The shelf is empty today: the realm has no games yet, and an empty shelf renders as an
-empty shelf. Nothing on this page is invented to fill it.
+| `games/overtighten/` | *Overtighten* — the studio's first experiment. See below. |
 
 ### The status tags
 
@@ -33,9 +31,33 @@ empty shelf. Nothing on this page is invented to fill it.
 Any other value is rendered as written, outlined in the worklight colour, rather than
 dropped: a mistake in the data belongs on the page where it can be seen.
 
-Games will live in `studio/games/<name>/`, one directory each, following the same
-convention as the production arcade: native ES modules split by concern
-(`constants.js`, `state.js`, `gameplay.js`, `ui.js`, `main.js`).
+## The games
+
+Games live in `studio/games/<name>/`, one directory each, following the same convention as
+the production arcade: native ES modules split by concern (`constants.js`, `state.js`,
+`gameplay.js`, `ui.js`, `main.js`).
+
+### `games/overtighten/` — PROTOTYPE
+
+A plate of bolts. Holding a bolt turns it and its torque climbs; every bolt it is coupled
+to loosens while you hold. Each bolt has a tolerance band and all of them must end inside
+their bands at once. Torque only goes onto a bolt directly and only comes off it by
+turning a neighbour, so a plate is an ordering puzzle with an analog release on top. Past
+the strip point a thread is ruined and the plate is lost.
+
+| File | What it is |
+|---|---|
+| `constants.js` | Tuning and the plates. Adding a plate is one entry; `x`/`y` are fractions of the field, so nothing here is in pixels. |
+| `gameplay.js` | The torque rules. Pure, no DOM, no time — `main.js` converts held milliseconds into an amount and calls `turn`. |
+| `state.js` | Progress and unlocking, pure. Every stored value is treated as something a person may have edited. |
+| `ui.js` | Markup from model state. No DOM, so every rendered state is unit-tested. |
+| `main.js` | The only file that touches the document: input, the turn loop, storage. |
+| `sfx.js` | Synthesized audio. No context exists until a user gesture creates one. |
+
+Two properties of every shipped plate are tested rather than assumed: a solver proves each
+one can be cleared from zero without stripping a thread, and a second test proves none of
+them can be cleared by holding each bolt once — which is the design hypothesis, that the
+coupling is the mechanic and not decoration. A plate that fails either does not ship.
 
 ## Rules for code in this folder
 
@@ -63,6 +85,8 @@ Documented before use, and checked by `npm run studio:check`.
 |---|---|---|---|
 | `studio_firstVisit` | `main.js` | timestamp (ms) | When this browser first opened the realm |
 | `studio_visitCount` | `main.js` | integer string | How many times it has been opened |
+| `studio_overtighten_progress` | `games/overtighten/main.js` | integer string | How many plates have been cleared. Clamped to the number of plates that exist; anything unreadable counts as none |
+| `studio_overtighten_muted` | `games/overtighten/main.js` | `'1'` or `'0'` | Whether the game's synthesized audio is muted |
 
 Clearing all game data from the settings drawer does **not** clear these: the drawer's key
 list lives in `shared/settings.js`, a production file the studio may not edit. The drawer
