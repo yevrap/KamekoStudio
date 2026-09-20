@@ -372,3 +372,69 @@ test('gameplay exception: a trailing newline is content, not noise', () => {
 test('gameplay exception: a file absent from the base revision is rejected', () => {
   assert.match(allowOnlyFrontPortalRow('', after), /did not exist at the base revision/);
 });
+
+// --- The exception, attacked ------------------------------------------------
+//
+// Every payload below defeated an earlier version of the rule, which described
+// an element as "a Vector3 call containing no parentheses". They are kept as
+// the specification of what the whitelist has to exclude.
+
+const withElement = text => after.replace('new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2)', text);
+
+test('exception: a tagged template inside the arguments is rejected', () => {
+  // fetch`...` calls without a single parenthesis.
+  assert.match(
+    allowOnlyFrontPortalRow(before, withElement('new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2 + 0*!!fetch`https://example.com/x`)')),
+    /changes beyond the front-wall portal row/);
+});
+
+test('exception: an assignment expression inside the arguments is rejected', () => {
+  assert.match(
+    allowOnlyFrontPortalRow(before, withElement('new THREE.Vector3(0, 4.0, window.__x = document.documentElement.innerHTML)')),
+    /changes beyond the front-wall portal row/);
+});
+
+test('exception: a fourth element is rejected — the approved scope is three', () => {
+  assert.match(
+    allowOnlyFrontPortalRow(before, after.replace(
+      'new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2)\n',
+      'new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2),\n        new THREE.Vector3(globalThis.x = 1, 0, 0)\n')),
+    /changes beyond the front-wall portal row/);
+});
+
+test('exception: a two-element row is rejected — the shape is exact, not a minimum', () => {
+  assert.match(
+    allowOnlyFrontPortalRow(before, after.replace(
+      '        new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2)\n', '')),
+    /changes beyond the front-wall portal row/);
+});
+
+test('exception: an argument may be arithmetic over identifiers, and nothing else', () => {
+  // The forms the real edit needs must keep working, or the whitelist is useless.
+  assert.equal(allowOnlyFrontPortalRow(before, withElement('new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2)')), null);
+  assert.equal(allowOnlyFrontPortalRow(before, withElement('new THREE.Vector3(-roomWidth/4, 4.0, roomDepth / 2 - 2.0)')), null);
+  for (const bad of ['new THREE.Vector3(0, 4.0, f(1))', 'new THREE.Vector3(0, 4.0, a ? b : c)',
+                     'new THREE.Vector3(0, 4.0, [1][0])', 'new THREE.Vector3(0, 4.0, 1; drop())',
+                     'new THREE.Vector3(0, 4.0)', 'new THREE.Vector3(0, 4.0, 1, 2)']) {
+    assert.match(allowOnlyFrontPortalRow(before, withElement(bad)), /changes beyond the front-wall portal row/, bad);
+  }
+});
+
+test('exception: leading comment lines are permitted, and bounded', () => {
+  // A comment cannot execute, and `hygiene` scans this file because it is an
+  // exception path, so smuggled *text* is caught there. Unbounded insertion is
+  // still outside the approved scope, so the block caps them.
+  const two = after.replace('    // Front wall,', '    // one\n    // two\n    // Front wall,');
+  assert.equal(allowOnlyFrontPortalRow(before, two), null);
+  const many = after.replace('    // Front wall,', '    // pad\n'.repeat(12) + '    // Front wall,');
+  assert.match(allowOnlyFrontPortalRow(before, many), /changes beyond the front-wall portal row/);
+});
+
+test('portal capacity: the same tables in a different order is reported', () => {
+  const { problems } = portalCapacity(
+    GAMEPLAY(4, { rotationsFor: ['leftPositions', 'backPositions', 'rightPositions', 'frontPositions'] }),
+    CONSTANTS(11)
+  );
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /different orders/);
+});

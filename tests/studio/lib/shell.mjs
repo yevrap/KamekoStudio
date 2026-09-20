@@ -53,7 +53,13 @@ export const git = (root, ...args) => run(gitPath(), args, { cwd: root });
  * path by one character.
  */
 export function gitRaw(root, ...args) {
-  return execFileSync(gitPath(), args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
+  // stderr is piped, not inherited: callers that expect a command to fail (a
+  // path absent at the base revision, say) would otherwise print git's error to
+  // the console before catching it, which reads like a broken run.
+  return execFileSync(gitPath(), args, {
+    cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
 }
 
 /** Does this ref exist? */
