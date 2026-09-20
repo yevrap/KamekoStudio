@@ -9,7 +9,10 @@ code works.
 - [ ] New or changed behavior is covered by a test, or the ticket states why it cannot be
       (and what was checked manually instead).
 - [ ] `npm test`, `npm run smoke` and `npm run e2e` are green.
-- [ ] `npm run studio:check` is green.
+- [ ] `npm run studio:check` is green — **at the ticket stage and at the gate stage**.
+      `npm run studio:check -- --stage=gate --skip-slow` is run on the ticket that changed
+      the code, so that a gate-only check such as `hygiene` fails on the ticket responsible
+      rather than after the work is merged. Iteration 01 learned this the expensive way.
 - [ ] Only allowed paths changed (see [`guardrails.md`](guardrails.md)).
 - [ ] Commits are conventional, scoped `studio`, and carry the ticket ID.
 - [ ] The ticket file records: what changed, what was tested, what was deferred.

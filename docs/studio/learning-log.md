@@ -48,3 +48,38 @@ that are really decisions go to `decisions/` instead.
 - **"Not run" must be reserved for things that genuinely could not run.** Reporting a
   missing Chrome as a suite *failure* makes an environment problem indistinguishable from a
   regression. The suites now skip with the reason and name what did run.
+
+## Iteration 01
+
+- **A rule that decides what may be written to a file is a whitelist, or it is a guess.**
+  The exception guarding a production file removed the approved change and compared what
+  was left against the base revision. Described as "up to the next bracket", it reverted
+  away whatever was smuggled inside the block. Narrowed to "arguments with no parentheses",
+  it still did: a tagged template calls without one and an assignment expression assigns
+  without one. An independent review put four such payloads into a file that runs on every
+  visit to the landing page, with the guard printing *exception used*. Only the third form
+  — an enumerated set of permitted tokens — held.
+- **An adversarial test must fail against the rule it attacks.** The test written to prove
+  the smuggling hole closed used `fetch("http://example.com")`, and was caught by the
+  parenthesis rather than by the block's shape. It passed against the broken rule and the
+  fixed one equally, so it measured nothing. Iteration 00's lesson was *test the input that
+  defeats the rule*; the input has to be one that actually did.
+- **Do not write "closed" before the thing that closes it has been attacked.** Three
+  documents recorded the hole as fixed while it was open. A confident record is harder to
+  doubt than a silent one.
+- **A helper that trims is not a helper for comparing files.** Byte-exact comparison
+  against `git show` output silently lost every file's final newline. The previous
+  exception never noticed because it parses JSON first. A convenience applied one layer
+  down defeated a boundary two layers up.
+- **Measure the clearance, do not reason about it — and then check which object you
+  measured.** The proposed portal row missed the nearest trophy by 0.01 in z. Reading the
+  numbers out of the running scene turned "it looks fine" into a number, and the number
+  changed the design. But the write-up then named the wrong trophy, and the review's
+  correction named the wrong portal; only recomputing every pair settled it. The built
+  portals were clear; the *reserved* twelfth slot was the one that overlapped.
+- **A gate-stage check has to be run at the gate stage before the work is merged.** Every
+  ticket recorded `--stage=ticket` evidence, so `hygiene` first failed after three tickets
+  had landed, on a regex the iteration itself had added.
+- **An empty state is a deliverable.** The shelf shipped with nothing on it. Building the
+  component, testing every state it can reach, and rendering an honest "nothing here yet"
+  is finished work; inventing entries to make a screenshot look better would not have been.

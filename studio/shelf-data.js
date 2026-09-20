@@ -27,8 +27,8 @@ export const PULSE = {
  * updating this line fails before it reaches the page.
  */
 export const LEARNED = {
-  iteration: '00',
-  line: 'A check that is only exercised by the input it was written for proves nothing: test the input that defeats the rule.'
+  iteration: '01',
+  line: 'An adversarial test has to fail against the rule it is attacking. One that passes against the old rule and the new one proves nothing about the fix.'
 };
 
 /**
