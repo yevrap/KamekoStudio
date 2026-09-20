@@ -17,25 +17,25 @@ TD-002 and surveyed in `../00/findings-3d.md`; the fix was approved by the execu
 
 ## Acceptance criteria
 
-- [ ] `createEnvironment()` builds a front-wall position row of three, taking the room from
+- [x] `createEnvironment()` builds a front-wall position row of three, taking the room from
       nine portal slots to twelve, with a matching rotation so the portals face into the
       room.
-- [ ] Every entry in `ARCADE_GAMES` gets a portal: the two previously dropped games appear,
+- [x] Every entry in `ARCADE_GAMES` gets a portal: the two previously dropped games appear,
       and no existing portal moves.
-- [ ] The front-wall positions clear the trophy shelf: they sit above its top surface and
+- [x] The front-wall positions clear the trophy shelf: they sit above its top surface and
       inside the room's height, verified against the room and shelf dimensions in the same
       file.
-- [ ] `shared/3d/constants.js` is unchanged — no game-list entry is added, and the twelfth
+- [x] `shared/3d/constants.js` is unchanged — no game-list entry is added, and the twelfth
       slot stays empty.
-- [ ] The path exception for `shared/3d/gameplay.js` is recorded in `guardrails.md` and in
+- [x] The path exception for `shared/3d/gameplay.js` is recorded in `guardrails.md` and in
       the guard itself, is scoped to this single change by comparing the file's content
       against the base revision, and is reported as *used* rather than passing silently.
-- [ ] A `portal-capacity` check fails when `ARCADE_GAMES` has more entries than
+- [x] A `portal-capacity` check fails when `ARCADE_GAMES` has more entries than
       `createEnvironment()` has positions, and is unit tested against a source that
       overflows as well as one that fits.
-- [ ] The exception rejects any other edit to `shared/3d/gameplay.js`, proven by a unit test
+- [x] The exception rejects any other edit to `shared/3d/gameplay.js`, proven by a unit test
       that feeds it one.
-- [ ] `npm test`, `npm run smoke` and `npm run e2e` stay green.
+- [x] `npm test`, `npm run smoke` and `npm run e2e` stay green.
 
 ## Evidence plan
 
@@ -84,7 +84,7 @@ TD-002 and surveyed in `../00/findings-3d.md`; the fix was approved by the execu
   - `portal-capacity` **failed first, against the real defect** —
     *"11 games but only 9 portal slots — the last 2 would be dropped silently"* — and
     passes after the fix: *"11 game(s), 12 portal slot(s) — every game has a door."*
-  - 13 new unit tests in `rules.test.mjs`: capacity on a fitting page, on the nine-slot
+  - 12 new unit tests in `rules.test.mjs`: capacity on a fitting page, on the nine-slot
     page, on exact fit, on a position row with no matching rotation row, and on three
     unreadable sources; the exception against the approved edit, an unchanged file, a
     smuggled unrelated edit, tampering *inside* the approved block, a deleted line
@@ -94,7 +94,9 @@ TD-002 and surveyed in `../00/findings-3d.md`; the fix was approved by the execu
     including Black Hole in One and Maze Warden, which had none before. No page errors.
   - Bounding boxes measured with all five trophies spawned; front portals span y 2.735 to
     5.265 (room height 6) and z 9.61 to 10.39, against a shelf at z 10.5 to 12 and trophies
-    from z 10.92.
+    from z 10.92. The clearance figures first written here were wrong in detail and are
+    corrected on SS-016: at the proposed position the built portals were clear by 0.01 in z,
+    and it was the *reserved* twelfth slot that overlapped the tallest trophy.
   - `npm test` 525 passed, `npm run smoke` green, `npm run e2e` 23 tests green.
   - `npm run studio:check -- --stage=ticket` green, with the exception reported as *used*.
 

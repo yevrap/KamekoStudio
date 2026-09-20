@@ -87,35 +87,11 @@ main {
 
 /* ---- Type ---- */
 
-.eyebrow {
-  margin: 0 0 6px;
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-}
-
-h1 {
-  margin: 0 0 12px;
-  font-size: clamp(2rem, 8vw, 2.75rem);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.lede {
-  margin: 0 0 28px;
-  font-size: 1.05rem;
-  color: var(--ink-dim);
-}
-
 /* Versions, iteration numbers and dates are stamped, not written. */
-.mono, time, code {
+.mono, time {
   font-family: var(--mono);
   font-size: 0.85em;
 }
-
-code { color: var(--ink-dim); }
 
 /* ---- Surfaces ---- */
 
@@ -127,8 +103,6 @@ code { color: var(--ink-dim); }
   box-shadow: var(--lift);
 }
 
-.card + .card { margin-top: 16px; }
-
 .card h2 {
   margin: 0 0 10px;
   font-size: 1rem;
@@ -137,40 +111,14 @@ code { color: var(--ink-dim); }
 
 .card p:last-child, .card ul:last-child { margin-bottom: 0; }
 
-hr {
-  height: 0;
-  margin: 28px 0;
-  border: 0;
-  border-top: 1px solid var(--rule);
-}
-
-ul { padding-left: 1.1em; margin: 0 0 12px; }
-li { margin-bottom: 6px; }
-
 /* ---- Interactive: teal, and nothing else ---- */
 
 a { color: var(--accent); }
 
-a:focus-visible, .pill:focus-visible {
+a:focus-visible {
   outline: 2px solid var(--worklight);
   outline-offset: 3px;
 }
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 18px;
-  border: 1px solid var(--edge);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink);
-  font: inherit;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.pill:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ---- The paper tag ---- */
 
@@ -231,8 +179,12 @@ footer a {
 
 .back:hover { text-decoration: underline; }
 
+/* The page's one h1. It names the place rather than shouting it: the dominant
+   text on the page is the pulse line, which is what the page is actually
+   telling you today. */
 .wordmark {
   margin: 0;
+  font-weight: 600;
   font-family: var(--mono);
   font-size: 0.8rem;
   letter-spacing: 0.12em;

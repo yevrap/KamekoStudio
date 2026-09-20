@@ -18,8 +18,18 @@ export const PULSE = {
   summary: 'Gave the realm its Backstage identity and this shelf, and restored two arcade games that the 3D landing page had been silently dropping.'
 };
 
-/** One line from the most recent retrospective. What the team changed about itself. */
-export const LEARNED = 'A check that is only exercised by the input it was written for proves nothing: test the input that defeats the rule.';
+/**
+ * One line from the most recent retrospective. What the team changed about itself.
+ *
+ * Carries the iteration it came from for the same reason PULSE does: a free
+ * string on a live page goes stale silently. A test ties `iteration` to the
+ * newest iteration that has actually written a retro, so shipping one without
+ * updating this line fails before it reaches the page.
+ */
+export const LEARNED = {
+  iteration: '00',
+  line: 'A check that is only exercised by the input it was written for proves nothing: test the input that defeats the rule.'
+};
 
 /**
  * The shelf. One entry per piece of work.
