@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Overtighten — Shadow Studio</title>
+<meta name="description" content="Seat every bolt inside its band. Tightening any bolt loosens the ones it is coupled to.">
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="chrome">
+  <a class="back" href="../../">← Studio</a>
+  <h1 class="wordmark">Overtighten</h1>
+</header>
+
+<main>
+  <p class="tag-line">
+    <span class="status">PROTOTYPE</span>
+    Seat every bolt inside its band — all of them at once. Turning any bolt loosens the ones
+    it is coupled to, and past the strip point a thread is gone.
+  </p>
+
+  <!-- Filled and revealed by main.js, so the no-JS page shows its explanation
+       instead of an empty bench with controls that do nothing. -->
+  <section id="game" class="game" hidden>
+    <div class="bench">
+      <h2 class="bench-title" id="plate-name"></h2>
+      <p class="bench-hint" id="plate-hint"></p>
+
+      <div class="plate" id="plate" role="group" aria-label="The plate"></div>
+
+      <p class="status-line mono" id="status" role="status" aria-live="polite"></p>
+
+      <div class="controls">
+        <button type="button" class="action" id="restart">Start this plate again</button>
+        <button type="button" class="action quiet" id="mute" aria-pressed="false">Sound on</button>
+      </div>
+    </div>
+
+    <div class="outcome card" id="outcome" tabindex="-1" hidden>
+      <h2 id="outcome-title"></h2>
+      <p id="outcome-line"></p>
+      <p id="outcome-all" hidden>All three plates seated. That is every plate this
+        experiment has — there is no progression layer behind it yet, on purpose.</p>
+      <button type="button" class="action" id="advance" hidden></button>
+    </div>
+
+    <nav class="picker" id="picker" aria-label="Plates"></nav>
+  </section>
+
+  <section class="card notes">
+    <h2>What this is</h2>
+    <p>
+      The first experiment built by the studio's own team. It exists to find out whether one
+      idea holds up: that the interesting part of tightening a plate is the <em>coupling</em>
+      between bolts, not the timing of a release. Torque only goes onto a bolt directly, and
+      only comes off it by turning one of its neighbours — so an overshoot is recoverable,
+      but never for free.
+    </p>
+    <p>
+      Each plate's bolts, bands and couplings are one entry in a data file, and a solver
+      proves every shipped plate can be cleared from zero without stripping a thread. A
+      second test proves the opposite of the lazy case: none of them can be cleared by
+      holding each bolt once. If that test ever passes, the coupling has become decoration.
+    </p>
+    <p class="how">
+      <a href="https://github.com/yevrap/KamekoStudio/tree/main/studio/games/overtighten">Source →</a>
+      <span class="how-note">and the team's handbook, tickets and reviews in
+        <a href="https://github.com/yevrap/KamekoStudio/tree/main/docs/studio">docs/studio</a>.</span>
+    </p>
+  </section>
+
+  <noscript>
+    <p class="empty">
+      Overtighten builds its plates in the browser from a data file, so it needs JavaScript
+      to be playable. The design, the plates and the tests that prove each one solvable are
+      readable without it:
+      <a href="https://github.com/yevrap/KamekoStudio/tree/main/studio/games/overtighten">read the source on GitHub</a>.
+    </p>
+  </noscript>
+</main>
+
+<footer>
+  <p>
+    An experiment in <a href="../../">Shadow Studio</a> · part of
+    <a href="../../../">Kameko Studio</a>
+  </p>
+</footer>
+
+<script src="main.js" type="module"></script>
+<script src="../../../shared/settings.js" data-gallery-depth="3"></script>
+</body>
+</html>

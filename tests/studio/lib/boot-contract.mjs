@@ -216,6 +216,41 @@ export function judgeKilledTreatment(killed, live) {
 }
 
 /**
+ * Overtighten, on top of the generic rules.
+ *
+ * A game's page can boot perfectly and still not be a game, so this asserts the
+ * mechanic rather than the markup: that holding turns a bolt by pointer and by
+ * keyboard, that turning one bolt visibly loosens the one it is coupled to, and
+ * that turning past the strip point ends the plate. The coupling assertion is
+ * the one that matters — it is the design hypothesis, and a build where it
+ * quietly stopped happening would look identical from the outside.
+ */
+export function judgeOvertighten(obs = {}) {
+  const game = obs.game;
+  if (!game) return ['the game was never driven: no observation was collected'];
+  const fail = [];
+
+  if (!(game.bolts > 0)) fail.push('the plate rendered no bolts');
+  if (!(game.lockedPicks > 0)) {
+    fail.push('no plate is locked on a fresh profile: the plates are not gated at all');
+  }
+  if (!game.keyboardTurned) {
+    fail.push('holding a key on a focused bolt did not turn it: the game is unplayable without a pointer');
+  }
+  if (!game.pointerTurned) fail.push('holding the pointer on a bolt did not turn it');
+  if (!game.couplingObserved) {
+    fail.push('turning a bolt did not loosen the bolt it is coupled to — the mechanic is not running');
+  }
+  if (!game.released) {
+    fail.push('the bolt kept turning after the input stopped');
+  }
+  if (!game.strippedEndsPlate) {
+    fail.push('turning past the strip point did not end the plate');
+  }
+  return fail;
+}
+
+/**
  * Page-specific contracts, by path relative to the repository root. A page with
  * no entry here is still judged by `judgeGeneric` — discovery is what grants
  * coverage, so a page added later cannot arrive uncovered. The check's report
@@ -223,7 +258,8 @@ export function judgeKilledTreatment(killed, live) {
  * a visible state rather than a silent one.
  */
 export const SPECIFIC = {
-  'studio/index.html': { name: 'the realm home', judge: judgeHome }
+  'studio/index.html': { name: 'the realm home', judge: judgeHome },
+  'studio/games/overtighten/index.html': { name: 'Overtighten', judge: judgeOvertighten }
 };
 
 /** The full judgement for one page: the generic contract, plus its own if it has one. */

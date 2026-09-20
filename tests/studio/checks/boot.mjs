@@ -211,6 +211,72 @@ async function observeHome(browser, url) {
   return { ...live, shelfTracks, ...cards };
 }
 
+/**
+ * Overtighten, driven. Holding is the whole interface, so it is held: once with
+ * a key on a focused bolt, once with the pointer on the bolt coupled to it, and
+ * once for long enough to strip a thread. The numbers come off the readouts,
+ * which is what a player reads too.
+ */
+async function observeOvertighten(browser, url) {
+  const page = await browser.newPage();
+  await page.setViewport({ width: 420, height: 900 });
+  await page.goto(url, { waitUntil: 'networkidle2' });
+  await settle();
+
+  const readouts = () => page.evaluate(() =>
+    Object.fromEntries([...document.querySelectorAll('[data-readout]')]
+      .map(el => [el.dataset.readout, Number.parseFloat(el.textContent) || 0])));
+  const boltIds = await page.evaluate(() =>
+    [...document.querySelectorAll('[data-bolt]')].map(el => el.dataset.bolt));
+  const lockedPicks = await page.evaluate(() =>
+    document.querySelectorAll('#picker [data-plate][disabled]').length);
+
+  // Keyboard: focus the first bolt and hold space. A key repeat is what a held
+  // key produces, which is why the game cannot rely on click alone.
+  await page.focus(`[data-bolt="${boltIds[0]}"]`);
+  await page.keyboard.down(' ');
+  await settle(500);
+  await page.keyboard.up(' ');
+  const afterKey = await readouts();
+  await settle(250);
+  const afterRelease = await readouts();
+
+  // Pointer on the second bolt, which the first is coupled to on every plate
+  // that ships. The first bolt must lose torque while the second gains it.
+  const box = await page.$eval(`[data-bolt="${boltIds[1]}"]`, el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  await page.mouse.move(box.x, box.y);
+  await page.mouse.down();
+  await settle(500);
+  await page.mouse.up();
+  const afterPointer = await readouts();
+
+  // Past the strip point: the bands top out at 92 and the rate is 42/s, so three
+  // more seconds of holding is unambiguous.
+  await page.mouse.down();
+  await settle(3000);
+  await page.mouse.up();
+  const ended = await page.evaluate(() => {
+    const panel = document.getElementById('outcome');
+    return Boolean(panel && !panel.hidden && /strip/i.test(panel.innerText));
+  });
+
+  await page.close();
+  return {
+    game: {
+      bolts: boltIds.length,
+      lockedPicks,
+      keyboardTurned: afterKey[boltIds[0]] > 0,
+      released: afterRelease[boltIds[0]] === afterKey[boltIds[0]],
+      pointerTurned: afterPointer[boltIds[1]] > 0,
+      couplingObserved: afterPointer[boltIds[0]] < afterKey[boltIds[0]],
+      strippedEndsPlate: ended
+    }
+  };
+}
+
 async function run(ctx) {
   if (ctx.offline) {
     return { status: 'skip', detail: 'needs a browser; --offline was passed' };
@@ -235,6 +301,9 @@ async function run(ctx) {
         withoutStorage: await observeWithoutStorage(browser, url)
       };
       if (pagePath === 'studio/index.html') Object.assign(obs, await observeHome(browser, url));
+      if (pagePath === 'studio/games/overtighten/index.html') {
+        Object.assign(obs, await observeOvertighten(browser, url));
+      }
       results.push(judgePage(pagePath, obs));
     }
   } finally {

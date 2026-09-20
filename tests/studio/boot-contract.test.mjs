@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MIN_TARGET, NARROW_WIDTH, SHELF_BREAKPOINTS,
-  judgeGeneric, judgeHome, judgeKilledTreatment, judgePage
+  judgeGeneric, judgeHome, judgeKilledTreatment, judgeOvertighten, judgePage
 } from './lib/boot-contract.mjs';
 
 /** A page that holds every generic rule. Each test spoils exactly one thing. */
@@ -162,4 +162,48 @@ test('a fixture that did not render is a failure, not an empty pass', () => {
 test('an empty observation fails loudly rather than quietly', () => {
   assert.ok(judgeGeneric({}).length >= 5);
   assert.ok(judgePage('studio/index.html', {}).failures.length >= 8);
+});
+
+// ---- The game's own contract -------------------------------------------------
+
+test('a game that was never driven fails rather than passing empty', () => {
+  const fail = judgeOvertighten({});
+  assert.equal(fail.length, 1);
+  assert.match(fail[0], /never driven/);
+});
+
+test('a fully working game produces no failures', () => {
+  assert.deepEqual(judgeOvertighten({ game: playing() }), []);
+});
+
+function playing(overrides = {}) {
+  return {
+    bolts: 2, lockedPicks: 2, keyboardTurned: true, released: true,
+    pointerTurned: true, couplingObserved: true, strippedEndsPlate: true, ...overrides
+  };
+}
+
+test('each way the mechanic can stop running is reported as itself', () => {
+  const cases = [
+    ['bolts', 0, /rendered no bolts/],
+    ['lockedPicks', 0, /not gated at all/],
+    ['keyboardTurned', false, /unplayable without a pointer/],
+    ['pointerTurned', false, /holding the pointer on a bolt did not turn it/],
+    ['couplingObserved', false, /the mechanic is not running/],
+    ['released', false, /kept turning after the input stopped/],
+    ['strippedEndsPlate', false, /did not end the plate/]
+  ];
+  for (const [field, value, pattern] of cases) {
+    const fail = judgeOvertighten({ game: playing({ [field]: value }) });
+    assert.equal(fail.length, 1, `${field} produced ${fail.length} failures`);
+    assert.match(fail[0], pattern);
+  }
+});
+
+test('the game page is judged by its own contract, not only the generic one', () => {
+  const verdict = judgePage('studio/games/overtighten/index.html', { game: playing() });
+  assert.equal(verdict.contract, 'Overtighten');
+  // The generic rules still apply on top: an observation with a working game and
+  // nothing else is not a page that passed.
+  assert.ok(verdict.failures.length >= 4);
 });
