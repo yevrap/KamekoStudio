@@ -438,3 +438,44 @@ test('portal capacity: the same tables in a different order is reported', () => 
   assert.equal(problems.length, 1);
   assert.match(problems[0], /different orders/);
 });
+
+// --- The capacity rule, attacked ---------------------------------------------
+//
+// Each of these reported a full room while the page would still drop games.
+// They came from an independent QA pass and are kept as the rule's spec.
+
+test('capacity: an entry whose first key is not `name` still counts', () => {
+  // The rule counted /\{\s*name\s*:/ — so { url, name, color }, which is valid
+  // and which nothing in production forbids, was invisible to it.
+  const reordered = `export const ARCADE_GAMES = [\n${
+    Array.from({ length: 11 }, (_, i) => `    { url: "games/g${i}/", name: "G${i}", color: 0 }`).join(',\n')
+  }\n];\n`;
+  assert.equal(portalCapacity(GAMEPLAY(4), reordered).games, 11);
+  assert.match(portalCapacity(GAMEPLAY(3), reordered).problems.join(), /11 games but only 9 portal slots/);
+});
+
+test('capacity: a positions table that is truncated as it is built is reported', () => {
+  const sliced = GAMEPLAY(4).replace('...frontPositions];', '...frontPositions].slice(0, 9);');
+  assert.match(portalCapacity(sliced, CONSTANTS(11)).problems.join(),
+    /could not find the positions table as a plain array of spreads/);
+});
+
+test('capacity: a positions table shortened afterwards is reported', () => {
+  const shortened = GAMEPLAY(4).replace('    const rotations = [', '    positions.length = 9;\n    const rotations = [');
+  assert.match(portalCapacity(shortened, CONSTANTS(11)).problems.join(), /shortened after it is built/);
+});
+
+test('capacity: a commented-out position is not a slot', () => {
+  const holed = GAMEPLAY(4).replace(
+    '        new THREE.Vector3(0, 2.5, 0),\n        new THREE.Vector3(1, 2.5, 1),',
+    '        // new THREE.Vector3(0, 2.5, 0),\n        // new THREE.Vector3(1, 2.5, 1),');
+  const { slots, problems } = portalCapacity(holed, CONSTANTS(11));
+  assert.equal(slots, 10);
+  assert.match(problems.join(), /11 games but only 10 portal slots/);
+});
+
+test('capacity: the positions table may hold only spreads', () => {
+  const inlined = GAMEPLAY(3).replace('...backPositions];', '...backPositions, someOtherThing];');
+  assert.match(portalCapacity(inlined, CONSTANTS(9)).problems.join(),
+    /holds something other than spreads: \.\.\.leftPositions/);
+});
