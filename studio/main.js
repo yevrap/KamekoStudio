@@ -1,8 +1,14 @@
-// Shadow Studio — placeholder page behavior.
+// Shadow Studio — the realm's home page.
 //
-// Deliberately tiny. Its one job beyond rendering is to exercise the storage
-// namespace rule with real keys, so that `npm run studio:check` is verifying
-// something rather than passing on an empty folder.
+// Everything on this page comes from shelf-data.js through the pure functions
+// in shelf.js; this file is the only one that touches the document. Keeping the
+// split means every rendered state — each status, an unrecognised one, the
+// empty shelf — is unit-testable without a browser.
+
+import { PULSE, LEARNED, SHELF } from './shelf-data.js';
+import { pulseMarkup, shelfMarkup } from './shelf.js';
+
+// --- Storage -----------------------------------------------------------------
 //
 // The namespace is applied inside these two wrappers and is never passed in, so
 // a caller cannot reach a production key even by accident — and because the
@@ -45,17 +51,32 @@ function describeVisit({ first, count }, now = Date.now()) {
   return `Visit number ${count}. The first one was ${since}.`;
 }
 
-function render() {
-  const visit = recordVisit();
-  if (!visit.stored) return; // storage unavailable — the page is complete without it
-  const card = document.getElementById('visits-card');
-  const text = document.getElementById('visits-text');
-  if (!card || !text) return;
-  text.textContent = describeVisit(visit);
-  card.hidden = false;
+// --- Rendering ---------------------------------------------------------------
+
+function fill(id, markup) {
+  const el = document.getElementById(id);
+  if (el) el.innerHTML = markup;
 }
 
-// Guarded so the pure helper can be imported by the unit tests, which have no DOM.
+function render() {
+  fill('pulse', pulseMarkup(PULSE));
+  fill('shelf-region', shelfMarkup(SHELF));
+
+  const learned = document.getElementById('learned');
+  if (learned) learned.textContent = LEARNED;
+
+  // The visit line is the realm's logbook, and the reason the storage rule has
+  // something real to check. It is a footnote, not a card: if storage is
+  // unavailable the page is complete without it.
+  const visit = recordVisit();
+  const line = document.getElementById('visits');
+  if (visit.stored && line) {
+    line.textContent = describeVisit(visit);
+    line.hidden = false;
+  }
+}
+
+// Guarded so the pure helpers can be imported by the unit tests, which have no DOM.
 if (typeof document !== 'undefined') render();
 
 export { describeVisit, wholeNumber };

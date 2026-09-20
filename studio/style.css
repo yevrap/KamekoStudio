@@ -203,6 +203,170 @@ footer a {
   padding: 0 2px;
 }
 
+/* ---- The realm's own chrome ------------------------------------------------
+ *
+ * Leaving is never a hunt: the way back is the first thing in the document and
+ * stays on screen without scrolling. It sits below the top-left corner rather
+ * than in it, because the arcade's settings control is fixed there. */
+
+.chrome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: var(--measure);
+  margin: 0 auto 28px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px 0 0;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back:hover { text-decoration: underline; }
+
+.wordmark {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* ---- The pulse: the realm's one live line ---- */
+
+.pulse { margin: 0 0 32px; }
+
+.pulse-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+
+.pulse-summary {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.45;
+  max-width: 40rem;
+}
+
+.section-title {
+  margin: 0 0 12px;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  font-weight: 400;
+}
+
+/* ---- The shelf ----
+ *
+ * One column on a phone, two from 520px, three from 900px. */
+
+.shelf {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+@media (min-width: 520px) { .shelf { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .shelf { grid-template-columns: repeat(3, 1fr); } }
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--lift);
+}
+
+.item h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.25;
+}
+
+.item .status { align-self: flex-start; }
+
+.item .blurb {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.95rem;
+}
+
+.item .meta {
+  margin: auto 0 0;
+  padding-top: 4px;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+/* Killed work stays on the shelf: visible as history, absent as an offer.
+   It recedes by losing its surface and its lift — the card sinks back into the
+   bench instead of sitting on it — rather than by fading its text. Fading was
+   the first attempt and it put the blurb at 3.7:1 in both themes; history a
+   reader cannot read is not history. Text here stays at full strength:
+   ink-dim on the ground measures 6.59:1 light and 6.85:1 dark. */
+.item.is-killed {
+  background: transparent;
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.item.is-killed h3 { color: var(--ink-dim); font-weight: 600; }
+
+.item.is-killed .status {
+  background: transparent;
+  color: var(--ink-dim);
+  border: 1px dashed var(--rule);
+  padding: 2px 9px;
+}
+
+/* A status the data made up. Loud on purpose: a mistake in the data should be
+   visible on the page, not swallowed by it. */
+.item.is-unknown .status {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--worklight);
+}
+
+.empty {
+  margin: 0;
+  padding: 20px;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius);
+  color: var(--ink-dim);
+}
+
+.learned { margin-top: 32px; }
+
+.how { margin: 24px 0 0; }
+
+/* A standalone navigation link, not a link inside prose — so it carries the
+   same 44px target as a button, exactly as the footer links do. */
+.how a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+}
+.how-note { display: block; margin-top: 2px; color: var(--ink-dim); font-size: 0.85rem; }
+
+footer p { margin: 0 0 4px; }
+footer #visits { color: var(--ink-dim); font-size: 0.75rem; }
+
 /* ---- Motion: things settle onto the bench. Nothing pulses, nothing glows. ---- */
 
 @media (prefers-reduced-motion: no-preference) {
