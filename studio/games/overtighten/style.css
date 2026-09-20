@@ -56,10 +56,12 @@ body.dark-mode {
 
 /* ---- The plate --------------------------------------------------------------
  *
- * A square field the bolts are positioned inside as percentages, so the layout
- * is the same shape on a phone and on a desktop and the data file never needs a
- * pixel. It is capped so the bolts stay a thumb's width apart rather than
- * drifting to the corners of a wide screen. */
+ * A field the bolts are positioned inside as percentages, so the layout is the
+ * same shape on a phone and on a desktop and the data file never needs a pixel.
+ * Square by default; a plate whose bolts sit on one line asks for a wider one
+ * through --plate-aspect, so it is a frame around the bolts rather than a fixed
+ * shape they rattle inside. Capped so the bolts stay a thumb's width apart
+ * rather than drifting to the corners of a wide screen. */
 
 .plate {
   position: relative;

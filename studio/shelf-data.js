@@ -3,7 +3,7 @@
 // This is the only file that declares what is on the shelf. Adding a game is
 // one entry here and no markup anywhere: studio/shelf.js turns each entry into
 // a card. Nothing in this file is invented — an empty shelf renders as an empty
-// shelf, which is the honest state of the realm today.
+// shelf, and a blurb says what a thing is rather than what it was meant to be.
 
 /**
  * What the company is doing right now. The realm's one live line.
@@ -27,8 +27,8 @@ export const PULSE = {
  * updating this line fails before it reaches the page.
  */
 export const LEARNED = {
-  iteration: '01',
-  line: 'An adversarial test has to fail against the rule it is attacking. One that passes against the old rule and the new one proves nothing about the fix.'
+  iteration: '02',
+  line: 'A test that defends a design has to be able to fail. Ours fixed the one variable the player was free to choose, and so proved something much smaller than the claim written above it.'
 };
 
 /**
@@ -43,4 +43,13 @@ export const LEARNED = {
  * - `url` is relative to studio/. An entry without one renders as a card that
  *   is not a link, which is what a prototype with nothing to open looks like.
  */
-export const SHELF = [];
+export const SHELF = [
+  {
+    title: 'Overtighten',
+    status: 'PROTOTYPE',
+    blurb: 'Hold a bolt to turn it; every bolt it is coupled to loosens while you hold. Seat them all inside their bands at once. Built to test whether the coupling would make it an ordering puzzle — it does not, and the page says so.',
+    iteration: '02',
+    changed: '2026-09-20',
+    url: 'games/overtighten/'
+  }
+];

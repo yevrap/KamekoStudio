@@ -3,6 +3,83 @@
 All notable changes to Shadow Studio, one section per iteration. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are iteration tags.
 
+## [studio-iteration-02] — 2026-09-20
+
+The shelf gets its first experiment, the realm gets boot coverage, and the experiment
+returns a "no".
+
+### Added
+
+- **`studio-boot`** — a self-check that opens every `index.html` found by walking
+  `studio/**` in a real headless Chrome, three times: ordinarily, with scripting disabled,
+  and with every `localStorage` accessor throwing. Pages are discovered rather than listed,
+  so a page added later arrives covered. It proves no uncaught error, no `console.error`, no
+  failed request, a back link, 44px targets and no sideways scroll at 320px, a `noscript`
+  fallback that says something, and — on the realm home — that the page ran its own script,
+  that the shelf holds its three column counts either side of both breakpoints, and that a
+  killed card reads differently from a live one. Closes TD-004: the eight mutations an
+  independent QA pass had named as surviving the entire repository suite all fail it.
+- **Overtighten**, at `studio/games/overtighten/` — the studio's first game and the first
+  entry on the shelf. A plate of bolts; holding one turns it and loosens every bolt it is
+  coupled to; all of them must end inside their tolerance bands at once, and past the strip
+  point a thread is gone. The torque rules, the progress rules and the markup are pure and
+  unit-tested; one file touches the document. Three plates, each proved reachable from zero
+  without stripping.
+
+### Changed
+
+- The realm's home page shows its first card, and the empty state it shipped with in
+  iteration 01 is no longer what the page renders.
+- **Overtighten's own page describes what the game turned out to be rather than what it was
+  designed to be.** See below.
+
+### Fixed
+
+- **The boot check's one exemption was defeatable.** It waived uncaught throws from
+  production's `shared/settings.js` (TD-005, a file outside the path guard) by matching any
+  path *ending* in that name — so `studio/games/x/shared/settings.js`, a file the studio may
+  create at will, claimed it. Both independent reviews built exactly that file, threw
+  uncaught from it, and watched the check pass. It is now anchored to the page's own origin
+  and the exact served path and fails closed. `firstFrame` also did not return the first
+  frame. None of the five classifiers had a test; ten now exist, each built from a bypass a
+  review demonstrated.
+- **Three blind spots in the same check**, each found by mutating `studio/**` and watching
+  the whole ticket stage pass: an invisible control was excluded from the 44px rule rather
+  than failing it, so `opacity: 0` over the plate was an escape; the phase that drives the
+  game collected no errors; the pointer release was sampled at the moment of release, so
+  deleting the release listeners — which makes every tap destroy the plate — passed. And
+  persistence is now proved by a reload rather than by a write.
+- **Seven input and focus defects in Overtighten.** A bolt was held by one slot with nothing
+  recording what held it, so a second finger froze the first bolt and left it drawn as
+  turning, and tapping Enter while Space was down ended a hold Space was still making;
+  a bolt is now held by a set of causes and the turn ends when the last lets go. A pointer
+  press never focused the bolt, so after any click the keyboard did nothing at all.
+  `setPointerCapture` was unguarded against the exception it is specified to throw. Choosing
+  a plate scrolled every bolt off the top of a phone screen; advancing dropped focus to the
+  body. The status line is an `aria-live` region and was rewritten every frame — 62 times
+  during a one-second hold, 61 of them identically.
+
+### Recorded
+
+- **Overtighten's design hypothesis is false, and the tests now say so.** It was built to
+  test whether the coupling between bolts would make each plate an ordering puzzle. Because
+  loosening clamps at zero, a bolt at zero absorbs nothing, so in a single pass a bolt is
+  reduced only by the neighbours turned after it — which makes each plate a
+  back-substitution. **142 of the 146 orderings across the three plates clear with one hold
+  per bolt**, with 6 to 38 units of strip headroom; the four that resist miss a strip point
+  by under three units. Blind round-robin clears every plate in at most four passes. The
+  test that was meant to catch this fixed the hold amount at the middle of the band — the
+  one variable a player chooses — and so could not fail. Nothing was re-tuned: any strategy
+  that moves a bolt to the middle of its band converges whatever the numbers. The assertions
+  now state what is true and are named so a redesign inverts them.
+
+### Debt
+
+- **TD-004 closed** by SS-020. **TD-007 opened**: the static file server now exists twice,
+  once in `scripts/smoke.mjs` and once in `tests/studio/lib/browser.mjs`. Taken deliberately
+  — `scripts/` is outside the path guard and exports nothing, so the alternative was a
+  production exception for test plumbing. TD-001, TD-003, TD-005 and TD-006 unchanged.
+
 ## [studio-iteration-01] — 2026-09-20
 
 The realm gets its identity and its shelf, and the arcade gets two doors back.

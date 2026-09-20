@@ -83,3 +83,43 @@ that are really decisions go to `decisions/` instead.
 - **An empty state is a deliverable.** The shelf shipped with nothing on it. Building the
   component, testing every state it can reach, and rendering an honest "nothing here yet"
   is finished work; inventing entries to make a screenshot look better would not have been.
+
+## Iteration 02
+
+- **A test that defends a design has to be able to fail.** The hypothesis was that the
+  coupling made each plate an ordering puzzle; the test held each bolt once *to the middle
+  of its band* and found it insufficient. The hold amount is the one variable the player
+  chooses, and fixing it removed the only freedom that mattered. The assertion was true and
+  much smaller than the sentence above it claimed. General form: **if the strategy under
+  test has a parameter the player chooses, fixing that parameter proves something narrower
+  than the claim — usually much narrower.**
+- **An exemption ships with its attacks, in the same commit.** Not "is tested": the tests
+  are the payloads that defeat the previous version. This iteration wrote "unit-tested both
+  ways" about four functions that had no test at all, and both reviews then defeated them.
+  Iteration 01 learned *do not write "closed" before the thing that closes it has been
+  attacked* — about an exemption — and this iteration repeated it on an exemption. Twice
+  now the lesson has been applied everywhere except the place structurally identical to
+  where it was learned, which is why it is now a step with an artifact rather than a thing
+  to remember.
+- **Anchor a path rule to an origin and a full path, never to a suffix.** `shared/settings.js`
+  matched anywhere, and the studio may write anywhere under `studio/**`. A rule about *which
+  file* must be a rule about the whole name.
+- **A check that drives something must be listening while it drives it.** The phase that
+  played the game collected no errors, so "no console errors" was a claim about the page
+  load only.
+- **Assert a release after a settle, never at the moment of release.** Reading immediately
+  after `mouse.up` cannot distinguish a control that stopped from one that never stops.
+  Deleting the pointer release made every tap destroy the plate, and everything passed.
+- **Prove persistence by coming back, not by writing.** Stubbing the storage wrapper to a
+  no-op passed every check. Stated as what the player gets back after a reload, it cannot.
+- **Hiding something is a failure, not an exemption from the rule about it.** An invisible
+  control was skipped before it was measured, which turned `opacity: 0` into an escape from
+  the tap-target rule rather than a violation of it.
+- **A difference test needs an absolute alongside it.** "Killed cards must differ from live
+  ones" was satisfied by a card that was visually identical and numerically different — a
+  double border, a shadow one thousandth of an alpha apart.
+- **A plan names the files its own existence invalidates.** Creating `iterations/NN/` makes
+  the realm's pulse line stale, because the line is tied to the newest iteration directory.
+- **An experiment that returns "no" has succeeded.** Overtighten was built to answer one
+  question and answered it, with a measurement. The failure was not the result; it was the
+  test that would have hidden it.
