@@ -1,0 +1,147 @@
+/* Shadow Studio — placeholder identity.
+ *
+ * Three tokens carry the whole page: a deep ground, one cyan accent and one
+ * amber accent. The visual identity is not decided yet (see the design brief
+ * that accompanies iteration 00), so this stylesheet deliberately stays at the
+ * level of tokens and layout — the shapes a real identity will replace.
+ *
+ * The production settings drawer owns the light/dark toggle via body.dark-mode,
+ * so this page follows that class rather than prefers-color-scheme. */
+
+:root {
+  --ground: #f4f2ee;
+  --surface: #ffffff;
+  --ink: #1a1c22;
+  --ink-dim: #55596a;
+  --edge: #d9d6cf;
+  --accent: #0f7d8c;
+  --accent-warm: #a25c14;
+  --radius: 14px;
+  --gutter: 20px;
+  --measure: 46rem;
+}
+
+body.dark-mode {
+  --ground: #0b0d12;
+  --surface: #14171f;
+  --ink: #e8e9ee;
+  --ink-dim: #9aa0b4;
+  --edge: #262b38;
+  --accent: #3fd0e0;
+  --accent-warm: #f0a84c;
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--ground); }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: calc(env(safe-area-inset-top) + 64px) var(--gutter)
+           calc(env(safe-area-inset-bottom) + 48px);
+  background: var(--ground);
+  color: var(--ink);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+main {
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: clamp(2rem, 8vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.lede {
+  margin: 0 0 28px;
+  font-size: 1.05rem;
+  color: var(--ink-dim);
+}
+
+.card {
+  padding: 20px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.card + .card { margin-top: 16px; }
+
+.card h2 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
+.card p:last-child, .card ul:last-child { margin-bottom: 0; }
+
+ul { padding-left: 1.1em; margin: 0 0 12px; }
+li { margin-bottom: 6px; }
+
+a { color: var(--accent); }
+a:focus-visible, .pill:focus-visible {
+  outline: 2px solid var(--accent-warm);
+  outline-offset: 3px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--edge);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pill:hover { border-color: var(--accent); color: var(--accent); }
+
+.status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-warm) 18%, transparent);
+  color: var(--accent-warm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+footer {
+  max-width: var(--measure);
+  margin: 32px auto 0;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  main > * { animation: rise 420ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards; }
+  main > :nth-child(2) { animation-delay: 60ms; }
+  main > :nth-child(3) { animation-delay: 120ms; }
+  main > :nth-child(4) { animation-delay: 180ms; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+  }
+}
