@@ -1,0 +1,79 @@
+# SS-022 — *Overtighten*, the studio's first experiment, is playable
+
+- **Status:** Ready
+- **Size:** M
+- **Iteration:** 02
+- **Role lead:** Game Designer
+- **Depends on:** SS-020
+- **Branch:** `ss-022-overtighten`
+
+## Motivation
+
+The shelf is a frame with nothing on it. The standing work mix runs new development on a
+cadence, and this is the iteration where that cadence fires. A first experiment also
+exercises the realm end to end — a game directory, the identity applied to something that
+is not a document, the storage rule, and the promotion path that has never been walked.
+
+## The mechanic, in one paragraph
+
+A plate of bolts. Hold a bolt to turn it and its torque climbs; every bolt it is coupled to
+loosens while you hold. Each bolt has a tolerance band and must end inside it — all of them
+at once. Torque is only ever added to a bolt directly and only ever removed from it by
+turning a neighbour, so a plate is an ordering puzzle with an analog release on top. Past
+the strip point a thread is ruined and the plate is lost.
+
+## Acceptance criteria
+
+- [ ] `studio/games/overtighten/` follows the folder convention in `studio/README.md`:
+      native ES modules split by concern, no build step, no framework, no binary assets.
+- [ ] The torque rules are pure functions with no DOM, unit-tested for: turning, coupled
+      loosening, the floor at zero, seating, stripping, and a solved plate.
+- [ ] Three plates ship, and a solver test proves each one reachable from zero to
+      all-seated without stripping. A plate the solver cannot clear does not ship.
+- [ ] A test asserts, for every plate, that the naive strategy — hold each bolt once, in
+      order, to the middle of its band — does **not** solve it. This is the design
+      hypothesis stated as a check.
+- [ ] Input works with pointer and with keyboard: bolts are focusable controls, holding
+      turns, releasing stops, and a pointer leaving the control stops it too.
+- [ ] Mobile-first: every interactive target is at least 44×44 CSS px at 320px width, and
+      the page has no horizontal scroll there.
+- [ ] The page follows `body.dark-mode` and the Backstage tokens, declaring no light/dark
+      toggle of its own.
+- [ ] Audio is synthesized, silent until the first pointer gesture, and mutable; the mute
+      state persists under `studio_overtighten_muted`.
+- [ ] Progress persists under `studio_overtighten_progress`, survives a corrupt or
+      hand-edited value, and the game is fully playable with storage blocked.
+- [ ] Both keys are documented in `studio/README.md` before use and pass `storage-keys`.
+- [ ] The page passes `studio-boot` from SS-020 with no console errors.
+- [ ] A back link to the realm is present and is the first focusable thing on the page.
+
+## Evidence plan
+
+| Criterion | Proof |
+|---|---|
+| Pure rules, coupling, stripping | `tests/studio/overtighten-gameplay.test.mjs` |
+| Every plate solvable | The solver test, which prints the move count it needed |
+| The hypothesis holds | The naive-strategy test, asserting failure per plate |
+| Boot, console, tap targets, storage blocked | `studio-boot`, which asserts these generically for every studio page |
+| Keyboard and pointer | Driven in the boot check: focus a bolt, hold a key, assert torque moved |
+| Storage keys | `storage-keys`, plus the README table |
+
+## Out of scope
+
+- **Meta-progression.** No score, no stars, no unlock economy beyond the furthest plate
+  cleared. Deliberate: see the plan.
+- **A level editor, custom plates, or sharing.**
+- **Promotion to the production arcade.** It ships as a PROTOTYPE on the studio shelf.
+- **The realm's portal.** Held by decision; adding a game does not change that this
+  iteration.
+
+---
+
+## Result
+
+*Filled in as the ticket is worked. Empty until then.*
+
+- **What changed:**
+- **Tested by:**
+- **Deferred:**
+- **Fix rounds used:** 0 / 2
