@@ -13,7 +13,7 @@ This file covers what is in this folder and the rules that apply to its code.
 | Path | What it is |
 |---|---|
 | `index.html` | The realm's landing page. Currently a placeholder — iteration 00 built the team, not a game. |
-| `style.css` | Placeholder identity: tokens, layout, light/dark. Will be replaced when the visual identity is decided. |
+| `style.css` | The Backstage identity: tokens, layout, light/dark. Warm ground, one amber worklight for status, one teal reserved for interactive elements. |
 | `main.js` | Placeholder behavior, and the first real exercise of the storage rule. |
 
 Games will live in `studio/games/<name>/`, one directory each, following the same

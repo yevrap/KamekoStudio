@@ -1,49 +1,82 @@
-/* Shadow Studio — placeholder identity.
+/* Shadow Studio — the Backstage identity.
  *
- * Three tokens carry the whole page: a deep ground, one cyan accent and one
- * amber accent. The visual identity is not decided yet (see the design brief
- * that accompanies iteration 00), so this stylesheet deliberately stays at the
- * level of tokens and layout — the shapes a real identity will replace.
+ * The workshop behind the arcade, not the arcade. Warm ground, paper and
+ * pencil, exposed structure, one amber worklight. Things sit on a surface with
+ * tags on them, so surfaces cast a shadow and a faint grid runs underneath.
+ *
+ * Two accents, and they do different jobs: amber is the worklight and marks
+ * status, teal is reserved for anything you can interact with. A reader should
+ * be able to find every link on the page by looking for one hue.
+ *
+ * Every foreground/background pair below meets WCAG AA in both themes; the
+ * measured ratios are recorded on ticket SS-012. The tag backgrounds are flat
+ * literals rather than color-mix() for exactly that reason — a computed
+ * background cannot be checked.
  *
  * The production settings drawer owns the light/dark toggle via body.dark-mode,
  * so this page follows that class rather than prefers-color-scheme. */
 
 :root {
-  --ground: #f4f2ee;
-  --surface: #ffffff;
-  --ink: #1a1c22;
-  --ink-dim: #55596a;
-  --edge: #d9d6cf;
-  --accent: #0f7d8c;
-  --accent-warm: #a25c14;
-  --radius: 14px;
+  /* Daylight in the workshop: warm off-white, paper, pencil. */
+  --ground: #f2efe9;
+  --surface: #fbf9f5;
+  --ink: #1e1c18;
+  --ink-dim: #5b5348;
+  --edge: #ded7ca;
+  --rule: #cdc4b4;
+
+  --accent: #0f6d7a;        /* teal — interactive, and only interactive */
+  --worklight: #8a4b0c;     /* amber — status, tags, the lamp */
+  --worklight-wash: #f0e4d4;
+
+  --grid: rgba(30, 28, 24, 0.045);
+  --lift: 0 1px 1px rgba(30, 28, 24, 0.05), 0 6px 16px -10px rgba(30, 28, 24, 0.35);
+
+  --radius: 12px;
   --gutter: 20px;
-  --measure: 46rem;
+  --measure: 52rem;
+
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 }
 
 body.dark-mode {
-  --ground: #0b0d12;
-  --surface: #14171f;
-  --ink: #e8e9ee;
-  --ink-dim: #9aa0b4;
-  --edge: #262b38;
+  /* After the lamp is the only thing on: graphite, and the worklight. */
+  --ground: #131418;
+  --surface: #1b1d23;
+  --ink: #e9e6df;
+  --ink-dim: #a49d91;
+  --edge: #2c2f37;
+  --rule: #363a44;
+
   --accent: #3fd0e0;
-  --accent-warm: #f0a84c;
+  --worklight: #f0a84c;
+  --worklight-wash: #2a2118;
+
+  --grid: rgba(233, 230, 223, 0.04);
+  --lift: 0 1px 1px rgba(0, 0, 0, 0.5), 0 10px 22px -14px rgba(0, 0, 0, 0.9);
 }
 
 * { box-sizing: border-box; }
 
 html { background: var(--ground); }
 
+/* The grid is the workbench surface: present, never legible as a pattern. */
 body {
   margin: 0;
   min-height: 100vh;
   min-height: 100dvh;
+  /* 64px of head room, not less: the arcade's shared settings script puts a
+     fixed control in the top-left corner of every page that loads it, and this
+     page does. Anything shorter and the control sits on top of the first line. */
   padding: calc(env(safe-area-inset-top) + 64px) var(--gutter)
            calc(env(safe-area-inset-bottom) + 48px);
-  background: var(--ground);
+  background-color: var(--ground);
+  background-image:
+    repeating-linear-gradient(to right, var(--grid) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(to bottom, var(--grid) 0 1px, transparent 1px 24px);
   color: var(--ink);
-  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+  font: 16px/1.6 var(--sans);
   -webkit-text-size-adjust: 100%;
 }
 
@@ -52,18 +85,20 @@ main {
   margin: 0 auto;
 }
 
+/* ---- Type ---- */
+
 .eyebrow {
   margin: 0 0 6px;
+  font-family: var(--mono);
   font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--ink-dim);
 }
 
 h1 {
   margin: 0 0 12px;
-  font-size: clamp(2rem, 8vw, 3rem);
+  font-size: clamp(2rem, 8vw, 2.75rem);
   line-height: 1.1;
   letter-spacing: -0.02em;
 }
@@ -74,11 +109,22 @@ h1 {
   color: var(--ink-dim);
 }
 
+/* Versions, iteration numbers and dates are stamped, not written. */
+.mono, time, code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+}
+
+code { color: var(--ink-dim); }
+
+/* ---- Surfaces ---- */
+
 .card {
   padding: 20px;
   border: 1px solid var(--edge);
   border-radius: var(--radius);
   background: var(--surface);
+  box-shadow: var(--lift);
 }
 
 .card + .card { margin-top: 16px; }
@@ -91,12 +137,22 @@ h1 {
 
 .card p:last-child, .card ul:last-child { margin-bottom: 0; }
 
+hr {
+  height: 0;
+  margin: 28px 0;
+  border: 0;
+  border-top: 1px solid var(--rule);
+}
+
 ul { padding-left: 1.1em; margin: 0 0 12px; }
 li { margin-bottom: 6px; }
 
+/* ---- Interactive: teal, and nothing else ---- */
+
 a { color: var(--accent); }
+
 a:focus-visible, .pill:focus-visible {
-  outline: 2px solid var(--accent-warm);
+  outline: 2px solid var(--worklight);
   outline-offset: 3px;
 }
 
@@ -116,15 +172,18 @@ a:focus-visible, .pill:focus-visible {
 
 .pill:hover { border-color: var(--accent); color: var(--accent); }
 
+/* ---- The paper tag ---- */
+
 .status {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent-warm) 18%, transparent);
-  color: var(--accent-warm);
-  font-size: 0.75rem;
+  border-radius: 3px;
+  background: var(--worklight-wash);
+  color: var(--worklight);
+  font-family: var(--mono);
+  font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
@@ -144,13 +203,15 @@ footer a {
   padding: 0 2px;
 }
 
+/* ---- Motion: things settle onto the bench. Nothing pulses, nothing glows. ---- */
+
 @media (prefers-reduced-motion: no-preference) {
-  main > * { animation: rise 420ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards; }
-  main > :nth-child(2) { animation-delay: 60ms; }
-  main > :nth-child(3) { animation-delay: 120ms; }
-  main > :nth-child(4) { animation-delay: 180ms; }
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(10px); }
+  main > * { animation: settle 400ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards; }
+  main > :nth-child(2) { animation-delay: 50ms; }
+  main > :nth-child(3) { animation-delay: 100ms; }
+  main > :nth-child(4) { animation-delay: 150ms; }
+  @keyframes settle {
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: none; }
   }
 }
