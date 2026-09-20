@@ -32,8 +32,8 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 | Stage | When | Checks |
 |---|---|---|
 | `preflight` | Before planning | `tree-clean`, `on-main`, `no-stop-file`, `baseline-suites` |
-| `ticket` | After each ticket | `path-guard`, `storage-keys`, `studio-tests` |
-| `gate` | Before pushing | `tree-clean`, `path-guard`, `storage-keys`, `hygiene`, `full-suites`, `commit-lint`, `docs-current`, `reviewer-verdict` |
+| `ticket` | After each ticket | `path-guard`, `storage-keys`, `portal-capacity`, `studio-tests` |
+| `gate` | Before pushing | `tree-clean`, `path-guard`, `storage-keys`, `portal-capacity`, `hygiene`, `full-suites`, `commit-lint`, `docs-current`, `reviewer-verdict` |
 | `postdeploy` | After Pages updates | `studio-live`, `production-live`, `production-unchanged` |
 | `closeout` | End of the iteration | `iteration-docs`, `doc-cleanliness`, `changelog` |
 
@@ -47,6 +47,7 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 | `baseline-suites` | The repo was already green before the studio touched it, so any later red is the studio's |
 | `path-guard` | Every changed path is inside the allowed list, or is a recorded exception (reported as used). Both sides of a rename count, so a file cannot be moved out of production unnoticed, and an exception is checked by comparing the file's content at the base revision with its content now — not by reading diff text, which is empty once a change is committed |
 | `storage-keys` | Studio code reaches the shared origin only through keys it can be shown to use, all `studio_`-prefixed. It checks the three named accessors, bracket access, `delete`, and `clear()`, and refuses a key it cannot read statically — a computed expression or an aliased store. It scans `studio/**` only, so it says nothing about the production settings drawer that studio pages inherit (see [ADR-0003](decisions/ADR-0003-storage-namespace.md)) |
+| `portal-capacity` | The 3D landing page has a portal position for every entry in `ARCADE_GAMES`, and every position table has a matching rotation table. It counts rather than trusts, because the page drops a game it has no position for with a bare `return` and says nothing — which is how two promoted games went portal-less unnoticed (TD-002). It reads production source the studio may not edit: the studio cannot fix that page at will, but it can refuse to be quiet about it |
 | `studio-tests` | The studio's own unit tests pass |
 | `hygiene` | No secrets, personal identifiers, private paths, note-vault syntax or oversized files in studio-owned paths, or in the paths the studio may touch by exception |
 | `full-suites` | `npm test`, `npm run smoke` and `npm run e2e` are green — production included |

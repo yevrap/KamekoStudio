@@ -107,11 +107,25 @@ export function createEnvironment() {
         new THREE.Vector3(0, 2.5, -roomDepth/2 + 1.2),
         new THREE.Vector3(roomWidth/4, 2.5, -roomDepth/2 + 1.2)
     ];
-    const positions = [...leftPositions, ...rightPositions, ...backPositions];
+    // Front wall, above the trophy shelf. Three more slots, so the room holds
+    // twelve portals rather than nine - ARCADE_GAMES has outgrown the table
+    // twice now, most recently when Maze Warden was promoted.
+    // The other three walls sit 1.2 from the wall; this row sits 2.0, because
+    // the trophy shelf occupies 1.5 of depth here and its trophies stand up to
+    // 1.1 above it. At 1.2 the portals cleared the tallest trophy by a
+    // hundredth of a unit, and trophy spacing changes with how many the player
+    // has earned, so that margin was luck rather than clearance.
+    const frontPositions = [
+        new THREE.Vector3(-roomWidth/4, 4.0, roomDepth/2 - 2.0),
+        new THREE.Vector3(roomWidth/4, 4.0, roomDepth/2 - 2.0),
+        new THREE.Vector3(0, 4.0, roomDepth/2 - 2.0)
+    ];
+    const positions = [...leftPositions, ...rightPositions, ...backPositions, ...frontPositions];
     const rotations = [
         ...leftPositions.map(() => Math.PI/2),
         ...rightPositions.map(() => -Math.PI/2),
-        ...backPositions.map(() => 0)
+        ...backPositions.map(() => 0),
+        ...frontPositions.map(() => Math.PI)
     ];
 
     ARCADE_GAMES.forEach((game, index) => {

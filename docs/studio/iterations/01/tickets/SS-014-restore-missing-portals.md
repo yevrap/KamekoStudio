@@ -1,6 +1,6 @@
 # SS-014 — The 3D landing page shows every game, not the first nine
 
-- **Status:** Ready
+- **Status:** Done
 - **Size:** M
 - **Iteration:** 01
 - **Role lead:** Tech Lead / Architect
@@ -59,9 +59,55 @@ TD-002 and surveyed in `../00/findings-3d.md`; the fix was approved by the execu
 
 ## Result
 
-*Filled in as the ticket is worked. Empty until then.*
+- **What changed:** `createEnvironment()` in `shared/3d/gameplay.js` gains a
+  `frontPositions` table of three, spread into `positions` and into `rotations` at
+  `Math.PI`. The room holds twelve portal slots; eleven games fill eleven of them and the
+  twelfth — the centre of the front wall, facing the spawn point — is left empty for the
+  realm's own door. No other file in `shared/` is touched, and `ARCADE_GAMES` is unchanged.
 
-- **What changed:**
+  Around it: `ADR-0005` records the exception; `guardrails.md` moves the file from *pending*
+  to *recorded*, and restates what is still pending as held by decision rather than by
+  capacity; `tech-debt.md` closes TD-002 and rewrites TD-001's status; `self-checks.md`
+  documents `portal-capacity`; `tests/studio/checks/portal-capacity.mjs` is the check and
+  `portalCapacity` in `lib/rules.mjs` is its rule.
+
+- **Deviation from the diff as proposed.** The findings note put the row at
+  `roomDepth/2 - 1.2`, matching the other three walls. Measured in the running scene with
+  every trophy present, that cleared the tallest trophy by **0.01 units** — the bounding
+  boxes did not intersect, but trophy spacing is `shelfWidth / (n + 1)`, so the margin
+  moves with how many achievements the player has. The row ships at `roomDepth/2 - 2.0`,
+  which puts the portals 0.53 in front of the nearest trophy in z and clear of the shelf's
+  1.5 of depth entirely. Separation is now structural rather than incidental. Height and
+  rotation are as proposed.
+
 - **Tested by:**
-- **Deferred:**
-- **Fix rounds used:** 0 / 2
+  - `portal-capacity` **failed first, against the real defect** —
+    *"11 games but only 9 portal slots — the last 2 would be dropped silently"* — and
+    passes after the fix: *"11 game(s), 12 portal slot(s) — every game has a door."*
+  - 13 new unit tests in `rules.test.mjs`: capacity on a fitting page, on the nine-slot
+    page, on exact fit, on a position row with no matching rotation row, and on three
+    unreadable sources; the exception against the approved edit, an unchanged file, a
+    smuggled unrelated edit, tampering *inside* the approved block, a deleted line
+    elsewhere, a stripped trailing newline, and a file absent from the base revision.
+  - The running landing page, in headless Chrome: 11 games, 11 portals, **no game without
+    one**, and all 11 showed their own `Press E to enter <name>` prompt when approached —
+    including Black Hole in One and Maze Warden, which had none before. No page errors.
+  - Bounding boxes measured with all five trophies spawned; front portals span y 2.735 to
+    5.265 (room height 6) and z 9.61 to 10.39, against a shelf at z 10.5 to 12 and trophies
+    from z 10.92.
+  - `npm test` 525 passed, `npm run smoke` green, `npm run e2e` 23 tests green.
+  - `npm run studio:check -- --stage=ticket` green, with the exception reported as *used*.
+
+- **Deferred:** nothing from this ticket. TD-001 stays open by decision, not by omission.
+
+- **Fix rounds used:** 2 / 2 — both found by tests written to defeat the rule rather than
+  to confirm it.
+  1. The exception rejected its own approved edit. `textAt` read the base revision through
+     a helper that trims, so every file lost its final newline and byte equality could
+     never hold. Invisible until now because the only previous exception parses JSON before
+     comparing. Fixed in `path-guard.mjs` by reading raw, with a regression test.
+  2. The exception *accepted* a bypass: its pattern matched the approved block as
+     "everything up to the next bracket", so code appended inside the block was reverted
+     away with it and the guard waved it through. The pattern now matches the block's exact
+     shape — comment lines, then an array whose every element is a bare `Vector3` call on
+     its own line. The adversarial test that caught it is kept.

@@ -27,17 +27,25 @@ the check. The check reports an exception as *used*, never silently, and verifie
 | Path | Scope of the exception | Approved |
 |---|---|---|
 | `package.json` | The single `"studio:check"` entry in `scripts`, with exactly the value `node tests/studio/check.mjs`. No other key, and no other value. | Iteration 00 brief, deliverable 4 |
+| `shared/3d/gameplay.js` | The `frontPositions` table in `createEnvironment()` — three front-wall positions, spread into `positions` and `rotations`. Nothing else in the file. | Iteration 01, as a production bug fix. ADR-0005 |
+
+The second exception is checked by removing exactly that change from the file's current
+text and requiring what remains to equal the base revision byte for byte, so an edit
+riding along with it fails the guard. Two holes in that mechanism were found by the tests
+written against it and are closed: a loose pattern that reverted away whatever was smuggled
+*inside* the approved block, and a trailing newline stripped from the base revision, which
+made the exception reject its own edit.
 
 ### Pending, not yet approved
 
 | Path | What it would be for | Status |
 |---|---|---|
-| `shared/3d/constants.js` | One entry in `ARCADE_GAMES` so the realm has a portal in the 3D landing page | Proposed in `iterations/00/findings-3d.md`; **blocked** until approved |
-| `shared/3d/gameplay.js` | A portal position for that entry — the existing position table holds 9 portals and is already full | Same |
-| `3d.html` | Nothing, as it turns out: the landing page's content lives in `shared/3d/`, not in the HTML | Same |
+| `shared/3d/constants.js` | One entry in `ARCADE_GAMES` so the realm has its own portal on the 3D landing page | **Held by decision**, not by capacity: the realm gets a door once it has a gallery worth entering. The twelfth slot is free and waiting. TD-001 |
+| `3d.html` | Nothing, as it turns out: the landing page's content lives in `shared/3d/`, not in the HTML | Not needed |
 
-The portal change is a single reviewed edit, made last, after the design is approved. It
-is not in the allowed list until then, and the guard will fail on it.
+A production edit is a single reviewed change, made last in the iteration, in its own
+commit, after it is approved. It is not in the allowed list until then, and the guard will
+fail on it.
 
 ## The storage rule
 

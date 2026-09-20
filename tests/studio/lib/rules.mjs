@@ -33,6 +33,11 @@ export const PATH_EXCEPTIONS = [
     path: 'package.json',
     reason: 'the single "studio:check" scripts entry (ADR-0002)',
     allow: allowOnlyStudioCheckScript
+  },
+  {
+    path: 'shared/3d/gameplay.js',
+    reason: 'the front-wall portal row that restores the dropped games (ADR-0005)',
+    allow: allowOnlyFrontPortalRow
   }
 ];
 
@@ -74,6 +79,97 @@ export function allowOnlyStudioCheckScript(before, after) {
     return `scripts["studio:check"] must be exactly "${EXPECTED_STUDIO_SCRIPT}", found "${value}"`;
   }
   return null;
+}
+
+/**
+ * The approved edit to shared/3d/gameplay.js, undone.
+ *
+ * The exception is for one change and no other, so rather than describing what
+ * may change, this removes exactly that change from the current text and
+ * requires the result to equal the base revision byte for byte. Anything else
+ * edited anywhere in the file — a line above, a number below, a stray space —
+ * breaks the equality and the guard fails. That is the intended sharpness: an
+ * exception is approved once, for one edit.
+ */
+// The block is matched by its exact shape — comment lines, then an array whose
+// every element is a bare Vector3 call on its own line — and not as "everything
+// up to the next bracket". A loose version removed whatever was inside the block
+// along with it, so code appended to one of those lines was reverted away and
+// the exception approved its own bypass. The adversarial test for that case is
+// in rules.test.mjs and is the reason this pattern is spelled out.
+const VECTOR = String.raw`new THREE\.Vector3\([^()]*\)`;
+const FRONT_ROW_BLOCK = new RegExp(
+  String.raw`\n(?:[ \t]*//[^\n]*\n)*[ \t]*const frontPositions = \[\n` +
+  String.raw`(?:[ \t]*${VECTOR},\n)*[ \t]*${VECTOR}\n[ \t]*\];(?=\n)`
+);
+const POSITIONS_WITH_FRONT = /(const positions = \[[^\]]*?),\s*\.\.\.frontPositions(\])/;
+const ROTATIONS_WITH_FRONT = /(\.\.\.backPositions\.map\(\(\) => 0\)),\n[ \t]*\.\.\.frontPositions\.map\(\(\) => Math\.PI\)/;
+
+export function revertFrontPortalRow(after) {
+  return String(after)
+    .replace(FRONT_ROW_BLOCK, '')
+    .replace(POSITIONS_WITH_FRONT, '$1$2')
+    .replace(ROTATIONS_WITH_FRONT, '$1');
+}
+
+export function allowOnlyFrontPortalRow(before, after) {
+  if (before === after) return null;          // unchanged since the base revision
+  if (!before) return 'the file did not exist at the base revision';
+  if (revertFrontPortalRow(after) === before) return null;
+  return 'changes beyond the front-wall portal row in createEnvironment()';
+}
+
+/**
+ * How many portals the 3D landing page can show, and how many games want one.
+ *
+ * The landing page builds its portal positions by concatenating named tables and
+ * then iterates the game list against them, skipping any index with no position:
+ *
+ *     ARCADE_GAMES.forEach((game, index) => {
+ *         if (!positions[index]) return;
+ *
+ * That `return` is silent, so for two years the page could show nine portals
+ * while the list held eleven games and nothing said so — two shipped games had
+ * no door and nobody noticed (TD-002). This rule is what says so.
+ *
+ * @returns {{games: number|null, slots: number|null, positionTables: string[],
+ *            rotationTables: string[], problems: string[]}}
+ */
+export function portalCapacity(gameplay, constants) {
+  const problems = [];
+
+  const gameList = /ARCADE_GAMES\s*=\s*\[([\s\S]*?)\];/.exec(String(constants ?? ''));
+  const games = gameList ? (gameList[1].match(/\{\s*name\s*:/g) ?? []).length : null;
+  if (games === null) problems.push('could not find ARCADE_GAMES in the constants source');
+
+  const source = String(gameplay ?? '');
+  const positionsDecl = /const\s+positions\s*=\s*\[([^\]]*)\]/.exec(source);
+  const rotationsDecl = /const\s+rotations\s*=\s*\[([\s\S]*?)\];/.exec(source);
+
+  const spreads = text => [...String(text).matchAll(/\.\.\.([A-Za-z_$][\w$]*)/g)].map(m => m[1]);
+  const positionTables = positionsDecl ? spreads(positionsDecl[1]) : [];
+  const rotationTables = rotationsDecl ? spreads(rotationsDecl[1]) : [];
+
+  if (!positionsDecl) problems.push('could not find the positions table in the gameplay source');
+  if (!rotationsDecl) problems.push('could not find the rotations table in the gameplay source');
+
+  let slots = positionsDecl ? 0 : null;
+  for (const name of positionTables) {
+    const decl = new RegExp(`const\\s+${name}\\s*=\\s*\\[([\\s\\S]*?)\\];`).exec(source);
+    if (!decl) { problems.push(`positions spreads ${name}, which is not declared as an array literal`); slots = null; break; }
+    slots += (decl[1].match(/new\s+THREE\.Vector3\s*\(/g) ?? []).length;
+  }
+
+  // A position with no rotation renders a portal facing an arbitrary direction,
+  // which is the mistake a new row invites. Both tables must cover the same ones.
+  const missing = positionTables.filter(n => !rotationTables.includes(n));
+  for (const name of missing) problems.push(`${name} has positions but no matching rotations`);
+
+  if (games !== null && slots !== null && games > slots) {
+    problems.push(`${games} games but only ${slots} portal slots — the last ${games - slots} would be dropped silently`);
+  }
+
+  return { games, slots, positionTables, rotationTables, problems };
 }
 
 /**
