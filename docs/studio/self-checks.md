@@ -5,11 +5,22 @@ dependencies beyond what the repo already has, it runs identically for anyone wh
 the repo, and every check prints `pass`, `fail` or `not run` — never nothing.
 
 ```
-npm run studio:check                  # every stage
-npm run studio:check -- --stage=gate  # one stage
-npm run studio:check -- --list        # what exists, without running it
-npm run studio:check -- --json        # machine-readable results
+npm run studio:check                     # every stage
+npm run studio:check -- --stage=gate     # one stage
+npm run studio:check -- --list           # what exists, without running it
+npm run studio:check -- --json           # machine-readable results
+npm run studio:check -- --base=<ref>     # what the path guard and commit lint diff against
+npm run studio:check -- --docs-root=<dir># an extra directory for doc-cleanliness
+npm run studio:check -- --skip-slow      # skip the test suites (the gate then fails, by design)
+npm run studio:check -- --offline        # make no network requests
 ```
+
+`--base` defaults to the most recent `studio-iteration-*` tag, falling back to
+`origin/main`. Iteration 00 has no previous tag, so it passes the pre-studio commit
+explicitly.
+
+`--docs-root` exists so that documents kept outside the repository can be held to the same
+cleanliness rule without the repository having to name where they live.
 
 Exit code is 0 when no check failed, 1 otherwise. A check that could not run (a missing
 prerequisite, a network-dependent step) reports `not run` with a reason and does **not**
@@ -58,7 +69,9 @@ and continue, so the studio can still work offline.
 
 ## Adding a check
 
-A check is a module in `tests/studio/checks/` exporting
-`{ id, stages, description, run(ctx) }`, returning `{ status, detail }` where status is
-`'pass' | 'fail' | 'skip'`. Register it in `tests/studio/checks/index.mjs` and add a row to
-the table above. A check that does not prove something specific does not get added.
+A check is an object `{ id, stages, description, run(ctx) }` exported from a module in
+`tests/studio/checks/` — a module may export several related ones. `run` returns
+`{ status, detail }`, where status is `'pass' | 'fail' | 'skip'`. Register it in
+`tests/studio/checks/index.mjs` and add a row to the table above. Put the decision logic in
+`tests/studio/lib/rules.mjs` as a pure function and unit-test it there. A check that does
+not prove something specific does not get added.
