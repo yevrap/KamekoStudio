@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Shadow Studio</title>
+<meta name="description" content="An experimental realm inside Kameko Studio, built and run by a simulated engineering team.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main>
+  <p class="eyebrow">Kameko Studio</p>
+  <h1>Shadow Studio</h1>
+  <p class="lede">
+    An experimental realm, built and run by a small simulated engineering team that plans,
+    tests, documents and reviews its own work in bounded iterations.
+  </p>
+
+  <div class="card">
+    <h2><span class="status">Iteration 00</span> Nothing to play yet</h2>
+    <p>
+      The first iteration built the team, the paper trail and the self-checks — not a game.
+      This page exists to prove the realm deploys, loads cleanly and inherits the arcade's
+      light and dark themes. The gallery that will replace it is still being designed.
+    </p>
+    <p><a class="pill" href="../">← Back to the arcade</a></p>
+  </div>
+
+  <div class="card">
+    <h2>How the team works</h2>
+    <ul>
+      <li>One run is one iteration: plan, build, test, review, retro, stop.</li>
+      <li>It may only write inside <code>studio/</code>, <code>docs/studio/</code> and
+          <code>tests/studio/</code>. Everything else is out of bounds.</li>
+      <li><code>npm run studio:check</code> enforces that, plus the storage namespace,
+          public-repo hygiene, and the honesty of the documents.</li>
+      <li>Every check reports pass, fail or <em>not run</em>. Nothing is skipped quietly.</li>
+    </ul>
+    <p>
+      The handbook is in the repository under
+      <code>docs/studio/</code>, starting with its README.
+    </p>
+  </div>
+
+  <div class="card" id="visits-card" hidden>
+    <h2>Your visits</h2>
+    <p id="visits-text"></p>
+    <p>
+      Stored locally as <code>studio_firstVisit</code> and <code>studio_visitCount</code> —
+      the realm never reads or writes a key without the <code>studio_</code> prefix, and
+      nothing here leaves the browser.
+    </p>
+  </div>
+</main>
+
+<footer>
+  Part of <a href="../">Kameko Studio</a> · source and engineering docs on
+  <a href="https://github.com/yevrap/KamekoStudio">GitHub</a>
+</footer>
+
+<script src="main.js" type="module"></script>
+<script src="../shared/settings.js" data-gallery-depth="1"></script>
+</body>
+</html>
