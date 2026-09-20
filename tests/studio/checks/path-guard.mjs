@@ -22,7 +22,7 @@ function changedPaths(root, base) {
  * it parses JSON before comparing; the first content-exact exception did, by
  * rejecting the very edit it was written to allow.
  */
-function textAt(root, rev, file) {
+export function textAt(root, rev, file) {
   try {
     return gitRaw(root, 'show', `${rev}:${file}`);
   } catch {

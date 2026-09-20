@@ -91,18 +91,35 @@ export function allowOnlyStudioCheckScript(before, after) {
  * breaks the equality and the guard fails. That is the intended sharpness: an
  * exception is approved once, for one edit.
  */
-// The block is matched by its exact shape — comment lines, then an array whose
-// every element is a bare Vector3 call on its own line — and not as "everything
-// up to the next bracket". A loose version removed whatever was inside the block
-// along with it, so code appended to one of those lines was reverted away and
-// the exception approved its own bypass. The adversarial test for that case is
-// in rules.test.mjs and is the reason this pattern is spelled out.
-const VECTOR = String.raw`new THREE\.Vector3\([^()]*\)`;
+// The block is matched by its exact shape, and the shape is a whitelist.
+//
+// An earlier version described an element as "a Vector3 call whose arguments
+// contain no parentheses". JavaScript does not need parentheses to have an
+// effect: a tagged template (fetch`...`) calls, and an assignment expression
+// (window.x = document.cookie) assigns. Both fit inside the argument list, both
+// were reverted away with the block, and the guard reported "exception used"
+// while arbitrary code went into a production file that runs on every visit to
+// the landing page. Four such payloads are in rules.test.mjs as regression
+// tests; they are the reason the argument charset below is a whitelist of
+// arithmetic rather than a blacklist of brackets.
+//
+// An argument may be a number, an identifier, a property path, and the four
+// arithmetic operators. No parentheses, no backticks, no assignment, no comma:
+// anything that could call, assign or sequence is outside the set.
+const ARG = String.raw`[-+*/\s\w.]+`;
+const VECTOR = String.raw`new THREE\.Vector3\(\s*${ARG},\s*${ARG},\s*${ARG}\s*\)`;
+
+// Exactly three elements, because the approved scope in guardrails.md is three
+// front-wall positions. A row of thirty is a different change and needs its own
+// approval. Leading comment lines are permitted and bounded: a comment cannot
+// execute, and the hygiene check scans this file because it is an exception
+// path, so text smuggled into one is caught there rather than here.
 const FRONT_ROW_BLOCK = new RegExp(
-  String.raw`\n(?:[ \t]*//[^\n]*\n)*[ \t]*const frontPositions = \[\n` +
-  String.raw`(?:[ \t]*${VECTOR},\n)*[ \t]*${VECTOR}\n[ \t]*\];(?=\n)`
+  String.raw`\n(?:[ \t]*//[^\n]*\n){0,12}[ \t]*const frontPositions = \[\n` +
+  String.raw`[ \t]*${VECTOR},\n[ \t]*${VECTOR},\n[ \t]*${VECTOR}\n[ \t]*\];(?=\n)`
 );
-const POSITIONS_WITH_FRONT = /(const positions = \[[^\]]*?),\s*\.\.\.frontPositions(\])/;
+
+const POSITIONS_WITH_FRONT = /(const positions = \[[^\]]*?),\s*\.\.\.frontPositions(\])/;  // studio-check:allow
 const ROTATIONS_WITH_FRONT = /(\.\.\.backPositions\.map\(\(\) => 0\)),\n[ \t]*\.\.\.frontPositions\.map\(\(\) => Math\.PI\)/;
 
 export function revertFrontPortalRow(after) {
@@ -161,9 +178,15 @@ export function portalCapacity(gameplay, constants) {
   }
 
   // A position with no rotation renders a portal facing an arbitrary direction,
-  // which is the mistake a new row invites. Both tables must cover the same ones.
+  // which is the mistake a new row invites. The tables are compared in order,
+  // not as sets: `positions` and `rotations` are indexed by the same counter, so
+  // listing the same tables in a different order points every portal on two
+  // walls the wrong way while covering exactly the same names.
   const missing = positionTables.filter(n => !rotationTables.includes(n));
   for (const name of missing) problems.push(`${name} has positions but no matching rotations`);
+  if (!missing.length && positionTables.join() !== rotationTables.join()) {
+    problems.push(`positions and rotations list the same tables in different orders (${positionTables.join(', ')} vs ${rotationTables.join(', ')}) — every portal after the first difference would face the wrong way`);
+  }
 
   if (games !== null && slots !== null && games > slots) {
     problems.push(`${games} games but only ${slots} portal slots — the last ${games - slots} would be dropped silently`);

@@ -31,10 +31,20 @@ the check. The check reports an exception as *used*, never silently, and verifie
 
 The second exception is checked by removing exactly that change from the file's current
 text and requiring what remains to equal the base revision byte for byte, so an edit
-riding along with it fails the guard. Two holes in that mechanism were found by the tests
-written against it and are closed: a loose pattern that reverted away whatever was smuggled
-*inside* the approved block, and a trailing newline stripped from the base revision, which
-made the exception reject its own edit.
+riding along with it fails the guard.
+
+The mechanism has been wrong in both directions, and what closed each hole is recorded
+because the closing is the only reason to trust it now:
+
+| Hole | How it was closed |
+|---|---|
+| The base revision was read through a helper that trims, so every file lost its final newline and byte equality could never hold — the exception rejected its own approved edit | Read raw. Tested against the repository in `tests/studio/path-guard.test.mjs`, not through the pure rule, which was never wrong |
+| The approved block was matched as "everything up to the next bracket", so anything appended inside it was reverted away and waved through | Narrowed to "no parentheses" — which was **still wrong**, because a tagged template and an assignment expression need none. An independent review demonstrated four working bypasses end to end, with the guard printing *exception used*. The element is now a whitelist: exactly three `Vector3` calls, each with exactly three arguments drawn from numbers, identifiers, property paths and the four arithmetic operators. The four payloads are regression tests |
+
+**What the exception still permits, stated rather than implied.** Up to twelve leading
+comment lines inside the block may change without failing the guard. A comment cannot
+execute, and `hygiene` scans this file because it is an exception path, so smuggled text is
+caught there. This is a bounded, accepted residual, not a closed hole.
 
 ### Pending, not yet approved
 

@@ -35,6 +35,14 @@ The exception is enforced by content, not by trust. `allowOnlyFrontPortalRow` in
 text and requires the result to equal the file at the base revision byte for byte. Any
 other edit anywhere in the file breaks the equality and fails the guard.
 
+The removal pattern is a whitelist, and it is a whitelist because a blacklist failed. An
+earlier version described a permitted element as a `Vector3` call whose arguments contain
+no parentheses; an independent review then wrote four payloads that need none — a tagged
+template, an assignment expression, a fourth array element, and a multi-line argument list —
+each of which the guard accepted while reporting the exception as *used*. An element is now
+exactly three arguments drawn from numbers, identifiers, property paths and arithmetic, and
+the row is exactly three elements. See `guardrails.md` for what the exception still permits.
+
 `shared/3d/constants.js` is **not** covered. Adding the studio's own entry to
 `ARCADE_GAMES` was proposed alongside this change and deliberately held: an empty room
 behind a door is worse than no door. The twelfth slot — the centre of the front wall,
