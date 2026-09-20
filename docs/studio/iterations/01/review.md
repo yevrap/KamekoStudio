@@ -32,8 +32,13 @@ left empty for the realm's own door.
 
 ## The independent review
 
-Two agents with fresh context read the iteration's diff. The Independent Reviewer
-**rejected** it, on two counts that were both reproduced before anything was changed:
+Two agents with fresh context read the iteration's diff, and the Independent Reviewer read
+it twice. It **rejected the diff on both passes**, and every blocker was reproduced against
+the live code before anything was changed. Thirteen tickets' worth of findings across the
+two passes and the QA run; five tickets were opened to answer them (SS-016 to SS-019, and
+SS-020 carried to iteration 02).
+
+### First pass — rejected
 
 - The path exception guarding `shared/3d/gameplay.js` accepted arbitrary executable
   JavaScript placed inside the approved block. The block was matched as "a `Vector3` call
@@ -52,6 +57,41 @@ clearance figure frozen into a production comment, fifty lines of dead CSS, a pa
 `h1`, two overstated test counts, an unguarded free-text line, and a capacity rule that
 compared table names as a set rather than a sequence.
 
+### Second pass — rejected again, on the fix
+
+SS-016 replaced "no parentheses" with the character class `[-+*/\s\w.]+`. A character class
+cannot express a token grammar, because every keyword is made of word characters. Twelve
+payloads went through it — `delete engineState.walls`, `new fetch`, `typeof window`,
+`obj.prop++` — and deleting `engineState.walls` blanks the production landing page while
+the guard prints *exception used*. Exfiltration was no longer reachable, so the ceiling had
+dropped from data theft to denial of service, but the boundary still fell.
+
+The sharper finding was about the tests, not the rule: every regression test written for the
+whitelist was a payload against the **old** rule, so the suite specified the previous hole
+and attacked nothing in force. The page shipped in this same diff says *"An adversarial test
+has to fail against the rule it is attacking."* SS-019 rewrote the rule as a grammar —
+operands joined by operators, two adjacent operands forbidden — and wrote its tests against
+it, running each payload against the live rule first to watch it pass.
+
+### The QA pass
+
+Sixteen test areas, run rather than reasoned about. Five majors. The one that mattered:
+**SS-014 broke the trophy shelf.** The landing page picks its prompt by 2D distance and
+prefers a portal to a trophy at any range, so the new row — sitting directly above the
+shelf — replaced 4 of 5 trophy descriptions with *"Press E to enter Black Hole in One"*.
+A production feature, changed silently, by a ticket that had put the trophy shelf out of
+scope. Fixed in SS-018 by moving the row to flank the shelf rather than crown it; the
+priority itself is production logic and is now TD-006.
+
+QA also fooled `portal-capacity` five ways into reporting a full room, found every shelf
+card's link would be a 20px target the moment an entry existed, and demonstrated eight
+mutations to `index.html` and `style.css` that the entire suite survives. That last one is
+the honest shape of TD-004 and is carried to iteration 02.
+
+A process note from QA that the retro took: three of SS-013's ticked criteria — 44px
+targets, no horizontal overflow, no uncaught errors — were each verified against the
+**empty** shelf, the one configuration in which they cannot fail.
+
 One finding was **partly overturned on the evidence.** The reviewer said the front portals
 intersected the trophies at the proposed position. Recomputed from the measured bounding
 boxes, the two *built* portals were clear, by 0.01 in z — but the *reserved* twelfth slot
@@ -67,18 +107,21 @@ bounded accepted residual, not as a closed hole.
 
 Recorded at the gate. A check that did not run is named, never omitted.
 
+*Filled in from the run, not before it. The first draft of this table recorded
+`reviewer-verdict | pass` while the check was failing for want of the verdict line below
+it, and `525 unit` when the suite had grown to 548 — the same anticipation the retro
+commits to stopping, in the document that records the commitment.*
+
 | Check | Result |
 |---|---|
 | `tree-clean` · `on-main` · `no-stop-file` · `baseline-suites` | pass (preflight) |
 | `path-guard` | pass — one exception used, `shared/3d/gameplay.js` |
-| `storage-keys` | pass |
-| `portal-capacity` | pass — 11 games, 12 slots |
-| `studio-tests` | pass |
+| `storage-keys` · `portal-capacity` · `studio-tests` | pass — 11 games, 12 slots; 82 studio tests |
 | `hygiene` | pass |
-| `full-suites` | pass — 525 unit, smoke, 23 e2e |
+| `full-suites` | pass — 548 unit, smoke, 23 e2e |
 | `commit-lint` · `docs-current` · `reviewer-verdict` | pass |
-| `studio-live` · `production-live` · `production-unchanged` | run after the deploy; recorded in the changelog and the handoff |
-| `iteration-docs` · `doc-cleanliness` · `changelog` | run at close-out, after this document exists |
+| `studio-live` · `production-live` · `production-unchanged` | recorded in the handoff after the deploy |
+| `iteration-docs` · `doc-cleanliness` · `changelog` | recorded at close-out |
 
 ## Not done
 
