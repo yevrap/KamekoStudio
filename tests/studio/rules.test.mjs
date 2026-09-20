@@ -479,3 +479,57 @@ test('capacity: the positions table may hold only spreads', () => {
   assert.match(portalCapacity(inlined, CONSTANTS(9)).problems.join(),
     /holds something other than spreads: \.\.\.leftPositions/);
 });
+
+// --- The exception, attacked again -------------------------------------------
+//
+// The payloads above were written against the rule as it was before the
+// whitelist, so they say what the *previous* hole was and nothing about this
+// one. These were written against the grammar that is in force now: each one
+// passed the character-class version, and each is valid JavaScript that acts.
+
+const RESERVED = 'new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2)';  // the fixture's reserved slot
+const withThirdArg = expr => after.replace(RESERVED, `new THREE.Vector3(0, 4.0, ${expr})`);
+
+test('exception: an argument may not act, however few characters it uses', () => {
+  // Every one of these is word characters, dots and arithmetic operators only —
+  // which is why a character class could not exclude them. The grammar does,
+  // by forbidding two operands with no operator between them.
+  const payloads = {
+    'delete engineState.walls': 'deletes a live object the room is built from',
+    'delete window.localStorage': 'deletes a host property',
+    'engineState.time++': 'assigns, using only +',
+    '--state.counter': 'assigns, using only -',
+    'new fetch': 'calls — `new` needs no parentheses',
+    'new createGridTexture': 'calls a function in this very file',
+    'void document.cookie': 'reads a getter',
+    'typeof window': 'reads a getter',
+    '1 /* pad */ + 1': 'smuggles a block comment inside an argument'
+  };
+  for (const [payload, why] of Object.entries(payloads)) {
+    assert.match(allowOnlyFrontPortalRow(before, withThirdArg(payload)),
+      /changes beyond the front-wall portal row/, `${payload} — ${why}`);
+  }
+});
+
+test('exception: the arguments the real edit needs are still accepted', () => {
+  // A whitelist that rejects the approved edit is not a whitelist, it is an
+  // outage. These are every argument form the shipped row uses.
+  for (const arg of ['roomDepth/2 - 1.2', '-roomWidth/4', '-roomWidth/2 + 2',
+                     'roomDepth / 2 - 2.0', '4.0', '0']) {
+    assert.equal(allowOnlyFrontPortalRow(before, withThirdArg(arg)), null, arg);
+  }
+});
+
+test('exception: the approved row may not be relocated into another function', () => {
+  // Reverting "the block, wherever it is" accepted the row moved verbatim
+  // somewhere it would run at a different time.
+  const block = after.slice(after.indexOf('    // Front wall'), after.indexOf('    const positions = ['));
+  assert.ok(block.includes('frontPositions'), 'fixture did not yield the block');
+  const moved = after.replace(block, '') + block;   // same bytes, somewhere else
+  assert.match(allowOnlyFrontPortalRow(before, moved), /changes beyond the front-wall portal row/);
+});
+
+test('exception: positions without a matching rotation entry are rejected here, not only downstream', () => {
+  const noRotation = after.replace(',\n        ...frontPositions.map(() => Math.PI)', '');
+  assert.match(allowOnlyFrontPortalRow(before, noRotation), /no matching rotation entry/);
+});

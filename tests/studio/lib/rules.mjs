@@ -91,32 +91,43 @@ export function allowOnlyStudioCheckScript(before, after) {
  * breaks the equality and the guard fails. That is the intended sharpness: an
  * exception is approved once, for one edit.
  */
-// The block is matched by its exact shape, and the shape is a whitelist.
+// The block is matched by its exact shape, and the shape is a token grammar.
 //
-// An earlier version described an element as "a Vector3 call whose arguments
-// contain no parentheses". JavaScript does not need parentheses to have an
-// effect: a tagged template (fetch`...`) calls, and an assignment expression
-// (window.x = document.cookie) assigns. Both fit inside the argument list, both
-// were reverted away with the block, and the guard reported "exception used"
-// while arbitrary code went into a production file that runs on every visit to
-// the landing page. Four such payloads are in rules.test.mjs as regression
-// tests; they are the reason the argument charset below is a whitelist of
-// arithmetic rather than a blacklist of brackets.
+// Two earlier versions failed, each in the same way: they described what an
+// argument may not contain instead of what it is.
 //
-// An argument may be a number, an identifier, a property path, and the four
-// arithmetic operators. No parentheses, no backticks, no assignment, no comma:
-// anything that could call, assign or sequence is outside the set.
-const ARG = String.raw`[-+*/\s\w.]+`;
+//   "no brackets"     — anything appended inside the block was reverted with it.
+//   "no parentheses"  — a tagged template calls and an assignment assigns
+//                       without one. Three exfiltration payloads went through.
+//   a character class — `[-+*/\s\w.]+` still admits `delete engineState.walls`,
+//                       `new fetch`, `typeof window` and `obj.prop++`, because
+//                       every keyword is made of word characters. Deleting
+//                       `engineState.walls` blanks the production landing page
+//                       while the guard prints "exception used". Twelve payloads.
+//
+// A character class cannot express "a number, an identifier, a property path, or
+// an operator", because it cannot forbid two operands sitting next to each other
+// — and `new X`, `delete a.b`, `typeof x` and `void x` are all exactly that. So
+// the grammar is spelled out: an argument is operands joined by operators, and
+// nothing else. `x++` fails because nothing follows the operator; `--x` fails
+// because an operand cannot begin with `-`; `1 /* p */ + 1` fails because `*` is
+// not an operand.
+const OPERAND = String.raw`(?:\d+(?:\.\d+)?|[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*)`;
+const ARG = String.raw`-?\s*${OPERAND}(?:\s*[-+*/]\s*-?\s*${OPERAND})*`;
 const VECTOR = String.raw`new THREE\.Vector3\(\s*${ARG},\s*${ARG},\s*${ARG}\s*\)`;
 
 // Exactly three elements, because the approved scope in guardrails.md is three
-// front-wall positions. A row of thirty is a different change and needs its own
-// approval. Leading comment lines are permitted and bounded: a comment cannot
-// execute, and the hygiene check scans this file because it is an exception
-// path, so text smuggled into one is caught there rather than here.
+// front-wall positions. Leading comment lines are permitted and bounded: only
+// `//` line comments, so nothing after them can be commented out, and `hygiene`
+// scans this file as an exception path, so smuggled text is caught there.
+//
+// The trailing lookahead anchors the block to the statement it belongs in front
+// of. Without it the whole row could be moved verbatim into another function —
+// reverted away from wherever it landed, and accepted.
 const FRONT_ROW_BLOCK = new RegExp(
   String.raw`\n(?:[ \t]*//[^\n]*\n){0,12}[ \t]*const frontPositions = \[\n` +
-  String.raw`[ \t]*${VECTOR},\n[ \t]*${VECTOR},\n[ \t]*${VECTOR}\n[ \t]*\];(?=\n)`
+  String.raw`[ \t]*${VECTOR},\n[ \t]*${VECTOR},\n[ \t]*${VECTOR}\n[ \t]*\];` +
+  String.raw`(?=\n[ \t]*const positions = \[)`
 );
 
 const POSITIONS_WITH_FRONT = /(const positions = \[[^\]]*?),\s*\.\.\.frontPositions(\])/;  // studio-check:allow
@@ -132,6 +143,12 @@ export function revertFrontPortalRow(after) {
 export function allowOnlyFrontPortalRow(before, after) {
   if (before === after) return null;          // unchanged since the base revision
   if (!before) return 'the file did not exist at the base revision';
+  // A row of positions with no matching rotations renders portals facing an
+  // arbitrary direction. portal-capacity catches it too; requiring it here means
+  // the guard does not depend on another check having been run.
+  if (!/\.\.\.frontPositions\.map\(\(\) => Math\.PI\)/.test(after)) {
+    return 'the front-wall row has no matching rotation entry';
+  }
   if (revertFrontPortalRow(after) === before) return null;
   return 'changes beyond the front-wall portal row in createEnvironment()';
 }

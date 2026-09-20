@@ -17,12 +17,14 @@
 <main>
   <section class="pulse" id="pulse" aria-label="What the studio is doing"></section>
 
-  <section aria-labelledby="shelf-heading">
+  <!-- Both sections are filled by main.js and are hidden until it does, so the
+       no-JS page shows its explanation instead of two empty headings. -->
+  <section id="shelf-section" aria-labelledby="shelf-heading" hidden>
     <h2 class="section-title" id="shelf-heading">The shelf</h2>
     <div id="shelf-region"></div>
   </section>
 
-  <section class="card learned" aria-labelledby="learned-heading">
+  <section class="card learned" id="learned-section" aria-labelledby="learned-heading" hidden>
     <h2 id="learned-heading">What the team changed about itself</h2>
     <p id="learned"></p>
   </section>

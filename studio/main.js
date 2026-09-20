@@ -39,7 +39,10 @@ function wholeNumber(value, fallback) {
 
 function recordVisit(now = Date.now()) {
   const first = wholeNumber(read(FIRST_VISIT), now) || now;
-  const count = wholeNumber(read(VISIT_COUNT), 0) + 1;
+  // Coerce after the increment as well as before it: a stored value of
+  // MAX_SAFE_INTEGER passed the guard and then rendered "Visit number
+  // 9007199254740992", which is not a number the guard would have allowed in.
+  const count = wholeNumber(wholeNumber(read(VISIT_COUNT), 0) + 1, 1);
   const stored = write(FIRST_VISIT, String(first)) && write(VISIT_COUNT, String(count));
   return { first, count, stored };
 }
@@ -58,12 +61,19 @@ function fill(id, markup) {
   if (el) el.innerHTML = markup;
 }
 
+function reveal(id) {
+  const el = document.getElementById(id);
+  if (el) el.hidden = false;
+}
+
 function render() {
   fill('pulse', pulseMarkup(PULSE));
   fill('shelf-region', shelfMarkup(SHELF));
+  reveal('shelf-section');
 
   const learned = document.getElementById('learned');
   if (learned) learned.textContent = LEARNED.line;
+  reveal('learned-section');
 
   // The visit line is the realm's logbook, and the reason the storage rule has
   // something real to check. It is a footnote, not a card: if storage is

@@ -139,3 +139,32 @@ test('the pulse line names the iteration and its date', () => {
   assert.match(markup, /<time class="mono" datetime="2026-09-20">20 Sep 2026<\/time>/);
   assert.match(markup, /Did a thing\./);
 });
+
+import { safeUrl } from '../../studio/shelf.js';
+
+test('a url that is not a link to a page is not made into one', () => {
+  // Escaping puts a url safely into an attribute; it does not make following it
+  // safe. This is the part escaping cannot cover.
+  assert.equal(safeUrl('games/tilt-maze/'), 'games/tilt-maze/');
+  assert.equal(safeUrl('../games/lantern/'), '../games/lantern/');
+  assert.equal(safeUrl('https://example.com/x'), 'https://example.com/x');
+  for (const bad of ['javascript:alert(1)', 'JaVaScRiPt:alert(1)', ' javascript:alert(1) ',
+                     'data:text/html,<script>x</script>', 'vbscript:x', '', '   ', undefined, null]) {
+    assert.equal(safeUrl(bad), null, String(bad));
+  }
+});
+
+test('a card with an unfollowable url renders as a card, not as a link', () => {
+  const markup = cardMarkup({ ...ENTRY, url: 'javascript:alert(1)' });
+  assert.doesNotMatch(markup, /<a /);
+  assert.match(markup, /Some Experiment/);
+  assert.doesNotMatch(markup, /javascript:/);
+});
+
+test('a visit count at the edge of the safe range does not render a nonsense number', () => {
+  // The guard ran on the stored value and the increment happened after it, so
+  // MAX_SAFE_INTEGER passed the check and then rendered one past it.
+  const max = Number.MAX_SAFE_INTEGER;
+  assert.equal(wholeNumber(wholeNumber(String(max), 0) + 1, 1), 1);
+  assert.equal(wholeNumber(wholeNumber('41', 0) + 1, 1), 42);
+});
