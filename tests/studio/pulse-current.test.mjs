@@ -6,9 +6,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { PULSE } from '../../studio/shelf-data.js';
+import { PULSE, LEARNED } from '../../studio/shelf-data.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 
@@ -47,4 +47,17 @@ test('the pulse line is complete: an iteration, a date and a sentence', () => {
   assert.match(PULSE.iteration, /^\d{2}$/);
   assert.match(PULSE.shipped, /^\d{4}-\d{2}-\d{2}$/);
   assert.ok(PULSE.summary.trim().length > 20, 'the pulse summary says nothing');
+});
+
+test('the retro line names the newest iteration that has written a retro', () => {
+  // PULSE may run one iteration ahead of the changelog while that iteration is
+  // being built. LEARNED may not: it quotes a retrospective, and a retro exists
+  // only once the iteration it belongs to is being closed out.
+  const withRetro = iterationDirs()
+    .filter(n => existsSync(path.join(ROOT, 'docs/studio/iterations', n, 'retro.md')))
+    .at(-1);
+  assert.ok(withRetro, 'no iteration has a retro');
+  assert.equal(LEARNED.iteration, withRetro,
+    `the page quotes iteration ${LEARNED.iteration}'s retro, but iteration ${withRetro} has since written one`);
+  assert.ok(LEARNED.line.trim().length > 20, 'the retro line says nothing');
 });

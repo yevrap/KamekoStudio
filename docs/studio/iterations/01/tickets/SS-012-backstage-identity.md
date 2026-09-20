@@ -16,20 +16,20 @@ real ones.
 
 ## Acceptance criteria
 
-- [ ] The stylesheet defines the Backstage token set: a warm off-white ground in light mode
+- [x] The stylesheet defines the Backstage token set: a warm off-white ground in light mode
       and a near-black graphite ground under `body.dark-mode`, an amber worklight accent
       `#f0a84c` (and its light-mode counterpart), and a single cool teal `#3fd0e0` reserved
       for interactive elements.
-- [ ] A monospace family token exists and is used for tags, versions and iteration numbers;
+- [x] A monospace family token exists and is used for tags, versions and iteration numbers;
       the system sans continues to carry UI text.
-- [ ] A faint grid sits under the page in both themes, and surfaces read as objects on it —
+- [x] A faint grid sits under the page in both themes, and surfaces read as objects on it —
       thin rules and a soft drop shadow rather than flat panels.
-- [ ] Motion is settle-only: no element pulses, glows or loops. Existing entry motion stays
+- [x] Motion is settle-only: no element pulses, glows or loops. Existing entry motion stays
       within 400 ms, ease-out, and remains behind `prefers-reduced-motion`.
-- [ ] Body text, dimmed text and accent-on-ground each meet WCAG AA contrast (4.5:1, or
+- [x] Body text, dimmed text and accent-on-ground each meet WCAG AA contrast (4.5:1, or
       3:1 for text at or above 24px) in **both** themes.
-- [ ] No binary assets are added: the grid and every texture are CSS.
-- [ ] The light/dark toggle still comes from the arcade's shared settings script via
+- [x] No binary assets are added: the grid and every texture are CSS.
+- [x] The light/dark toggle still comes from the arcade's shared settings script via
       `body.dark-mode`; the realm declares no toggle of its own.
 
 ## Evidence plan

@@ -63,7 +63,7 @@ function render() {
   fill('shelf-region', shelfMarkup(SHELF));
 
   const learned = document.getElementById('learned');
-  if (learned) learned.textContent = LEARNED;
+  if (learned) learned.textContent = LEARNED.line;
 
   // The visit line is the realm's logbook, and the reason the storage rule has
   // something real to check. It is a footnote, not a card: if storage is
