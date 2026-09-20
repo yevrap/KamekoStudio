@@ -8,6 +8,7 @@ import { treeClean, onMain, noStopFile } from './preflight.mjs';
 import { baselineSuites, fullSuites, studioTests } from './suites.mjs';
 import { pathGuard, productionUnchanged } from './path-guard.mjs';
 import { storageKeys } from './storage-keys.mjs';
+import { portalCapacityCheck } from './portal-capacity.mjs';
 import { hygiene } from './hygiene.mjs';
 import { commitLint } from './commit-lint.mjs';
 import { iterationDocs, docsCurrent, reviewerVerdict, changelog, docCleanliness } from './docs.mjs';
@@ -20,6 +21,7 @@ export const CHECKS = [
   baselineSuites,
   pathGuard,
   storageKeys,
+  portalCapacityCheck,
   studioTests,
   hygiene,
   fullSuites,

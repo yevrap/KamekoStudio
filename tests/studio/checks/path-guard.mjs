@@ -6,17 +6,28 @@
 
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { git, gitRaw, committedPaths, workingTreePaths, refExists, latestIterationTag, attempt, gitPath } from '../lib/shell.mjs';
+import { gitRaw, committedPaths, workingTreePaths, refExists, latestIterationTag } from '../lib/shell.mjs';
 import { classifyPaths, PATH_EXCEPTIONS } from '../lib/rules.mjs';
 
 function changedPaths(root, base) {
   return [...new Set([...committedPaths(root, base), ...workingTreePaths(root)])];
 }
 
-/** The file's text at `rev`, or '' when it did not exist there. */
+/**
+ * The file's text at `rev`, or '' when it did not exist there.
+ *
+ * Read raw, never through the trimming helper: an exception that compares a
+ * file's content byte for byte is defeated by a stripped trailing newline, and
+ * every source file has one. The package.json exception did not notice, because
+ * it parses JSON before comparing; the first content-exact exception did, by
+ * rejecting the very edit it was written to allow.
+ */
 function textAt(root, rev, file) {
-  const r = attempt(gitPath(), ['show', `${rev}:${file}`], { cwd: root });
-  return r.ok ? r.out : '';
+  try {
+    return gitRaw(root, 'show', `${rev}:${file}`);
+  } catch {
+    return '';
+  }
 }
 
 async function textNow(root, file) {

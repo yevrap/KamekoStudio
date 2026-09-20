@@ -233,3 +233,142 @@ test('commit lint: exemption comes from the parent count, not the word "Merge"',
 test('commit lint: long subjects are rejected', () => {
   assert.match(lintCommitSubject('feat(studio): SS-003 ' + 'x'.repeat(80)), /characters/);
 });
+
+// --- The 3D landing page's portal capacity -----------------------------------
+
+import { portalCapacity, allowOnlyFrontPortalRow, revertFrontPortalRow } from './lib/rules.mjs';
+
+const CONSTANTS = n => `export const ARCADE_GAMES = [\n${
+  Array.from({ length: n }, (_, i) => `    { name: "Game ${i}", url: "games/g${i}/", color: 0x00ff00 }`).join(',\n')
+}\n];\n`;
+
+/** A gameplay source with `rows` position tables of three, like the real one. */
+const GAMEPLAY = (rows, { rotationsFor = null } = {}) => {
+  const names = ['leftPositions', 'rightPositions', 'backPositions', 'frontPositions'].slice(0, rows);
+  const table = name => `    const ${name} = [\n${
+    Array.from({ length: 3 }, (_, i) => `        new THREE.Vector3(${i}, 2.5, ${i})`).join(',\n')
+  }\n    ];\n`;
+  const rotated = rotationsFor ?? names;
+  return [
+    'function createEnvironment() {\n',
+    ...names.map(table),
+    `    const positions = [${names.map(n => `...${n}`).join(', ')}];\n`,
+    `    const rotations = [\n${rotated.map(n => `        ...${n}.map(() => 0)`).join(',\n')}\n    ];\n`,
+    '}\n'
+  ].join('');
+};
+
+test('portal capacity: a page with room for every game is clean', () => {
+  const { games, slots, problems } = portalCapacity(GAMEPLAY(4), CONSTANTS(11));
+  assert.equal(games, 11);
+  assert.equal(slots, 12);
+  assert.deepEqual(problems, []);
+});
+
+test('portal capacity: the defect this rule exists for is reported, with the count', () => {
+  // Nine slots, eleven games — the state the landing page shipped in for months.
+  const { games, slots, problems } = portalCapacity(GAMEPLAY(3), CONSTANTS(11));
+  assert.equal(games, 11);
+  assert.equal(slots, 9);
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /11 games but only 9 portal slots — the last 2 would be dropped silently/);
+});
+
+test('portal capacity: exactly enough slots is not a shortfall', () => {
+  assert.deepEqual(portalCapacity(GAMEPLAY(3), CONSTANTS(9)).problems, []);
+});
+
+test('portal capacity: a position row with no matching rotation row is reported', () => {
+  // The mistake adding a row invites: the portals render facing nowhere.
+  const { problems } = portalCapacity(
+    GAMEPLAY(4, { rotationsFor: ['leftPositions', 'rightPositions', 'backPositions'] }),
+    CONSTANTS(11)
+  );
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /frontPositions has positions but no matching rotations/);
+});
+
+test('portal capacity: a source it cannot read is reported, never assumed fine', () => {
+  assert.match(portalCapacity(GAMEPLAY(3), 'export const SOMETHING_ELSE = [];').problems.join(),
+    /could not find ARCADE_GAMES/);
+  assert.match(portalCapacity('function createEnvironment() {}', CONSTANTS(11)).problems.join(),
+    /could not find the positions table/);
+  assert.match(portalCapacity(
+    '    const positions = [...missingTable];\n    const rotations = [\n...missingTable.map(() => 0)\n];',
+    CONSTANTS(11)
+  ).problems.join(), /positions spreads missingTable, which is not declared as an array literal/);
+});
+
+// --- The shared/3d/gameplay.js exception -------------------------------------
+
+const BASE_TABLES = `    const backPositions = [
+        new THREE.Vector3(-roomWidth/4, 2.5, -roomDepth/2 + 1.2)
+    ];
+    const positions = [...leftPositions, ...rightPositions, ...backPositions];
+    const rotations = [
+        ...leftPositions.map(() => Math.PI/2),
+        ...rightPositions.map(() => -Math.PI/2),
+        ...backPositions.map(() => 0)
+    ];
+`;
+
+const APPROVED_TABLES = `    const backPositions = [
+        new THREE.Vector3(-roomWidth/4, 2.5, -roomDepth/2 + 1.2)
+    ];
+    // Front wall, above the trophy shelf. Three more slots, so the room holds
+    // twelve portals rather than nine.
+    const frontPositions = [
+        new THREE.Vector3(-roomWidth/4, 4.0, roomDepth/2 - 1.2),
+        new THREE.Vector3(roomWidth/4, 4.0, roomDepth/2 - 1.2),
+        new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2)
+    ];
+    const positions = [...leftPositions, ...rightPositions, ...backPositions, ...frontPositions];
+    const rotations = [
+        ...leftPositions.map(() => Math.PI/2),
+        ...rightPositions.map(() => -Math.PI/2),
+        ...backPositions.map(() => 0),
+        ...frontPositions.map(() => Math.PI)
+    ];
+`;
+
+const PREAMBLE = 'import * as THREE from "three";\nconst roomWidth = 18;\n';
+const TAIL = '\n    ARCADE_GAMES.forEach((game, index) => {\n        if (!positions[index]) return;\n    });\n';
+
+const before = PREAMBLE + BASE_TABLES + TAIL;
+const after = PREAMBLE + APPROVED_TABLES + TAIL;
+
+test('gameplay exception: the approved front-wall row is allowed', () => {
+  assert.equal(revertFrontPortalRow(after), before);
+  assert.equal(allowOnlyFrontPortalRow(before, after), null);
+});
+
+test('gameplay exception: an unchanged file is allowed', () => {
+  assert.equal(allowOnlyFrontPortalRow(before, before), null);
+});
+
+test('gameplay exception: any other edit riding along is rejected', () => {
+  // The whole point of a narrow exception: one approved change, nothing else.
+  const smuggled = after.replace('const roomWidth = 18;', 'const roomWidth = 40;');
+  assert.match(allowOnlyFrontPortalRow(before, smuggled), /changes beyond the front-wall portal row/);
+});
+
+test('gameplay exception: tampering inside the approved row is rejected', () => {
+  const tampered = after.replace('new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2)',
+    'new THREE.Vector3(0, 4.0, roomDepth/2 - 1.2); fetch("http://example.com")');
+  assert.match(allowOnlyFrontPortalRow(before, tampered), /changes beyond the front-wall portal row/);
+});
+
+test('gameplay exception: a deleted line elsewhere is rejected', () => {
+  const trimmed = after.replace('        if (!positions[index]) return;\n', '');
+  assert.match(allowOnlyFrontPortalRow(before, trimmed), /changes beyond the front-wall portal row/);
+});
+
+test('gameplay exception: a trailing newline is content, not noise', () => {
+  // The bug this test exists for: git output read through a trimming helper
+  // lost the file's final newline, so the exception rejected its own edit.
+  assert.match(allowOnlyFrontPortalRow(before.trimEnd(), after), /changes beyond the front-wall portal row/);
+});
+
+test('gameplay exception: a file absent from the base revision is rejected', () => {
+  assert.match(allowOnlyFrontPortalRow('', after), /did not exist at the base revision/);
+});
