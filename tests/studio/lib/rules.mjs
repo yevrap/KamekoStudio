@@ -152,23 +152,65 @@ export function allowOnlyFrontPortalRow(before, after) {
  * @returns {{games: number|null, slots: number|null, positionTables: string[],
  *            rotationTables: string[], problems: string[]}}
  */
+/**
+ * Comments are not code. A commented-out position was counted as a slot, which
+ * made the rule report more room than the page has — the exact direction of
+ * error it exists to prevent. Stripped before anything is counted.
+ *
+ * The `[^:]` guard keeps `https://` in a URL from being read as a comment. No
+ * string in either file contains `/*` or a brace, which is what lets this be a
+ * scanner rather than a parser; if that stops being true, this needs to become
+ * one.
+ */
+function stripComments(source) {
+  return String(source ?? '')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+}
+
+/** Brace-balanced objects at the top level of an array body. */
+function countEntries(body) {
+  let depth = 0, count = 0;
+  for (const ch of body) {
+    if (ch === '{') { if (depth === 0) count += 1; depth += 1; }
+    else if (ch === '}') depth -= 1;
+  }
+  return count;
+}
+
 export function portalCapacity(gameplay, constants) {
   const problems = [];
+  const consts = stripComments(constants);
+  const source = stripComments(gameplay);
 
-  const gameList = /ARCADE_GAMES\s*=\s*\[([\s\S]*?)\];/.exec(String(constants ?? ''));
-  const games = gameList ? (gameList[1].match(/\{\s*name\s*:/g) ?? []).length : null;
+  const gameList = /ARCADE_GAMES\s*=\s*\[([\s\S]*?)\];/.exec(consts);
+  // Entries are counted as objects, not as occurrences of `name:`. Counting the
+  // key meant an entry written { url, name, color } was invisible, and the rule
+  // reported a full room while the page dropped two games.
+  const games = gameList ? countEntries(gameList[1]) : null;
   if (games === null) problems.push('could not find ARCADE_GAMES in the constants source');
 
-  const source = String(gameplay ?? '');
-  const positionsDecl = /const\s+positions\s*=\s*\[([^\]]*)\]/.exec(source);
+  const positionsDecl = /const\s+positions\s*=\s*\[([^\]]*)\]\s*;/.exec(source);
   const rotationsDecl = /const\s+rotations\s*=\s*\[([\s\S]*?)\];/.exec(source);
 
   const spreads = text => [...String(text).matchAll(/\.\.\.([A-Za-z_$][\w$]*)/g)].map(m => m[1]);
   const positionTables = positionsDecl ? spreads(positionsDecl[1]) : [];
   const rotationTables = rotationsDecl ? spreads(rotationsDecl[1]) : [];
 
-  if (!positionsDecl) problems.push('could not find the positions table in the gameplay source');
+  if (!positionsDecl) {
+    // Includes `= [...].slice(0, 9);`, which reads as nine slots at runtime
+    // however many the tables hold.
+    problems.push('could not find the positions table as a plain array of spreads ending in "];"');
+  } else if (!/^\s*(?:\.\.\.[A-Za-z_$][\w$]*\s*,\s*)*\.\.\.[A-Za-z_$][\w$]*\s*$/.test(positionsDecl[1])) {
+    problems.push(`the positions table holds something other than spreads: ${positionsDecl[1].trim().slice(0, 60)}`);
+  }
   if (!rotationsDecl) problems.push('could not find the rotations table in the gameplay source');
+
+  // A table can be built correctly and then shortened. `positions.length = 9`
+  // is two words and undoes the whole row.
+  if (/\bpositions\s*\.\s*(?:length\s*=|splice\s*\(|pop\s*\(|shift\s*\()/.test(source)) {
+    problems.push('positions is shortened after it is built, so the table the rule counts is not the table the page uses');
+  }
 
   let slots = positionsDecl ? 0 : null;
   for (const name of positionTables) {

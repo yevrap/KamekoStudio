@@ -107,19 +107,20 @@ export function createEnvironment() {
         new THREE.Vector3(0, 2.5, -roomDepth/2 + 1.2),
         new THREE.Vector3(roomWidth/4, 2.5, -roomDepth/2 + 1.2)
     ];
-    // Front wall, above the trophy shelf. Three more slots, so the room holds
-    // twelve portals rather than nine - ARCADE_GAMES has outgrown the table
-    // twice now, most recently when Maze Warden was promoted.
-    // The other three walls sit 1.2 from the wall; this row sits 2.0, because
-    // the trophy shelf occupies 1.5 of depth here and its trophies stand on it.
-    // At 1.2, measured with all five trophies present: the two outer portals
-    // missed the nearest trophy by 0.01 in z, and the centre slot overlapped
-    // the tallest one in all three axes. At 2.0 every slot clears every trophy
-    // by 0.55 in z, and trophy depth is fixed at the shelf, so the separation
-    // holds however many the player has earned.
+    // Front wall. Three more slots, so the room holds twelve portals rather
+    // than nine - ARCADE_GAMES has outgrown the table twice now, most recently
+    // when Maze Warden was promoted.
+    // The outer two sit clear of the trophy shelf in x, not merely above it.
+    // updatePlayer picks the prompt by 2D distance and prefers a portal to a
+    // trophy at any range, so a portal within INTERACTION_DISTANCE of where a
+    // player stands to read a trophy replaces its description. Directly above
+    // the shelf, this row masked 4 of 5 trophies; flanking it, none - the
+    // closest a player gets to one of these while reading a trophy is 3.68.
+    // The centre slot is reserved and empty; filling it would mask the middle
+    // trophy, which is recorded against TD-001.
     const frontPositions = [
-        new THREE.Vector3(-roomWidth/4, 4.0, roomDepth/2 - 2.0),
-        new THREE.Vector3(roomWidth/4, 4.0, roomDepth/2 - 2.0),
+        new THREE.Vector3(-roomWidth/2 + 2, 4.0, roomDepth/2 - 2.0),
+        new THREE.Vector3(roomWidth/2 - 2, 4.0, roomDepth/2 - 2.0),
         new THREE.Vector3(0, 4.0, roomDepth/2 - 2.0)
     ];
     const positions = [...leftPositions, ...rightPositions, ...backPositions, ...frontPositions];
