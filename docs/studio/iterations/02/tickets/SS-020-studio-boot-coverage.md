@@ -94,9 +94,14 @@ studio-owned check rather than a second production exception.
   production code the studio may not fix — so the check has to exempt it. The exemption
   matches on the **throwing file from the stack**, never on the message, which is why
   removing the studio's own try/catch is still caught while production's throw is not.
-  A message-based exemption would have passed mutation 8. Unit-tested both ways.
+  A message-based exemption would have passed mutation 8.
 
-  Also run: `node --test tests/studio/` (101 green), `--stage=ticket` green,
+  **Corrected after review.** This section originally claimed the exemption was
+  "unit-tested both ways". It was not tested at all, and the anchoring was loose enough
+  that a studio-owned `shared/settings.js` claimed it. Both independent reviews found
+  this and the iteration was rejected on it. Closed by SS-024.
+
+  Also run: `node --test tests/studio/` (101 green at this commit; 191 at the end of the iteration), `--stage=ticket` green,
   `--stage=ticket --offline` reports `studio-boot` as *not run* with the reason.
 
 - **Deferred:** TD-007 — the static server now exists twice, once in `scripts/smoke.mjs`

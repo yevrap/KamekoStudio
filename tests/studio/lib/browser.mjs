@@ -39,8 +39,12 @@ export async function serve(root) {
       let urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
       if (urlPath.endsWith('/')) urlPath += 'index.html';
       const filePath = path.join(root, urlPath);
-      // A request may not escape the served root, even with a well-formed path.
-      if (!filePath.startsWith(root)) { res.writeHead(403); res.end(); return; }
+      // A request may not escape the served root. Compared at the path boundary
+      // rather than as a prefix: with a root of `/repo`, a plain `startsWith`
+      // also accepts `/repo-evil/x`.
+      if (filePath !== root && !filePath.startsWith(root + path.sep)) {
+        res.writeHead(403); res.end(); return;
+      }
       const data = await fs.readFile(filePath);
       res.writeHead(200, { 'Content-Type': MIME[path.extname(filePath)] || 'application/octet-stream' });
       res.end(data);
