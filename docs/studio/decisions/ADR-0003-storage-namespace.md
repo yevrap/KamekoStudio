@@ -17,17 +17,26 @@ There is already a repo-wide guard test, `tests/guard-localStorage.test.mjs`, bu
 
 ## Decision
 
-1. Every key the studio writes begins with `studio_`.
-2. The studio never reads or writes a key without that prefix.
+1. Every key written by code under `studio/` begins with `studio_`.
+2. Studio code never reads or writes a key without that prefix, and never calls
+   `localStorage.clear()`, which empties the whole origin.
 3. The rule is enforced by the studio's own check (`storage-keys`), which scans
    `studio/**` — not by extending the repo-wide guard test.
 4. Studio keys are deliberately **not** added to the production "Clear All Game Data"
    list, because that would require editing `shared/settings.js`.
+5. The rule is scoped to **studio code**, not to everything a studio page loads. Studio
+   pages inherit `shared/settings.js` for the light/dark toggle, and that production script
+   owns `theme` and `devMode` and provides the clear-data control.
 
 ## Consequences
 
-- Nothing the studio does can corrupt or clear a production save, and nothing production
-  does can clear a studio save.
+- Nothing the *studio* writes can corrupt a production save: its keys occupy a namespace
+  nothing else uses, and it cannot clear the origin.
+- It does not follow that a studio page is inert with respect to production storage. It
+  inherits the arcade's settings drawer, so `theme` and `devMode` are read and written on
+  its behalf, and a visitor can clear the arcade's saves from it. That is the price of
+  inheriting the theme rather than re-declaring it; the trade was made knowingly in SS-004,
+  and point 5 exists so that no document can claim otherwise.
 - Clearing all game data in production leaves studio data behind. For an experimental
   realm this is acceptable, and arguably correct; when the studio has data worth clearing
   it will need its own control, or a one-line exception adding the `studio_` prefix to

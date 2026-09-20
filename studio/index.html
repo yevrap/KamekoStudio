@@ -47,9 +47,11 @@
     <h2>Your visits</h2>
     <p id="visits-text"></p>
     <p>
-      Stored locally as <code>studio_firstVisit</code> and <code>studio_visitCount</code> —
-      the realm never reads or writes a key without the <code>studio_</code> prefix, and
-      nothing here leaves the browser.
+      Stored locally as <code>studio_firstVisit</code> and <code>studio_visitCount</code>.
+      Nothing here leaves the browser. Every key the realm's own code touches carries the
+      <code>studio_</code> prefix, because this page shares an origin with the arcade; the
+      arcade's shared settings script, which this page deliberately inherits for the
+      light/dark toggle, owns <code>theme</code> and <code>devMode</code>.
     </p>
   </div>
 </main>
