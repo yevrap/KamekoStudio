@@ -19,11 +19,40 @@
 // between them is here, pure and tested, rather than inline in the driver:
 // an exemption is the part of a check most worth attacking.
 
-/** The file a stack trace blames first, or '' when there is no usable frame. */
+/** The one production file whose uncaught throw is exempt, as a served path. */
+export const INHERITED_SETTINGS = '/shared/settings.js';
+
+/**
+ * A stack frame's URL, with any trailing `:line:col` removed, or null.
+ *
+ * Returned as a URL rather than a string so callers compare an origin and a
+ * path instead of matching a substring. Substring matching is what let a
+ * studio-owned `studio/games/x/shared/settings.js` claim production's
+ * exemption: both independent reviews built that file and watched the check
+ * print `pass` while a studio page threw uncaught.
+ */
+export function sourceUrl(raw) {
+  const text = String(raw ?? '').trim().replace(/:\d+(?::\d+)?$/, '');
+  if (!text) return null;
+  try { return new URL(text); } catch { return null; }
+}
+
+/**
+ * The first frame of a stack that names a URL, scanned line by line in order.
+ *
+ * The previous version matched the parenthesised form against the whole stack
+ * before the bare form, so a named frame anywhere below beat the anonymous
+ * frame at the top — `at http://…/main.js:25` lost to
+ * `at getSavedTheme (http://…/shared/settings.js:12)` underneath it, and a
+ * studio throw from an anonymous callback would have been credited to
+ * production. Order is the whole point of a function called firstFrame.
+ */
 export function firstFrame(stack) {
-  const text = String(stack ?? '');
-  const match = /\((https?:[^)\s]+)/.exec(text) || /at (https?:\S+)/.exec(text);
-  return match ? match[1] : '';
+  for (const line of String(stack ?? '').split('\n')) {
+    const match = /\((https?:[^)\s]+)\)/.exec(line) || /^\s*at\s+(https?:\S+)/.exec(line);
+    if (match) return match[1];
+  }
+  return '';
 }
 
 /**
@@ -33,22 +62,31 @@ export function firstFrame(stack) {
  * for it would be reporting production's omission as the studio's defect.
  */
 export function isBrowserInitiated(error = {}) {
-  return /\/favicon\.ico(\?|$)/.test(error.source || '');
+  const url = sourceUrl(error.source);
+  return Boolean(url && /\/favicon\.ico$/.test(url.pathname));
 }
 
 /**
- * TD-005, and only TD-005: `shared/settings.js` throws an uncaught SecurityError
- * when site data is blocked, and it is production code outside the path guard.
+ * Production's settings script throwing with site data blocked (TD-005), and
+ * nothing else. It is production code outside the path guard, so the studio
+ * cannot fix it; without an exemption every studio page fails on a defect it
+ * has no way to repair.
  *
- * The exemption is by **throwing file**, never by message. The message is
- * `SecurityError: denied` and names nobody, so a message test would exempt the
- * studio's own code for throwing the same thing — which is precisely the
- * mutation this check exists to catch. An error with no frame to blame is not
- * exempt: an exemption that widens when it is least certain is not an
- * exemption, it is a hole.
+ * Anchored to the page's own **origin and exact path**, and it **fails closed**:
+ * no origin, no parseable frame, a frame from anywhere else — the error counts
+ * against the page. The studio may write anywhere under `studio/**`, so
+ * `/studio/.../shared/settings.js` is a file the studio itself can create, and
+ * an unanchored test handed it production's exemption.
+ *
+ * It exempts *any* uncaught throw from that file, not only a SecurityError.
+ * Narrowing by error type would only mean failing on another defect in a file
+ * the studio still cannot touch. Stated because the previous comment said
+ * "TD-005, and only TD-005", which was not what the code did.
  */
-export function isInheritedSettingsThrow(error = {}) {
-  return error.kind === 'uncaught' && /\/shared\/settings\.js(\?|$|:)/.test(error.source || '');
+export function isInheritedSettingsThrow(error = {}, origin = '') {
+  if (error.kind !== 'uncaught' || !origin) return false;
+  const url = sourceUrl(error.source);
+  return Boolean(url && url.origin === origin && url.pathname === INHERITED_SETTINGS);
 }
 
 /** The error strings a page is answerable for, after `ignore` has had its say. */
@@ -111,7 +149,21 @@ export function judgeGeneric(obs = {}) {
     }
   }
 
-  const small = (obs.targets ?? []).filter(t => t.height < MIN_TARGET || t.width < MIN_TARGET);
+  const targets = obs.targets ?? [];
+
+  // A control that takes up space but cannot be seen is a failure, not an
+  // exclusion. The first version skipped invisible elements before measuring
+  // them, which made hiding a target an escape from the 44px rule instead of a
+  // violation of it: both reviews blanked the whole plate with `opacity: 0` and
+  // watched the check pass. `display: none` and `[hidden]` are different — the
+  // page is choosing not to offer the control at all, which is legitimate.
+  const invisible = targets.filter(t => t.laidOut && !t.visible);
+  if (invisible.length) {
+    fail.push(`${invisible.length} control(s) take up space but cannot be seen:\n`
+      + list(invisible.map(t => `${t.label} — ${t.reason ?? 'not visible'}`)));
+  }
+
+  const small = targets.filter(t => t.visible && (t.height < MIN_TARGET || t.width < MIN_TARGET));
   if (small.length) {
     fail.push(`${small.length} target(s) under ${MIN_TARGET}px at ${NARROW_WIDTH}px wide:\n`
       + list(small.map(t => `${t.label} — ${Math.round(t.width)}×${Math.round(t.height)}`)));
@@ -200,6 +252,19 @@ export function judgeHome(obs = {}) {
 export function judgeKilledTreatment(killed, live) {
   if (!killed || !live) return ['the killed-card fixture did not render'];
   const fail = [];
+
+  // Absolute first, then the difference. A pure difference test was satisfied by
+  // a killed card made *visually identical* to a live one and merely numerically
+  // different — `border-style: double`, a shadow one thousandth of an alpha
+  // apart. The treatment is named in the design: no surface, no lift, a dashed
+  // edge. Say so, and keep the difference test for the case where the live card
+  // is changed to match.
+  if (killed.boxShadow !== 'none') {
+    fail.push(`a killed card still casts a shadow (${killed.boxShadow}): it must sit in the bench, not on it`);
+  }
+  if (killed.borderStyle !== 'dashed') {
+    fail.push(`a killed card's border is ${killed.borderStyle}, not dashed`);
+  }
   if (killed.background === live.background) {
     fail.push(`a killed card has the same background as a live one (${killed.background}): it is not receding`);
   }
@@ -230,7 +295,16 @@ export function judgeOvertighten(obs = {}) {
   if (!game) return ['the game was never driven: no observation was collected'];
   const fail = [];
 
+  if ((game.errors ?? []).length) {
+    fail.push(`the game threw while being played:\n${list(game.errors)}`);
+  }
   if (!(game.bolts > 0)) fail.push('the plate rendered no bolts');
+  if (game.plateVisible === false) {
+    fail.push('the plate takes up space but cannot be seen');
+  }
+  if (!game.gaugeMoved) {
+    fail.push('the gauge did not move while the bolt was turning: the page shows a number, not a state');
+  }
   if (!(game.lockedPicks > 0)) {
     fail.push('no plate is locked on a fresh profile: the plates are not gated at all');
   }
@@ -242,7 +316,13 @@ export function judgeOvertighten(obs = {}) {
     fail.push('turning a bolt did not loosen the bolt it is coupled to — the mechanic is not running');
   }
   if (!game.released) {
-    fail.push('the bolt kept turning after the input stopped');
+    fail.push('the bolt kept turning after the key was released');
+  }
+  if (!game.releasedPointer) {
+    fail.push('the bolt kept turning after the pointer was released: every tap runs the bolt to its strip point');
+  }
+  if (!game.progressPersisted) {
+    fail.push('clearing a plate did not survive a reload: the game has no persistence');
   }
   if (!game.strippedEndsPlate) {
     fail.push('turning past the strip point did not end the plate');

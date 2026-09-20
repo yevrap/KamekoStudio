@@ -23,6 +23,9 @@ import {
   isInheritedSettingsThrow, judgePage, pageErrors
 } from '../lib/boot-contract.mjs';
 
+/** How long a hold has to run before a frozen gauge and a live one look different. */
+const HOLD_MS = 500;
+
 /** Every index.html under studio/, as repo-relative paths, in a stable order. */
 async function discoverPages(root) {
   const pages = [];
@@ -64,11 +67,29 @@ async function observeNormal(browser, url) {
         for (const child of el.querySelectorAll('*')) excluded.add(child);
       }
     }
-    const visible = el => {
+    // Three different states, kept apart rather than collapsed into "visible":
+    // absent from the layout (legitimate — the page is not offering it), laid
+    // out and seen, and laid out but invisible. Only the contract decides which
+    // of those is a failure. `checkVisibility` is asked about opacity and
+    // visibility because both inherit: the previous version read the element's
+    // own computed style, so a control inside an `opacity: 0` ancestor measured
+    // as perfectly visible.
+    const describe = el => {
       const style = getComputedStyle(el);
-      if (style.display === 'none' || style.visibility === 'hidden' || Number(style.opacity) === 0) return false;
       const box = el.getBoundingClientRect();
-      return box.width > 0 && box.height > 0;
+      const laidOut = box.width > 0 && box.height > 0 && style.display !== 'none' && !el.closest('[hidden]');
+      const seen = typeof el.checkVisibility === 'function'
+        ? el.checkVisibility({ opacityProperty: true, visibilityProperty: true, contentVisibilityAuto: true })
+        : style.visibility !== 'hidden' && Number(style.opacity) !== 0;
+      let reason = '';
+      if (laidOut && !seen) {
+        const faded = el.closest('*');
+        reason = style.visibility === 'hidden' ? 'visibility: hidden'
+          : Number(style.opacity) === 0 ? 'opacity: 0'
+          : 'hidden by an ancestor (opacity or visibility)';
+        void faded;
+      }
+      return { laidOut, seen, reason };
     };
     const label = el => {
       const text = (el.getAttribute('aria-label') || el.textContent || '').trim().replace(/\s+/g, ' ');
@@ -77,13 +98,16 @@ async function observeNormal(browser, url) {
 
     const targets = [];
     for (const el of document.querySelectorAll('a[href], button, [role="button"], input, select, summary')) {
-      if (excluded.has(el) || !visible(el)) continue;
+      if (excluded.has(el)) continue;
+      const { laidOut, seen, reason } = describe(el);
+      if (!laidOut) continue;
       const box = el.getBoundingClientRect();
-      targets.push({ label: label(el), width: box.width, height: box.height });
+      targets.push({ label: label(el), width: box.width, height: box.height, laidOut, visible: seen, reason });
     }
 
     const back = document.querySelector('[data-back], a.back');
     const backBox = back ? back.getBoundingClientRect() : null;
+    void describe;
 
     return {
       targets,
@@ -125,7 +149,7 @@ async function observeWithoutScript(browser, url) {
  * browser with site data blocked does. studio/ shares an origin with production
  * and keeps a visit log, so every call site here is a place the page can die.
  */
-async function observeWithoutStorage(browser, url) {
+async function observeWithoutStorage(browser, url, origin) {
   const page = await browser.newPage();
   const errors = collectErrors(page);
   await page.evaluateOnNewDocument(() => {
@@ -145,7 +169,9 @@ async function observeWithoutStorage(browser, url) {
   // pages for it. The exemption is by throwing file, not by message — the
   // message is "SecurityError: denied" and names nobody — so a studio file that
   // starts throwing here is still caught.
-  return { mainText, errors: pageErrors(errors, isInheritedSettingsThrow) };
+  // The exemption is anchored to this page's own origin, so a studio-owned file
+  // that merely ends in `shared/settings.js` cannot claim it.
+  return { mainText, errors: pageErrors(errors, e => isInheritedSettingsThrow(e, origin)) };
 }
 
 /**
@@ -212,13 +238,26 @@ async function observeHome(browser, url) {
 }
 
 /**
- * Overtighten, driven. Holding is the whole interface, so it is held: once with
- * a key on a focused bolt, once with the pointer on the bolt coupled to it, and
- * once for long enough to strip a thread. The numbers come off the readouts,
- * which is what a player reads too.
+ * Overtighten, driven.
+ *
+ * Holding is the whole interface, so it is held — with a key, with the pointer,
+ * and for long enough to strip a thread. Three things here exist because the
+ * first version of this function missed them and both reviews found the gap:
+ *
+ *  - errors are collected. The first version drove focus, keys, pointer capture
+ *    and stripping with nothing listening, so "no console errors" was true of
+ *    the page load and of nothing else.
+ *  - the **pointer** release is asserted, by reading the readouts again after a
+ *    settle. The first version sampled immediately after `mouse.up`, which is
+ *    indistinguishable from a bolt that never stops. Deleting the pointer
+ *    release listeners — which makes every tap run the bolt to its strip point
+ *    and destroy the plate — passed every check.
+ *  - progress is proved to survive a **reload**, not merely to be written.
+ *    Stubbing the storage wrapper to a no-op passed everything.
  */
 async function observeOvertighten(browser, url) {
   const page = await browser.newPage();
+  const errors = collectErrors(page);
   await page.setViewport({ width: 420, height: 900 });
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle();
@@ -226,35 +265,53 @@ async function observeOvertighten(browser, url) {
   const readouts = () => page.evaluate(() =>
     Object.fromEntries([...document.querySelectorAll('[data-readout]')]
       .map(el => [el.dataset.readout, Number.parseFloat(el.textContent) || 0])));
+  const dashOf = id => page.evaluate(boltId =>
+    document.querySelector(`[data-bolt="${boltId}"] .fill`)?.getAttribute('stroke-dasharray') ?? '', id);
+  const centreOf = id => page.$eval(`[data-bolt="${id}"]`, el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+
   const boltIds = await page.evaluate(() =>
     [...document.querySelectorAll('[data-bolt]')].map(el => el.dataset.bolt));
   const lockedPicks = await page.evaluate(() =>
     document.querySelectorAll('#picker [data-plate][disabled]').length);
+  const plateVisible = await page.evaluate(() => {
+    const plate = document.getElementById('plate');
+    if (!plate) return false;
+    const box = plate.getBoundingClientRect();
+    if (!(box.width > 0 && box.height > 0)) return false;
+    return typeof plate.checkVisibility === 'function'
+      ? plate.checkVisibility({ opacityProperty: true, visibilityProperty: true })
+      : true;
+  });
 
-  // Keyboard: focus the first bolt and hold space. A key repeat is what a held
-  // key produces, which is why the game cannot rely on click alone.
+  // Keyboard: focus the first bolt and hold space. A held key repeats rather
+  // than staying down, which is why the game cannot rely on click alone.
+  const dashBefore = await dashOf(boltIds[0]);
   await page.focus(`[data-bolt="${boltIds[0]}"]`);
   await page.keyboard.down(' ');
-  await settle(500);
+  await settle(HOLD_MS);
+  const dashDuring = await dashOf(boltIds[0]);
   await page.keyboard.up(' ');
   const afterKey = await readouts();
-  await settle(250);
-  const afterRelease = await readouts();
+  await settle(300);
+  const afterKeySettled = await readouts();
 
-  // Pointer on the second bolt, which the first is coupled to on every plate
-  // that ships. The first bolt must lose torque while the second gains it.
-  const box = await page.$eval(`[data-bolt="${boltIds[1]}"]`, el => {
-    const r = el.getBoundingClientRect();
-    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
-  });
+  // Pointer on the second bolt, which the first is coupled to on every shipped
+  // plate: the first must lose torque while the second gains it. Then read
+  // again after a settle, which is the assertion that the pointer release works.
+  const box = await centreOf(boltIds[1]);
   await page.mouse.move(box.x, box.y);
   await page.mouse.down();
-  await settle(500);
+  await settle(HOLD_MS);
   await page.mouse.up();
   const afterPointer = await readouts();
+  await settle(400);
+  const afterPointerSettled = await readouts();
 
-  // Past the strip point: the bands top out at 92 and the rate is 42/s, so three
-  // more seconds of holding is unambiguous.
+  // Past the strip point: the bands top out at 92 and the rate is 42/s, so
+  // three more seconds of holding is unambiguous.
   await page.mouse.down();
   await settle(3000);
   await page.mouse.up();
@@ -263,18 +320,82 @@ async function observeOvertighten(browser, url) {
     return Boolean(panel && !panel.hidden && /strip/i.test(panel.innerText));
   });
 
+  // Persistence, end to end: clear a plate, reload, and see it stay cleared.
+  // Written as "one fewer plate is locked" rather than as a storage read, so it
+  // is a claim about what the player gets back.
+  const progressPersisted = await provePersistence(page, url, lockedPicks);
+
   await page.close();
   return {
     game: {
+      errors: pageErrors(errors),
       bolts: boltIds.length,
       lockedPicks,
+      plateVisible,
+      gaugeMoved: dashDuring !== dashBefore,
       keyboardTurned: afterKey[boltIds[0]] > 0,
-      released: afterRelease[boltIds[0]] === afterKey[boltIds[0]],
+      released: afterKeySettled[boltIds[0]] === afterKey[boltIds[0]],
       pointerTurned: afterPointer[boltIds[1]] > 0,
+      releasedPointer: afterPointerSettled[boltIds[1]] === afterPointer[boltIds[1]],
       couplingObserved: afterPointer[boltIds[0]] < afterKey[boltIds[0]],
-      strippedEndsPlate: ended
+      strippedEndsPlate: ended,
+      progressPersisted
     }
   };
+}
+
+/**
+ * Win the first plate through the page's own input, reload, and report whether
+ * the win survived. Stated as "one fewer plate is locked" rather than as a
+ * storage read, because that is what the player gets back — stubbing the
+ * storage wrapper to a no-op passed every check before this existed.
+ *
+ * The strategy is the closed loop a person uses: look at the readouts, hold the
+ * bolt furthest below the middle of its band for about as long as it needs,
+ * look again. It is deliberately not a computed solution applied blind.
+ */
+async function provePersistence(page, url, lockedBefore) {
+  await page.goto(url, { waitUntil: 'networkidle2' });
+  await settle(400);
+
+  const bolts = await page.evaluate(async () => {
+    const { PLATES } = await import('./constants.js');
+    return PLATES[0].bolts.map(b => ({ id: b.id, mid: (b.lo + b.hi) / 2 }));
+  });
+  const readouts = () => page.evaluate(() =>
+    Object.fromEntries([...document.querySelectorAll('[data-readout]')]
+      .map(el => [el.dataset.readout, Number.parseFloat(el.textContent) || 0])));
+  const solvedNow = () => page.evaluate(() => {
+    const panel = document.getElementById('outcome');
+    return Boolean(panel && !panel.hidden && /seated/i.test(panel.innerText));
+  });
+
+  for (let step = 0; step < 30; step++) {
+    if (await solvedNow()) break;
+    const values = await readouts();
+    const worst = bolts
+      .map(b => ({ b, deficit: b.mid - (values[b.id] ?? 0) }))
+      .filter(x => x.deficit > 0.5)
+      .sort((x, y) => y.deficit - x.deficit)[0];
+    if (!worst) break;
+    const point = await page.$eval(`[data-bolt="${worst.b.id}"]`, el => {
+      const r = el.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    });
+    await page.mouse.move(point.x, point.y);
+    await page.mouse.down();
+    await settle(Math.max(40, Math.round((worst.deficit / 42) * 1000)));
+    await page.mouse.up();
+    await settle(70);
+  }
+
+  if (!(await solvedNow())) return false;
+
+  await page.reload({ waitUntil: 'networkidle2' });
+  await settle(400);
+  const lockedAfter = await page.evaluate(() =>
+    document.querySelectorAll('#picker [data-plate][disabled]').length);
+  return lockedAfter < lockedBefore;
 }
 
 async function run(ctx) {
@@ -298,7 +419,7 @@ async function run(ctx) {
       const obs = {
         ...(await observeNormal(browser, url)),
         withoutScript: await observeWithoutScript(browser, url),
-        withoutStorage: await observeWithoutStorage(browser, url)
+        withoutStorage: await observeWithoutStorage(browser, url, site.origin)
       };
       if (pagePath === 'studio/index.html') Object.assign(obs, await observeHome(browser, url));
       if (pagePath === 'studio/games/overtighten/index.html') {
