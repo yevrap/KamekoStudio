@@ -43,14 +43,23 @@ is not in the allowed list until then, and the guard will fail on it.
 
 `studio/` is served from the same origin as production, so it shares one `localStorage`.
 
-- Every key the studio writes begins with `studio_`.
-- The studio never reads or writes a key that does not begin with `studio_`.
+- Every key written by code under `studio/` begins with `studio_`.
+- Studio code never reads or writes a key that does not begin with `studio_`, never calls
+  `localStorage.clear()` — which would empty the whole origin, production saves included —
+  and never builds a key the `storage-keys` check cannot read statically.
 - Every key is documented in `studio/README.md` before it is used.
 
-The production "Clear All Game Data" button in `shared/settings.js` does not know about
-`studio_` keys, and `shared/settings.js` is outside the path guard. Clearing production
-data therefore leaves studio data behind, on purpose, for now. Adding the `studio_` prefix
-to that list is a future one-line exception; see `decisions/ADR-0003-storage-namespace.md`.
+**What this rule does not cover.** Studio pages load `shared/settings.js`, the arcade's
+settings drawer, for the light/dark toggle. That script reads and writes `theme` and
+`devMode` and provides "Clear All Game Data", which removes the production keys it knows
+about. It is production code, inherited deliberately, and it is outside the path guard —
+so the rule above is a rule about *studio code*, not about every byte of storage a studio
+page touches. Saying otherwise would be a claim the check cannot support: `storage-keys`
+scans `studio/**` only.
+
+Clearing all game data therefore leaves studio data behind, since the drawer's key list
+does not know about the `studio_` prefix. Adding it is a future one-line exception; see
+`decisions/ADR-0003-storage-namespace.md`.
 
 ## The production safety net
 
