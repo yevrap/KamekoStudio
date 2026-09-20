@@ -36,8 +36,23 @@
   against both the old and the new rule proves nothing about the fix. The four payloads in
   `rules.test.mjs` were each run against the old pattern first, and each bypassed it.
   (SS-016)
-- **A rule that decides what may be written is a whitelist.** "Anything but X" is a
-  guess about what an attacker will use. (SS-016, ADR-0005)
+- **A rule that decides what may be written is a whitelist — and a whitelist is a grammar,
+  not a character class.** "Anything but X" is a guess about what an attacker will use.
+  The first correction was still a guess: `[-+*/\s\w.]+` reads as "arithmetic" and admits
+  `delete a.b`, `new fetch` and `typeof x`, because a character class cannot forbid two
+  operands sitting next to each other. Say what the thing *is*. (SS-016, SS-019, ADR-0005)
+- **Write the adversarial test against the rule in force.** Every payload written for the
+  whitelist had been aimed at the rule it replaced, so the suite documented the old hole and
+  tested nothing. Each payload now goes at the live rule first, to watch it pass, before the
+  rule changes. (SS-019)
+- **Verify a criterion in the configuration where it can fail.** Three of SS-013's criteria —
+  tap targets, horizontal overflow, uncaught errors — were checked against an empty shelf,
+  which has no cards, no links and no data. Two defects fell straight out of putting six
+  entries on it. (SS-019)
+- **"Out of scope" describes what the ticket will not do, not what it cannot break.**
+  SS-014 put the trophy shelf out of scope and then silenced four of its five trophies, and
+  its evidence proved the portals worked without ever asking whether anything else still
+  did. (SS-018)
 - **Run the stage the check lives in, not the stage that is convenient.** Every ticket from
   iteration 02 records a `--stage=gate --skip-slow` run alongside its ticket-stage evidence,
   so a gate-only check fails on the ticket that caused it. (Added to
@@ -54,7 +69,13 @@
 
 ## Reserved capacity
 
-Used, and then some. SS-014 was the debt share and closed TD-002. SS-016 and SS-017 were
-unplanned, added by the review, and together came to roughly a third of the iteration —
-which is what a rejected diff costs. The three committed tickets all landed; nothing was cut
-to pay for the review work.
+Used, and then well past it. SS-014 was the planned debt share and closed TD-002. SS-016,
+SS-017, SS-018 and SS-019 were all unplanned, added by two review passes and a QA run, and
+together came to more than half the iteration — which is what a diff rejected twice costs.
+The three committed tickets all landed; nothing was cut to pay for the review work, and
+three new debt rows were opened rather than absorbed quietly (TD-004 restated, TD-005
+restated, TD-006 new).
+
+The honest summary of this iteration: the work it planned took about a third of it, and
+finding out what was wrong with that work took the rest. Both review passes rejected the
+diff, and both were right to.

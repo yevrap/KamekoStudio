@@ -48,6 +48,17 @@ the row is exactly three elements. See `guardrails.md` for what the exception st
 behind a door is worse than no door. The twelfth slot — the centre of the front wall,
 facing the player's spawn point — is left empty for it. TD-001 stays open.
 
+## What "one edit" means here
+
+The row was repositioned twice after it was first written — once for physical clearance
+over the trophy shelf, once because it masked the trophy prompts. Both are changes to a
+production file under an exception approved once, so the boundary is stated rather than
+assumed: **the exception is scoped to the `frontPositions` table, not to a particular set of
+coordinates.** Moving a position inside that table is inside it; adding a fourth position,
+touching any other statement, or moving the table elsewhere in the file is not, and the
+guard rejects all three. Anything beyond the table needs its own approval and its own
+record.
+
 ## Consequences
 
 - Two shipped games have a door again. The landing page shows eleven portals.

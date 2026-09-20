@@ -27,7 +27,7 @@ the check. The check reports an exception as *used*, never silently, and verifie
 | Path | Scope of the exception | Approved |
 |---|---|---|
 | `package.json` | The single `"studio:check"` entry in `scripts`, with exactly the value `node tests/studio/check.mjs`. No other key, and no other value. | Iteration 00 brief, deliverable 4 |
-| `shared/3d/gameplay.js` | The `frontPositions` table in `createEnvironment()` — three front-wall positions, spread into `positions` and `rotations`. Nothing else in the file. | Iteration 01, as a production bug fix. ADR-0005 |
+| `shared/3d/gameplay.js` | The `frontPositions` table in `createEnvironment()` — three front-wall positions, spread into `positions` and `rotations`. The scope is the table, not a particular set of coordinates: moving a position within it is inside the exception, a fourth position or any other statement is not. Nothing else in the file. | Iteration 01, as a production bug fix. ADR-0005 |
 
 The second exception is checked by removing exactly that change from the file's current
 text and requiring what remains to equal the base revision byte for byte, so an edit
@@ -39,7 +39,9 @@ because the closing is the only reason to trust it now:
 | Hole | How it was closed |
 |---|---|
 | The base revision was read through a helper that trims, so every file lost its final newline and byte equality could never hold — the exception rejected its own approved edit | Read raw. Tested against the repository in `tests/studio/path-guard.test.mjs`, not through the pure rule, which was never wrong |
-| The approved block was matched as "everything up to the next bracket", so anything appended inside it was reverted away and waved through | Narrowed to "no parentheses" — which was **still wrong**, because a tagged template and an assignment expression need none. An independent review demonstrated four working bypasses end to end, with the guard printing *exception used*. The element is now a whitelist: exactly three `Vector3` calls, each with exactly three arguments drawn from numbers, identifiers, property paths and the four arithmetic operators. The four payloads are regression tests |
+| The approved block was matched as "everything up to the next bracket", so anything appended inside it was reverted away and waved through | Narrowed to "no parentheses" — **still wrong**, because a tagged template calls and an assignment expression assigns without one. Narrowed again to the character class `[-+*/\s\w.]+` — **still wrong**, because every keyword is word characters, so `delete engineState.walls`, `new fetch`, `typeof window` and `obj.prop++` all passed; deleting `engineState.walls` blanks the landing page. Two review passes demonstrated sixteen bypasses between them, each end to end with the guard printing *exception used*. An argument is now a **grammar** — operands joined by operators, two adjacent operands forbidden — which is what rejects `new X`, `delete a.b`, `typeof x` and `void x` at once. Every payload is a regression test written against the rule in force |
+| The block could be moved verbatim to another point in the file, reverted away from wherever it landed, and accepted | The pattern is anchored to the statement it precedes |
+| Positions could be added with no matching rotations, leaving portals facing an arbitrary direction | The guard requires the rotation entry itself, rather than relying on `portal-capacity` having been run |
 
 **What the exception still permits, stated rather than implied.** Up to twelve leading
 comment lines inside the block may change without failing the guard. A comment cannot
