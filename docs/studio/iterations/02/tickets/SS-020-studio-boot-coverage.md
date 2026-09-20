@@ -17,13 +17,13 @@ studio-owned check rather than a second production exception.
 
 ## Acceptance criteria
 
-- [ ] A check `studio-boot` exists, registered in `tests/studio/checks/index.mjs` and in
+- [x] A check `studio-boot` exists, registered in `tests/studio/checks/index.mjs` and in
       the `self-checks.md` table, running at the `ticket` and `gate` stages.
-- [ ] It discovers pages by walking `studio/**` for `index.html`, so a page added later is
+- [x] It discovers pages by walking `studio/**` for `index.html`, so a page added later is
       covered without the check being edited. The detail line names how many pages it found.
-- [ ] Every discovered page loads with no uncaught error, no unhandled rejection, no
+- [x] Every discovered page loads with no uncaught error, no unhandled rejection, no
       `console.error` and no failed network request.
-- [ ] Each of the eight mutations below is demonstrated failing the check, and the
+- [x] Each of the eight mutations below is demonstrated failing the check, and the
       demonstration is recorded in the Result section with the message the check printed:
       1. the `main.js` script tag removed from `studio/index.html`
       2. the shelf container removed
@@ -33,11 +33,11 @@ studio-owned check rather than a second production exception.
       6. every `min-height` zeroed
       7. the killed-card rule emptied
       8. the `try`/`catch` removed from the storage wrappers
-- [ ] The page contract is expressed as data with pure predicates in
+- [x] The page contract is expressed as data with pure predicates in
       `tests/studio/lib/`, unit-tested without a browser, so what is asserted can be read.
-- [ ] Without Chrome the check reports `skip` with the reason and the binary it looked for,
+- [x] Without Chrome the check reports `skip` with the reason and the binary it looked for,
       never `pass`; `--offline` skips it for the same reason the browser suites are skipped.
-- [ ] `docs/studio/tech-debt.md` closes TD-004 with this ticket ID, and any debt this
+- [x] `docs/studio/tech-debt.md` closes TD-004 with this ticket ID, and any debt this
       ticket *takes* is opened in the same edit.
 
 ## Evidence plan
