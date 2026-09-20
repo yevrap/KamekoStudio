@@ -168,3 +168,14 @@ test('a visit count at the edge of the safe range does not render a nonsense num
   assert.equal(wholeNumber(wholeNumber(String(max), 0) + 1, 1), 1);
   assert.equal(wholeNumber(wholeNumber('41', 0) + 1, 1), 42);
 });
+
+test('a url is neutralised before its scheme is read, not after', () => {
+  // A browser strips whitespace inside a scheme when resolving an href, so an
+  // interior newline turns a javascript: url into something a naive scheme
+  // test reads as a relative path.
+  assert.equal(safeUrl('java\nscript:alert(1)'), null);
+  assert.equal(safeUrl('java\tscript:alert(1)'), null);
+  assert.equal(safeUrl('//evil.example/x'), null);     // protocol-relative: off-site
+  assert.equal(safeUrl('games/tilt-maze/'), 'games/tilt-maze/');
+  assert.equal(safeUrl('https://example.com/x'), 'https://example.com/x');
+});
