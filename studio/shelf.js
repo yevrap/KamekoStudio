@@ -8,6 +8,20 @@ export const STATUSES = ['PROTOTYPE', 'ITERATING', 'KILLED', 'PROMOTED'];
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+/**
+ * Escaping makes a url safe to put in an attribute; it does not make it safe to
+ * follow. `javascript:doSomething()` survives escaping intact. The shelf's data
+ * is ours today, so this is defence in depth — but the file's own promise is
+ * that it escapes its inputs, and the scheme is the part escaping cannot cover.
+ */
+export function safeUrl(value) {
+  const url = String(value ?? '').trim();
+  if (!url) return null;
+  // Relative links are what the shelf actually uses; absolute ones must be http.
+  if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return /^https?:/i.test(url) ? url : null;
+  return url;
+}
+
 /** Entries are ours, but markup built by concatenation escapes its inputs anyway. */
 export function escapeHtml(value) {
   return String(value ?? '')
@@ -45,13 +59,14 @@ export function formatDate(iso) {
 export function cardMarkup(entry = {}) {
   const { status, known } = normalizeStatus(entry.status);
   const killed = status === 'KILLED';
-  const linked = Boolean(entry.url) && !killed;
+  const href = killed ? null : safeUrl(entry.url);
+  const linked = Boolean(href);
   const classes = ['item', killed ? 'is-killed' : '', known ? '' : 'is-unknown']
     .filter(Boolean).join(' ');
 
   const title = escapeHtml(entry.title ?? 'Untitled');
   const heading = linked
-    ? `<a href="${escapeHtml(entry.url)}">${title}</a>`
+    ? `<a href="${escapeHtml(href)}">${title}</a>`
     : title;
 
   const meta = [];

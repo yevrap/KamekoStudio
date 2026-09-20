@@ -37,7 +37,15 @@ status tag on each item, and a persistent way back to the arcade.
       page.)*
 - [x] Back to the arcade is a persistent link in the realm's own chrome, top-left, with a
       44px minimum target, present on the page without scrolling.
-- [x] The page loads with no uncaught console errors, including with site data blocked.
+- [x] The page loads with no uncaught console errors from **studio code**, including with
+      site data blocked, and every part of the page the studio owns still renders.
+      *(Narrowed during the review, because the unqualified version was false and had been
+      ticked. With site data blocked the arcade's `shared/settings.js` throws a
+      `SecurityError` before the studio's own code runs, and `body.dark-mode` is never
+      applied, so a dark-theme reader gets the light page. That script is production's and
+      is outside the path guard — TD-005. Verified: with `localStorage` throwing, the
+      pulse, the shelf, the retro line and the way back all render, the visit line
+      correctly hides itself, and the only uncaught error comes from `settings.js`.)*
 - [x] Every storage key the page's own code touches still carries the `studio_` prefix, and
       `studio/README.md`'s key table still matches the code.
 

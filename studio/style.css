@@ -59,6 +59,14 @@ body.dark-mode {
 
 * { box-sizing: border-box; }
 
+/* A title or an unknown status is data, and data can be one long token. Without
+   this a 50-character word pushed the page to 508px wide inside a 320px
+   viewport. `min-width: 0` is what lets a grid item shrink below its content. */
+.item, .item h3, .item .blurb, .item .status, .empty {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 html { background: var(--ground); }
 
 /* The grid is the workbench surface: present, never legible as a pattern. */
@@ -248,6 +256,15 @@ footer a {
   margin: 0;
   font-size: 1.05rem;
   line-height: 1.25;
+}
+
+/* The card's title is its only target, so it carries the realm's 44px floor
+   like every other standalone link. The empty shelf hid this: the rule was
+   verified in the one configuration that has no card links in it. */
+.item h3 a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .item .status { align-self: flex-start; }
