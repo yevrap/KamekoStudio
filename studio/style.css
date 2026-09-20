@@ -135,6 +135,15 @@ footer {
   font-size: 0.85rem;
 }
 
+/* Standalone navigation links, unlike links inside prose, are things people aim
+   at — so they carry the same 44px target as a button. */
+footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 2px;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   main > * { animation: rise 420ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards; }
   main > :nth-child(2) { animation-delay: 60ms; }

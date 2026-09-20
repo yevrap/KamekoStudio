@@ -29,5 +29,22 @@ that are really decisions go to `decisions/` instead.
   the command's output before splitting shifts every path by one character. The runner
   keeps porcelain output untrimmed and parses it with an explicit two-character status
   field.
-- **`git log --grep` needs `--all` or a branch range to see unmerged work.** The commit
-  lint therefore reads the merge-base range for the iteration rather than `main` alone.
+- **`git diff --name-only` prints only the destination of a rename.** A `git mv` out of a
+  production directory into `studio/` therefore looked like a studio-only change while
+  deleting a production file. The guard now reads `--name-status -M -z` and counts both
+  sides. This was the most serious thing the independent review found.
+- **A diff-text check sees nothing once the change is committed.** The `package.json`
+  exception parsed `+`/`-` lines, so it was only ever exercised against an uncommitted
+  change — at the gate, with a clean tree, it compared an empty string and passed. Rules
+  that guard a file should compare *content* between two revisions, not diff text.
+- **A static storage rule is only as good as its list of routes.** Checking
+  `getItem`/`setItem`/`removeItem` missed `localStorage['key']`, `delete localStorage.key`
+  and — worst — `localStorage.clear()`, which would wipe every production save on a shared
+  origin. It also passed `setItem(studio_key, v)`, where the key is a variable that merely
+  *reads* like a compliant one. A computed key is now a violation whatever its text.
+- **A green gate can sit on untracked files.** The document checks read the filesystem, so
+  they certified nine ticket files that were not in the repository. `tree-clean` now runs at
+  the gate too, which is what makes those checks statements about what will be pushed.
+- **"Not run" must be reserved for things that genuinely could not run.** Reporting a
+  missing Chrome as a suite *failure* makes an environment problem indistinguishable from a
+  regression. The suites now skip with the reason and name what did run.

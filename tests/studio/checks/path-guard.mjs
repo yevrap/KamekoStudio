@@ -4,22 +4,34 @@
 // ranges: `path-guard` asks it of the work in hand, `production-unchanged`
 // asks it of what is about to be deployed against what was deployed last.
 
-import { git, workingTreePaths, refExists, latestIterationTag } from '../lib/shell.mjs';
+import path from 'node:path';
+import { promises as fs } from 'node:fs';
+import { git, gitRaw, committedPaths, workingTreePaths, refExists, latestIterationTag, attempt, gitPath } from '../lib/shell.mjs';
 import { classifyPaths, PATH_EXCEPTIONS } from '../lib/rules.mjs';
 
 function changedPaths(root, base) {
-  const committed = git(root, 'diff', '--name-only', `${base}...HEAD`).split('\n');
-  return [...new Set([...committed, ...workingTreePaths(root)].map(s => s.trim()).filter(Boolean))];
+  return [...new Set([...committedPaths(root, base), ...workingTreePaths(root)])];
 }
 
-function evaluate(root, paths) {
+/** The file's text at `rev`, or '' when it did not exist there. */
+function textAt(root, rev, file) {
+  const r = attempt(gitPath(), ['show', `${rev}:${file}`], { cwd: root });
+  return r.ok ? r.out : '';
+}
+
+async function textNow(root, file) {
+  try { return await fs.readFile(path.join(root, file), 'utf8'); } catch { return ''; }
+}
+
+async function evaluate(root, base, paths) {
   const { allowed, exceptions, violations } = classifyPaths(paths);
   const notes = [];
 
   for (const p of exceptions) {
     const rule = PATH_EXCEPTIONS.find(e => e.path === p);
-    const diff = git(root, 'diff', 'HEAD', '--', p) || git(root, 'diff', '--', p);
-    const problem = rule.allow(diff);
+    // Compare content at the base revision against content now, so the check
+    // works the same whether the change is committed or still in the tree.
+    const problem = rule.allow(textAt(root, base, p), await textNow(root, p));
     if (problem) violations.push(`${p} (exception exceeded: ${problem})`);
     else notes.push(`exception used: ${p} — ${rule.reason}`);
   }
@@ -35,11 +47,13 @@ export const pathGuard = {
   id: 'path-guard',
   stages: ['ticket', 'gate'],
   description: 'Every changed path is inside the allowed list, or is a recorded exception',
-  run(ctx) {
+  async run(ctx) {
+    // A base that does not resolve is a failure, not a skip: an unverifiable
+    // guard at the ticket stage is exactly where a stray write would slip out.
     if (!refExists(ctx.root, ctx.base)) {
-      return { status: 'skip', detail: `base ref "${ctx.base}" does not exist; pass --base=<ref>` };
+      return { status: 'fail', detail: `base ref "${ctx.base}" does not exist, so nothing could be compared; pass --base=<ref>` };
     }
-    return evaluate(ctx.root, changedPaths(ctx.root, ctx.base));
+    return evaluate(ctx.root, ctx.base, changedPaths(ctx.root, ctx.base));
   }
 };
 
@@ -47,13 +61,12 @@ export const productionUnchanged = {
   id: 'production-unchanged',
   stages: ['postdeploy'],
   description: "No file outside the allowed paths differs from the previous iteration's tag",
-  run(ctx) {
+  async run(ctx) {
     const tag = ctx.previousTag ?? latestIterationTag(ctx.root);
     if (!tag) {
       return { status: 'skip', detail: 'no previous studio-iteration tag to compare against (expected for iteration 00)' };
     }
-    const paths = git(ctx.root, 'diff', '--name-only', `${tag}..HEAD`).split('\n').map(s => s.trim()).filter(Boolean);
-    const result = evaluate(ctx.root, paths);
+    const result = await evaluate(ctx.root, tag, committedPaths(ctx.root, tag));
     return result.status === 'pass'
       ? { status: 'pass', detail: `nothing outside the guard changed since ${tag} (${result.detail})` }
       : { status: 'fail', detail: `since ${tag}: ${result.detail}` };

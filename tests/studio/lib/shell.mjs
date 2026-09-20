@@ -56,17 +56,6 @@ export function gitRaw(root, ...args) {
   return execFileSync(gitPath(), args, { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 });
 }
 
-/** Paths git reports as changed in the working tree, staged or not. */
-export function workingTreePaths(root) {
-  return gitRaw(root, 'status', '--porcelain=v1', '--untracked-files=all')
-    .split('\n')
-    .map(line => line.match(/^(..) (.*)$/))
-    .filter(Boolean)
-    .map(([, , rest]) => (rest.includes(' -> ') ? rest.split(' -> ')[1] : rest))
-    .map(p => p.replace(/^"|"$/g, ''))
-    .filter(Boolean);
-}
-
 /** Does this ref exist? */
 export function refExists(root, ref) {
   return attempt(gitPath(), ['rev-parse', '--verify', '--quiet', ref + '^{commit}'], { cwd: root }).ok;
@@ -77,6 +66,45 @@ export function latestIterationTag(root) {
   const out = attempt(gitPath(), ['tag', '--list', 'studio-iteration-*', '--sort=-v:refname'], { cwd: root });
   const first = out.out.split('\n').map(s => s.trim()).filter(Boolean)[0];
   return first || null;
+}
+
+/**
+ * Paths git reports as changed in the working tree, staged or not.
+ *
+ * NUL-separated, because with the default core.quotePath a path with non-ASCII
+ * characters comes back quoted and escaped, which the guard would then read as
+ * a different (and unrecognised) path.
+ */
+export function workingTreePaths(root) {
+  const parts = gitRaw(root, 'status', '--porcelain=v1', '-z', '--untracked-files=all')
+    .split('\0').filter(Boolean);
+  const paths = [];
+  for (let i = 0; i < parts.length; i++) {
+    const status = parts[i].slice(0, 2);
+    paths.push(parts[i].slice(3));
+    // A rename or copy is followed by its other path in the next record.
+    if (/[RC]/.test(status) && parts[i + 1] !== undefined) paths.push(parts[++i]);
+  }
+  return paths.filter(Boolean);
+}
+
+/**
+ * Paths changed between `base` and HEAD, counting **both sides of a rename**.
+ *
+ * `git diff --name-only` prints only a rename's destination, so `git mv` from a
+ * production directory into studio/ would have looked like a studio-only change
+ * while deleting a production file. Found by review of iteration 00.
+ */
+export function committedPaths(root, base) {
+  const parts = gitRaw(root, 'diff', '--name-status', '-M', '-z', `${base}...HEAD`)
+    .split('\0').filter(Boolean);
+  const paths = [];
+  for (let i = 0; i < parts.length; ) {
+    const status = parts[i++];
+    if (/^[RC]/.test(status)) { paths.push(parts[i++], parts[i++]); }
+    else { paths.push(parts[i++]); }
+  }
+  return paths.filter(Boolean);
 }
 
 /** Recursively list files under `dir` (absolute paths), skipping node_modules and .git. */

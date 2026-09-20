@@ -1,8 +1,10 @@
 // deploy.mjs — what the world can actually see.
 //
 // GitHub Pages serves this repository from the main branch; there is no Actions
-// workflow to watch, so these checks poll the live URLs and give up politely
-// rather than hanging.
+// workflow to watch, so these checks poll the live URLs until the new build
+// appears. Worst case for studio-live is ctx.pollAttempts x (request timeout +
+// POLL_MS) — about five minutes at the defaults — after which it reports a
+// failure with the reason rather than hanging indefinitely.
 
 import { fetchUrl } from '../lib/shell.mjs';
 
