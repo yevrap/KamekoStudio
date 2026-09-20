@@ -1,6 +1,6 @@
 # SS-020 — Every page under `studio/` boots in a real browser, under assertion
 
-- **Status:** Ready
+- **Status:** Done
 - **Size:** M
 - **Iteration:** 02
 - **Role lead:** QA Engineer
@@ -62,9 +62,46 @@ studio-owned check rather than a second production exception.
 
 ## Result
 
-*Filled in as the ticket is worked. Empty until then.*
-
 - **What changed:**
-- **Tested by:**
-- **Deferred:**
+  - `tests/studio/lib/boot-contract.mjs` — the contract, as pure predicates over an
+    "observation" object. Generic rules every studio page gets by being discovered, the
+    realm home's own rules, and the two error classifiers.
+  - `tests/studio/lib/browser.mjs` — a loopback static server and a headless Chrome, with
+    production's `CHROME_PATH` convention.
+  - `tests/studio/checks/boot.mjs` — the driver: discovery, three page loads per page
+    (ordinary, scripting disabled, site data blocked), and the home page's fixture sweep.
+  - `tests/studio/boot-contract.test.mjs` — 17 tests, no browser.
+  - Registered in `checks/index.mjs`; rows added to `self-checks.md` and both READMEs.
+  - `tech-debt.md`: TD-004 closed, TD-007 opened.
+
+- **Tested by:** each of the eight mutations applied to a clean tree, `studio-boot` run,
+  the message recorded, the mutation reverted. All eight fail; none is caught only as a
+  side effect of another.
+
+  | # | Mutation | What the check said |
+  |---|---|---|
+  | 1 | `main.js` script tag removed | *the pulse line is empty: the page did not run its own script* · *the retro line is empty* · *#shelf-region rendered nothing — not even the empty state* · *the shelf section is still hidden: main.js never revealed it* |
+  | 2 | shelf container removed | *#shelf-region is missing: there is nowhere for the shelf to render* |
+  | 3 | back link removed | *no back link: leaving the page is a hunt* |
+  | 4 | `<noscript>` removed | *with JavaScript disabled the page says nothing: no noscript fallback rendered* |
+  | 5 | both breakpoints moved (520→620, 900→1000) | *at 520px the shelf has 1 column(s), not 2* · *at 900px the shelf has 2 column(s), not 3* |
+  | 6 | every `min-height: 44px` zeroed | *the back link is 25.59px tall, under the 44px floor* · *4 target(s) under 44px at 320px wide* |
+  | 7 | killed-card rule emptied | *a killed card has the same background as a live one* · *…still casts the live card's shadow* · *…border is solid, the same as a live one* |
+  | 8 | storage `try`/`catch` removed | *with site data blocked the page throws: uncaught: SecurityError: denied* |
+
+  Mutation 8 is also the attack on this check's one exemption. `shared/settings.js` throws
+  the *same* `SecurityError: denied` in the same configuration (TD-005), and it is
+  production code the studio may not fix — so the check has to exempt it. The exemption
+  matches on the **throwing file from the stack**, never on the message, which is why
+  removing the studio's own try/catch is still caught while production's throw is not.
+  A message-based exemption would have passed mutation 8. Unit-tested both ways.
+
+  Also run: `node --test tests/studio/` (101 green), `--stage=ticket` green,
+  `--stage=ticket --offline` reports `studio-boot` as *not run* with the reason.
+
+- **Deferred:** TD-007 — the static server now exists twice, once in `scripts/smoke.mjs`
+  and once in `tests/studio/lib/browser.mjs`. Registered rather than fixed: `scripts/` is
+  outside the path guard and exports nothing, so the alternative was a production
+  exception for test plumbing, which the ticket exists to avoid.
+
 - **Fix rounds used:** 0 / 2
