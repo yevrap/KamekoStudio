@@ -13,6 +13,7 @@ import { hygiene } from './hygiene.mjs';
 import { commitLint } from './commit-lint.mjs';
 import { iterationDocs, docsCurrent, reviewerVerdict, changelog, docCleanliness } from './docs.mjs';
 import { studioLive, productionLive } from './deploy.mjs';
+import { studioBoot } from './boot.mjs';
 
 export const CHECKS = [
   treeClean,
@@ -23,6 +24,7 @@ export const CHECKS = [
   storageKeys,
   portalCapacityCheck,
   studioTests,
+  studioBoot,
   hygiene,
   fullSuites,
   commitLint,

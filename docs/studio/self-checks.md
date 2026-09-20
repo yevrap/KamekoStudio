@@ -32,8 +32,8 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 | Stage | When | Checks |
 |---|---|---|
 | `preflight` | Before planning | `tree-clean`, `on-main`, `no-stop-file`, `baseline-suites` |
-| `ticket` | After each ticket | `path-guard`, `storage-keys`, `portal-capacity`, `studio-tests` |
-| `gate` | Before pushing | `tree-clean`, `path-guard`, `storage-keys`, `portal-capacity`, `hygiene`, `full-suites`, `commit-lint`, `docs-current`, `reviewer-verdict` |
+| `ticket` | After each ticket | `path-guard`, `storage-keys`, `portal-capacity`, `studio-tests`, `studio-boot` |
+| `gate` | Before pushing | `tree-clean`, `path-guard`, `storage-keys`, `portal-capacity`, `studio-boot`, `hygiene`, `full-suites`, `commit-lint`, `docs-current`, `reviewer-verdict` |
 | `postdeploy` | After Pages updates | `studio-live`, `production-live`, `production-unchanged` |
 | `closeout` | End of the iteration | `iteration-docs`, `doc-cleanliness`, `changelog` |
 
@@ -49,6 +49,7 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 | `storage-keys` | Studio code reaches the shared origin only through keys it can be shown to use, all `studio_`-prefixed. It checks the three named accessors, bracket access, `delete`, and `clear()`, and refuses a key it cannot read statically — a computed expression or an aliased store. It scans `studio/**` only, so it says nothing about the production settings drawer that studio pages inherit (see [ADR-0003](decisions/ADR-0003-storage-namespace.md)) |
 | `portal-capacity` | The 3D landing page has a portal position for every entry in `ARCADE_GAMES`, and every position table has a matching rotation table. It counts rather than trusts, because the page drops a game it has no position for with a bare `return` and says nothing — which is how two promoted games went portal-less unnoticed (TD-002). It reads production source the studio may not edit: the studio cannot fix that page at will, but it can refuse to be quiet about it |
 | `studio-tests` | The studio's own unit tests pass |
+| `studio-boot` | Every page found by walking `studio/**` for an `index.html` opens in a real Chrome and holds the contract in `tests/studio/lib/boot-contract.mjs` — in three configurations: ordinary, scripting disabled, and site data blocked. It proves no uncaught error, no `console.error`, no failed request, a back link, 44px targets and no sideways scroll at 320px, a `noscript` fallback that actually says something, and — on the realm home — that the page ran its own script, that the shelf's three column counts hold either side of both breakpoints, and that a killed card reads differently from a live one. Pages are **discovered, not listed**, so a page added later arrives covered; the report names any page that got only the generic contract. It proves nothing about how a page looks: there are no screenshots here |
 | `hygiene` | No secrets, personal identifiers, private paths, note-vault syntax or oversized files in studio-owned paths, or in the paths the studio may touch by exception |
 | `full-suites` | `npm test`, `npm run smoke` and `npm run e2e` are green — production included |
 | `commit-lint` | Every studio commit is conventional, scoped `studio`, and names a ticket. Merge commits are exempt by having more than one parent, not by their subject line |
@@ -63,8 +64,10 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 
 ## Network-dependent checks
 
-`npm test` is pure Node and always runs. `npm run smoke` and `npm run e2e` drive a real
-Chrome and load three.js from a CDN, and the three `postdeploy` checks make HTTP requests.
+`npm test` is pure Node and always runs. `npm run smoke`, `npm run e2e` and `studio-boot`
+drive a real Chrome — the first two also load three.js from a CDN — and the three
+`postdeploy` checks make HTTP requests. `studio-boot` serves the repository from loopback
+and needs no network, but it still needs the browser.
 
 When a browser or the network is unavailable, those report `not run` **with the reason**,
 naming which suites were skipped and which still ran. They are not reported as failures:
@@ -80,7 +83,11 @@ A check is an object `{ id, stages, description, run(ctx) }` exported from a mod
 `tests/studio/checks/` — a module may export several related ones. `run` returns
 `{ status, detail }`, where status is `'pass' | 'fail' | 'skip'`. Register it in
 `tests/studio/checks/index.mjs` and add a row to the table above. Put the decision logic in
-`tests/studio/lib/rules.mjs` as a pure function and unit-test it there. A check that does
+`tests/studio/lib/rules.mjs` as a pure function and unit-test it there — or, for a check
+with a contract of its own, in a sibling module beside it, as `studio-boot` does with
+`lib/boot-contract.mjs`. Either way the decision is pure and tested without the machinery
+that feeds it: an exemption is the part of a check most worth attacking, and one buried in
+driver code cannot be attacked at all. A check that does
 not prove something specific does not get added.
 
 Two habits, learned from the review of iteration 00, are worth keeping: test the rule

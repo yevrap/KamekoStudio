@@ -1,12 +1,20 @@
 # Studio tests and self-checks
 
 ```
-check.mjs          the self-check runner — `npm run studio:check`
-checks/            one module per area; each exports one or more check objects
-lib/rules.mjs      the pure logic the checks decide with
-lib/shell.mjs      git, filesystem and network plumbing
-rules.test.mjs     unit tests for lib/rules.mjs
+check.mjs              the self-check runner — `npm run studio:check`
+checks/                one module per area; each exports one or more check objects
+lib/rules.mjs          the pure logic the checks decide with
+lib/boot-contract.mjs  what a booted studio page must be true of, as pure predicates
+lib/shell.mjs          git, filesystem and network plumbing
+lib/browser.mjs        a static server and headless Chrome, for `studio-boot`
+rules.test.mjs         unit tests for lib/rules.mjs
+boot-contract.test.mjs unit tests for lib/boot-contract.mjs — no browser needed
 ```
+
+`lib/browser.mjs` stands up its own static server rather than calling into
+`scripts/smoke.mjs`: that file is a top-level script with no exports and it is outside the
+path guard, so the studio can neither import it nor change it. The duplication is
+registered as TD-007.
 
 `node --test tests/` collects `*.test.mjs` from here, so the studio's unit tests run as
 part of the repository suite. `check.mjs` is not named like a test file and is therefore
