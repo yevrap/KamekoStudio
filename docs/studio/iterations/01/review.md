@@ -119,11 +119,54 @@ commits to stopping, in the document that records the commitment.*
 | `storage-keys` · `portal-capacity` · `studio-tests` | pass — 11 games, 12 slots; 82 studio tests |
 | `hygiene` | pass |
 | `full-suites` | pass — 548 unit, smoke, 23 e2e |
-| `commit-lint` · `docs-current` · `reviewer-verdict` | pass |
+| `commit-lint` · `docs-current` | pass — 10 commits, 8 tickets |
+| `reviewer-verdict` | pass, once the verdict below existed. It failed through all three passes, which is what it is for |
 | `studio-live` · `production-live` · `production-unchanged` | recorded in the handoff after the deploy |
 | `iteration-docs` · `doc-cleanliness` · `changelog` | recorded at close-out |
+
+### Third pass — approved
+
+The grammar held. Roughly thirty payloads, including all ten round-2 bypasses and thirteen
+new constructions — optional chaining, indexing, the comma operator, hex and exponent
+literals, `await`, `yield`, `in`, `instanceof`, a unicode-escape identifier — and none got
+through. Relocation, a fourth element and a thirteenth comment line are all rejected, and a
+ReDoS probe on the ambiguous `-` stayed flat at 1–2 ms across 30 consecutive signs.
+
+Seven payloads are accepted and were judged acceptable by both sides: expressions over
+numbers and property paths whose only effect is the coordinate they produce. One correction
+to this repository's earlier wording — `this.x` is not inert, it *throws*, because
+`gameplay.js` is a module and `this` is `undefined` inside `createEnvironment()`. It is the
+same class as a mistyped identifier, and that class is irreducible without scope analysis:
+you cannot tell `roomWidth` from a typo, and both are visible in a three-line diff.
+
+Three findings closed in SS-021 and SS-015:
+
+- `SS-015` ticked *"review.md records the Independent Reviewer's verdict line"* while no
+  verdict existed — reported without being checked, one layer up from the gap that caused
+  the first rejection. Worth recording why it survived: `docs-current` counts *unticked*
+  boxes on Done tickets, so a false tick passes and an honest blank fails. Two checks in the
+  same gate disagreed about one sentence, and the document-level one was wrong.
+- The guard's rotation requirement grepped the whole file for
+  `...frontPositions.map(() => Math.PI)`, and that string in a comment *inside the approved
+  block* satisfied it — the comment is reverted away, so the real rotation entry could be
+  deleted and the row accepted, leaving twelve positions against nine rotations.
+  `portal-capacity` caught it, which is exactly what the claim next to the code denied.
+- `safeUrl` let through `//evil.example/x` and `java\nscript:alert(1)` — a browser strips
+  whitespace inside a scheme when it resolves an href.
 
 ## Not done
 
 - **TD-001, the realm's entrance.** Held by decision, not by capacity. The slot is reserved.
-- **TD-003, TD-004, TD-005.** Untouched and unchanged on the register.
+- **TD-003.** Untouched and unchanged on the register.
+- **TD-004**, restated with eight named mutations the whole suite survives. Declined for
+  this iteration and agreed by the reviewer: closing it now means taking a **second**
+  production exception, under time pressure, in the iteration whose entire history is the
+  cost of getting an exception wrong. Iteration 02 adds a studio-owned boot check (SS-020).
+- **TD-005**, restated with its consequence measured, and **TD-006**, opened against the
+  real cause of the trophy masking.
+
+## Verdict
+
+Recorded from the Independent Reviewer's third pass, on `a06b0b1`:
+
+**Verdict:** APPROVED

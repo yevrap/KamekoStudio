@@ -144,9 +144,11 @@ export function allowOnlyFrontPortalRow(before, after) {
   if (before === after) return null;          // unchanged since the base revision
   if (!before) return 'the file did not exist at the base revision';
   // A row of positions with no matching rotations renders portals facing an
-  // arbitrary direction. portal-capacity catches it too; requiring it here means
-  // the guard does not depend on another check having been run.
-  if (!/\.\.\.frontPositions\.map\(\(\) => Math\.PI\)/.test(after)) {
+  // arbitrary direction. Tested through the anchored pattern, not by grepping
+  // the file for the text: the loose version was satisfied by that string
+  // sitting in a comment *inside the approved block*, which is reverted away —
+  // so the real rotation entry could be deleted and the guard would accept it.
+  if (!ROTATIONS_WITH_FRONT.test(after)) {
     return 'the front-wall row has no matching rotation entry';
   }
   if (revertFrontPortalRow(after) === before) return null;

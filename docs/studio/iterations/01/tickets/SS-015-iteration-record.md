@@ -4,7 +4,7 @@
 - **Size:** S
 - **Iteration:** 01
 - **Role lead:** Scrum Master
-- **Depends on:** SS-012, SS-013, SS-014, SS-016, SS-017
+- **Depends on:** SS-012, SS-013, SS-014, SS-016, SS-017, SS-018, SS-019, SS-021
 - **Branch:** `ss-015-iteration-record`
 
 ## Motivation
@@ -47,4 +47,10 @@ are not part of this repository.
 
 - **Deferred:** nothing.
 
-- **Fix rounds used:** 0 / 2
+- **Fix rounds used:** 2 / 2 — the first draft recorded `reviewer-verdict | pass` and
+  `525 unit` before the gate had run, which the second review pass caught. The second draft
+  then ticked *"review.md records the Independent Reviewer's verdict line"* while no verdict
+  existed, which the third pass caught. Both are the same mistake — reporting a state
+  instead of reading it — in the ticket owned by the role that owns the Definition of Done.
+  Worth keeping: `docs-current` counts *unticked* boxes on a Done ticket, so a false tick
+  passed the gate and an honest blank would have failed it. The check rewarded the error.

@@ -533,3 +533,13 @@ test('exception: positions without a matching rotation entry are rejected here, 
   const noRotation = after.replace(',\n        ...frontPositions.map(() => Math.PI)', '');
   assert.match(allowOnlyFrontPortalRow(before, noRotation), /no matching rotation entry/);
 });
+
+test('exception: the rotation entry must be the real statement, not the words in a comment', () => {
+  // The loose check grepped the whole file, and the block's own comment lines
+  // are reverted away — so the marker could sit in one while the real spread
+  // was deleted, leaving twelve positions against nine rotations.
+  const faked = after
+    .replace(',\n        ...frontPositions.map(() => Math.PI)', '')
+    .replace('    const frontPositions = [', '    // ...frontPositions.map(() => Math.PI)\n    const frontPositions = [');
+  assert.match(allowOnlyFrontPortalRow(before, faked), /no matching rotation entry/);
+});

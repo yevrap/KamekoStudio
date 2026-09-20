@@ -15,8 +15,14 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
  * that it escapes its inputs, and the scheme is the part escaping cannot cover.
  */
 export function safeUrl(value) {
-  const url = String(value ?? '').trim();
+  // Whitespace and control characters are stripped before anything is decided,
+  // not merely trimmed from the ends: a browser ignores them *inside* a scheme
+  // when it resolves an href, so `java\nscript:` is a live javascript: url that
+  // a scheme test reads as a relative path.
+  const url = String(value ?? '').replace(/[\s\u0000-\u001f]+/g, '');
   if (!url) return null;
+  // A protocol-relative url navigates off-site while looking like a path.
+  if (url.startsWith('//')) return null;
   // Relative links are what the shelf actually uses; absolute ones must be http.
   if (/^[a-z][a-z0-9+.-]*:/i.test(url)) return /^https?:/i.test(url) ? url : null;
   return url;
