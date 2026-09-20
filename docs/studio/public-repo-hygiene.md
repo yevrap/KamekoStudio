@@ -11,7 +11,7 @@ search engines, and permanent in git history. The checklist below is enforced by
 | **Secrets** | API keys, tokens, passwords, private keys, `.env` contents | Obvious, and unrecoverable once pushed |
 | **Personal identifiers** | Home or street addresses, phone numbers, email addresses, full names of private individuals, dates of birth | The studio's work needs none of it |
 | **Private planning paths** | Absolute paths into personal folders, cloud-drive paths, note-vault paths | Leaks a private directory structure and the fact of what is in it |
-| **Note-vault syntax** | `[[wikilinks]]`, note front-matter copied from private notes | A tell that private material was pasted in, and a broken link for every reader |
+| **Note-vault syntax** | `[[wikilinks]]`, note front-matter copied from private notes <!-- studio-check:allow --> | A tell that private material was pasted in, and a broken link for every reader |
 | **Private context** | Household, health, family, financial or employment details | None of it belongs to this project |
 | **Verbatim direction** | The executive's raw messages | The repo records the resulting *decision*, in neutral technical language |
 | **Oversized binaries** | Anything over 1 MB, uncompressed art, audio files | The studio synthesizes audio and draws its own art; a big file is a smell |

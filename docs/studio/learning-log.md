@@ -20,5 +20,14 @@ that are really decisions go to `decisions/` instead.
 - **Pages deploys from the `main` branch, not from an Actions workflow.** There is no
   `.github/` directory in this repo, so a post-deploy check cannot watch a workflow run —
   it has to poll the live URL until the content changes, with a timeout.
+- **Node cannot always spawn the `git` on PATH.** On this machine `/usr/local/bin/git` is
+  an x86-only binary; `posix_spawn` from an arm64 Node fails with `EBADARCH`
+  ("Unknown system error -86") even though the same command works from an interactive
+  shell. The checks resolve a git binary by probing and falling back to the universal
+  `/usr/bin/git`, overridable with `STUDIO_GIT`.
+- **`git status --porcelain` lines start with a space** for unstaged changes, so trimming
+  the command's output before splitting shifts every path by one character. The runner
+  keeps porcelain output untrimmed and parses it with an explicit two-character status
+  field.
 - **`git log --grep` needs `--all` or a branch range to see unmerged work.** The commit
   lint therefore reads the merge-base range for the iteration rather than `main` alone.

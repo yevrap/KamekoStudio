@@ -13,8 +13,9 @@ The setup iteration. No player-facing features.
   Done, guardrails, public-repo hygiene, self-check reference, tech-debt policy and
   register, learning log, decision records and templates.
 - Twelve role definitions in `docs/studio/team/`.
-- `npm run studio:check` — the executable self-checks, in `tests/studio/`, with sixteen
-  checks across five stages, plus unit tests for the checks themselves.
+- `npm run studio:check` — the executable self-checks, in `tests/studio/`: eighteen
+  checks across five stages, with the decision logic isolated as pure functions and unit
+  tested.
 - `studio/` — a placeholder landing page for the realm, and `studio/README.md`.
 - `docs/studio/iterations/00/` — plan, tickets, log, review, retro and a findings note on
   how the 3D landing page actually works.

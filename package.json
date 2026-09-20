@@ -5,7 +5,8 @@
   "scripts": {
     "test": "node --test tests/",
     "smoke": "node scripts/smoke.mjs",
-    "e2e": "node scripts/e2e.mjs"
+    "e2e": "node scripts/e2e.mjs",
+    "studio:check": "node tests/studio/check.mjs"
   },
   "devDependencies": {
     "puppeteer-core": "^24.10.0"
