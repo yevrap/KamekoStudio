@@ -3,6 +3,50 @@
 All notable changes to Shadow Studio, one section per iteration. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are iteration tags.
 
+## [studio-iteration-01] — 2026-09-20
+
+The realm gets its identity and its shelf, and the arcade gets two doors back.
+
+### Added
+
+- The **Backstage** visual identity in `studio/style.css`, replacing iteration 00's
+  deliberately identity-free tokens: a warm paper ground by day and graphite by night, one
+  amber worklight reserved for status, one teal reserved for anything interactive, a
+  monospace for tags and dates, and a faint bench grid under the page. Every
+  foreground/background pair measures AA or better in both themes.
+- The realm's home page: a pulse line naming the current iteration, a shelf generated
+  entirely from `studio/shelf-data.js` through pure functions in `studio/shelf.js`, status
+  tags (PROTOTYPE / ITERATING / KILLED / PROMOTED), a persistent way back to the arcade,
+  and a `<noscript>` route to the handbook. The shelf is empty, and renders as empty: the
+  realm has no games yet and none were invented to fill it.
+- `portal-capacity` — a self-check that counts `ARCADE_GAMES` against the 3D landing page's
+  portal position table, and fails when the list outgrows it.
+
+### Fixed
+
+- **Two production games had no portal.** The 3D landing page built nine portal positions
+  for an eleven-game list and dropped the remainder with a bare `return`, so Black Hole in
+  One and Maze Warden were unreachable from the landing page and nothing reported it. A
+  front-wall row takes the room to twelve slots. Made under a recorded, content-checked
+  path exception (ADR-0005), in its own commit, last in the iteration. Closes TD-002.
+- The path-guard exception mechanism, in both directions. It rejected its own approved
+  edit, because the base revision was read through a helper that trims and every source
+  file ends in a newline. And it accepted a bypass: the approved block was matched first as
+  "everything up to the next bracket" and then as "arguments containing no parentheses",
+  and an independent review demonstrated four payloads that need no parenthesis — a tagged
+  template calls, an assignment expression assigns — going into a production file with the
+  guard reporting the exception as used. A permitted element is now a whitelist of exactly
+  three arithmetic arguments, and the four payloads are regression tests. The reader behind
+  the first bug is now tested against the repository rather than through the pure rule it
+  feeds, which was never wrong.
+
+### Known gaps
+
+- The realm still has no entrance from the 3D landing page. The twelfth portal slot — the
+  centre of the front wall, facing the spawn point — is free and reserved for it. Held by
+  decision rather than by capacity (TD-001).
+- The shelf has nothing on it. That is the next iteration's work, not a defect.
+
 ## [studio-iteration-00] — 2026-09-19
 
 The setup iteration. No player-facing features.
