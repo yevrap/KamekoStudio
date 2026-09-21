@@ -9,9 +9,11 @@
 | SHS-045 | Every ticket a commit names has exactly one file; content rules reach every ticket the iteration names or edits | `tests/studio/checks/docs.mjs`, `rules.mjs`, three reconstructed files in `iterations/02/tickets/` |
 | SHS-046 | This record | `iterations/03/`, `studio/shelf-data.js`, `CHANGELOG.md`, `learning-log.md` |
 | SHS-047 | One pushed commit waived by its full hash, visibly | `tests/studio/checks/commit-lint.mjs`, `rules.mjs` |
+| SHS-048 | Trunk-based development written down as a trial for iteration 04 | `decisions/ADR-0007-trunk-based-development.md`, `process.md` |
 
-Three committed tickets, the record, and SHS-047, opened during the build by SHS-043's own
-verification. **No ticket was opened by a review**: every finding went into a fix round on
+Three committed tickets, the record, SHS-047 — opened during the build by SHS-043's own
+verification — and SHS-048, opened after review on the executive's direction and not
+reviewed. **No ticket was opened by a review**: every finding went into a fix round on
 the ticket it was about, and none reached the cap of two.
 
 Nothing in the realm a visitor sees changed except the pulse and retro lines on its home
@@ -85,9 +87,10 @@ The gate stage, run on the commit being pushed:
 
 ## Verdict
 
-**Verdict:** REJECTED by the second and last review round — the Independent Reviewer's
-blocker, which QA found independently, is closed by an unreviewed fix round; whether that
-ships is the executive's decision.
+**Verdict:** REJECTED by the second and last review round — and shipped on the team's judgment, the executive having handed the tie-break back to the team.
+
+The reviewer's blocker, which QA found independently, is closed by a fix round no
+reviewer has examined.
 
 That line is the record, so it is worth being exact about it.
 
@@ -103,8 +106,25 @@ proves the spirals exist before removing the black hole, and tries the two route
 defeated round 1's version. The reviewer's decoy now exits *unclear*. No reviewer has
 examined that fix.
 
-**Why it does not ship on the team's authority.** The executive's standing answer is that
-the gate keeps its verdict and the executive breaks a tie. This is one.
+**Why it ships.** The standing answer was that the gate keeps its verdict and the
+executive breaks a tie. Asked to break this one, the executive handed it back: decide by
+the team's own goals and practices, try it, and let a retrospective judge the choice. The
+team shipped, for four reasons:
+
+1. The blocker is closed by the correction its own reviewer verified, and by more than
+   that: the check now proves its precondition, and tries the two routes that defeated
+   the previous version.
+2. The gate is green, the whole repository suite included.
+3. Nothing a player sees changes except two lines of text on the realm's home page.
+   Everything else in the iteration is checks, a diagnostic and documents.
+4. Holding would leave finished work unshipped over a finding that is closed, and the
+   honest expectation of a third round — written down above — is more of the same shape,
+   none of it a defect a player would hit.
+
+What that costs: the TD-009 check's final form has had no independent pass. If it is
+wrong, the cost is a diagnostic that misjudges a partial fix of a one-line defect whose
+correct fix is already known. Iteration 04's retrospective checks whether this call was
+right.
 
 ## Keep / Iterate / Kill
 
@@ -117,4 +137,7 @@ the gate keeps its verdict and the executive breaks a tie. This is one.
 - **The TD-009 diagnostic — Keep, then retire.** Its job ends when the defect is fixed; the
   row can be closed with its output, and the regression test belongs in production's suite.
 - **The two-round cap — Keep.** It ended a review that would otherwise have continued, and
-  put the decision where the standing answer says it belongs.
+  put the decision where the standing answer said it belonged — which then handed it back
+  to the team.
+- **SHS-048, trunk-based development as a trial — Iterate.** Written down, not yet tried.
+  Iteration 04 is built that way and its retrospective judges it.

@@ -59,6 +59,20 @@
 5. **A number in the public record names where it was measured, and is reproducible from
    the repository or left out.** Learning log. SHS-046.
 
+## Tried this way, next time the other
+
+The executive's direction for how the company improves: try one way, hold a retro, try
+another, hold a retro. Two things this iteration did one way are tried the other way next.
+
+- **Branch per ticket → trunk-based.** Every ticket here was a branch merged with `--no-ff`,
+  and the whole iteration reached the live site in one push at the end. Iteration 04
+  commits to `main` and pushes each ticket when it is green. ADR-0007 says what that is
+  testing and the questions its retro answers. SHS-048.
+- **The executive breaks a rejected review's tie → the team does.** Asked to break this
+  one, the executive handed it back to the team. The team shipped, and gave its reasons in
+  `review.md`. Iteration 04's retro asks whether that was right: did anything in the
+  unreviewed fix round turn out wrong?
+
 ## Carried to the next iteration
 
 - **TD-009's fix**, under the executive's new standing permission for production fixes —
