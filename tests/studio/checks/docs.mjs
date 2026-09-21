@@ -45,7 +45,7 @@ export const docsCurrent = {
     const problems = [];
     for (const f of files) {
       const text = await fs.readFile(path.join(ticketDir, f), 'utf8');
-      const status = text.match(/^-\s+\*\*Status:\*\*[ \t]*(.+)$/m)?.[1]?.trim();
+      const status = statusOf(text);
       if (!status) { problems.push(`${f}: no Status line`); continue; }
       // The vocabulary is closed. Without this, `Done ✅`, `Done.` or `Shipped`
       // slipped past every evidence and criteria check below — forging the
@@ -77,7 +77,7 @@ export const docsCurrent = {
         }
         // `[\s\u00a0]` rather than a literal space: `- [ ]` with a non-breaking
         // space renders as an unticked box and counted as zero.
-        const unchecked = (text.match(/^[ \t]*-[ \t]+\[[\s\u00a0]\]/gm) || []).length;
+        const unchecked = untickedCriteria(text);
         if (unchecked) problems.push(`${f}: Done with ${unchecked} unticked acceptance criterion/criteria`);
       }
     }
@@ -146,6 +146,33 @@ function resultSection(text) {
   const headings = [...visible.matchAll(/^##+[ \t]+Result\b[^\n]*$/gim)];
   if (!headings.length) return null;
   return visible.slice(headings[headings.length - 1].index);
+}
+
+/**
+ * The ticket's status, read from the text a person would see.
+ *
+ * Read through `withoutHiddenText` and taken as the **first** visible match.
+ * The previous version matched the raw file, so an HTML comment or a fenced
+ * block placed above the real line supplied the status instead — and since
+ * every evidence and criteria check below is gated on the status being `Done`,
+ * forging it to anything outside the vocabulary skipped all of them. A ticket
+ * could read "Done" to a human, carry an empty Result and no ticked criteria,
+ * and pass. The seventh review demonstrated it on this iteration's own tickets.
+ */
+export function statusOf(text) {
+  return withoutHiddenText(String(text ?? '')).match(/^-[ \t]+\*\*Status:\*\*[ \t]*(.+)$/m)?.[1]?.trim() ?? '';
+}
+
+/**
+ * How many acceptance criteria are still unticked.
+ *
+ * Any of GFM's three bullet characters, because `*` and `+` render as task
+ * items exactly as `-` does — a Done ticket with every criterion unticked as
+ * `* [ ]` counted as zero. Non-breaking space included for the same reason it
+ * always was: it renders as an empty box.
+ */
+export function untickedCriteria(text) {
+  return (withoutHiddenText(String(text ?? '')).match(/^[ \t]*[-*+][ \t]+\[[\s\u00a0]\]/gm) || []).length;
 }
 
 /** Whether a ticket has a Result section at all. A Done ticket must. */

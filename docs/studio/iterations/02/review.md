@@ -17,6 +17,7 @@
 | SS-031 | The record, the fence, the mobile viewport and the bolt's four states | opened by the **fourth** review |
 | SS-032 | Three width rules for three causes; the fence, indented | opened by the **fifth** review |
 | SS-033 | Rules for four defects that had none; `docs-current` fails closed | opened by the **sixth** review |
+| SS-034 | The status word; two rules satisfied by the defect they named | opened by the **seventh** review |
 
 Live: <https://yevrap.github.io/KamekoStudio/studio/> · <https://yevrap.github.io/KamekoStudio/studio/games/overtighten/>
 
@@ -184,6 +185,58 @@ SS-023 ticked a criterion saying `review.md` records the reviewer's verdict line
 SS-028 — the ticket whose subject was record truth — wrote "**Both are true now**" about
 it. The line did not exist. The criterion has been removed rather than re-explained: a
 ticket cannot tick a line the reviewer writes.
+
+## The sixth review — rejected on a count that added up
+
+The count was arithmetically perfect and false about what it measured.
+"51 mutations across seven attack sets now fail the **ticket stage**" counted two game
+defects that had only ever been reproduced by hand — with no rule behind them at all — and
+a third that fails `docs-current`, which runs at the **gate**. A claim asserted about a
+configuration it was never measured in, which is this iteration's signature failure wearing
+a number.
+
+Both uncovered behaviours got rules. `docs-current` also turned out to have a **fail-open
+fallback inside the fix written to close it**: `resultSection(text) || text`, so whenever
+the heading pattern missed — `## Result (final)`, a lowercase `## result`, no heading, an
+unclosed fence — evidence came from the raw file with nothing stripped. Four more routes.
+
+The count was then re-measured by re-running all eight harnesses, and is now stated **with
+the stage each set fails at**. Two harness entries had themselves gone stale against source
+SS-025 rewrote; they were fixed rather than trusted.
+
+### What the sixth review credited
+
+The plate claims, re-derived independently again. The three width rules verified as
+distinct and correct. Focus after a pick genuinely asserted. No error filter remaining.
+Hygiene clean across 120 files.
+
+## The seventh review — rejected on the status word
+
+Six rounds had hardened how *evidence* is read. The **status word**, which gates every one
+of those checks, was still matched against the raw file — so an HTML comment or a fenced
+block above the real line forged it to something outside the vocabulary and skipped all of
+them. The ticket still read "Done" to a person. Demonstrated on this iteration's own
+SS-033, gutted to an empty Result with every criterion unticked, passing the gate.
+Unticked criteria were counted for `-` bullets only, while `*` and `+` render identically.
+
+Two rules written the round before were each satisfied by the defect they named: the back
+link rejected exactly `#` and accepted `#top`, `./` and a blank, because it read the
+attribute instead of resolving it; and the status-churn rule had a ceiling and no floor, so
+**freezing** the live region passed — the opposite defect, and worse for the reader it
+exists to serve. The bolt-state fingerprint combined fill, head and shape, so the 1px head
+border alone satisfied it while the 8px torque arc — the thing a player reads — could be
+one colour in all four states.
+
+And the record was false again, in the ticket written to make it true: four count
+statements wrong, and **round six was never narrated here at all**, which is what let
+"five rounds" survive in three documents.
+
+### What the seventh review credited
+
+The headline count's *predicate* — thirteen mutations re-applied by hand across the older
+sets, no false entry found in the per-set table. The shelf-card rule unevadable. The
+second-release rule sound. Gate green on everything substantive, hygiene clean across 121
+files.
 
 ## The fifth review — rejected, and on what
 

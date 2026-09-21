@@ -9,7 +9,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { STATUSES, evidenceFor, hasResultSection } from './checks/docs.mjs';
+import { STATUSES, evidenceFor, hasResultSection, statusOf, untickedCriteria } from './checks/docs.mjs';
 
 const EMPTY_TEMPLATE = [
   '## Result',
@@ -198,4 +198,33 @@ test('a fence indented by up to three spaces is still a fence', () => {
 test('four or more fence characters are still a fence', () => {
   const text = '## Result\n\n- **What changed:**\n\n````\n## Result\n\n- **What changed:** a forged evidence line\n````\n';
   assert.equal(evidenceFor(text, 'What changed'), '');
+});
+
+// ---- The status word, and the criteria count -------------------------------
+
+test('the status is read from what a reader sees, not from the raw file', () => {
+  // Every evidence and criteria check is gated on the status being `Done`, and
+  // the status was matched against the raw text — so a hidden line above the
+  // real one forged it to something outside the vocabulary and skipped all of
+  // them. The ticket still read "Done" to a person.
+  const real = '- **Status:** Done\n';
+  assert.equal(statusOf(real), 'Done');
+  assert.equal(statusOf(`<!--\n- **Status:** Won't do\n-->\n\n${real}`), 'Done');
+  assert.equal(statusOf('```\n- **Status:** Won\'t do\n```\n\n' + real), 'Done');
+  assert.equal(statusOf('~~~\n- **Status:** Blocked\n~~~\n\n' + real), 'Done');
+  assert.equal(statusOf('   ```\n- **Status:** Blocked\n   ```\n\n' + real), 'Done');
+  assert.equal(statusOf(''), '');
+  assert.equal(statusOf(null), '');
+});
+
+test('an unticked criterion counts whichever bullet it uses', () => {
+  // `*` and `+` are valid GFM task-list bullets and render as empty boxes, so a
+  // Done ticket with every criterion unticked that way counted as zero.
+  assert.equal(untickedCriteria('- [ ] a\n* [ ] b\n+ [ ] c'), 3);
+  assert.equal(untickedCriteria('- [x] a\n* [x] b'), 0);
+  assert.equal(untickedCriteria('  - [ ] indented'), 1);
+  assert.equal(untickedCriteria('- [ ] non-breaking space'), 1);
+  // And a criterion hidden in a fence is not a criterion.
+  assert.equal(untickedCriteria('```\n- [ ] hidden\n```'), 0);
+  assert.equal(untickedCriteria(''), 0);
 });

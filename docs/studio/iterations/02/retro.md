@@ -29,8 +29,9 @@
 - **The check's blind spots were about what it *did not look at*, not about what it judged
   wrongly.** Every rule it had was correct. It simply never collected the observation that
   would have failed — four such gaps in the first round, seven in the second, ten in the
-  third, twelve in the fourth, and in the fifth a rule this very sequence had just
-  rewritten.
+  third, twelve in the fourth, six in the fifth, four in the sixth, and in the seventh the
+  status word itself, read from raw text while everything it gates was read from stripped
+  text.
 
 - **Two fix rounds were spent making an untrustworthy input more precise.** The exemption
   was anchored to a path, then to an origin and a path, and tested against every path attack
@@ -41,7 +42,7 @@
   evidence match read the next label as the answer. Two failures of the same kind stacked:
   a criterion ticked without evidence, and a check that could not tell.
 
-- **The record has been wrong in five consecutive rounds**, each time in a document
+- **The record has been wrong in six consecutive rounds**, each time in a document
   written to correct the previous round's record. The worst case was a ticket claiming
   "both are true now" about a line that did not exist. Remembering what another document
   says is not knowing it.
@@ -74,7 +75,7 @@
    whole subject was a claim written before it was checked. Read it off the thing, at the
    time, or leave it out.
 10. **A claim about another document is checked against that document, in the same edit.**
-    Six rounds, five of them with a false statement in the record, every one of which
+    Seven rounds, six of them with a false statement in the record, every one of which
     would have been caught by opening the file it described.
 11. **A ticket may not tick a criterion it cannot satisfy.** The verdict line belongs to
     the reviewer and to `reviewer-verdict`; a ticket claiming it was claiming someone
@@ -99,7 +100,7 @@
 
 ## The shape of this iteration's failures
 
-Five rounds of independent review, and the same shape each time: **the team checked the thing it had
+Seven rounds of independent review, and the same shape each time: **the team checked the thing it had
 built, in the configuration where it works.** The exemption was tested against paths
 because paths were what it had been written to handle. The shelf's empty state was tested
 through a fixture because the fixture was what had been built. The Result sections were
@@ -127,6 +128,6 @@ is change 1 above — make it a step with an artifact, not a thing to remember.
 
 Used, and then some. SS-020 was the planned debt share and closed TD-004. Everything from
 SS-024 onwards — SS-024, SS-025, SS-026, SS-027, SS-028, SS-029, SS-030, SS-031, SS-032,
-SS-033 — was opened by a review. Two committed tickets became thirteen. Planned work was well under a fifth
+SS-034 — was opened by a review. Two committed tickets became fourteen. Planned work was well under a fifth
 of the iteration and finding out what was wrong with it was the rest, which is a sharper
 version of the same ratio as iteration 01.

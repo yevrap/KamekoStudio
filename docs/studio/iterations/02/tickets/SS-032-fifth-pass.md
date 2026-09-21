@@ -31,7 +31,10 @@ it — committed by the ticket written to end it.
 - [x] `resultSection` strips a fence indented by up to three spaces, and a fence of four or
       more characters.
 - [x] Focus after choosing a plate from the picker is asserted, not only after a restart.
-- [x] Every stale count is corrected: five rounds of review, 51 mutations across seven sets.
+- [x] Every stale count is corrected. *(The figures this ticket wrote — five rounds, 51
+      mutations across seven sets — were themselves superseded by the sixth review, which
+      found the predicate wrong as well as the total. SS-033 re-measured: 57 across eight
+      sets, 53 at the ticket stage and 4 at the gate.)*
 - [x] The changelog records the fourth and fifth rounds, including **TD-008**.
 - [x] The strip-headroom figure is scoped to what was measured.
 - [x] SS-031's mutation accounting reconciles twelve reported against nine replayed.

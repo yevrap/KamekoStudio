@@ -162,12 +162,35 @@ async function observeNormal(browser, url) {
 
     const back = document.querySelector('[data-back], a.back');
     const backBox = back ? back.getBoundingClientRect() : null;
+    // Resolved against the page, not read as a string. `#`, `#top`, `./` and a
+    // blank are four spellings of the same defect — a back link that leaves you
+    // exactly where you are — and a rule over the raw attribute caught one.
+    let backGoes = null;
+    if (back) {
+      const raw = back.getAttribute('href') ?? '';
+      try {
+        const to = new URL(raw, location.href);
+        backGoes = {
+          raw,
+          samePage: to.pathname === location.pathname,
+          fragmentOnly: raw.trim().startsWith('#') || raw.trim() === ''
+        };
+      } catch {
+        backGoes = { raw, samePage: false, fragmentOnly: true };
+      }
+    }
 
     return {
       deviceWidth: floor.deviceWidth,
       targets,
       backLink: back
-        ? { present: true, href: back.getAttribute('href') || '', width: backBox.width, height: backBox.height }
+        ? {
+          present: true,
+          href: back.getAttribute('href') || '',
+          width: backBox.width,
+          height: backBox.height,
+          ...backGoes
+        }
         : { present: false },
       // Three separate numbers, because under mobile emulation two of them move
       // together and one does not.
@@ -399,10 +422,17 @@ async function observeOvertighten(browser, url) {
     host.className = 'plate';
     host.style.cssText = 'position:absolute;left:-9999px;top:0;width:300px;height:300px';
     const copy = bolt.cloneNode(true);
+    // Transitions off on the fixture. The torque arc animates its stroke over
+    // 120ms, so a computed colour read immediately after a class change is
+    // still the *previous* state's — which made all four states read as loose.
+    copy.style.transition = 'none';
+    for (const el of copy.querySelectorAll('*')) el.style.transition = 'none';
     host.appendChild(copy);
     document.body.appendChild(host);
     const read = state => {
       copy.className = `bolt is-${state}`;
+      // Force a style flush so the new class is resolved before it is read.
+      void copy.offsetWidth;
       const fill = copy.querySelector('.fill');
       const head = copy.querySelector('.head');
       return {
@@ -732,9 +762,12 @@ async function measureStatusChurn(page, boltId) {
     const r = el.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
   });
+  // Long enough for the first bolt to reach its band, so the status line has
+  // something true to say that it did not say before. A window in which nothing
+  // ought to change cannot tell a live region from a frozen one.
   await page.mouse.move(box.x, box.y);
   await page.mouse.down();
-  await settle(1000);
+  await settle(1500);
   await page.mouse.up();
   const writes = await page.evaluate(() => window.__statusWrites ?? 0);
   await page.evaluate(() => document.getElementById('restart')?.click());
@@ -1022,8 +1055,11 @@ async function run(ctx) {
             // rule was written for, one substitution over.
             reachable: card.href
               ? pages.some(p => {
-                const target = '/' + p.replace(/index\.html$/, '');
-                return card.href.replace(site.origin, '') === target && target !== '/studio/';
+                const dir = '/' + p.replace(/index\.html$/, '');
+                if (dir === '/studio/') return false;
+                const asked = card.href.replace(site.origin, '');
+                // Either spelling of the same page: `games/x/` or `games/x/index.html`.
+                return asked === dir || asked === '/' + p;
               })
               : false
           }));

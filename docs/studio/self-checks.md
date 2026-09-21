@@ -51,7 +51,10 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 | `studio-tests` | The studio's own unit tests pass |
 | `studio-boot` | Every page found by walking `studio/**` for an `index.html` opens in a real Chrome and holds the contract in `tests/studio/lib/boot-contract.mjs` — in three configurations: ordinary, scripting disabled, and site data blocked. It proves no uncaught error, no `console.error`, no failed request, a back link, 44px targets, that the page asks for the device's width and that nothing
 inside it forces the layout viewport wider, that it does not scroll sideways inside its own
-layout, that no control is laid out but invisible, and a `noscript` fallback that actually says something. On the realm home: that the page ran its own script, that the shelf's three column counts hold either side of both breakpoints, that a killed card both reads differently from a live one and matches its named treatment, and that the **real** shelf offers at least one card whose link is a page this check itself booted. On a game page it also drives the thing — pointer, keyboard, release, coupling, stripping, every control pressed, progress proved by a reload — and checks the bolt actually repaints and that its gauge is stroked in visible colours. Pages are **discovered, not listed**, so a page added later arrives covered; the report names any page that got only the generic contract. In the blocked-storage pass it serves an **empty script** in place of production's `shared/settings.js`, so what that pass proves is about studio code only (see the note below) |
+layout, that no control is laid out but invisible, and a `noscript` fallback that actually says something. On the realm home: that the page ran its own script, that the shelf's three column counts hold either side of both breakpoints, that a killed card both reads differently from a live one and matches its named treatment, and that the **real** shelf offers at least one card, and every live card links to a page this check itself booted and not to the shelf's own page. On a game page it also drives the thing — pointer, keyboard, release, coupling, stripping, every control pressed, progress proved by a reload — and checks the bolt actually repaints, that its gauge is stroked in visible colours at a
+non-zero width, that the torque arc tells the four bolt states apart on its own, that a turn
+survives one of two inputs letting go, that the status line changes while a bolt seats but
+not on every frame, and that the back link resolves somewhere other than the page it is on. Pages are **discovered, not listed**, so a page added later arrives covered; the report names any page that got only the generic contract. In the blocked-storage pass it serves an **empty script** in place of production's `shared/settings.js`, so what that pass proves is about studio code only (see the note below) |
 | `hygiene` | No secrets, personal identifiers, private paths, note-vault syntax or oversized files in studio-owned paths, or in the paths the studio may touch by exception |
 | `full-suites` | `npm test`, `npm run smoke` and `npm run e2e` are green — production included |
 | `commit-lint` | Every studio commit is conventional, scoped `studio`, and names a ticket. Merge commits are exempt by having more than one parent, not by their subject line |
@@ -103,7 +106,7 @@ available, change the situation rather than trusting it.
 
 ## What `studio-boot` does not cover
 
-Worth stating, because five rounds of review each found mutations it survived and the
+Worth stating, because seven rounds of review each found mutations it survived and the
 honest position is a bounded one rather than "nothing is left".
 
 It covers what it collects. Everything asserted above is collected from a real page; a
