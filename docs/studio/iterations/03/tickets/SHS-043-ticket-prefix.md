@@ -59,8 +59,16 @@ the boundary (042 and 043 for both prefixes). `git grep` for the old convention 
   handbook's own example commit, `feat(studio): SHS-003 add the path-guard check`, was
   rejected by the rule this ticket introduced — it came in with the executive's edit, and
   the check for leftovers searched only for the *old* prefix. The example is now
-  `SHS-043`, and a new test reads every example commit subject in `docs/studio/*.md` and
-  lints it, so an example cannot contradict the rule again.
+  `SHS-043`, and a new test reads the example commit subjects in the handbook and lints
+  them. **Fix round 2**, from the QA review's second round: that test matched only
+  inline-code examples using one of the nine allowed types, in top-level files — so a
+  fenced example, `feat(studio)!: …`, `ci(studio): …`, or an example in `decisions/` or
+  `team/` passed unchecked, and the claim that *an example cannot contradict the rule
+  again* was larger than the test. It now matches anything shaped like a studio commit
+  subject with a ticket number, any type, inline or fenced, in every handbook document at
+  any depth, excluding only the records — `iterations/`, the changelog and the learning
+  log — which quote rejected subjects because that is what happened. This round was not
+  reviewed: review is capped at two.
 
 - **Tested by:** seven new tests in `tests/studio/rules.test.mjs`, each on a boundary —
   `SS-042` and `SHS-043` pass; `SS-043`, `SS-100`, `SHS-042`, `SHS-001`, `SHS-000` fail
@@ -77,8 +85,12 @@ the boundary (042 and 043 for both prefixes). `git grep` for the old convention 
   length, tickets not yet closed, no review yet). Fix round 1: the example-subject test
   fails on the old `SHS-003` line with *"process.md: feat(studio): SHS-003 add the
   path-guard check"* and passes on the corrected one; `tests/studio/rules.test.mjs` 78/78.
+  Fix round 2: each of the QA review's five defeating inputs, added alone and reverted —
+  a fenced `SHS-003` example and inline `feat(studio)!: SS-060 …` and `ci(studio): SHS-050
+  …` in `process.md`, `feat(studio): SHS-003 …` in ADR-0006, `fix(studio): SS-060 …` in
+  `team/qa-engineer.md` — now fails the test; the handbook as committed passes, 82/82.
 
 - **Deferred:** SS-042's over-length subject, opened as SHS-047. Branch names remain
   unchecked, as ADR-0006 says.
 
-- **Fix rounds used:** 1 / 2
+- **Fix rounds used:** 2 / 2

@@ -819,17 +819,38 @@ test('commit lint: every example commit subject in the handbook passes the lint'
   // The prefix change left `SHS-003` in process.md — an example of the
   // convention that the convention's own rule rejects. Examples are read from
   // the documents, not copied here, so the next one is checked too.
-  const { readdirSync, readFileSync } = await import('node:fs');
+  //
+  // What counts as an example is anything shaped like a studio commit subject
+  // with a ticket number — any type, with or without `!`, inline or in a fenced
+  // block, in any handbook document at any depth. The first version matched
+  // only inline code with one of the nine allowed types in top-level files, so
+  // `ci(studio): SHS-050 …`, `feat(studio)!: …`, a fenced block, or an example
+  // in `decisions/` or `team/` all passed unchecked.
+  //
+  // The records are excluded: iterations/, the changelog and the learning log
+  // quote subjects that were rejected, because that is what happened.
+  const { readdirSync, readFileSync, statSync } = await import('node:fs');
   const path = await import('node:path');
   const { fileURLToPath } = await import('node:url');
   const docs = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../docs/studio');
-  const example = /`((?:feat|fix|docs|test|refactor|chore|perf|style|build)\(studio\): [^`]+)`/g;
+  const RECORDS = new Set(['iterations', 'CHANGELOG.md', 'learning-log.md']);
+  const files = [];
+  const walk = dir => {
+    for (const name of readdirSync(dir)) {
+      if (dir === docs && RECORDS.has(name)) continue;
+      const full = path.join(dir, name);
+      if (statSync(full).isDirectory()) walk(full);
+      else if (/\.md$/i.test(name)) files.push(full);
+    }
+  };
+  walk(docs);
+  const example = /\b[a-z]+\(studio\)!?: (?:SHS|SS)-\d{3}\b[^`\n]*/g;
   const found = [];
-  for (const name of readdirSync(docs).filter(f => f.endsWith('.md'))) {
-    for (const [, subject] of readFileSync(path.join(docs, name), 'utf8').matchAll(example)) {
-      if (/\b(SHS|SS)-\d{3}\b/.test(subject)) found.push({ name, subject });
+  for (const file of files) {
+    for (const [subject] of readFileSync(file, 'utf8').matchAll(example)) {
+      found.push({ file: path.relative(docs, file), subject: subject.trim().replace(/\.$/, '') });
     }
   }
   assert.ok(found.length, 'no example commit subjects found — the pattern no longer matches the handbook');
-  for (const { name, subject } of found) assert.equal(lintCommitSubject(subject), null, `${name}: ${subject}`);
+  for (const { file, subject } of found) assert.equal(lintCommitSubject(subject), null, `${file}: ${subject}`);
 });
