@@ -63,3 +63,23 @@ committed.
   returned, found the new ADR on attempt 3 of 12 — 3 of 3. One correction before the push:
   the ticket named test files that do not exist and called ADR-0001 unchanged while its
   status line had changed; both fixed in the unpushed commit. *Next:* SHS-052's red run.
+
+## After SHS-052 — the first production fix
+
+- **Front-end / Gameplay Dev** — *Done:* one line in `stepParticles`: with no black hole,
+  spirals are dropped. Three e2e tests, each in its own browser profile and each proving
+  spirals were alive before acting, were run first against the unfixed file: exactly
+  those three failed, each with TD-009's error. With the fix, 26 of 26, then five runs in a
+  row, 26 of 26 each. Two partial fixes tried and reverted; the direct test failed both,
+  while both route tests passed both — the direct test is the one that decides. *Next:*
+  review. *Blocked:* nothing.
+- **QA Engineer** — *Done:* the diagnostic's last run exited 0, every route clean, and it
+  was retired. `push` 10 of 10, the guard naming both production files as SHS-052's.
+  Post-deploy started when the push returned and found the fixed line in the served
+  `ui.js` on attempt 3 of 12. *Next:* hand the diff to review. *Blocked:* nothing.
+- **Tech Lead** — *Done:* that post-deploy run said *"nothing outside the guard changed"*
+  above a list of two admitted production files. Fixed as SHS-051's first fix round: an
+  admitted change is now reported as a change. *Next:* review. *Blocked:* nothing.
+- **Scrum Master** — *Done:* every planned ticket is live. Eight pushes so far, each
+  checked before and after; none broke the live site. *Next:* round 1 of review — QA and
+  the Independent Reviewer, on different models. *Blocked:* nothing.
