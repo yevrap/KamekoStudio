@@ -42,8 +42,11 @@ the production arcade: native ES modules split by concern (`constants.js`, `stat
 A plate of bolts. Holding a bolt turns it and its torque climbs; every bolt it is coupled
 to loosens while you hold. Each bolt has a tolerance band and all of them must end inside
 their bands at once. Torque only goes onto a bolt directly and only comes off it by
-turning a neighbour, so a plate is an ordering puzzle with an analog release on top. Past
-the strip point a thread is ruined and the plate is lost.
+turning a neighbour. Past the strip point a thread is ruined and the plate is lost.
+
+It was built to test whether that coupling would make each plate an **ordering puzzle**. It
+does not — see below — so what is here is a tactile convergence toy, and the experiment's
+value is the answer rather than the game.
 
 | File | What it is |
 |---|---|
