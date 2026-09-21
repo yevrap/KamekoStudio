@@ -30,6 +30,15 @@
   judged wrongly.** Every rule it had was correct. It simply never collected the observation
   that would have failed.
 
+- **Two fix rounds were spent making an untrustworthy input more precise.** The exemption
+  was anchored to a path, then to an origin and a path, and tested against every path attack
+  the first review produced. None of that mattered: the input itself was a claim the page
+  made about itself. The question "can this be tightened" was asked twice before anyone
+  asked "should this be trusted at all".
+- **A ticket shipped Done with an empty Result and the check agreed**, because the check's
+  evidence match read the next label as the answer. Two failures of the same kind stacked:
+  a criterion ticked without evidence, and a check that could not tell.
+
 ## Changes, already made
 
 1. **An exemption ships with its attacks, in the same commit.** Not "is tested" — the tests
@@ -49,6 +58,24 @@
    chooses, fixing it proves something narrower than the claim.
 7. **A plan names the files that its own existence invalidates.** Creating
    `iterations/NN/` stales the pulse line; that belongs in the plan's dependencies.
+8. **Before tightening a rule, ask what it decides from.** If the input is something the
+   subject says about itself — a stack frame, a declared type, a self-reported name — no
+   amount of tightening helps, and the work is to stop needing it. Written into
+   `self-checks.md` as a rule for every check added here: decide from what the driver
+   observed, never from what the page claimed.
+9. **A number in a Result is evidence.** Three were wrong, two of them in the ticket whose
+   whole subject was a claim written before it was checked. Read it off the thing, at the
+   time, or leave it out.
+
+## The shape of this iteration's failures
+
+Three review passes, and the same shape each time: **the team checked the thing it had
+built, in the configuration where it works.** The exemption was tested against paths
+because paths were what it had been written to handle. The shelf's empty state was tested
+through a fixture because the fixture was what had been built. The Result sections were
+read by a regex written against filled-in tickets. Each of those is the iteration 01 lesson
+— *verify a criterion in the configuration where it can fail* — applied to the code and not
+to the checks over the code.
 
 ## Did the last retro's changes help?
 
