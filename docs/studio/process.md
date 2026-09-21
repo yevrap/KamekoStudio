@@ -1,7 +1,7 @@
 # Process
 
 One run is one iteration. An iteration is a small, bounded batch of tickets that ends with
-everything merged, tagged, documented and reviewed — or with a clean stop and a report of
+everything on `main`, reviewed, documented and tagged — or with a clean stop and a report of
 what blocked it.
 
 ## The iteration protocol
@@ -10,12 +10,12 @@ what blocked it.
 |---|---|---|
 | 0 | **Preflight** | Inputs logged; clean tree; up-to-date `main`; no `STOP`; baseline suites green |
 | 1 | **Refine and plan** | `iterations/NN/plan.md`, `iterations/NN/tickets/*.md` |
-| 2 | **Build** | One branch per ticket; commits; tests |
+| 2 | **Build** | Small commits to `main`, each green; each ticket pushed and deploy-checked when it is done |
 | 3 | **Fix, bounded** | At most 2 fix rounds per ticket, then the ticket is marked Blocked |
 | 4 | **Independent review** | QA and Independent Reviewer findings → fixes or new tickets |
 | 5 | **Document** | Tickets closed, `CHANGELOG.md`, `learning-log.md`, studio log entries |
-| 6 | **Gate** | `npm run studio:check --stage=gate` green, or nothing is pushed |
-| 7 | **Publish** | `--no-ff` merges to `main`, tag `studio-iteration-NN`, post-deploy checks |
+| 6 | **Gate** | `npm run studio:check --stage=gate` green, or the iteration is not tagged. Each ticket's own push needs its ticket stage and the full suite green first |
+| 7 | **Publish** | The last push, tag `studio-iteration-NN`, post-deploy checks |
 | 8 | **Review and retro** | `iterations/NN/review.md`, `iterations/NN/retro.md` |
 | 9 | **Stop** | Handoff written; the run ends |
 
@@ -51,13 +51,25 @@ A run stops early, writes the handoff and reports, on any of:
 - context exhaustion;
 - a `STOP` file appearing in the working directory the run was started from.
 
-## Branches, commits, tags
+## Trunk, commits, tags
 
-- One branch per ticket, named `shs-NNN-short-slug`, cut from `main`.
+The studio works trunk-based, as a trial from iteration 04 — see
+[ADR-0007](decisions/ADR-0007-trunk-based-development.md), which also says what the trial
+is testing and how its retrospective judges it.
+
+- Commit to `main`. No ticket branches, no merge commits. A ticket is one or more small
+  commits, each naming it.
+- Every commit leaves `main` releasable: `npm run studio:check -- --stage=ticket` green
+  before committing, and `--stage=gate --skip-slow` on any commit that changes code.
+- When a ticket is done: the ticket stage and the full repository suite green, then push,
+  then `--stage=postdeploy`. Pages deploys every push, so every push is a release.
+- A page a player could reach but that is not ready stays off the shelf until its ticket
+  is done.
+- Review findings are fixed forward. A push that breaks the live site is undone with one
+  `git revert` commit, never by rewriting history.
 - Conventional commits scoped `studio`, with the ticket ID:
   `feat(studio): SHS-043 retire the SS- prefix`.
-- Merges to `main` use `--no-ff`, so each ticket is one visible merge bubble.
-- One annotated tag per iteration: `studio-iteration-NN`.
+- One annotated tag per iteration, `studio-iteration-NN`, on the reviewed state.
 - The whole studio history filters with `git log --grep "(studio)"` or `git log -- studio/`.
 - Ticket numbers are one sequence. `SS-001` to `SS-042` keep the prefix they were issued
   under; every ticket from 043 on is `SHS-NNN`. `commit-lint` enforces the split in both
