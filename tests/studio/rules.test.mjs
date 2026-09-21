@@ -10,7 +10,7 @@ import {
   scanHygiene, scanDocCleanliness, HYGIENE_PRAGMA,
   lintCommitSubject, moduleImports, sameOriginAssets,
   LAST_SS_TICKET, ticketIdProblem, commitTicketId, lintCommit, LINT_WAIVERS,
-  ticketFileProblems, ticketFileId
+  ticketFileProblems, ticketFileId, ticketsNamedByLog
 } from './lib/rules.mjs';
 
 test('path guard: studio-owned paths are allowed', () => {
@@ -396,6 +396,42 @@ test('ticketFileProblems: a merge subject names no ticket, so it cannot supply o
   // The ID comes from the commit below the merge. commitTicketId returns null
   // for a merge subject, and the check skips commits with two parents anyway.
   assert.equal(commitTicketId('Merge ss-099-x: SS-099 something'), null);
+});
+
+test('ticketFileProblems: a file name obeys the ticket sequence, as a commit does', () => {
+  // Found by review: SHS-041 collides with SS-041, and SS-050 is a new ticket
+  // under the retired prefix. Both were accepted as ticket files.
+  const collides = ticketFileProblems([ticketFile('03', 'SHS-041-collides.md', '# SHS-041 — x')], []);
+  assert.match(collides.join('\n'), /SHS-041-collides\.md: SHS-041: numbers up to 042 belong to SS- tickets/);
+  const retired = ticketFileProblems([ticketFile('03', 'SS-050-retired.md', '# SS-050 — x')], []);
+  assert.match(retired.join('\n'), /SS-050-retired\.md: SS-050: the SS- prefix is retired/);
+  assert.deepEqual(ticketFileProblems([ticketFile('02', 'SS-042-x.md', '# SS-042 — x')], []), []);
+});
+
+test('ticketFileProblems: an upper-case extension is not a second, invisible file', () => {
+  // `SHS-045-copy.MD` beside the real file: read, and failed for its name.
+  const files = [
+    ticketFile('03', 'SHS-045-real.md', '# SHS-045 — real'),
+    ticketFile('03', 'SHS-045-copy.MD', '# SHS-045 — copy')
+  ];
+  assert.match(ticketFileProblems(files, []).join('\n'), /SHS-045-copy\.MD: not named/);
+});
+
+test('ticketsNamedByLog: a merge names nothing, whatever its subject says', () => {
+  const log = [
+    { sha: 'a'.repeat(40), parents: 'p1', subject: 'feat(studio): SHS-050 real work' },
+    // A merge with a conforming subject: excluded by its parents, not its wording.
+    { sha: 'b'.repeat(40), parents: 'p1 p2', subject: 'docs(studio): SHS-099 written by git' },
+    { sha: 'c'.repeat(40), parents: '', subject: 'feat(studio): SHS-051 a root commit' },
+    { sha: 'd'.repeat(40), parents: 'p1', subject: 'Update README' }
+  ];
+  assert.deepEqual(ticketsNamedByLog(log).map(n => n.id), ['SHS-050', 'SHS-051']);
+});
+
+test('ticketsNamedByLog: a commit names the ticket in its ticket position, and only that one', () => {
+  // A mention later in the description is not a claim to be that ticket.
+  const named = ticketsNamedByLog([{ sha: 'a'.repeat(40), parents: 'p', subject: 'docs(studio): SHS-046 record the SHS-099 finding' }]);
+  assert.deepEqual(named.map(n => n.id), ['SHS-046']);
 });
 
 test('commitTicketId: the ID a conforming subject names, and nothing else', () => {
