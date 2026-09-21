@@ -51,6 +51,14 @@ rather than called flaky, and the gate stops accepting a ticket that has no file
   register and was tried on a scratch copy only. It is production code, and waits on the
   executive.
 
+### Found on the way out
+
+- **The post-deploy stage proved less than it said, twice.** `studio-live` never waits for
+  the new build, so a correct deploy read as a failure; `production-unchanged`, run after
+  the tag, compared the release with itself and passed. Registered as TD-010 and TD-011 by
+  SHS-049, which landed after the tag; the deploy itself was verified with the right
+  baseline.
+
 ### Review
 
 Two rounds, the cap. The second rejected the iteration, on a gap in the TD-009 check that

@@ -13,10 +13,13 @@ npm run studio:check -- --base=<ref>     # what the path guard and commit lint d
 npm run studio:check -- --docs-root=<dir># an extra directory for doc-cleanliness
 npm run studio:check -- --skip-slow      # skip the test suites (the gate then fails, by design)
 npm run studio:check -- --offline        # make no network requests
+npm run studio:check -- --previous-tag=<tag> # what production-unchanged compares with
 ```
 
 `--base` defaults to the most recent `studio-iteration-*` tag, falling back to
-`origin/main`. Iteration 00 has no previous tag, so it passes the pre-studio commit
+`origin/main`. `production-unchanged` compares with `--previous-tag`, which also defaults to
+the most recent tag — so **after the iteration's own tag exists, pass `--previous-tag`
+explicitly**, or it compares the release with itself (TD-011). Iteration 00 has no previous tag, so it passes the pre-studio commit
 explicitly.
 
 `--docs-root` exists so that documents kept outside the repository can be held to the same
