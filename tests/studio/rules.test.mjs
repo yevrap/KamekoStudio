@@ -8,7 +8,8 @@ import {
   classifyPaths, PATH_EXCEPTIONS, EXPECTED_STUDIO_SCRIPT, jsonDiffPaths,
   extractStorageKeys, badStorageKeys, findStorageViolations,
   scanHygiene, scanDocCleanliness, HYGIENE_PRAGMA,
-  lintCommitSubject, moduleImports, sameOriginAssets
+  lintCommitSubject, moduleImports, sameOriginAssets,
+  LAST_SS_TICKET, ticketIdProblem, commitTicketId
 } from './lib/rules.mjs';
 
 test('path guard: studio-owned paths are allowed', () => {
@@ -232,6 +233,68 @@ test('commit lint: exemption comes from the parent count, not the word "Merge"',
 
 test('commit lint: long subjects are rejected', () => {
   assert.match(lintCommitSubject('feat(studio): SS-003 ' + 'x'.repeat(80)), /characters/);
+});
+
+// --- The ticket prefix: one sequence, two prefixes, split at 042/043 -----------
+
+test('commit lint: SHS- names every new ticket, from 043', () => {
+  assert.equal(lintCommitSubject('feat(studio): SHS-043 retire the old prefix'), null);
+  assert.equal(lintCommitSubject('fix(studio): SHS-999 the last three-digit ticket'), null);
+});
+
+test('commit lint: SS- is accepted only for the numbers it already issued', () => {
+  // Every existing commit keeps passing — history is not renamed.
+  assert.equal(lintCommitSubject('docs(studio): SS-042 the last SS- ticket'), null);
+  assert.equal(lintCommitSubject('feat(studio): SS-001 the first'), null);
+  // A new ticket under the retired prefix is the thing being prevented.
+  assert.match(lintCommitSubject('feat(studio): SS-043 a new ticket'), /SS- prefix is retired/);
+  assert.match(lintCommitSubject('feat(studio): SS-100 a new ticket'), /SS- prefix is retired/);
+});
+
+test('commit lint: SHS- may not reuse a number an SS- ticket holds', () => {
+  // One number naming two tickets is the ambiguity the switch removes.
+  assert.match(lintCommitSubject('feat(studio): SHS-042 collides with SS-042'), /belong to SS- tickets/);
+  assert.match(lintCommitSubject('feat(studio): SHS-001 collides with SS-001'), /belong to SS- tickets/);
+  assert.match(lintCommitSubject('feat(studio): SHS-000 no such ticket'), /belong to SS- tickets/);
+});
+
+test('commit lint: the prefix is exact — case, spelling and width', () => {
+  for (const subject of [
+    'feat(studio): shs-043 lower case',
+    'feat(studio): Shs-043 mixed case',
+    'feat(studio): SH-043 a near miss',
+    'feat(studio): SSH-043 a near miss',
+    'feat(studio): SHS-43 two digits',
+    'feat(studio): SHS-0043 four digits',
+    'feat(studio): SHS043 no hyphen'
+  ]) assert.match(lintCommitSubject(subject), /expected "type\(studio\): SHS-NNN/, subject);
+});
+
+test('commit lint: each rule says which rule it is', () => {
+  const messages = new Set([
+    lintCommitSubject('feat(studio): SS-043 x'),
+    lintCommitSubject('feat(studio): SHS-042 x'),
+    lintCommitSubject('feat(studio): SHS-43 x'),
+    lintCommitSubject('feat(studio): SHS-043 ' + 'x'.repeat(80))
+  ]);
+  assert.equal(messages.size, 4);
+});
+
+test('ticketIdProblem: the boundary sits between 042 and 043 for both prefixes', () => {
+  assert.equal(LAST_SS_TICKET, 42);
+  assert.equal(ticketIdProblem('SS', 42), null);
+  assert.notEqual(ticketIdProblem('SS', 43), null);
+  assert.notEqual(ticketIdProblem('SHS', 42), null);
+  assert.equal(ticketIdProblem('SHS', 43), null);
+});
+
+test('commitTicketId: the ID a conforming subject names, and nothing else', () => {
+  assert.equal(commitTicketId('feat(studio): SHS-043 x'), 'SHS-043');
+  assert.equal(commitTicketId('docs(studio): SS-041 x'), 'SS-041');
+  // A merge subject is git's, and names a branch as well as a ticket.
+  assert.equal(commitTicketId('Merge ss-041-flaky: SS-041 TD-009 recorded'), null);
+  assert.equal(commitTicketId('feat(studio): SS-0411 x'), null);
+  assert.equal(commitTicketId(undefined), null);
 });
 
 // --- The 3D landing page's portal capacity -----------------------------------

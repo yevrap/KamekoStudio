@@ -53,12 +53,29 @@ A run stops early, writes the handoff and reports, on any of:
 
 ## Branches, commits, tags
 
-- One branch per ticket, named `ss-NNN-short-slug`, cut from `main`.
+- One branch per ticket, named `shs-NNN-short-slug`, cut from `main`.
 - Conventional commits scoped `studio`, with the ticket ID:
-  `feat(studio): SS-003 add the path-guard check`.
+  `feat(studio): SHS-003 add the path-guard check`.
 - Merges to `main` use `--no-ff`, so each ticket is one visible merge bubble.
 - One annotated tag per iteration: `studio-iteration-NN`.
 - The whole studio history filters with `git log --grep "(studio)"` or `git log -- studio/`.
+- Ticket numbers are one sequence. `SS-001` to `SS-042` keep the prefix they were issued
+  under; every ticket from 043 on is `SHS-NNN`. `commit-lint` enforces the split in both
+  directions. See [ADR-0006](decisions/ADR-0006-ticket-prefix.md).
+
+## Naming
+
+Names are read by strangers even when they are internal: they end up in commit messages,
+URLs and a public repository. Before the studio adopts an abbreviation, a codename or a
+label — a ticket prefix, a branch, a feature name, a class name someone will read:
+
+1. **Read it as a stranger would.** Look for the meanings it was not chosen for,
+   especially loaded or offensive ones.
+2. **Prefer clarity to brevity.** A plain word beats a clever two-letter tag.
+3. **If unsure, search it.** It takes seconds.
+4. **When in doubt, spell it out.**
+
+The rule exists because the studio's first ticket prefix broke it.
 
 ## Roles
 
