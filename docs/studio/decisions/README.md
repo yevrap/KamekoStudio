@@ -20,3 +20,4 @@ they always show the current state — and the history lives here.
 | [0005](ADR-0005-front-wall-portal-row.md) | `shared/3d/gameplay.js` gets one recorded exception for the front-wall portal row |
 | [0006](ADR-0006-ticket-prefix.md) | Tickets are numbered `SHS-NNN`; the `SS-` prefix is retired at 042 |
 | [0007](ADR-0007-trunk-based-development.md) | Trunk-based development, as a trial from iteration 04 |
+| [0008](ADR-0008-production-fixes.md) | The studio fixes production, under the full process, one ticket per file |

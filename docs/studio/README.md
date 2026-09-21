@@ -31,7 +31,9 @@ why any given decision was made, without any outside context.
 
 1. **One home per artifact.** Nothing is maintained in two places.
 2. **State lives in files.** A fresh session picks up from `iterations/<latest>/` and the handoff.
-3. **Production is untouched.** The studio may only write inside its own paths — see [`guardrails.md`](guardrails.md).
+3. **Production changes only as reviewed fixes.** The studio writes inside its own paths, and outside them only as a
+   production fix through the full process ([ADR-0008](decisions/ADR-0008-production-fixes.md)) or a recorded
+   exception — see [`guardrails.md`](guardrails.md).
 4. **Public-repo quality.** Everything committed is something a stranger could read and respect.
 5. **Bounded runs.** One iteration per run, small caps, a clean stop.
 6. **Checks are evidence-based.** A check that did not run is reported as "not run", never silently skipped.

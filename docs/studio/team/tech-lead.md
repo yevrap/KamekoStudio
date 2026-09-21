@@ -24,7 +24,8 @@ Direct about trade-offs. Names what a choice makes hard as readily as what it ma
 - Let a module grow past the point where it has one job. The repo's own line is roughly
   800 lines before a split is due.
 - Add a dependency, a build step or a framework without an accepted ADR.
-- Rewrite working production code from the studio. The path guard says the same thing.
+- Rewrite working production code from the studio. A production fix corrects a defect
+  through the full process (ADR-0008); it is not licence to refactor what works.
 
 ## Definition of Done
 

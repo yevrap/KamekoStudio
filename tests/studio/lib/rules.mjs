@@ -257,20 +257,100 @@ export function portalCapacity(gameplay, constants) {
 }
 
 /**
- * Classify changed paths against the guard.
- * @param {string[]} paths
- * @returns {{allowed: string[], exceptions: string[], violations: string[]}}
+ * Production files the studio is fixing, under the executive's standing
+ * permission to fix production through the full sprint process (ADR-0008).
+ * One entry per file per ticket: `{ path, ticket, iteration }`.
+ *
+ * An entry is a fact about one iteration, not a licence. The guard admits the
+ * path only while that iteration is the one being checked, only when the ticket
+ * has a file in that iteration's `tickets/`, and only when every commit that
+ * changed the path names that ticket — see `productionFixProblem`. Entries stay
+ * after their iteration ships: together they are the record of every production
+ * file the studio has changed, and why.
  */
-export function classifyPaths(paths) {
+export const PRODUCTION_FIXES = [];
+
+/**
+ * Classify changed paths against the guard.
+ *
+ * A production-fix entry for the iteration being checked comes before a recorded
+ * exception: an exception narrows one file to one approved edit, and a defect
+ * elsewhere in that file is fixed through the full process, not refused by the
+ * narrow rule. An entry for another iteration only routes the path to
+ * `productionFixProblem`, which says why it is not admitted.
+ *
+ * @param {string[]} paths
+ * @param {{ iteration?: string, fixes?: object[] }} [opts]
+ * @returns {{allowed: string[], exceptions: string[], fixes: string[], violations: string[]}}
+ */
+export function classifyPaths(paths, { iteration, fixes = PRODUCTION_FIXES } = {}) {
   const allowed = [];
   const exceptions = [];
+  const fixed = [];
   const violations = [];
   for (const p of paths) {
     if (ALLOWED_PREFIXES.some(prefix => p.startsWith(prefix))) allowed.push(p);
+    else if (fixes.some(f => f.path === p && f.iteration === iteration)) fixed.push(p);
     else if (PATH_EXCEPTIONS.some(e => e.path === p)) exceptions.push(p);
+    else if (fixes.some(f => f.path === p)) fixed.push(p);
     else violations.push(p);
   }
-  return { allowed, exceptions, violations };
+  return { allowed, exceptions, fixes: fixed, violations };
+}
+
+/**
+ * Why a changed production path is not admissible as a fix, or null when it is.
+ *
+ * Decided only from what the checker observes: the entries, the file names in
+ * the iteration's `tickets/` directory, and the subjects of the commits that
+ * changed the path. It reads no Markdown — the studio has watched a checker that
+ * interpreted Markdown be defeated ten times, and this one decides a boundary.
+ *
+ * @param path       a changed path outside the allowed prefixes
+ * @param iteration  the iteration being checked, as `NN`
+ * @param ticketIds  the IDs the file names in that iteration's `tickets/` declare
+ * @param commits    `[{ sha, subject }]` — every non-merge commit in the range that
+ *                   changed `path`; empty while the change is still uncommitted
+ * @param fixes      the entries to decide by
+ */
+export function productionFixProblem(path, { iteration, ticketIds = [], commits = [], fixes = PRODUCTION_FIXES } = {}) {
+  const entries = fixes.filter(f => f.path === path && f.iteration === iteration);
+  if (!entries.length) {
+    const elsewhere = fixes.filter(f => f.path === path).map(f => `${f.ticket} in iteration ${f.iteration}`);
+    return elsewhere.length
+      ? `its production-fix entries are for ${elsewhere.join(', ')}, not iteration ${iteration}`
+      : `no production-fix entry names it for iteration ${iteration}`;
+  }
+  const tickets = [...new Set(entries.map(f => f.ticket))];
+  const missing = tickets.filter(t => !ticketIds.includes(t));
+  if (missing.length) {
+    return `${missing.join(', ')} has no ticket file in iterations/${iteration}/tickets/`;
+  }
+  for (const { sha, subject } of commits) {
+    const id = commitTicketId(subject);
+    if (!tickets.includes(id)) {
+      return `commit ${String(sha ?? '').slice(0, 7)} changed it and names ${id ?? 'no ticket'}; only ${tickets.join(' or ')} may`;
+    }
+  }
+  return null;
+}
+
+/** Problems with the entries themselves, so a malformed one fails loudly rather than never matching. */
+export function productionFixEntryProblems(fixes = PRODUCTION_FIXES) {
+  const problems = [];
+  for (const f of fixes) {
+    const where = JSON.stringify(f);
+    if (typeof f.path !== 'string' || !f.path || f.path.startsWith('/') || f.path.includes('..')) {
+      problems.push(`${where}: path must be a repository-relative file path`);
+    } else if (ALLOWED_PREFIXES.some(prefix => f.path.startsWith(prefix))) {
+      problems.push(`${where}: ${f.path} is inside the studio's own paths and needs no entry`);
+    }
+    const m = /^(SHS|SS)-(\d{3})$/.exec(String(f.ticket ?? ''));
+    if (!m) problems.push(`${where}: ticket must be an ID such as SHS-052`);
+    else if (ticketIdProblem(m[1], Number(m[2]))) problems.push(`${where}: ${ticketIdProblem(m[1], Number(m[2]))}`);
+    if (!/^\d{2}$/.test(String(f.iteration ?? ''))) problems.push(`${where}: iteration must be two digits, such as '04'`);
+  }
+  return problems;
 }
 
 /**

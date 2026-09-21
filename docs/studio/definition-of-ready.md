@@ -12,7 +12,9 @@ Owner owns this list; the Scrum Master refuses to plan a ticket that fails it.
 - [ ] **Sized.** S (under an hour of agent work), M, or L. An L is split before planning.
 - [ ] **Inside the guard.** Every file it expects to touch is inside the allowed paths in
       [`guardrails.md`](guardrails.md), or the ticket states the exception it needs and
-      who approved it.
+      who approved it, or — for a production fix — the ticket lists each production file it
+      will change, and says why the change is a fix and not a feature
+      ([ADR-0008](decisions/ADR-0008-production-fixes.md)).
 - [ ] **No hidden decision.** If the ticket contains an open product question, it is not
       ready — the question goes to the executive as a questionnaire, and the ticket waits.
 - [ ] **Dependencies named.** Any ticket it must follow is listed.

@@ -14,7 +14,8 @@ code works.
       check, such as `hygiene`, so one fails on the ticket responsible rather than after the
       work is merged. Iteration 01 learned this the expensive way.
 - [ ] After the push, `--stage=postdeploy` passes with a `--marker` only the new build has.
-- [ ] Only allowed paths changed (see [`guardrails.md`](guardrails.md)).
+- [ ] Only allowed paths changed (see [`guardrails.md`](guardrails.md)). A production fix
+      also has a regression test shown failing without the fix and passing with it.
 - [ ] Commits are conventional, scoped `studio`, and carry the ticket ID.
 - [ ] The ticket file records: what changed, what was tested, what was deferred.
 - [ ] Anything discovered and not done is written down — as a new ticket, a debt-register
@@ -45,7 +46,8 @@ unsigned column and no stated reason.
 - [ ] `review.md` and `retro.md` written from ceremonies that actually happened.
 - [ ] `CHANGELOG.md` updated.
 - [ ] Debt register and learning log updated.
-- [ ] Post-deploy checks recorded: the studio URL serves the change, a production page
-      still loads, and no production file changed.
+- [ ] Post-deploy checks recorded: the new build is being served, a production page still
+      loads, and no production file changed except the production fixes this iteration's
+      tickets own.
 - [ ] Tag `studio-iteration-NN` pushed.
 - [ ] Handoff written and reported.

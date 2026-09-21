@@ -4,7 +4,7 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { walk, exists } from '../lib/shell.mjs';
-import { scanHygiene, PATH_EXCEPTIONS } from '../lib/rules.mjs';
+import { scanHygiene, PATH_EXCEPTIONS, PRODUCTION_FIXES } from '../lib/rules.mjs';
 
 const MAX_BYTES = 1024 * 1024;
 
@@ -28,8 +28,14 @@ export const hygiene = {
     }
     // The paths the studio may touch by exception are the ones most worth
     // scanning, and were previously the only ones never scanned.
-    for (const e of PATH_EXCEPTIONS) {
-      const full = path.join(ctx.root, e.path);
+    // So are the production files this iteration is fixing (ADR-0008): the
+    // studio is about to publish its own edits to them.
+    const touched = [
+      ...PATH_EXCEPTIONS.map(e => e.path),
+      ...(ctx.productionFixes ?? PRODUCTION_FIXES).filter(f => f.iteration === ctx.iteration).map(f => f.path)
+    ];
+    for (const rel of new Set(touched)) {
+      const full = path.join(ctx.root, rel);
       if (await exists(full)) files.push(full);
     }
 

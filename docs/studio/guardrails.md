@@ -1,7 +1,8 @@
 # Guardrails
 
 Shadow Studio shares a repository and a deployment with the production arcade. Everything
-below exists so that a bad iteration is a messy `studio/` folder and nothing worse.
+below exists so that a bad iteration is a messy `studio/` folder, or at worst one reviewed
+production fix that one `git revert` commit undoes.
 
 ## The path guard
 
@@ -14,7 +15,7 @@ The studio may create or modify only these paths:
 | `tests/studio/**` | Its tests and self-check runner |
 
 Everything else is out of bounds. A change outside the list stops the run and asks,
-unless it is a **recorded exception** below.
+unless it is a **recorded exception** or a **production fix**, both below.
 
 ### Recorded exceptions
 
@@ -55,9 +56,34 @@ caught there. This is a bounded, accepted residual, not a closed hole.
 | `shared/3d/constants.js` | One entry in `ARCADE_GAMES` so the realm has its own portal on the 3D landing page | **Held by decision**, not by capacity: the realm gets a door once it has a gallery worth entering. The twelfth slot is free and waiting. TD-001 |
 | `3d.html` | Nothing, as it turns out: the landing page's content lives in `shared/3d/`, not in the HTML | Not needed |
 
-A production edit is a single reviewed change, made last in the iteration, in its own
-commit, after it is approved. It is not in the allowed list until then, and the guard will
-fail on it.
+### Production fixes
+
+The executive has given the studio standing permission to fix production files, provided
+the full sprint process runs with its documentation. [ADR-0008](decisions/ADR-0008-production-fixes.md)
+records the permission, what counts as a fix, and what still stops the run.
+
+A production fix is admitted by the guard, not waved past it. `PRODUCTION_FIXES` in
+`tests/studio/lib/rules.mjs` lists each production file the studio fixes, with its ticket
+and iteration, and `path-guard` admits the file only when:
+
+- an entry for that exact path names the iteration being checked;
+- that ticket has a file in the iteration's `tickets/` directory;
+- every commit since the previous release that changed the file names that ticket.
+
+The check names every fix it admits, with its ticket; `production-unchanged` applies the
+same rule after the deploy; `hygiene` scans the file. A production path without a matching
+entry is a violation, exactly as before.
+
+The list has one home, `PRODUCTION_FIXES` itself, unlike the exceptions above: an entry is
+a fact about one ticket, and the ticket is where its reasons are written. An entry for the
+iteration being checked takes precedence over an exception on the same file, so a defect
+elsewhere in that file goes through the full process instead of being refused by the
+narrower rule.
+
+What a production fix still may not be, and so stops and asks: a feature, a design change,
+a fix that needs a choice between two reasonable behaviours, a promotion, a change to a
+game's listing, a repository-wide dependency or tooling change, anything touching releases,
+accounts, credentials or money, or undoing production work the studio did not do.
 
 ## The storage rule
 
@@ -86,16 +112,20 @@ does not know about the `studio_` prefix. Adding it is a future one-line excepti
 GitHub Pages deploys from `main`, so every studio push also redeploys production. Two
 consequences the team lives with:
 
-1. **Before merging**, the full existing suite runs: `npm test`, `npm run smoke`,
-   `npm run e2e`. Not the studio's tests — all of them.
-2. **After deploying**, the run verifies that a production game page still loads and that
-   no file outside the allowed paths differs from the previous iteration's tag.
+1. **Before every push**, the full existing suite runs: `npm test`, `npm run smoke`,
+   `npm run e2e`. Not the studio's tests — all of them. The `push` stage of the checker
+   runs it.
+2. **After every deploy**, the run verifies that a production game page still loads, that
+   the new build is the one being served, and that no file outside the allowed paths
+   differs from the previous release — other than the production fixes this iteration's
+   tickets own.
 
 ## Stop and ask
 
 The run halts and reports rather than deciding, when it hits:
 
-- a change outside the allowed paths that has no recorded exception;
+- a change outside the allowed paths that is neither a recorded exception nor an
+  admissible production fix;
 - anything touching releases, accounts, credentials or money;
 - a destructive or hard-to-reverse git operation (force push, history rewrite, branch
   deletion on the remote, reverting production work);

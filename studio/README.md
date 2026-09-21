@@ -94,7 +94,8 @@ Documented before use, and checked by `npm run studio:check`.
 | `studio_overtighten_muted` | `games/overtighten/main.js` | `'1'` or `'0'` | Whether the game's synthesized audio is muted |
 
 Clearing all game data from the settings drawer does **not** clear these: the drawer's key
-list lives in `shared/settings.js`, a production file the studio may not edit. The drawer
+list lives in `shared/settings.js`, a production file the studio changes only as a reviewed
+fix (ADR-0008 in the handbook), and this one has not been made. The drawer
 is reachable from this page, because this page loads that script — so clearing from here
 clears the *arcade's* saves and leaves the studio's behind.
 

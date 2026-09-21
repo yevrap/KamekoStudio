@@ -1,6 +1,6 @@
 # ADR-0001 — The studio lives in the production repo, behind a path guard
 
-- **Status:** Accepted
+- **Status:** Accepted — amended by [ADR-0008](ADR-0008-production-fixes.md), which adds production fixes, under the full process, to what the path guard admits
 - **Date:** 2026-09-19
 - **Iteration:** 00
 
