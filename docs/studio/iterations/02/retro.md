@@ -106,7 +106,11 @@
     from the reading: a ticket declares each thing once, counted raw, and a second
     declaration fails wherever it hides. A rule that cannot be defeated by a construct it
     never heard of is worth more than a rule that handles every construct you can name.
-17. **Two documents asserting a guarantee is not two pieces of evidence for it.** The
+17. **A check reads the thing that changed, not the thing that contains it.** `studio-live`
+    searched the realm's HTML for a marker that lives in the data file the page builds
+    itself from, so a correct deploy reported a failure. Fourth variety this iteration of
+    one rule: a check fed input that cannot falsify it.
+18. **Two documents asserting a guarantee is not two pieces of evidence for it.** The
     sideways-scroll claim survived in `self-checks.md` and the changelog for a whole round
     after the thing proving it had stopped working.
 

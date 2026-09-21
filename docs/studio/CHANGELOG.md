@@ -172,6 +172,11 @@ returns a "no".
   declaration fails wherever it is and however it is hidden. Every payload from all ten
   rounds had beaten the old checks by adding a second declaration, so one rule catches all
   of them, and 170 lines of parser were deleted.
+- **The deploy check can see what changed.** `studio-live` searched the realm's HTML for
+  its marker, but that page is a shell — its shelf, pulse and retro lines are all built in
+  the browser from `shelf-data.js`. A correct deploy reported a failure. It now searches the
+  page and the same-origin files it loads, following one level of module imports.
+
 ### Debt
 
 - **TD-004 closed** by SS-020. **TD-007 opened**: the static file server now exists twice,

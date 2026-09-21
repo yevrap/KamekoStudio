@@ -7,6 +7,7 @@
 // failure with the reason rather than hanging indefinitely.
 
 import { fetchUrl } from '../lib/shell.mjs';
+import { moduleImports, sameOriginAssets } from '../lib/rules.mjs';
 
 const POLL_MS = 10000;
 
@@ -23,17 +24,64 @@ async function poll(url, predicate, attempts) {
 export const studioLive = {
   id: 'studio-live',
   stages: ['postdeploy'],
-  description: 'The deployed studio URL returns 200 and serves the new build',
+  description: 'The deployed studio URL returns 200 and the new build is really on it',
   async run(ctx) {
     if (ctx.offline) return { status: 'skip', detail: '--offline was passed' };
     const url = `${ctx.siteUrl}/studio/`;
     const marker = ctx.deployMarker;
-    const res = await poll(url, body => (marker ? body.includes(marker) : true), ctx.pollAttempts);
-    if (res.ok) {
-      return { status: 'pass', detail: `${url} serves ${marker ? `"${marker}"` : 'content'} (after ${res.attempts} attempt(s))` };
+
+    // Wait for the page itself first.
+    const page = await poll(url, () => true, ctx.pollAttempts);
+    if (!page.ok) {
+      const why = page.last?.error ? page.last.error : `HTTP ${page.last?.status}`;
+      return { status: 'fail', detail: `${url}: ${why} after ${page.attempts} attempt(s)` };
     }
-    const why = res.last?.error ? res.last.error : `HTTP ${res.last?.status}${marker ? `, marker "${marker}" not found` : ''}`;
-    return { status: 'fail', detail: `${url}: ${why} after ${res.attempts} attempt(s)` };
+    if (!marker) {
+      return { status: 'pass', detail: `${url} serves content (after ${page.attempts} attempt(s))` };
+    }
+
+    // Then look for the marker in the page **and in the files the page loads**.
+    //
+    // The realm's home page is a shell: its shelf, its pulse line and its retro
+    // line are all built in the browser from `shelf-data.js`. So the one thing
+    // this check exists to prove — that what changed is really on the wire —
+    // was the one thing it could not see. Iteration 02 deployed a new game, the
+    // page served it correctly, and this reported a failure because the game's
+    // name is in a module rather than in the HTML.
+    //
+    // A deploy check that can only read the shell verifies the shell.
+    const assets = sameOriginAssets(page.last.body, url);
+    const searched = [url];
+    if (page.last.body.includes(marker)) {
+      return { status: 'pass', detail: `${url} serves "${marker}" (after ${page.attempts} attempt(s))` };
+    }
+    // A queue rather than a list: a module the page links can import the file
+    // that holds the words. `main.js` imports `shelf-data.js`, and every word
+    // the realm shows is in the second one.
+    const queue = [...assets];
+    while (queue.length) {
+      const asset = queue.shift();
+      if (searched.includes(asset)) continue;
+      searched.push(asset);
+      const res = await fetchUrl(asset);
+      if (res.error || res.status !== 200) continue;
+      if (res.body.includes(marker)) {
+        return {
+          status: 'pass',
+          detail: `"${marker}" served from ${asset} (reached from ${url}; ${searched.length} file(s) checked)`
+        };
+      }
+      if (/\.m?js$/.test(new URL(asset).pathname)) {
+        for (const next of moduleImports(res.body, asset)) {
+          if (!searched.includes(next)) queue.push(next);
+        }
+      }
+    }
+    return {
+      status: 'fail',
+      detail: `${url}: HTTP 200, marker "${marker}" not found in the page or the `
+        + `${searched.length - 1} file(s) it loads after ${page.attempts} attempt(s)`
+    };
   }
 };
 

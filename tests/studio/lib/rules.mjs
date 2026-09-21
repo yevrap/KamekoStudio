@@ -450,3 +450,62 @@ export function lintCommitSubject(subject, { parentCount = 1 } = {}) {
   if (subject.length > 80) return `subject is ${subject.length} characters (max 80)`;
   return null;
 }
+
+/**
+ * The same-origin scripts and stylesheets a page loads, as absolute urls.
+ *
+ * Used by `studio-live`, because the realm's home page is a shell: everything
+ * it shows is built in the browser from `shelf-data.js`. A deploy check that
+ * reads only the HTML can prove the shell arrived and nothing about what is in
+ * it — which is exactly the state iteration 02 shipped into, with a correct
+ * deploy and a check that could not see it.
+ *
+ * Off-origin urls are dropped: a CDN copy of three.js says nothing about
+ * whether *this* build is on the wire.
+ */
+export function sameOriginAssets(html, pageUrl) {
+  const found = [];
+  const base = new URL(pageUrl);
+  const patterns = [
+    /<script[^>]+src=["']([^"']+)["']/gi,
+    /<link[^>]+href=["']([^"']+)["'][^>]*>/gi
+  ];
+  for (const pattern of patterns) {
+    for (const match of String(html ?? '').matchAll(pattern)) {
+      if (pattern.source.startsWith('<link') && !/rel=["']?stylesheet/i.test(match[0])) continue;
+      let url;
+      try { url = new URL(match[1], base); } catch { continue; }
+      if (url.origin !== base.origin) continue;
+      const clean = url.origin + url.pathname;
+      if (!found.includes(clean)) found.push(clean);
+    }
+  }
+  return found;
+}
+
+/**
+ * The same-origin modules a JavaScript file imports, as absolute urls.
+ *
+ * One level is enough to reach what matters here and stops this from becoming a
+ * bundler: the realm's page links `main.js`, and `main.js` imports
+ * `shelf-data.js`, which is where every word the page actually shows lives.
+ */
+export function moduleImports(source, fromUrl) {
+  const found = [];
+  const base = new URL(fromUrl);
+  const patterns = [
+    /\bimport\s[^;]*?from\s*["']([^"']+)["']/g,
+    /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
+    /\bexport\s[^;]*?from\s*["']([^"']+)["']/g
+  ];
+  for (const pattern of patterns) {
+    for (const match of String(source ?? '').matchAll(pattern)) {
+      let url;
+      try { url = new URL(match[1], base); } catch { continue; }
+      if (url.origin !== base.origin) continue;
+      const clean = url.origin + url.pathname;
+      if (!found.includes(clean)) found.push(clean);
+    }
+  }
+  return found;
+}
