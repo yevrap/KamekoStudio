@@ -131,3 +131,74 @@ test('after a deploy, an admitted fix is reported as a change outside the guard,
   assert.doesNotMatch(deployed.detail, /nothing outside the guard changed/);
   assert.match(deployed.detail, /the only changes outside the guard are the 1 admitted below/);
 });
+
+test('a change made inside a merge commit is refused: the merge names no ticket', async t => {
+  const r = iterationRepo(t);
+  r.commit('fix(studio): SHS-052 the fix', [FIX.path]);
+  r.git('checkout', '--quiet', '-b', 'side');
+  r.commit('docs(studio): SHS-053 on a side branch', ['docs/studio/side.md']);
+  r.git('checkout', '--quiet', 'main');
+  r.commit('docs(studio): SHS-053 on main', ['docs/studio/main.md']);
+  r.git('merge', '--quiet', '--no-ff', '--no-commit', 'side');
+  r.write(FIX.path, 'changed inside the merge');
+  r.git('add', '--all');
+  r.git('commit', '--quiet', '-m', 'Merge side');
+  const ctx = { root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [FIX] };
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'fail', guard.detail);
+  assert.match(guard.detail, /names no ticket/);
+  const deployed = await productionUnchanged.run({ ...ctx, previousTag: 'studio-iteration-03' });
+  assert.equal(deployed.status, 'fail', deployed.detail);
+});
+
+test('an ordinary merge bringing in a ticket\'s fix is admitted: the change is in the commit that names it', async t => {
+  const r = iterationRepo(t);
+  r.git('checkout', '--quiet', '-b', 'fix');
+  r.commit('fix(studio): SHS-052 the fix on a branch', [FIX.path]);
+  r.git('checkout', '--quiet', 'main');
+  r.commit('docs(studio): SHS-053 meanwhile', ['docs/studio/main.md']);
+  r.git('merge', '--quiet', '--no-ff', '-m', 'Merge fix', 'fix');
+  const guard = await pathGuard.run({ root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [FIX] });
+  assert.equal(guard.status, 'pass', guard.detail);
+  assert.match(guard.detail, /SHS-052, 1 commit\(s\)/);
+});
+
+test('once the iteration is tagged, a later change to its fix is refused', async t => {
+  const r = iterationRepo(t);
+  r.commit('fix(studio): SHS-052 the fix', [FIX.path]);
+  r.git('tag', 'studio-iteration-04');
+  const atRelease = await productionUnchanged.run({ root: r.root, iteration: '04', productionFixes: [FIX], previousTag: 'studio-iteration-03' });
+  assert.equal(atRelease.status, 'pass', `the release itself is admitted: ${atRelease.detail}`);
+  r.commit('fix(studio): SHS-052 one more tweak after the tag', [FIX.path]);
+  const guard = await pathGuard.run({ root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [FIX] });
+  assert.equal(guard.status, 'fail', guard.detail);
+  assert.match(guard.detail, /after studio-iteration-04 was tagged/);
+});
+
+test('deleting a production file is refused even with an entry for it', async t => {
+  const r = iterationRepo(t);
+  r.commit('fix(studio): SHS-052 add', [FIX.path]);
+  r.git('tag', '-f', 'studio-iteration-03');
+  r.git('rm', '--quiet', FIX.path);
+  r.git('commit', '--quiet', '-m', 'fix(studio): SHS-052 remove it');
+  const guard = await pathGuard.run({ root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [FIX] });
+  assert.equal(guard.status, 'fail', guard.detail);
+  assert.match(guard.detail, /deleted/);
+});
+
+test('a malformed entry fails the check itself, not only the pure rule', async t => {
+  const r = iterationRepo(t);
+  r.commit('fix(studio): SHS-052 the fix', [FIX.path]);
+  const guard = await pathGuard.run({ root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [{ ...FIX, iteration: '4' }] });
+  assert.equal(guard.status, 'fail', guard.detail);
+  assert.match(guard.detail, /malformed production-fix entries/);
+});
+
+test('an admitted fix is reported with its line counts, and with any uncommitted changes', async t => {
+  const r = iterationRepo(t);
+  r.commit('fix(studio): SHS-052 the fix', [FIX.path]);
+  r.write(FIX.path, 'more\nlines\n');
+  const guard = await pathGuard.run({ root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [FIX] });
+  assert.equal(guard.status, 'pass', guard.detail);
+  assert.match(guard.detail, /SHS-052, 1 commit\(s\) and uncommitted changes, \+2 −0/);
+});

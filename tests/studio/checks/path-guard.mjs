@@ -6,7 +6,7 @@
 
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { git, gitRaw, committedPaths, workingTreePaths, refExists, previousIterationTag, commitsSince } from '../lib/shell.mjs';
+import { git, gitRaw, attempt, gitPath, exists, committedPaths, workingTreePaths, refExists, previousIterationTag, commitsSince } from '../lib/shell.mjs';
 import { classifyPaths, PATH_EXCEPTIONS, PRODUCTION_FIXES, productionFixProblem, productionFixEntryProblems, ticketFileId } from '../lib/rules.mjs';
 
 function changedPaths(root, base) {
@@ -44,10 +44,33 @@ async function ticketIdsIn(root, iteration) {
   }
 }
 
-/** Every non-merge commit in `base..HEAD` that changed `file`, as `{ sha, subject }`. */
-function commitsTouching(root, base, file) {
-  const log = git(root, 'log', '--no-merges', '--format=%H%x1f%s', `${base}..HEAD`, '--', file);
-  return log ? log.split('\n').map(line => { const [sha, subject] = line.split('\x1f'); return { sha, subject }; }) : [];
+/**
+ * Every commit in `base..HEAD` that changed `file`, as `{ sha, subject, afterRelease }`.
+ *
+ * Merges are **not** excluded. Git's default history simplification already
+ * leaves out a merge whose result matches one of its parents for this file — an
+ * ordinary merge, whose change is in a commit below it — and keeps one that made
+ * a change of its own. That second kind names no ticket, so the rule refuses it.
+ * `--no-merges` used to drop both, and a change made inside a merge went through
+ * with no subject checked at all.
+ */
+function commitsTouching(root, base, file, releaseTag) {
+  const log = git(root, 'log', '--format=%H%x1f%s', `${base}..HEAD`, '--', file);
+  if (!log) return [];
+  return log.split('\n').map(line => {
+    const [sha, subject] = line.split('\x1f');
+    const afterRelease = releaseTag
+      ? !attempt(gitPath(), ['merge-base', '--is-ancestor', sha, releaseTag], { cwd: root }).ok
+      : false;
+    return { sha, subject, afterRelease };
+  });
+}
+
+/** `+added −removed` for a file, from the base to the working tree. */
+function lineCounts(root, base, file) {
+  const r = attempt(gitPath(), ['diff', '--numstat', base, '--', file], { cwd: root });
+  const [added, removed] = (r.out.split('\t') ?? []);
+  return /^\d+$/.test(added ?? '') ? `+${added} −${removed}` : 'binary or unreadable';
 }
 
 async function evaluate(root, base, paths, { iteration, fixes = PRODUCTION_FIXES } = {}) {
@@ -62,14 +85,18 @@ async function evaluate(root, base, paths, { iteration, fixes = PRODUCTION_FIXES
   // (ADR-0008). Never silently: every admitted path is reported with its ticket.
   if (fixed.length) {
     const ticketIds = await ticketIdsIn(root, iteration);
+    const releaseTag = refExists(root, `studio-iteration-${iteration}`) ? `studio-iteration-${iteration}` : null;
+    const dirty = new Set(workingTreePaths(root));
     for (const p of fixed) {
-      const commits = commitsTouching(root, base, p);
-      const problem = productionFixProblem(p, { iteration, ticketIds, commits, fixes });
+      const commits = commitsTouching(root, base, p, releaseTag);
+      const deleted = !(await exists(path.join(root, p)));
+      const problem = productionFixProblem(p, { iteration, ticketIds, commits, deleted, fixes });
       if (problem) {
         violations.push(`${p} (not an admissible production fix: ${problem})`);
       } else {
         const tickets = [...new Set(fixes.filter(f => f.path === p && f.iteration === iteration).map(f => f.ticket))];
-        notes.push(`production fix: ${p} — ${tickets.join(', ')}, ${commits.length} commit(s)${commits.length ? '' : ', uncommitted'}`);
+        const pending = dirty.has(p) ? (commits.length ? ' and uncommitted changes' : ', uncommitted') : '';
+        notes.push(`production fix: ${p} — ${tickets.join(', ')}, ${commits.length} commit(s)${pending}, ${lineCounts(root, base, p)}`);
       }
     }
   }

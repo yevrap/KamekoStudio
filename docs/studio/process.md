@@ -70,7 +70,9 @@ is testing and how its retrospective judges it.
 - A page a player could reach but that is not ready stays off the shelf until its ticket
   is done.
 - Review findings are fixed forward. A push that breaks the live site is undone with one
-  `git revert` commit, never by rewriting history.
+  revert commit, never by rewriting history: `git revert --no-commit <sha>`, then a
+  conventional subject naming a ticket — `fix(studio): SHS-NNN revert <short sha>` —
+  because `commit-lint` reads every subject, and git's own `Revert "…"` fails it.
 - Conventional commits scoped `studio`, with the ticket ID:
   `feat(studio): SHS-043 retire the SS- prefix`.
 - One annotated tag per iteration, `studio-iteration-NN`, on the reviewed state.

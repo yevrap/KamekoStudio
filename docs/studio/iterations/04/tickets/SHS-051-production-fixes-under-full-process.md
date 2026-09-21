@@ -112,5 +112,37 @@ exceptions, so the permission needs a rule the guard can enforce, not only a sen
   contradicted the list under it. It now says *"the only changes outside the guard are the
   N admitted below"* whenever it admitted anything, fix or exception. A test in
   `production-fix.test.mjs` holds it.
-- **Deferred:** nothing.
-- **Fix rounds used:** 1 / 2
+- **Fix round 2 — from review round 1, the last this ticket may use.** Both passes rejected
+  the guard:
+  - **What it proves was overstated** (Independent Reviewer, blocker). The entry, the
+    ticket file and the commit subjects are all written by the studio, and so are the
+    guard's rules. A fabricated fix — a made-up SHS-999 with a one-line ticket, editing
+    `index.html` — passes. ADR-0008, `guardrails.md` and `self-checks.md` now say what the
+    guard proves: that a write was *planned and recorded*, not that the plan was
+    legitimate. The control against a wrong or fabricated fix is a review before it is
+    pushed, which is **SHS-054**, opened by this finding.
+  - **A merge commit could carry a change past the guard** (reviewer minor, QA B1).
+    `--no-merges` is gone. Git's history simplification keeps a merge only when the merge
+    itself changed the file, and such a merge names no ticket. An ordinary merge of a
+    ticket's branch is still admitted.
+  - **A commit after the iteration's tag was still admitted** (QA B3). Once
+    `studio-iteration-NN` exists, a commit to a fix file that the tag does not contain is
+    refused. `--iteration`'s help now says that it chooses the fixes admitted.
+  - **Deleting a fix file was admitted** (QA M2a). Refused now.
+  - **A revert the documents describe could not pass `commit-lint`** (QA m2). ADR-0008 and
+    `process.md` give the command and a conventional subject.
+  - **Two passages the search missed** (QA m4): `self-checks.md`'s `portal-capacity` row
+    and `guardrails.md`'s note on the clear-data list.
+  - **Nits** (QA n1, n2): the admission note gives line counts and says when uncommitted
+    changes ride along; a malformed entry is tested through the check, not only the rule.
+  - **Declined, with the reason in ADR-0008:** that an entry for the current iteration takes
+    precedence over the narrow `gameplay.js` exception. The exception's grammar exists
+    because that edit needs no review; a production fix gets one before it is pushed.
+  - **Deferred as TD-012** (QA M2b): an entry for a test harness admits emptying it.
+  - Tests: `production-fix.test.mjs` +6 (a change made inside a merge refused, an
+    ordinary merge admitted, a change after the tag refused, a deletion refused, a
+    malformed entry through the check, the note's line counts and uncommitted changes).
+    Three mutations, each putting back one hole in this working tree, and each failed one
+    test: `--no-merges` restored, the release tag ignored, deletion ignored.
+- **Deferred:** TD-012.
+- **Fix rounds used:** 2 / 2

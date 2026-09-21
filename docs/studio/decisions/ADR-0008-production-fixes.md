@@ -43,17 +43,41 @@ permission has to be something the guard can check.
 
 - an entry for that exact path names the iteration being checked;
 - that entry's ticket has a file in that iteration's `tickets/` directory;
-- every commit since the previous release that changed the file names that ticket.
+- every commit since the previous release that changed the file names that ticket — a
+  merge commit included, when the merge itself made a change to the file.
+
+It also refuses a fix file that was **deleted**, and any commit to a fix file made **after
+the iteration's own tag** exists: once an iteration is released, its fixes are closed.
 
 Anything else outside the studio's paths is a violation, as before. `production-unchanged`
 applies the same rule after the deploy. Every admitted file is named in the check's output
-with its ticket, and `hygiene` scans it. The rule decides from entries, file names and
-commit subjects only; it reads no Markdown.
+with its ticket and its line counts, and `hygiene` scans it. The rule decides from entries,
+file names and git history only; it reads no Markdown.
 
 An entry for the current iteration takes precedence over a narrow exception on the same
 file: a defect elsewhere in a file with an exception is fixed through the full process
 rather than refused by the narrower rule. In any other iteration the exception governs the
-file again.
+file again. The narrow exception's grammar exists because that edit needs no review; a fix
+gets a review before it is pushed, so it does not need the grammar.
+
+### What the guard proves, and what it cannot
+
+The guard proves that a production write was **planned and recorded**: an entry, a ticket
+file and the commits that made the change all agree. A write that nobody planned fails it.
+That is the kind of mistake it exists to catch.
+
+It **cannot** prove that the plan was legitimate. The entry, the ticket file and the
+commit subjects are all written by the studio. So are the guard's own rules, which live in
+`tests/studio/`. A fabricated fix that is consistent with itself passes. Iteration 04's
+first review demonstrated exactly that, with a made-up ticket and an edit to `index.html`.
+Nothing inside the repository can close this, because the party being checked can write
+everything the check reads.
+
+What stands between a production fix and the live site is therefore an **independent
+review before the fix is pushed**, below. The studio records that review too, so the
+check that enforces it makes the review impossible to *forget*, not impossible to *fake*.
+Making it impossible to fake would take a signal from outside the repository, such as an
+approval the executive gives on the hosting platform. That choice is the executive's.
 
 **What counts as a fix:**
 
@@ -82,7 +106,11 @@ file again.
   TD-005 and TD-006, both production-side debt, become eligible.
 - **The studio's worst case gets bigger.** It used to be a messy `studio/` folder. Now it
   includes a production fix that is wrong. That is contained by the regression test, the
-  whole suite, review and the post-deploy checks, and undone with one `git revert` commit.
+  whole suite, review and the post-deploy checks. It is undone with one revert commit whose
+  subject names a ticket, since `commit-lint` reads every subject:
+  `git revert --no-commit <sha>`, then `fix(studio): SHS-NNN revert <short sha>`. A revert
+  that restores the previous release exactly leaves no production file changed since
+  then, so it needs no entry and no review.
   Every production fix is also listed in one place.
 - A production fix goes through the whole sprint: plan, ticket, review, retrospective. For
   a one-line fix that is a lot of ceremony. The executive asked for exactly that.

@@ -2,7 +2,7 @@
 
 Shadow Studio shares a repository and a deployment with the production arcade. Everything
 below exists so that a bad iteration is a messy `studio/` folder, or at worst one reviewed
-production fix that one `git revert` commit undoes.
+production fix that one revert commit undoes.
 
 ## The path guard
 
@@ -68,11 +68,18 @@ and iteration, and `path-guard` admits the file only when:
 
 - an entry for that exact path names the iteration being checked;
 - that ticket has a file in the iteration's `tickets/` directory;
-- every commit since the previous release that changed the file names that ticket.
+- every commit since the previous release that changed the file names that ticket, a
+  merge that changed it included.
 
-The check names every fix it admits, with its ticket; `production-unchanged` applies the
+It refuses a fix file that was deleted, and any change to one after the iteration's own
+tag. The check names every fix it admits, with its ticket and line counts; `production-unchanged` applies the
 same rule after the deploy; `hygiene` scans the file. A production path without a matching
 entry is a violation, exactly as before.
+
+**What this proves is that a production write was planned and recorded, not that the plan
+was legitimate.** Everything the guard reads, its own rules included, is written by the
+studio. The control against a wrong or fabricated fix is an independent review *before* it
+is pushed; see ADR-0008.
 
 The list has one home, `PRODUCTION_FIXES` itself, unlike the exceptions above: an entry is
 a fact about one ticket, and the ticket is where its reasons are written. An entry for the
@@ -104,8 +111,8 @@ page touches. Saying otherwise would be a claim the check cannot support: `stora
 scans `studio/**` only.
 
 Clearing all game data therefore leaves studio data behind, since the drawer's key list
-does not know about the `studio_` prefix. Adding it is a future one-line exception; see
-`decisions/ADR-0003-storage-namespace.md`.
+does not know about the `studio_` prefix. Adding it would be a production fix under
+ADR-0008; see `decisions/ADR-0003-storage-namespace.md`.
 
 ## The production safety net
 

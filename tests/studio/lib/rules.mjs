@@ -314,11 +314,14 @@ export function classifyPaths(paths, { iteration, fixes = PRODUCTION_FIXES } = {
  * @param path       a changed path outside the allowed prefixes
  * @param iteration  the iteration being checked, as `NN`
  * @param ticketIds  the IDs the file names in that iteration's `tickets/` declare
- * @param commits    `[{ sha, subject }]` — every non-merge commit in the range that
- *                   changed `path`; empty while the change is still uncommitted
+ * @param commits    `[{ sha, subject, afterRelease }]` — every commit in the range that
+ *                   changed `path`, a merge included when the merge itself changed it;
+ *                   `afterRelease` when the iteration's own tag exists and does not
+ *                   contain the commit. Empty while the change is still uncommitted.
+ * @param deleted    the path no longer exists
  * @param fixes      the entries to decide by
  */
-export function productionFixProblem(path, { iteration, ticketIds = [], commits = [], fixes = PRODUCTION_FIXES } = {}) {
+export function productionFixProblem(path, { iteration, ticketIds = [], commits = [], deleted = false, fixes = PRODUCTION_FIXES } = {}) {
   const entries = fixes.filter(f => f.path === path && f.iteration === iteration);
   if (!entries.length) {
     const elsewhere = fixes.filter(f => f.path === path).map(f => `${f.ticket} in iteration ${f.iteration}`);
@@ -326,12 +329,19 @@ export function productionFixProblem(path, { iteration, ticketIds = [], commits 
       ? `its production-fix entries are for ${elsewhere.join(', ')}, not iteration ${iteration}`
       : `no production-fix entry names it for iteration ${iteration}`;
   }
+  // Removing a production file is not a fix (ADR-0008), whatever the entry says.
+  if (deleted) return 'it was deleted, and deleting a production file is not a fix';
   const tickets = [...new Set(entries.map(f => f.ticket))];
   const missing = tickets.filter(t => !ticketIds.includes(t));
   if (missing.length) {
     return `${missing.join(', ')} has no ticket file in iterations/${iteration}/tickets/`;
   }
-  for (const { sha, subject } of commits) {
+  for (const { sha, subject, afterRelease } of commits) {
+    // Once an iteration is tagged its fixes are closed: a later change has had no
+    // review and no gate, and belongs to a new ticket in a new iteration.
+    if (afterRelease) {
+      return `commit ${String(sha ?? '').slice(0, 7)} changed it after studio-iteration-${iteration} was tagged; a change after the release needs a new ticket in a new iteration`;
+    }
     const id = commitTicketId(subject);
     if (!tickets.includes(id)) {
       return `commit ${String(sha ?? '').slice(0, 7)} changed it and names ${id ?? 'no ticket'}; only ${tickets.join(' or ')} may`;
