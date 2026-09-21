@@ -1,6 +1,6 @@
 # SS-023 — The shelf shows the first experiment, and the iteration is on the record
 
-- **Status:** Ready
+- **Status:** Done
 - **Size:** S
 - **Iteration:** 02
 - **Role lead:** Technical Writer
@@ -16,16 +16,16 @@ that write it name an ID.
 
 ## Acceptance criteria
 
-- [ ] `SHELF` has one entry for *Overtighten*, status `PROTOTYPE`, with a blurb, the
+- [x] `SHELF` has one entry for *Overtighten*, status `PROTOTYPE`, with a blurb, the
       iteration it arrived in, the date it last changed, and a working relative url.
-- [ ] The empty-state copy is no longer rendered, and the test that covers the empty state
+- [x] The empty-state copy is no longer rendered, and the test that covers the empty state
       still covers it — the state is gone from the page, not from the component.
-- [ ] `PULSE` and `LEARNED` name iteration 02, and the tests that tie both to the newest
+- [x] `PULSE` and `LEARNED` name iteration 02, and the tests that tie both to the newest
       iteration folder still pass.
-- [ ] `studio/README.md` describes the new folder and its two storage keys.
-- [ ] `docs/studio/iterations/02/` holds `plan.md`, `tickets/`, `log.md`, `review.md` and
+- [x] `studio/README.md` describes the new folder and its two storage keys.
+- [x] `docs/studio/iterations/02/` holds `plan.md`, `tickets/`, `log.md`, `review.md` and
       `retro.md`; `CHANGELOG.md`, `tech-debt.md` and `learning-log.md` are current.
-- [ ] `review.md` records the Independent Reviewer's `**Verdict:**` line and a Keep /
+- [x] `review.md` records the Independent Reviewer's `**Verdict:**` line and a Keep /
       Iterate / Kill line per shipped item.
 
 ## Evidence plan

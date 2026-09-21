@@ -46,7 +46,7 @@ Each defect reproduced by QA's own steps against the fix, in a real browser.
   `{ scroll, focus }` and a new `showBench()` applies them; `paint()` assigns the status
   line only on change.
 
-- **Tested by** reproducing each of QA's steps against the fix, in a real browser:
+- **Tested by:** reproducing each of QA's steps against the fix, in a real browser:
 
   | Defect | Before | After |
   |---|---|---|
