@@ -114,10 +114,10 @@ export const STATUSES = ['Ready', 'In progress', 'Blocked', 'Done', "Won't do"];
  */
 function resultSection(text) {
   const withoutFences = text
-    // Any fence, not only backticks: a `~~~` block after the real Result became
-    // the last `## Result` and supplied the evidence. Same finding as the
-    // backtick one, a round later, with a different character in it.
-    .replace(/^(```|~~~)[\s\S]*?^\1/gm, '')
+    // Any fence, not only backticks, and indented by up to three spaces —
+    // which CommonMark still renders as a code block. Three rounds closed this
+    // same hole three times: backticks, then `~~~`, then one space over.
+    .replace(/^[ \t]{0,3}(```+|~~~+)[\s\S]*?^[ \t]{0,3}\1/gm, '')
     // And an HTML comment, which renders as nothing at all.
     .replace(/<!--[\s\S]*?-->/g, '');
   const headings = [...withoutFences.matchAll(/^##+[ \t]+Result[ \t]*$/gm)];

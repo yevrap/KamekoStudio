@@ -91,10 +91,17 @@ Each of the review's mutations re-applied to a clean tree, the ticket stage run,
   right bar — a check that insisted on our ring rather than any ring would be asserting a
   colour, not a capability.
 
-- **What this does not claim:** that nothing is left. Four passes found 4, 7, 10 and 12
-  mutations. The rate is falling, the surface is not closed, and the four things the check
-  does not collect are now listed in `self-checks.md` and carry TD-008 so that something
-  schedules them rather than only describing them.
+- **The accounting, because the review named twelve and this replays nine.** Eleven were
+  reported as passing and one was withdrawn by the reviewer. Of the eleven, nine are
+  replayed above — eight now fail and one is declined with a measurement. The other two are
+  **disclosed gaps rather than oversights**: inverting the mute toggle, which
+  `self-checks.md` records as unobserved because no audio is, and hiding the
+  all-plates-cleared ending, which the same list covers because the driver clears one
+  plate. Both sit under TD-008. Nothing is deferred silently.
+
+- **What this does not claim:** that nothing is left. The surface is not closed, and the
+  four things the check does not collect are listed in `self-checks.md` and carry TD-008 so
+  that something schedules them rather than only describing them.
 
 - **Deferred:** nothing.
 

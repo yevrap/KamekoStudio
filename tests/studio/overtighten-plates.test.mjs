@@ -12,7 +12,9 @@
 // no loosening, so in a single pass a bolt is only reduced by neighbours turned
 // *after* it. That makes the plate a back-substitution — overshoot each bolt by
 // `coupling × Σ(later neighbours' amounts)` — and every plate falls to one hold
-// per bolt, with 6 to 38 units of strip headroom to spare.
+// per bolt. On the listed order the per-bolt strip headroom runs 6 to 38
+// units; across all 142 clearing orderings the tightest is 3.5. Comfortable
+// either way, which is the point — this is not a frame-perfect exploit.
 //
 // So the assertions below say what is true: each plate is reachable, and each
 // plate is also trivial in two different ways. `onePass` and `roundRobin` are

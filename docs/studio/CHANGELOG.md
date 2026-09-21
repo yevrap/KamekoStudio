@@ -14,8 +14,8 @@ returns a "no".
   `studio/**` in a real headless Chrome, three times: ordinarily, with scripting disabled,
   and with every `localStorage` accessor throwing. Pages are discovered rather than listed,
   so a page added later arrives covered. It proves no uncaught error, no `console.error`, no
-  failed request, a back link, 44px targets and no sideways scroll at 320px, a `noscript`
-  fallback that says something, and — on the realm home — that the page ran its own script,
+  failed request, a back link, 44px targets, a page that asks for the device's width and
+  does not overflow it, a `noscript` fallback that says something, and — on the realm home — that the page ran its own script,
   that the shelf holds its three column counts either side of both breakpoints, and that a
   killed card reads differently from a live one. Closes TD-004: the eight mutations an
   independent QA pass had named as surviving the entire repository suite all fail it.
@@ -67,14 +67,16 @@ returns a "no".
   loosening clamps at zero, a bolt at zero absorbs nothing, so in a single pass a bolt is
   reduced only by the neighbours turned after it — which makes each plate a
   back-substitution. **142 of the 146 orderings across the three plates clear with one hold
-  per bolt**, with 6 to 38 units of strip headroom; the four that resist miss a strip point
-  by under three units. Blind round-robin clears every plate in at most three passes. The
+  per bolt**; the four that resist miss a strip point by under three units. On the order the
+  plates are listed in, the per-bolt strip headroom runs from 6 to 38 units, and across all
+  142 clearing orderings the tightest is 3.5 — comfortable either way, and not a
+  frame-perfect exploit. Blind round-robin clears every plate in at most three passes. The
   test that was meant to catch this fixed the hold amount at the middle of the band — the
   one variable a player chooses — and so could not fail. Nothing was re-tuned: any strategy
   that moves a bolt to the middle of its band converges whatever the numbers. The assertions
   now state what is true and are named so a redesign inverts them.
 
-### Also fixed, after three reviews
+### Also fixed, after five rounds of review
 
 - **The boot check's exemption was removed rather than tightened.** Anchoring it to an
   origin and an exact path was still wrong: a stack frame's URL is minted by the script
@@ -111,12 +113,45 @@ returns a "no".
   status word (`Done ✅`, `Shipped`), a label inside a fenced example elsewhere in the file,
   and an earlier draft Result answering for the final one.
 
+- **The check had never used a mobile viewport, while its code said it had.**
+  `setViewport({ width: 320 })` is a narrow *desktop* window, and desktop Chrome ignores
+  `<meta name="viewport">` entirely — so deleting that tag from both pages, which on a phone
+  renders the whole realm at ~980px and scales it down under a thumb, passed everything. The
+  driver now emulates a phone, and three separate measurements replace one: whether the page
+  *asks* for the device width, whether content forced the layout viewport wider than the
+  device anyway, and whether the page scrolls sideways inside its own layout. The first
+  version of that fix reported all three as the first one, and silently killed the
+  sideways-scroll rule by comparing `scrollWidth` against a number that tracks it.
+- **Three of a bolt's four state treatments were drawn by nobody's rule.** The gauge's ink
+  was read from a bolt on a fresh plate, where every bolt is loose, so deleting the seated,
+  over and stripped colours left one shade in every state and passed. The four states and
+  the picker's locked treatment are now read from fixtures and must differ from one another.
+- **Five more things a player sees are now observed:** focus landing on a bolt after a plate
+  loads by either route, the picker redrawn when a plate is cleared, the outcome panel's
+  explanation, the "next plate" button's label, and a visible focus ring on a bolt reached
+  with Tab.
+- **The tuning the tests verify is now the tuning that runs.** A plate may lower its own
+  coupling and the bracket does, but nothing connected the value the unit tests check to the
+  one the game passes to `turn()`; the plate element carries the coupling it is being played
+  at, and every plate is compared against the model.
+- **`docs-current` accepted an evidence-free ticket four more ways** across two rounds: an
+  unvalidated status word, a fenced example elsewhere in the file, an earlier draft Result
+  answering for the final one, and — after the first two fence fixes — a fence indented by
+  one to three spaces, which CommonMark still renders as a code block.
+- **The favicon is answered by exact path**, not by suffix: a suffix match answered
+  `studio/anything/favicon.ico` too, and would have hidden a real 404.
+
 ### Debt
 
 - **TD-004 closed** by SS-020. **TD-007 opened**: the static file server now exists twice,
   once in `scripts/smoke.mjs` and once in `tests/studio/lib/browser.mjs`. Taken deliberately
   — `scripts/` is outside the path guard and exports nothing, so the alternative was a
-  production exception for test plumbing. TD-001, TD-003, TD-005 and TD-006 unchanged.
+  production exception for test plumbing. **TD-008 opened**: `studio-boot` covers what it
+  collects, and four things it does not collect are written down in `self-checks.md` — no
+  audio observation, no layout or visual regression beyond one bolt's pixels, only the first
+  plate played, and the realm home measured rather than driven. Registered rather than only
+  described, because a gap in prose schedules nothing. TD-001, TD-003, TD-005 and TD-006
+  unchanged.
 
 ## [studio-iteration-01] — 2026-09-20
 

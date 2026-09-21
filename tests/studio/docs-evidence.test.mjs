@@ -152,3 +152,25 @@ test('a fence still works as a fence when the Result genuinely follows it', () =
   const text = '~~~js\nconst x = 1;\n~~~\n\n## Result\n\n- **What changed:** the torque model and its tests';
   assert.equal(evidenceFor(text, 'What changed'), 'the torque model and its tests');
 });
+
+test('a fence indented by up to three spaces is still a fence', () => {
+  // CommonMark allows up to three spaces of indentation before a fence, and it
+  // still renders as a code block. The strip pattern was anchored at column
+  // zero, so one space defeated it — the same hole as the backtick and `~~~`
+  // rounds, moved over by a character.
+  const real = '## Result\n\n- **What changed:**\n- **Tested by:**\n';
+  for (const indent of ['', ' ', '  ', '   ']) {
+    for (const fence of ['```markdown', '~~~']) {
+      const text = real + `\n${indent}${fence}\n## Result\n\n`
+        + '- **What changed:** a forged evidence line long enough to pass\n'
+        + `- **Tested by:** another forged line long enough to pass\n${indent}${fence.slice(0, 3)}\n`;
+      assert.equal(evidenceFor(text, 'What changed'), '', `${JSON.stringify(indent)} + ${fence}`);
+      assert.equal(evidenceFor(text, 'Tested by'), '', `${JSON.stringify(indent)} + ${fence}`);
+    }
+  }
+});
+
+test('four or more fence characters are still a fence', () => {
+  const text = '## Result\n\n- **What changed:**\n\n````\n## Result\n\n- **What changed:** a forged evidence line\n````\n';
+  assert.equal(evidenceFor(text, 'What changed'), '');
+});

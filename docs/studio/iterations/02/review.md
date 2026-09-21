@@ -183,6 +183,47 @@ SS-028 — the ticket whose subject was record truth — wrote "**Both are true 
 it. The line did not exist. The criterion has been removed rather than re-explained: a
 ticket cannot tick a line the reviewer writes.
 
+## The fifth review — rejected, and on what
+
+Rejected, and the reviewer was explicit that it was **not** for the existence of further
+mutations: it found six more and declined to reject on them, because `self-checks.md` and
+TD-008 disclose that surface as unbounded. It rejected on four claims that outran the truth.
+
+### The ticket that ended the signature failure committed it
+
+SS-031 made the driver emulate a phone. Under `isMobile`, Chrome grows the *layout*
+viewport to fit overflowing content — so `window.innerWidth` tracks `scrollWidth`, and the
+sideways-scroll rule became a comparison of a number against itself. It could no longer
+fail. Two documents went on asserting "no sideways scroll at 320px", and the rule that
+replaced it blamed a missing viewport meta tag on a page whose tag was present and correct.
+
+A correct rule fed input that cannot falsify it, introduced by the ticket written to end
+exactly that, and not noticed. There are now three measurements and three rules: does the
+page *ask* for the device width, did content *force* the layout viewport wider, and does it
+*scroll* sideways inside its own layout — the last against `clientWidth`, which does not
+move with the overflow.
+
+### The fence, a fourth time
+
+Backticks were closed in round three, `~~~` and HTML comments in round four, and a fence
+indented by one to three spaces — still a code block in CommonMark — passed a ticket with
+an empty Result in round five.
+
+### The record, a fourth consecutive time
+
+Six statements still said three reviews and 38 mutations. The changelog recorded none of
+the fourth round at all, including TD-008 — the row that is the basis of the iteration's
+own claim to be honest about its gaps.
+
+### What the fifth review credited
+
+The viewport claim itself is real and was verified on both pages. Emulation weakened
+nothing else: the 44px floor, the invisible-control rule and the focus ring were each
+re-demonstrated failing under it. Every plate claim exact, re-derived independently for the
+third time by a third reviewer. No error filter remaining, the favicon answered by exact
+path, the blocked-storage pass proving its own configuration. The declined focus-ring
+finding judged honest. Public-repo hygiene clean across 119 files.
+
 ### What the fourth review credited
 
 Every plate claim exact, re-derived from `constants.js` without the studio's helpers. No
@@ -216,12 +257,12 @@ visually identical and numerically different, so it now asserts the named treatm
 > Yev: strike through what you disagree with and write your own verdict. These are the
 > team's, and the team is not the judge of them.
 
-- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Three
-  reviews attacked it and it is a much stronger thing than the version that first shipped:
-  **38 mutations across five attack sets now fail the ticket stage**, against the 8 it was
+- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Five
+  rounds of review attacked it, and it is a far stronger thing than the version that shipped:
+  **51 mutations across seven attack sets now fail the ticket stage**, against the 8 it was
   written for. That is a count of what has been tried, not a claim that nothing is left —
-  each of the three passes found mutations the previous round survived, and `self-checks.md`
-  now states plainly what the check does not cover. It also caught a real accident
+  every one of the five rounds found mutations the previous round survived, and
+  `self-checks.md` now states plainly what the check does not cover. It also caught a real accident
   rather than a planted one — a parameter in SS-029 that shadowed an imported function and
   silently killed every hold — within an hour of the error-collection rule being added.
 - **Overtighten — Iterate, not Keep.** It is a well-built, pleasant, tactile thing, and it is

@@ -88,6 +88,21 @@ export function isInvisibleColour(value) {
   return false;
 }
 
+/**
+ * Whether a viewport meta tag asks for the device's width.
+ *
+ * `width=device-width` is the whole point of the tag; a fixed pixel width, or a
+ * tag with only `initial-scale`, leaves a phone laying the page out at its
+ * default ~980px and scaling the result down.
+ */
+export function declaresDeviceWidth(content) {
+  if (typeof content !== 'string') return false;
+  return content.split(',').some(part => {
+    const [key, value] = part.split('=').map(s => s.trim().toLowerCase());
+    return key === 'width' && value === 'device-width';
+  });
+}
+
 /** Every standalone target on a studio page, in CSS px. Mobile-first, per studio/README.md. */
 export const MIN_TARGET = 44;
 
@@ -163,25 +178,38 @@ export function judgeGeneric(obs = {}) {
       + list(small.map(t => `${t.label} — ${Math.round(t.width)}×${Math.round(t.height)}`)));
   }
 
-  // The page has to opt into the device's width. Without `<meta name="viewport">`
-  // a phone lays out at ~980px and scales it down: no sideways scroll, every
-  // internal measurement consistent, and the whole page rendered zoomed out with
-  // the controls under a thumb. Every mobile assertion below was being measured
-  // in the one configuration where the meta tag cannot matter.
-  if (Number.isFinite(obs.deviceWidth) && Number.isFinite(obs.layoutWidth)
-      && obs.layoutWidth !== obs.deviceWidth) {
-    fail.push(`the page laid out at ${obs.layoutWidth}px on a ${obs.deviceWidth}px device`
-      + ' — it is missing a viewport meta tag and renders zoomed out on a phone');
-  }
-
-  // Asked as "were these measured, and do they hold" rather than as a bare
-  // comparison. `undefined > undefined` is false, so a rule written only as the
-  // comparison passes an observation that contains no measurement at all —
-  // which is the shape of every bug where a check is wired to nothing.
-  if (!Number.isFinite(obs.documentWidth) || !Number.isFinite(obs.viewportWidth)) {
+  // Three rules over three measurements, because they are three different
+  // defects and the first version reported all of them as the first one.
+  //
+  // Asked as "were these measured, and do they hold" rather than as bare
+  // comparisons: `undefined > undefined` is false, so a rule written only as
+  // the comparison passes an observation containing no measurement at all.
+  if (!Number.isFinite(obs.documentWidth) || !Number.isFinite(obs.clientWidth)
+      || !Number.isFinite(obs.layoutWidth) || !Number.isFinite(obs.deviceWidth)) {
     fail.push('the page width was never measured');
-  } else if (obs.documentWidth > obs.viewportWidth) {
-    fail.push(`the page scrolls sideways at ${obs.viewportWidth}px: content is ${Math.round(obs.documentWidth)}px wide`);
+  } else {
+    // 1. Does the page ask for the device's width? Read from the tag, not
+    //    inferred from a measurement — inferring it reported a page whose meta
+    //    tag was present and correct as "missing a viewport meta tag".
+    if (!declaresDeviceWidth(obs.viewportMeta)) {
+      fail.push(obs.viewportMeta === null
+        ? 'there is no viewport meta tag: a phone lays the page out at ~980px and renders it zoomed out'
+        : `the viewport meta tag does not ask for the device width (${obs.viewportMeta})`);
+    }
+    // 2. Did the content force the layout viewport wider than the device
+    //    anyway? Chrome grows the layout viewport to fit an overflow under
+    //    mobile emulation, which is why this is not a scroll.
+    if (obs.layoutWidth > obs.deviceWidth) {
+      fail.push(`content forced the layout viewport to ${obs.layoutWidth}px on a ${obs.deviceWidth}px device:`
+        + ' something inside the page is wider than the screen, so it renders zoomed out');
+    }
+    // 3. And can it be scrolled sideways within its own layout? Compared
+    //    against `clientWidth`, which does not move with the overflow the way
+    //    `innerWidth` does — that identity is what made this rule unreachable.
+    if (obs.documentWidth > obs.clientWidth) {
+      fail.push(`the page scrolls sideways: content is ${Math.round(obs.documentWidth)}px`
+        + ` inside a ${Math.round(obs.clientWidth)}px viewport`);
+    }
   }
 
   if (!String(obs.mainText ?? '').trim()) fail.push('main rendered no text at all');

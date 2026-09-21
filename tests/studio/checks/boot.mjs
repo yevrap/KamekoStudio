@@ -169,14 +169,23 @@ async function observeNormal(browser, url) {
       backLink: back
         ? { present: true, href: back.getAttribute('href') || '', width: backBox.width, height: backBox.height }
         : { present: false },
+      // Three separate numbers, because under mobile emulation two of them move
+      // together and one does not.
+      //
+      // `innerWidth` is the *layout* viewport, and Chrome grows it to fit
+      // overflowing content — so `scrollWidth > innerWidth` became unreachable
+      // the moment this check started emulating a phone, and the sideways-scroll
+      // rule it fed was proved by nothing. `clientWidth` is what the content is
+      // actually laid out against, and `deviceWidth` is the screen the page was
+      // given, which never moves.
       documentWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
       viewportWidth: window.innerWidth,
-      // What the page laid itself out at, against the device it was given.
-      // Without `<meta name="viewport">` a phone uses a ~980px layout viewport
-      // and scales the result down — so the page has no sideways scroll, every
-      // measurement is internally consistent, and the whole thing renders
-      // zoomed out under a thumb. Comparing the two is what catches it.
       layoutWidth: window.innerWidth,
+      // Whether the page asks for the device's width at all. Read rather than
+      // inferred, so "no meta tag" and "content too wide" are told apart
+      // instead of both being reported as the first one.
+      viewportMeta: document.querySelector('meta[name="viewport"]')?.getAttribute('content') ?? null,
       mainText: (document.querySelector('main') || document.body).innerText || ''
     };
   }, NOT_OURS, { deviceWidth: PHONE.width });
@@ -543,7 +552,7 @@ async function observeOvertighten(browser, url) {
         'plate picker': persistence.picked
       },
       benchOnScreenAfterPick: persistence.boltsOnScreen,
-      focusAfterLoad,
+      focusAfterLoad: focusAfterLoad && persistence.focusedAfterPick,
       pickerRefreshedOnClear: persistence.pickerRefreshed,
       outcomeExplained: persistence.outcomeExplained,
       advanceLabelled: persistence.advanceLabelled,
@@ -662,19 +671,23 @@ async function proveStateClasses(page, boltId) {
 }
 
 /**
- * After restarting a plate and after choosing one, focus must be on a bolt.
+ * After restarting a plate, focus must be on a bolt. The other way a plate
+ * loads — chosen from the picker — is asserted in `provePersistence`, where a
+ * second plate is unlocked; both call sites pass `focus: true` and only one of
+ * them used to be checked.
  *
  * `showBench` scrolls *and* focuses, and only the scroll was asserted — so
  * deleting the focus half left a keyboard player on the document body after
  * every plate load, which is the defect its own docstring says it prevents.
  */
 async function proveFocusAfterLoad(page) {
-  const focused = () => page.evaluate(() => document.activeElement?.dataset?.bolt ?? null);
+  const focusedBolt = () => page.evaluate(() => document.activeElement?.dataset?.bolt ?? null);
   await page.click('#restart');
   await settle(250);
-  const afterRestart = focused();
-  return Boolean(await afterRestart);
+  return Boolean(await focusedBolt());
 }
+
+
 
 /**
  * Every plate's coupling, as the running game uses it, against the value the
@@ -788,7 +801,8 @@ function currentPlate(page) {
 async function provePersistence(page, url, lockedBefore) {
   const unsolved = {
     persisted: false, advanced: false, picked: false, boltsOnScreen: false,
-    pickerRefreshed: false, outcomeExplained: false, advanceLabelled: false
+    pickerRefreshed: false, outcomeExplained: false, advanceLabelled: false,
+    focusedAfterPick: false
   };
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle(400);
@@ -872,6 +886,9 @@ async function provePersistence(page, url, lockedBefore) {
   await page.click(`#picker [data-plate="${target}"]`);
   await settle(500);
   const picked = (await currentPlate(page)) === target;
+  // The pick path's focus, which the restart path's helper only claimed to
+  // cover. Both call sites pass `focus: true` and only one was asserted.
+  const focusedAfterPick = await page.evaluate(() => Boolean(document.activeElement?.dataset?.bolt));
 
   // And the plate you just chose has to be on screen. The picker sits after the
   // bench in the document, so pressing it scrolls the picker into view: with the
@@ -890,6 +907,7 @@ async function provePersistence(page, url, lockedBefore) {
     persisted: lockedAfter < lockedBefore,
     advanced, picked, boltsOnScreen,
     pickerRefreshed: pickerRefreshed < lockedBefore,
+    focusedAfterPick,
     outcomeExplained,
     advanceLabelled
   };
