@@ -55,6 +55,12 @@ A deploy check that reads only the shell verifies only the shell.
   builds. That is the fourth variety of it this iteration: a rule fed input that cannot
   falsify it. It is now in the retro's numbered changes.
 
+- **Where this sits relative to the tag.** `studio-iteration-02` points at the commit the
+  gate passed and the deploy was made from. This ticket landed two commits later, because
+  the publish step is what found the defect. The tag has **not** been moved: it marks what
+  was gated and shipped, and moving a pushed tag rewrites a ref other clones may hold. The
+  live site is `main`, so the fix is deployed either way.
+
 - **Deferred:** nothing.
 
 - **Fix rounds used:** 1 / 2
