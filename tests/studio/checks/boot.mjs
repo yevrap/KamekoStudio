@@ -23,6 +23,21 @@ import {
   judgePage, pageErrors
 } from '../lib/boot-contract.mjs';
 
+/**
+ * A phone, as Chrome understands one.
+ *
+ * `setViewport({ width: 320 })` on its own is a narrow *desktop* window, and
+ * desktop Chrome ignores `<meta name="viewport">` entirely — so every mobile
+ * assertion this check makes was being measured in the one configuration where
+ * the viewport meta cannot matter. Deleting that tag from both pages, which
+ * renders the whole realm zoomed out at ~980px on a real phone, passed
+ * everything. `isMobile` is what makes the meta tag load-bearing.
+ */
+const PHONE = { width: NARROW_WIDTH, height: 640, isMobile: true, hasTouch: true, deviceScaleFactor: 2 };
+
+/** The one path a browser requests unasked, and the only one the driver answers for it. */
+const FAVICON = '/favicon.ico';
+
 /** How long a hold has to run before a frozen gauge and a live one look different. */
 const HOLD_MS = 500;
 
@@ -49,7 +64,11 @@ async function openPage(browser, { stubInherited = false } = {}) {
   page.on('request', request => {
     let pathname;
     try { pathname = new URL(request.url()).pathname; } catch { pathname = ''; }
-    if (/\/favicon\.ico$/.test(pathname)) {
+    // Exactly the one path the browser asks for on its own, not anything ending
+    // in that name: a suffix match answered `studio/whatever/favicon.ico` with a
+    // 200 as well, so a studio page could hide a real 404 behind the name. The
+    // fourth instance of the same mistake, in the code written to end it.
+    if (pathname === FAVICON) {
       stubbed.favicon += 1;
       return request.respond({ status: 200, contentType: 'image/x-icon', body: '' });
     }
@@ -93,7 +112,7 @@ function urlFor(origin, pagePath) {
  */
 async function observeNormal(browser, url) {
   const { page, errors } = await openPage(browser);
-  await page.setViewport({ width: NARROW_WIDTH, height: 720 });
+  await page.setViewport(PHONE);
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle();
 
@@ -145,16 +164,22 @@ async function observeNormal(browser, url) {
     const backBox = back ? back.getBoundingClientRect() : null;
 
     return {
+      deviceWidth: floor.deviceWidth,
       targets,
       backLink: back
         ? { present: true, href: back.getAttribute('href') || '', width: backBox.width, height: backBox.height }
         : { present: false },
       documentWidth: document.documentElement.scrollWidth,
       viewportWidth: window.innerWidth,
-      mainText: (document.querySelector('main') || document.body).innerText || '',
-      floor
+      // What the page laid itself out at, against the device it was given.
+      // Without `<meta name="viewport">` a phone uses a ~980px layout viewport
+      // and scales the result down — so the page has no sideways scroll, every
+      // measurement is internally consistent, and the whole thing renders
+      // zoomed out under a thumb. Comparing the two is what catches it.
+      layoutWidth: window.innerWidth,
+      mainText: (document.querySelector('main') || document.body).innerText || ''
     };
-  }, NOT_OURS, MIN_TARGET);
+  }, NOT_OURS, { deviceWidth: PHONE.width });
 
   await page.close();
   return { ...measured, errors: pageErrors(errors) };
@@ -352,6 +377,71 @@ async function observeOvertighten(browser, url) {
       'torque readout': readout ? { colour: getComputedStyle(readout).color } : {}
     };
   });
+
+  // What each of the four states is drawn as. Read from a copy of a real bolt
+  // with each class applied in turn, because a live plate starts with every
+  // bolt loose — so three of the four treatments were never observed at all,
+  // and deleting all of them passed. Same shape as the shelf's killed-card
+  // fixture, and judged the same way: each state must differ from the others.
+  const stateInk = await page.evaluate(() => {
+    const bolt = document.querySelector('[data-bolt]');
+    if (!bolt) return null;
+    const host = document.createElement('div');
+    host.className = 'plate';
+    host.style.cssText = 'position:absolute;left:-9999px;top:0;width:300px;height:300px';
+    const copy = bolt.cloneNode(true);
+    host.appendChild(copy);
+    document.body.appendChild(host);
+    const read = state => {
+      copy.className = `bolt is-${state}`;
+      const fill = copy.querySelector('.fill');
+      const head = copy.querySelector('.head');
+      return {
+        fill: fill ? getComputedStyle(fill).stroke : '',
+        head: head ? getComputedStyle(head).borderTopColor : '',
+        shape: head ? getComputedStyle(head).clipPath : ''
+      };
+    };
+    const out = Object.fromEntries(['loose', 'seated', 'over', 'stripped'].map(s => [s, read(s)]));
+    host.remove();
+    return out;
+  });
+
+  // The picker's locked treatment, read the same way and for the same reason:
+  // `lockedPicks` counts the disabled attribute, never what it looks like, so a
+  // locked plate could be made visually identical to an open one.
+  const pickInk = await page.evaluate(() => {
+    const open = document.querySelector('#picker [data-plate]:not([disabled])');
+    const locked = document.querySelector('#picker [data-plate][disabled]');
+    const read = el => (el ? {
+      background: getComputedStyle(el).backgroundColor,
+      borderStyle: getComputedStyle(el).borderTopStyle,
+      colour: getComputedStyle(el).color
+    } : null);
+    return { open: read(open), locked: read(locked) };
+  });
+  // The focus ring on the only control in the game. Deleting it leaves a
+  // keyboard player with no idea which bolt they are about to turn, and every
+  // other focus assertion here still passes because the driver knows where
+  // focus is without being able to see it.
+  // Reached with Tab, not with `.focus()`. `:focus-visible` is a pseudo-*class*,
+  // so it cannot be read with a pseudo-element argument, and Chrome does not
+  // match it for programmatic focus on a button — the ring only exists for the
+  // player this rule is about.
+  await page.evaluate(() => document.querySelector('.back')?.focus());
+  await page.keyboard.press('Tab');
+  await settle(150);
+  const focusRing = await page.evaluate(() => {
+    const el = document.activeElement;
+    if (!el || !(el instanceof HTMLElement) || el.dataset.bolt === undefined) return null;
+    const style = getComputedStyle(el);
+    return {
+      style: style.outlineStyle,
+      width: style.outlineWidth,
+      colour: style.outlineColor,
+      visible: el.matches(':focus-visible')
+    };
+  });
   const plateVisible = await page.evaluate(() => {
     const plate = document.getElementById('plate');
     if (!plate) return false;
@@ -417,6 +507,12 @@ async function observeOvertighten(browser, url) {
   // A bolt must change state class as it crosses into its band.
   const stateClassesTrack = await proveStateClasses(page, boltIds[0]);
 
+  // Where focus lands after a plate is loaded. `showBench` scrolls *and*
+  // focuses, and only the scroll half was asserted — so dropping `focus: true`
+  // from all three call sites, which leaves a keyboard player on a hidden button
+  // or on the document body, passed everything.
+  const focusAfterLoad = await proveFocusAfterLoad(page);
+
   // The controls that exist on a fresh profile, pressed. The two that need a
   // cleared plate — "Next plate" and the picker's positive case — are pressed
   // in provePersistence, where one exists.
@@ -426,6 +522,9 @@ async function observeOvertighten(browser, url) {
   // Written as "one fewer plate is locked" rather than as a storage read, so it
   // is a claim about what the player gets back.
   const persistence = await provePersistence(page, url, lockedPicks);
+
+  // Last, because it seeds progress so every plate can be opened.
+  const couplingPerPlate = await proveCouplingPerPlate(page, url);
 
   await page.close();
   return {
@@ -444,6 +543,11 @@ async function observeOvertighten(browser, url) {
         'plate picker': persistence.picked
       },
       benchOnScreenAfterPick: persistence.boltsOnScreen,
+      focusAfterLoad,
+      pickerRefreshedOnClear: persistence.pickerRefreshed,
+      outcomeExplained: persistence.outcomeExplained,
+      advanceLabelled: persistence.advanceLabelled,
+      couplingPerPlate,
       keyboardTurned: afterKey[boltIds[0]] > 0,
       released: afterKeySettled[boltIds[0]] === afterKey[boltIds[0]],
       pointerTurned: afterPointer[boltIds[1]] > 0,
@@ -452,6 +556,9 @@ async function observeOvertighten(browser, url) {
       keyboardAfterPointer,
       releasedOnFocusLoss,
       stateClassesTrack,
+      stateInk,
+      pickInk,
+      focusRing,
       strippedEndsPlate: ended,
       progressPersisted: persistence.persisted
     }
@@ -555,6 +662,52 @@ async function proveStateClasses(page, boltId) {
 }
 
 /**
+ * After restarting a plate and after choosing one, focus must be on a bolt.
+ *
+ * `showBench` scrolls *and* focuses, and only the scroll was asserted — so
+ * deleting the focus half left a keyboard player on the document body after
+ * every plate load, which is the defect its own docstring says it prevents.
+ */
+async function proveFocusAfterLoad(page) {
+  const focused = () => page.evaluate(() => document.activeElement?.dataset?.bolt ?? null);
+  await page.click('#restart');
+  await settle(250);
+  const afterRestart = focused();
+  return Boolean(await afterRestart);
+}
+
+/**
+ * Every plate's coupling, as the running game uses it, against the value the
+ * model says it should.
+ *
+ * `constants.js` lets a plate lower its own coupling and the bracket does, but
+ * nothing connected the value the *unit tests* verify to the one `main.js`
+ * passes to `turn()`. Replacing `couplingFor(plate)` with the house constant
+ * made the bracket silently ignore its own tuning, and passed: the driver only
+ * ever played the first plate. Progress is seeded so every plate can be opened.
+ */
+async function proveCouplingPerPlate(page, url) {
+  await page.goto(url, { waitUntil: 'networkidle2' });
+  await page.evaluate(async () => {
+    const { PLATES } = await import('./constants.js');
+    try { localStorage.setItem('studio_overtighten_progress', String(PLATES.length)); } catch { /* ignore */ }
+  });
+  await page.reload({ waitUntil: 'networkidle2' });
+  await settle(400);
+  const expected = await page.evaluate(async () => {
+    const { PLATES, couplingFor } = await import('./constants.js');
+    return PLATES.map(p => couplingFor(p));
+  });
+  for (let i = 0; i < expected.length; i++) {
+    await page.evaluate(n => document.querySelector(`#picker [data-plate="${n}"]`)?.click(), i);
+    await settle(250);
+    const used = await page.evaluate(() => Number(document.getElementById('plate')?.dataset.coupling));
+    if (!(Math.abs(used - expected[i]) < 1e-9)) return false;
+  }
+  return true;
+}
+
+/**
  * Press each control and check something actually happened.
  *
  * Restart must reset a turned bolt; the picker must change the plate; advance
@@ -633,7 +786,10 @@ function currentPlate(page) {
  * look again. It is deliberately not a computed solution applied blind.
  */
 async function provePersistence(page, url, lockedBefore) {
-  const unsolved = { persisted: false, advanced: false, picked: false, boltsOnScreen: false };
+  const unsolved = {
+    persisted: false, advanced: false, picked: false, boltsOnScreen: false,
+    pickerRefreshed: false, outcomeExplained: false, advanceLabelled: false
+  };
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle(400);
 
@@ -675,6 +831,18 @@ async function provePersistence(page, url, lockedBefore) {
   // Both of these need a cleared plate to exist, so they happen here rather
   // than in exerciseControls. Identity is read from the picker's own
   // `aria-current` index, not from a heading a mutation can blank.
+  // Read while the outcome panel is up: its explanation and the next button's
+  // generated label. Both could be blanked with everything still green — the
+  // labels rule covered the plate's name and hint and not the one control whose
+  // text the code writes.
+  const outcomeExplained = await page.evaluate(() =>
+    (document.getElementById('outcome-line')?.textContent ?? '').trim().length > 10);
+  const advanceLabelled = await page.evaluate(() =>
+    (document.getElementById('advance')?.textContent ?? '').trim().length > 0);
+  // And the picker must be redrawn when a plate is cleared, not only on reload.
+  const pickerRefreshed = await page.evaluate(() =>
+    document.querySelectorAll('#picker [data-plate][disabled]').length);
+
   const beforeAdvance = await currentPlate(page);
   await page.click('#advance');
   await settle(400);
@@ -718,7 +886,13 @@ async function provePersistence(page, url, lockedBefore) {
     });
   });
 
-  return { persisted: lockedAfter < lockedBefore, advanced, picked, boltsOnScreen };
+  return {
+    persisted: lockedAfter < lockedBefore,
+    advanced, picked, boltsOnScreen,
+    pickerRefreshed: pickerRefreshed < lockedBefore,
+    outcomeExplained,
+    advanceLabelled
+  };
 }
 
 async function run(ctx) {

@@ -68,6 +68,11 @@ function loadPlate(index, options = {}) {
   session.lastStatus = null;
   release();
   el('plate').style.setProperty('--plate-aspect', plateAspect(session.plate));
+  // The coupling this plate is actually being played at. On the element because
+  // it is the one number a reader cannot infer from the page, and because
+  // nothing otherwise tied the value the tests verify to the value the game
+  // uses — the bracket's own 0.18 could be ignored silently.
+  el('plate').dataset.coupling = String(session.coupling);
   el('plate').innerHTML = plateMarkup(session.plate, plateState(session.plate, session.torque));
   el('plate-name').textContent = session.plate.name;
   el('plate-hint').textContent = session.plate.hint;

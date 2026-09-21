@@ -133,3 +133,22 @@ test('the status vocabulary is closed, so forging the word cannot replace forgin
   assert.ok(STATUSES.some(s => s.toLowerCase() === 'done'));
   assert.ok(STATUSES.some(s => s.toLowerCase() === "won't do"));
 });
+
+test('any fence style, and an HTML comment, are stripped before the Result is found', () => {
+  // The backtick case was closed a round earlier; `~~~` and `<!-- -->` were the
+  // same finding with a different character in it. Each of these places a fake
+  // Result *after* the real one, so it would otherwise win as "the last".
+  const real = '## Result\n\n- **What changed:**\n- **Tested by:**\n';
+  const tilde = real + '\n~~~markdown\n## Result\n\n- **What changed:** the driver and the contract\n- **Tested by:** every attack replayed\n~~~\n';
+  const comment = real + '\n<!--\n## Result\n\n- **What changed:** the driver and the contract\n- **Tested by:** every attack replayed\n-->\n';
+  const backtick = real + '\n```markdown\n## Result\n\n- **What changed:** the driver and the contract\n```\n';
+  for (const [name, text] of [['~~~', tilde], ['<!-- -->', comment], ['```', backtick]]) {
+    assert.equal(evidenceFor(text, 'What changed'), '', name);
+    assert.equal(evidenceFor(text, 'Tested by'), '', name);
+  }
+});
+
+test('a fence still works as a fence when the Result genuinely follows it', () => {
+  const text = '~~~js\nconst x = 1;\n~~~\n\n## Result\n\n- **What changed:** the torque model and its tests';
+  assert.equal(evidenceFor(text, 'What changed'), 'the torque model and its tests');
+});

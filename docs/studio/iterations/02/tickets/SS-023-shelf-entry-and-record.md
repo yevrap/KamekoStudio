@@ -25,8 +25,12 @@ that write it name an ID.
 - [x] `studio/README.md` describes the new folder and its two storage keys.
 - [x] `docs/studio/iterations/02/` holds `plan.md`, `tickets/`, `log.md`, `review.md` and
       `retro.md`; `CHANGELOG.md`, `tech-debt.md` and `learning-log.md` are current.
-- [x] `review.md` records the Independent Reviewer's `**Verdict:**` line and a Keep /
-      Iterate / Kill line per shipped item.
+- [x] `review.md` carries a Keep / Iterate / Kill line per shipped item.
+
+The reviewer's `**Verdict:**` line is **not** this ticket's to claim: it is written by the
+Independent Reviewer at the end of the iteration, and `reviewer-verdict` is the check that
+holds it. A criterion here ticked for a line this ticket cannot write was one of the false
+ticks the fourth review found.
 
 ## Evidence plan
 
@@ -66,8 +70,12 @@ that write it name an ID.
   ticked, and `docs-current` reported the iteration complete — its evidence match used
   `\s*(.*)`, and `\s` matches a newline, so each label was "answered" by the label below
   it. Found by the second review; the check is fixed in SS-027 and now refuses this file.
-  Two of the ticked criteria were also false at the time: the card's link was asserted by
-  nothing, and the reviewer's verdict line did not exist. Both are true now.
+- **Two of the ticked criteria were false at the time, and the first correction of that was
+  itself false.** The card's link was asserted by nothing — true then, fixed in SS-027, and
+  asserted now. The reviewer's verdict line did not exist — and SS-028's correction claimed
+  "both are true now" while it still did not. The fourth review caught that. The criterion
+  has been removed rather than re-explained: a ticket cannot tick a line the reviewer
+  writes.
 
 - **Deferred:** nothing.
 

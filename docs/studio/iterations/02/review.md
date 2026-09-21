@@ -13,6 +13,8 @@
 | SS-027 | The exemption removed rather than anchored; nine more attacks closed | opened by the **second** review |
 | SS-028 | The record corrected, including about itself | opened by the second review |
 | SS-029 | One hold runs one animation loop | opened by the second review |
+| SS-030 | The last error filter removed; ten more attacks closed | opened by the **third** review |
+| SS-031 | The record, the fence, the mobile viewport and the bolt's four states | opened by the **fourth** review |
 
 Live: <https://yevrap.github.io/KamekoStudio/studio/> · <https://yevrap.github.io/KamekoStudio/studio/games/overtighten/>
 
@@ -152,6 +154,40 @@ written the round before to stop exactly that defect. Coupling lines and torque 
 
 An unvalidated status word, a label inside a fenced example elsewhere in the file, and an
 earlier draft Result answering for the final one.
+
+## The fourth review — rejected
+
+Rejected on three things, one of which is the iteration's own pattern in its purest form.
+
+### The mobile claim had never been tested on a mobile
+
+`page.setViewport({ width: 320 })` is a narrow *desktop* window, and desktop Chrome ignores
+`<meta name="viewport">` entirely. Deleting that tag from both pages — which renders the
+whole realm zoomed out at ~980px on a real phone, with the bolts under a thumb — passed
+everything. Every mobile assertion the check makes was being measured in the one
+configuration where the tag cannot matter, while a comment in the driver claimed the
+opposite. Fixed by emulating a phone, and by asserting that the page adopts the device's
+width rather than only that nothing overflows.
+
+### Three of the bolt's four states were drawn by nobody's rule
+
+`gaugeInk` read a bolt on a fresh plate, where every bolt is loose. Deleting the seated,
+over and stripped treatments left the gauge one colour in every state and passed — the
+third review's `stroke-width: 0` finding with the selector moved. Both the states and the
+picker's locked treatment are now read from fixtures and must differ from one another.
+
+### The record was wrong again, in the sentences written to correct it
+
+SS-023 ticked a criterion saying `review.md` records the reviewer's verdict line, and
+SS-028 — the ticket whose subject was record truth — wrote "**Both are true now**" about
+it. The line did not exist. The criterion has been removed rather than re-explained: a
+ticket cannot tick a line the reviewer writes.
+
+### What the fourth review credited
+
+Every plate claim exact, re-derived from `constants.js` without the studio's helpers. No
+error filter remaining. The gap disclosure in `self-checks.md` judged as "honest and
+correctly shaped". Public-repo hygiene clean across the whole diff.
 
 ### What the third review credited
 

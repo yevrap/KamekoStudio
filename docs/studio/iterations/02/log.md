@@ -106,3 +106,22 @@ Both ran with fresh context and neither saw the other's report.
   learning log carrying a lesson the next review disproved, "three blind spots" over four
   bullets, and SS-024's last wrong count. *Reflection:* three of the four record defects in
   this round were in documents written by the pass that was meant to have fixed the record.
+
+## After the fourth review — rejected
+
+- **Independent Reviewer** — *Verdict:* **REJECTED.** Twelve mutations pass, the largest
+  being that `studio-boot` has never used a mobile viewport while its code says it has.
+  `docs-current` accepts an evidence-free ticket two further ways. Four false statements in
+  the record, three of them in sentences written to correct the record — including a ticked
+  criterion and an explicit "both are true now" about a verdict line that does not exist.
+- **QA Engineer** — *Done:* SS-031. The driver emulates a phone, which is what makes the
+  viewport meta tag load-bearing; the bolt's four states and the picker's locked treatment
+  are read from fixtures and must differ; the coupling the game runs at is checked against
+  the coupling the model specifies, for every plate. *Next:* nothing outstanding.
+- **Technical Writer** — *Done:* the false criterion removed rather than re-explained — a
+  ticket cannot tick a line the reviewer writes — and SS-028's correction corrected.
+  *Reflection:* the record has now been wrong in three consecutive rounds, each time in a
+  document written to fix the previous round's record. The change that follows is in the
+  retro: a claim about another document is checked against that document, not remembered.
+- **Tech Lead** — *Done:* TD-008 opened for what the check does not collect, because a gap
+  described in prose schedules nothing.

@@ -61,8 +61,9 @@ export function firstFrame(stack) {
  * a console message that is a string the page chose, forgeable with
  * `//# sourceURL`. The two things that used to need excusing — production's
  * settings drawer and the browser's favicon request — are now *changed* by the
- * driver instead, in `openPage`. Nothing is recognised, so nothing can be
- * impersonated.
+ * driver instead, in `openPage`: it answers one exact path and replaces one
+ * exact script, both decided before the page runs. Nothing about an error is
+ * recognised here, so no error can be dressed up as one that would be excused.
  */
 export function pageErrors(errors = []) {
   return errors.map(e => e.text);
@@ -160,6 +161,17 @@ export function judgeGeneric(obs = {}) {
   if (small.length) {
     fail.push(`${small.length} target(s) under ${MIN_TARGET}px at ${NARROW_WIDTH}px wide:\n`
       + list(small.map(t => `${t.label} — ${Math.round(t.width)}×${Math.round(t.height)}`)));
+  }
+
+  // The page has to opt into the device's width. Without `<meta name="viewport">`
+  // a phone lays out at ~980px and scales it down: no sideways scroll, every
+  // internal measurement consistent, and the whole page rendered zoomed out with
+  // the controls under a thumb. Every mobile assertion below was being measured
+  // in the one configuration where the meta tag cannot matter.
+  if (Number.isFinite(obs.deviceWidth) && Number.isFinite(obs.layoutWidth)
+      && obs.layoutWidth !== obs.deviceWidth) {
+    fail.push(`the page laid out at ${obs.layoutWidth}px on a ${obs.deviceWidth}px device`
+      + ' — it is missing a viewport meta tag and renders zoomed out on a phone');
   }
 
   // Asked as "were these measured, and do they hold" rather than as a bare
@@ -348,6 +360,17 @@ export function judgeOvertighten(obs = {}) {
     }
   }
   if (!game.gaugeInk) fail.push('the gauge\'s colours were never read');
+  if (!game.focusRing) {
+    fail.push('tabbing from the back link did not reach a bolt: the plate is not in the tab order');
+  } else if (!game.focusRing.visible) {
+    fail.push('a bolt reached with Tab does not match :focus-visible, so it is never given a ring');
+  } else if (game.focusRing.style === 'none' || !(Number.parseFloat(game.focusRing.width) > 0)
+      || isInvisibleColour(game.focusRing.colour)) {
+    fail.push(`the focus ring is ${game.focusRing.style} ${game.focusRing.width} ${game.focusRing.colour}:`
+      + ' a keyboard player cannot see which bolt they are on');
+  }
+  fail.push(...judgeStateInk(game.stateInk));
+  fail.push(...judgeLockedPick(game.pickInk));
   for (const [label, text] of Object.entries(game.labels ?? {})) {
     if (!String(text ?? '').trim()) fail.push(`the ${label} is empty`);
   }
@@ -380,6 +403,21 @@ export function judgeOvertighten(obs = {}) {
   if (!game.releasedOnFocusLoss) {
     fail.push('the bolt kept turning after focus left it: the hold cannot be stopped');
   }
+  if (!game.focusAfterLoad) {
+    fail.push('after loading a plate, focus is not on a bolt: a keyboard player is dropped to the document');
+  }
+  if (!game.pickerRefreshedOnClear) {
+    fail.push('the picker still showed the old lock state after a plate was cleared');
+  }
+  if (!game.outcomeExplained) {
+    fail.push('the outcome panel gives a title and no explanation');
+  }
+  if (!game.advanceLabelled) {
+    fail.push('the "next plate" button ships with no label');
+  }
+  if (!game.couplingPerPlate) {
+    fail.push('a plate is being played at a coupling other than its own: the tuning the tests verify is not the tuning that runs');
+  }
   if (!game.benchOnScreenAfterPick) {
     fail.push('after choosing a plate, its bolts are off screen: there is nothing playable in view');
   }
@@ -399,6 +437,55 @@ export function judgeOvertighten(obs = {}) {
     fail.push('turning past the strip point did not end the plate');
   }
   return fail;
+}
+
+/**
+ * The four states a bolt can be in must be drawn differently from one another.
+ *
+ * Asserted as a difference rather than as four literal colours, for the same
+ * reason the killed card is: the point is that a player can tell them apart.
+ * Read from a fixture, because a live plate starts with every bolt loose — so
+ * three of the four treatments were observed by nothing, and deleting all of
+ * them passed. The stylesheet's own header says amber means past the band and
+ * red means a ruined thread; this is that promise, checked.
+ */
+export function judgeStateInk(ink) {
+  if (!ink) return ['the bolt\'s state treatments were never read'];
+  const states = ['loose', 'seated', 'over', 'stripped'];
+  const fail = [];
+  for (const state of states) {
+    if (!ink[state]) return [`the ${state} bolt was never rendered`];
+    if (isInvisibleColour(ink[state].fill)) {
+      fail.push(`a ${state} bolt's gauge is drawn in ${ink[state].fill || 'nothing'}`);
+    }
+  }
+  const seen = new Map();
+  for (const state of states) {
+    const key = `${ink[state].fill}|${ink[state].head}|${ink[state].shape}`;
+    if (seen.has(key)) {
+      fail.push(`a ${state} bolt looks exactly like a ${seen.get(key)} one: the gauge stops reporting what it is`);
+    } else {
+      seen.set(key, state);
+    }
+  }
+  return fail;
+}
+
+/**
+ * A locked plate must look locked. `lockedPicks` counts the `disabled`
+ * attribute, which says nothing about what the player sees: emptying the rule
+ * left a locked plate identical to an open one, so pressing it did nothing for
+ * no visible reason. The realm's shelf already holds killed work to this
+ * standard — visible as a thing that exists, absent as an offer — and the
+ * game's picker cites that principle by name.
+ */
+export function judgeLockedPick(ink) {
+  if (!ink) return ['the picker\'s treatments were never read'];
+  if (!ink.open || !ink.locked) return ['the picker had no open and locked pair to compare'];
+  const same = ['background', 'borderStyle', 'colour'].filter(k => ink.open[k] === ink.locked[k]);
+  return same.length === 3
+    ? [`a locked plate is drawn exactly like an open one (${ink.locked.borderStyle}, ${ink.locked.background}): pressing it does nothing for no visible reason`]
+    : [];
 }
 
 /**
