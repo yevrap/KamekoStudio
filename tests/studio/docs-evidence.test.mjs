@@ -9,7 +9,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { STATUSES, evidenceFor } from './checks/docs.mjs';
+import { STATUSES, evidenceFor, hasResultSection } from './checks/docs.mjs';
 
 const EMPTY_TEMPLATE = [
   '## Result',
@@ -29,13 +29,15 @@ test('an unfilled template records nothing, whatever follows the label', () => {
 });
 
 test('a label on the same line as its evidence is read', () => {
-  const text = '- **What changed:** the torque model\n- **Tested by:** the plate suite';
+  const text = '## Result\n\n- **What changed:** the torque model\n- **Tested by:** the plate suite';
   assert.equal(evidenceFor(text, 'What changed'), 'the torque model');
   assert.equal(evidenceFor(text, 'Tested by'), 'the plate suite');
 });
 
 test('evidence may continue on the lines beneath the label', () => {
   const text = [
+    '## Result',
+    '',
     '- **What changed:**',
     '  - `gameplay.js` — the torque rules',
     '  - `state.js` — progress',
@@ -49,12 +51,14 @@ test('evidence may continue on the lines beneath the label', () => {
 test('one label never borrows the next label as its answer', () => {
   // The defeat case, stated directly: the bug was that this returned
   // "- **Tested by:**".
-  const text = '- **What changed:**\n- **Tested by:** a suite';
+  const text = '## Result\n\n- **What changed:**\n- **Tested by:** a suite';
   assert.equal(evidenceFor(text, 'What changed'), '');
 });
 
 test('a table or a paragraph under the label counts', () => {
   const text = [
+    '## Result',
+    '',
     '- **Tested by:** each mutation applied and reverted:',
     '',
     '  | # | Mutation | Result |',
@@ -68,7 +72,7 @@ test('a table or a paragraph under the label counts', () => {
 });
 
 test('evidence stops at a heading or a rule, not only at the next label', () => {
-  const text = '- **Fix rounds used:** 1 / 2\n\n---\n\n## Something else\n\nnot evidence';
+  const text = '## Result\n\n- **Fix rounds used:** 1 / 2\n\n---\n\n## Something else\n\nnot evidence';
   assert.equal(evidenceFor(text, 'Fix rounds used'), '1 / 2');
 });
 
@@ -117,8 +121,29 @@ test('a filled final Result is still read when an earlier draft exists', () => {
   assert.equal(evidenceFor(text, 'What changed'), 'the real thing');
 });
 
-test('a ticket with no Result heading falls back to the whole file', () => {
-  assert.equal(evidenceFor('- **What changed:** something', 'What changed'), 'something');
+test('a ticket with no Result section records nothing, rather than falling back to the file', () => {
+  // The fallback was fail-open: with no heading match, evidence came from the
+  // raw text with fences and comments *not* stripped, so a ticket could route
+  // its evidence through a fenced example simply by omitting the heading — or
+  // by spelling it `## Result (final)` or `## result`.
+  assert.equal(hasResultSection('- **What changed:** something'), false);
+  assert.equal(evidenceFor('- **What changed:** something', 'What changed'), '');
+  assert.equal(hasResultSection('## Result\n\n- **What changed:** x'), true);
+  assert.equal(hasResultSection('## Result (final)\n\n- **What changed:** x'), true);
+  assert.equal(hasResultSection('## result\n\n- **What changed:** x'), true);
+});
+
+test('a heading spelled differently is still the Result, and an unclosed fence still hides', () => {
+  const body = '- **What changed:** a forged evidence line long enough\n- **Tested by:** another forged line\n';
+  const empty = '- **What changed:**\n- **Tested by:**\n';
+  for (const heading of ['## Result (final)', '## result', '### Result']) {
+    const text = `${heading}\n\n${empty}\n<!--\n## Result\n\n${body}-->\n`;
+    assert.equal(evidenceFor(text, 'What changed'), '', heading);
+  }
+  // An unclosed fence runs to the end of the document when rendered, so it must
+  // here too.
+  const unclosed = `## Result\n\n${empty}\n\`\`\`md\n## Result\n\n${body}`;
+  assert.equal(evidenceFor(unclosed, 'What changed'), '');
 });
 
 test('the status vocabulary is closed, so forging the word cannot replace forging evidence', () => {

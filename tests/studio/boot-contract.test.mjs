@@ -71,7 +71,7 @@ test('a page with no errors at all is the only page that passes the error rule',
 
 test('a missing back link fails, and so does one that is too small or has no href', () => {
   assert.match(judgeGeneric(goodGeneric({ backLink: { present: false } }))[0], /no back link/);
-  assert.match(judgeGeneric(goodGeneric({ backLink: { present: true, href: '', height: 44 } }))[0], /no href/);
+  assert.match(judgeGeneric(goodGeneric({ backLink: { present: true, href: '', height: 44 } }))[0], /goes nowhere/);
   assert.match(
     judgeGeneric(goodGeneric({ backLink: { present: true, href: '../', height: 26 } }))[0],
     /26px tall, under the 44px floor/
@@ -306,6 +306,7 @@ function playing(overrides = {}) {
       locked: { background: 'rgba(0, 0, 0, 0)', borderStyle: 'dashed', colour: 'rgb(91, 83, 72)' }
     },
     focusRing: { style: 'solid', width: '2px', colour: 'rgb(15, 109, 122)', visible: true },
+    survivesSecondRelease: true, statusChurn: 2,
     keyboardAfterPointer: true, releasedOnFocusLoss: true, stateClassesTrack: true,
     benchOnScreenAfterPick: true, focusAfterLoad: true, pickerRefreshedOnClear: true,
     outcomeExplained: true, advanceLabelled: true, couplingPerPlate: true,
@@ -327,6 +328,7 @@ test('each way the mechanic can stop running is reported as itself', () => {
     ['plateVisible', false, /cannot be seen/],
     ['gaugeMoved', false, /gauge did not move/],
     ['boltRepainted', false, /did not change a single pixel/],
+    ['survivesSecondRelease', false, /ended a turn the other was still making/],
     ['keyboardAfterPointer', false, /a click leaves the keyboard dead/],
     ['releasedOnFocusLoss', false, /the hold cannot be stopped/],
     ['stateClassesTrack', false, /kept its old state class/],
@@ -363,6 +365,20 @@ test('an error thrown while the game is being played counts against it', () => {
   // And an observation with no error array at all fails closed, rather than
   // reading as "no errors" — the shape this file warns about for page width.
   assert.match(judgeOvertighten({ game: playing({ errors: undefined }) })[0], /no errors were collected/);
+});
+
+test('an aria-live region rewritten on every frame fails', () => {
+  assert.deepEqual(judgeOvertighten({ game: playing({ statusChurn: 0 }) }), []);
+  assert.deepEqual(judgeOvertighten({ game: playing({ statusChurn: 12 }) }), []);
+  assert.match(judgeOvertighten({ game: playing({ statusChurn: 62 }) })[0], /rewritten 62 times/);
+  assert.match(judgeOvertighten({ game: playing({ statusChurn: undefined }) })[0], /never measured/);
+});
+
+test('a back link must go somewhere, not merely have an href', () => {
+  assert.match(
+    judgeGeneric(goodGeneric({ backLink: { present: true, href: '#', height: 44, width: 80 } }))[0],
+    /goes nowhere/
+  );
 });
 
 test('a gauge stroked in nothing fails, even though the bolt still repaints', () => {

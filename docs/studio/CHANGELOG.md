@@ -134,10 +134,16 @@ returns a "no".
   coupling and the bracket does, but nothing connected the value the unit tests check to the
   one the game passes to `turn()`; the plate element carries the coupling it is being played
   at, and every plate is compared against the model.
-- **`docs-current` accepted an evidence-free ticket four more ways** across two rounds: an
-  unvalidated status word, a fenced example elsewhere in the file, an earlier draft Result
-  answering for the final one, and — after the first two fence fixes — a fence indented by
-  one to three spaces, which CommonMark still renders as a code block.
+- **`docs-current` accepted an evidence-free Done ticket in eight different ways**, found
+  across four rounds and closed one round at a time: a label answered by the label below it;
+  an unvalidated status word (`Done ✅`, `Shipped`); a backtick-fenced example elsewhere in
+  the file; an earlier draft Result answering for the final one; a `~~~` fence; an HTML
+  comment; a fence indented by one to three spaces, which CommonMark still renders as a code
+  block; and finally the fallback inside the fix itself — when the heading pattern missed,
+  on `## Result (final)` or a lowercase `## result` or no heading at all, evidence was taken
+  from the raw file with nothing stripped. It now fails closed: a Done ticket with no Result
+  section is a failure, and an unclosed fence hides everything after it, as it does when
+  rendered.
 - **The favicon is answered by exact path**, not by suffix: a suffix match answered
   `studio/anything/favicon.ico` too, and would have hidden a real 404.
 

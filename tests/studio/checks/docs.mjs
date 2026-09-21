@@ -64,6 +64,9 @@ export const docsCurrent = {
         // complete. Evidence may also continue on the following lines, so a
         // bare label is checked against what follows it rather than only
         // against the rest of its own line.
+        if (!hasResultSection(text)) {
+          problems.push(`${f}: Done with no Result section`);
+        }
         const changed = evidenceFor(text, 'What changed');
         const tested = evidenceFor(text, 'Tested by');
         if (changed.length < MIN_EVIDENCE) {
@@ -112,17 +115,42 @@ export const STATUSES = ['Ready', 'In progress', 'Blocked', 'Done', "Won't do"];
  *  - and `\s*(.*)` matched a newline, so each label was answered by the label
  *    below it.
  */
-function resultSection(text) {
-  const withoutFences = text
-    // Any fence, not only backticks, and indented by up to three spaces —
-    // which CommonMark still renders as a code block. Three rounds closed this
-    // same hole three times: backticks, then `~~~`, then one space over.
+/**
+ * Everything a reader would not see as prose: fenced blocks of any style,
+ * indented up to three spaces as CommonMark allows, and HTML comments.
+ *
+ * Unclosed forms run to the end of the document, because that is what they do
+ * when rendered — an unclosed fence swallowing the rest of the file was one of
+ * the four ways a ticket still shipped with an empty Result.
+ */
+function withoutHiddenText(text) {
+  return text
     .replace(/^[ \t]{0,3}(```+|~~~+)[\s\S]*?^[ \t]{0,3}\1/gm, '')
-    // And an HTML comment, which renders as nothing at all.
-    .replace(/<!--[\s\S]*?-->/g, '');
-  const headings = [...withoutFences.matchAll(/^##+[ \t]+Result[ \t]*$/gm)];
-  if (!headings.length) return '';
-  return withoutFences.slice(headings[headings.length - 1].index);
+    .replace(/^[ \t]{0,3}(```+|~~~+)[\s\S]*$/m, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<!--[\s\S]*$/, '');
+}
+
+/**
+ * The ticket's last Result section, or **null** when it has none.
+ *
+ * Null, not the whole file. The previous version fell back to the raw text
+ * whenever its heading pattern missed — and it missed on `## Result (final)`
+ * and on a lowercase `## result` — so a ticket could route its evidence through
+ * a fenced example or an HTML comment simply by spelling the heading
+ * differently, or by omitting it. A fail-open fallback inside the function
+ * written to stop evidence coming from the wrong place.
+ */
+function resultSection(text) {
+  const visible = withoutHiddenText(text);
+  const headings = [...visible.matchAll(/^##+[ \t]+Result\b[^\n]*$/gim)];
+  if (!headings.length) return null;
+  return visible.slice(headings[headings.length - 1].index);
+}
+
+/** Whether a ticket has a Result section at all. A Done ticket must. */
+export function hasResultSection(text) {
+  return resultSection(text) !== null;
 }
 
 /** Evidence shorter than this is a placeholder, not a record. */
@@ -134,7 +162,8 @@ const MIN_EVIDENCE = 12;
  * Returns '' when the label is present but nothing follows it.
  */
 export function evidenceFor(text, label) {
-  const section = resultSection(text) || text;
+  const section = resultSection(text);
+  if (section === null) return '';
   const pattern = new RegExp(`^-[ \\t]+\\*\\*${label}:\\*\\*[ \\t]*(.*)$`, 'm');
   const match = pattern.exec(section);
   if (!match) return '';

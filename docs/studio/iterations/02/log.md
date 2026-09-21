@@ -142,3 +142,21 @@ Both ran with fresh context and neither saw the other's report.
   row, and a headroom figure that had been generalised past what was measured.
   *Reflection:* this is the fourth consecutive round with a record defect, and the second
   in which the ticket that fixed a rule broke another one in the same edit.
+
+## After the sixth review — rejected
+
+- **Independent Reviewer** — *Verdict:* **REJECTED.** The headline count was false about
+  the configuration it named: two of the counted mutations were game defects reproduced by
+  hand with no rule behind them, and `docs-current` runs at the gate, not the ticket stage.
+  `docs-current` still passed an evidence-free ticket four ways, because the fix's own
+  fallback was fail-open. Four record statements stale, two in files the previous ticket
+  had just rewritten.
+- **QA Engineer** — *Done:* SS-033. The two behaviours that had only ever been reproduced
+  by hand now have rules; `docs-current` returns null rather than the whole file and a Done
+  ticket with no Result section is a failure; a shelf card may not link to the shelf's own
+  page and a back link may not be `#`. *Next:* nothing outstanding.
+- **Technical Writer** — *Done:* every count re-measured by re-running all eight mutation
+  harnesses at this commit and stated **with the stage it fails at**. Two harness entries
+  had themselves gone stale against source SS-025 rewrote and were fixed rather than
+  trusted. *Reflection:* the number was arithmetically right and false about its predicate,
+  which is the same defect as a check measuring in a configuration where nothing can fail.

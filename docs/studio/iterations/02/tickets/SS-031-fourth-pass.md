@@ -71,7 +71,7 @@ Each of the review's mutations re-applied to a clean tree, the ticket stage run,
 
   | Mutation | What the check says now |
   |---|---|
-  | `<meta name="viewport">` deleted from both pages | *the page laid out at 980px on a 320px device — it is missing a viewport meta tag and renders zoomed out on a phone* |
+  | `<meta name="viewport">` deleted from both pages | *there is no viewport meta tag: a phone lays the page out at ~980px and renders it zoomed out* — the message this ticket first shipped blamed the tag for any overflow, which the fifth review rejected; SS-032 split it into three causes |
   | all three bolt state treatments deleted | *a seated bolt looks exactly like a loose one: the gauge stops reporting what it is* |
   | `.pick[disabled]` emptied | *a locked plate is drawn exactly like an open one: pressing it does nothing for no visible reason* |
   | `focus: true` dropped from every `loadPlate` call | *after loading a plate, focus is not on a bolt* |

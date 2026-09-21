@@ -15,6 +15,8 @@
 | SS-029 | One hold runs one animation loop | opened by the second review |
 | SS-030 | The last error filter removed; ten more attacks closed | opened by the **third** review |
 | SS-031 | The record, the fence, the mobile viewport and the bolt's four states | opened by the **fourth** review |
+| SS-032 | Three width rules for three causes; the fence, indented | opened by the **fifth** review |
+| SS-033 | Rules for four defects that had none; `docs-current` fails closed | opened by the **sixth** review |
 
 Live: <https://yevrap.github.io/KamekoStudio/studio/> · <https://yevrap.github.io/KamekoStudio/studio/games/overtighten/>
 
@@ -36,7 +38,7 @@ reviewers created it, threw uncaught from it, and watched the check print `pass`
 the whole stack before the bare form, so a named production frame beat an anonymous studio
 frame above it.
 
-None of the five classifiers had a test, while SS-020's Result claimed they were
+None of the four error helpers had a test, while SS-020's Result claimed they were
 "unit-tested both ways". **That sentence was false when it was written.** Iteration 01's
 retro said: *do not write "closed" before the thing that closes it has been attacked.* One
 iteration later, the same mistake, on the same kind of object.
@@ -257,12 +259,14 @@ visually identical and numerically different, so it now asserts the named treatm
 > Yev: strike through what you disagree with and write your own verdict. These are the
 > team's, and the team is not the judge of them.
 
-- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Five
-  rounds of review attacked it, and it is a far stronger thing than the version that shipped:
-  **51 mutations across seven attack sets now fail the ticket stage**, against the 8 it was
-  written for. That is a count of what has been tried, not a claim that nothing is left —
-  every one of the five rounds found mutations the previous round survived, and
-  `self-checks.md` now states plainly what the check does not cover. It also caught a real accident
+- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Six
+  rounds of review attacked it, and it is a far stronger thing than the version that
+  shipped: **57 mutations across eight sets now fail — 53 at the ticket stage and 4 at the
+  gate**, against the 8 it was written for. The stages are named because the sixth review
+  caught this same sentence claiming the ticket stage for things that fail at the gate, and
+  for two behaviours that had no rule behind them at all. It is a count of what has been
+  tried, not a claim that nothing is left — every round found mutations the previous one
+  survived, and `self-checks.md` states plainly what the check does not cover. It also caught a real accident
   rather than a planted one — a parameter in SS-029 that shadowed an imported function and
   silently killed every hold — within an hour of the error-collection rule being added.
 - **Overtighten — Iterate, not Keep.** It is a well-built, pleasant, tactile thing, and it is
