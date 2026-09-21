@@ -80,6 +80,52 @@ committed.
 - **Tech Lead** — *Done:* that post-deploy run said *"nothing outside the guard changed"*
   above a list of two admitted production files. Fixed as SHS-051's first fix round: an
   admitted change is now reported as a change. *Next:* review. *Blocked:* nothing.
-- **Scrum Master** — *Done:* every planned ticket is live. Eight pushes so far, each
-  checked before and after; none broke the live site. *Next:* round 1 of review — QA and
+- **Scrum Master** — *Done:* every planned ticket is live. Five pushes before this one,
+  each checked before and after; none broke the live site. *Next:* round 1 of review — QA and
   the Independent Reviewer, on different models. *Blocked:* nothing.
+
+## After review round 1 — both passes rejected
+
+- **Scrum Master** — *Done:* both passes ran on fresh context: the Independent Reviewer on
+  a different model from the author, and QA on the author's. The reviewer **rejected** and
+  QA **failed** the iteration. Neither found a problem with TD-009's fix. QA confirmed it on
+  all four player routes, with real taps and a fresh profile per trial: 20 of 20 trials
+  threw on the unfixed build and 0 of 20 on the fixed one, and golf is unchanged. Both
+  found holes in the production-fix guard, and QA found checks that still pass having
+  compared nothing. Every finding has a disposition, below. *Next:* the fix rounds, then
+  round 2, the last. *Blocked:* nothing.
+- **Tech Lead** — *Done:* the reviewer's blocker is right about what matters. The guard
+  decides from an entry, a ticket file and commit subjects, and the studio writes all
+  three, so it catches an unplanned production write but cannot tell a real fix from a
+  fabricated one. Worse, under trunk-based work a production fix is live before any review
+  has seen it, and SHS-052 was. The answer is not more cleverness in the guard. It is an
+  independent review between a production fix and the live site. **SHS-054, opened by the
+  review:** a production fix is reviewed before it is pushed, and the `push` stage refuses
+  one whose review does not cover its latest commit. *Next:* the fixes. *Blocked:*
+  nothing.
+- **Product Owner** — *Done:* where each finding goes:
+  - *SHS-050, fix round 1:*
+    - `path-guard` and `commit-lint` pass on a comparison of no commits (QA B2);
+    - `studio-live` passes with no marker, or with one the last release already had (QA M1);
+    - `postdeploy` exits 0 having verified nothing (QA m7);
+    - an untracked directory changes the iteration (QA m6);
+    - the stages table lost a row (QA m3).
+  - *SHS-051, fix round 2, its last:*
+    - a merge commit carries a change past the guard (reviewer minor, QA B1);
+    - a commit after the iteration's tag is still admitted (QA B3);
+    - deleting a fix file is admitted (QA M2);
+    - what the guard proves, stated plainly (reviewer blocker);
+    - a rollback the documents describe that `commit-lint` refuses (QA m2);
+    - two passages the search missed (QA m4);
+    - two nits (QA n1, n2).
+  - *SHS-052, fix round 1:*
+    - the direct test accepts an over-broad fix that also drops the Explore bursts (QA m1);
+    - the fix line allocates on every Explore frame (QA n3).
+  - *SHS-053:* the push count above was wrong — it said eight; there had been five (QA m5).
+    Corrected in place.
+  - *SHS-054:* the reviewer's blocker.
+  - *Declined, with reasons in the review:*
+    - a fix entry taking precedence over the narrow exception on the same file;
+    - a test-name rule for production's harness, registered as debt instead (QA M2b).
+
+  *Next:* SHS-050. *Blocked:* nothing.
