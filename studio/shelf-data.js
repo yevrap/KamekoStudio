@@ -13,9 +13,9 @@
  * iterations ship past it.
  */
 export const PULSE = {
-  iteration: '02',
-  shipped: '2026-09-20',
-  summary: 'Built the studio\'s first experiment, Overtighten, and gave every page in the realm a boot check that opens it in a real browser — the eight mutations the old suite survived all fail it now.'
+  iteration: '03',
+  shipped: '2026-09-21',
+  summary: 'A maintenance iteration: tickets get a prefix chosen by reading it, a flaky production test gets a root cause and a specified fix, and the gate stops accepting a ticket that has no file.'
 };
 
 /**
