@@ -101,7 +101,7 @@ studio-owned check rather than a second production exception.
   that a studio-owned `shared/settings.js` claimed it. Both independent reviews found
   this and the iteration was rejected on it. Closed by SS-024.
 
-  Also run: `node --test tests/studio/` (101 green at this commit; 191 at the end of the iteration), `--stage=ticket` green,
+  Also run: `node --test tests/studio/` (101 green at this commit), `--stage=ticket` green,
   `--stage=ticket --offline` reports `studio-boot` as *not run* with the reason.
 
 - **Deferred:** TD-007 — the static server now exists twice, once in `scripts/smoke.mjs`

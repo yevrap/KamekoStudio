@@ -74,7 +74,9 @@ Each bypass re-applied to a clean tree, `studio-boot` run, the message recorded,
   | the whole plate hidden with `opacity: 0` | *2 control(s) take up space but cannot be seen · the plate takes up space but cannot be seen* |
   | killed card made visually identical to a live one | *a killed card still casts a shadow … a killed card's border is double, not dashed* |
 
-  The original eight all still fail. `npm test` 637 green (was 623).
+  The original eight all still fail. `npm test` 637 green at this commit, from a baseline
+  of 619 — this ticket added the 18 tests that take `boot-contract.test.mjs` from 17 to 35,
+  and touched no other suite.
 
 - **The correction worth recording:** SS-020's Result said the exemption was "unit-tested
   both ways". It was not tested at all, and the amendment this iteration made to
