@@ -54,21 +54,18 @@ export function firstFrame(stack) {
 }
 
 /**
- * Chrome asks every origin for /favicon.ico on its own. The repository ships no
- * favicon, so every page in it — production's included — answers 404. It is a
- * request the browser made, not one the page made.
+ * The error strings a page is answerable for — which is all of them.
  *
- * Safe to decide from, unlike a stack frame: this is the URL the browser
- * actually requested, observed by the driver, not a string the page chose.
+ * There is deliberately no filter here. Two were tried and both were defeated
+ * the same way: they decided from `error.source`, and for an uncaught throw or
+ * a console message that is a string the page chose, forgeable with
+ * `//# sourceURL`. The two things that used to need excusing — production's
+ * settings drawer and the browser's favicon request — are now *changed* by the
+ * driver instead, in `openPage`. Nothing is recognised, so nothing can be
+ * impersonated.
  */
-export function isBrowserInitiated(error = {}) {
-  const url = sourceUrl(error.source);
-  return Boolean(url && /\/favicon\.ico$/.test(url.pathname));
-}
-
-/** The error strings a page is answerable for. */
 export function pageErrors(errors = []) {
-  return errors.filter(e => !isBrowserInitiated(e)).map(e => e.text);
+  return errors.map(e => e.text);
 }
 
 /**
@@ -191,6 +188,15 @@ export function judgeGeneric(obs = {}) {
   // page keeps a visit log, so every accessor can throw. The page must survive
   // it, not merely avoid it.
   const blocked = obs.withoutStorage ?? {};
+  // First, that the configuration happened at all. Without this the pass would
+  // become a second ordinary load if the injection ever stopped applying, and
+  // still report a pass.
+  if (!blocked.storageBlocked) {
+    fail.push('the blocked-storage pass ran without storage actually being blocked');
+  }
+  if (!blocked.inheritedStubbed) {
+    fail.push('the blocked-storage pass loaded production\'s settings script instead of a stub');
+  }
   if ((blocked.errors ?? []).length) {
     fail.push(`with site data blocked the page throws:\n${list(blocked.errors)}`);
   }
@@ -330,9 +336,15 @@ export function judgeOvertighten(obs = {}) {
   if (!game.boltRepainted) {
     fail.push('the bolt did not change a single pixel while it was turning: its gauge is not drawn');
   }
-  for (const [part, colour] of Object.entries(game.gaugeInk ?? {})) {
-    if (isInvisibleColour(colour)) {
-      fail.push(`the gauge's ${part} is drawn in ${colour || 'nothing'}: the player cannot see it`);
+  for (const [part, ink] of Object.entries(game.gaugeInk ?? {})) {
+    if (isInvisibleColour(ink.colour)) {
+      fail.push(`the gauge's ${part} is drawn in ${ink.colour || 'nothing'}: the player cannot see it`);
+    }
+    // A visible colour at zero width draws nothing either. The band was set to
+    // `stroke-width: 0` with its colour untouched and walked through the rule
+    // written to stop exactly this defect.
+    if (ink.width !== undefined && !(Number.parseFloat(ink.width) > 0)) {
+      fail.push(`the gauge's ${part} is ${ink.width} wide: the player cannot see it`);
     }
   }
   if (!game.gaugeInk) fail.push('the gauge\'s colours were never read');
@@ -355,6 +367,24 @@ export function judgeOvertighten(obs = {}) {
   }
   if (!game.releasedPointer) {
     fail.push('the bolt kept turning after the pointer was released: every tap runs the bolt to its strip point');
+  }
+  // The keyboard *after* a pointer press. The check used to focus a bolt itself
+  // and then drive the pointer, which is the one order in which deleting the
+  // handler's focus() call cannot be noticed — and that deletion is the SS-025
+  // defect, restorable in one line.
+  if (!game.keyboardAfterPointer) {
+    fail.push('holding a key did nothing after the pointer was used: a click leaves the keyboard dead');
+  }
+  // Losing focus must stop a turn. Without it, tabbing away mid-hold leaves a
+  // bolt running to its strip point with no way to stop it.
+  if (!game.releasedOnFocusLoss) {
+    fail.push('the bolt kept turning after focus left it: the hold cannot be stopped');
+  }
+  if (!game.benchOnScreenAfterPick) {
+    fail.push('after choosing a plate, its bolts are off screen: there is nothing playable in view');
+  }
+  if (!game.stateClassesTrack) {
+    fail.push('a bolt kept its old state class as it seated: the gauge stops reporting what it is');
   }
   if (!game.progressPersisted) {
     fail.push('clearing a plate did not survive a reload: the game has no persistence');

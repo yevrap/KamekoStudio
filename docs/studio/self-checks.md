@@ -67,20 +67,45 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 Studio pages load `shared/settings.js`, production's settings drawer, which throws an
 uncaught `SecurityError` when site data is blocked (TD-005) and is outside the path guard.
 
-The first two answers to that were exemptions keyed on the throwing file — first an exact
-path, then an origin and an exact path. Both were wrong, and not by being too loose: **a
-stack frame's URL is minted by the script that throws.** A `//# sourceURL` comment lets any
-studio file claim to come from any path at any origin, so no amount of anchoring can make a
-self-reported frame into evidence. An independent review demonstrated it in six lines.
+Three answers were tried and the first two were wrong in the same way.
 
-The blocked-storage pass therefore replaces that script with an empty one. Nothing in the
-pass is production's, so every error in it is the studio's, and there is no exemption left
-to defeat. The claim it supports is narrower and true: *studio code* survives blocked
-storage. TD-005 remains recorded as production's defect, which is where it belongs.
+1. An exemption matching any path ending in `shared/settings.js` — defeated by creating
+   `studio/…/shared/settings.js`, which is inside the path guard.
+2. The same exemption anchored to the page's origin *and* the exact path — defeated by
+   `//# sourceURL`, because **a stack frame's URL is minted by the script that throws.**
+3. A filter for the browser's own `/favicon.ico` 404 survived both rounds, and was defeated
+   the same way: it also read `error.source`, so a studio file could throw
+   `//# sourceURL=<origin>/favicon.ico` and have the error dropped in every pass.
+
+The third review found (3) after (1) and (2) had been fixed. The pattern is the finding: a
+filter over errors is a rule about *whose* error it is, and the only evidence available is
+what the page says about itself.
+
+So there is **no error filter in this check**. The two things that needed excusing are
+*changed* instead, in `openPage`: the blocked-storage pass serves an empty script in place
+of production's settings drawer, and every pass answers the browser's favicon request so
+there is no 404 to explain. Nothing is recognised, so nothing can be impersonated. The
+claim the blocked-storage pass supports is narrower and true: *studio code* survives blocked
+storage, and it now also proves it was in that configuration rather than assuming it.
+TD-005 remains recorded as production's defect.
 
 The general rule, which applies to any check added here: **decide only from what the driver
-observed, never from what the page said about itself.** A requested URL, a measured box, a
-computed style and a screenshot are observations. A stack frame is a claim.
+did or observed, never from what the page said about itself.** A URL the driver served, a
+measured box, a computed style and a screenshot are observations. A stack frame, a console
+message's location and a script's declared name are claims. When a claim is the only thing
+available, change the situation rather than trusting it.
+
+## What `studio-boot` does not cover
+
+Worth stating, because three review passes each found mutations it survived and the
+honest position is a bounded one rather than "nothing is left".
+
+It covers what it collects. Everything asserted above is collected from a real page; a
+property nobody collects is a property nobody checks. It has no screenshots beyond one
+bolt's before/after comparison, no layout regression, and no audio observation — `sfx.js`
+is exercised only by being imported. Adding a rule here means adding an **observation**
+first; a rule over an observation the driver never took is the failure mode this check has
+had in every round so far.
 
 ## Network-dependent checks
 

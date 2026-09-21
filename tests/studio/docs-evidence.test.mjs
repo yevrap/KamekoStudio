@@ -9,7 +9,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { evidenceFor } from './checks/docs.mjs';
+import { STATUSES, evidenceFor } from './checks/docs.mjs';
 
 const EMPTY_TEMPLATE = [
   '## Result',
@@ -75,4 +75,61 @@ test('evidence stops at a heading or a rule, not only at the next label', () => 
 test('a label that is not there records nothing rather than throwing', () => {
   assert.equal(evidenceFor('', 'What changed'), '');
   assert.equal(evidenceFor('## Result\n\nnothing here', 'What changed'), '');
+});
+
+// ---- The three routes the third review found ---------------------------------
+
+test('evidence comes from the Result section, not from a fenced example elsewhere', () => {
+  const text = [
+    '## Evidence plan',
+    '',
+    'Fill the Result in like this:',
+    '',
+    '```markdown',
+    '- **What changed:** the files this ticket touched',
+    '- **Tested by:** the check that proves it',
+    '```',
+    '',
+    '## Result',
+    '',
+    '- **What changed:**',
+    '- **Tested by:**'
+  ].join('\n');
+  assert.equal(evidenceFor(text, 'What changed'), '');
+  assert.equal(evidenceFor(text, 'Tested by'), '');
+});
+
+test('the last Result wins, so a draft cannot answer for the final section', () => {
+  const text = [
+    '## Result',
+    '',
+    '- **What changed:** an early draft',
+    '',
+    '## Result',
+    '',
+    '- **What changed:**'
+  ].join('\n');
+  assert.equal(evidenceFor(text, 'What changed'), '');
+});
+
+test('a filled final Result is still read when an earlier draft exists', () => {
+  const text = '## Result\n\n- **What changed:** a draft\n\n## Result\n\n- **What changed:** the real thing';
+  assert.equal(evidenceFor(text, 'What changed'), 'the real thing');
+});
+
+test('a ticket with no Result heading falls back to the whole file', () => {
+  assert.equal(evidenceFor('- **What changed:** something', 'What changed'), 'something');
+});
+
+test('the status vocabulary is closed, so forging the word cannot replace forging evidence', () => {
+  // With the status unvalidated, everything below it was gated on the literal
+  // word "Done" — so `Done ✅`, `Done.`, `Done (merged)` and `Shipped` all
+  // skipped every evidence and criteria check and the ticket reported complete.
+  assert.deepEqual(STATUSES, ['Ready', 'In progress', 'Blocked', 'Done', "Won't do"]);
+  for (const forged of ['Done ✅', 'Done.', 'Done (merged)', 'Shipped', 'done!']) {
+    assert.ok(!STATUSES.some(s => s.toLowerCase() === forged.toLowerCase()), forged);
+  }
+  // Case is not the point; the vocabulary is.
+  assert.ok(STATUSES.some(s => s.toLowerCase() === 'done'));
+  assert.ok(STATUSES.some(s => s.toLowerCase() === "won't do"));
 });

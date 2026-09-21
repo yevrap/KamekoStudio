@@ -89,12 +89,14 @@ studio-owned check rather than a second production exception.
   | 7 | killed-card rule emptied | *a killed card has the same background as a live one* · *…still casts the live card's shadow* · *…border is solid, the same as a live one* |
   | 8 | storage `try`/`catch` removed | *with site data blocked the page throws: uncaught: SecurityError: denied* |
 
-  Mutation 8 is also the attack on this check's one exemption. `shared/settings.js` throws
-  the *same* `SecurityError: denied` in the same configuration (TD-005), and it is
-  production code the studio may not fix — so the check has to exempt it. The exemption
-  matches on the **throwing file from the stack**, never on the message, which is why
-  removing the studio's own try/catch is still caught while production's throw is not.
-  A message-based exemption would have passed mutation 8.
+  Mutation 8 was also the attack on this check's one exemption, as it stood at this
+  commit. `shared/settings.js` throws the *same* `SecurityError: denied` in the same
+  configuration (TD-005), and it is production code the studio may not fix, so the check
+  exempted it — matching on the throwing file from the stack rather than on the message.
+  **That whole approach was later removed.** Three review passes defeated three successive
+  versions of it, and the check now changes the situation instead of recognising anything:
+  the blocked-storage pass serves an empty script in place of production's. See
+  `self-checks.md` and SS-027/SS-030.
 
   **Corrected after review.** This section originally claimed the exemption was
   "unit-tested both ways". It was not tested at all, and the anchoring was loose enough

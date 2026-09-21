@@ -123,3 +123,45 @@ test('markup escapes its inputs even though every input is ours', () => {
   const bolt = boltMarkup({ ...BOLT, id: 'a" onfocus="x' }, boltState(BOLT, 10));
   assert.ok(!bolt.includes('onfocus="x"'), 'a bolt id escaped its attribute');
 });
+
+test('a coupling line carries no floating-point noise', () => {
+  // `0.28 * 100` is 28.000000000000004.
+  const markup = linkMarkup({ bolts: [{ id: 'a', x: 0.3, y: 0.28, links: ['b'] }, { id: 'b', x: 0.7, y: 0.72, links: ['a'] }] });
+  assert.ok(!/\d{6,}/.test(markup), `a coordinate carries float noise: ${markup}`);
+});
+
+test('a coupling line runs between the two bolts it couples, not between transposed points', () => {
+  // The third review swapped x for y in `linkMarkup` and nothing noticed: the
+  // existing tests counted `<line>` elements and never read a coordinate. The
+  // line is the only statement the plate makes about which bolt pulls on which,
+  // so drawing it from the wrong point is a lie the player has no way to check.
+  const plate = {
+    bolts: [
+      { id: 'a', x: 0.3, y: 0.28, links: ['b'] },
+      { id: 'b', x: 0.7, y: 0.72, links: ['a'] }
+    ]
+  };
+  const markup = linkMarkup(plate);
+  assert.match(markup, /x1="30"/);
+  assert.match(markup, /y1="28"/);
+  assert.match(markup, /x2="70"/);
+  assert.match(markup, /y2="72"/);
+  // Transposing is the specific defect, so name it: with x and y swapped the
+  // first point would read x1="28" y1="30".
+  assert.ok(!markup.includes('x1="28"'), 'the line starts from a transposed point');
+});
+
+test('every shipped plate draws each line between its real bolt positions', () => {
+  for (const plate of PLATES) {
+    const markup = linkMarkup(plate);
+    const drawn = [...markup.matchAll(/<line x1="([\d.]+)" y1="([\d.]+)" x2="([\d.]+)" y2="([\d.]+)"/g)];
+    for (const [, x1, y1, x2, y2] of drawn) {
+      const from = plate.bolts.find(b => Math.abs(b.x * 100 - Number(x1)) < 0.01 && Math.abs(b.y * 100 - Number(y1)) < 0.01);
+      const to = plate.bolts.find(b => Math.abs(b.x * 100 - Number(x2)) < 0.01 && Math.abs(b.y * 100 - Number(y2)) < 0.01);
+      assert.ok(from, `${plate.id}: a line starts at (${x1}, ${y1}), which is no bolt`);
+      assert.ok(to, `${plate.id}: a line ends at (${x2}, ${y2}), which is no bolt`);
+      assert.ok(from.links.includes(to.id), `${plate.id}: a line joins ${from.id} and ${to.id}, which are not coupled`);
+    }
+    assert.equal(drawn.length, new Set(plate.bolts.flatMap(b => b.links.map(id => [b.id, id].sort().join('|')))).size);
+  }
+});

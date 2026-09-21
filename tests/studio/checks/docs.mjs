@@ -45,8 +45,15 @@ export const docsCurrent = {
     const problems = [];
     for (const f of files) {
       const text = await fs.readFile(path.join(ticketDir, f), 'utf8');
-      const status = text.match(/^-\s+\*\*Status:\*\*\s*(.+)$/m)?.[1]?.trim();
+      const status = text.match(/^-\s+\*\*Status:\*\*[ \t]*(.+)$/m)?.[1]?.trim();
       if (!status) { problems.push(`${f}: no Status line`); continue; }
+      // The vocabulary is closed. Without this, `Done ✅`, `Done.` or `Shipped`
+      // slipped past every evidence and criteria check below — forging the
+      // status word simply replaced forging the evidence.
+      if (!STATUSES.some(s => s.toLowerCase() === status.toLowerCase())) {
+        problems.push(`${f}: unknown status "${status}" (expected one of: ${STATUSES.join(', ')})`);
+        continue;
+      }
       if (/^(Ready|In progress)$/i.test(status)) problems.push(`${f}: still "${status}" at the gate`);
       if (/^(Done)$/i.test(status)) {
         // `[ \t]` rather than `\s`, which matches a newline: `\s*(.*)` ate the
@@ -85,19 +92,41 @@ export const reviewerVerdict = {
   }
 };
 
+/** The statuses a ticket may carry. Anything else is a mistake, not a synonym. */
+export const STATUSES = ['Ready', 'In progress', 'Blocked', 'Done', "Won't do"];
+
+/**
+ * The ticket's Result section — the **last** one, with fenced code removed.
+ *
+ * Three things the first version got wrong, each found by taking evidence from
+ * somewhere that is not the Result:
+ *  - it searched the whole file, so a label inside a fenced Markdown example
+ *    elsewhere in the ticket answered for an empty Result;
+ *  - it took the first match, so a draft Result answered for the final one;
+ *  - and `\s*(.*)` matched a newline, so each label was answered by the label
+ *    below it.
+ */
+function resultSection(text) {
+  const withoutFences = text.replace(/^```[\s\S]*?^```/gm, '');
+  const headings = [...withoutFences.matchAll(/^##+[ \t]+Result[ \t]*$/gm)];
+  if (!headings.length) return '';
+  return withoutFences.slice(headings[headings.length - 1].index);
+}
+
 /**
  * What a ticket records under one Result label: the rest of its own line, plus
- * any indented or bulleted lines beneath it, up to the next top-level label.
+ * any lines beneath it, up to the next top-level label, heading or rule.
  * Returns '' when the label is present but nothing follows it.
  */
 export function evidenceFor(text, label) {
+  const section = resultSection(text) || text;
   const pattern = new RegExp(`^-[ \\t]+\\*\\*${label}:\\*\\*[ \\t]*(.*)$`, 'm');
-  const match = pattern.exec(text);
+  const match = pattern.exec(section);
   if (!match) return '';
-  const rest = text.slice(match.index + match[0].length).split('\n');
+  const rest = section.slice(match.index + match[0].length).split('\n');
   const body = [match[1]];
   for (const line of rest) {
-    // A new top-level bullet, or a new heading, ends this label's evidence.
+    // A new top-level bullet, a heading, or a rule ends this label's evidence.
     if (/^-[ \t]+\*\*/.test(line) || /^#{1,6} /.test(line) || /^---\s*$/.test(line)) break;
     body.push(line);
   }

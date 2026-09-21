@@ -60,7 +60,7 @@ Each bypass re-applied to a clean tree, `studio-boot` run, the message recorded,
     collects errors, re-reads after the pointer release, and proves persistence by winning
     the first plate through the page's own input and reloading.
   - `tests/studio/lib/browser.mjs` — path-boundary comparison in `serve()`.
-  - `tests/studio/boot-contract.test.mjs` — 35 tests, up from 21; ten of them on the
+  - `tests/studio/boot-contract.test.mjs` — 35 tests, up from 17; ten of them on the
     classifiers, which had none.
 
 - **Tested by:** every bypass both reviews demonstrated, replayed against the hardened
