@@ -432,6 +432,35 @@ export function scanDocCleanliness(text, { isDecisionRecord = false } = {}) {
 }
 
 /**
+ * Ticket IDs: one sequence of numbers under two prefixes.
+ *
+ * `SS-001` to `SS-042` were issued under a prefix made by abbreviating the
+ * realm's name without reading the result, and the initials turned out to be
+ * those of the Nazi Schutzstaffel. The prefix is retired and the numbering
+ * carries on: `SHS-043` onward. The old IDs keep their names, because history
+ * refers to them. See ADR-0006.
+ *
+ * So the rule is about the *sequence*, not about which strings look right: an
+ * `SS-` number above the last one issued is a new ticket under the retired
+ * prefix, and an `SHS-` number at or below it would give one number to two
+ * tickets.
+ */
+export const LAST_SS_TICKET = 42;
+
+const pad3 = n => String(n).padStart(3, '0');
+
+/** Why this ID may not be used, or null. `prefix` is `SS` or `SHS`. */
+export function ticketIdProblem(prefix, number) {
+  if (prefix === 'SS' && number > LAST_SS_TICKET) {
+    return `SS-${pad3(number)}: the SS- prefix is retired after SS-${pad3(LAST_SS_TICKET)} — name new tickets SHS-NNN`;
+  }
+  if (prefix === 'SHS' && number <= LAST_SS_TICKET) {
+    return `SHS-${pad3(number)}: numbers up to ${pad3(LAST_SS_TICKET)} belong to SS- tickets — SHS- numbering starts at ${pad3(LAST_SS_TICKET + 1)}`;
+  }
+  return null;
+}
+
+/**
  * Commit-message lint. Studio commits are conventional, scoped `studio`, and
  * name their ticket.
  *
@@ -440,13 +469,21 @@ export function scanDocCleanliness(text, { isDecisionRecord = false } = {}) {
  * Subject matching made the whole lint opt-out: any message could begin with
  * that word.
  */
-export const COMMIT_RE = /^(feat|fix|docs|test|refactor|chore|perf|style|build)\(studio\): (SS-\d{3}) .+/;
+export const COMMIT_RE = /^(feat|fix|docs|test|refactor|chore|perf|style|build)\(studio\): ((SHS|SS)-(\d{3})) .+/;
+
+/** The ticket ID a conforming commit subject names, or null. */
+export function commitTicketId(subject) {
+  return COMMIT_RE.exec(String(subject ?? ''))?.[2] ?? null;
+}
 
 export function lintCommitSubject(subject, { parentCount = 1 } = {}) {
   if (parentCount > 1) return null;
-  if (!COMMIT_RE.test(subject)) {
-    return 'expected "type(studio): SS-NNN description"';
+  const match = COMMIT_RE.exec(subject);
+  if (!match) {
+    return 'expected "type(studio): SHS-NNN description"';
   }
+  const problem = ticketIdProblem(match[3], Number(match[4]));
+  if (problem) return problem;
   if (subject.length > 80) return `subject is ${subject.length} characters (max 80)`;
   return null;
 }

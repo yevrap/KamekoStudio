@@ -30,7 +30,7 @@ The executive's input arrives as conversation. It enters the repo only after tra
 
 | Input | Repo record |
 |---|---|
-| "make it moodier, the current thing is too cheerful" | `SS-0NN: lower the gallery's ambient brightness and shift the accent toward the cool end of the palette. Motivation: art direction feedback — the current treatment reads too bright for the intended mood.` |
+| "make it moodier, the current thing is too cheerful" | `SHS-0NN: lower the gallery's ambient brightness and shift the accent toward the cool end of the palette. Motivation: art direction feedback — the current treatment reads too bright for the intended mood.` |
 | A "no" to a proposal | A ticket closed as *won't do*, with the technical reason |
 | A preference with no reason given | A decision record stating the choice and that it was a directed preference |
 

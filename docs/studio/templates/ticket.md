@@ -1,11 +1,11 @@
-# SS-NNN — <one-line outcome>
+# SHS-NNN — <one-line outcome>
 
 - **Status:** Ready | In progress | Blocked | Done | Won't do
 - **Size:** S | M | L
 - **Iteration:** NN
 - **Role lead:** <role from team/>
 - **Depends on:** <ticket IDs, or none>
-- **Branch:** `ss-NNN-short-slug`
+- **Branch:** `shs-NNN-short-slug`
 
 ## Motivation
 

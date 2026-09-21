@@ -23,7 +23,7 @@ export const iterationDocs = {
     for (const f of REQUIRED) if (!(await exists(path.join(dir, f)))) missing.push(f);
     const ticketDir = path.join(dir, 'tickets');
     const tickets = (await exists(ticketDir)) ? (await fs.readdir(ticketDir)).filter(f => f.endsWith('.md')) : [];
-    if (!tickets.length) missing.push('tickets/SS-NNN-*.md (none found)');
+    if (!tickets.length) missing.push('tickets/SHS-NNN-*.md (none found)');
 
     return missing.length
       ? { status: 'fail', detail: `iteration ${ctx.iteration} is missing: ${missing.join(', ')}` }
