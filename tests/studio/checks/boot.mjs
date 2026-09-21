@@ -100,6 +100,14 @@ async function discoverPages(root) {
   return pages.sort();
 }
 
+/** Whether a url answers with something other than a 404. */
+async function headOk(url) {
+  try {
+    const res = await fetch(url, { method: 'GET' });
+    return res.status >= 200 && res.status < 400;
+  } catch { return false; }
+}
+
 /** `studio/games/overtighten/index.html` → `/studio/games/overtighten/`. */
 function urlFor(origin, pagePath) {
   return `${origin}/${pagePath.replace(/index\.html$/, '')}`;
@@ -175,9 +183,19 @@ async function observeNormal(browser, url) {
         // same page and passed — one more spelling of the defect, after `#`,
         // `#top`, `./` and a blank. Comparing the page rather than the text is
         // what makes the spelling stop mattering.
-        const page = url => url.pathname.replace(/index\.html$/, '').replace(/\/+$/, '/');
+        // Decoded and case-folded before comparing. `%69ndex.html` and
+        // `Index.html` are two more spellings of the page you are on, and both
+        // passed a rule that normalised only the literal `index.html` — the
+        // fifth consecutive round in which a rule was satisfied by the defect
+        // it named. Decoding is what the server itself does.
+        const page = url => {
+          let p = url.pathname;
+          try { p = decodeURIComponent(p); } catch { /* keep it as written */ }
+          return p.toLowerCase().replace(/index\.html$/, '').replace(/\/+$/, '/');
+        };
         backGoes = {
           raw,
+          resolved: to.pathname,
           samePage: page(to) === page(new URL(location.href)),
           fragmentOnly: raw.trim().startsWith('#') || raw.trim() === ''
         };
@@ -1047,6 +1065,15 @@ async function run(ctx) {
         withoutScript: await observeWithoutScript(browser, url),
         withoutStorage: await observeWithoutStorage(browser, url)
       };
+      // A back link has to lead to a page that is really there. The shelf's
+      // cards are already held to this; the back link was not, so a link to a
+      // page that 404s passed as long as it was a different path.
+      if (obs.backLink && obs.backLink.present && obs.backLink.resolved) {
+        const target = obs.backLink.resolved.replace(/\/+$/, '/');
+        obs.backLink.reachable = await headOk(site.origin + obs.backLink.resolved)
+          || pages.some(p => '/' + p.replace(/index\.html$/, '') === target);
+      }
+
       if (pagePath === 'studio/index.html') {
         const home = await observeHome(browser, url);
         // A card's link is "reachable" only if it points at a page this check

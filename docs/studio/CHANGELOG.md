@@ -153,13 +153,24 @@ returns a "no".
   fence or comment hides everything after it, as it does when rendered.
 - **The favicon is answered by exact path**, not by suffix: a suffix match answered
   `studio/anything/favicon.ico` too, and would have hidden a real 404.
-- **Three rules written to close defects were each satisfied by the defect they named**, and
-  the fixes are what the learning log now calls writing the rule about the thing rather than
-  about the spelling: the back link is compared after normalising `index.html` away, so the
-  *page* is compared and not the text; the four bolt-state colours are compared **as
-  colours against an absolute gap**, after four greys one unit apart passed a test of string
-  difference; and the status-churn rule gained a floor as well as a ceiling, after freezing
-  the live region turned out to pass.
+- **Rules written to close a defect kept being satisfied by that defect**, which the
+  learning log now states as writing the rule about the thing rather than about the
+  spelling. The back link is compared as a *page* — decoded, case-folded and with
+  `index.html` normalised away — after `index.html`, `%69ndex.html` and `Index.html` each
+  passed in turn; the four bolt-state colours are compared **as colours against an absolute
+  gap**, after four greys one unit apart passed a test of string difference; and unticked
+  criteria are counted on rendered structure, after `*`, `+`, `1.` and `> -` each counted
+  zero. Separately, the status-churn rule gained a floor as well as a ceiling, after
+  freezing the live region turned out to pass — a ceiling-only rule, not a spelling.
+- **`docs-current` stopped stripping and started scanning.** Seven rounds removed hiding
+  places from the text — backticks, `~~~`, comments, indented fences, `<script>` — and the
+  eighth round's harder stripping was worse than the softer: its pattern deleted text
+  CommonMark *renders*, and because the Result is taken from the last heading in the
+  processed copy, deleting too much promoted a draft Result over the real one. It failed
+  **open**, five ways, one of them invisible on the page. A single-pass block scanner
+  (`tests/studio/lib/markdown.mjs`) now reports which lines a reader sees, strips blockquote
+  markers so a quoted task item still counts, and — when a fence, comment or raw block is
+  left unterminated — reports that the ticket **cannot be read** instead of guessing.
 
 ### Debt
 

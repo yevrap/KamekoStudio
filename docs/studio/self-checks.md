@@ -54,11 +54,11 @@ inside it forces the layout viewport wider, that it does not scroll sideways ins
 layout, that no control is laid out but invisible, and a `noscript` fallback that actually says something. On the realm home: that the page ran its own script, that the shelf's three column counts hold either side of both breakpoints, that a killed card both reads differently from a live one and matches its named treatment, and that the **real** shelf offers at least one card, and every live card links to a page this check itself booted and not to the shelf's own page. On a game page it also drives the thing — pointer, keyboard, release, coupling, stripping, every control pressed, progress proved by a reload — and checks the bolt actually repaints, that its gauge is stroked in visible colours at a
 non-zero width, that the four bolt states are stroked in colours a person can tell apart — compared as colours against an absolute gap, not as strings — that a turn
 survives one of two inputs letting go, that the status line changes while a bolt seats but
-not on every frame, and that the back link resolves to a different page, compared after normalising `index.html` away. Pages are **discovered, not listed**, so a page added later arrives covered; the report names any page that got only the generic contract. In the blocked-storage pass it serves an **empty script** in place of production's `shared/settings.js`, so what that pass proves is about studio code only (see the note below) |
+not on every frame, and that the back link resolves to a different page that is really there — compared after decoding, case-folding and normalising `index.html` away. Pages are **discovered, not listed**, so a page added later arrives covered; the report names any page that got only the generic contract. In the blocked-storage pass it serves an **empty script** in place of production's `shared/settings.js`, so what that pass proves is about studio code only (see the note below) |
 | `hygiene` | No secrets, personal identifiers, private paths, note-vault syntax or oversized files in studio-owned paths, or in the paths the studio may touch by exception |
 | `full-suites` | `npm test`, `npm run smoke` and `npm run e2e` are green — production included |
 | `commit-lint` | Every studio commit is conventional, scoped `studio`, and names a ticket. Merge commits are exempt by having more than one parent, not by their subject line |
-| `docs-current` | Every ticket in the iteration has a file, a status from a **closed vocabulary**, and evidence under both `What changed` and `Tested by`. Evidence is read from the **last** `## Result` section with fences and HTML comments stripped, and stops at the next label. Each of those is a hole a review found: `\s*(.*)` matched a newline so one label answered for the next; an unvalidated status let `Done ✅` skip every check below it; and a fenced or commented block placed after the real Result became the last one and supplied its evidence |
+| `docs-current` | Every ticket in the iteration has a file, a status declared **exactly once** and drawn from a **closed vocabulary**, and evidence under both `What changed` and `Tested by`. Evidence is read from the **last** `## Result` section with fences and HTML comments stripped, and stops at the next label. Each of those is a hole a review found: `\s*(.*)` matched a newline so one label answered for the next; an unvalidated status let `Done ✅` skip every check below it; and a fenced or commented block placed after the real Result became the last one and supplied its evidence |
 | `reviewer-verdict` | The Independent Reviewer's verdict is recorded in the iteration's review |
 | `studio-live` | The deployed studio URL returns 200 and serves the new build |
 | `production-live` | A production game page still returns 200 after the deploy |
@@ -106,7 +106,7 @@ available, change the situation rather than trusting it.
 
 ## What `studio-boot` does not cover
 
-Worth stating, because eight rounds of review each found mutations it survived and the
+Worth stating, because nine rounds of review each found mutations it survived and the
 honest position is a bounded one rather than "nothing is left".
 
 It covers what it collects. Everything asserted above is collected from a real page; a
