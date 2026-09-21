@@ -397,6 +397,38 @@ rather than guessing as a genuine fail-closed. All thirteen previously-closed pa
 failing. The back link as no longer defeatable — `%2e/`, `index%2ehtml`, `IND%45X.html`,
 `%2569ndex.html` and `?x=1` all caught. Hygiene clean across 126 files.
 
+## Verdict
+
+**Verdict:** REJECTED by the tenth independent review — and shipped anyway, on the
+executive's explicit decision of 21 September 2026.
+
+That sentence is the record, so it is worth being exact about what it does and does not
+mean.
+
+**What was rejected, and what happened to it.** Ten independent passes examined this
+iteration and all ten rejected it. Every finding from every round is closed: the last
+round's four `docs-current` bypasses and its two record defects are closed by SS-037, and
+each earlier round's findings by the ticket named against it in the table above. No
+reviewer has examined the state being shipped, because no eleventh pass was run.
+
+**Why it ships without an approval.** The gate cannot pass without a recorded verdict, and
+a sufficiently adversarial reviewer can withhold one indefinitely — ten rounds found real
+defects, and the honest expectation is that an eleventh would find more, because the
+surface it searches is unbounded and `self-checks.md` says so. The decision to stop is
+therefore the executive's rather than the team's, and it was made: *"push and ship by
+yourself."*
+
+**What that costs, stated rather than implied.** This ships without an independent pass
+over its final state. The specific things known to be open are in TD-008 and in
+`self-checks.md`'s "What `studio-boot` does not cover"; the general thing is that nobody
+has attacked the version on the wire.
+
+**What was gained by the ten rounds**, since the count only means anything alongside this:
+`studio-boot` went from catching the 8 mutations it was written for to 84 across twelve
+sets. Two forgeable exemptions were removed rather than narrowed. A game shipped with its
+central design claim falsified and published as falsified. That is what the rejections
+bought.
+
 ## Keep / Iterate / Kill
 
 > Yev: strike through what you disagree with and write your own verdict. These are the
