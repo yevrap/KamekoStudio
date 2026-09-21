@@ -93,7 +93,7 @@ studio-owned check rather than a second production exception.
   commit. `shared/settings.js` throws the *same* `SecurityError: denied` in the same
   configuration (TD-005), and it is production code the studio may not fix, so the check
   exempted it — matching on the throwing file from the stack rather than on the message.
-  **That whole approach was later removed.** Three review passes defeated three successive
+  **That whole approach was later removed.** Successive review passes defeated three successive
   versions of it, and the check now changes the situation instead of recognising anything:
   the blocked-storage pass serves an empty script in place of production's. See
   `self-checks.md` and SS-027/SS-030.

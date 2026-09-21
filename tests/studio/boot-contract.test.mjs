@@ -10,7 +10,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   INHERITED_SETTINGS, MIN_TARGET, NARROW_WIDTH, SHELF_BREAKPOINTS,
-  firstFrame, isInvisibleColour, judgeGeneric, judgeHome, judgeLockedPick, judgeStateInk,
+  declaresDeviceWidth, firstFrame, isInvisibleColour, judgeGeneric, judgeHome,
+  judgeLockedPick, judgeStateInk,
   judgeKilledTreatment, judgeOvertighten, judgePage, pageErrors, sourceUrl
 } from './lib/boot-contract.mjs';
 
@@ -21,9 +22,11 @@ function goodGeneric(overrides = {}) {
     backLink: { present: true, href: '../', width: 87, height: 44 },
     targets: [{ label: 'a "← Arcade"', width: 87, height: 44, laidOut: true, visible: true }],
     documentWidth: NARROW_WIDTH,
+    clientWidth: NARROW_WIDTH,
     viewportWidth: NARROW_WIDTH,
     deviceWidth: NARROW_WIDTH,
     layoutWidth: NARROW_WIDTH,
+    viewportMeta: 'width=device-width, initial-scale=1.0, viewport-fit=cover',
     mainText: 'Iteration 02',
     withoutScript: { present: true, text: 'This page builds its shelf in the browser, so it needs JavaScript.' },
     withoutStorage: { mainText: 'Iteration 02', errors: [], storageBlocked: true, inheritedStubbed: true },
@@ -106,20 +109,52 @@ test('a control the page is not offering at all is not a failure', () => {
   assert.deepEqual(judgeGeneric(goodGeneric({ targets: [absent] })), []);
 });
 
-test('a page that does not adopt the device width fails: it renders zoomed out', () => {
-  // The defect this catches is a missing viewport meta tag, and it is invisible
-  // to every other rule here — without the tag the page lays out at ~980px and
-  // is scaled down, so nothing overflows and every measurement agrees with
-  // itself.
-  const fail = judgeGeneric(goodGeneric({ layoutWidth: 980, viewportWidth: 980, documentWidth: 980 }));
-  assert.match(fail[0], /laid out at 980px on a 320px device/);
-  assert.match(fail[0], /missing a viewport meta tag/);
+test('a missing viewport meta tag is named as a missing viewport meta tag', () => {
+  // Read from the tag rather than inferred from a measurement. Inferring it
+  // reported a page whose tag was present and correct as "missing a viewport
+  // meta tag" the moment anything inside the page was too wide.
+  const fail = judgeGeneric(goodGeneric({
+    viewportMeta: null, layoutWidth: 980, clientWidth: 980, viewportWidth: 980, documentWidth: 980
+  }));
+  assert.match(fail[0], /no viewport meta tag/);
+  assert.match(fail[1], /content forced the layout viewport to 980px/);
+  assert.match(judgeGeneric(goodGeneric({ viewportMeta: 'initial-scale=1' }))[0], /does not ask for the device width/);
   assert.deepEqual(judgeGeneric(goodGeneric()), []);
 });
 
-test('content wider than the viewport fails, and content exactly as wide does not', () => {
-  assert.deepEqual(judgeGeneric(goodGeneric({ documentWidth: 320, viewportWidth: 320 })), []);
-  assert.match(judgeGeneric(goodGeneric({ documentWidth: 508, viewportWidth: 320 }))[0], /scrolls sideways/);
+test('a viewport meta tag is judged on what it asks for', () => {
+  for (const good of ['width=device-width', 'width=device-width, initial-scale=1', 'WIDTH=DEVICE-WIDTH']) {
+    assert.equal(declaresDeviceWidth(good), true, good);
+  }
+  for (const bad of ['initial-scale=1', 'width=980', '', null, undefined, 'width=device-widths']) {
+    assert.equal(declaresDeviceWidth(bad), false, String(bad));
+  }
+});
+
+test('content wider than the device is its own failure, with its own cause', () => {
+  // Under mobile emulation Chrome grows the *layout* viewport to fit an
+  // overflow, so this is not a scroll and must not be reported as one — and
+  // the tag being present must not be reported as it being absent.
+  const fail = judgeGeneric(goodGeneric({ layoutWidth: 440, viewportWidth: 440 }));
+  assert.equal(fail.length, 1);
+  assert.match(fail[0], /content forced the layout viewport to 440px on a 320px device/);
+  assert.ok(!/viewport meta tag/.test(fail[0]), 'it must not blame the tag, which is present');
+});
+
+test('sideways scroll is measured against the layout viewport, not against innerWidth', () => {
+  // `innerWidth` tracks the overflow under mobile emulation, so comparing
+  // against it made this rule unreachable: it could only ever compare a number
+  // against itself. `clientWidth` is what the content is laid out against.
+  assert.deepEqual(judgeGeneric(goodGeneric({ documentWidth: 320, clientWidth: 320 })), []);
+  assert.match(
+    judgeGeneric(goodGeneric({ documentWidth: 508, clientWidth: 320 }))[0],
+    /scrolls sideways: content is 508px inside a 320px viewport/
+  );
+});
+
+test('a width that was never measured fails rather than passing by omission', () => {
+  assert.match(judgeGeneric(goodGeneric({ clientWidth: undefined }))[0], /never measured/);
+  assert.match(judgeGeneric(goodGeneric({ deviceWidth: undefined }))[0], /never measured/);
 });
 
 test('an empty main fails even when everything else is intact', () => {

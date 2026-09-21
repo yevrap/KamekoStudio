@@ -125,3 +125,20 @@ Both ran with fresh context and neither saw the other's report.
   retro: a claim about another document is checked against that document, not remembered.
 - **Tech Lead** — *Done:* TD-008 opened for what the check does not collect, because a gap
   described in prose schedules nothing.
+
+## After the fifth review — rejected
+
+- **Independent Reviewer** — *Verdict:* **REJECTED**, and explicitly not for the mutation
+  surface, which it judged honestly disclosed. Four claims outran the truth: the
+  sideways-scroll rule was killed by the previous ticket's own phone emulation and two
+  documents still asserted it; `docs-current` still took evidence from a fence indented by
+  one space; six statements said three reviews and 38 mutations after a fourth round; and
+  the changelog recorded none of the fourth round, including the TD-008 row the iteration's
+  honesty claim rests on.
+- **QA Engineer** — *Done:* SS-032. One rule became three, each naming its own cause, with
+  the scroll compared against `clientWidth` rather than against a number that tracks the
+  overflow. *Next:* nothing outstanding.
+- **Technical Writer** — *Done:* every stale count, the changelog's missing round and debt
+  row, and a headroom figure that had been generalised past what was measured.
+  *Reflection:* this is the fourth consecutive round with a record defect, and the second
+  in which the ticket that fixed a rule broke another one in the same edit.

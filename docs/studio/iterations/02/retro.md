@@ -29,7 +29,8 @@
 - **The check's blind spots were about what it *did not look at*, not about what it judged
   wrongly.** Every rule it had was correct. It simply never collected the observation that
   would have failed — four such gaps in the first round, seven in the second, ten in the
-  third.
+  third, twelve in the fourth, and in the fifth a rule this very sequence had just
+  rewritten.
 
 - **Two fix rounds were spent making an untrustworthy input more precise.** The exemption
   was anchored to a path, then to an origin and a path, and tested against every path attack
@@ -82,10 +83,18 @@
     fail.** The mobile rules ran on a desktop; the state-colour rule read the one state a
     fresh plate is in; the scroll rule used a programmatic click, which does not scroll.
     Each was a correct rule fed input that could not falsify it.
+13. **Changing the configuration a check runs in re-opens every rule that runs in it.**
+    Emulating a phone fixed one rule and silently killed another, because `innerWidth`
+    means something different under emulation. A change to the *environment* is a change to
+    every measurement taken in it, and each has to be re-shown failing — which is the
+    step that would have caught it, and which the ticket did not take.
+14. **Two documents asserting a guarantee is not two pieces of evidence for it.** The
+    sideways-scroll claim survived in `self-checks.md` and the changelog for a whole round
+    after the thing proving it had stopped working.
 
 ## The shape of this iteration's failures
 
-Three review passes, and the same shape each time: **the team checked the thing it had
+Five rounds of independent review, and the same shape each time: **the team checked the thing it had
 built, in the configuration where it works.** The exemption was tested against paths
 because paths were what it had been written to handle. The shelf's empty state was tested
 through a fixture because the fixture was what had been built. The Result sections were
