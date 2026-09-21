@@ -210,3 +210,24 @@ it could be written up as evidence.
   computed from the per-set table rather than carried forward, and every stale count
   corrected. *Reflection:* the order was wrong twice because each fix moved the section the
   author could see. Sorting is not an edit; it is a property to be produced.
+
+## After the tenth review — rejected, and the approach changed
+
+- **Independent Reviewer** — *Verdict:* **REJECTED.** Four more ways past `docs-current`,
+  three invisible on the rendered page: a comment or a `<script>` inside a blockquote was
+  never recognised as an opener, so the scanner reported hidden text as *visible*; an HTML
+  block interrupting a paragraph was missed; a nested list's indent hid a visibly unticked
+  criterion. `review.md` missing its ninth round and carrying four credit subsections
+  stranded under the seventh in reverse order.
+- **Tech Lead** — *Done:* stopped patching and ended the approach. Ten rounds had all bet
+  that this checker could decide what a Markdown renderer would show; the surface is the
+  whole of CommonMark. A ticket now declares each thing exactly once, counted raw. 170
+  lines of parser deleted. *Blocked:* nothing.
+- **QA Engineer** — *Done:* SS-037. All six payloads fail, five with the same message.
+  Every one of the thirteen hiding places found across ten rounds is now a unit test, in
+  both orderings.
+- **Technical Writer** — *Done:* `review.md` re-filed so each round's credits sit under
+  that round; rounds nine and ten narrated; the count re-measured per set.
+  *Reflection:* the sort was wrong twice because both fixes moved only what their author
+  could see — top-level headings the first time, one section the second. The subsections
+  were never in the sort's scope and nobody checked what its scope was.

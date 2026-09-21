@@ -145,3 +145,13 @@ that are really decisions go to `decisions/` instead.
   by five ways of hiding text and once more by a status read from raw text. Stripping each
   hiding place in turn never converged; "a ticket declares its status exactly once" ended
   it, because it is indifferent to how the second declaration was hidden.
+- **A rule that has to interpret a format is competing with that format.** Ten review
+  rounds defeated `docs-current` ten times, and every fix but the last tried to decide what
+  a Markdown renderer would show — first by stripping hiding places out of the text, then by
+  scanning it as CommonMark. Stripping deleted text that renders; scanning missed
+  constructs a real parser handles. The surface was the whole of CommonMark and the checker
+  was three hundred lines.
+  **So: need less from the reading.** "A ticket declares each thing exactly once, counted
+  raw" is indifferent to every construct the format has or will ever have, and it caught
+  every one of the thirteen payloads that had beaten the previous designs. When a rule keeps
+  losing, the question is not how to read better but how to depend on reading less.

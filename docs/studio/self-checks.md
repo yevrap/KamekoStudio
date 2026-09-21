@@ -58,7 +58,7 @@ not on every frame, and that the back link resolves to a different page that is 
 | `hygiene` | No secrets, personal identifiers, private paths, note-vault syntax or oversized files in studio-owned paths, or in the paths the studio may touch by exception |
 | `full-suites` | `npm test`, `npm run smoke` and `npm run e2e` are green — production included |
 | `commit-lint` | Every studio commit is conventional, scoped `studio`, and names a ticket. Merge commits are exempt by having more than one parent, not by their subject line |
-| `docs-current` | Every ticket in the iteration has a file, a status declared **exactly once** and drawn from a **closed vocabulary**, and evidence under both `What changed` and `Tested by`. Evidence is read from the **last** `## Result` section with fences and HTML comments stripped, and stops at the next label. Each of those is a hole a review found: `\s*(.*)` matched a newline so one label answered for the next; an unvalidated status let `Done ✅` skip every check below it; and a fenced or commented block placed after the real Result became the last one and supplied its evidence |
+| `docs-current` | Every ticket in the iteration has a file, a status declared **exactly once** and drawn from a **closed vocabulary**, and evidence under both `What changed` and `Tested by`. A ticket **declares each thing exactly once** — one `## Result`, one `Status`, one `What changed`, one `Tested by` — counted in the raw file, so a second declaration fails wherever it is and however it is hidden. Evidence is read from the declaration at the margin and stops at the next label; unticked criteria are counted in the raw text, in any bullet, indentation or blockquote. Ten rounds of review defeated the two previous designs — stripping hiding places out of the text, then scanning it as CommonMark — because both bet that this checker could decide what a Markdown renderer would show. Each of those is a hole a review found: `\s*(.*)` matched a newline so one label answered for the next; an unvalidated status let `Done ✅` skip every check below it; and a fenced or commented block placed after the real Result became the last one and supplied its evidence |
 | `reviewer-verdict` | The Independent Reviewer's verdict is recorded in the iteration's review |
 | `studio-live` | The deployed studio URL returns 200 and serves the new build |
 | `production-live` | A production game page still returns 200 after the deploy |
@@ -106,7 +106,7 @@ available, change the situation rather than trusting it.
 
 ## What `studio-boot` does not cover
 
-Worth stating, because nine rounds of review each found mutations it survived and the
+Worth stating, because ten rounds of review each found mutations it survived and the
 honest position is a bounded one rather than "nothing is left".
 
 It covers what it collects. Everything asserted above is collected from a real page; a

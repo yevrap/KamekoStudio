@@ -76,7 +76,7 @@ returns a "no".
   that moves a bolt to the middle of its band converges whatever the numbers. The assertions
   now state what is true and are named so a redesign inverts them.
 
-### Also fixed, after eight rounds of review
+### Also fixed, after ten rounds of review
 
 - **The boot check's exemption was removed rather than tightened.** Anchoring it to an
   origin and an exact path was still wrong: a stack frame's URL is minted by the script
@@ -162,16 +162,16 @@ returns a "no".
   criteria are counted on rendered structure, after `*`, `+`, `1.` and `> -` each counted
   zero. Separately, the status-churn rule gained a floor as well as a ceiling, after
   freezing the live region turned out to pass — a ceiling-only rule, not a spelling.
-- **`docs-current` stopped stripping and started scanning.** Seven rounds removed hiding
-  places from the text — backticks, `~~~`, comments, indented fences, `<script>` — and the
-  eighth round's harder stripping was worse than the softer: its pattern deleted text
-  CommonMark *renders*, and because the Result is taken from the last heading in the
-  processed copy, deleting too much promoted a draft Result over the real one. It failed
-  **open**, five ways, one of them invisible on the page. A single-pass block scanner
-  (`tests/studio/lib/markdown.mjs`) now reports which lines a reader sees, strips blockquote
-  markers so a quoted task item still counts, and — when a fence, comment or raw block is
-  left unterminated — reports that the ticket **cannot be read** instead of guessing.
-
+- **`docs-current` stopped trying to read Markdown.** Ten rounds of review defeated it ten
+  times, and every fix but the last made the same bet: that the checker could decide which
+  text a renderer would show. Stripping hiding places out deleted text that *renders* and
+  promoted a draft Result over the real one; a hand-written CommonMark scanner then missed a
+  comment inside a blockquote, an HTML block interrupting a paragraph, and a nested list's
+  indentation. **A ticket now declares each thing exactly once** — one `## Result`, one
+  `Status`, one `What changed`, one `Tested by` — counted in the raw file, so a second
+  declaration fails wherever it is and however it is hidden. Every payload from all ten
+  rounds had beaten the old checks by adding a second declaration, so one rule catches all
+  of them, and 170 lines of parser were deleted.
 ### Debt
 
 - **TD-004 closed** by SS-020. **TD-007 opened**: the static file server now exists twice,

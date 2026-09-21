@@ -42,7 +42,7 @@
   evidence match read the next label as the answer. Two failures of the same kind stacked:
   a criterion ticked without evidence, and a check that could not tell.
 
-- **The record has been wrong in eight consecutive rounds**, each time in a document
+- **The record has been wrong in nine consecutive rounds**, each time in a document
   written to correct the previous round's record. The worst case was a ticket claiming
   "both are true now" about a line that did not exist. Remembering what another document
   says is not knowing it.
@@ -75,7 +75,7 @@
    whole subject was a claim written before it was checked. Read it off the thing, at the
    time, or leave it out.
 10. **A claim about another document is checked against that document, in the same edit.**
-    Nine rounds, eight of them with a false statement in the record, every one of which
+    Ten rounds, nine of them with a false statement in the record, every one of which
     would have been caught by opening the file it described.
 11. **A ticket may not tick a criterion it cannot satisfy.** The verdict line belongs to
     the reviewer and to `reviewer-verdict`; a ticket claiming it was claiming someone
@@ -99,13 +99,20 @@
     instance in front of the author. Compare pages rather than hrefs, colours rather than
     strings, declarations rather than hiding places. A rule that can only be stated as a
     list of forms is unfinished, and the next form is already waiting.
-16. **Two documents asserting a guarantee is not two pieces of evidence for it.** The
+16. **When a rule keeps losing, ask what it is competing with.** `docs-current` was
+    defeated ten times because every version tried to work out what a Markdown renderer
+    would show. That is a competition against the whole of CommonMark, and it was never
+    going to be won by a regex or by a hand-written scanner. The fix was to **need less**
+    from the reading: a ticket declares each thing once, counted raw, and a second
+    declaration fails wherever it hides. A rule that cannot be defeated by a construct it
+    never heard of is worth more than a rule that handles every construct you can name.
+17. **Two documents asserting a guarantee is not two pieces of evidence for it.** The
     sideways-scroll claim survived in `self-checks.md` and the changelog for a whole round
     after the thing proving it had stopped working.
 
 ## The shape of this iteration's failures
 
-Nine rounds of independent review, and the same shape each time: **the team checked the thing it had
+Ten rounds of independent review, and the same shape each time: **the team checked the thing it had
 built, in the configuration where it works.** The exemption was tested against paths
 because paths were what it had been written to handle. The shelf's empty state was tested
 through a fixture because the fixture was what had been built. The Result sections were
@@ -132,7 +139,7 @@ is change 1 above — make it a step with an artifact, not a thing to remember.
 ## Reserved capacity
 
 Used, and then some. SS-020 was the planned debt share and closed TD-004. Everything from
-SS-024 onwards — SS-024 through SS-036, thirteen tickets — was opened by a review. Two
-committed tickets became sixteen. Planned work was well under a fifth
+SS-024 onwards — SS-024 through SS-037, fourteen tickets — was opened by a review. Two
+committed tickets became seventeen. Planned work was well under a fifth
 of the iteration and finding out what was wrong with it was the rest, which is a sharper
 version of the same ratio as iteration 01.

@@ -4,7 +4,6 @@
 // breaks when the paper trail is thin. That is exactly why they are automated.
 
 import path from 'node:path';
-import { readableLines } from '../lib/markdown.mjs';
 import { promises as fs } from 'node:fs';
 import { walk, exists, readIfPresent } from '../lib/shell.mjs';
 import { scanDocCleanliness } from '../lib/rules.mjs';
@@ -53,14 +52,6 @@ export const docsCurrent = {
       // criteria check below was skipped. Stripping the known hiding places is
       // a game of spellings; requiring the ticket to declare its status exactly
       // once ends it, whatever the next hiding place turns out to be.
-      // A ticket with an unterminated fence, comment or raw block cannot be
-      // read with confidence, and guessing is how the previous version let
-      // five payloads through. Say so instead.
-      const { unterminated } = visible(text);
-      if (unterminated) {
-        problems.push(`${f}: ${unterminated} is never closed — the ticket cannot be read`);
-        continue;
-      }
       const declared = statusLineCount(text);
       if (declared > 1) {
         problems.push(`${f}: ${declared} Status lines — a ticket declares its status once`);
@@ -85,8 +76,15 @@ export const docsCurrent = {
         // complete. Evidence may also continue on the following lines, so a
         // bare label is checked against what follows it rather than only
         // against the rest of its own line.
-        if (!hasResultSection(text)) {
-          problems.push(`${f}: Done with no Result section`);
+        // One declaration of each thing, counted in the raw file. A second
+        // one — wherever it is, however it is hidden, whether or not a reader
+        // would see it — is a failure.
+        const results = resultHeadingCount(text);
+        if (results === 0) problems.push(`${f}: Done with no Result section`);
+        else if (results > 1) problems.push(`${f}: ${results} Result sections — a ticket has one`);
+        for (const label of ['What changed', 'Tested by']) {
+          const n = labelCount(text, label);
+          if (n > 1) problems.push(`${f}: "${label}" declared ${n} times — a ticket says it once`);
         }
         const changed = evidenceFor(text, 'What changed');
         const tested = evidenceFor(text, 'Tested by');
@@ -122,119 +120,114 @@ export const reviewerVerdict = {
   }
 };
 
-const STATUS_LINE = /^-[ \t]+\*\*Status:\*\*[ \t]*(.+)$/m;
+/**
+ * How a ticket is read, after ten rounds of getting it wrong.
+ *
+ * The first nine attempts tried to work out *which text a reader sees* — first
+ * by stripping hiding places out of the document, then by scanning it as
+ * CommonMark. Both are the same bet: that this checker can decide what a
+ * Markdown renderer would show. It lost that bet ten times. Stripping deleted
+ * text that renders, which promoted a draft Result over the real one; scanning
+ * missed a comment inside a blockquote, an HTML block interrupting a paragraph,
+ * and a nested list's indentation. Each round closed one construct and the next
+ * round found another, because the surface is the whole of CommonMark and the
+ * checker is not a CommonMark implementation.
+ *
+ * So it stopped trying. **A ticket declares each thing exactly once**, counted
+ * in the raw file, and that is the whole rule:
+ *
+ *   - one `## Result` heading
+ *   - one `- **Status:**` line
+ *   - one `- **What changed:**` and one `- **Tested by:**`
+ *
+ * It does not matter where a second one is hidden, or how, or whether a reader
+ * would see it — a second declaration is a failure. That is the same shape as
+ * the status rule, which is the one rule here that was never defeated, and it
+ * is indifferent to every construct CommonMark has or will have.
+ *
+ * Unticked criteria are counted in the raw text too. A hidden decoy can only
+ * make a ticket *fail*, which is the safe direction; a hidden real criterion
+ * counts, which is the direction that kept being exploited.
+ *
+ * All sixteen tickets in this iteration already satisfy the rule, so it costs
+ * nothing except saying what you mean once.
+ */
+
+// Two patterns for each thing, and the difference is the whole design.
+//
+// **Counting is permissive**: any indentation, any blockquote depth, anywhere
+// in the file. A second declaration is a failure wherever it is, so a hidden
+// one has to be *found*, not overlooked.
+//
+// **Reading is strict**: only a declaration at the margin. So even if counting
+// somehow missed a forgery, the value still comes from the real line rather
+// than from something buried in a quote or an example.
+//
+// Permissive where a miss would let something through; strict where a match
+// would let something through. Each pattern errs in the safe direction for the
+// job it does.
+const ANYWHERE = '[ \\t>]*';
+const STATUS_LINE = new RegExp(`^${ANYWHERE}-[ \\t]+\\*\\*Status:\\*\\*[ \\t]*(.+)$`, 'm');
+const STATUS_STRICT = /^-[ \t]+\*\*Status:\*\*[ \t]*(.+)$/m;
+const RESULT_HEADING = new RegExp(`^${ANYWHERE}#{1,6}[ \\t]+Result[ \\t]*$`, 'm');
+const LABEL_ANY = label => new RegExp(`^${ANYWHERE}-[ \\t]+\\*\\*${label}:\\*\\*`, 'm');
+const LABEL = label => new RegExp(`^-[ \\t]+\\*\\*${label}:\\*\\*[ \\t]*(.*)$`, 'm');
+
+/** Every line in the raw file matching a single-line pattern. */
+function occurrences(text, pattern) {
+  return (String(text ?? '').match(new RegExp(pattern.source, 'gm')) || []).length;
+}
 
 /** The statuses a ticket may carry. Anything else is a mistake, not a synonym. */
 export const STATUSES = ['Ready', 'In progress', 'Blocked', 'Done', "Won't do"];
 
-/**
- * The ticket's Result section — the **last** one, with fenced code removed.
- *
- * Three things the first version got wrong, each found by taking evidence from
- * somewhere that is not the Result:
- *  - it searched the whole file, so a label inside a fenced Markdown example
- *    elsewhere in the ticket answered for an empty Result;
- *  - it took the first match, so a draft Result answered for the final one;
- *  - and `\s*(.*)` matched a newline, so each label was answered by the label
- *    below it.
- */
-/**
- * The document as a reader sees it, and whether it can be read at all.
- *
- * Delegates to `lib/markdown.mjs`, which *scans* rather than strips. The
- * stripping version was defeated five ways in one round, and the diagnosis is
- * the part worth keeping: its regex deleted text CommonMark renders, and since
- * the Result is taken from the last heading in the processed copy and criteria
- * are counted in it, deleting too much promoted a draft Result to final and
- * made unticked criteria vanish. It failed **open**.
- */
-function visible(text) {
-  return readableLines(text);
-}
-
-function withoutHiddenText(text) {
-  return visible(text).lines.join('\n');
-}
-
-/**
- * The ticket's last Result section, or **null** when it has none.
- *
- * Null, not the whole file. The previous version fell back to the raw text
- * whenever its heading pattern missed — and it missed on `## Result (final)`
- * and on a lowercase `## result` — so a ticket could route its evidence through
- * a fenced example or an HTML comment simply by spelling the heading
- * differently, or by omitting it. A fail-open fallback inside the function
- * written to stop evidence coming from the wrong place.
- */
-function resultSection(text) {
-  const visible = withoutHiddenText(text);
-  const headings = [...visible.matchAll(/^##+[ \t]+Result\b[^\n]*$/gim)];
-  if (!headings.length) return null;
-  return visible.slice(headings[headings.length - 1].index);
-}
-
-/**
- * The ticket's status, read from the text a person would see.
- *
- * Read through `withoutHiddenText` and taken as the **first** visible match.
- * The previous version matched the raw file, so an HTML comment or a fenced
- * block placed above the real line supplied the status instead — and since
- * every evidence and criteria check below is gated on the status being `Done`,
- * forging it to anything outside the vocabulary skipped all of them. A ticket
- * could read "Done" to a human, carry an empty Result and no ticked criteria,
- * and pass. The seventh review demonstrated it on this iteration's own tickets.
- */
-export function statusOf(text) {
-  return withoutHiddenText(String(text ?? '')).match(STATUS_LINE)?.[1]?.trim() ?? '';
-}
-
-/** Every `- **Status:** …` line in a file, visible or not. */
-export function statusLineCount(text) {
-  return (String(text ?? '').match(new RegExp(STATUS_LINE.source, 'gm')) || []).length;
-}
-
-/**
- * How many acceptance criteria are still unticked.
- *
- * Any of GFM's three bullet characters, because `*` and `+` render as task
- * items exactly as `-` does — a Done ticket with every criterion unticked as
- * `* [ ]` counted as zero. Non-breaking space included for the same reason it
- * always was: it renders as an empty box.
- */
-export function untickedCriteria(text) {
-  // Bulleted *and* ordered task items: GFM renders `1. [ ]` as an empty box
-  // exactly as `- [ ]` does, and rewriting six criteria that way counted zero.
-  return (withoutHiddenText(String(text ?? ''))
-    .match(/^[ \t]*(?:[-*+]|\d+[.)])[ \t]+\[[\s\u00a0]\]/gm) || []).length;
-}
-
-/** Whether a ticket has a Result section at all. A Done ticket must. */
-export function hasResultSection(text) {
-  return resultSection(text) !== null;
-}
-
 /** Evidence shorter than this is a placeholder, not a record. */
 const MIN_EVIDENCE = 12;
 
+/** The ticket's status. */
+export function statusOf(text) {
+  return String(text ?? '').match(STATUS_STRICT)?.[1]?.trim() ?? '';
+}
+
+/** How many `- **Status:**` lines the file contains, hidden or not. */
+export function statusLineCount(text) {
+  return occurrences(text, STATUS_LINE);
+}
+
+/** How many `## Result` headings the file contains, hidden or not. */
+export function resultHeadingCount(text) {
+  return occurrences(text, RESULT_HEADING);
+}
+
+/** How many times one Result label is declared, hidden or not. */
+export function labelCount(text, label) {
+  return occurrences(text, LABEL_ANY(label));
+}
+
 /**
  * What a ticket records under one Result label: the rest of its own line, plus
- * any lines beneath it, up to the next top-level label, heading or rule.
- * Returns '' when the label is present but nothing follows it.
+ * the lines beneath it, up to the next top-level label, heading or rule.
  */
 export function evidenceFor(text, label) {
-  const section = resultSection(text);
-  if (section === null) return '';
-  const pattern = new RegExp(`^-[ \\t]+\\*\\*${label}:\\*\\*[ \\t]*(.*)$`, 'm');
-  const match = pattern.exec(section);
+  const source = String(text ?? '');
+  const match = LABEL(label).exec(source);
   if (!match) return '';
-  const rest = section.slice(match.index + match[0].length).split('\n');
   const body = [match[1]];
-  for (const line of rest) {
-    // A new top-level bullet, a heading, or a rule ends this label's evidence.
+  for (const line of source.slice(match.index + match[0].length).split('\n')) {
     if (/^-[ \t]+\*\*/.test(line) || /^#{1,6} /.test(line) || /^---\s*$/.test(line)) break;
     body.push(line);
   }
   return body.join('\n').trim();
+}
+
+/**
+ * Unticked acceptance criteria, in the raw text, whatever bullet or indentation
+ * they use — including inside a blockquote or a nested list, both of which
+ * render as empty boxes and both of which a cleverer reader missed.
+ */
+export function untickedCriteria(text) {
+  return (String(text ?? '')
+    .match(/^[ \t>]*(?:[-*+]|\d+[.)])[ \t]+\[[\s\u00a0]\]/gm) || []).length;
 }
 
 export const changelog = {
