@@ -24,7 +24,14 @@ npm run studio:check -- --marker-at=<path> # where on the site to look for it (d
 iteration's own tag is on `HEAD`, it is the one before. Defaulting to the newest tag
 outright compared a freshly tagged release with itself, and `production-unchanged` passed
 having compared nothing (TD-011). A comparison that still covers no commits — an explicit
-baseline that is `HEAD` itself — reports `not run`, never `pass`. Iteration 00 had no
+baseline that is `HEAD` itself, or the `origin/main` fallback just after a push — reports
+`not run`, never `pass`, in `path-guard` (when nothing is uncommitted either),
+`commit-lint` and `production-unchanged` alike. The report's first line says where the
+base came from, because the fallback compares only unpushed commits.
+
+`--iteration` defaults to the newest iteration with a file git tracks, not the newest
+directory on disk: an empty or untracked directory used to change which production fixes
+the guard admits. Iteration 00 had no
 previous tag, so it passed the pre-studio commit explicitly.
 
 A value may contain `=`: an argument is split at its first one only, so a line of code
@@ -35,8 +42,8 @@ cleanliness rule without the repository having to name where they live.
 
 Exit code is 0 when no check failed, 1 otherwise. A check that could not run (a missing
 prerequisite, a network-dependent step) reports `not run` with a reason and does **not**
-turn the run green by omission — the report shows it, and the `gate` and `push` stages
-refuse to pass a `not run`.
+turn the run green by omission — the report shows it, and the `gate`, `push` and
+`postdeploy` stages refuse to pass a `not run`.
 
 ## Stages
 
@@ -47,16 +54,18 @@ refuse to pass a `not run`.
 | `gate` | Before the iteration is tagged | `tree-clean`, `path-guard`, `storage-keys`, `portal-capacity`, `studio-boot`, `hygiene`, `full-suites`, `commit-lint`, `docs-current`, `reviewer-verdict` |
 | `push` | Before every push to `main` | `tree-clean`, `on-main`, `no-stop-file`, `path-guard`, `storage-keys`, `portal-capacity`, `studio-boot`, `hygiene`, `full-suites`, `commit-lint` |
 | `postdeploy` | After Pages updates, after every push | `studio-live`, `production-live`, `production-unchanged` |
+| `closeout` | End of the iteration | `iteration-docs`, `doc-cleanliness`, `changelog` |
 
 `push` exists because under trunk-based work ([ADR-0007](decisions/ADR-0007-trunk-based-development.md))
 every finished ticket is pushed, and every push deploys the whole arcade. It is the gate
 without the two checks that only make sense once the iteration is reviewed —
 `docs-current`, which requires every ticket to be closed with evidence, and
 `reviewer-verdict` — plus `on-main` and `no-stop-file`, because the push goes straight to
-the branch that deploys and must respect a halt. Like the gate, it treats `not run` as a
-failure. A test holds the list to that rule, so a check added to the gate later lands in
-`push` too unless it is a review check.
-| `closeout` | End of the iteration | `iteration-docs`, `doc-cleanliness`, `changelog` |
+the branch that deploys and must respect a halt. A test holds the list to that rule, so a
+check added to the gate later lands in `push` too unless it is a review check.
+
+`gate`, `push` and `postdeploy` are **conclusive**: a check they could not run fails them.
+`postdeploy` used to exit 0 with all three of its checks not run.
 
 ## What each check proves
 
@@ -78,10 +87,10 @@ survives one of two inputs letting go, that the status line changes while a bolt
 not on every frame, and that the back link resolves to a different page that is really there — compared after decoding, case-folding and normalising `index.html` away. Pages are **discovered, not listed**, so a page added later arrives covered; the report names any page that got only the generic contract. In the blocked-storage pass it serves an **empty script** in place of production's `shared/settings.js`, so what that pass proves is about studio code only (see the note below) |
 | `hygiene` | No secrets, personal identifiers, private paths, note-vault syntax or oversized files in studio-owned paths, in the paths the studio may touch by exception, or in the production files this iteration is fixing |
 | `full-suites` | `npm test`, `npm run smoke` and `npm run e2e` are green — production included |
-| `commit-lint` | Every studio commit is conventional, scoped `studio`, and names a ticket in the one ticket sequence: `SHS-NNN` from 043, `SS-NNN` only up to the 042 already issued (ADR-0006). Merge commits are exempt by having more than one parent, not by their subject line. A commit already on the remote that fails and cannot be amended without rewriting `main` is **waived by its full hash** in `LINT_WAIVERS`, with the ticket that explains it, and every waiver applied is printed — a hash is computed from the commit's content, so a waiver cannot be claimed by another commit copying its subject. There is one: SS-042's subject, at 81 characters |
+| `commit-lint` | Every studio commit is conventional, scoped `studio`, and names a ticket in the one ticket sequence: `SHS-NNN` from 043, `SS-NNN` only up to the 042 already issued (ADR-0006). Merge commits are exempt by having more than one parent, not by their subject line. A commit already on the remote that fails and cannot be amended without rewriting `main` is **waived by its full hash** in `LINT_WAIVERS`, with the ticket that explains it, and every waiver applied is printed — a hash is computed from the commit's content, so a waiver cannot be claimed by another commit copying its subject. There is one: SS-042's subject, at 81 characters. An empty range reports `not run`: it proves nothing about the history |
 | `docs-current` | **Every ticket a commit names has exactly one file.** The ticket each non-merge studio commit names — the ID in its subject's ticket position, not a mention later in the description — anywhere in the history, has one file under `iterations/*/tickets/`, named `<ID>-<slug>.md` with an ID that obeys the ticket sequence, whose first line is a heading naming the same ID; a missing file, a second file, a malformed name (an upper-case `.MD` included), an out-of-sequence ID or a heading naming another ticket fails. Before this, the check read only the files that existed, so a ticket with no file was invisible to it — and three shipped that way. This part is decided from commit subjects and file names, and reads no Markdown. **Then, content:** every ticket the iteration names or edits — its own directory, the file of any ticket a commit in its range names, and any ticket file its commits changed, wherever it lives — has a status declared **exactly once** and drawn from a **closed vocabulary**, and evidence under both `What changed` and `Tested by`. A ticket **declares each thing exactly once** — one `## Result`, one `Status`, one `What changed`, one `Tested by` — counted in the raw file, so a second declaration fails wherever it is and however it is hidden. Evidence is read from the declaration at the margin and stops at the next label; unticked criteria are counted in the raw text, in any bullet, indentation or blockquote. Ten rounds of review defeated the two previous designs — stripping hiding places out of the text, then scanning it as CommonMark — because both bet that this checker could decide what a Markdown renderer would show. Each of those is a hole a review found: `\s*(.*)` matched a newline so one label answered for the next; an unvalidated status let `Done ✅` skip every check below it; and a fenced or commented block placed after the real Result became the last one and supplied its evidence |
 | `reviewer-verdict` | The Independent Reviewer's verdict is recorded in the iteration's review |
-| `studio-live` | The new build is really being served. It looks for `--marker` on the page at `--marker-at` — the realm's home by default, or any path on the site, a script included — **and in the same-origin files that page loads**, following module imports, because the realm's home page is a shell and everything it shows is built in the browser from `shelf-data.js`. It searches **afresh on every attempt** until the marker appears or the attempts run out, and says which attempt found it: a page returns 200 before a deploy as well as after, so polling for the status code and searching once read the old build every time (TD-010). Without `--marker` it only proves a page is there, and says so |
+| `studio-live` | The new build is really being served. It looks for `--marker` on the page at `--marker-at` — the realm's home by default, or any path on the site, a script included — **and in the same-origin files that page loads**, following module imports, because the realm's home page is a shell and everything it shows is built in the browser from `shelf-data.js`. It searches **afresh on every attempt** until the marker appears or the attempts run out, and says which attempt found it: a page returns 200 before a deploy as well as after, so polling for the status code and searching once read the old build every time (TD-010). A marker the previous release's copy of the file already held is **refused** — it is found on the old build as readily as on the new one — and without `--marker` the check reports `not run`. The comparison is with the previous *release*, not the previous push, so each push picks a string it introduces |
 | `production-live` | A production game page still returns 200 after the deploy |
 | `production-unchanged` | No file outside the allowed paths differs from the previous release — the newest iteration tag that is not `HEAD`, or `--previous-tag` — except the production fixes this iteration owns, admitted by the same rule as `path-guard`. It reports how many commits it compared, and `not run` when that number is zero |
 | `iteration-docs` | Plan, tickets, log, review and retro all exist for this iteration |
@@ -164,8 +173,9 @@ naming which suites were skipped and which still ran. They are not reported as f
 a missing Chrome and a real regression must not look the same. `--offline` skips the two
 browser suites as well as the deploy checks, so it means what it says.
 
-The `gate` stage converts any `not run` into a failure, because the gate exists to be
-conclusive. The other stages report and continue, so the studio can still work offline.
+The `gate`, `push` and `postdeploy` stages convert any `not run` into a failure, because
+each exists to be conclusive. The other stages report and continue, so the studio can
+still work offline.
 
 ## Adding a check
 

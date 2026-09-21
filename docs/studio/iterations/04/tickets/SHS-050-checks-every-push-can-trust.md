@@ -29,7 +29,7 @@ command rather than three.
       it compares with the previous iteration. The same default applies to `--base`.
       (TD-011)
 - [x] A comparison that covers no commits at all — the baseline *is* `HEAD` — reports
-      `not run` with the reason, never `pass`.
+      `not run` with the reason, never `pass`, in every check that compares with a base.
 - [x] A `push` stage runs the gate's checks except `docs-current` and `reviewer-verdict`,
       the two that only make sense once the iteration is reviewed, plus `on-main` and
       `no-stop-file`, since the push goes straight to the branch that deploys and must
@@ -94,5 +94,26 @@ command rather than three.
     served 27 s after the push, and the same command then passed.
   - This ticket's own push: `--stage=push`, then `--stage=postdeploy` straight after, with
     `--marker-at` pointed at the check file this ticket changed — results in `log.md`.
+- **Fix round 1 — from review round 1.** QA found the ticket's title claim true of one
+  comparison in three, and a stage that verified nothing exiting 0:
+  - **A comparison of no commits passed `path-guard` and `commit-lint`** (QA B2) — with
+    `--base=HEAD`, or with the `origin/main` fallback just after a push. Both now report
+    `not run`: `commit-lint` on an empty range, `path-guard` when nothing is committed or
+    uncommitted since the base. The report's first line says where the base came from.
+  - **`studio-live` passed with no marker, or with one the last release already had**
+    (QA M1). No marker is now `not run`; a marker the previous release's copy of the file
+    held is refused (`staleMarkerProblem`, `repoPathFor`). The comparison is with the
+    previous *release*, not the previous push, and `self-checks.md` says so.
+  - **`postdeploy` exited 0 with all three checks not run** (QA m7). It is conclusive now,
+    like `gate` and `push`.
+  - **An empty or untracked iteration directory changed the iteration** (QA m6). The
+    default is now the newest iteration with a tracked file (`newestTrackedIteration`).
+  - **The stages table lost its `closeout` row** under the `push` paragraph (QA m3); and
+    the paragraph saying only the gate is conclusive, missed by this ticket, now names all
+    three.
+  - Tests: `baseline.test.mjs` +3 (path-guard empty and dirty, commit-lint empty, tracked
+    iteration), `deploy.test.mjs` +4 (URL to file, stale marker, no marker never fetches,
+    stale marker refused against a scratch repository's release), `stages.test.mjs`
+    (postdeploy conclusive).
 - **Deferred:** nothing.
-- **Fix rounds used:** 0 / 2
+- **Fix rounds used:** 1 / 2

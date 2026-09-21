@@ -7,15 +7,15 @@
 //   npm run studio:check -- --json           machine-readable results
 //
 // Every check reports pass, fail or "not run" with a reason. A check that could
-// not run is never silently dropped: the gate and push stages treat "not run"
-// as a failure, because a guarantee nobody verified is not a guarantee.
+// not run is never silently dropped: the gate, push and postdeploy stages treat
+// "not run" as a failure, because a guarantee nobody verified is not a guarantee.
 //
 // Reference: docs/studio/self-checks.md
 
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { STAGES, CONCLUSIVE_STAGES, checksForStage } from './checks/index.mjs';
-import { previousIterationTag } from './lib/shell.mjs';
+import { previousIterationTag, newestTrackedIteration } from './lib/shell.mjs';
 import { splitArg } from './lib/rules.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -82,8 +82,9 @@ function usage() {
   --base=<ref>           git ref the path guard and commit lint diff against
                          (default: the newest studio-iteration tag that is
                          not HEAD itself)
-  --iteration=NN         iteration number for the document checks
-                         (default: inferred from the latest iteration folder)
+  --iteration=NN         the iteration being checked: the document checks, and
+                         which production fixes the path guard admits
+                         (default: the newest iteration with a tracked file)
   --previous-tag=<tag>   tag that production-unchanged compares against
                          (default: as for --base)
   --marker=<text>        string the new build has and the old one does not
@@ -94,19 +95,6 @@ function usage() {
   --offline              do not make network requests
   --list                 list the checks and exit
   --json                 emit JSON instead of a table`);
-}
-
-async function inferIteration(root) {
-  const { promises: fs } = await import('node:fs');
-  try {
-    const dirs = (await fs.readdir(path.join(root, 'docs/studio/iterations'), { withFileTypes: true }))
-      .filter(d => d.isDirectory() && /^\d+$/.test(d.name))
-      .map(d => d.name)
-      .sort();
-    return dirs[dirs.length - 1] ?? '00';
-  } catch {
-    return '00';
-  }
 }
 
 const ICON = { pass: '✓', fail: '✗', skip: '–' };
@@ -131,14 +119,20 @@ async function main() {
     return 0;
   }
 
+  // Not simply the newest tag: once the iteration's own tag is on HEAD, the
+  // newest tag is the release itself, and every comparison with it is empty and
+  // passes having proved nothing (TD-011).
+  const previousRelease = previousIterationTag(ROOT);
   const ctx = {
     root: ROOT,
     ...DEFAULTS,
-    // Not simply the newest tag: once the iteration's own tag is on HEAD, the
-    // newest tag is the release itself, and every comparison with it is empty
-    // and passes having proved nothing (TD-011).
-    base: opts.base ?? previousIterationTag(ROOT) ?? 'origin/main',
-    iteration: opts.iteration ?? await inferIteration(ROOT),
+    base: opts.base ?? previousRelease ?? 'origin/main',
+    // Said out loud in the report, because the fallback compares only what has
+    // not been pushed yet — a much smaller claim than "since the last release".
+    baseSource: opts.base ? 'given'
+      : previousRelease ? 'the previous release'
+      : 'no studio-iteration tag found, so origin/main: only unpushed commits are compared',
+    iteration: opts.iteration ?? newestTrackedIteration(ROOT) ?? '00',
     previousTag: opts.previousTag,
     deployMarker: opts.deployMarker,
     markerAt: opts.markerAt,
@@ -165,8 +159,8 @@ async function main() {
     }
   }
 
-  // "not run" is a failure at the gate and before a push: both exist to be
-  // conclusive.
+  // "not run" is a failure at the gate, before a push and after a deploy: each
+  // exists to be conclusive, and a stage that verified nothing must not exit 0.
   for (const r of results) {
     if (CONCLUSIVE_STAGES.includes(r.stage) && r.status === 'skip') {
       r.status = 'fail';
@@ -183,7 +177,7 @@ async function main() {
 }
 
 function report(ctx, stages, results) {
-  console.log(`studio:check — base ${ctx.base}, iteration ${ctx.iteration}\n`);
+  console.log(`studio:check — base ${ctx.base} (${ctx.baseSource}), iteration ${ctx.iteration}\n`);
   for (const stage of stages) {
     console.log(stage);
     for (const r of results.filter(x => x.stage === stage)) {

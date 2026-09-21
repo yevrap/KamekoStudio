@@ -94,6 +94,26 @@ export function previousIterationTag(root) {
   return iterationTags(root).find(tag => commitOf(root, tag) !== head) ?? null;
 }
 
+/**
+ * The newest iteration with a tracked file under `docs/studio/iterations/`, as
+ * `NN`, or null.
+ *
+ * Read from git's index, not the filesystem: an empty or untracked directory —
+ * `mkdir iterations/05`, say — used to become "the iteration", and with it the
+ * production fixes the guard admits and the files `hygiene` scans. An iteration
+ * exists once something in it is staged or committed.
+ */
+export function newestTrackedIteration(root) {
+  const r = attempt(gitPath(), ['ls-files', '-z', '--', 'docs/studio/iterations'], { cwd: root });
+  if (!r.ok) return null;
+  const found = new Set();
+  for (const file of r.out.split('\0')) {
+    const m = /^docs\/studio\/iterations\/(\d{2})\//.exec(file);
+    if (m) found.add(m[1]);
+  }
+  return [...found].sort().at(-1) ?? null;
+}
+
 /** How many commits are reachable from HEAD and not from `ref`. */
 export function commitsSince(root, ref) {
   const r = attempt(gitPath(), ['rev-list', '--count', `${ref}..HEAD`], { cwd: root });

@@ -14,7 +14,8 @@ export const commitLint = {
     // %H is the full hash, which is what a waiver is keyed by; %P is the parent
     // list: more than one means git wrote this commit, not us.
     const log = git(ctx.root, 'log', '--format=%H%x1f%P%x1f%s', `${ctx.base}..HEAD`);
-    if (!log) return { status: 'pass', detail: 'no commits in range' };
+    // An empty range proves nothing about the history; it is not a pass.
+    if (!log) return { status: 'skip', detail: `no commits since ${ctx.base}, so nothing was linted` };
 
     const problems = [];
     const waived = [];

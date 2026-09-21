@@ -6,8 +6,9 @@
 // one search + POLL_MS) — a few minutes at the defaults — after which it
 // reports a failure with the reason rather than hanging indefinitely.
 
-import { fetchUrl } from '../lib/shell.mjs';
+import { fetchUrl, previousIterationTag, refExists } from '../lib/shell.mjs';
 import { moduleImports, sameOriginAssets } from '../lib/rules.mjs';
+import { textAt } from './path-guard.mjs';
 
 const POLL_MS = 10000;
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -78,6 +79,36 @@ export async function pollForMarker(url, marker, { attempts, waitMs = POLL_MS, f
   return { ok: false, attempt: attempts, ...last };
 }
 
+/**
+ * The repository path a URL on the site is served from, or null when the URL is
+ * not under the site. A directory is served by its `index.html`.
+ */
+export function repoPathFor(url, siteUrl) {
+  const site = new URL(`${siteUrl}/`);
+  const u = new URL(url);
+  if (u.origin !== site.origin || !u.pathname.startsWith(site.pathname)) return null;
+  let rel = decodeURIComponent(u.pathname.slice(site.pathname.length));
+  if (rel === '' || rel.endsWith('/')) rel += 'index.html';
+  return rel;
+}
+
+/**
+ * Why a marker cannot tell the new build from the last release, or null.
+ *
+ * A marker the previous release's copy of the same file already contained is
+ * found on the old build as readily as on the new one, so finding it proves
+ * nothing about the deploy — the same shape as a comparison of no commits.
+ * Measured against the previous *release*, not the previous push: a marker
+ * brought in by an earlier push this iteration still passes, so each push
+ * should pick a string it introduces itself (self-checks.md says so).
+ */
+export function staleMarkerProblem(marker, previousText, where) {
+  if (previousText && previousText.includes(marker)) {
+    return `"${marker}" is already in ${where}, so finding it cannot tell the new build from the old one — choose a string this push introduces`;
+  }
+  return null;
+}
+
 export const studioLive = {
   id: 'studio-live',
   stages: ['postdeploy'],
@@ -94,19 +125,26 @@ export const studioLive = {
     const marker = ctx.deployMarker;
 
     if (!marker) {
-      // Without a marker there is no new build to look for, only a page.
-      const res = await fetchUrl(url);
-      return !res.error && res.status === 200
-        ? { status: 'pass', detail: `${url} serves content (no --marker given, so which build it is was not checked)` }
-        : { status: 'fail', detail: `${url}: ${res.error ?? `HTTP ${res.status}`}` };
+      // Without a marker there is no new build to look for, only a page, and a
+      // page answers before a deploy exactly as it does after one.
+      return { status: 'skip', detail: 'no --marker given, so which build is being served was not checked' };
     }
 
-    const result = await pollForMarker(url, marker, { attempts: ctx.pollAttempts });
+    // `ctx.fetch` exists for tests; the command line never sets it.
+    const result = await pollForMarker(url, marker, { attempts: ctx.pollAttempts, fetch: ctx.fetch, wait: ctx.wait });
     if (result.ok) {
+      const tag = ctx.previousTag ?? previousIterationTag(ctx.root);
+      const file = repoPathFor(result.where, ctx.siteUrl);
+      let against = 'no previous release to compare the marker with';
+      if (tag && refExists(ctx.root, tag) && file) {
+        const stale = staleMarkerProblem(marker, textAt(ctx.root, tag, file), `${tag}:${file}`);
+        if (stale) return { status: 'fail', detail: stale };
+        against = `absent from ${tag}:${file}`;
+      }
       const via = result.where === url ? '' : `, reached from ${url}`;
       return {
         status: 'pass',
-        detail: `"${marker}" served from ${result.where}${via} — found on attempt ${result.attempt} of ${ctx.pollAttempts}; ${result.searched.length} file(s) checked`
+        detail: `"${marker}" served from ${result.where}${via} — found on attempt ${result.attempt} of ${ctx.pollAttempts}; ${result.searched.length} file(s) checked; ${against}`
       };
     }
     if (result.status !== 200) {

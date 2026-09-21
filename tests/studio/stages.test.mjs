@@ -24,8 +24,8 @@ test('a check the gate adds later lands in push too, unless it is a review check
   }
 });
 
-test('push and gate are conclusive: a check they cannot run is a failure', () => {
-  assert.deepEqual([...CONCLUSIVE_STAGES].sort(), ['gate', 'push']);
+test('gate, push and postdeploy are conclusive: a check they cannot run is a failure', () => {
+  assert.deepEqual([...CONCLUSIVE_STAGES].sort(), ['gate', 'postdeploy', 'push']);
   assert.ok(STAGES.indexOf('push') > STAGES.indexOf('gate') && STAGES.indexOf('push') < STAGES.indexOf('postdeploy'));
 });
 

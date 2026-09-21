@@ -104,6 +104,11 @@ export const pathGuard = {
     if (!refExists(ctx.root, ctx.base)) {
       return { status: 'fail', detail: `base ref "${ctx.base}" does not exist, so nothing could be compared; pass --base=<ref>` };
     }
+    // Nothing committed since the base and nothing in the tree: there is nothing
+    // to compare, and a pass would say "0 path(s)" about work it never saw.
+    if (commitsSince(ctx.root, ctx.base) === 0 && workingTreePaths(ctx.root).length === 0) {
+      return { status: 'skip', detail: `no commits since ${ctx.base} and nothing uncommitted, so nothing was compared` };
+    }
     return evaluate(ctx.root, ctx.base, changedPaths(ctx.root, ctx.base), { iteration: ctx.iteration, fixes: ctx.productionFixes });
   }
 };

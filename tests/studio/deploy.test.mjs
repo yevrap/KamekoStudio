@@ -8,7 +8,8 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { pollForMarker, searchForMarker } from './checks/deploy.mjs';
+import { pollForMarker, searchForMarker, repoPathFor, staleMarkerProblem, studioLive } from './checks/deploy.mjs';
+import { scratchRepo } from './lib/scratch-repo.mjs';
 
 const SITE = 'https://example.test/app';
 const PAGE = `${SITE}/studio/`;
@@ -100,4 +101,40 @@ test('a file on another origin is never searched', async () => {
   const result = await searchForMarker(PAGE, 'iteration 04', fetch);
   assert.equal(result.found, false);
   assert.deepEqual(fetched, [PAGE]);
+});
+
+test('a URL on the site maps to the file it is served from', () => {
+  assert.equal(repoPathFor(`${SITE}/studio/`, SITE), 'studio/index.html');
+  assert.equal(repoPathFor(`${SITE}/games/g/ui.js`, SITE), 'games/g/ui.js');
+  assert.equal(repoPathFor('https://example.test/other/x.js', SITE), null);
+  assert.equal(repoPathFor('https://elsewhere.test/app/x.js', SITE), null);
+});
+
+test('a marker the previous release already had is refused', () => {
+  assert.match(staleMarkerProblem('export function step', 'export function step() {}', 'tag:ui.js'), /cannot tell the new build/);
+  assert.equal(staleMarkerProblem('dropped (TD-009)', 'export function step() {}', 'tag:ui.js'), null);
+  assert.equal(staleMarkerProblem('anything', '', 'tag:new.js'), null, 'a file new in this release cannot hold an old marker');
+});
+
+test('studio-live reports "not run" without a marker, and never fetches anything', async () => {
+  let fetched = 0;
+  const result = await studioLive.run({ siteUrl: SITE, markerAt: '/studio/', deployMarker: null, pollAttempts: 1, fetch: async () => { fetched++; return { status: 200, body: '' }; } });
+  assert.equal(result.status, 'skip');
+  assert.equal(fetched, 0);
+});
+
+test('studio-live fails a marker that the previous release\'s copy of the file already held', async t => {
+  const r = scratchRepo(); t.after(r.done);
+  r.write('games/g/ui.js', 'export function step() {}\n');
+  r.git('add', '--all'); r.git('commit', '--quiet', '-m', 'docs(studio): SHS-050 release');
+  r.git('tag', 'studio-iteration-03');
+  r.commit(undefined, ['games/g/ui.js']);
+  const served = { [`${SITE}/games/g/ui.js`]: 'export function step() {} // new build' };
+  const fetch = async url => (url in served ? { status: 200, body: served[url] } : { status: 404, body: '' });
+  const ctx = { root: r.root, siteUrl: SITE, markerAt: '/games/g/ui.js', pollAttempts: 1, fetch, previousTag: 'studio-iteration-03' };
+  const stale = await studioLive.run({ ...ctx, deployMarker: 'export function step' });
+  assert.equal(stale.status, 'fail', stale.detail);
+  const fresh = await studioLive.run({ ...ctx, deployMarker: '// new build' });
+  assert.equal(fresh.status, 'pass', fresh.detail);
+  assert.match(fresh.detail, /absent from studio-iteration-03:games\/g\/ui\.js/);
 });

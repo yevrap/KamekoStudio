@@ -6,8 +6,11 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { previousIterationTag, commitsSince } from './lib/shell.mjs';
-import { productionUnchanged } from './checks/path-guard.mjs';
+import { mkdirSync } from 'node:fs';
+import path from 'node:path';
+import { previousIterationTag, commitsSince, newestTrackedIteration } from './lib/shell.mjs';
+import { pathGuard, productionUnchanged } from './checks/path-guard.mjs';
+import { commitLint } from './checks/commit-lint.mjs';
 import { scratchRepo as repo } from './lib/scratch-repo.mjs';
 
 test('mid-iteration, the previous release is the newest tag', t => {
@@ -68,4 +71,33 @@ test('production-unchanged fails on a baseline that names no commit', async t =>
   r.commit();
   const result = await productionUnchanged.run({ root: r.root, previousTag: 'studio-iteration-99' });
   assert.equal(result.status, 'fail');
+});
+
+test('path-guard reports "not run" when there is nothing committed or uncommitted to compare', async t => {
+  const r = repo(); t.after(r.done);
+  r.commit(); r.git('tag', 'studio-iteration-00');
+  const empty = await pathGuard.run({ root: r.root, base: 'HEAD', iteration: '00' });
+  assert.equal(empty.status, 'skip', empty.detail);
+  // Uncommitted work is something to compare, even with no commits since the base.
+  r.write('games/g/index.html', 'changed');
+  const dirty = await pathGuard.run({ root: r.root, base: 'HEAD', iteration: '00' });
+  assert.equal(dirty.status, 'fail', dirty.detail);
+  assert.match(dirty.detail, /games\/g\/index\.html/);
+});
+
+test('commit-lint reports "not run", not "pass", on a range with no commits', t => {
+  const r = repo(); t.after(r.done);
+  r.commit();
+  const result = commitLint.run({ root: r.root, base: 'HEAD' });
+  assert.equal(result.status, 'skip', result.detail);
+});
+
+test('the iteration is the newest one git tracks, not the newest directory on disk', t => {
+  const r = repo(); t.after(r.done);
+  r.commit(undefined, ['docs/studio/iterations/03/plan.md']);
+  mkdirSync(path.join(r.root, 'docs/studio/iterations/05'), { recursive: true });
+  r.write('docs/studio/iterations/06/plan.md', 'untracked');
+  assert.equal(newestTrackedIteration(r.root), '03');
+  r.git('add', 'docs/studio/iterations/06/plan.md');
+  assert.equal(newestTrackedIteration(r.root), '06', 'a staged file counts: the iteration exists once something in it is tracked');
 });
