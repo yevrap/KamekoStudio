@@ -55,7 +55,7 @@ A run stops early, writes the handoff and reports, on any of:
 
 - One branch per ticket, named `shs-NNN-short-slug`, cut from `main`.
 - Conventional commits scoped `studio`, with the ticket ID:
-  `feat(studio): SHS-003 add the path-guard check`.
+  `feat(studio): SHS-043 retire the SS- prefix`.
 - Merges to `main` use `--no-ff`, so each ticket is one visible merge bubble.
 - One annotated tag per iteration: `studio-iteration-NN`.
 - The whole studio history filters with `git log --grep "(studio)"` or `git log -- studio/`.

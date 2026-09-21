@@ -55,7 +55,12 @@ the boundary (042 and 043 for both prefixes). `git grep` for the old convention 
   single sequence, and a new *Naming* section. `templates/ticket.md` carries the
   executive's edit unchanged. New `decisions/ADR-0006-ticket-prefix.md`, indexed.
   `self-checks.md`'s `commit-lint` row, `public-repo-hygiene.md`'s example and one message
-  in `checks/docs.mjs` updated to the new prefix.
+  in `checks/docs.mjs` updated to the new prefix. **Fix round 1**, from the QA review: the
+  handbook's own example commit, `feat(studio): SHS-003 add the path-guard check`, was
+  rejected by the rule this ticket introduced — it came in with the executive's edit, and
+  the check for leftovers searched only for the *old* prefix. The example is now
+  `SHS-043`, and a new test reads every example commit subject in `docs/studio/*.md` and
+  lints it, so an example cannot contradict the rule again.
 
 - **Tested by:** seven new tests in `tests/studio/rules.test.mjs`, each on a boundary —
   `SS-042` and `SHS-043` pass; `SS-043`, `SS-100`, `SHS-042`, `SHS-001`, `SHS-000` fail
@@ -69,9 +74,11 @@ the boundary (042 and 043 for both prefixes). `git grep` for the old convention 
   names it as the retired range. `--stage=ticket` green; `--stage=gate --skip-slow`:
   `path-guard`, `storage-keys`, `portal-capacity`, `studio-boot` and `hygiene` pass, the
   rest fail for the expected reasons (uncommitted work, slow suites skipped, SS-042's
-  length, tickets not yet closed, no review yet).
+  length, tickets not yet closed, no review yet). Fix round 1: the example-subject test
+  fails on the old `SHS-003` line with *"process.md: feat(studio): SHS-003 add the
+  path-guard check"* and passes on the corrected one; `tests/studio/rules.test.mjs` 78/78.
 
 - **Deferred:** SS-042's over-length subject, opened as SHS-047. Branch names remain
   unchecked, as ADR-0006 says.
 
-- **Fix rounds used:** 0 / 2
+- **Fix rounds used:** 1 / 2

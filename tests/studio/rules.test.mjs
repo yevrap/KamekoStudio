@@ -776,3 +776,24 @@ test('neither helper throws on nonsense', () => {
   assert.deepEqual(moduleImports("import x from '::::'", 'https://host.test/a.js'),
     ['https://host.test/::::']);
 });
+
+// --- The handbook's own examples obey the rules they illustrate ----------------
+
+test('commit lint: every example commit subject in the handbook passes the lint', async () => {
+  // The prefix change left `SHS-003` in process.md — an example of the
+  // convention that the convention's own rule rejects. Examples are read from
+  // the documents, not copied here, so the next one is checked too.
+  const { readdirSync, readFileSync } = await import('node:fs');
+  const path = await import('node:path');
+  const { fileURLToPath } = await import('node:url');
+  const docs = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../docs/studio');
+  const example = /`((?:feat|fix|docs|test|refactor|chore|perf|style|build)\(studio\): [^`]+)`/g;
+  const found = [];
+  for (const name of readdirSync(docs).filter(f => f.endsWith('.md'))) {
+    for (const [, subject] of readFileSync(path.join(docs, name), 'utf8').matchAll(example)) {
+      if (/\b(SHS|SS)-\d{3}\b/.test(subject)) found.push({ name, subject });
+    }
+  }
+  assert.ok(found.length, 'no example commit subjects found — the pattern no longer matches the handbook');
+  for (const { name, subject } of found) assert.equal(lintCommitSubject(subject), null, `${name}: ${subject}`);
+});
