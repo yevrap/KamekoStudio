@@ -90,3 +90,22 @@ not reconstructed afterwards.
   `review.md`. *Next:* review round 2, briefed on the fix-round diff only.
 - **Scrum Master** — *Done:* no ticket is at its cap; each used 1 of 2. *Next:* round 2 is
   the last; if it rejects, the run stops and asks.
+
+## After review round 2 of 2 — the last
+
+- **Independent Reviewer** — *Done:* **rejected**, on one blocker: the direct check added
+  in round 1 ran in the start menu's state and never confirmed a spiral existed, so a fix
+  keyed to the menu was reported *fixed*. It verified a one-line correction. One minor, two
+  nits.
+- **QA Engineer** — *Done:* **failed** it, on the same gap, found separately — with two
+  routes the script did not try that still threw under that fix. Two minor findings and a
+  nit.
+- **Tech Lead** — *Done:* the final fix round on SHS-044 (2 of 2) and on SHS-043 (2 of 2).
+  Every round-2 finding fixed or declined with a reason in `review.md`. No round reviewed
+  the fixes: the cap is two.
+- **Scrum Master** — *Done:* stopped reviewing, and wrote down what a third round would
+  most likely find. The verdict of record is a rejection, so the run asks the executive
+  before publishing. Mid-run inputs — an automated process review, a hygiene audit in the
+  inbox, and answers to three open questions — were logged and triaged; the answers apply
+  from the next iteration, as they say. *Blocked:* on the executive's tie-break, after the
+  gate.

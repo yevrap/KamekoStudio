@@ -155,3 +155,47 @@ that are really decisions go to `decisions/` instead.
   raw" is indifferent to every construct the format has or will ever have, and it caught
   every one of the thirteen payloads that had beaten the previous designs. When a rule keeps
   losing, the question is not how to read better but how to depend on reading less.
+
+## Iteration 03
+
+- **A flaky test can be a deterministic defect sampled by a race.** TD-009 failed about one
+  suite run in three, so it was registered as a flaky test. The cause was in the game:
+  `stepParticles` moves spiral particles around `world.blackHole`, Explore's world reset
+  sets it to `null` and leaves the particles, and the start menu draws a golf hole with a
+  black hole behind itself. A player entering Explore with spirals alive hits it every
+  time; the test only when a particle happens to spawn in the few frames it waits. **Run
+  the player's path before calling a test flaky.**
+- **A check that says "fixed" has to test the defect, not a route to it.** The TD-009
+  reproduction was defeated twice by partial fixes: first because it tried the route it was
+  built from, then because the direct test added to close that ran in the start menu's
+  state — the very state a route-specific fix keys off — and never confirmed that a spiral
+  existed before removing the black hole. The direct test now runs in a golf round and
+  counts the spirals it spawned, by swapping in a black hole whose `x` counts its reads and
+  subtracting a no-particle baseline. **A clean result is only evidence if the check proved
+  its precondition first.**
+- **A script's own failure must not share an exit code with a verdict.** The first version
+  exited 1 — *present* — when a selector was missing.
+- **Games remember things between visits, so every browser trial gets its own profile.**
+  Black Hole in One draws the last mode played behind its menu; with one shared profile,
+  only the first trial of each batch had a golf hole behind it.
+- **A check that reads only what exists cannot see what is missing.** `docs-current` read
+  the ticket files that existed, so three tickets named by commits on `main` had no file
+  and the gate reported their iteration complete. Existence has to be decided from an
+  independent source — here, every commit subject in the history — and that part of the
+  rule reads no Markdown at all.
+- **When a convention changes, check for violations of the new rule, not leftovers of the
+  old spelling.** The search after the prefix change looked for `SS-NNN` and missed an
+  `SHS-003` example, which the new rule rejects, in the paragraph that states the rule. The
+  check is now a test that lints every example in the handbook.
+- **A commit already on the remote cannot be fixed; it can be waived by its hash.** A hash
+  is computed from the commit's content, subject included, so a waiver keyed by it names
+  one subject forever and cannot be claimed by copying. That is the difference from the
+  exemptions iteration 02 removed: nothing in it is something a commit says about itself.
+- **Say where a number was measured.** Two counts in a Result were taken on uncommitted
+  trees and did not say so, and a rate was stated from three runs. A number in the public
+  record names where it came from and is reproducible from the repository, or it is left
+  out.
+- **Agreement between reviewers on different models is stronger evidence than agreement
+  between two on the same one.** In iteration 02, two passes on the author's model found
+  the same defects — corroboration, or a shared blind spot. In round 2 here the reviewer, on
+  a different model, and QA, on the author's, found the same defect independently.
