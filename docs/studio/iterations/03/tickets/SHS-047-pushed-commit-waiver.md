@@ -52,12 +52,17 @@ real range, before and after.
   under a different hash, a seven-character prefix of the hash, the hash upper-cased, and
   no hash, all fail; a conforming commit and a merge are `ok`; every entry is a
   40-character lower-case hash with a reason naming a ticket. `tests/studio/rules.test.mjs`
-  69/69. `commit-lint` against the real range, `studio-iteration-02..HEAD`: before, *"1 of 5
-  commit(s): 5416876 subject is 81 characters"*; after, *"6 non-merge commit(s)
+  69/69. `commit-lint` against the real range, `studio-iteration-02..HEAD`, at two points
+  that were **uncommitted working trees**, not commits: before the waiver, run during
+  SHS-043 before its own commit, *"1 of 5 commit(s): 5416876 subject is 81 characters"*;
+  after, run on this ticket's branch before its commit, *"6 non-merge commit(s)
   conventional, 1 waived by hash: 5416876 waived — SS-042: subject is 81 characters…"*.
+  Re-measured at commits by the QA review — the parent of this ticket's merge gives "1 of
+  6", this ticket's commit "7 … 1 waived" — the same result one commit later each time,
+  because each count includes the commit that had not yet been made when it was taken.
   `--stage=gate --skip-slow` on this branch: `path-guard`, `storage-keys`,
   `portal-capacity`, `studio-boot`, `hygiene` and `commit-lint` pass.
 
 - **Deferred:** nothing.
 
-- **Fix rounds used:** 0 / 2
+- **Fix rounds used:** 1 / 2 — the record only: two counts, above, that did not say where they were taken
