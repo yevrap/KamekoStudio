@@ -106,5 +106,11 @@ exceptions, so the permission needs a rule the guard can enforce, not only a sen
     (1). Files restored after each.
   - `npm run studio:check -- --stage=ticket` green on this ticket: no entries yet, nothing
     admitted, 41 paths inside the guard.
+- **Fix round 1 — found by the author on SHS-052's deploy.** With the first real fix
+  admitted, `production-unchanged` reported *"nothing outside the guard changed in 8
+  commit(s)"* and then listed the two production files it had admitted — the sentence
+  contradicted the list under it. It now says *"the only changes outside the guard are the
+  N admitted below"* whenever it admitted anything, fix or exception. A test in
+  `production-fix.test.mjs` holds it.
 - **Deferred:** nothing.
-- **Fix rounds used:** 0 / 2
+- **Fix rounds used:** 1 / 2

@@ -87,7 +87,11 @@ async function evaluate(root, base, paths, { iteration, fixes = PRODUCTION_FIXES
     return { status: 'fail', detail: `outside the guard:\n  ${violations.join('\n  ')}` };
   }
   const summary = `${allowed.length} path(s) inside the guard`;
-  return { status: 'pass', detail: notes.length ? `${summary}\n  ${notes.join('\n  ')}` : summary };
+  return {
+    status: 'pass',
+    detail: notes.length ? `${summary}\n  ${notes.join('\n  ')}` : summary,
+    admitted: exceptions.length + fixed.length
+  };
 }
 
 export const pathGuard = {
@@ -125,7 +129,14 @@ export const productionUnchanged = {
     }
     const result = await evaluate(ctx.root, tag, committedPaths(ctx.root, tag), { iteration: ctx.iteration, fixes: ctx.productionFixes });
     return result.status === 'pass'
-      ? { status: 'pass', detail: `nothing outside the guard changed in ${commits} commit(s) since ${tag} (${result.detail})` }
+      ? {
+          status: 'pass',
+          // "Nothing outside the guard changed" is only true when nothing was
+          // admitted; a fix or an exception is a change outside it, reported as one.
+          detail: result.admitted
+            ? `in ${commits} commit(s) since ${tag}, the only changes outside the guard are the ${result.admitted} admitted below — ${result.detail}`
+            : `nothing outside the guard changed in ${commits} commit(s) since ${tag} (${result.detail})`
+        }
       : { status: 'fail', detail: `since ${tag}: ${result.detail}` };
   }
 };

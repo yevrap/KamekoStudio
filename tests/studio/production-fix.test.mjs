@@ -122,3 +122,12 @@ test('the check still refuses a production file no entry covers, next to an admi
   assert.match(guard.detail, /games\/g\/other\.js/);
   assert.doesNotMatch(guard.detail, /games\/g\/ui\.js \(/);
 });
+
+test('after a deploy, an admitted fix is reported as a change outside the guard, not as "nothing changed"', async t => {
+  const r = iterationRepo(t);
+  r.commit('fix(studio): SHS-052 the fix', [FIX.path]);
+  const deployed = await productionUnchanged.run({ root: r.root, iteration: '04', productionFixes: [FIX], previousTag: 'studio-iteration-03' });
+  assert.equal(deployed.status, 'pass', deployed.detail);
+  assert.doesNotMatch(deployed.detail, /nothing outside the guard changed/);
+  assert.match(deployed.detail, /the only changes outside the guard are the 1 admitted below/);
+});
