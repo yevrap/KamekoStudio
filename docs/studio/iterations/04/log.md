@@ -29,3 +29,23 @@ committed.
   first: every push this iteration runs the post-deploy stage, and TD-010 would make each
   of those report a correct deploy as a failure. The plan says so. *Next:* SHS-050's
   polling and baseline default. *Blocked:* nothing.
+- **QA Engineer** — *Done:* the plan's push was the first trunk-based deploy. Post-deploy
+  run 8 s after the push, with the old check: `studio-live` failed a correct deploy —
+  *"marker … not found … after 1 attempt(s)"* — TD-010 once more. The new build was
+  served 27 s after the push, and the same command then passed 3 of 3. *Next:* SHS-050.
+  *Blocked:* nothing.
+
+## After SHS-050 — checks every push can trust
+
+- **QA Engineer** — *Done:* `studio-live` searches afresh on every attempt; the baseline is
+  the newest tag that is not `HEAD`, and a comparison of no commits is `not run`. Each new
+  test was run against a mutation restoring the defect it covers, and each failed. On the
+  way, `--marker` values were found cut at their second `=`, and fixed. This ticket's push:
+  `--stage=push` 10 of 10 on its first run; `--stage=postdeploy` started the moment the
+  push returned, with `--marker-at` on the check file itself, found the new build on
+  attempt 3 of 12 with no waiting by hand — 3 of 3 passed. *Next:* SHS-051. *Blocked:*
+  nothing.
+- **Scrum Master** — *Done:* noticed that `no-stop-file` watches only the repository, while
+  a run is started from a directory outside it, where the executive's `STOP` file would go.
+  The checker cannot name that directory in a public repository. Checked by hand before
+  each push for now; the retrospective decides whether it needs more. *Next:* SHS-051.
