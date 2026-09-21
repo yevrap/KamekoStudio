@@ -102,7 +102,7 @@ returns a "no".
   request and **stubs** the inherited settings script, so nothing needs recognising and
   nothing can be impersonated, and the blocked-storage pass proves it was in that
   configuration rather than assuming it.
-- **Ten more mutations inside `studio/**`**, all found by the third review: a click no
+- **Nine more mutations inside `studio/**`** beyond the forged `sourceURL` above, all found by the third review: a click no
   longer leaving the keyboard dead, focus loss releasing a hold, the mute toggle, the state
   classes a bolt carries as it seats, the band at `stroke-width: 0` with its colour intact,
   the coupling lines and the torque readouts in `transparent`, a transposed coupling line,

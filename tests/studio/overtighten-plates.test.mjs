@@ -112,7 +112,10 @@ for (const plate of PLATES) {
 
   test(`${plate.id}: no bolt is coupled to more than it can gain`, () => {
     for (const { id, load } of couplingLoad(plate, coupling)) {
-      assert.ok(load < 1, `${plate.id}/${id} loses ${load} per unit gained: the plate cannot converge`);
+      // Not "cannot converge" — the bracket still converges at exactly 1.0.
+      // At this point a bolt gives its neighbours back everything one turn
+      // gained, which is the design limit the plates are authored against.
+      assert.ok(load < 1, `${plate.id}/${id} gives back ${load} of every unit gained: past the design limit`);
     }
   });
 

@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   INHERITED_SETTINGS, MIN_TARGET, NARROW_WIDTH, SHELF_BREAKPOINTS,
-  firstFrame, isInvisibleColour, judgeGeneric, judgeHome,
+  firstFrame, isInvisibleColour, judgeGeneric, judgeHome, judgeLockedPick, judgeStateInk,
   judgeKilledTreatment, judgeOvertighten, judgePage, pageErrors, sourceUrl
 } from './lib/boot-contract.mjs';
 
@@ -22,6 +22,8 @@ function goodGeneric(overrides = {}) {
     targets: [{ label: 'a "← Arcade"', width: 87, height: 44, laidOut: true, visible: true }],
     documentWidth: NARROW_WIDTH,
     viewportWidth: NARROW_WIDTH,
+    deviceWidth: NARROW_WIDTH,
+    layoutWidth: NARROW_WIDTH,
     mainText: 'Iteration 02',
     withoutScript: { present: true, text: 'This page builds its shelf in the browser, so it needs JavaScript.' },
     withoutStorage: { mainText: 'Iteration 02', errors: [], storageBlocked: true, inheritedStubbed: true },
@@ -102,6 +104,17 @@ test('a control the page is not offering at all is not a failure', () => {
   // never measured, never failed.
   const absent = { label: 'button "Next"', width: 0, height: 0, laidOut: false, visible: false };
   assert.deepEqual(judgeGeneric(goodGeneric({ targets: [absent] })), []);
+});
+
+test('a page that does not adopt the device width fails: it renders zoomed out', () => {
+  // The defect this catches is a missing viewport meta tag, and it is invisible
+  // to every other rule here — without the tag the page lays out at ~980px and
+  // is scaled down, so nothing overflows and every measurement agrees with
+  // itself.
+  const fail = judgeGeneric(goodGeneric({ layoutWidth: 980, viewportWidth: 980, documentWidth: 980 }));
+  assert.match(fail[0], /laid out at 980px on a 320px device/);
+  assert.match(fail[0], /missing a viewport meta tag/);
+  assert.deepEqual(judgeGeneric(goodGeneric()), []);
 });
 
 test('content wider than the viewport fails, and content exactly as wide does not', () => {
@@ -247,8 +260,20 @@ function playing(overrides = {}) {
       'head edge': { colour: 'rgb(205, 196, 180)' },
       'torque readout': { colour: 'rgb(91, 83, 72)' }
     },
+    stateInk: {
+      loose: { fill: 'rgb(91, 83, 72)', head: 'rgb(205, 196, 180)', shape: 'polygon(a)' },
+      seated: { fill: 'rgb(28, 107, 63)', head: 'rgb(28, 107, 63)', shape: 'polygon(a)' },
+      over: { fill: 'rgb(138, 75, 12)', head: 'rgb(138, 75, 12)', shape: 'polygon(a)' },
+      stripped: { fill: 'rgb(163, 48, 28)', head: 'rgb(163, 48, 28)', shape: 'polygon(b)' }
+    },
+    pickInk: {
+      open: { background: 'rgb(251, 249, 245)', borderStyle: 'solid', colour: 'rgb(15, 109, 122)' },
+      locked: { background: 'rgba(0, 0, 0, 0)', borderStyle: 'dashed', colour: 'rgb(91, 83, 72)' }
+    },
+    focusRing: { style: 'solid', width: '2px', colour: 'rgb(15, 109, 122)', visible: true },
     keyboardAfterPointer: true, releasedOnFocusLoss: true, stateClassesTrack: true,
-    benchOnScreenAfterPick: true,
+    benchOnScreenAfterPick: true, focusAfterLoad: true, pickerRefreshedOnClear: true,
+    outcomeExplained: true, advanceLabelled: true, couplingPerPlate: true,
     labels: { 'plate name': 'Hinge plate', 'plate hint': 'Two bolts, coupled.', 'status line': '2 of 2 still out' },
     controls: {
       'Start this plate again': true, 'plate picker': true,
@@ -271,6 +296,11 @@ test('each way the mechanic can stop running is reported as itself', () => {
     ['releasedOnFocusLoss', false, /the hold cannot be stopped/],
     ['stateClassesTrack', false, /kept its old state class/],
     ['benchOnScreenAfterPick', false, /nothing playable in view/],
+    ['focusAfterLoad', false, /dropped to the document/],
+    ['pickerRefreshedOnClear', false, /old lock state/],
+    ['outcomeExplained', false, /title and no explanation/],
+    ['advanceLabelled', false, /no label/],
+    ['couplingPerPlate', false, /not the tuning that runs/],
     ['keyboardTurned', false, /unplayable without a pointer/],
     ['pointerTurned', false, /holding the pointer on a bolt did not turn it/],
     ['couplingObserved', false, /the mechanic is not running/],
@@ -342,6 +372,50 @@ test('an invisible colour is recognised however it is written', () => {
   for (const value of ['rgb(0,0,0)', 'rgba(0,0,0,0.01)', '#fff', 'rgb(255 255 255 / 0.5)']) {
     assert.equal(isInvisibleColour(value), false, JSON.stringify(value));
   }
+});
+
+test('a bolt reached with Tab must have a ring somebody can see', () => {
+  const ring = over => ({ style: 'solid', width: '2px', colour: 'rgb(15,109,122)', visible: true, ...over });
+  assert.deepEqual(judgeOvertighten({ game: playing({ focusRing: ring() }) }), []);
+  assert.match(judgeOvertighten({ game: playing({ focusRing: null }) })[0], /not in the tab order/);
+  assert.match(judgeOvertighten({ game: playing({ focusRing: ring({ visible: false }) }) })[0], /never given a ring/);
+  for (const broken of [{ style: 'none' }, { width: '0px' }, { colour: 'transparent' }]) {
+    assert.match(judgeOvertighten({ game: playing({ focusRing: ring(broken) }) })[0], /cannot see which bolt/);
+  }
+});
+
+test('the four bolt states must be told apart, and none may be invisible', () => {
+  // Read from a fixture because a live plate is all-loose, so three of the four
+  // treatments were observed by nothing and deleting every one of them passed.
+  const ink = over => ({
+    loose: { fill: 'rgb(91,83,72)', head: 'rgb(205,196,180)', shape: 'a' },
+    seated: { fill: 'rgb(28,107,63)', head: 'rgb(28,107,63)', shape: 'a' },
+    over: { fill: 'rgb(138,75,12)', head: 'rgb(138,75,12)', shape: 'a' },
+    stripped: { fill: 'rgb(163,48,28)', head: 'rgb(163,48,28)', shape: 'b' },
+    ...over
+  });
+  assert.deepEqual(judgeStateInk(ink()), []);
+  // Every state stroked the same: the defect, which is what deleting the three
+  // state rules actually does.
+  const flat = { fill: 'rgb(91,83,72)', head: 'rgb(205,196,180)', shape: 'a' };
+  const fail = judgeStateInk({ loose: flat, seated: flat, over: flat, stripped: flat });
+  assert.equal(fail.length, 3);
+  assert.match(fail[0], /looks exactly like a loose one/);
+  // A single state made invisible is named on its own.
+  assert.match(judgeStateInk(ink({ over: { fill: 'transparent', head: 'x', shape: 'a' } }))[0], /over bolt's gauge is drawn in transparent/);
+  assert.match(judgeStateInk(null)[0], /never read/);
+  assert.match(judgeStateInk({ loose: flat })[0], /seated bolt was never rendered/);
+});
+
+test('a locked plate must look locked', () => {
+  const open = { background: 'rgb(251,249,245)', borderStyle: 'solid', colour: 'rgb(15,109,122)' };
+  const locked = { background: 'rgba(0,0,0,0)', borderStyle: 'dashed', colour: 'rgb(91,83,72)' };
+  assert.deepEqual(judgeLockedPick({ open, locked }), []);
+  // One difference is enough; identical in all three is the defect.
+  assert.deepEqual(judgeLockedPick({ open, locked: { ...open, colour: 'rgb(1,2,3)' } }), []);
+  assert.match(judgeLockedPick({ open, locked: { ...open } })[0], /drawn exactly like an open one/);
+  assert.match(judgeLockedPick(null)[0], /never read/);
+  assert.match(judgeLockedPick({ open })[0], /no open and locked pair/);
 });
 
 test('a dead control and an empty label are each named', () => {

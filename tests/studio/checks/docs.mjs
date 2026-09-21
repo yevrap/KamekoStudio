@@ -66,9 +66,15 @@ export const docsCurrent = {
         // against the rest of its own line.
         const changed = evidenceFor(text, 'What changed');
         const tested = evidenceFor(text, 'Tested by');
-        if (!changed) problems.push(`${f}: Done with no "What changed" evidence`);
-        if (!tested) problems.push(`${f}: Done with no "Tested by" evidence`);
-        const unchecked = (text.match(/^\s*-\s+\[ \]/gm) || []).length;
+        if (changed.length < MIN_EVIDENCE) {
+          problems.push(`${f}: Done with no "What changed" evidence${changed ? ` (only ${JSON.stringify(changed)})` : ''}`);
+        }
+        if (tested.length < MIN_EVIDENCE) {
+          problems.push(`${f}: Done with no "Tested by" evidence${tested ? ` (only ${JSON.stringify(tested)})` : ''}`);
+        }
+        // `[\s\u00a0]` rather than a literal space: `- [ ]` with a non-breaking
+        // space renders as an unticked box and counted as zero.
+        const unchecked = (text.match(/^[ \t]*-[ \t]+\[[\s\u00a0]\]/gm) || []).length;
         if (unchecked) problems.push(`${f}: Done with ${unchecked} unticked acceptance criterion/criteria`);
       }
     }
@@ -107,11 +113,20 @@ export const STATUSES = ['Ready', 'In progress', 'Blocked', 'Done', "Won't do"];
  *    below it.
  */
 function resultSection(text) {
-  const withoutFences = text.replace(/^```[\s\S]*?^```/gm, '');
+  const withoutFences = text
+    // Any fence, not only backticks: a `~~~` block after the real Result became
+    // the last `## Result` and supplied the evidence. Same finding as the
+    // backtick one, a round later, with a different character in it.
+    .replace(/^(```|~~~)[\s\S]*?^\1/gm, '')
+    // And an HTML comment, which renders as nothing at all.
+    .replace(/<!--[\s\S]*?-->/g, '');
   const headings = [...withoutFences.matchAll(/^##+[ \t]+Result[ \t]*$/gm)];
   if (!headings.length) return '';
   return withoutFences.slice(headings[headings.length - 1].index);
 }
+
+/** Evidence shorter than this is a placeholder, not a record. */
+const MIN_EVIDENCE = 12;
 
 /**
  * What a ticket records under one Result label: the rest of its own line, plus

@@ -40,6 +40,11 @@
   evidence match read the next label as the answer. Two failures of the same kind stacked:
   a criterion ticked without evidence, and a check that could not tell.
 
+- **The record has been wrong in three consecutive rounds**, each time in a document
+  written to correct the previous round's record. The worst case was a ticket claiming
+  "both are true now" about a line that did not exist. Remembering what another document
+  says is not knowing it.
+
 ## Changes, already made
 
 1. **An exemption ships with its attacks, in the same commit.** Not "is tested" — the tests
@@ -67,6 +72,16 @@
 9. **A number in a Result is evidence.** Three were wrong, two of them in the ticket whose
    whole subject was a claim written before it was checked. Read it off the thing, at the
    time, or leave it out.
+10. **A claim about another document is checked against that document, in the same edit.**
+    Four rounds, three of them with a false statement in the record, every one of which
+    would have been caught by opening the file it described.
+11. **A ticket may not tick a criterion it cannot satisfy.** The verdict line belongs to
+    the reviewer and to `reviewer-verdict`; a ticket claiming it was claiming someone
+    else's work.
+12. **A rule needs an observation, and an observation needs the configuration where it can
+    fail.** The mobile rules ran on a desktop; the state-colour rule read the one state a
+    fresh plate is in; the scroll rule used a programmatic click, which does not scroll.
+    Each was a correct rule fed input that could not falsify it.
 
 ## The shape of this iteration's failures
 
@@ -96,6 +111,8 @@ is change 1 above — make it a step with an artifact, not a thing to remember.
 
 ## Reserved capacity
 
-Used, and then some. SS-020 was the planned debt share and closed TD-004; SS-024, SS-025 and
-SS-026 were all opened by the reviews. Planned work was roughly a third of the iteration;
-finding out what was wrong with it was the rest — the same ratio as iteration 01.
+Used, and then some. SS-020 was the planned debt share and closed TD-004. Everything from
+SS-024 onwards — SS-024, SS-025, SS-026, SS-027, SS-028, SS-029, SS-030, SS-031 — was
+opened by a review. Two committed tickets became ten. Planned work was well under a fifth
+of the iteration and finding out what was wrong with it was the rest, which is a sharper
+version of the same ratio as iteration 01.

@@ -9,6 +9,13 @@ lib/shell.mjs          git, filesystem and network plumbing
 lib/browser.mjs        a static server and headless Chrome, for `studio-boot`
 rules.test.mjs         unit tests for lib/rules.mjs
 boot-contract.test.mjs unit tests for lib/boot-contract.mjs — no browser needed
+docs-evidence.test.mjs unit tests for the Result-evidence rule in checks/docs.mjs
+home-page.test.mjs     the realm home's shelf component, every rendered state
+pulse-current.test.mjs the pulse and retro lines against the repository's own record
+path-guard.test.mjs    the path guard against the repository, not through the pure rule
+overtighten-gameplay.test.mjs  the torque rules and the progress rules
+overtighten-plates.test.mjs    every shipped plate: reachable, and what clears it
+overtighten-ui.test.mjs        the game's markup, including the coupling lines
 ```
 
 `lib/browser.mjs` stands up its own static server rather than calling into

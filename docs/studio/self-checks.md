@@ -53,7 +53,7 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 | `hygiene` | No secrets, personal identifiers, private paths, note-vault syntax or oversized files in studio-owned paths, or in the paths the studio may touch by exception |
 | `full-suites` | `npm test`, `npm run smoke` and `npm run e2e` are green — production included |
 | `commit-lint` | Every studio commit is conventional, scoped `studio`, and names a ticket. Merge commits are exempt by having more than one parent, not by their subject line |
-| `docs-current` | Every ticket in the iteration has a file, a status and evidence. Evidence is read with `evidenceFor`, which stops at the next label — the first version's `\s*(.*)` matched a newline and returned the following line, so an entirely unfilled Result section passed with one label "answered" by the next |
+| `docs-current` | Every ticket in the iteration has a file, a status from a **closed vocabulary**, and evidence under both `What changed` and `Tested by`. Evidence is read from the **last** `## Result` section with fences and HTML comments stripped, and stops at the next label. Each of those is a hole a review found: `\s*(.*)` matched a newline so one label answered for the next; an unvalidated status let `Done ✅` skip every check below it; and a fenced or commented block placed after the real Result became the last one and supplied its evidence |
 | `reviewer-verdict` | The Independent Reviewer's verdict is recorded in the iteration's review |
 | `studio-live` | The deployed studio URL returns 200 and serves the new build |
 | `production-live` | A production game page still returns 200 after the deploy |
@@ -84,7 +84,11 @@ what the page says about itself.
 So there is **no error filter in this check**. The two things that needed excusing are
 *changed* instead, in `openPage`: the blocked-storage pass serves an empty script in place
 of production's settings drawer, and every pass answers the browser's favicon request so
-there is no 404 to explain. Nothing is recognised, so nothing can be impersonated. The
+there is no 404 to explain. Both are decided by exact path, before the page runs, and
+neither looks at an error — so no error can be dressed up as one that would be excused.
+(The favicon rule was first written as a *suffix* match, which answered
+`studio/anything/favicon.ico` too and would have hidden a real 404. That was the fourth
+instance of the same mistake, in the code written to end it.) The
 claim the blocked-storage pass supports is narrower and true: *studio code* survives blocked
 storage, and it now also proves it was in that configuration rather than assuming it.
 TD-005 remains recorded as production's defect.
@@ -101,11 +105,26 @@ Worth stating, because three review passes each found mutations it survived and 
 honest position is a bounded one rather than "nothing is left".
 
 It covers what it collects. Everything asserted above is collected from a real page; a
-property nobody collects is a property nobody checks. It has no screenshots beyond one
-bolt's before/after comparison, no layout regression, and no audio observation — `sfx.js`
-is exercised only by being imported. Adding a rule here means adding an **observation**
-first; a rule over an observation the driver never took is the failure mode this check has
-had in every round so far.
+property nobody collects is a property nobody checks. Adding a rule here means adding an
+**observation** first — a rule over an observation the driver never took is the failure
+mode this check has had in every round.
+
+Known gaps, registered as TD-008 rather than only described here:
+
+- **No audio is observed.** `sfx.js` is exercised by being imported and by the mute
+  toggle's label and `aria-pressed` flipping. Inverting the toggle so the button reads
+  "Sound off" while sound keeps playing is not caught.
+- **No layout or visual regression.** The only pixels compared are one bolt's, before and
+  during a turn. A page can be laid out badly and pass.
+- **One plate is played.** The driver clears the first plate; the all-plates-cleared ending
+  is never reached, so a mutation that hides it is not caught.
+- **The realm home is not driven**, only rendered and measured. It has no controls beyond
+  its links.
+
+The mobile viewport *was* a gap and is no longer one: the driver emulates a phone
+(`isMobile`, touch, 320px), which is what makes `<meta name="viewport">` load-bearing.
+Before that, every mobile assertion here was measured in a desktop window, where that tag
+does nothing.
 
 ## Network-dependent checks
 

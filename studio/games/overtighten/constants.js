@@ -17,8 +17,11 @@ export const TURN_RATE = 42;
  * How much of what you add to a bolt is taken off each of its neighbours.
  *
  * The one number the whole game turns on. Below about 0.15 the coupling stops
- * mattering and the game is a reaction test; at or above `1 / degree` a bolt
- * loses torque at least as fast as it gains it and its plate stops converging.
+ * mattering and the game is a reaction test; at `1 / degree` a bolt gives back
+ * to its neighbours everything a single turn gains, which is the point past
+ * which the plate stops behaving as designed. It does not stop being solvable —
+ * the bracket still converges at 1.0 — so this is a design limit, not a
+ * mathematical one, and `couplingLoad` enforces it as such.
  *
  * A plate may lower it — see `bracket`, whose hub has four neighbours and would
  * sit at exactly 1.0 on this value. It may not raise it: a plate that needed a
