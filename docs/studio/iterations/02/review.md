@@ -53,7 +53,12 @@ from the bypasses the reviews demonstrated.
 ### The design hypothesis is false
 
 Recorded in full in SS-026. In short: the test defending it could not fail, and the thing it
-was defending is not true. 142 of the 146 orderings across the three plates clear with a
+was defending is not true. It has since been confirmed **three times by three methods that
+share no code** — closed-form back-substitution, a human driving the real interface, and a
+brute-force grid search over hold amounts and orders that assumes no targeting rule at all.
+The third one finds solutions aiming at the *bottom* of each band rather than the middle,
+which is what makes the result structural rather than an artefact of how the first two
+aimed. 142 of the 146 orderings across the three plates clear with a
 single hold per bolt; blind round-robin clears every plate in at most three passes. There is
 no ordering to discover.
 

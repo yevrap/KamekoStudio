@@ -69,8 +69,27 @@ bracket in 5, through the real interface, one of them keyboard-only.
   `studio/README.md` now describe the game as what it is.
 
 - **Tested by:** 28 tests in the plate file, all green. The measurement above was taken
-  twice by different code — once by QA driving the real interface, once by exhaustive
-  enumeration over all 146 orderings in the model.
+  **three times, by three methods that share no code**:
+
+  | Method | Result |
+  |---|---|
+  | Closed-form back-substitution over all 146 orderings | 142 clear with one hold per bolt |
+  | QA driving the real interface, by hand | hinge 2 holds, face 4, bracket 5 |
+  | A brute-force grid search over hold *amounts* and every bolt order, driving the shipped `turn()` | agrees on all three plates |
+
+  The grid search is the strongest of the three, because it does not assume the targeting
+  rule the other two use. It found solutions aiming at the **bottom** of each band rather
+  than the middle — `hinge: a+57.5, b+46.0`; `face: a+74.5, b+61, c+59, d+52`;
+  `bracket: hub+74.5, n+46, e+46, s+46, w+52` — and every one of them was re-run against
+  the shipped model here and lands every bolt inside its band:
+
+  ```
+  hinge    SOLVED  a=46.00 b=46.00
+  face     SOLVED  a=46.25 b=46.25 c=46.00 d=52.00
+  bracket  SOLVED  hub=40.30 n=46.00 e=46.00 s=46.00 w=52.00
+  ```
+
+  So the hypothesis does not fail on a particular choice of target. It fails structurally.
 
 - **Why nothing was re-tuned:** any strategy that always moves a bolt to the middle of its
   band converges, because turning only ever *adds* to the bolt being turned and coupling
