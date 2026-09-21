@@ -13,9 +13,9 @@
  * iterations ship past it.
  */
 export const PULSE = {
-  iteration: '03',
+  iteration: '04',
   shipped: '2026-09-21',
-  summary: 'A maintenance iteration: tickets get a prefix chosen by reading it, a flaky production test gets a root cause and a specified fix, and the gate stops accepting a ticket that has no file.'
+  summary: 'In progress, and visible as it goes: the studio makes its first fix to a production game, under a written permission its own checks enforce, and every push is now checked before and after it lands.'
 };
 
 /**
