@@ -81,8 +81,9 @@ with the precondition removed; no run reproduces. The path guard at the ticket s
   particles when Explore starts → *unclear*, 2; stopping spirals while a menu shows and
   clearing them whenever one opens (the round-2 reviewers' decoy) → *unclear*, 2;
   removing spirals altogether → *unclear, could not be tested*, 2; the Explore button
-  renamed → *broken*, 4. The three routes and decoys new in round 2 are the reviewers'
-  own patches, applied from their scratch trees. How the cause was found, before the script
+  renamed → *broken*, 4. The three decoys new in round 2 are QA's own patches, applied
+  from its scratch trees; the Independent Reviewer's decoy has the same shape as the
+  second-to-last of them. How the cause was found, before the script
   existed: the flaky flow in isolation threw 0/15 times with New Map clicked straight after
   the shot and 2/24 with delays of 100–2500 ms, always from `stepParticles`, never from New
   Map's code; starting Explore after 60 frames with the menu hidden, with no shot and no
