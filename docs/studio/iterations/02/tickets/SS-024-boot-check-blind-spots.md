@@ -22,7 +22,7 @@ and that the check survived.
       a missing origin, an unparseable frame, or any other file.
 - [x] `firstFrame` returns the first frame that names a URL, scanned in order — not the
       first parenthesised one found anywhere in the stack.
-- [x] All five classifiers are unit-tested, including every bypass the reviews built. This
+- [x] All four error helpers are unit-tested, including every bypass the reviews built. This
       is the criterion SS-020 claimed and did not meet.
 - [x] A control that is laid out but invisible **fails** the contract instead of being
       excluded from it. A control that is `display: none` or `[hidden]` is still not a
@@ -51,8 +51,8 @@ Each bypass re-applied to a clean tree, `studio-boot` run, the message recorded,
 - **What changed:**
   - `tests/studio/lib/boot-contract.mjs` — `sourceUrl` (new), `firstFrame` rewritten to scan
     in order, `isInheritedSettingsThrow` anchored to origin + `INHERITED_SETTINGS` and
-    failing closed, `isBrowserInitiated` matching the URL path rather than any text.
-    Hidden-but-laid-out controls fail. Killed-card treatment asserted absolutely and by
+    failing closed, `isBrowserInitiated` matching the URL path rather than any text (both later deleted
+    outright — see SS-027 and SS-030). Hidden-but-laid-out controls fail. Killed-card treatment asserted absolutely and by
     difference. Four new game rules: errors, plate visibility, gauge liveness, pointer
     release, persistence.
   - `tests/studio/checks/boot.mjs` — visibility measured with `checkVisibility` so an

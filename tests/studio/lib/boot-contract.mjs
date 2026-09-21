@@ -152,7 +152,11 @@ export function judgeGeneric(obs = {}) {
   if (!back || !back.present) {
     fail.push('no back link: leaving the page is a hunt');
   } else {
-    if (!back.href) fail.push('the back link has no href');
+    // A non-empty href is not a destination: `#` satisfied it while going
+    // nowhere, under a rule whose own message is "leaving the page is a hunt".
+    if (!back.href || back.href === '#') {
+      fail.push(`the back link goes nowhere (href="${back.href}"): leaving the page is still a hunt`);
+    }
     if (back.height < MIN_TARGET) {
       fail.push(`the back link is ${back.height}px tall, under the ${MIN_TARGET}px floor`);
     }
@@ -423,6 +427,18 @@ export function judgeOvertighten(obs = {}) {
   // and then drive the pointer, which is the one order in which deleting the
   // handler's focus() call cannot be noticed — and that deletion is the SS-025
   // defect, restorable in one line.
+  if (!game.survivesSecondRelease) {
+    fail.push('releasing one of two inputs ended a turn the other was still making');
+  }
+  // Sixty writes a second to an aria-live region is a screen reader being
+  // spoken over by itself for the length of every hold. A handful of changes
+  // during a second of turning is the expected shape.
+  if (!Number.isFinite(game.statusChurn)) {
+    fail.push('the status line\'s churn was never measured');
+  } else if (game.statusChurn > 12) {
+    fail.push(`the status line was rewritten ${game.statusChurn} times during a one-second hold:`
+      + ' it is an aria-live region and this speaks over itself');
+  }
   if (!game.keyboardAfterPointer) {
     fail.push('holding a key did nothing after the pointer was used: a click leaves the keyboard dead');
   }

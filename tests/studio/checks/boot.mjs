@@ -516,6 +516,13 @@ async function observeOvertighten(browser, url) {
   // A bolt must change state class as it crosses into its band.
   const stateClassesTrack = await proveStateClasses(page, boltIds[0]);
 
+  // Two behaviours SS-025 fixed in the game and nothing ever checked: a turn
+  // must survive one of two inputs letting go, and the status line must not
+  // rewrite itself on every frame. Both were counted as covered when they were
+  // only ever reproduced by hand.
+  const survivesSecondRelease = await proveSecondReleaseKeepsTurning(page, boltIds[0]);
+  const statusChurn = await measureStatusChurn(page, boltIds[0]);
+
   // Where focus lands after a plate is loaded. `showBench` scrolls *and*
   // focuses, and only the scroll half was asserted — so dropping `focus: true`
   // from all three call sites, which leaves a keyboard player on a hidden button
@@ -562,6 +569,8 @@ async function observeOvertighten(browser, url) {
       pointerTurned: afterPointer[boltIds[1]] > 0,
       releasedPointer: afterPointerSettled[boltIds[1]] === afterPointer[boltIds[1]],
       couplingObserved: afterPointer[boltIds[0]] < afterKey[boltIds[0]],
+      survivesSecondRelease,
+      statusChurn,
       keyboardAfterPointer,
       releasedOnFocusLoss,
       stateClassesTrack,
@@ -668,6 +677,69 @@ async function proveStateClasses(page, boltId) {
   await page.evaluate(() => document.getElementById('restart')?.click());
   await settle(200);
   return before.includes('is-loose') && states(after).length === 1 && !after.includes('is-loose');
+}
+
+/**
+ * Hold a bolt with two inputs, let one go, and it must keep turning.
+ *
+ * A bolt is held by a set of causes precisely so that tapping Enter while Space
+ * is down, or lifting a second finger, does not end a turn the other input is
+ * still making. Deleting the size check restores that defect in one line, and
+ * nothing here noticed — the behaviour had only ever been reproduced by hand.
+ */
+async function proveSecondReleaseKeepsTurning(page, boltId) {
+  await page.evaluate(() => document.getElementById('restart')?.click());
+  await settle(200);
+  const read = () => page.evaluate(
+    id => Number.parseFloat(document.querySelector(`[data-readout="${id}"]`)?.textContent) || 0, boltId);
+  await page.focus(`[data-bolt="${boltId}"]`);
+  await page.keyboard.down(' ');
+  await settle(250);
+  // A second input joins the same bolt, then leaves it.
+  await page.keyboard.down('Enter');
+  await settle(80);
+  await page.keyboard.up('Enter');
+  await settle(60);
+  const atSecondRelease = await read();
+  await settle(400);
+  const later = await read();
+  await page.keyboard.up(' ');
+  await settle(80);
+  await page.evaluate(() => document.getElementById('restart')?.click());
+  await settle(150);
+  return later > atSecondRelease;
+}
+
+/**
+ * How many times the status line is rewritten during a one-second hold.
+ *
+ * It is an `aria-live` region and `paint()` runs every frame, so assigning it
+ * unconditionally re-stuffs a screen reader's polite queue about sixty times a
+ * second. The fix was to assign only on change; nothing checked that it stayed
+ * fixed.
+ */
+async function measureStatusChurn(page, boltId) {
+  await page.evaluate(() => document.getElementById('restart')?.click());
+  await settle(200);
+  await page.evaluate(() => {
+    window.__statusWrites = 0;
+    const node = document.getElementById('status');
+    if (!node) return;
+    new MutationObserver(list => { window.__statusWrites += list.length; })
+      .observe(node, { childList: true, characterData: true, subtree: true });
+  });
+  const box = await page.$eval(`[data-bolt="${boltId}"]`, el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  await page.mouse.move(box.x, box.y);
+  await page.mouse.down();
+  await settle(1000);
+  await page.mouse.up();
+  const writes = await page.evaluate(() => window.__statusWrites ?? 0);
+  await page.evaluate(() => document.getElementById('restart')?.click());
+  await settle(150);
+  return writes;
 }
 
 /**
@@ -944,7 +1016,16 @@ async function run(ctx) {
           .filter(card => !card.killed)
           .map(card => ({
             ...card,
-            reachable: card.href ? pages.some(p => card.href.replace(site.origin, '') === '/' + p.replace(/index\.html$/, '')) : false
+            // A page the check booted **and not the shelf's own page**. The
+            // first version accepted any booted page, so pointing a card at
+            // `./` made the only game unreachable and passed — the defect the
+            // rule was written for, one substitution over.
+            reachable: card.href
+              ? pages.some(p => {
+                const target = '/' + p.replace(/index\.html$/, '');
+                return card.href.replace(site.origin, '') === target && target !== '/studio/';
+              })
+              : false
           }));
         Object.assign(obs, home);
       }
