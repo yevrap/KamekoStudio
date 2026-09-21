@@ -114,7 +114,7 @@ async function main() {
   if (opts.list) {
     for (const stage of stages) {
       console.log(`\n${stage}`);
-      for (const c of checksForStage(stage)) console.log(`  ${c.id.padEnd(22)} ${c.description}`);
+      for (const c of checksForStage(stage)) console.log(`  ${c.id.padEnd(24)} ${c.description}`);
     }
     return 0;
   }
@@ -182,7 +182,7 @@ function report(ctx, stages, results) {
     console.log(stage);
     for (const r of results.filter(x => x.stage === stage)) {
       const timing = r.reused ? '(reused)' : `${r.ms}ms`;
-      console.log(`  ${ICON[r.status]} ${r.id.padEnd(22)} ${WORD[r.status].padEnd(8)} ${timing}`);
+      console.log(`  ${ICON[r.status]} ${r.id.padEnd(24)} ${WORD[r.status].padEnd(8)} ${timing}`);
       if (r.detail) console.log(`      ${r.detail.split('\n').join('\n      ')}`);
     }
     console.log('');

@@ -54,7 +54,7 @@ async function ticketIdsIn(root, iteration) {
  * `--no-merges` used to drop both, and a change made inside a merge went through
  * with no subject checked at all.
  */
-function commitsTouching(root, base, file, releaseTag) {
+export function commitsTouching(root, base, file, releaseTag) {
   const log = git(root, 'log', '--format=%H%x1f%s', `${base}..HEAD`, '--', file);
   if (!log) return [];
   return log.split('\n').map(line => {

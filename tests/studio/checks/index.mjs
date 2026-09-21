@@ -14,6 +14,7 @@ import { commitLint } from './commit-lint.mjs';
 import { iterationDocs, docsCurrent, reviewerVerdict, changelog, docCleanliness } from './docs.mjs';
 import { studioLive, productionLive } from './deploy.mjs';
 import { studioBoot } from './boot.mjs';
+import { productionFixReviewed } from './production-review.mjs';
 
 export const CHECKS = [
   treeClean,
@@ -28,6 +29,7 @@ export const CHECKS = [
   hygiene,
   fullSuites,
   commitLint,
+  productionFixReviewed,
   docsCurrent,
   reviewerVerdict,
   studioLive,

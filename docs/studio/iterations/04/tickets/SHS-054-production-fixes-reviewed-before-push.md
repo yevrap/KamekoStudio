@@ -1,6 +1,6 @@
 # SHS-054 — A production fix is independently reviewed before it is pushed, and the push stage refuses one that was not
 
-- **Status:** In progress
+- **Status:** Done
 - **Size:** M
 - **Iteration:** 04
 - **Role lead:** Tech Lead / Architect
@@ -20,13 +20,13 @@ forget.
 
 ## Acceptance criteria
 
-- [ ] A production fix is the one exception to "push when a ticket is done": its commits
+- [x] A production fix is the one exception to "push when a ticket is done": its commits
       are pushed only after an independent review (fresh context, a different model from
       the author) has passed them. `process.md`, ADR-0007 and ADR-0008 say so.
-- [ ] The review is recorded in `iterations/NN/reviews/<TICKET>.md`, which names the full
+- [x] The review is recorded in `iterations/NN/reviews/<TICKET>.md`, which names the full
       hash of the commit it reviewed on exactly one `**Reviewed:**` line and gives exactly
       one `**Verdict:**` line.
-- [ ] A new check, `production-fix-reviewed`, in the `push` and `gate` stages, fails
+- [x] A new check, `production-fix-reviewed`, in the `push` and `gate` stages, fails
       unless, for every ticket whose production files changed since the previous release:
       - the record exists;
       - its verdict begins with `APPROVED`;
@@ -35,11 +35,11 @@ forget.
         the reviewed commit.**
 
       A fix changed after it was reviewed is refused until it is reviewed again.
-- [ ] ADR-0008 says plainly what this proves and what it cannot. The record is written by
+- [x] ADR-0008 says plainly what this proves and what it cannot. The record is written by
       the studio, so the check makes the review impossible to forget, not impossible to
       fake. Only a signal from outside the repository could do the second, and that is the
       executive's call.
-- [ ] Tests cover the rule, pure and against a scratch repository: a missing record, a
+- [x] Tests cover the rule, pure and against a scratch repository: a missing record, a
       missing or doubled `Reviewed` line, a short hash, a rejected verdict, a record that
       predates the fix, a fix changed after its review, and the admitted case.
 
@@ -59,9 +59,44 @@ to SHS-052's files is refused until a review covers it.
 
 ## Result
 
-*Filled in as the ticket is worked. Empty until then.*
-
 - **What changed:**
+  - `tests/studio/lib/rules.mjs` — `productionReviewProblem`. It reads a review record raw:
+    exactly one `**Reviewed:**` line with a full 40-character hash, exactly one
+    `**Verdict:**` line beginning `APPROVED`, and a first line naming the ticket. Then every
+    commit that changed the ticket's production files must be contained in the reviewed
+    commit.
+  - `tests/studio/checks/production-review.mjs` — the `production-fix-reviewed` check, in
+    `push` and `gate`. It also refuses a reviewed commit that is not in `HEAD`'s history.
+    `commitsTouching` is exported from `path-guard.mjs` so both use the same commit list.
+  - `docs/studio/iterations/04/reviews/SHS-052.md` — the first record. It is written from
+    review round 1's reports and says so, because SHS-052 went live before this rule
+    existed.
+  - Docs:
+    - ADR-0008 (item 4, and *Reviewed before it is pushed*);
+    - ADR-0007 (the exception to push-when-done);
+    - `process.md`, `guardrails.md`, `self-checks.md` (both stage rows and the check's
+      row), `definition-of-done.md`.
+  - `check.mjs` — the report's id column is two characters wider, for this check's name.
 - **Tested by:**
-- **Deferred:**
+  - `production-fix.test.mjs` +4. The pure rule against nine malformed or insufficient
+    records, including a verdict hidden in a comment, which counts as a second declaration.
+    Then, in a scratch repository, the whole cycle:
+    - no record, refused;
+    - a record from before the fix, refused;
+    - a record of the fix's own commit, admitted;
+    - the fix changed again, refused.
+
+    Also: a record naming a commit that exists nowhere, and one on another branch that
+    contains the fix, both refused. And no production fix in range means nothing to
+    review.
+  - Three mutations in this working tree:
+    - skipping the coverage loop failed 2 tests;
+    - accepting any verdict failed 1;
+    - skipping the history check failed none at first, because the only test for it used
+      a hash that exists nowhere, which the coverage check refuses first. The test now
+      also uses a real commit on another branch, and the mutation fails it.
+  - This ticket's own push: `push` 11 of 11, with the check admitting SHS-052 as reviewed
+    at `7b8a0fe`. Results in `log.md`.
+- **Deferred:** an approval from outside the repository, the only thing that would make the
+  review impossible to fake. It is offered to the executive as a choice.
 - **Fix rounds used:** 0 / 2

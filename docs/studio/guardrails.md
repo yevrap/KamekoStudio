@@ -79,7 +79,9 @@ entry is a violation, exactly as before.
 **What this proves is that a production write was planned and recorded, not that the plan
 was legitimate.** Everything the guard reads, its own rules included, is written by the
 studio. The control against a wrong or fabricated fix is an independent review *before* it
-is pushed; see ADR-0008.
+is pushed, recorded in `iterations/NN/reviews/<TICKET>.md` against the commit it saw.
+`production-fix-reviewed` refuses a push, or the gate, while any change to a fix's files
+is outside the reviewed commit. See ADR-0008.
 
 The list has one home, `PRODUCTION_FIXES` itself, unlike the exceptions above: an entry is
 a fact about one ticket, and the ticket is where its reasons are written. An entry for the

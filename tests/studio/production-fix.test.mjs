@@ -8,9 +8,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  PRODUCTION_FIXES, classifyPaths, productionFixProblem, productionFixEntryProblems
+  PRODUCTION_FIXES, classifyPaths, productionFixProblem, productionFixEntryProblems, productionReviewProblem
 } from './lib/rules.mjs';
 import { pathGuard, productionUnchanged } from './checks/path-guard.mjs';
+import { productionFixReviewed } from './checks/production-review.mjs';
 import { scratchRepo } from './lib/scratch-repo.mjs';
 
 const FIX = { path: 'games/g/ui.js', ticket: 'SHS-052', iteration: '04' };
@@ -201,4 +202,84 @@ test('an admitted fix is reported with its line counts, and with any uncommitted
   const guard = await pathGuard.run({ root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [FIX] });
   assert.equal(guard.status, 'pass', guard.detail);
   assert.match(guard.detail, /SHS-052, 1 commit\(s\) and uncommitted changes, \+2 −0/);
+});
+
+// ── SHS-054: a production fix is reviewed before it is pushed ────────────────
+
+const record = (ticket, sha, verdict = 'APPROVED') =>
+  `# ${ticket} — pre-push review\n\n- **Reviewed:** ${sha}\n- **Verdict:** ${verdict}\n`;
+const always = () => true;
+
+test('a review record is read strictly: one hash, one approving verdict, the right ticket', () => {
+  const sha = 'a'.repeat(40);
+  assert.equal(productionReviewProblem('SHS-052', { text: record('SHS-052', sha), commits: [], contains: always }), null);
+  assert.match(productionReviewProblem('SHS-052', { text: null, contains: always }), /no pre-push review record/);
+  assert.match(productionReviewProblem('SHS-052', { text: record('SHS-051', sha), contains: always }), /should begin/);
+  assert.match(productionReviewProblem('SHS-052', { text: record('SHS-052', 'abc1234'), contains: always }), /full 40-character/);
+  assert.match(productionReviewProblem('SHS-052', { text: record('SHS-052', sha) + `- **Reviewed:** ${'b'.repeat(40)}\n`, contains: always }), /2 times/);
+  assert.match(productionReviewProblem('SHS-052', { text: record('SHS-052', sha, 'REJECTED'), contains: always }), /not an approval/);
+  assert.match(productionReviewProblem('SHS-052', { text: record('SHS-052', sha, 'APPROVEDISH'), contains: always }), /not an approval/);
+  assert.match(productionReviewProblem('SHS-052', { text: record('SHS-052', sha) + '<!-- - **Verdict:** REJECTED -->\n', contains: always }), /2 times/);
+  assert.equal(productionReviewProblem('SHS-052', { text: record('SHS-052', sha, 'APPROVED WITH FINDINGS'), contains: always }), null);
+  assert.match(productionReviewProblem('SHS-052', { text: record('SHS-052', sha), commits: ['c'.repeat(40)], contains: () => false }), /review it again/);
+});
+
+test('the push is refused until a review covering the fix\'s latest commit is recorded', async t => {
+  const r = iterationRepo(t);
+  const fixSha = r.commit('fix(studio): SHS-052 the fix', [FIX.path]);
+  const ctx = { root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [FIX] };
+  const RECORD = 'docs/studio/iterations/04/reviews/SHS-052.md';
+
+  const none = await productionFixReviewed.run(ctx);
+  assert.equal(none.status, 'fail', none.detail);
+  assert.match(none.detail, /no pre-push review record/);
+
+  // A review recorded before the fix existed does not cover it.
+  const before = r.git('rev-parse', 'studio-iteration-03');
+  r.write(RECORD, record('SHS-052', before));
+  r.git('add', '--all'); r.git('commit', '--quiet', '-m', 'docs(studio): SHS-054 a stale review');
+  const stale = await productionFixReviewed.run(ctx);
+  assert.equal(stale.status, 'fail', stale.detail);
+  assert.match(stale.detail, /review it again/);
+
+  // A review of the fix's own commit covers it.
+  r.write(RECORD, record('SHS-052', fixSha));
+  r.git('add', '--all'); r.git('commit', '--quiet', '-m', 'docs(studio): SHS-054 the review');
+  const covered = await productionFixReviewed.run(ctx);
+  assert.equal(covered.status, 'pass', covered.detail);
+  assert.match(covered.detail, /SHS-052: reviewed at/);
+
+  // Changed again after the review: refused until it is reviewed again.
+  r.commit('fix(studio): SHS-052 a later change', [FIX.path]);
+  const changed = await productionFixReviewed.run(ctx);
+  assert.equal(changed.status, 'fail', changed.detail);
+  assert.match(changed.detail, /review it again/);
+});
+
+test('a review naming a commit this branch does not have is refused, even one that contains the fix', async t => {
+  const r = iterationRepo(t);
+  r.commit('fix(studio): SHS-052 the fix', [FIX.path]);
+  const ctx = { root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [FIX] };
+  const RECORD = 'docs/studio/iterations/04/reviews/SHS-052.md';
+  // A commit that exists nowhere.
+  r.write(RECORD, record('SHS-052', 'f'.repeat(40)));
+  r.git('add', '--all'); r.git('commit', '--quiet', '-m', 'docs(studio): SHS-054 a review of nothing');
+  assert.equal((await productionFixReviewed.run(ctx)).status, 'fail');
+  // A real commit on another branch, which does contain the fix — reviewed there,
+  // never brought here. "Contains the fix" alone would accept it.
+  r.git('checkout', '--quiet', '-b', 'elsewhere');
+  const elsewhere = r.commit('docs(studio): SHS-053 elsewhere', ['docs/studio/elsewhere.md']);
+  r.git('checkout', '--quiet', 'main');
+  r.write(RECORD, record('SHS-052', elsewhere));
+  r.git('add', '--all'); r.git('commit', '--quiet', '-m', 'docs(studio): SHS-054 a review of another branch');
+  const result = await productionFixReviewed.run(ctx);
+  assert.equal(result.status, 'fail', result.detail);
+  assert.match(result.detail, /not in HEAD's history/);
+});
+
+test('with no production fix in range, there is nothing to review', async t => {
+  const r = iterationRepo(t);
+  r.commit('docs(studio): SHS-053 docs only');
+  const result = await productionFixReviewed.run({ root: r.root, base: 'studio-iteration-03', iteration: '04', productionFixes: [FIX] });
+  assert.equal(result.status, 'pass', result.detail);
 });

@@ -64,6 +64,10 @@ is testing and how its retrospective judges it.
 - When a ticket is done: `--stage=push` green — the gate's checks short of the review ones,
   the full repository suite included — then push, then `--stage=postdeploy` with a
   `--marker` only the new build has. Pages deploys every push, so every push is a release.
+- **A production fix waits for review.** Its commits stay local until an independent review
+  has passed them and `iterations/NN/reviews/<TICKET>.md` names the commit it saw; the
+  `push` stage refuses the push otherwise, and again whenever the fix changes after its
+  review ([ADR-0008](decisions/ADR-0008-production-fixes.md)).
 - Ceremony records — the plan, each stand-up entry, the review, the retrospective — are
   pushed as soon as they are committed, through the same `push` stage, so work in flight is
   visible on the remote while it happens rather than all at once at the end.

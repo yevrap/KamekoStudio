@@ -34,7 +34,10 @@ From iteration 04, as a trial:
 3. **Push when a ticket is done**, not once per iteration: the `push` stage green — the
    gate's checks short of the review ones, the full repository suite included, so a
    gate-only check fails on the ticket responsible — then push, then the post-deploy
-   checks. Small, frequent deploys, each verified. Ceremony records — the plan, stand-up
+   checks. Small, frequent deploys, each verified. **The one exception is a production
+   fix**, which is pushed only after an independent review has passed the commit it is
+   pushed at (ADR-0008): a production change players can see is not reviewed after it is
+   live. Ceremony records — the plan, stand-up
    entries, the review, the retrospective — are pushed the same way as soon as they are
    committed: the executive asked that work in flight be visible on the remote while it
    happens.

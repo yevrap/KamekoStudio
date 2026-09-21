@@ -33,9 +33,10 @@ permission has to be something the guard can check.
    file, naming the ticket and the iteration.
 3. **Is proved** by a regression test that fails without the fix and passes with it,
    shown on the ticket.
-4. **Passes everything a studio change passes**: the whole repository suite before the
-   push, the iteration's two-round independent review, the gate, and the post-deploy
-   checks — with a marker proving the fixed file is the one being served.
+4. **Is independently reviewed before it is pushed**, and then passes everything a studio
+   change passes: the whole repository suite before the push, the iteration's review
+   rounds, the gate, and the post-deploy checks — with a marker proving the fixed file is
+   the one being served. See *Reviewed before it is pushed*, below.
 5. **Is written up** on its ticket, in the changelog, in the debt register when it closes
    a row, and in the retrospective.
 
@@ -78,6 +79,28 @@ review before the fix is pushed**, below. The studio records that review too, so
 check that enforces it makes the review impossible to *forget*, not impossible to *fake*.
 Making it impossible to fake would take a signal from outside the repository, such as an
 approval the executive gives on the hosting platform. That choice is the executive's.
+
+### Reviewed before it is pushed
+
+Under trunk-based work a finished ticket is pushed at once, and so is live at once
+(ADR-0007). For a production fix that put a change players see live before any
+independent review had seen it. The first fix, SHS-052, went out that way. So **a
+production fix is the one exception to "push when a ticket is done"**:
+
+- its commits are committed and stay local until an independent review has passed them —
+  fresh context, and a different model from the author for at least one pass;
+- the review is recorded in `iterations/NN/reviews/<TICKET>.md`, naming the full hash of
+  the commit it saw on one `**Reviewed:**` line and its verdict on one `**Verdict:**` line;
+- `production-fix-reviewed`, in the `push` and `gate` stages, refuses the push unless:
+  - the verdict begins with `APPROVED`;
+  - the reviewed commit is in `HEAD`'s history;
+  - **every commit that changed one of the ticket's production files is contained in the
+    reviewed commit**.
+
+  A fix changed after its review is refused until it is reviewed again.
+
+The check makes the review impossible to forget. It cannot make it impossible to fake,
+for the reason given above.
 
 **What counts as a fix:**
 
