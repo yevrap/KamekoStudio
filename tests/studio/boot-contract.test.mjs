@@ -19,7 +19,7 @@ import {
 function goodGeneric(overrides = {}) {
   return {
     errors: [],
-    backLink: { present: true, href: '../', width: 87, height: 44 },
+    backLink: { present: true, href: '../', width: 87, height: 44, samePage: false, fragmentOnly: false },
     targets: [{ label: 'a "← Arcade"', width: 87, height: 44, laidOut: true, visible: true }],
     documentWidth: NARROW_WIDTH,
     clientWidth: NARROW_WIDTH,
@@ -71,9 +71,12 @@ test('a page with no errors at all is the only page that passes the error rule',
 
 test('a missing back link fails, and so does one that is too small or has no href', () => {
   assert.match(judgeGeneric(goodGeneric({ backLink: { present: false } }))[0], /no back link/);
-  assert.match(judgeGeneric(goodGeneric({ backLink: { present: true, href: '', height: 44 } }))[0], /goes nowhere/);
   assert.match(
-    judgeGeneric(goodGeneric({ backLink: { present: true, href: '../', height: 26 } }))[0],
+    judgeGeneric(goodGeneric({ backLink: { present: true, href: '', height: 44, fragmentOnly: true, samePage: false } }))[0],
+    /goes nowhere/
+  );
+  assert.match(
+    judgeGeneric(goodGeneric({ backLink: { present: true, href: '../', height: 26, samePage: false, fragmentOnly: false } }))[0],
     /26px tall, under the 44px floor/
   );
 });
@@ -367,17 +370,33 @@ test('an error thrown while the game is being played counts against it', () => {
   assert.match(judgeOvertighten({ game: playing({ errors: undefined }) })[0], /no errors were collected/);
 });
 
-test('an aria-live region rewritten on every frame fails', () => {
-  assert.deepEqual(judgeOvertighten({ game: playing({ statusChurn: 0 }) }), []);
+test('an aria-live region must change while a bolt seats — and only a little', () => {
+  assert.deepEqual(judgeOvertighten({ game: playing({ statusChurn: 1 }) }), []);
   assert.deepEqual(judgeOvertighten({ game: playing({ statusChurn: 12 }) }), []);
   assert.match(judgeOvertighten({ game: playing({ statusChurn: 62 }) })[0], /rewritten 62 times/);
+  // The rule had a ceiling and no floor, so freezing the line passed — the
+  // opposite defect, and worse for the reader it is there to serve.
+  assert.match(judgeOvertighten({ game: playing({ statusChurn: 0 }) })[0], /it is frozen/);
   assert.match(judgeOvertighten({ game: playing({ statusChurn: undefined }) })[0], /never measured/);
 });
 
-test('a back link must go somewhere, not merely have an href', () => {
+test('a back link must go somewhere, judged on where it resolves', () => {
+  // Four spellings of the same defect. A rule over the raw attribute rejected
+  // the first and accepted the rest.
+  const link = over => ({ present: true, href: '../', height: 44, width: 80, samePage: false, fragmentOnly: false, ...over });
+  assert.deepEqual(judgeGeneric(goodGeneric({ backLink: link() })), []);
+  for (const broken of [
+    { href: '#', fragmentOnly: true },
+    { href: '#top', fragmentOnly: true },
+    { href: ' ', fragmentOnly: true },
+    { href: './', samePage: true }
+  ]) {
+    assert.match(judgeGeneric(goodGeneric({ backLink: link(broken) }))[0], /goes nowhere/, broken.href);
+  }
+  // And an observation that was never taken is not a pass.
   assert.match(
-    judgeGeneric(goodGeneric({ backLink: { present: true, href: '#', height: 44, width: 80 } }))[0],
-    /goes nowhere/
+    judgeGeneric(goodGeneric({ backLink: { present: true, href: '../', height: 44, width: 80 } }))[0],
+    /never resolved/
   );
 });
 
@@ -450,12 +469,27 @@ test('the four bolt states must be told apart, and none may be invisible', () =>
   // state rules actually does.
   const flat = { fill: 'rgb(91,83,72)', head: 'rgb(205,196,180)', shape: 'a' };
   const fail = judgeStateInk({ loose: flat, seated: flat, over: flat, stripped: flat });
-  assert.equal(fail.length, 3);
-  assert.match(fail[0], /looks exactly like a loose one/);
+  assert.match(fail.join('\n'), /looks exactly like a loose one/);
+  assert.match(fail.join('\n'), /the arc stops reporting what the bolt is/);
   // A single state made invisible is named on its own.
   assert.match(judgeStateInk(ink({ over: { fill: 'transparent', head: 'x', shape: 'a' } }))[0], /over bolt's gauge is drawn in transparent/);
   assert.match(judgeStateInk(null)[0], /never read/);
   assert.match(judgeStateInk({ loose: flat })[0], /seated bolt was never rendered/);
+});
+
+test('the torque arc alone must tell the four states apart', () => {
+  // A composite fingerprint of fill, head and shape was satisfied by the 1px
+  // head border, so the 8px arc — the thing the player reads — could be one
+  // colour in all four states and pass.
+  const headOnly = {
+    loose: { fill: 'rgb(91,83,72)', head: 'rgb(1,1,1)', shape: 'a' },
+    seated: { fill: 'rgb(91,83,72)', head: 'rgb(2,2,2)', shape: 'a' },
+    over: { fill: 'rgb(91,83,72)', head: 'rgb(3,3,3)', shape: 'a' },
+    stripped: { fill: 'rgb(91,83,72)', head: 'rgb(4,4,4)', shape: 'b' }
+  };
+  const fail = judgeStateInk(headOnly);
+  assert.equal(fail.length, 3, 'three states share the loose arc colour');
+  assert.match(fail[0], /gauge is the same colour as a loose one/);
 });
 
 test('a locked plate must look locked', () => {

@@ -160,3 +160,29 @@ Both ran with fresh context and neither saw the other's report.
   had themselves gone stale against source SS-025 rewrote and were fixed rather than
   trusted. *Reflection:* the number was arithmetically right and false about its predicate,
   which is the same defect as a check measuring in a configuration where nothing can fail.
+
+## After the seventh review — rejected
+
+- **Independent Reviewer** — *Verdict:* **REJECTED.** Six rounds hardened how evidence is
+  read; the **status word** that gates every one of those checks was still matched against
+  the raw file, so a hidden line forged it and skipped all of them — demonstrated on this
+  iteration's own SS-033. The back-link and status-churn rules added the round before were
+  each satisfied by the defect they named. Four count statements false, and round six was
+  never narrated in `review.md` at all.
+- **QA Engineer** — *Done:* SS-034. The status and the criteria count are now read from the
+  text a reader sees, through the same stripping as the evidence; the back link is judged on
+  where it **resolves**; the churn rule has a floor as well as a ceiling; the torque arc must
+  tell the four states apart on its own. *Next:* nothing outstanding.
+- **Technical Writer** — *Done:* rounds six and seven narrated, every count corrected, the
+  `self-checks.md` rows that described superseded rules rewritten.
+  *Reflection:* the missing round-six section was not a separate defect from the stale
+  counts — it **was** the cause. A narrative with a hole in it keeps producing wrong numbers.
+
+### One thing this round got right by accident
+
+The new state-ink rule failed against the real page on its first run. The cause was a 120ms
+stroke transition: a computed colour read immediately after a class change is still the
+previous state's, so all four states read as loose. The rule was right and the observation
+was taken at the wrong moment — the same error as measuring in a configuration where
+nothing can fail, at the scale of a single frame. Caught by the check's own baseline before
+it could be written up as evidence.

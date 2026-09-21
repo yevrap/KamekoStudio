@@ -152,10 +152,15 @@ export function judgeGeneric(obs = {}) {
   if (!back || !back.present) {
     fail.push('no back link: leaving the page is a hunt');
   } else {
-    // A non-empty href is not a destination: `#` satisfied it while going
-    // nowhere, under a rule whose own message is "leaving the page is a hunt".
-    if (!back.href || back.href === '#') {
-      fail.push(`the back link goes nowhere (href="${back.href}"): leaving the page is still a hunt`);
+    // Judged on where the link *resolves*, not on what it says. A rule over the
+    // raw attribute rejected `#` and accepted `#top`, `./` and a blank — three
+    // more spellings of a back link that leaves you where you are, under a rule
+    // whose own message is "leaving the page is a hunt".
+    if (back.fragmentOnly || back.samePage) {
+      fail.push(`the back link goes nowhere (href="${back.href}" resolves to this page):`
+        + ' leaving the page is still a hunt');
+    } else if (back.samePage === undefined) {
+      fail.push('the back link was never resolved, so nothing knows where it goes');
     }
     if (back.height < MIN_TARGET) {
       fail.push(`the back link is ${back.height}px tall, under the ${MIN_TARGET}px floor`);
@@ -436,8 +441,13 @@ export function judgeOvertighten(obs = {}) {
   if (!Number.isFinite(game.statusChurn)) {
     fail.push('the status line\'s churn was never measured');
   } else if (game.statusChurn > 12) {
-    fail.push(`the status line was rewritten ${game.statusChurn} times during a one-second hold:`
+    fail.push(`the status line was rewritten ${game.statusChurn} times while a bolt was seating:`
       + ' it is an aria-live region and this speaks over itself');
+  } else if (game.statusChurn === 0) {
+    // The opposite defect, and the rule had no floor: freezing the line on the
+    // plate's opening sentence gave zero writes and passed, leaving a sighted
+    // player a stale count and a screen-reader player no progress at all.
+    fail.push('the status line never changed while a bolt crossed into its band: it is frozen');
   }
   if (!game.keyboardAfterPointer) {
     fail.push('holding a key did nothing after the pointer was used: a click leaves the keyboard dead');
@@ -493,6 +503,11 @@ export function judgeOvertighten(obs = {}) {
  * them passed. The stylesheet's own header says amber means past the band and
  * red means a ruined thread; this is that promise, checked.
  */
+/** "a loose bolt", "an over bolt" — the message reads as a sentence either way. */
+function article(word) {
+  return /^[aeiou]/i.test(String(word)) ? 'an' : 'a';
+}
+
 export function judgeStateInk(ink) {
   if (!ink) return ['the bolt\'s state treatments were never read'];
   const states = ['loose', 'seated', 'over', 'stripped'];
@@ -503,11 +518,27 @@ export function judgeStateInk(ink) {
       fail.push(`a ${state} bolt's gauge is drawn in ${ink[state].fill || 'nothing'}`);
     }
   }
+  // The torque arc on its own, first. A composite fingerprint of
+  // fill+head+shape was satisfied by the 1px head border alone, so the 8px arc
+  // — the thing the player actually reads — could be one colour in all four
+  // states while the rule passed and its message still said otherwise.
+  const byFill = new Map();
+  for (const state of states) {
+    const fill = ink[state].fill;
+    if (byFill.has(fill)) {
+      fail.push(`a ${state} bolt's gauge is the same colour as a ${byFill.get(fill)} one (${fill}):`
+        + ' the arc stops reporting what the bolt is');
+    } else {
+      byFill.set(fill, state);
+    }
+  }
+
   const seen = new Map();
   for (const state of states) {
     const key = `${ink[state].fill}|${ink[state].head}|${ink[state].shape}`;
     if (seen.has(key)) {
-      fail.push(`a ${state} bolt looks exactly like a ${seen.get(key)} one: the gauge stops reporting what it is`);
+      fail.push(`${article(state)} ${state} bolt looks exactly like ${article(seen.get(key))} ${seen.get(key)} one:`
+        + ' the gauge stops reporting what it is');
     } else {
       seen.set(key, state);
     }

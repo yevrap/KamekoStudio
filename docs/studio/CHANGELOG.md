@@ -76,7 +76,7 @@ returns a "no".
   that moves a bolt to the middle of its band converges whatever the numbers. The assertions
   now state what is true and are named so a redesign inverts them.
 
-### Also fixed, after five rounds of review
+### Also fixed, after seven rounds of review
 
 - **The boot check's exemption was removed rather than tightened.** Anchoring it to an
   origin and an exact path was still wrong: a stack frame's URL is minted by the script
@@ -135,7 +135,7 @@ returns a "no".
   one the game passes to `turn()`; the plate element carries the coupling it is being played
   at, and every plate is compared against the model.
 - **`docs-current` accepted an evidence-free Done ticket in eight different ways**, found
-  across four rounds and closed one round at a time: a label answered by the label below it;
+  across five rounds and closed one round at a time: a label answered by the label below it;
   an unvalidated status word (`Done ✅`, `Shipped`); a backtick-fenced example elsewhere in
   the file; an earlier draft Result answering for the final one; a `~~~` fence; an HTML
   comment; a fence indented by one to three spaces, which CommonMark still renders as a code
