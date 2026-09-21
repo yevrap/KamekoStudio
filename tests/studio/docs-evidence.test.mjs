@@ -9,7 +9,9 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { STATUSES, evidenceFor, hasResultSection, statusOf, untickedCriteria } from './checks/docs.mjs';
+import {
+  STATUSES, evidenceFor, hasResultSection, statusLineCount, statusOf, untickedCriteria
+} from './checks/docs.mjs';
 
 const EMPTY_TEMPLATE = [
   '## Result',
@@ -227,4 +229,26 @@ test('an unticked criterion counts whichever bullet it uses', () => {
   // And a criterion hidden in a fence is not a criterion.
   assert.equal(untickedCriteria('```\n- [ ] hidden\n```'), 0);
   assert.equal(untickedCriteria(''), 0);
+});
+
+test('a ticket declares its status exactly once', () => {
+  // The general form of a defect found three times — a status hidden above the
+  // real one in an HTML comment, then a fenced block, then a raw <script>
+  // block, each forging a status outside the vocabulary so that every evidence
+  // and criteria check below was skipped. Stripping known hiding places is a
+  // game of spellings; counting declarations ends it.
+  assert.equal(statusLineCount('- **Status:** Done'), 1);
+  assert.equal(statusLineCount("<!--\n- **Status:** Blocked\n-->\n\n- **Status:** Done"), 2);
+  assert.equal(statusLineCount("<script>\n- **Status:** Blocked\n</script>\n\n- **Status:** Done"), 2);
+  assert.equal(statusLineCount("```\n- **Status:** Blocked\n```\n\n- **Status:** Done"), 2);
+  assert.equal(statusLineCount('nothing here'), 0);
+  assert.equal(statusLineCount(''), 0);
+});
+
+test('an unticked criterion counts as an ordered task item too', () => {
+  // GFM renders `1. [ ]` as an empty box exactly as `- [ ]` does, and rewriting
+  // six criteria that way counted zero.
+  assert.equal(untickedCriteria('1. [ ] a\n2. [ ] b\n3) [ ] c'), 3);
+  assert.equal(untickedCriteria('1. [x] a\n2. [x] b'), 0);
+  assert.equal(untickedCriteria('  1. [ ] indented'), 1);
 });

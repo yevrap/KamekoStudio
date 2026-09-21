@@ -42,7 +42,7 @@
   evidence match read the next label as the answer. Two failures of the same kind stacked:
   a criterion ticked without evidence, and a check that could not tell.
 
-- **The record has been wrong in six consecutive rounds**, each time in a document
+- **The record has been wrong in seven consecutive rounds**, each time in a document
   written to correct the previous round's record. The worst case was a ticket claiming
   "both are true now" about a line that did not exist. Remembering what another document
   says is not knowing it.
@@ -75,7 +75,7 @@
    whole subject was a claim written before it was checked. Read it off the thing, at the
    time, or leave it out.
 10. **A claim about another document is checked against that document, in the same edit.**
-    Seven rounds, six of them with a false statement in the record, every one of which
+    Eight rounds, seven of them with a false statement in the record, every one of which
     would have been caught by opening the file it described.
 11. **A ticket may not tick a criterion it cannot satisfy.** The verdict line belongs to
     the reviewer and to `reviewer-verdict`; a ticket claiming it was claiming someone
@@ -94,13 +94,18 @@
     was counted had no rule behind it, and some failed at a different stage. A number is
     a claim about *what was measured, where* — and it is checked by re-running the
     measurement, not by re-adding the column.
-15. **Two documents asserting a guarantee is not two pieces of evidence for it.** The
+15. **Write the rule about the thing, not about the spelling.** Three rules in one round
+    were each satisfied by the defect they named, because each was written to exclude the
+    instance in front of the author. Compare pages rather than hrefs, colours rather than
+    strings, declarations rather than hiding places. A rule that can only be stated as a
+    list of forms is unfinished, and the next form is already waiting.
+16. **Two documents asserting a guarantee is not two pieces of evidence for it.** The
     sideways-scroll claim survived in `self-checks.md` and the changelog for a whole round
     after the thing proving it had stopped working.
 
 ## The shape of this iteration's failures
 
-Seven rounds of independent review, and the same shape each time: **the team checked the thing it had
+Eight rounds of independent review, and the same shape each time: **the team checked the thing it had
 built, in the configuration where it works.** The exemption was tested against paths
 because paths were what it had been written to handle. The shelf's empty state was tested
 through a fixture because the fixture was what had been built. The Result sections were
@@ -127,7 +132,7 @@ is change 1 above — make it a step with an artifact, not a thing to remember.
 ## Reserved capacity
 
 Used, and then some. SS-020 was the planned debt share and closed TD-004. Everything from
-SS-024 onwards — SS-024, SS-025, SS-026, SS-027, SS-028, SS-029, SS-030, SS-031, SS-032,
-SS-034 — was opened by a review. Two committed tickets became fourteen. Planned work was well under a fifth
+SS-024 onwards — SS-024 through SS-035, twelve tickets — was opened by a review. Two
+committed tickets became fifteen. Planned work was well under a fifth
 of the iteration and finding out what was wrong with it was the rest, which is a sharper
 version of the same ratio as iteration 01.

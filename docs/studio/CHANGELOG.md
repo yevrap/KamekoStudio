@@ -76,7 +76,7 @@ returns a "no".
   that moves a bolt to the middle of its band converges whatever the numbers. The assertions
   now state what is true and are named so a redesign inverts them.
 
-### Also fixed, after seven rounds of review
+### Also fixed, after eight rounds of review
 
 - **The boot check's exemption was removed rather than tightened.** Anchoring it to an
   origin and an exact path was still wrong: a stack frame's URL is minted by the script
@@ -134,18 +134,32 @@ returns a "no".
   coupling and the bracket does, but nothing connected the value the unit tests check to the
   one the game passes to `turn()`; the plate element carries the coupling it is being played
   at, and every plate is compared against the model.
-- **`docs-current` accepted an evidence-free Done ticket in eight different ways**, found
-  across five rounds and closed one round at a time: a label answered by the label below it;
+- **`docs-current` accepted an evidence-free Done ticket in twelve different ways**, found
+  across seven rounds and closed one round at a time — and the last fix is the only one that
+  generalises. The routes: a label answered by the label below it;
   an unvalidated status word (`Done ✅`, `Shipped`); a backtick-fenced example elsewhere in
   the file; an earlier draft Result answering for the final one; a `~~~` fence; an HTML
   comment; a fence indented by one to three spaces, which CommonMark still renders as a code
   block; and finally the fallback inside the fix itself — when the heading pattern missed,
   on `## Result (final)` or a lowercase `## result` or no heading at all, evidence was taken
-  from the raw file with nothing stripped. It now fails closed: a Done ticket with no Result
-  section is a failure, and an unclosed fence hides everything after it, as it does when
-  rendered.
+  from the raw file with nothing stripped. Then three more in the **status word**, which
+  gates every one of those checks and was itself read from raw text: forged in an HTML
+  comment, in a fenced block, and in a raw `<script>` block. And two in the criteria count:
+  `*`/`+` bullets, then ordered `1. [ ]` items, both of which render as empty boxes.
+
+  It now fails closed, and the status rule is the general one: **a ticket declares its
+  status exactly once**, counted in the raw file, so it is indifferent to how a second
+  declaration was hidden. A Done ticket with no Result section is a failure; an unclosed
+  fence or comment hides everything after it, as it does when rendered.
 - **The favicon is answered by exact path**, not by suffix: a suffix match answered
   `studio/anything/favicon.ico` too, and would have hidden a real 404.
+- **Three rules written to close defects were each satisfied by the defect they named**, and
+  the fixes are what the learning log now calls writing the rule about the thing rather than
+  about the spelling: the back link is compared after normalising `index.html` away, so the
+  *page* is compared and not the text; the four bolt-state colours are compared **as
+  colours against an absolute gap**, after four greys one unit apart passed a test of string
+  difference; and the status-churn rule gained a floor as well as a ceiling, after freezing
+  the live region turned out to pass.
 
 ### Debt
 

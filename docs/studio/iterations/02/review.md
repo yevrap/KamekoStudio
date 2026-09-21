@@ -18,6 +18,7 @@
 | SS-032 | Three width rules for three causes; the fence, indented | opened by the **fifth** review |
 | SS-033 | Rules for four defects that had none; `docs-current` fails closed | opened by the **sixth** review |
 | SS-034 | The status word; two rules satisfied by the defect they named | opened by the **seventh** review |
+| SS-035 | Three more of the same; rules that generalise instead of spelling | opened by the **eighth** review |
 
 Live: <https://yevrap.github.io/KamekoStudio/studio/> · <https://yevrap.github.io/KamekoStudio/studio/games/overtighten/>
 
@@ -186,6 +187,79 @@ SS-028 — the ticket whose subject was record truth — wrote "**Both are true 
 it. The line did not exist. The criterion has been removed rather than re-explained: a
 ticket cannot tick a line the reviewer writes.
 
+## The eighth review — every rule written last round was satisfied by its own defect
+
+Three for three, and it is the clearest statement of the iteration's deepest habit.
+
+- The **back link** was judged on `to.pathname === location.pathname`. The driver serves
+  pages in directory form, so `href="index.html"` — the same page, spelled explicitly — is
+  a different string. `./` had only ever been caught by accident of that URL form.
+- The **state-ink** rule required the four arc colours to be different *strings*. Four greys
+  one unit of blue apart satisfied it and report nothing to a player. This project's own
+  learning log says **"a difference test needs an absolute alongside it"**, about the killed
+  card, one round before this rule was written without one.
+- **Unticked criteria** counted `-`, `*` and `+`. GFM renders `1. [ ]` as an empty box too,
+  and six criteria rewritten that way counted zero.
+
+And `docs-current` was defeated a third time in the same place: a raw `<script>` block
+hides its contents from a reader exactly as a comment and a fence do, forging a `Status`
+outside the vocabulary and skipping every check below it.
+
+**The fix stopped being a list of spellings.** A ticket must now declare its status exactly
+once, counted in the raw file — whatever the next hiding place turns out to be. The back
+link is compared after normalising `index.html` away, so the page is compared rather than
+the text. Colours are compared as colours against an absolute gap. Each of those is a rule
+about the *thing*, where its predecessor was a rule about one way of writing the thing.
+
+### What the eighth review credited
+
+The pure/driver split and the new exports as genuinely unit-tested. `withoutHiddenText`'s
+unclosed-fence handling as correct and failing closed. `resultSection` returning null as
+the right shape. The status-churn floor as "a real rule over a real observation". The
+state-fixture transition fix, and SS-034's honesty about the rule failing on its own
+baseline first, as "the best moment in the iteration". Hygiene clean across 122 files.
+
+## The fifth review — rejected, and on what
+
+Rejected, and the reviewer was explicit that it was **not** for the existence of further
+mutations: it found six more and declined to reject on them, because `self-checks.md` and
+TD-008 disclose that surface as unbounded. It rejected on four claims that outran the truth.
+
+### The ticket that ended the signature failure committed it
+
+SS-031 made the driver emulate a phone. Under `isMobile`, Chrome grows the *layout*
+viewport to fit overflowing content — so `window.innerWidth` tracks `scrollWidth`, and the
+sideways-scroll rule became a comparison of a number against itself. It could no longer
+fail. Two documents went on asserting "no sideways scroll at 320px", and the rule that
+replaced it blamed a missing viewport meta tag on a page whose tag was present and correct.
+
+A correct rule fed input that cannot falsify it, introduced by the ticket written to end
+exactly that, and not noticed. There are now three measurements and three rules: does the
+page *ask* for the device width, did content *force* the layout viewport wider, and does it
+*scroll* sideways inside its own layout — the last against `clientWidth`, which does not
+move with the overflow.
+
+### The fence, a fourth time
+
+Backticks were closed in round three, `~~~` and HTML comments in round four, and a fence
+indented by one to three spaces — still a code block in CommonMark — passed a ticket with
+an empty Result in round five.
+
+### The record, a fourth consecutive time
+
+Six statements still said three reviews and 38 mutations. The changelog recorded none of
+the fourth round at all, including TD-008 — the row that is the basis of the iteration's
+own claim to be honest about its gaps.
+
+### What the fifth review credited
+
+The viewport claim itself is real and was verified on both pages. Emulation weakened
+nothing else: the 44px floor, the invisible-control rule and the focus ring were each
+re-demonstrated failing under it. Every plate claim exact, re-derived independently for the
+third time by a third reviewer. No error filter remaining, the favicon answered by exact
+path, the blocked-storage pass proving its own configuration. The declined focus-ring
+finding judged honest. Public-repo hygiene clean across 119 files.
+
 ## The sixth review — rejected on a count that added up
 
 The count was arithmetically perfect and false about what it measured.
@@ -238,47 +312,6 @@ sets, no false entry found in the per-set table. The shelf-card rule unevadable.
 second-release rule sound. Gate green on everything substantive, hygiene clean across 121
 files.
 
-## The fifth review — rejected, and on what
-
-Rejected, and the reviewer was explicit that it was **not** for the existence of further
-mutations: it found six more and declined to reject on them, because `self-checks.md` and
-TD-008 disclose that surface as unbounded. It rejected on four claims that outran the truth.
-
-### The ticket that ended the signature failure committed it
-
-SS-031 made the driver emulate a phone. Under `isMobile`, Chrome grows the *layout*
-viewport to fit overflowing content — so `window.innerWidth` tracks `scrollWidth`, and the
-sideways-scroll rule became a comparison of a number against itself. It could no longer
-fail. Two documents went on asserting "no sideways scroll at 320px", and the rule that
-replaced it blamed a missing viewport meta tag on a page whose tag was present and correct.
-
-A correct rule fed input that cannot falsify it, introduced by the ticket written to end
-exactly that, and not noticed. There are now three measurements and three rules: does the
-page *ask* for the device width, did content *force* the layout viewport wider, and does it
-*scroll* sideways inside its own layout — the last against `clientWidth`, which does not
-move with the overflow.
-
-### The fence, a fourth time
-
-Backticks were closed in round three, `~~~` and HTML comments in round four, and a fence
-indented by one to three spaces — still a code block in CommonMark — passed a ticket with
-an empty Result in round five.
-
-### The record, a fourth consecutive time
-
-Six statements still said three reviews and 38 mutations. The changelog recorded none of
-the fourth round at all, including TD-008 — the row that is the basis of the iteration's
-own claim to be honest about its gaps.
-
-### What the fifth review credited
-
-The viewport claim itself is real and was verified on both pages. Emulation weakened
-nothing else: the 44px floor, the invisible-control rule and the focus ring were each
-re-demonstrated failing under it. Every plate claim exact, re-derived independently for the
-third time by a third reviewer. No error filter remaining, the favicon answered by exact
-path, the blocked-storage pass proving its own configuration. The declined focus-ring
-finding judged honest. Public-repo hygiene clean across 119 files.
-
 ### What the fourth review credited
 
 Every plate claim exact, re-derived from `constants.js` without the studio's helpers. No
@@ -312,9 +345,9 @@ visually identical and numerically different, so it now asserts the named treatm
 > Yev: strike through what you disagree with and write your own verdict. These are the
 > team's, and the team is not the judge of them.
 
-- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Six
+- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Eight
   rounds of review attacked it, and it is a far stronger thing than the version that
-  shipped: **57 mutations across eight sets now fail — 53 at the ticket stage and 4 at the
+  shipped: **66 mutations across nine sets now fail — 59 at the ticket stage and 7 at the
   gate**, against the 8 it was written for. The stages are named because the sixth review
   caught this same sentence claiming the ticket stage for things that fail at the gate, and
   for two behaviours that had no rule behind them at all. It is a count of what has been

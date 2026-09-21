@@ -10,7 +10,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   INHERITED_SETTINGS, MIN_TARGET, NARROW_WIDTH, SHELF_BREAKPOINTS,
-  declaresDeviceWidth, firstFrame, isInvisibleColour, judgeGeneric, judgeHome,
+  channelsOf, colourDistance, declaresDeviceWidth, firstFrame, isInvisibleColour,
+  judgeGeneric, judgeHome,
   judgeLockedPick, judgeStateInk,
   judgeKilledTreatment, judgeOvertighten, judgePage, pageErrors, sourceUrl
 } from './lib/boot-contract.mjs';
@@ -477,6 +478,33 @@ test('the four bolt states must be told apart, and none may be invisible', () =>
   assert.match(judgeStateInk({ loose: flat })[0], /seated bolt was never rendered/);
 });
 
+test('colours are compared as colours, against an absolute gap', () => {
+  assert.deepEqual(channelsOf('rgb(1, 2, 3)'), [1, 2, 3]);
+  assert.deepEqual(channelsOf('rgba(1, 2, 3, 0.5)'), [1, 2, 3]);
+  assert.equal(channelsOf('transparent'), null);
+  assert.equal(colourDistance('rgb(0,0,0)', 'rgb(0,0,24)'), 24);
+  assert.equal(colourDistance('rgb(136,136,137)', 'rgb(136,136,138)'), 1);
+  assert.equal(colourDistance('rgb(1,2,3)', 'rgb(1,2,3)'), 0);
+  // Unreadable values are treated as different unless they are identical
+  // strings, so an unparseable colour never quietly counts as a match.
+  assert.equal(colourDistance('weird', 'weird'), 0);
+  assert.equal(colourDistance('weird', 'other'), Infinity);
+});
+
+test('four indistinguishable colours are one colour, however different the strings', () => {
+  // The defeat case, built by the eighth review: four greys one unit of blue
+  // apart pass any test of string difference and report nothing to a player.
+  const greys = {
+    loose: { fill: 'rgb(136,136,136)', head: 'rgb(1,1,1)', shape: 'a' },
+    seated: { fill: 'rgb(136,136,137)', head: 'rgb(2,2,2)', shape: 'a' },
+    over: { fill: 'rgb(136,136,138)', head: 'rgb(3,3,3)', shape: 'a' },
+    stripped: { fill: 'rgb(136,136,139)', head: 'rgb(4,4,4)', shape: 'b' }
+  };
+  const fail = judgeStateInk(greys);
+  assert.equal(fail.length, 6, 'every pair of the four is too close');
+  assert.match(fail[0], /apart: the arc stops reporting what the bolt is/);
+});
+
 test('the torque arc alone must tell the four states apart', () => {
   // A composite fingerprint of fill, head and shape was satisfied by the 1px
   // head border, so the 8px arc — the thing the player reads — could be one
@@ -488,8 +516,8 @@ test('the torque arc alone must tell the four states apart', () => {
     stripped: { fill: 'rgb(91,83,72)', head: 'rgb(4,4,4)', shape: 'b' }
   };
   const fail = judgeStateInk(headOnly);
-  assert.equal(fail.length, 3, 'three states share the loose arc colour');
-  assert.match(fail[0], /gauge is the same colour as a loose one/);
+  assert.ok(fail.length >= 3, 'three states share the loose arc colour');
+  assert.match(fail.join('\n'), /the same colour/);
 });
 
 test('a locked plate must look locked', () => {

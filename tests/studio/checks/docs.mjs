@@ -45,6 +45,18 @@ export const docsCurrent = {
     const problems = [];
     for (const f of files) {
       const text = await fs.readFile(path.join(ticketDir, f), 'utf8');
+      // One Status line, counted in the **raw** file. This is the general form
+      // of a defect found twice: a status hidden above the real one in an HTML
+      // comment, then in a fenced block, then in a raw `<script>` block, each
+      // forging a status outside the vocabulary so that every evidence and
+      // criteria check below was skipped. Stripping the known hiding places is
+      // a game of spellings; requiring the ticket to declare its status exactly
+      // once ends it, whatever the next hiding place turns out to be.
+      const declared = statusLineCount(text);
+      if (declared > 1) {
+        problems.push(`${f}: ${declared} Status lines — a ticket declares its status once`);
+        continue;
+      }
       const status = statusOf(text);
       if (!status) { problems.push(`${f}: no Status line`); continue; }
       // The vocabulary is closed. Without this, `Done ✅`, `Done.` or `Shipped`
@@ -100,6 +112,8 @@ export const reviewerVerdict = {
     return { status: 'pass', detail: `verdict recorded: ${verdict}` };
   }
 };
+
+const STATUS_LINE = /^-[ \t]+\*\*Status:\*\*[ \t]*(.+)$/m;
 
 /** The statuses a ticket may carry. Anything else is a mistake, not a synonym. */
 export const STATUSES = ['Ready', 'In progress', 'Blocked', 'Done', "Won't do"];
@@ -160,7 +174,12 @@ function resultSection(text) {
  * and pass. The seventh review demonstrated it on this iteration's own tickets.
  */
 export function statusOf(text) {
-  return withoutHiddenText(String(text ?? '')).match(/^-[ \t]+\*\*Status:\*\*[ \t]*(.+)$/m)?.[1]?.trim() ?? '';
+  return withoutHiddenText(String(text ?? '')).match(STATUS_LINE)?.[1]?.trim() ?? '';
+}
+
+/** Every `- **Status:** …` line in a file, visible or not. */
+export function statusLineCount(text) {
+  return (String(text ?? '').match(new RegExp(STATUS_LINE.source, 'gm')) || []).length;
 }
 
 /**
@@ -172,7 +191,10 @@ export function statusOf(text) {
  * always was: it renders as an empty box.
  */
 export function untickedCriteria(text) {
-  return (withoutHiddenText(String(text ?? '')).match(/^[ \t]*[-*+][ \t]+\[[\s\u00a0]\]/gm) || []).length;
+  // Bulleted *and* ordered task items: GFM renders `1. [ ]` as an empty box
+  // exactly as `- [ ]` does, and rewriting six criteria that way counted zero.
+  return (withoutHiddenText(String(text ?? ''))
+    .match(/^[ \t]*(?:[-*+]|\d+[.)])[ \t]+\[[\s\u00a0]\]/gm) || []).length;
 }
 
 /** Whether a ticket has a Result section at all. A Done ticket must. */

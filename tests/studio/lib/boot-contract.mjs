@@ -503,6 +503,35 @@ export function judgeOvertighten(obs = {}) {
  * them passed. The stylesheet's own header says amber means past the band and
  * red means a ruined thread; this is that promise, checked.
  */
+/**
+ * A colour as three channels, or null if it cannot be read.
+ */
+export function channelsOf(value) {
+  const m = /^rgba?\(([^)]+)\)$/.exec(String(value ?? '').trim().toLowerCase());
+  if (!m) return null;
+  const parts = m[1].split(/[,\s/]+/).filter(Boolean).map(Number);
+  return parts.length >= 3 && parts.slice(0, 3).every(Number.isFinite) ? parts.slice(0, 3) : null;
+}
+
+/**
+ * How far apart two colours are, as the largest single-channel difference.
+ *
+ * Crude on purpose: the question is "could a person tell these apart", and a
+ * rule that answers it badly is still enormously better than a string
+ * comparison. Four greys one unit of blue apart are four *different strings*
+ * and one colour to the eye, and that is exactly how a difference test over
+ * strings was defeated.
+ */
+export function colourDistance(a, b) {
+  const x = channelsOf(a);
+  const y = channelsOf(b);
+  if (!x || !y) return a === b ? 0 : Infinity;
+  return Math.max(...x.map((v, i) => Math.abs(v - y[i])));
+}
+
+/** Below this, two colours are the same colour as far as a player is concerned. */
+export const MIN_COLOUR_GAP = 24;
+
 /** "a loose bolt", "an over bolt" — the message reads as a sentence either way. */
 function article(word) {
   return /^[aeiou]/i.test(String(word)) ? 'an' : 'a';
@@ -522,14 +551,19 @@ export function judgeStateInk(ink) {
   // fill+head+shape was satisfied by the 1px head border alone, so the 8px arc
   // — the thing the player actually reads — could be one colour in all four
   // states while the rule passed and its message still said otherwise.
-  const byFill = new Map();
-  for (const state of states) {
-    const fill = ink[state].fill;
-    if (byFill.has(fill)) {
-      fail.push(`a ${state} bolt's gauge is the same colour as a ${byFill.get(fill)} one (${fill}):`
-        + ' the arc stops reporting what the bolt is');
-    } else {
-      byFill.set(fill, state);
+  // Compared as colours, not as strings, and against an absolute gap. A pure
+  // difference test was satisfied by four greys one unit of blue apart — which
+  // is this project's own written lesson ("a difference test needs an absolute
+  // alongside it"), re-committed one round after the ticket that cited it.
+  for (let i = 0; i < states.length; i++) {
+    for (let j = i + 1; j < states.length; j++) {
+      const [a, b] = [states[i], states[j]];
+      const gap = colourDistance(ink[a].fill, ink[b].fill);
+      if (gap < MIN_COLOUR_GAP) {
+        fail.push(`${article(a)} ${a} bolt's gauge (${ink[a].fill}) and ${article(b)} ${b} one`
+          + ` (${ink[b].fill}) are ${gap === 0 ? 'the same colour' : `${gap} apart`}:`
+          + ' the arc stops reporting what the bolt is');
+      }
     }
   }
 
