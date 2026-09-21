@@ -476,6 +476,36 @@ export function commitTicketId(subject) {
   return COMMIT_RE.exec(String(subject ?? ''))?.[2] ?? null;
 }
 
+/**
+ * Commits that fail the lint and cannot be fixed: they are on the remote's
+ * `main`, and amending them would rewrite published history, which the studio
+ * does not do.
+ *
+ * Keyed by the **full** commit hash. A hash is computed by git from the
+ * commit's content, subject included, so a waiver names one subject forever
+ * and cannot be claimed by another commit copying it. That is the difference
+ * between this and the exemptions the studio has learned to distrust: nothing
+ * here is something a commit says about itself.
+ *
+ * Every waiver applied is reported by the check. An entry is a fact about
+ * history, and is added only with a ticket that says why it could not be fixed.
+ */
+export const LINT_WAIVERS = new Map([
+  ['5416876baceb4d4de3ff3b5536a720800e06f9e8',
+    'SS-042: subject is 81 characters; it reached the remote after the iteration-02 gate ran, and fixing it would rewrite main (SHS-047)']
+]);
+
+/**
+ * One commit's lint outcome: `ok`, `waived` (with the recorded reason) or
+ * `fail` (with the problem). A waiver applies only to the exact hash it names.
+ */
+export function lintCommit({ sha, parentCount = 1, subject }) {
+  const problem = lintCommitSubject(subject, { parentCount });
+  if (!problem) return { status: 'ok' };
+  const waiver = LINT_WAIVERS.get(String(sha ?? ''));
+  return waiver ? { status: 'waived', reason: waiver } : { status: 'fail', problem };
+}
+
 export function lintCommitSubject(subject, { parentCount = 1 } = {}) {
   if (parentCount > 1) return null;
   const match = COMMIT_RE.exec(subject);
