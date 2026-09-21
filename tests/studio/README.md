@@ -16,6 +16,7 @@ path-guard.test.mjs    the path guard against the repository, not through the pu
 overtighten-gameplay.test.mjs  the torque rules and the progress rules
 overtighten-plates.test.mjs    every shipped plate: reachable, and what clears it
 overtighten-ui.test.mjs        the game's markup, including the coupling lines
+diagnostics/td-009.mjs         a reproduction of a production defect (TD-009) — not a test; nothing collects it
 ```
 
 `lib/browser.mjs` stands up its own static server rather than calling into
