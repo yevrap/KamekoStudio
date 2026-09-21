@@ -81,9 +81,25 @@ Nothing in that list is a defect a player would hit.
 
 ## Checks
 
-The gate stage, run on the commit being pushed:
+The gate stage, `--base=studio-iteration-02`, run on `4f413e4` — the merge before this
+section was written; the only change after it is this section and one line of SHS-046's
+Result, and the gate runs again on the commit that is pushed.
 
-*(filled in from the gate run)*
+| Check | Result |
+|---|---|
+| `tree-clean` | pass — working tree clean |
+| `path-guard` | pass — 36 paths, all inside the guard; no exception used |
+| `storage-keys` | pass — 11 source files, storage use compliant |
+| `portal-capacity` | pass — 11 games, 12 slots |
+| `studio-boot` | pass — 2 pages booted and held their contract |
+| `hygiene` | pass — 142 files clean |
+| `full-suites` | pass — `npm test`, `npm run smoke`, `npm run e2e` |
+| `commit-lint` | pass — 22 non-merge commits conventional, 1 waived by hash (SS-042, SHS-047) |
+| `docs-current` | pass — 10 tickets complete, 6 of them this iteration's; 47 ticket files, one for every ticket a commit names |
+| `reviewer-verdict` | pass — the verdict below is recorded; the check proves it is present, not that it is an approval |
+
+Post-deploy and close-out results are in the handoff: they run after this document is
+pushed.
 
 ## Verdict
 

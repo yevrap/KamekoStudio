@@ -41,9 +41,10 @@ to name — the same arrangement as SS-009, SS-015 and SS-023.
   the pulse line moved to 03 in the plan's commit, and the retro line in the retro's.
   `CHANGELOG.md`, `learning-log.md`, and the retro's changes to `team/qa-engineer.md`.
 - **Tested by:** `pulse-current.test.mjs` 4/4 after each move of the realm's lines;
-  `docs-current` at the gate over every ticket this iteration names or edits; the
-  close-out stage's `iteration-docs`, `doc-cleanliness` and `changelog` after publishing.
-  Claims naming another document were checked against it while written: the review's
-  file table against the tree, the retro's changes against the files they name.
+  `docs-current` at the gate over every ticket this iteration names or edits, and the rest
+  of the gate — recorded in `review.md`. Claims naming another document were checked
+  against it while written: the review's file table against the tree, the retro's changes
+  against the files they name. The close-out stage runs after the push, so its result is
+  in the handoff rather than here.
 - **Deferred:** nothing.
 - **Fix rounds used:** 0 / 2
