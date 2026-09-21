@@ -19,8 +19,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { chromeAvailable, chromePath, collectErrors, launch, serve, settle } from '../lib/browser.mjs';
 import {
-  MIN_TARGET, NARROW_WIDTH, NOT_OURS, SHELF_BREAKPOINTS,
-  isInheritedSettingsThrow, judgePage, pageErrors
+  INHERITED_SETTINGS, MIN_TARGET, NARROW_WIDTH, NOT_OURS, SHELF_BREAKPOINTS,
+  judgePage, pageErrors
 } from '../lib/boot-contract.mjs';
 
 /** How long a hold has to run before a frozen gauge and a live one look different. */
@@ -149,9 +149,36 @@ async function observeWithoutScript(browser, url) {
  * browser with site data blocked does. studio/ shares an origin with production
  * and keeps a visit log, so every call site here is a place the page can die.
  */
-async function observeWithoutStorage(browser, url, origin) {
+async function observeWithoutStorage(browser, url) {
   const page = await browser.newPage();
   const errors = collectErrors(page);
+
+  // Production's settings drawer is *replaced* for this pass, rather than
+  // excused for throwing.
+  //
+  // It does throw here — an uncaught SecurityError with site data blocked
+  // (TD-005) — and it is outside the path guard, so the studio cannot fix it.
+  // The first answer was an exemption keyed on the throwing file. That was
+  // wrong in a way no amount of anchoring could fix: a stack frame's URL is
+  // minted by the script that throws, so `//# sourceURL` lets any studio file
+  // claim to be production's. The second review did it in six lines.
+  //
+  // Serving an empty script instead removes the question. Nothing in this pass
+  // is production's, so every error in it is the studio's, and there is no
+  // exemption left to defeat. What this pass proves is narrower and true:
+  // *studio code* survives blocked storage. TD-005 stays in the debt register
+  // as production's defect, which is where it belongs.
+  await page.setRequestInterception(true);
+  let stubbed = 0;
+  page.on('request', request => {
+    if (new URL(request.url()).pathname === INHERITED_SETTINGS) {
+      stubbed += 1;
+      request.respond({ status: 200, contentType: 'text/javascript', body: '/* replaced for the blocked-storage pass */' });
+    } else {
+      request.continue();
+    }
+  });
+
   await page.evaluateOnNewDocument(() => {
     const blocked = () => { throw new DOMException('denied', 'SecurityError'); };
     Object.defineProperty(window, 'localStorage', {
@@ -163,15 +190,7 @@ async function observeWithoutStorage(browser, url, origin) {
   await settle();
   const mainText = await page.evaluate(() => (document.querySelector('main') || document.body).innerText || '');
   await page.close();
-  // shared/settings.js throws an uncaught SecurityError in exactly this
-  // configuration, and it is production code outside the path guard (TD-005).
-  // The studio records that in the debt register; it does not fail its own
-  // pages for it. The exemption is by throwing file, not by message — the
-  // message is "SecurityError: denied" and names nobody — so a studio file that
-  // starts throwing here is still caught.
-  // The exemption is anchored to this page's own origin, so a studio-owned file
-  // that merely ends in `shared/settings.js` cannot claim it.
-  return { mainText, errors: pageErrors(errors, e => isInheritedSettingsThrow(e, origin)) };
+  return { mainText, errors: pageErrors(errors), stubbedInherited: stubbed };
 }
 
 /**
@@ -192,7 +211,14 @@ async function observeHome(browser, url) {
       pulseText: (document.getElementById('pulse') || {}).innerText || '',
       learnedText: (document.getElementById('learned') || {}).innerText || '',
       shelfSectionHidden: section ? section.hidden : true,
-      shelfRegion: region ? { present: true, text: region.innerText || '' } : { present: false }
+      shelfRegion: region ? { present: true, text: region.innerText || '' } : { present: false },
+      // The realm's own shelf, before any fixture touches the page: what it
+      // actually offers, and whether each offer goes anywhere.
+      shelfCards: [...document.querySelectorAll('#shelf-region .item')].map(item => ({
+        title: (item.querySelector('h3')?.textContent || '').trim(),
+        killed: item.classList.contains('is-killed'),
+        href: item.querySelector('h3 a')?.href || ''
+      }))
     };
   });
 
@@ -276,6 +302,26 @@ async function observeOvertighten(browser, url) {
     [...document.querySelectorAll('[data-bolt]')].map(el => el.dataset.bolt));
   const lockedPicks = await page.evaluate(() =>
     document.querySelectorAll('#picker [data-plate][disabled]').length);
+  const labels = await page.evaluate(() => ({
+    'plate name': document.getElementById('plate-name')?.textContent ?? '',
+    'plate hint': document.getElementById('plate-hint')?.textContent ?? '',
+    'status line': document.getElementById('status')?.textContent ?? ''
+  }));
+  // The gauge's own ink. A bolt that repaints is not the same as a bolt whose
+  // gauge is drawn: the turning highlight repaints even when every stroke on
+  // the arc is transparent.
+  const gaugeInk = await page.evaluate(() => {
+    const bolt = document.querySelector('[data-bolt]');
+    if (!bolt) return null;
+    const ink = el => (el ? getComputedStyle(el).stroke : '');
+    const head = bolt.querySelector('.head');
+    return {
+      track: ink(bolt.querySelector('.track')),
+      band: ink(bolt.querySelector('.band')),
+      fill: ink(bolt.querySelector('.fill')),
+      'head edge': head ? getComputedStyle(head).borderTopColor : ''
+    };
+  });
   const plateVisible = await page.evaluate(() => {
     const plate = document.getElementById('plate');
     if (!plate) return false;
@@ -289,10 +335,19 @@ async function observeOvertighten(browser, url) {
   // Keyboard: focus the first bolt and hold space. A held key repeats rather
   // than staying down, which is why the game cannot rely on click alone.
   const dashBefore = await dashOf(boltIds[0]);
+  // A picture of the plate, not a reading of its attributes. Stroking the
+  // gauge, the band and the head in `transparent` leaves every attribute moving
+  // and the plate blank; an invisible band has already shipped here once.
+  // Focus first, then take the baseline. Taking it before focusing put the
+  // focus ring in the "during" frame, so a bolt with nothing drawn on it still
+  // changed pixels — the difference was the outline, not the gauge.
   await page.focus(`[data-bolt="${boltIds[0]}"]`);
+  await settle(120);
+  const pixelsBefore = await page.screenshot({ clip: await boltBox(page, boltIds[0]) });
   await page.keyboard.down(' ');
   await settle(HOLD_MS);
   const dashDuring = await dashOf(boltIds[0]);
+  const pixelsDuring = await page.screenshot({ clip: await boltBox(page, boltIds[0]) });
   await page.keyboard.up(' ');
   const afterKey = await readouts();
   await settle(300);
@@ -320,10 +375,15 @@ async function observeOvertighten(browser, url) {
     return Boolean(panel && !panel.hidden && /strip/i.test(panel.innerText));
   });
 
+  // Every control on the page, pressed. A dead listener is invisible to a check
+  // that only ever touches the bolts: emptying the restart, picker and advance
+  // handlers each left a button that does nothing and passed everything.
+  const controls = await exerciseControls(page);
+
   // Persistence, end to end: clear a plate, reload, and see it stay cleared.
   // Written as "one fewer plate is locked" rather than as a storage read, so it
   // is a claim about what the player gets back.
-  const progressPersisted = await provePersistence(page, url, lockedPicks);
+  const persistence = await provePersistence(page, url, lockedPicks);
 
   await page.close();
   return {
@@ -333,15 +393,76 @@ async function observeOvertighten(browser, url) {
       lockedPicks,
       plateVisible,
       gaugeMoved: dashDuring !== dashBefore,
+      boltRepainted: !Buffer.from(pixelsBefore).equals(Buffer.from(pixelsDuring)),
+      gaugeInk,
+      labels,
+      controls: {
+        ...controls,
+        'Next plate': persistence.advanced,
+        'plate picker': persistence.picked
+      },
       keyboardTurned: afterKey[boltIds[0]] > 0,
       released: afterKeySettled[boltIds[0]] === afterKey[boltIds[0]],
       pointerTurned: afterPointer[boltIds[1]] > 0,
       releasedPointer: afterPointerSettled[boltIds[1]] === afterPointer[boltIds[1]],
       couplingObserved: afterPointer[boltIds[0]] < afterKey[boltIds[0]],
       strippedEndsPlate: ended,
-      progressPersisted
+      progressPersisted: persistence.persisted
     }
   };
+}
+
+/**
+ * One bolt's box on screen, for a screenshot clip.
+ *
+ * The bolt, not the whole plate. Clipping the plate included the torque
+ * readouts, whose text changes while a bolt turns — so a stylesheet that
+ * stroked the gauge, the band and the head in `transparent`, leaving nothing
+ * drawn on the bolt at all, still changed pixels and passed.
+ */
+async function boltBox(page, boltId) {
+  return page.$eval(`[data-bolt="${boltId}"]`, el => {
+    const r = el.getBoundingClientRect();
+    return { x: Math.round(r.x), y: Math.round(r.y), width: Math.round(r.width), height: Math.round(r.height) };
+  });
+}
+
+/**
+ * Press each control and check something actually happened.
+ *
+ * Restart must reset a turned bolt; the picker must change the plate; advance
+ * is checked during the persistence solve, where a plate has been cleared and
+ * the button is on screen. Each of these listeners was emptied in turn by the
+ * second review, and each left a dead button with the whole ticket stage green.
+ */
+async function exerciseControls(page) {
+  const firstBolt = await page.evaluate(() => document.querySelector('[data-bolt]')?.dataset.bolt ?? '');
+  const valueOf = id => page.evaluate(
+    boltId => Number.parseFloat(document.querySelector(`[data-readout="${boltId}"]`)?.textContent) || 0, id);
+
+  const before = await valueOf(firstBolt);
+  await page.click('#restart');
+  await settle(200);
+  const afterRestart = await valueOf(firstBolt);
+
+  // A locked plate must not load. This is the picker's *refusal*, and on its own
+  // it is satisfied by a picker that does nothing at all — which is why the
+  // picker's positive case is checked later, once a second plate is unlocked.
+  const nameBefore = await currentPlate(page);
+  await page.evaluate(() => document.querySelector('#picker [data-plate="1"]')?.click());
+  await settle(200);
+  const lockedStayed = (await currentPlate(page)) === nameBefore;
+
+  return {
+    'Start this plate again': before > 0 && afterRestart === 0,
+    'plate picker refuses a locked plate': lockedStayed
+  };
+}
+
+/** Which plate the picker says is current, by index — not by a label that can be blanked. */
+function currentPlate(page) {
+  return page.evaluate(() =>
+    document.querySelector('#picker [aria-current="true"]')?.dataset.plate ?? null);
 }
 
 /**
@@ -355,6 +476,7 @@ async function observeOvertighten(browser, url) {
  * look again. It is deliberately not a computed solution applied blind.
  */
 async function provePersistence(page, url, lockedBefore) {
+  const unsolved = { persisted: false, advanced: false, picked: false };
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle(400);
 
@@ -389,13 +511,33 @@ async function provePersistence(page, url, lockedBefore) {
     await settle(70);
   }
 
-  if (!(await solvedNow())) return false;
+  if (!(await solvedNow())) return unsolved;
+
+  // "Next plate" only exists once a plate has been cleared, so it is pressed
+  // here rather than in exerciseControls.
+  // Both of these need a cleared plate to exist, so they happen here rather
+  // than in exerciseControls. Identity is read from the picker's own
+  // `aria-current` index, not from a heading a mutation can blank.
+  const beforeAdvance = await currentPlate(page);
+  await page.click('#advance');
+  await settle(400);
+  const advanced = (await currentPlate(page)) !== beforeAdvance;
 
   await page.reload({ waitUntil: 'networkidle2' });
   await settle(400);
   const lockedAfter = await page.evaluate(() =>
     document.querySelectorAll('#picker [data-plate][disabled]').length);
-  return lockedAfter < lockedBefore;
+
+  // The picker's positive case: a plate that is now unlocked must load when
+  // pressed. Deleting the picker's listener entirely passed every check while
+  // this was only ever tested on a fresh profile, where nothing may load anyway.
+  const beforePick = await currentPlate(page);
+  const target = beforePick === '0' ? '1' : '0';
+  await page.evaluate(n => document.querySelector(`#picker [data-plate="${n}"]`)?.click(), target);
+  await settle(400);
+  const picked = (await currentPlate(page)) === target;
+
+  return { persisted: lockedAfter < lockedBefore, advanced, picked };
 }
 
 async function run(ctx) {
@@ -419,9 +561,20 @@ async function run(ctx) {
       const obs = {
         ...(await observeNormal(browser, url)),
         withoutScript: await observeWithoutScript(browser, url),
-        withoutStorage: await observeWithoutStorage(browser, url, site.origin)
+        withoutStorage: await observeWithoutStorage(browser, url)
       };
-      if (pagePath === 'studio/index.html') Object.assign(obs, await observeHome(browser, url));
+      if (pagePath === 'studio/index.html') {
+        const home = await observeHome(browser, url);
+        // A card's link is "reachable" only if it points at a page this check
+        // itself discovered and booted. A url that merely parses is not a door.
+        home.shelfCards = home.shelfCards
+          .filter(card => !card.killed)
+          .map(card => ({
+            ...card,
+            reachable: card.href ? pages.some(p => card.href.replace(site.origin, '') === '/' + p.replace(/index\.html$/, '')) : false
+          }));
+        Object.assign(obs, home);
+      }
       if (pagePath === 'studio/games/overtighten/index.html') {
         Object.assign(obs, await observeOvertighten(browser, url));
       }

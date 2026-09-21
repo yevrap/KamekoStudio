@@ -156,7 +156,7 @@ for (const plate of PLATES) {
       `only ${fell.length} of ${orders.length} orders fall to one hold per bolt`);
   });
 
-  test(`${plate.id}: the orders that resist one pass resist on a ceiling, not on a puzzle`, () => {
+  test(`${plate.id}: any order that resists one pass resists on a ceiling, not on a puzzle (vacuous unless one does)`, () => {
     // Four orderings of the face plate do not fall, and it is worth being exact
     // about why: one bolt would have to be turned 0.2 to 2.8 units past its own
     // strip point. That is a tuning accident, not something a player could
@@ -171,7 +171,10 @@ for (const plate of PLATES) {
       assert.ok(overshooting.length > 0,
         `${plate.id}: ${order.join('→')} fails for a structural reason, not a strip ceiling — the mechanic may have changed`);
       for (const bolt of overshooting) {
-        assert.ok(result.amounts[bolt.id] - bolt.strip < 5,
+        // Three, not five: the claim written in review.md, the ticket and the
+        // game's own page is "under three units", and the test should defend
+        // the sentence rather than something looser. Measured maximum: 2.750.
+        assert.ok(result.amounts[bolt.id] - bolt.strip < 3,
           `${plate.id}/${bolt.id}: misses by ${(result.amounts[bolt.id] - bolt.strip).toFixed(1)}, which is a margin, not a wall`);
       }
     }

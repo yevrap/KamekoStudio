@@ -19,17 +19,15 @@
 // between them is here, pure and tested, rather than inline in the driver:
 // an exemption is the part of a check most worth attacking.
 
-/** The one production file whose uncaught throw is exempt, as a served path. */
+/**
+ * The production script studio pages inherit for the light/dark toggle. Named
+ * here because the blocked-storage pass replaces it; see below.
+ */
 export const INHERITED_SETTINGS = '/shared/settings.js';
 
 /**
  * A stack frame's URL, with any trailing `:line:col` removed, or null.
- *
- * Returned as a URL rather than a string so callers compare an origin and a
- * path instead of matching a substring. Substring matching is what let a
- * studio-owned `studio/games/x/shared/settings.js` claim production's
- * exemption: both independent reviews built that file and watched the check
- * print `pass` while a studio page threw uncaught.
+ * Used for reporting, never for deciding anything. See the note on provenance.
  */
 export function sourceUrl(raw) {
   const text = String(raw ?? '').trim().replace(/:\d+(?::\d+)?$/, '');
@@ -40,12 +38,12 @@ export function sourceUrl(raw) {
 /**
  * The first frame of a stack that names a URL, scanned line by line in order.
  *
- * The previous version matched the parenthesised form against the whole stack
- * before the bare form, so a named frame anywhere below beat the anonymous
- * frame at the top — `at http://…/main.js:25` lost to
- * `at getSavedTheme (http://…/shared/settings.js:12)` underneath it, and a
- * studio throw from an anonymous callback would have been credited to
- * production. Order is the whole point of a function called firstFrame.
+ * **A stack frame's URL is not evidence of anything.** Any script can mint one
+ * with a `//# sourceURL` comment, so a frame can claim to come from any file at
+ * any origin. This function exists to put a helpful path in a failure message
+ * and for nothing else. There used to be an exemption that trusted it; the
+ * second review forged production's identity in six lines and walked straight
+ * through. Nothing decides anything from this value any more.
  */
 export function firstFrame(stack) {
   for (const line of String(stack ?? '').split('\n')) {
@@ -58,40 +56,38 @@ export function firstFrame(stack) {
 /**
  * Chrome asks every origin for /favicon.ico on its own. The repository ships no
  * favicon, so every page in it — production's included — answers 404. It is a
- * request the browser made, not one the page made, and failing a studio page
- * for it would be reporting production's omission as the studio's defect.
+ * request the browser made, not one the page made.
+ *
+ * Safe to decide from, unlike a stack frame: this is the URL the browser
+ * actually requested, observed by the driver, not a string the page chose.
  */
 export function isBrowserInitiated(error = {}) {
   const url = sourceUrl(error.source);
   return Boolean(url && /\/favicon\.ico$/.test(url.pathname));
 }
 
-/**
- * Production's settings script throwing with site data blocked (TD-005), and
- * nothing else. It is production code outside the path guard, so the studio
- * cannot fix it; without an exemption every studio page fails on a defect it
- * has no way to repair.
- *
- * Anchored to the page's own **origin and exact path**, and it **fails closed**:
- * no origin, no parseable frame, a frame from anywhere else — the error counts
- * against the page. The studio may write anywhere under `studio/**`, so
- * `/studio/.../shared/settings.js` is a file the studio itself can create, and
- * an unanchored test handed it production's exemption.
- *
- * It exempts *any* uncaught throw from that file, not only a SecurityError.
- * Narrowing by error type would only mean failing on another defect in a file
- * the studio still cannot touch. Stated because the previous comment said
- * "TD-005, and only TD-005", which was not what the code did.
- */
-export function isInheritedSettingsThrow(error = {}, origin = '') {
-  if (error.kind !== 'uncaught' || !origin) return false;
-  const url = sourceUrl(error.source);
-  return Boolean(url && url.origin === origin && url.pathname === INHERITED_SETTINGS);
+/** The error strings a page is answerable for. */
+export function pageErrors(errors = []) {
+  return errors.filter(e => !isBrowserInitiated(e)).map(e => e.text);
 }
 
-/** The error strings a page is answerable for, after `ignore` has had its say. */
-export function pageErrors(errors = [], ignore = () => false) {
-  return errors.filter(e => !isBrowserInitiated(e) && !ignore(e)).map(e => e.text);
+/**
+ * A colour that draws nothing: `transparent`, or any form with zero alpha.
+ *
+ * Needed because "did the pixels change" is not enough on its own. Stroking the
+ * gauge, the band and the head in `transparent` leaves the bolt's *turning*
+ * highlight intact, so the bolt still repaints while the thing the player reads
+ * — the torque arc and the band they are aiming at — is not drawn at all.
+ */
+export function isInvisibleColour(value) {
+  const text = String(value ?? '').trim().toLowerCase();
+  if (!text || text === 'transparent' || text === 'none') return true;
+  const alpha = /^rgba?\(([^)]+)\)$/.exec(text);
+  if (alpha) {
+    const parts = alpha[1].split(/[,\s/]+/).filter(Boolean);
+    if (parts.length >= 4 && Number(parts[3]) === 0) return true;
+  }
+  return false;
 }
 
 /** Every standalone target on a studio page, in CSS px. Mobile-first, per studio/README.md. */
@@ -225,6 +221,23 @@ export function judgeHome(obs = {}) {
   } else if (!String(obs.shelfRegion.text ?? '').trim()) {
     fail.push('#shelf-region rendered nothing — not even the empty state');
   }
+
+  // The *real* shelf, not the fixture. The fixture proved the component; it
+  // said nothing about whether the realm actually offers anything. Emptying
+  // SHELF, or dropping a card's url, closed the only route to the game and
+  // passed every check — in the very configuration the last review was
+  // supposed to have closed.
+  const cards = obs.shelfCards;
+  if (!Array.isArray(cards)) {
+    fail.push('the realm home\'s own shelf was never read');
+  } else if (cards.length === 0) {
+    fail.push('the shelf is empty: the realm offers nothing, whatever the component can render');
+  } else {
+    for (const card of cards) {
+      if (!card.href) fail.push(`"${card.title}" is on the shelf with no link: there is no way to reach it`);
+      else if (!card.reachable) fail.push(`"${card.title}" links to ${card.href}, which is not a page that boots`);
+    }
+  }
   if (obs.shelfSectionHidden) {
     fail.push('the shelf section is still hidden: main.js never revealed it');
   }
@@ -295,16 +308,38 @@ export function judgeOvertighten(obs = {}) {
   if (!game) return ['the game was never driven: no observation was collected'];
   const fail = [];
 
-  if ((game.errors ?? []).length) {
+  // Asked as "was this collected, and is it empty" — every other rule here
+  // fails closed and these two did not, which is the shape this same file warns
+  // about for the page width.
+  if (!Array.isArray(game.errors)) {
+    fail.push('no errors were collected while the game was driven');
+  } else if (game.errors.length) {
     fail.push(`the game threw while being played:\n${list(game.errors)}`);
   }
   if (!(game.bolts > 0)) fail.push('the plate rendered no bolts');
-  if (game.plateVisible === false) {
+  if (!game.plateVisible) {
     fail.push('the plate takes up space but cannot be seen');
   }
   if (!game.gaugeMoved) {
     fail.push('the gauge did not move while the bolt was turning: the page shows a number, not a state');
   }
+  // The attribute changing is not the same as the player seeing anything. A
+  // stylesheet that strokes the gauge, the band and the head in `transparent`
+  // leaves every attribute moving and the plate blank — and an invisible band
+  // has already shipped here once.
+  if (!game.boltRepainted) {
+    fail.push('the bolt did not change a single pixel while it was turning: its gauge is not drawn');
+  }
+  for (const [part, colour] of Object.entries(game.gaugeInk ?? {})) {
+    if (isInvisibleColour(colour)) {
+      fail.push(`the gauge's ${part} is drawn in ${colour || 'nothing'}: the player cannot see it`);
+    }
+  }
+  if (!game.gaugeInk) fail.push('the gauge\'s colours were never read');
+  for (const [label, text] of Object.entries(game.labels ?? {})) {
+    if (!String(text ?? '').trim()) fail.push(`the ${label} is empty`);
+  }
+  if (!game.labels) fail.push('the plate\'s labels were never read');
   if (!(game.lockedPicks > 0)) {
     fail.push('no plate is locked on a fresh profile: the plates are not gated at all');
   }
@@ -324,6 +359,12 @@ export function judgeOvertighten(obs = {}) {
   if (!game.progressPersisted) {
     fail.push('clearing a plate did not survive a reload: the game has no persistence');
   }
+  // Every control on the page, pressed. A dead button is invisible to a check
+  // that only ever touches the bolts.
+  for (const [name, worked] of Object.entries(game.controls ?? {})) {
+    if (!worked) fail.push(`the "${name}" control does nothing when pressed`);
+  }
+  if (!game.controls) fail.push('the page\'s controls were never pressed');
   if (!game.strippedEndsPlate) {
     fail.push('turning past the strip point did not end the plate');
   }

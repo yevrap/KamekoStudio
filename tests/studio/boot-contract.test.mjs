@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   INHERITED_SETTINGS, MIN_TARGET, NARROW_WIDTH, SHELF_BREAKPOINTS,
-  firstFrame, isBrowserInitiated, isInheritedSettingsThrow, judgeGeneric, judgeHome,
+  firstFrame, isBrowserInitiated, isInvisibleColour, judgeGeneric, judgeHome,
   judgeKilledTreatment, judgeOvertighten, judgePage, pageErrors, sourceUrl
 } from './lib/boot-contract.mjs';
 
@@ -38,6 +38,7 @@ function goodHome(overrides = {}) {
     shelfSectionHidden: false,
     shelfRegion: { present: true, text: 'Overtighten' },
     shelfTracks: tracks,
+    shelfCards: [{ title: 'Overtighten', href: 'http://x/studio/games/overtighten/', killed: false, reachable: true }],
     liveCard: { background: 'rgb(251, 249, 245)', boxShadow: '0 1px 1px rgba(0,0,0,0.05)', borderStyle: 'solid', isLink: true },
     killedCard: { background: 'rgba(0, 0, 0, 0)', boxShadow: 'none', borderStyle: 'dashed', isLink: false },
     ...overrides
@@ -220,6 +221,13 @@ test('a fully working game produces no failures', () => {
 function playing(overrides = {}) {
   return {
     errors: [], bolts: 2, lockedPicks: 2, plateVisible: true, gaugeMoved: true,
+    boltRepainted: true,
+    gaugeInk: { track: 'rgb(222, 215, 202)', band: 'rgb(138, 75, 12)', fill: 'rgb(28, 107, 63)', 'head edge': 'rgb(205, 196, 180)' },
+    labels: { 'plate name': 'Hinge plate', 'plate hint': 'Two bolts, coupled.', 'status line': '2 of 2 still out' },
+    controls: {
+      'Start this plate again': true, 'plate picker': true,
+      'plate picker refuses a locked plate': true, 'Next plate': true
+    },
     keyboardTurned: true, released: true, pointerTurned: true, releasedPointer: true,
     couplingObserved: true, strippedEndsPlate: true, progressPersisted: true, ...overrides
   };
@@ -231,6 +239,7 @@ test('each way the mechanic can stop running is reported as itself', () => {
     ['lockedPicks', 0, /not gated at all/],
     ['plateVisible', false, /cannot be seen/],
     ['gaugeMoved', false, /gauge did not move/],
+    ['boltRepainted', false, /did not change a single pixel/],
     ['keyboardTurned', false, /unplayable without a pointer/],
     ['pointerTurned', false, /holding the pointer on a bolt did not turn it/],
     ['couplingObserved', false, /the mechanic is not running/],
@@ -255,6 +264,63 @@ test('an error thrown while the game is being played counts against it', () => {
   const fail = judgeOvertighten({ game: playing({ errors: ['uncaught: x is not a function'] }) });
   assert.equal(fail.length, 1);
   assert.match(fail[0], /threw while being played/);
+  // And an observation with no error array at all fails closed, rather than
+  // reading as "no errors" — the shape this file warns about for page width.
+  assert.match(judgeOvertighten({ game: playing({ errors: undefined }) })[0], /no errors were collected/);
+});
+
+test('a gauge stroked in nothing fails, even though the bolt still repaints', () => {
+  // The turning highlight repaints the bolt whatever the arc is stroked in, so
+  // "did the pixels change" cannot see this on its own.
+  assert.match(
+    judgeOvertighten({ game: playing({ gaugeInk: { band: 'transparent' } }) })[0],
+    /the gauge's band is drawn in transparent/
+  );
+  assert.match(
+    judgeOvertighten({ game: playing({ gaugeInk: { fill: 'rgba(0, 0, 0, 0)' } }) })[0],
+    /the gauge's fill is drawn in/
+  );
+  assert.match(judgeOvertighten({ game: playing({ gaugeInk: null }) })[0], /colours were never read/);
+});
+
+test('an invisible colour is recognised however it is written', () => {
+  for (const value of ['transparent', 'none', '', '  ', 'rgba(0,0,0,0)', 'rgba(255, 255, 255, 0)', 'rgb(0 0 0 / 0)']) {
+    assert.equal(isInvisibleColour(value), true, JSON.stringify(value));
+  }
+  for (const value of ['rgb(0,0,0)', 'rgba(0,0,0,0.01)', '#fff', 'rgb(255 255 255 / 0.5)']) {
+    assert.equal(isInvisibleColour(value), false, JSON.stringify(value));
+  }
+});
+
+test('a dead control and an empty label are each named', () => {
+  // Five of the second review's seven mutations were exactly this: a listener
+  // body deleted, or a label blanked. Every one passed the whole ticket stage.
+  assert.match(
+    judgeOvertighten({ game: playing({ controls: { 'Start this plate again': false } }) })[0],
+    /"Start this plate again" control does nothing/
+  );
+  assert.match(
+    judgeOvertighten({ game: playing({ labels: { 'status line': '  ' } }) })[0],
+    /the status line is empty/
+  );
+  assert.match(judgeOvertighten({ game: playing({ controls: undefined }) })[0], /controls were never pressed/);
+  assert.match(judgeOvertighten({ game: playing({ labels: undefined }) })[0], /labels were never read/);
+});
+
+test('the realm\'s own shelf must offer something that can be reached', () => {
+  // Emptying SHELF, or dropping the card's url, closed the only route to the
+  // game and passed every check — in the configuration review.md claimed was
+  // closed. The three-card fixture proved the component, never the realm.
+  assert.match(judgeHome(goodHome({ shelfCards: [] }))[0], /the shelf is empty/);
+  assert.match(judgeHome(goodHome({ shelfCards: undefined }))[0], /never read/);
+  assert.match(
+    judgeHome(goodHome({ shelfCards: [{ title: 'Overtighten', href: '', reachable: false }] }))[0],
+    /on the shelf with no link/
+  );
+  assert.match(
+    judgeHome(goodHome({ shelfCards: [{ title: 'Overtighten', href: 'http://x/nope/', reachable: false }] }))[0],
+    /which is not a page that boots/
+  );
 });
 
 test('the game page is judged by its own contract, not only the generic one', () => {
@@ -309,62 +375,31 @@ test('firstFrame skips the message line and a frame with no URL', () => {
   );
 });
 
-test('production\'s settings script is exempt, and only at its own origin and path', () => {
-  assert.equal(isInheritedSettingsThrow(uncaught(`${ORIGIN}${INHERITED_SETTINGS}:12:9`), ORIGIN), true);
-  assert.equal(isInheritedSettingsThrow(uncaught(`http://elsewhere.test${INHERITED_SETTINGS}`), ORIGIN), false,
-    'another origin is not this page');
-});
-
-test('a studio-owned shared/settings.js cannot claim the exemption', () => {
-  // Both reviews built exactly this file and watched the check print "pass"
-  // while a studio page threw uncaught. studio/** is inside the path guard, so
-  // this is a file the studio can create at will.
-  for (const path of [
-    '/studio/shared/settings.js',
-    '/studio/games/overtighten/shared/settings.js',
-    '/studio/games/x/vendor/shared/settings.js'
-  ]) {
-    assert.equal(isInheritedSettingsThrow(uncaught(`${ORIGIN}${path}:1:55`), ORIGIN), false, path);
-  }
-});
-
-test('a near-miss path is not the exempt path', () => {
-  for (const path of [
-    '/shared/settings.js.map',
-    '/shared/settings.json',
-    '/not-shared/settings.js',
-    '/shared/settings.js/extra',
-    '/Shared/Settings.js'
-  ]) {
-    assert.equal(isInheritedSettingsThrow(uncaught(`${ORIGIN}${path}`), ORIGIN), false, path);
-  }
-  // A query string is not a different file, and must stay exempt.
-  assert.equal(isInheritedSettingsThrow(uncaught(`${ORIGIN}${INHERITED_SETTINGS}?v=2`), ORIGIN), true);
-});
-
-test('the exemption fails closed on everything it cannot establish', () => {
-  assert.equal(isInheritedSettingsThrow(uncaught(`${ORIGIN}${INHERITED_SETTINGS}`), ''), false, 'no origin');
-  assert.equal(isInheritedSettingsThrow(uncaught(''), ORIGIN), false, 'no frame to blame');
-  assert.equal(isInheritedSettingsThrow(uncaught(undefined), ORIGIN), false);
-  assert.equal(isInheritedSettingsThrow({}, ORIGIN), false);
-  assert.equal(isInheritedSettingsThrow(undefined, ORIGIN), false);
-  // Only an uncaught throw. A console.error or a failed request from that file
-  // is a different thing and is not waved through.
+test('nothing decides anything from a stack frame, because a page can forge one', () => {
+  // The exemption that used to live here was removed rather than anchored
+  // harder. Two passes tightened it — first to an exact path, then to an origin
+  // and an exact path — and the second review walked through both by minting a
+  // frame with a `//# sourceURL` comment:
+  //
+  //   new Function('throw new DOMException("denied","SecurityError")' +
+  //                '\\n//# sourceURL=' + location.origin + '/shared/settings.js')
+  //
+  // Origin matched, path matched, kind matched. No property of a self-reported
+  // frame is evidence of anything, so the blocked-storage pass now serves an
+  // empty script in place of production's and there is no exemption left to
+  // defeat. `firstFrame` survives only to put a path in a failure message.
   assert.equal(
-    isInheritedSettingsThrow({ kind: 'console', text: 'x', source: `${ORIGIN}${INHERITED_SETTINGS}` }, ORIGIN),
-    false
+    firstFrame(`Error: x\n    at ${ORIGIN}/anything/at/all.js:1:1`),
+    `${ORIGIN}/anything/at/all.js:1:1`,
+    'it reports whatever the stack claims — which is exactly why it decides nothing'
   );
-});
-
-test('the exemption cannot be claimed by the message, which names nobody', () => {
-  // The studio's own throw and production's are the same string. If the
-  // exemption were ever rewritten to match text, this is the case that catches
-  // it: identical message, studio file, must not be exempt.
-  const studio = { kind: 'uncaught', text: 'uncaught: SecurityError: denied', source: `${ORIGIN}/studio/main.js:9:1` };
-  const production = { kind: 'uncaught', text: 'uncaught: SecurityError: denied', source: `${ORIGIN}${INHERITED_SETTINGS}:9:1` };
-  assert.equal(studio.text, production.text);
-  assert.equal(isInheritedSettingsThrow(studio, ORIGIN), false);
-  assert.equal(isInheritedSettingsThrow(production, ORIGIN), true);
+  // A studio file claiming production's identity is indistinguishable here, and
+  // that is the fact the design now assumes rather than resists.
+  assert.deepEqual(
+    pageErrors([uncaught(`${ORIGIN}${INHERITED_SETTINGS}:3:1`)]),
+    ['uncaught: SecurityError: denied'],
+    'a throw claiming to be production is kept like any other'
+  );
 });
 
 test('only the browser\'s own favicon request is browser-initiated', () => {
@@ -378,7 +413,7 @@ test('only the browser\'s own favicon request is browser-initiated', () => {
   assert.equal(isBrowserInitiated({}), false);
 });
 
-test('pageErrors keeps everything it was not explicitly told to drop', () => {
+test('pageErrors drops the browser\'s favicon request and nothing else', () => {
   const errors = [
     { kind: 'response', text: 'HTTP 404: /favicon.ico', source: `${ORIGIN}/favicon.ico` },
     uncaught(`${ORIGIN}${INHERITED_SETTINGS}:1:1`),
@@ -387,10 +422,6 @@ test('pageErrors keeps everything it was not explicitly told to drop', () => {
   ];
   assert.deepEqual(pageErrors(errors), [
     'uncaught: SecurityError: denied',
-    'uncaught: SecurityError: denied',
-    'console.error: boom'
-  ], 'only the favicon goes by default');
-  assert.deepEqual(pageErrors(errors, e => isInheritedSettingsThrow(e, ORIGIN)), [
     'uncaught: SecurityError: denied',
     'console.error: boom'
   ]);

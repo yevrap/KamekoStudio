@@ -49,11 +49,11 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 | `storage-keys` | Studio code reaches the shared origin only through keys it can be shown to use, all `studio_`-prefixed. It checks the three named accessors, bracket access, `delete`, and `clear()`, and refuses a key it cannot read statically — a computed expression or an aliased store. It scans `studio/**` only, so it says nothing about the production settings drawer that studio pages inherit (see [ADR-0003](decisions/ADR-0003-storage-namespace.md)) |
 | `portal-capacity` | The 3D landing page has a portal position for every entry in `ARCADE_GAMES`, and every position table has a matching rotation table. It counts rather than trusts, because the page drops a game it has no position for with a bare `return` and says nothing — which is how two promoted games went portal-less unnoticed (TD-002). It reads production source the studio may not edit: the studio cannot fix that page at will, but it can refuse to be quiet about it |
 | `studio-tests` | The studio's own unit tests pass |
-| `studio-boot` | Every page found by walking `studio/**` for an `index.html` opens in a real Chrome and holds the contract in `tests/studio/lib/boot-contract.mjs` — in three configurations: ordinary, scripting disabled, and site data blocked. It proves no uncaught error, no `console.error`, no failed request, a back link, 44px targets and no sideways scroll at 320px, a `noscript` fallback that actually says something, and — on the realm home — that the page ran its own script, that the shelf's three column counts hold either side of both breakpoints, and that a killed card reads differently from a live one. Pages are **discovered, not listed**, so a page added later arrives covered; the report names any page that got only the generic contract. It proves nothing about how a page looks: there are no screenshots here |
+| `studio-boot` | Every page found by walking `studio/**` for an `index.html` opens in a real Chrome and holds the contract in `tests/studio/lib/boot-contract.mjs` — in three configurations: ordinary, scripting disabled, and site data blocked. It proves no uncaught error, no `console.error`, no failed request, a back link, 44px targets and no sideways scroll at 320px, that no control is laid out but invisible, and a `noscript` fallback that actually says something. On the realm home: that the page ran its own script, that the shelf's three column counts hold either side of both breakpoints, that a killed card both reads differently from a live one and matches its named treatment, and that the **real** shelf offers at least one card whose link is a page this check itself booted. On a game page it also drives the thing — pointer, keyboard, release, coupling, stripping, every control pressed, progress proved by a reload — and checks the bolt actually repaints and that its gauge is stroked in visible colours. Pages are **discovered, not listed**, so a page added later arrives covered; the report names any page that got only the generic contract. In the blocked-storage pass it serves an **empty script** in place of production's `shared/settings.js`, so what that pass proves is about studio code only (see the note below) |
 | `hygiene` | No secrets, personal identifiers, private paths, note-vault syntax or oversized files in studio-owned paths, or in the paths the studio may touch by exception |
 | `full-suites` | `npm test`, `npm run smoke` and `npm run e2e` are green — production included |
 | `commit-lint` | Every studio commit is conventional, scoped `studio`, and names a ticket. Merge commits are exempt by having more than one parent, not by their subject line |
-| `docs-current` | Every ticket in the iteration has a file, a status and evidence |
+| `docs-current` | Every ticket in the iteration has a file, a status and evidence. Evidence is read with `evidenceFor`, which stops at the next label — the first version's `\s*(.*)` matched a newline and returned the following line, so an entirely unfilled Result section passed with one label "answered" by the next |
 | `reviewer-verdict` | The Independent Reviewer's verdict is recorded in the iteration's review |
 | `studio-live` | The deployed studio URL returns 200 and serves the new build |
 | `production-live` | A production game page still returns 200 after the deploy |
@@ -61,6 +61,26 @@ turn the run green by omission — the report shows it, and the gate refuses to 
 | `iteration-docs` | Plan, tickets, log, review and retro all exist for this iteration |
 | `doc-cleanliness` | No stacked "superseded" / "revision" / "v2" passages; each document states one current version |
 | `changelog` | The iteration has a changelog entry |
+
+## The one thing `studio-boot` refuses to trust
+
+Studio pages load `shared/settings.js`, production's settings drawer, which throws an
+uncaught `SecurityError` when site data is blocked (TD-005) and is outside the path guard.
+
+The first two answers to that were exemptions keyed on the throwing file — first an exact
+path, then an origin and an exact path. Both were wrong, and not by being too loose: **a
+stack frame's URL is minted by the script that throws.** A `//# sourceURL` comment lets any
+studio file claim to come from any path at any origin, so no amount of anchoring can make a
+self-reported frame into evidence. An independent review demonstrated it in six lines.
+
+The blocked-storage pass therefore replaces that script with an empty one. Nothing in the
+pass is production's, so every error in it is the studio's, and there is no exemption left
+to defeat. The claim it supports is narrower and true: *studio code* survives blocked
+storage. TD-005 remains recorded as production's defect, which is where it belongs.
+
+The general rule, which applies to any check added here: **decide only from what the driver
+observed, never from what the page said about itself.** A requested URL, a measured box, a
+computed style and a screenshot are observations. A stack frame is a claim.
 
 ## Network-dependent checks
 

@@ -49,8 +49,16 @@ export const docsCurrent = {
       if (!status) { problems.push(`${f}: no Status line`); continue; }
       if (/^(Ready|In progress)$/i.test(status)) problems.push(`${f}: still "${status}" at the gate`);
       if (/^(Done)$/i.test(status)) {
-        const changed = text.match(/^-\s+\*\*What changed:\*\*\s*(.*)$/m)?.[1]?.trim();
-        const tested = text.match(/^-\s+\*\*Tested by:\*\*\s*(.*)$/m)?.[1]?.trim();
+        // `[ \t]` rather than `\s`, which matches a newline: `\s*(.*)` ate the
+        // line break and captured the *next* line, so an entirely unfilled
+        // Result section read as evidence — `**What changed:**` was "answered"
+        // by the literal text `- **Tested by:**` below it. A whole ticket
+        // shipped Done with an empty template and the check reported it
+        // complete. Evidence may also continue on the following lines, so a
+        // bare label is checked against what follows it rather than only
+        // against the rest of its own line.
+        const changed = evidenceFor(text, 'What changed');
+        const tested = evidenceFor(text, 'Tested by');
         if (!changed) problems.push(`${f}: Done with no "What changed" evidence`);
         if (!tested) problems.push(`${f}: Done with no "Tested by" evidence`);
         const unchecked = (text.match(/^\s*-\s+\[ \]/gm) || []).length;
@@ -76,6 +84,25 @@ export const reviewerVerdict = {
     return { status: 'pass', detail: `verdict recorded: ${verdict}` };
   }
 };
+
+/**
+ * What a ticket records under one Result label: the rest of its own line, plus
+ * any indented or bulleted lines beneath it, up to the next top-level label.
+ * Returns '' when the label is present but nothing follows it.
+ */
+export function evidenceFor(text, label) {
+  const pattern = new RegExp(`^-[ \\t]+\\*\\*${label}:\\*\\*[ \\t]*(.*)$`, 'm');
+  const match = pattern.exec(text);
+  if (!match) return '';
+  const rest = text.slice(match.index + match[0].length).split('\n');
+  const body = [match[1]];
+  for (const line of rest) {
+    // A new top-level bullet, or a new heading, ends this label's evidence.
+    if (/^-[ \t]+\*\*/.test(line) || /^#{1,6} /.test(line) || /^---\s*$/.test(line)) break;
+    body.push(line);
+  }
+  return body.join('\n').trim();
+}
 
 export const changelog = {
   id: 'changelog',
