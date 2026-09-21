@@ -672,6 +672,143 @@ await test('black-hole-in-one: 🔄 New Map is hidden while authoring a map in t
   assert(hidden, '🔄 New Map should be hidden in the Map Maker editor — nothing procedural to reroll');
 });
 
+// TD-009: entering Explore while a golf hole's spiral particles were alive threw
+// "Cannot read properties of null (reading 'x')" from stepParticles on every frame
+// for about a second. Explore's world has no black hole, and the spirals were left
+// orbiting nothing. Spirals spawn on about one frame in eleven, so tests that
+// happened to enter Explore early failed only sometimes. These force the
+// precondition, prove it, and then take the route a player takes.
+//
+// Each runs in a browser profile of its own: the game remembers the last mode
+// played and draws it behind the start menu, and Explore — which earlier tests
+// play — has no black hole to spawn spirals around.
+async function inFreshProfile(fn) {
+  const context = await browser.createBrowserContext();
+  const page = await context.newPage();
+  const errors = [];
+  page.on('pageerror', err => errors.push(String(err && err.message || err)));
+  let failure = null;
+  try {
+    await fn(page);
+  } catch (err) {
+    failure = err;
+  } finally {
+    await context.close().catch(() => {});
+  }
+  const thrown = errors.length
+    ? errors.length + ' uncaught page error(s), the first: ' + errors[0]
+    : null;
+  if (failure) throw new Error(failure.message + (thrown ? ' — and ' + thrown : ''));
+  if (thrown) throw new Error(thrown);
+}
+
+// Let spirals spawn on every frame for a while: stepParticles spawns one whenever
+// Math.random() < 0.09, so forcing it only makes certain what play makes likely.
+async function forceSpirals(page, frames = 30) {
+  await page.evaluate(async n => {
+    const real = Math.random;
+    Math.random = () => 0;
+    try {
+      await new Promise(resolve => {
+        let seen = 0;
+        const tick = () => (++seen >= n ? resolve() : requestAnimationFrame(tick));
+        requestAnimationFrame(tick);
+      });
+    } finally {
+      Math.random = real;
+    }
+  }, frames);
+}
+
+// How many spirals are orbiting the black hole right now, counted without reaching
+// into the module: swap in a black hole whose `x` counts its reads, and take one
+// step that passes no time and spawns nothing. Each spiral reads `x` exactly once.
+const spiralCount = page => page.evaluate(async () => {
+  const ui = await import('/games/black-hole-in-one/ui.js');
+  const { world } = await import('/games/black-hole-in-one/state.js');
+  const hole = world.blackHole;
+  if (!hole) return 0;
+  let reads = 0;
+  const counted = {};
+  for (const key of Object.keys(hole)) {
+    Object.defineProperty(counted, key, { enumerable: true, get: () => { if (key === 'x') reads++; return hole[key]; } });
+  }
+  const real = Math.random;
+  world.blackHole = counted;
+  Math.random = () => 1;
+  try { ui.stepParticles(0); } finally { Math.random = real; world.blackHole = hole; }
+  return reads;
+});
+
+const bhMode = page => page.evaluate(async () => (await import('/games/black-hole-in-one/state.js')).S.mode);
+
+await test('black-hole-in-one: entering Explore from the start menu with spirals alive throws nothing (TD-009)', () =>
+  inFreshProfile(async page => {
+    await page.goto(BH, { waitUntil: 'load' });
+    await forceSpirals(page);
+    const alive = await spiralCount(page);
+    assert(alive > 0, 'precondition not met: no spirals orbiting the golf hole behind the start menu');
+    await page.click('#modeExplore');
+    await sleep(1600); // a spiral lives 1.1 s; any throw would have happened by now
+    assert(await bhMode(page) === 'explore', 'tapping Explore did not start Explore');
+  }));
+
+await test('black-hole-in-one: entering Explore from a golf round via ☰ Menu with spirals alive throws nothing (TD-009)', () =>
+  inFreshProfile(async page => {
+    await page.goto(BH, { waitUntil: 'load' });
+    await page.click('#modeEndless');
+    await forceSpirals(page);
+    await page.click('#helpBtn');
+    await sleep(300);
+    const alive = await spiralCount(page);
+    assert(alive > 0, 'precondition not met: no spirals orbiting the golf hole when ☰ Menu opened');
+    await page.click('#modeExplore');
+    await sleep(1600);
+    assert(await bhMode(page) === 'explore', 'tapping Explore from ☰ Menu did not start Explore');
+  }));
+
+await test('black-hole-in-one: spirals whose black hole is gone are dropped, not stepped (TD-009)', () =>
+  inFreshProfile(async page => {
+    await page.goto(BH, { waitUntil: 'load' });
+    await page.click('#modeEndless');
+    await sleep(300);
+    // The defect itself, whatever route leads to it. One synchronous evaluation
+    // from start to finish, so no animation frame runs in between and nothing but
+    // these calls touches the particles.
+    const r = await page.evaluate(async () => {
+      const ui = await import('/games/black-hole-in-one/ui.js');
+      const { world } = await import('/games/black-hole-in-one/state.js');
+      const hole = world.blackHole;
+      if (!hole) return { noHole: true };
+      const real = Math.random;
+      const count = () => {
+        let reads = 0;
+        const counted = {};
+        for (const key of Object.keys(hole)) {
+          Object.defineProperty(counted, key, { enumerable: true, get: () => { if (key === 'x') reads++; return hole[key]; } });
+        }
+        world.blackHole = counted;
+        Math.random = () => 1;
+        try { ui.stepParticles(0); } finally { Math.random = real; world.blackHole = hole; }
+        return reads;
+      };
+      Math.random = () => 0;
+      try { for (let i = 0; i < 10; i++) ui.stepParticles(1 / 60); } finally { Math.random = real; }
+      const before = count();
+      world.blackHole = null;
+      let threw = null;
+      Math.random = () => 1;
+      try { ui.stepParticles(1 / 60); } catch (err) { threw = String(err && err.message || err); }
+      finally { Math.random = real; world.blackHole = hole; }
+      const after = count();
+      return { before, threw, after };
+    });
+    assert(!r.noHole, 'precondition not met: a golf round has no black hole');
+    assert(r.before > 0, 'precondition not met: no spiral could be created in a golf round');
+    assert(r.threw === null, 'stepping ' + r.before + ' spiral(s) with no black hole threw: ' + r.threw);
+    assert(r.after === 0, r.after + ' spiral(s) survived their black hole and would orbit the next one');
+  }));
+
 await test('durak-alchemist: Play is free and starts the game', async page => {
   await page.goto(base + '/games/durak-alchemist/', { waitUntil: 'load' });
   const label = await page.$eval('#start-btn', b => b.textContent);

@@ -157,6 +157,7 @@ export function stepParticles(dt) {
         p.vx *= 0.985; p.vy *= 0.985;
     }
     const bh = world.blackHole;
+    if (!bh) particles = particles.filter(p => !p.spiral); // their black hole is gone (TD-009)
     if (bh && Math.random() < 0.09) {
         const a = rand(0, Math.PI * 2), r = bh.r * rand(2.4, 3.4);
         particles.push({ x: bh.x + Math.cos(a) * r, y: bh.y + Math.sin(a) * r,

@@ -268,7 +268,12 @@ export function portalCapacity(gameplay, constants) {
  * after their iteration ships: together they are the record of every production
  * file the studio has changed, and why.
  */
-export const PRODUCTION_FIXES = [];
+export const PRODUCTION_FIXES = [
+  // TD-009: spirals left orbiting a removed black hole threw on every frame.
+  { path: 'games/black-hole-in-one/ui.js', ticket: 'SHS-052', iteration: '04' },
+  // Its regression tests, in production's own suite.
+  { path: 'scripts/e2e.mjs', ticket: 'SHS-052', iteration: '04' }
+];
 
 /**
  * Classify changed paths against the guard.

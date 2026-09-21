@@ -7,22 +7,26 @@ lib/rules.mjs          the pure logic the checks decide with
 lib/boot-contract.mjs  what a booted studio page must be true of, as pure predicates
 lib/shell.mjs          git, filesystem and network plumbing
 lib/browser.mjs        a static server and headless Chrome, for `studio-boot`
+lib/scratch-repo.mjs   a throwaway git repository, for tests that need real history
 rules.test.mjs         unit tests for lib/rules.mjs
 boot-contract.test.mjs unit tests for lib/boot-contract.mjs — no browser needed
 docs-evidence.test.mjs unit tests for the Result-evidence rule in checks/docs.mjs
 home-page.test.mjs     the realm home's shelf component, every rendered state
 pulse-current.test.mjs the pulse and retro lines against the repository's own record
 path-guard.test.mjs    the path guard against the repository, not through the pure rule
+production-fix.test.mjs the production-fix rule, pure and against a scratch repository
+baseline.test.mjs      which tag is "the previous release", against a scratch repository
+deploy.test.mjs        studio-live's search and polling, against a fake web server
+stages.test.mjs        which checks each stage runs, and how arguments are read
 overtighten-gameplay.test.mjs  the torque rules and the progress rules
 overtighten-plates.test.mjs    every shipped plate: reachable, and what clears it
 overtighten-ui.test.mjs        the game's markup, including the coupling lines
-diagnostics/td-009.mjs         a reproduction of a production defect (TD-009) — not a test; nothing collects it
 ```
 
 `lib/browser.mjs` stands up its own static server rather than calling into
-`scripts/smoke.mjs`: that file is a top-level script with no exports and it is outside the
-path guard, so the studio can neither import it nor change it. The duplication is
-registered as TD-007.
+`scripts/smoke.mjs`: that file is a top-level script with no exports, so the studio cannot
+import it, and changing it would be a production fix (ADR-0008) made for test plumbing.
+The duplication is registered as TD-007.
 
 `node --test tests/` collects `*.test.mjs` from here, so the studio's unit tests run as
 part of the repository suite. `check.mjs` is not named like a test file and is therefore
