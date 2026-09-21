@@ -27,8 +27,8 @@ export const PULSE = {
  * updating this line fails before it reaches the page.
  */
 export const LEARNED = {
-  iteration: '02',
-  line: 'A test that defends a design has to be able to fail. Ours fixed the one variable the player was free to choose, and so proved something much smaller than the claim written above it.'
+  iteration: '03',
+  line: 'A check that can say "fixed" has to test the defect itself and prove its own precondition first. Ours was fooled twice by partial fixes: once by testing only the route it was built from, once by testing in the very state those fixes keyed off.'
 };
 
 /**

@@ -3,6 +3,60 @@
 All notable changes to Shadow Studio, one section per iteration. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are iteration tags.
 
+## [studio-iteration-03] — 2026-09-21
+
+A maintenance iteration: the ticket prefix is retired, a production defect is diagnosed
+rather than called flaky, and the gate stops accepting a ticket that has no file.
+
+### Added
+
+- **`tests/studio/diagnostics/td-009.mjs`** — a reproduction of a Black Hole in One defect
+  (TD-009), for whoever fixes it. It tries four player routes into Explore, a control, and
+  the defect directly — spirals proven alive in a golf round, black hole removed — and
+  says *fixed* only when all of them are clean. Two review rounds each defeated a version
+  of it with a partial fix; the final version reports every one of their decoys as
+  *present* or *unclear*. Not a test:
+  nothing collects it, so it cannot turn a suite red. It changes no file.
+- **ADR-0006** and a *Naming* section in `process.md`: every name the studio coins is read
+  as a stranger would read it before it is adopted.
+
+### Changed
+
+- **Tickets are numbered `SHS-NNN` from 043.** The `SS-` prefix was made by abbreviating the
+  realm's name without reading the result, and the initials are those of the Nazi
+  *Schutzstaffel*. The numbering continues, so one number names one ticket, and `SS-001` to
+  `SS-042` keep their names. `commit-lint` enforces the split in both directions.
+- **`docs-current` checks that every ticket a commit names has exactly one file** — whose
+  name and first line carry its ID, and whose ID obeys the sequence — across the whole
+  history, and applies the content rules to every ticket the iteration names or edits,
+  wherever the file lives. A test lints every example commit subject in the handbook.
+- **`commit-lint` waives one commit by its full hash**, visibly: SS-042's subject is 81
+  characters, it reached the remote after the previous gate ran, and fixing it would
+  rewrite `main`.
+
+### Fixed
+
+- **`docs-current` could not see a missing ticket.** It read only the files that existed,
+  so SS-039, SS-041 and SS-042 were named by commits on `main` with no file while the gate
+  reported iteration 02 complete. The three files are reconstructed from their commits and
+  marked as such.
+
+### Diagnosed, not fixed
+
+- **TD-009 is a real defect, not a flaky test.** Entering Explore while a golf hole's
+  spiral particles are alive throws on every frame for about a second, before the canvas
+  renders: `stepParticles` moves spirals around a black hole that Explore's reset removed.
+  Players reach it by every route from a golf hole to the Explore button that was tried —
+  four of them; two end-to-end tests catch it only when a particle spawns in time. The one-line fix is specified in the debt
+  register and was tried on a scratch copy only. It is production code, and waits on the
+  executive.
+
+### Review
+
+Two rounds, the cap. The second rejected the iteration, on a gap in the TD-009 check that
+both reviewers found independently; it was closed in a fix round no reviewer has examined.
+See `iterations/03/review.md`.
+
 ## [studio-iteration-02] — 2026-09-20
 
 The shelf gets its first experiment, the realm gets boot coverage, and the experiment
