@@ -44,3 +44,31 @@ not reconstructed afterwards.
 - **Tech Lead** — *Done:* the waiver is keyed by the full hash, which git computes from the
   commit's content, so it cannot be claimed by copying a subject; every waiver applied is
   printed. *Blocked:* nothing.
+
+## After SHS-045 — one file per ticket
+
+- **Tech Lead** — *Done:* `docs-current` now checks, across the whole history, that every
+  ticket a commit names has exactly one file whose name and first line carry its ID, and
+  holds any file named by a commit in range to the content rules wherever it lives. The
+  existence half reads commit subjects and file names only — no Markdown. *Next:* SHS-044.
+- **Technical Writer** — *Done:* reconstructed SS-039, SS-041 and SS-042 from their commits
+  into iteration 02's directory. The first draft of the reconstructions said everything in
+  them was read off the commit; the size, role and dependencies were not, and the preamble
+  now says which parts were assigned. *Blocked:* nothing.
+- **QA Engineer** — *Done:* before the backfill the rule named exactly the three missing
+  IDs; four mutations on the real tree each failed with their own message and were
+  reverted.
+
+## After SHS-044 — TD-009 diagnosed
+
+- **QA Engineer** — *Done:* TD-009 is not a flaky test and not a New Map defect. It is a
+  player-facing defect in Black Hole in One that the test only catches when a particle
+  happens to spawn in time: spirals left orbiting a black hole that Explore's reset
+  removed. The first real-tap measurement read 1 in 5, then 1 in 20 — both hits on the
+  first run of a batch, because the game remembered Explore as the last mode and drew it
+  behind the menu from then on. A fresh profile per run gave 10/10. *Next:* the
+  independent reviews. *Blocked:* nothing.
+- **Tech Lead** — *Done:* the fix is one line in production's `stepParticles`, tried on a
+  scratch copy only. Specified in TD-009 for the executive; not made.
+- **Scrum Master** — *Done:* three committed tickets and SHS-047 merged; SHS-046 carries
+  the record. Review round 1 of 2 next.
