@@ -131,3 +131,17 @@ that are really decisions go to `decisions/` instead.
 - **An experiment that returns "no" has succeeded.** Overtighten was built to answer one
   question and answered it, with a measurement. The failure was not the result; it was the
   test that would have hidden it.
+- **A rule written to close a defect is the most likely thing to be satisfied by that
+  defect.** Three rules written in one round were each defeated by the very behaviour they
+  named: a back link rule that rejected `#` and accepted `index.html`; a
+  states-must-differ rule satisfied by four greys one unit apart; an unticked-criteria rule
+  that missed ordered lists. The author has the defect in mind and writes the narrowest
+  thing that excludes the instance in front of them.
+  **So: write the rule about the thing, not about the spelling.** Compare pages, not
+  hrefs. Compare colours, not strings. Count declarations, not hiding places. When a rule
+  can only be stated as a list of forms, it is not finished — the next form is already
+  waiting.
+- **The one that keeps working is the general one.** `docs-current` was defeated five times
+  by five ways of hiding text and once more by a status read from raw text. Stripping each
+  hiding place in turn never converged; "a ticket declares its status exactly once" ended
+  it, because it is indifferent to how the second declaration was hidden.

@@ -170,9 +170,15 @@ async function observeNormal(browser, url) {
       const raw = back.getAttribute('href') ?? '';
       try {
         const to = new URL(raw, location.href);
+        // Normalised before comparing. The driver serves pages in directory
+        // form, so `href="index.html"` resolved to a *different string* for the
+        // same page and passed — one more spelling of the defect, after `#`,
+        // `#top`, `./` and a blank. Comparing the page rather than the text is
+        // what makes the spelling stop mattering.
+        const page = url => url.pathname.replace(/index\.html$/, '').replace(/\/+$/, '/');
         backGoes = {
           raw,
-          samePage: to.pathname === location.pathname,
+          samePage: page(to) === page(new URL(location.href)),
           fragmentOnly: raw.trim().startsWith('#') || raw.trim() === ''
         };
       } catch {
