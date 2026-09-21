@@ -451,6 +451,19 @@ bought.
   hypothesis as a test was right. Writing one that could not fail was the error, and the
   retro carries the rule that came out of it.
 
+## One thing found on the way out
+
+The publish step ran the full suite twice, and the second run failed a production test the
+first had passed: `black-hole-in-one: 🔄 New Map regenerates the Explore world under a
+fresh seed, keeping fuel (GEN-1)`, throwing `Cannot read properties of null (reading 'x')`.
+
+Measured rather than assumed: **one failure in three consecutive runs** on an unchanged
+tree. It is not the studio's — no commit in this iteration touches `games/`, `shared/`,
+`scripts/` or the landing pages, and `production-unchanged` confirms it. Registered as
+**TD-009** rather than shrugged at, because the studio's own guardrail is that the whole
+repository suite is green before anything merges, and a test that fails a third of the time
+makes that guarantee weaker than it reads — and would hide a real regression in that path.
+
 ## The open decision this leaves
 
 Overtighten needs an irreversible state to become a puzzle, and each candidate is a
