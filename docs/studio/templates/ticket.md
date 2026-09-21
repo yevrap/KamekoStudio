@@ -5,7 +5,7 @@
 - **Iteration:** NN
 - **Role lead:** <role from team/>
 - **Depends on:** <ticket IDs, or none>
-- **Branch:** `shs-NNN-short-slug`
+- **Branch:** none — trunk-based, commits to `main` (ADR-0007)
 
 ## Motivation
 

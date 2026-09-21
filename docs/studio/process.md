@@ -29,7 +29,7 @@ is capacity left.
 | Backlog refinement | Start | Tickets sized S/M/L with acceptance criteria; debt items pulled in |
 | Iteration planning | Start | Goal, committed tickets, capacity, risks (`plan.md`) |
 | Async stand-up | Between tickets | Three lines in `iterations/NN/log.md`: done / next / blocked, per role that acted |
-| Build and test loop | Middle | Branch per ticket, commits, test results recorded on the ticket |
+| Build and test loop | Middle | Small commits to `main`, each ticket pushed when done, test results recorded on the ticket |
 | Review / demo | End | Demo list, URLs, and a Keep / Iterate / Kill line per item (`review.md`) |
 | Retrospective | End | Went well / didn't / change next time; every change becomes a ticket or a doc edit (`retro.md`) |
 
@@ -64,6 +64,9 @@ is testing and how its retrospective judges it.
 - When a ticket is done: `--stage=push` green — the gate's checks short of the review ones,
   the full repository suite included — then push, then `--stage=postdeploy` with a
   `--marker` only the new build has. Pages deploys every push, so every push is a release.
+- Ceremony records — the plan, each stand-up entry, the review, the retrospective — are
+  pushed as soon as they are committed, through the same `push` stage, so work in flight is
+  visible on the remote while it happens rather than all at once at the end.
 - A page a player could reach but that is not ready stays off the shelf until its ticket
   is done.
 - Review findings are fixed forward. A push that breaks the live site is undone with one

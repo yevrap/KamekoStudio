@@ -49,3 +49,17 @@ committed.
   a run is started from a directory outside it, where the executive's `STOP` file would go.
   The checker cannot name that directory in a public repository. Checked by hand before
   each push for now; the retrospective decides whether it needs more. *Next:* SHS-051.
+
+## After SHS-051 — production fixes, admitted per ticket
+
+- **Tech Lead** — *Done:* ADR-0008 writes down the executive's standing permission, and
+  the path guard enforces it. A production file is admitted only for an entry naming this
+  iteration, a ticket file in this iteration, and commits that all name that ticket.
+  Decided from git and file names only; no Markdown is read. Six mutations, each putting
+  back one hole, each failed the tests. The search for passages that said production was
+  untouchable found seven documents to change and four decision records to leave as
+  history. *Next:* SHS-052, the first use. *Blocked:* nothing.
+- **QA Engineer** — *Done:* `push` 10 of 10; post-deploy, started the moment the push
+  returned, found the new ADR on attempt 3 of 12 — 3 of 3. One correction before the push:
+  the ticket named test files that do not exist and called ADR-0001 unchanged while its
+  status line had changed; both fixed in the unpushed commit. *Next:* SHS-052's red run.

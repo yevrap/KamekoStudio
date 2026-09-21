@@ -34,7 +34,10 @@ From iteration 04, as a trial:
 3. **Push when a ticket is done**, not once per iteration: the `push` stage green — the
    gate's checks short of the review ones, the full repository suite included, so a
    gate-only check fails on the ticket responsible — then push, then the post-deploy
-   checks. Small, frequent deploys, each verified.
+   checks. Small, frequent deploys, each verified. Ceremony records — the plan, stand-up
+   entries, the review, the retrospective — are pushed the same way as soon as they are
+   committed: the executive asked that work in flight be visible on the remote while it
+   happens.
 4. **Unfinished work a player could see stays dark.** For the realm, the switch is the
    shelf: a page is not listed in `studio/shelf-data.js` until its ticket is done, so it is
    reachable only by someone who already has its address.
