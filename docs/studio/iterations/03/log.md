@@ -72,3 +72,21 @@ not reconstructed afterwards.
   scratch copy only. Specified in TD-009 for the executive; not made.
 - **Scrum Master** — *Done:* three committed tickets and SHS-047 merged; SHS-046 carries
   the record. Review round 1 of 2 next.
+
+## After review round 1 of 2
+
+- **Independent Reviewer** (a different model from the author) — *Done:* **approved**, with
+  one minor finding and one nit. *Blocked:* nothing.
+- **QA Engineer** — *Done:* **failed** it, on one major finding: SHS-044's reproduction
+  printed "looks fixed, close the row" under a partial fix that stopped spirals on the
+  menu only, while a player leaving a golf round through ☰ Menu still hit the throw every
+  time — and its own crash exited with the code for "present". Also four minor findings
+  (a second exposed e2e test; the handbook's example commit rejected by the new rule; a
+  reconstructed ticket edited in this iteration escaping the content rules; the docs
+  claiming *every ID* where the rule reads one) and four nits.
+- **Tech Lead** — *Done:* one fix round each on SHS-043, SHS-044, SHS-045 and SHS-047;
+  every QA finding fixed, and the reviewer's nit. The reviewer's minor finding — the pulse
+  line's `shipped` date is set before the iteration ships — is declined with a reason in
+  `review.md`. *Next:* review round 2, briefed on the fix-round diff only.
+- **Scrum Master** — *Done:* no ticket is at its cap; each used 1 of 2. *Next:* round 2 is
+  the last; if it rejects, the run stops and asks.
