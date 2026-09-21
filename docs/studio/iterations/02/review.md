@@ -46,10 +46,10 @@ from the bypasses the reviews demonstrated.
 
 Recorded in full in SS-026. In short: the test defending it could not fail, and the thing it
 was defending is not true. 142 of the 146 orderings across the three plates clear with a
-single hold per bolt; blind round-robin clears every plate in at most four passes. There is
+single hold per bolt; blind round-robin clears every plate in at most three passes. There is
 no ordering to discover.
 
-### Three blind spots in the check, each found by mutating `studio/**`
+### Four blind spots in the check, each found by mutating `studio/**`
 
 - Deleting the pointer release listeners makes **every tap run a bolt to its strip point and
   destroy the plate.** The whole ticket stage passed. The check sampled the readouts
@@ -114,6 +114,52 @@ asserted by nothing.
 was answered by the label below it and an entirely unfilled template read as complete.
 SS-023 shipped that way with all six criteria ticked.
 
+## The third review — rejected again
+
+Reviewed once more with fresh context, and rejected. Two of the three headline claims were
+false.
+
+### Deleting one exemption had left another
+
+`pageErrors` still filtered the browser's own `/favicon.ico` 404 — and that filter read
+`error.source` too. A studio file throwing
+
+```js
+new Function('throw new DOMException("studio defect","SecurityError")\n//# sourceURL=' +
+             location.origin + '/favicon.ico')
+```
+
+had its error dropped **in every pass**, and the new test suite asserted the hole as
+intended. Three successive exemptions, each defeated by the same forgery pointed somewhere
+new. The comment above the filter claimed it was "safe to decide from, unlike a stack
+frame"; it was being fed a stack frame.
+
+The fix stopped being a filter at all. The driver now **answers** the favicon request, so
+there is no 404 to explain, and there is no error filter left in the check.
+
+### Ten more mutations passed
+
+A click no longer focusing the bolt — the SS-025 defect, restorable in one line, and
+invisible because the check focused bolts for itself and only then used the pointer. Focus
+loss no longer releasing a hold, so tabbing away mid-hold ran a bolt to its strip point
+with no way to stop it. A dead mute toggle, which had never been pressed while the comment
+above said every control was. State classes never cleared. A transposed coupling line. The
+band at `stroke-width: 0` with its colour untouched — walking straight through the rule
+written the round before to stop exactly that defect. Coupling lines and torque readouts in
+`transparent`. And choosing a plate leaving nothing playable on a 320px screen.
+
+### And `docs-current` still passed an evidence-free ticket, three ways
+
+An unvalidated status word, a label inside a fenced example elsewhere in the file, and an
+earlier draft Result answering for the final one.
+
+### What the third review credited
+
+The `turnId` and `causes` hold logic, attacked with dispatched multi-pointer events and CDP
+touch: no stuck state, no unstoppable hold, no concurrent loops. Every plate claim exact,
+re-derived from a model it wrote itself. The fail-closed shape of the new judges. Public-repo
+hygiene across the whole diff.
+
 ### What the second review credited
 
 The input fixes, verified by driving real multi-pointer events. Every measured claim about
@@ -136,7 +182,10 @@ visually identical and numerically different, so it now asserts the named treatm
 
 - **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Three
   reviews attacked it and it is a much stronger thing than the version that first shipped:
-  28 mutations now fail it, against the 8 it was written for. It also caught a real accident
+  **38 mutations across five attack sets now fail the ticket stage**, against the 8 it was
+  written for. That is a count of what has been tried, not a claim that nothing is left —
+  each of the three passes found mutations the previous round survived, and `self-checks.md`
+  now states plainly what the check does not cover. It also caught a real accident
   rather than a planted one — a parameter in SS-029 that shadowed an imported function and
   silently killed every hold — within an hour of the error-collection rule being added.
 - **Overtighten — Iterate, not Keep.** It is a well-built, pleasant, tactile thing, and it is

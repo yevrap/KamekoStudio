@@ -101,9 +101,17 @@ that are really decisions go to `decisions/` instead.
   now the lesson has been applied everywhere except the place structurally identical to
   where it was learned, which is why it is now a step with an artifact rather than a thing
   to remember.
-- **Anchor a path rule to an origin and a full path, never to a suffix.** `shared/settings.js`
-  matched anywhere, and the studio may write anywhere under `studio/**`. A rule about *which
-  file* must be a rule about the whole name.
+- **Do not decide anything from what a page says about itself.** A stack frame's URL, a
+  console message's location and a script's declared name are all minted by the code that
+  produced them: `//# sourceURL` lets any file claim any path at any origin. Three
+  successive exemptions were built on that evidence and all three were defeated — first by
+  a suffix match, then by anchoring to an origin and exact path, then by the same forgery
+  pointed at `/favicon.ico`. **The lesson is not "anchor it harder".** When the only
+  evidence available is a claim, change the situation instead: the driver now serves the
+  favicon and stubs the inherited script, so there is nothing to recognise and nothing to
+  impersonate.
+- **A filter over errors is a rule about whose error it is**, and that is the question the
+  page gets to answer. Prefer removing the cause to classifying the symptom.
 - **A check that drives something must be listening while it drives it.** The phase that
   played the game collected no errors, so "no console errors" was a claim about the page
   load only.

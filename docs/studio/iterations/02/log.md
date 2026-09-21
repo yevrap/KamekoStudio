@@ -75,3 +75,34 @@ Both ran with fresh context and neither saw the other's report.
   and the README. Nothing re-tuned. *Blocked:* the redesign is the executive's call.
 - **Technical Writer** — *Done:* review, retro, changelog, learning log, the debt register,
   and the correction to SS-020's Result, which claimed a test that did not exist.
+
+## After the second review — rejected
+
+- **Independent Reviewer** — *Verdict:* **REJECTED.** The exemption anchored by SS-024 is
+  still defeatable: a `//# sourceURL` comment mints a stack frame, so any studio file can
+  claim production's identity. Seven more mutations inside `studio/**` pass the ticket
+  stage, including emptying the shelf. A ticket is Done with an entirely empty Result and
+  `docs-current` reads it as complete.
+- **Tech Lead** — *Done:* stopped anchoring and removed the exemption. The blocked-storage
+  pass serves an empty script in place of production's, so there is nothing left to forge.
+  *Next:* the seven mutations. *Blocked:* nothing.
+- **Scrum Master** — *Done:* three tickets rather than patches — SS-027 (the check), SS-028
+  (the record), SS-029 (the turn loop). SS-027 reaches the two-round cap here.
+
+## After the third review — rejected
+
+- **Independent Reviewer** — *Verdict:* **REJECTED.** Deleting one exemption left another:
+  the favicon filter read the same forgeable source, so a studio throw claiming
+  `/favicon.ico` was dropped in every pass. Ten more mutations pass. `docs-current` passes
+  an evidence-free ticket three further ways. One of the three numbers SS-028 was opened to
+  fix is still wrong, with its criterion ticked.
+- **QA Engineer** — *Done:* SS-030. The error filter is gone entirely — the driver answers
+  the favicon request rather than recognising it afterwards — and all ten mutations are
+  covered by observations the driver now takes. *Next:* nothing outstanding.
+- **Front-end / Gameplay Dev** — *Done:* the coupling line's coordinates are rounded and
+  unit-tested against the bolts they join; a transposed endpoint now fails.
+- **Technical Writer** — *Done:* the wrong number on the **live page** (round-robin "four
+  passes", actually three), the changelog asserting a superseded design as current, the
+  learning log carrying a lesson the next review disproved, "three blind spots" over four
+  bullets, and SS-024's last wrong count. *Reflection:* three of the four record defects in
+  this round were in documents written by the pass that was meant to have fixed the record.

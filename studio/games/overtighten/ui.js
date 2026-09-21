@@ -81,7 +81,10 @@ export function linkMarkup(plate) {
       drawn.add(key);
       const other = plate.bolts.find(b => b.id === id);
       if (!other) continue;
-      lines.push(`<line x1="${bolt.x * 100}" y1="${bolt.y * 100}" x2="${other.x * 100}" y2="${other.y * 100}"></line>`);
+      // Rounded: `0.28 * 100` is 28.000000000000004, and a seventeen-digit
+      // coordinate in the markup helps nobody.
+      const at = value => Number((value * 100).toFixed(3));
+      lines.push(`<line x1="${at(bolt.x)}" y1="${at(bolt.y)}" x2="${at(other.x)}" y2="${at(other.y)}"></line>`);
     }
   }
   return `<svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${lines.join('')}</svg>`;

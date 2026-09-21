@@ -26,6 +26,45 @@ import {
 /** How long a hold has to run before a frozen gauge and a live one look different. */
 const HOLD_MS = 500;
 
+/**
+ * Open a page with the two things the driver controls rather than judges.
+ *
+ * **The favicon is served**, not filtered. Chrome asks every origin for
+ * `/favicon.ico` on its own and the repository ships none, so every page
+ * answers 404 — production's included — and that 404 arrives as both a failed
+ * response and a console error. The first answer was a filter keyed on the
+ * error's source, and a source is a string the page chooses: a studio file
+ * throwing `//# sourceURL=<origin>/favicon.ico` had its error dropped in every
+ * pass. Answering the browser's request removes the 404, and with it the need
+ * to recognise anything. There is no error filter left in this check.
+ *
+ * `stubInherited` additionally replaces production's settings drawer, for the
+ * blocked-storage pass. Same principle: change what happens, do not excuse it.
+ */
+async function openPage(browser, { stubInherited = false } = {}) {
+  const page = await browser.newPage();
+  const errors = collectErrors(page);
+  const stubbed = { favicon: 0, inherited: 0 };
+  await page.setRequestInterception(true);
+  page.on('request', request => {
+    let pathname;
+    try { pathname = new URL(request.url()).pathname; } catch { pathname = ''; }
+    if (/\/favicon\.ico$/.test(pathname)) {
+      stubbed.favicon += 1;
+      return request.respond({ status: 200, contentType: 'image/x-icon', body: '' });
+    }
+    if (stubInherited && pathname === INHERITED_SETTINGS) {
+      stubbed.inherited += 1;
+      return request.respond({
+        status: 200, contentType: 'text/javascript',
+        body: '/* replaced for the blocked-storage pass */'
+      });
+    }
+    return request.continue();
+  });
+  return { page, errors, stubbed };
+}
+
 /** Every index.html under studio/, as repo-relative paths, in a stable order. */
 async function discoverPages(root) {
   const pages = [];
@@ -53,8 +92,7 @@ function urlFor(origin, pagePath) {
  * properties of a narrow viewport and neither can fail on a wide one.
  */
 async function observeNormal(browser, url) {
-  const page = await browser.newPage();
-  const errors = collectErrors(page);
+  const { page, errors } = await openPage(browser);
   await page.setViewport({ width: NARROW_WIDTH, height: 720 });
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle();
@@ -83,11 +121,9 @@ async function observeNormal(browser, url) {
         : style.visibility !== 'hidden' && Number(style.opacity) !== 0;
       let reason = '';
       if (laidOut && !seen) {
-        const faded = el.closest('*');
         reason = style.visibility === 'hidden' ? 'visibility: hidden'
           : Number(style.opacity) === 0 ? 'opacity: 0'
           : 'hidden by an ancestor (opacity or visibility)';
-        void faded;
       }
       return { laidOut, seen, reason };
     };
@@ -107,7 +143,6 @@ async function observeNormal(browser, url) {
 
     const back = document.querySelector('[data-back], a.back');
     const backBox = back ? back.getBoundingClientRect() : null;
-    void describe;
 
     return {
       targets,
@@ -131,7 +166,7 @@ async function observeNormal(browser, url) {
  * know the explanation is really there is to load the page without scripts.
  */
 async function observeWithoutScript(browser, url) {
-  const page = await browser.newPage();
+  const { page } = await openPage(browser);
   await page.setJavaScriptEnabled(false);
   await page.goto(url, { waitUntil: 'domcontentloaded' });
   const text = await page.evaluate(() => {
@@ -150,34 +185,7 @@ async function observeWithoutScript(browser, url) {
  * and keeps a visit log, so every call site here is a place the page can die.
  */
 async function observeWithoutStorage(browser, url) {
-  const page = await browser.newPage();
-  const errors = collectErrors(page);
-
-  // Production's settings drawer is *replaced* for this pass, rather than
-  // excused for throwing.
-  //
-  // It does throw here — an uncaught SecurityError with site data blocked
-  // (TD-005) — and it is outside the path guard, so the studio cannot fix it.
-  // The first answer was an exemption keyed on the throwing file. That was
-  // wrong in a way no amount of anchoring could fix: a stack frame's URL is
-  // minted by the script that throws, so `//# sourceURL` lets any studio file
-  // claim to be production's. The second review did it in six lines.
-  //
-  // Serving an empty script instead removes the question. Nothing in this pass
-  // is production's, so every error in it is the studio's, and there is no
-  // exemption left to defeat. What this pass proves is narrower and true:
-  // *studio code* survives blocked storage. TD-005 stays in the debt register
-  // as production's defect, which is where it belongs.
-  await page.setRequestInterception(true);
-  let stubbed = 0;
-  page.on('request', request => {
-    if (new URL(request.url()).pathname === INHERITED_SETTINGS) {
-      stubbed += 1;
-      request.respond({ status: 200, contentType: 'text/javascript', body: '/* replaced for the blocked-storage pass */' });
-    } else {
-      request.continue();
-    }
-  });
+  const { page, errors, stubbed } = await openPage(browser, { stubInherited: true });
 
   await page.evaluateOnNewDocument(() => {
     const blocked = () => { throw new DOMException('denied', 'SecurityError'); };
@@ -189,8 +197,25 @@ async function observeWithoutStorage(browser, url) {
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle();
   const mainText = await page.evaluate(() => (document.querySelector('main') || document.body).innerText || '');
+
+  // Prove the configuration actually happened. Without this the pass would
+  // silently become a second ordinary load if `evaluateOnNewDocument` or the
+  // interception ever stopped applying — and report a pass either way. It is
+  // the iteration's own rule turned on itself: verify in the configuration
+  // where it can fail, and first check you are in it.
+  const storageBlocked = await page.evaluate(() => {
+    try { localStorage.getItem('studio_probe'); return false; } catch { return true; }
+  });
+  const referencesInherited = await page.evaluate(
+    path => [...document.scripts].some(s => s.src && new URL(s.src).pathname === path), INHERITED_SETTINGS);
+
   await page.close();
-  return { mainText, errors: pageErrors(errors), stubbedInherited: stubbed };
+  return {
+    mainText,
+    errors: pageErrors(errors),
+    storageBlocked,
+    inheritedStubbed: !referencesInherited || stubbed.inherited > 0
+  };
 }
 
 /**
@@ -200,7 +225,7 @@ async function observeWithoutStorage(browser, url) {
  * shelf, the one configuration in which they cannot fail.
  */
 async function observeHome(browser, url) {
-  const page = await browser.newPage();
+  const { page } = await openPage(browser);
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle();
 
@@ -282,9 +307,10 @@ async function observeHome(browser, url) {
  *    Stubbing the storage wrapper to a no-op passed everything.
  */
 async function observeOvertighten(browser, url) {
-  const page = await browser.newPage();
-  const errors = collectErrors(page);
-  await page.setViewport({ width: 420, height: 900 });
+  const { page, errors } = await openPage(browser);
+  // A phone, not a desktop: 'the plate is on screen' is only a real assertion
+  // on a viewport where it can fail.
+  await page.setViewport({ width: 390, height: 720 });
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle();
 
@@ -313,13 +339,17 @@ async function observeOvertighten(browser, url) {
   const gaugeInk = await page.evaluate(() => {
     const bolt = document.querySelector('[data-bolt]');
     if (!bolt) return null;
-    const ink = el => (el ? getComputedStyle(el).stroke : '');
+    const stroke = el => (el ? { colour: getComputedStyle(el).stroke, width: getComputedStyle(el).strokeWidth } : {});
     const head = bolt.querySelector('.head');
+    const line = document.querySelector('.links line');
+    const readout = document.querySelector('[data-readout]');
     return {
-      track: ink(bolt.querySelector('.track')),
-      band: ink(bolt.querySelector('.band')),
-      fill: ink(bolt.querySelector('.fill')),
-      'head edge': head ? getComputedStyle(head).borderTopColor : ''
+      track: stroke(bolt.querySelector('.track')),
+      band: stroke(bolt.querySelector('.band')),
+      fill: stroke(bolt.querySelector('.fill')),
+      'coupling line': stroke(line),
+      'head edge': head ? { colour: getComputedStyle(head).borderTopColor } : {},
+      'torque readout': readout ? { colour: getComputedStyle(readout).color } : {}
     };
   });
   const plateVisible = await page.evaluate(() => {
@@ -375,9 +405,21 @@ async function observeOvertighten(browser, url) {
     return Boolean(panel && !panel.hidden && /strip/i.test(panel.innerText));
   });
 
-  // Every control on the page, pressed. A dead listener is invisible to a check
-  // that only ever touches the bolts: emptying the restart, picker and advance
-  // handlers each left a button that does nothing and passed everything.
+  // The keyboard *after* the pointer. Done in this order on purpose: focusing a
+  // bolt from the driver and then using the pointer is the one sequence in
+  // which a missing `focus()` in the pointer handler cannot be noticed.
+  const keyboardAfterPointer = await proveKeyboardAfterPointer(page, boltIds[0]);
+
+  // Losing focus must stop the turn, or a hold started with the keyboard cannot
+  // be stopped at all.
+  const releasedOnFocusLoss = await proveFocusLossReleases(page, boltIds[0]);
+
+  // A bolt must change state class as it crosses into its band.
+  const stateClassesTrack = await proveStateClasses(page, boltIds[0]);
+
+  // The controls that exist on a fresh profile, pressed. The two that need a
+  // cleared plate — "Next plate" and the picker's positive case — are pressed
+  // in provePersistence, where one exists.
   const controls = await exerciseControls(page);
 
   // Persistence, end to end: clear a plate, reload, and see it stay cleared.
@@ -401,11 +443,15 @@ async function observeOvertighten(browser, url) {
         'Next plate': persistence.advanced,
         'plate picker': persistence.picked
       },
+      benchOnScreenAfterPick: persistence.boltsOnScreen,
       keyboardTurned: afterKey[boltIds[0]] > 0,
       released: afterKeySettled[boltIds[0]] === afterKey[boltIds[0]],
       pointerTurned: afterPointer[boltIds[1]] > 0,
       releasedPointer: afterPointerSettled[boltIds[1]] === afterPointer[boltIds[1]],
       couplingObserved: afterPointer[boltIds[0]] < afterKey[boltIds[0]],
+      keyboardAfterPointer,
+      releasedOnFocusLoss,
+      stateClassesTrack,
       strippedEndsPlate: ended,
       progressPersisted: persistence.persisted
     }
@@ -428,6 +474,87 @@ async function boltBox(page, boltId) {
 }
 
 /**
+ * Click a bolt, then hold a key on it without touching focus from the driver.
+ *
+ * The pointer handler calls `preventDefault`, which suppresses the browser's own
+ * focus, so it must set focus itself. Deleting that one line leaves
+ * `activeElement` on the body and the keyboard dead after any click — the
+ * SS-025 defect, restorable in one line and invisible to a check that focuses
+ * bolts for itself.
+ */
+async function proveKeyboardAfterPointer(page, boltId) {
+  await page.evaluate(() => document.getElementById('restart')?.click());
+  await settle(200);
+  // Focus is deliberately taken off the plate first. An earlier phase focuses a
+  // bolt from the driver, and with focus still there the keyboard works whether
+  // or not the pointer handler restores it — which is the one arrangement in
+  // which deleting that line cannot be noticed.
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    document.body.focus?.();
+  });
+  await settle(100);
+  const box = await page.$eval(`[data-bolt="${boltId}"]`, el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  await page.mouse.click(box.x, box.y);
+  await settle(150);
+  const read = () => page.evaluate(
+    id => Number.parseFloat(document.querySelector(`[data-readout="${id}"]`)?.textContent) || 0, boltId);
+  const before = await read();
+  await page.keyboard.down(' ');
+  await settle(400);
+  await page.keyboard.up(' ');
+  const after = await read();
+  return after > before;
+}
+
+/** Focus leaving the plate mid-hold must stop the turn, and it must stay stopped. */
+async function proveFocusLossReleases(page, boltId) {
+  await page.evaluate(() => document.getElementById('restart')?.click());
+  await settle(200);
+  const read = () => page.evaluate(
+    id => Number.parseFloat(document.querySelector(`[data-readout="${id}"]`)?.textContent) || 0, boltId);
+  await page.focus(`[data-bolt="${boltId}"]`);
+  await page.keyboard.down(' ');
+  await settle(300);
+  await page.evaluate(() => document.getElementById('restart')?.focus());
+  await settle(120);
+  const atFocusLoss = await read();
+  await settle(500);
+  const later = await read();
+  await page.keyboard.up(' ');
+  return later === atFocusLoss;
+}
+
+/**
+ * A bolt must change state class as it crosses into its band. Without the class
+ * being cleared, the old one stays alongside the new and the gauge stops
+ * reporting what the bolt is.
+ */
+async function proveStateClasses(page, boltId) {
+  await page.evaluate(() => document.getElementById('restart')?.click());
+  await settle(200);
+  const classesOf = () => page.evaluate(
+    id => document.querySelector(`[data-bolt="${id}"]`)?.className ?? '', boltId);
+  const before = await classesOf();
+  const box = await page.$eval(`[data-bolt="${boltId}"]`, el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  await page.mouse.move(box.x, box.y);
+  await page.mouse.down();
+  await settle(1400);
+  await page.mouse.up();
+  const after = await classesOf();
+  const states = text => (text.match(/is-(loose|seated|over|stripped)/g) || []);
+  await page.evaluate(() => document.getElementById('restart')?.click());
+  await settle(200);
+  return before.includes('is-loose') && states(after).length === 1 && !after.includes('is-loose');
+}
+
+/**
  * Press each control and check something actually happened.
  *
  * Restart must reset a turned bolt; the picker must change the plate; advance
@@ -440,6 +567,18 @@ async function exerciseControls(page) {
   const valueOf = id => page.evaluate(
     boltId => Number.parseFloat(document.querySelector(`[data-readout="${boltId}"]`)?.textContent) || 0, id);
 
+  // Turn the bolt here rather than relying on an earlier phase having left it
+  // turned: the helpers above each restart the plate, and a restart button
+  // "resets" a bolt that was already at zero however dead its listener is.
+  const box = await page.$eval(`[data-bolt="${firstBolt}"]`, el => {
+    const r = el.getBoundingClientRect();
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  });
+  await page.mouse.move(box.x, box.y);
+  await page.mouse.down();
+  await settle(400);
+  await page.mouse.up();
+  await settle(120);
   const before = await valueOf(firstBolt);
   await page.click('#restart');
   await settle(200);
@@ -453,9 +592,27 @@ async function exerciseControls(page) {
   await settle(200);
   const lockedStayed = (await currentPlate(page)) === nameBefore;
 
+  // The mute toggle. Never pressed before, while the comment above claimed
+  // every control was — and `sfx.js` has no other coverage in the repository.
+  const muteBefore = await page.evaluate(() => ({
+    pressed: document.getElementById('mute')?.getAttribute('aria-pressed'),
+    label: document.getElementById('mute')?.textContent?.trim()
+  }));
+  await page.click('#mute');
+  await settle(150);
+  const muteAfter = await page.evaluate(() => ({
+    pressed: document.getElementById('mute')?.getAttribute('aria-pressed'),
+    label: document.getElementById('mute')?.textContent?.trim()
+  }));
+  await page.click('#mute');
+  await settle(150);
+
   return {
     'Start this plate again': before > 0 && afterRestart === 0,
-    'plate picker refuses a locked plate': lockedStayed
+    'plate picker refuses a locked plate': lockedStayed,
+    'Sound on/off': muteBefore.pressed === 'false'
+      && muteAfter.pressed === 'true'
+      && muteAfter.label !== muteBefore.label
   };
 }
 
@@ -476,7 +633,7 @@ function currentPlate(page) {
  * look again. It is deliberately not a computed solution applied blind.
  */
 async function provePersistence(page, url, lockedBefore) {
-  const unsolved = { persisted: false, advanced: false, picked: false };
+  const unsolved = { persisted: false, advanced: false, picked: false, boltsOnScreen: false };
   await page.goto(url, { waitUntil: 'networkidle2' });
   await settle(400);
 
@@ -533,11 +690,35 @@ async function provePersistence(page, url, lockedBefore) {
   // this was only ever tested on a fresh profile, where nothing may load anyway.
   const beforePick = await currentPlate(page);
   const target = beforePick === '0' ? '1' : '0';
-  await page.evaluate(n => document.querySelector(`#picker [data-plate="${n}"]`)?.click(), target);
-  await settle(400);
+  // A small phone for this one measurement. On a tall viewport the bench fits
+  // however it is scrolled, which is the configuration where scrolling to the
+  // wrong edge cannot fail.
+  await page.setViewport({ width: 320, height: 568 });
+  await settle(200);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await settle(120);
+  // A real click, not `element.click()`. The browser scrolls a control into
+  // view and focuses it when a person presses it, and that is exactly what
+  // pushes the bench off the top — a programmatic click does neither, so it
+  // tests the page in the one configuration where this cannot fail.
+  await page.click(`#picker [data-plate="${target}"]`);
+  await settle(500);
   const picked = (await currentPlate(page)) === target;
 
-  return { persisted: lockedAfter < lockedBefore, advanced, picked };
+  // And the plate you just chose has to be on screen. The picker sits after the
+  // bench in the document, so pressing it scrolls the picker into view: with the
+  // bench scrolled to the wrong edge every bolt sits above the top of a phone
+  // screen and there is nothing playable visible at all.
+  const boltsOnScreen = await page.evaluate(() => {
+    const bolts = [...document.querySelectorAll('[data-bolt]')];
+    if (!bolts.length) return false;
+    return bolts.every(b => {
+      const r = b.getBoundingClientRect();
+      return r.top >= 0 && r.bottom <= window.innerHeight;
+    });
+  });
+
+  return { persisted: lockedAfter < lockedBefore, advanced, picked, boltsOnScreen };
 }
 
 async function run(ctx) {

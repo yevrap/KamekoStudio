@@ -186,7 +186,9 @@ for (const plate of PLATES) {
       .map(order => roundRobin(plate, coupling, order))
       .reduce((a, b) => (b.passes > a.passes ? b : a));
     assert.equal(worst.solved, true);
-    assert.ok(worst.passes <= 4, `worst case ${worst.passes} passes`);
+    // Three, which is what review.md, the ticket and the game's own page say.
+    // A looser bound would let the sentence and the test disagree.
+    assert.ok(worst.passes <= 3, `worst case ${worst.passes} passes`);
   });
 }
 

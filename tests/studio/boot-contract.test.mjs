@@ -10,7 +10,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   INHERITED_SETTINGS, MIN_TARGET, NARROW_WIDTH, SHELF_BREAKPOINTS,
-  firstFrame, isBrowserInitiated, isInvisibleColour, judgeGeneric, judgeHome,
+  firstFrame, isInvisibleColour, judgeGeneric, judgeHome,
   judgeKilledTreatment, judgeOvertighten, judgePage, pageErrors, sourceUrl
 } from './lib/boot-contract.mjs';
 
@@ -24,7 +24,7 @@ function goodGeneric(overrides = {}) {
     viewportWidth: NARROW_WIDTH,
     mainText: 'Iteration 02',
     withoutScript: { present: true, text: 'This page builds its shelf in the browser, so it needs JavaScript.' },
-    withoutStorage: { mainText: 'Iteration 02', errors: [] },
+    withoutStorage: { mainText: 'Iteration 02', errors: [], storageBlocked: true, inheritedStubbed: true },
     ...overrides
   };
 }
@@ -119,14 +119,31 @@ test('the no-JS path fails when the fallback is missing, and when it is a token 
 });
 
 test('blocked storage fails on a throw, and on a page that renders nothing', () => {
+  const blocked = extra => ({ mainText: 'x', errors: [], storageBlocked: true, inheritedStubbed: true, ...extra });
   assert.match(
-    judgeGeneric(goodGeneric({ withoutStorage: { mainText: 'x', errors: ['uncaught: SecurityError'] } }))[0],
+    judgeGeneric(goodGeneric({ withoutStorage: blocked({ errors: ['uncaught: SecurityError'] }) }))[0],
     /with site data blocked the page throws/
   );
   assert.match(
-    judgeGeneric(goodGeneric({ withoutStorage: { mainText: '', errors: [] } }))[0],
+    judgeGeneric(goodGeneric({ withoutStorage: blocked({ mainText: '' }) }))[0],
     /renders nothing/
   );
+});
+
+test('the blocked-storage pass has to prove it was blocked', () => {
+  // Otherwise it degrades silently into a second ordinary load — and passes.
+  // The iteration's own rule, turned on the check: verify in the configuration
+  // where it can fail, and first check that you are in it.
+  const blocked = extra => ({ mainText: 'x', errors: [], storageBlocked: true, inheritedStubbed: true, ...extra });
+  assert.match(
+    judgeGeneric(goodGeneric({ withoutStorage: blocked({ storageBlocked: false }) }))[0],
+    /without storage actually being blocked/
+  );
+  assert.match(
+    judgeGeneric(goodGeneric({ withoutStorage: blocked({ inheritedStubbed: false }) }))[0],
+    /instead of a stub/
+  );
+  assert.ok(judgeGeneric(goodGeneric({ withoutStorage: {} })).length >= 3);
 });
 
 test('the home page fails when its script never ran', () => {
@@ -222,11 +239,21 @@ function playing(overrides = {}) {
   return {
     errors: [], bolts: 2, lockedPicks: 2, plateVisible: true, gaugeMoved: true,
     boltRepainted: true,
-    gaugeInk: { track: 'rgb(222, 215, 202)', band: 'rgb(138, 75, 12)', fill: 'rgb(28, 107, 63)', 'head edge': 'rgb(205, 196, 180)' },
+    gaugeInk: {
+      track: { colour: 'rgb(222, 215, 202)', width: '8px' },
+      band: { colour: 'rgb(138, 75, 12)', width: '3px' },
+      fill: { colour: 'rgb(28, 107, 63)', width: '8px' },
+      'coupling line': { colour: 'rgb(205, 196, 180)', width: '1.5px' },
+      'head edge': { colour: 'rgb(205, 196, 180)' },
+      'torque readout': { colour: 'rgb(91, 83, 72)' }
+    },
+    keyboardAfterPointer: true, releasedOnFocusLoss: true, stateClassesTrack: true,
+    benchOnScreenAfterPick: true,
     labels: { 'plate name': 'Hinge plate', 'plate hint': 'Two bolts, coupled.', 'status line': '2 of 2 still out' },
     controls: {
       'Start this plate again': true, 'plate picker': true,
-      'plate picker refuses a locked plate': true, 'Next plate': true
+      'plate picker refuses a locked plate': true, 'Next plate': true,
+      'Sound on/off': true
     },
     keyboardTurned: true, released: true, pointerTurned: true, releasedPointer: true,
     couplingObserved: true, strippedEndsPlate: true, progressPersisted: true, ...overrides
@@ -240,6 +267,10 @@ test('each way the mechanic can stop running is reported as itself', () => {
     ['plateVisible', false, /cannot be seen/],
     ['gaugeMoved', false, /gauge did not move/],
     ['boltRepainted', false, /did not change a single pixel/],
+    ['keyboardAfterPointer', false, /a click leaves the keyboard dead/],
+    ['releasedOnFocusLoss', false, /the hold cannot be stopped/],
+    ['stateClassesTrack', false, /kept its old state class/],
+    ['benchOnScreenAfterPick', false, /nothing playable in view/],
     ['keyboardTurned', false, /unplayable without a pointer/],
     ['pointerTurned', false, /holding the pointer on a bolt did not turn it/],
     ['couplingObserved', false, /the mechanic is not running/],
@@ -273,14 +304,35 @@ test('a gauge stroked in nothing fails, even though the bolt still repaints', ()
   // The turning highlight repaints the bolt whatever the arc is stroked in, so
   // "did the pixels change" cannot see this on its own.
   assert.match(
-    judgeOvertighten({ game: playing({ gaugeInk: { band: 'transparent' } }) })[0],
+    judgeOvertighten({ game: playing({ gaugeInk: { band: { colour: 'transparent', width: '3px' } } }) })[0],
     /the gauge's band is drawn in transparent/
   );
   assert.match(
-    judgeOvertighten({ game: playing({ gaugeInk: { fill: 'rgba(0, 0, 0, 0)' } }) })[0],
+    judgeOvertighten({ game: playing({ gaugeInk: { fill: { colour: 'rgba(0, 0, 0, 0)', width: '8px' } } }) })[0],
     /the gauge's fill is drawn in/
   );
   assert.match(judgeOvertighten({ game: playing({ gaugeInk: null }) })[0], /colours were never read/);
+});
+
+test('a visible colour at zero width still draws nothing', () => {
+  // The defeat case for a colour-only rule, and the one the third review used:
+  // `stroke-width: 0` on the band leaves its colour untouched, so the band —
+  // the thing the player aims at — vanishes while every colour check passes.
+  // This file already records an invisible band as a defect that shipped once.
+  assert.match(
+    judgeOvertighten({ game: playing({ gaugeInk: { band: { colour: 'rgb(138, 75, 12)', width: '0px' } } }) })[0],
+    /the gauge's band is 0px wide/
+  );
+  assert.match(
+    judgeOvertighten({ game: playing({ gaugeInk: { 'coupling line': { colour: 'rgb(1,2,3)', width: '0' } } }) })[0],
+    /coupling line is 0 wide/
+  );
+  // A part with no width of its own — a border colour, a text colour — is
+  // judged on colour alone rather than failing for a width it cannot have.
+  assert.deepEqual(
+    judgeOvertighten({ game: playing({ gaugeInk: { 'head edge': { colour: 'rgb(1,2,3)' } } }) }),
+    []
+  );
 });
 
 test('an invisible colour is recognised however it is written', () => {
@@ -402,29 +454,19 @@ test('nothing decides anything from a stack frame, because a page can forge one'
   );
 });
 
-test('only the browser\'s own favicon request is browser-initiated', () => {
-  assert.equal(isBrowserInitiated({ source: `${ORIGIN}/favicon.ico` }), true);
-  assert.equal(isBrowserInitiated({ source: `${ORIGIN}/favicon.ico?v=1` }), true);
-  assert.equal(isBrowserInitiated({ source: `${ORIGIN}/studio/favicon.ico` }), true);
-  assert.equal(isBrowserInitiated({ source: `${ORIGIN}/studio/main.js` }), false);
-  // A page that mentions the word is not a page the browser asked for an icon.
-  assert.equal(isBrowserInitiated({ source: `${ORIGIN}/favicon.ico.js`, text: 'favicon.ico' }), false);
-  assert.equal(isBrowserInitiated({ source: '' }), false);
-  assert.equal(isBrowserInitiated({}), false);
-});
-
-test('pageErrors drops the browser\'s favicon request and nothing else', () => {
+test('there is no error filter left to impersonate', () => {
+  // Two filters were tried here and both decided from `error.source`, which for
+  // an uncaught throw or a console message is a string the page chose. The
+  // browser's favicon request is now *answered* by the driver rather than
+  // recognised afterwards, so nothing needs excusing and nothing can pretend to
+  // be the thing that was excused.
   const errors = [
-    { kind: 'response', text: 'HTTP 404: /favicon.ico', source: `${ORIGIN}/favicon.ico` },
-    uncaught(`${ORIGIN}${INHERITED_SETTINGS}:1:1`),
-    uncaught(`${ORIGIN}/studio/main.js:1:1`),
-    { kind: 'console', text: 'console.error: boom', source: `${ORIGIN}/studio/main.js` }
+    { kind: 'uncaught', text: 'uncaught: SecurityError: studio bug', source: `${ORIGIN}/studio/favicon.ico:3:1` },
+    { kind: 'console', text: 'console.error: studio bug', source: `${ORIGIN}/favicon.ico` },
+    { kind: 'uncaught', text: 'uncaught: SecurityError: denied', source: `${ORIGIN}${INHERITED_SETTINGS}:1:1` },
+    { kind: 'response', text: 'HTTP 404: /favicon.ico', source: `${ORIGIN}/favicon.ico` }
   ];
-  assert.deepEqual(pageErrors(errors), [
-    'uncaught: SecurityError: denied',
-    'uncaught: SecurityError: denied',
-    'console.error: boom'
-  ]);
+  assert.deepEqual(pageErrors(errors), errors.map(e => e.text), 'every error counts against the page');
   assert.deepEqual(pageErrors([]), []);
   assert.deepEqual(pageErrors(), []);
 });

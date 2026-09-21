@@ -39,11 +39,12 @@ returns a "no".
   production's `shared/settings.js` (TD-005, a file outside the path guard) by matching any
   path *ending* in that name — so `studio/games/x/shared/settings.js`, a file the studio may
   create at will, claimed it. Both independent reviews built exactly that file, threw
-  uncaught from it, and watched the check pass. It is now anchored to the page's own origin
-  and the exact served path and fails closed. `firstFrame` also did not return the first
-  frame. None of the five classifiers had a test; ten now exist, each built from a bypass a
-  review demonstrated.
-- **Three blind spots in the same check**, each found by mutating `studio/**` and watching
+  uncaught from it, and watched the check pass. Anchoring it to the page's own origin and
+  the exact served path was the first attempt and was itself defeated — see *After three
+  reviews* below for what the check does instead. `firstFrame` also did not return the
+  first frame. None of the classifiers had a test at the time; the ones that remain are
+  covered by tests built from the bypasses the reviews demonstrated.
+- **Four blind spots in the same check**, each found by mutating `studio/**` and watching
   the whole ticket stage pass: an invisible control was excluded from the 44px rule rather
   than failing it, so `opacity: 0` over the plate was an escape; the phase that drives the
   game collected no errors; the pointer release was sampled at the moment of release, so
@@ -67,13 +68,13 @@ returns a "no".
   reduced only by the neighbours turned after it — which makes each plate a
   back-substitution. **142 of the 146 orderings across the three plates clear with one hold
   per bolt**, with 6 to 38 units of strip headroom; the four that resist miss a strip point
-  by under three units. Blind round-robin clears every plate in at most four passes. The
+  by under three units. Blind round-robin clears every plate in at most three passes. The
   test that was meant to catch this fixed the hold amount at the middle of the band — the
   one variable a player chooses — and so could not fail. Nothing was re-tuned: any strategy
   that moves a bolt to the middle of its band converges whatever the numbers. The assertions
   now state what is true and are named so a redesign inverts them.
 
-### Also fixed, after a second review
+### Also fixed, after three reviews
 
 - **The boot check's exemption was removed rather than tightened.** Anchoring it to an
   origin and an exact path was still wrong: a stack frame's URL is minted by the script
@@ -93,6 +94,22 @@ returns a "no".
   the label below it. One ticket had shipped that way.
 - **One hold now runs one animation loop.** A frame pending from a previous hold carried on
   beside the new one; six rapid press/release pairs left seven concurrent loops.
+- **The error filter is gone entirely.** A third review found that deleting the
+  `shared/settings.js` exemption had left a second one: the filter for the browser's own
+  `/favicon.ico` 404 also read `error.source`, so a studio file throwing
+  `//# sourceURL=<origin>/favicon.ico` had its error dropped in every pass. Three successive
+  exemptions, three successive forgeries. The driver now **answers** the browser's favicon
+  request and **stubs** the inherited settings script, so nothing needs recognising and
+  nothing can be impersonated, and the blocked-storage pass proves it was in that
+  configuration rather than assuming it.
+- **Ten more mutations inside `studio/**`**, all found by the third review: a click no
+  longer leaving the keyboard dead, focus loss releasing a hold, the mute toggle, the state
+  classes a bolt carries as it seats, the band at `stroke-width: 0` with its colour intact,
+  the coupling lines and the torque readouts in `transparent`, a transposed coupling line,
+  and choosing a plate leaving nothing playable on a 320px screen.
+- **`docs-current` could still pass an evidence-free ticket three ways**: an unvalidated
+  status word (`Done ✅`, `Shipped`), a label inside a fenced example elsewhere in the file,
+  and an earlier draft Result answering for the final one.
 
 ### Debt
 

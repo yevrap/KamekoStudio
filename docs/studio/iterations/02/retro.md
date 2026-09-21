@@ -26,9 +26,10 @@
   The pulse line is tied to the newest iteration directory, so the plan landing made the
   page stale immediately. Caught by a test, fixed in a minute — but the plan should have
   known.
-- **Three of the check's blind spots were about what it *did not look at*, not about what it
-  judged wrongly.** Every rule it had was correct. It simply never collected the observation
-  that would have failed.
+- **The check's blind spots were about what it *did not look at*, not about what it judged
+  wrongly.** Every rule it had was correct. It simply never collected the observation that
+  would have failed — four such gaps in the first round, seven in the second, ten in the
+  third.
 
 - **Two fix rounds were spent making an untrustworthy input more precise.** The exemption
   was anchored to a path, then to an origin and a path, and tested against every path attack
