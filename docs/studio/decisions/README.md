@@ -19,3 +19,4 @@ they always show the current state — and the history lives here.
 | [0004](ADR-0004-checks-as-a-script.md) | The self-checks are an executable script, not a checklist |
 | [0005](ADR-0005-front-wall-portal-row.md) | `shared/3d/gameplay.js` gets one recorded exception for the front-wall portal row |
 | [0006](ADR-0006-ticket-prefix.md) | Tickets are numbered `SHS-NNN`; the `SS-` prefix is retired at 042 |
+| [0007](ADR-0007-trunk-based-development.md) | Trunk-based development, as a trial from iteration 04 |
