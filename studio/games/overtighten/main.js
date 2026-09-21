@@ -48,7 +48,12 @@ const session = {
   causes: new Set(),
   lastFrame: 0,
   clickAccrued: 0,
-  lastStatus: null
+  lastStatus: null,
+  // Which turn the animation loop belongs to. A frame already scheduled by a
+  // previous hold would otherwise see `session.held` still truthy and carry on
+  // alongside the new one: six pointerdown/up pairs in a single task left seven
+  // loops running, each repainting the whole plate every frame.
+  turnId: 0
 };
 
 const el = id => document.getElementById(id);
@@ -198,8 +203,12 @@ function hold(boltId, cause) {
   session.causes = new Set([cause]);
   session.lastFrame = performance.now();
   session.clickAccrued = 0;
+  session.turnId += 1;
+  // Named `turnId`, not `turn`: `turn` is the torque rule imported from
+  // gameplay.js, and shadowing it here made `turn(plate, …)` a call on a number.
+  const turnId = session.turnId;
   el('plate').querySelector(`[data-bolt="${boltId}"]`)?.classList.add('is-turning');
-  requestAnimationFrame(step);
+  requestAnimationFrame(now => step(now, turnId));
 }
 
 /**
@@ -222,8 +231,10 @@ function release(cause) {
 }
 
 /** One frame of turning. Elapsed time, not frame count, so the rate is the same everywhere. */
-function step(now) {
-  if (!session.held) return;
+function step(now, turnId) {
+  // A frame left over from a previous hold retires here rather than running on
+  // beside the current one.
+  if (turnId !== session.turnId || !session.held) return;
   // A backgrounded tab resumes with a huge delta, which would strip every bolt
   // the player was holding when they switched away. One frame at 30fps is the
   // most any single step may apply.
@@ -243,7 +254,7 @@ function step(now) {
   }
 
   paint();
-  if (session.held) requestAnimationFrame(step);
+  if (session.held) requestAnimationFrame(next => step(next, turnId));
 }
 
 // --- Input -------------------------------------------------------------------
