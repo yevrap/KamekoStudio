@@ -69,4 +69,16 @@ deliberately run with fresh context, because independence is the whole point of 
 - **QA Engineer** — writes and runs the test plan against the diff.
 - **Independent Reviewer** — critiques the iteration's diff without having written it.
 
+**Both run on a named model, and the reviewer's is deliberately not the author's.** Fresh
+context buys independence of *memory*; it does not buy independence of *priors*. Iteration
+02 ran both passes on the author's model and they found the same two primary defects
+independently — read at the time as corroboration, equally consistent with a shared blind
+spot. See `team/independent-reviewer.md` for the pairing and the reasoning.
+
+**Review rounds are capped at two.** Iteration 02 ran ten; the last four found paperwork
+defects and drift in the record rather than anything a player would hit. An adversarial
+search over an unbounded surface does not terminate on its own, so the stopping rule lives
+here. After the second pass: close the findings, write down what a third pass would most
+likely have found, and stop.
+
 Role definitions live in [`team/`](team/).
