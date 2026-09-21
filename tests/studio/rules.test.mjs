@@ -8,7 +8,7 @@ import {
   classifyPaths, PATH_EXCEPTIONS, EXPECTED_STUDIO_SCRIPT, jsonDiffPaths,
   extractStorageKeys, badStorageKeys, findStorageViolations,
   scanHygiene, scanDocCleanliness, HYGIENE_PRAGMA,
-  lintCommitSubject
+  lintCommitSubject, moduleImports, sameOriginAssets
 } from './lib/rules.mjs';
 
 test('path guard: studio-owned paths are allowed', () => {
@@ -542,4 +542,64 @@ test('exception: the rotation entry must be the real statement, not the words in
     .replace(',\n        ...frontPositions.map(() => Math.PI)', '')
     .replace('    const frontPositions = [', '    // ...frontPositions.map(() => Math.PI)\n    const frontPositions = [');
   assert.match(allowOnlyFrontPortalRow(before, faked), /no matching rotation entry/);
+});
+
+// ---- What a deploy check can actually see ------------------------------------
+
+test('sameOriginAssets finds the scripts and stylesheets a page loads', () => {
+  const html = [
+    '<link rel="stylesheet" href="style.css">',
+    '<link rel="icon" href="favicon.ico">',
+    '<script src="main.js" type="module"></script>',
+    '<script src="../shared/settings.js"></script>',
+    '<script src="https://cdn.example.com/three.js"></script>'
+  ].join('\n');
+  const found = sameOriginAssets(html, 'https://host.test/studio/');
+  assert.deepEqual(found, [
+    'https://host.test/studio/main.js',
+    'https://host.test/shared/settings.js',
+    'https://host.test/studio/style.css'
+  ]);
+  // A CDN copy says nothing about whether *this* build is on the wire.
+  assert.ok(!found.some(u => u.includes('cdn.example.com')));
+  // A favicon link is not a stylesheet.
+  assert.ok(!found.some(u => u.includes('favicon')));
+});
+
+test('moduleImports reaches the file that holds the words', () => {
+  // The realm's page links main.js; main.js imports shelf-data.js; every word
+  // the page shows is in shelf-data.js. A deploy check that reads only the HTML
+  // proves the shell arrived and nothing about what is in it — which is the
+  // state iteration 02 shipped into, with a correct deploy and a check that
+  // could not see it.
+  const source = [
+    "import { PULSE, SHELF } from './shelf-data.js';",
+    "import { shelfMarkup } from './shelf.js';",
+    "const lazy = await import('./later.js');",
+    "export { thing } from './other.js';",
+    "import three from 'https://cdn.example.com/three.js';"
+  ].join('\n');
+  const found = moduleImports(source, 'https://host.test/studio/main.js');
+  // Order follows the pattern list, not the source, and the check queues them
+  // all — so this asserts the set rather than a sequence nothing depends on.
+  assert.deepEqual([...found].sort(), [
+    'https://host.test/studio/later.js',
+    'https://host.test/studio/other.js',
+    'https://host.test/studio/shelf-data.js',
+    'https://host.test/studio/shelf.js'
+  ]);
+  assert.ok(!found.some(u => u.includes('cdn.example.com')), 'a CDN import is not this build');
+});
+
+test('neither helper throws on nonsense', () => {
+  assert.deepEqual(sameOriginAssets('', 'https://host.test/'), []);
+  assert.deepEqual(sameOriginAssets(null, 'https://host.test/'), []);
+  assert.deepEqual(sameOriginAssets('<script src="::::">', 'https://host.test/'),
+    ['https://host.test/::::'], 'an unparseable-looking specifier is just a path');
+  assert.deepEqual(moduleImports('', 'https://host.test/a.js'), []);
+  assert.deepEqual(moduleImports(null, 'https://host.test/a.js'), []);
+  // A junk specifier resolves to a junk path rather than throwing; the check
+  // then fetches it, gets a 404, and moves on.
+  assert.deepEqual(moduleImports("import x from '::::'", 'https://host.test/a.js'),
+    ['https://host.test/::::']);
 });
