@@ -20,7 +20,8 @@ convention lines were changed by the executive directly; `commit-lint` still acc
 
 - [x] `commit-lint` accepts `type(studio): SHS-NNN description` for `NNN` of 043 and above.
 - [x] `commit-lint` accepts `SS-NNN` only for `NNN` of 042 and below, so every existing
-      commit still passes and no new ticket can be issued under the retired prefix.
+      commit still passes the prefix rule and no new ticket can be issued under the retired
+      prefix.
 - [x] `commit-lint` rejects `SHS-NNN` for `NNN` of 042 and below: those numbers belong to
       `SS-` tickets, and one number naming two tickets is the ambiguity being removed.
 - [x] Each rejection says which of the three rules it broke.

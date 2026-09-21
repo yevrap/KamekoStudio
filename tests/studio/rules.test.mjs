@@ -9,7 +9,7 @@ import {
   extractStorageKeys, badStorageKeys, findStorageViolations,
   scanHygiene, scanDocCleanliness, HYGIENE_PRAGMA,
   lintCommitSubject, moduleImports, sameOriginAssets,
-  LAST_SS_TICKET, ticketIdProblem, commitTicketId
+  LAST_SS_TICKET, ticketIdProblem, commitTicketId, lintCommit, LINT_WAIVERS
 } from './lib/rules.mjs';
 
 test('path guard: studio-owned paths are allowed', () => {
@@ -286,6 +286,42 @@ test('ticketIdProblem: the boundary sits between 042 and 043 for both prefixes',
   assert.notEqual(ticketIdProblem('SS', 43), null);
   assert.notEqual(ticketIdProblem('SHS', 42), null);
   assert.equal(ticketIdProblem('SHS', 43), null);
+});
+
+// --- Waivers for commits already on the remote --------------------------------
+
+const WAIVED_SHA = '5416876baceb4d4de3ff3b5536a720800e06f9e8';
+const WAIVED_SUBJECT = 'docs(studio): SS-042 pin the reviewer to a different model, and cap review rounds';
+
+test('lintCommit: the one waived commit passes, and says why', () => {
+  assert.ok(LINT_WAIVERS.has(WAIVED_SHA));
+  // The waiver is for a real failure — without it this subject fails.
+  assert.match(lintCommitSubject(WAIVED_SUBJECT), /81 characters/);
+  const result = lintCommit({ sha: WAIVED_SHA, subject: WAIVED_SUBJECT });
+  assert.equal(result.status, 'waived');
+  assert.match(result.reason, /SS-042/);
+});
+
+test('lintCommit: a waiver is not transferable by copying the subject', () => {
+  // The same subject on any other commit is an ordinary failure.
+  const other = lintCommit({ sha: 'f'.repeat(40), subject: WAIVED_SUBJECT });
+  assert.equal(other.status, 'fail');
+  // An abbreviated or altered hash is a different key, not a near match.
+  assert.equal(lintCommit({ sha: WAIVED_SHA.slice(0, 7), subject: WAIVED_SUBJECT }).status, 'fail');
+  assert.equal(lintCommit({ sha: WAIVED_SHA.toUpperCase(), subject: WAIVED_SUBJECT }).status, 'fail');
+  assert.equal(lintCommit({ sha: undefined, subject: WAIVED_SUBJECT }).status, 'fail');
+});
+
+test('lintCommit: a conforming commit is ok, a merge is ok, and neither consults the waivers', () => {
+  assert.deepEqual(lintCommit({ sha: 'a'.repeat(40), subject: 'feat(studio): SHS-047 x' }), { status: 'ok' });
+  assert.deepEqual(lintCommit({ sha: 'a'.repeat(40), parentCount: 2, subject: 'Merge anything' }), { status: 'ok' });
+});
+
+test('lintCommit: every waiver is keyed by a full 40-character hash and gives a reason naming its ticket', () => {
+  for (const [sha, reason] of LINT_WAIVERS) {
+    assert.match(sha, /^[0-9a-f]{40}$/);
+    assert.match(reason, /\b(SHS|SS)-\d{3}\b/);
+  }
 });
 
 test('commitTicketId: the ID a conforming subject names, and nothing else', () => {
