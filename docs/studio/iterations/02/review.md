@@ -19,6 +19,7 @@
 | SS-033 | Rules for four defects that had none; `docs-current` fails closed | opened by the **sixth** review |
 | SS-034 | The status word; two rules satisfied by the defect they named | opened by the **seventh** review |
 | SS-035 | Three more of the same; rules that generalise instead of spelling | opened by the **eighth** review |
+| SS-036 | Stop stripping the document and read it | opened by the **ninth** review |
 
 Live: <https://yevrap.github.io/KamekoStudio/studio/> · <https://yevrap.github.io/KamekoStudio/studio/games/overtighten/>
 
@@ -187,38 +188,6 @@ SS-028 — the ticket whose subject was record truth — wrote "**Both are true 
 it. The line did not exist. The criterion has been removed rather than re-explained: a
 ticket cannot tick a line the reviewer writes.
 
-## The eighth review — every rule written last round was satisfied by its own defect
-
-Three for three, and it is the clearest statement of the iteration's deepest habit.
-
-- The **back link** was judged on `to.pathname === location.pathname`. The driver serves
-  pages in directory form, so `href="index.html"` — the same page, spelled explicitly — is
-  a different string. `./` had only ever been caught by accident of that URL form.
-- The **state-ink** rule required the four arc colours to be different *strings*. Four greys
-  one unit of blue apart satisfied it and report nothing to a player. This project's own
-  learning log says **"a difference test needs an absolute alongside it"**, about the killed
-  card, one round before this rule was written without one.
-- **Unticked criteria** counted `-`, `*` and `+`. GFM renders `1. [ ]` as an empty box too,
-  and six criteria rewritten that way counted zero.
-
-And `docs-current` was defeated a third time in the same place: a raw `<script>` block
-hides its contents from a reader exactly as a comment and a fence do, forging a `Status`
-outside the vocabulary and skipping every check below it.
-
-**The fix stopped being a list of spellings.** A ticket must now declare its status exactly
-once, counted in the raw file — whatever the next hiding place turns out to be. The back
-link is compared after normalising `index.html` away, so the page is compared rather than
-the text. Colours are compared as colours against an absolute gap. Each of those is a rule
-about the *thing*, where its predecessor was a rule about one way of writing the thing.
-
-### What the eighth review credited
-
-The pure/driver split and the new exports as genuinely unit-tested. `withoutHiddenText`'s
-unclosed-fence handling as correct and failing closed. `resultSection` returning null as
-the right shape. The status-churn floor as "a real rule over a real observation". The
-state-fixture transition fix, and SS-034's honesty about the rule failing on its own
-baseline first, as "the best moment in the iteration". Hygiene clean across 122 files.
-
 ## The fifth review — rejected, and on what
 
 Rejected, and the reviewer was explicit that it was **not** for the existence of further
@@ -339,15 +308,47 @@ counts: inclusive band boundaries tested *at* the boundary, stripping outranking
 `"1e999"` granting nothing rather than unlocking everything. `judgeKilledTreatment`
 asserting a *difference* is the right shape — and QA then defeated it with a card that was
 visually identical and numerically different, so it now asserts the named treatment too.
+## The eighth review — every rule written last round was satisfied by its own defect
+
+Three for three, and it is the clearest statement of the iteration's deepest habit.
+
+- The **back link** was judged on `to.pathname === location.pathname`. The driver serves
+  pages in directory form, so `href="index.html"` — the same page, spelled explicitly — is
+  a different string. `./` had only ever been caught by accident of that URL form.
+- The **state-ink** rule required the four arc colours to be different *strings*. Four greys
+  one unit of blue apart satisfied it and report nothing to a player. This project's own
+  learning log says **"a difference test needs an absolute alongside it"**, about the killed
+  card, one round before this rule was written without one.
+- **Unticked criteria** counted `-`, `*` and `+`. GFM renders `1. [ ]` as an empty box too,
+  and six criteria rewritten that way counted zero.
+
+And `docs-current` was defeated a third time in the same place: a raw `<script>` block
+hides its contents from a reader exactly as a comment and a fence do, forging a `Status`
+outside the vocabulary and skipping every check below it.
+
+**The fix stopped being a list of spellings.** A ticket must now declare its status exactly
+once, counted in the raw file — whatever the next hiding place turns out to be. The back
+link is compared after normalising `index.html` away, so the page is compared rather than
+the text. Colours are compared as colours against an absolute gap. Each of those is a rule
+about the *thing*, where its predecessor was a rule about one way of writing the thing.
+
+### What the eighth review credited
+
+The pure/driver split and the new exports as genuinely unit-tested. `withoutHiddenText`'s
+unclosed-fence handling as correct and failing closed. `resultSection` returning null as
+the right shape. The status-churn floor as "a real rule over a real observation". The
+state-fixture transition fix, and SS-034's honesty about the rule failing on its own
+baseline first, as "the best moment in the iteration". Hygiene clean across 122 files.
+
 
 ## Keep / Iterate / Kill
 
 > Yev: strike through what you disagree with and write your own verdict. These are the
 > team's, and the team is not the judge of them.
 
-- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Eight
+- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Nine
   rounds of review attacked it, and it is a far stronger thing than the version that
-  shipped: **66 mutations across nine sets now fail — 59 at the ticket stage and 7 at the
+  shipped: **78 mutations across eleven sets now fail — 63 at the ticket stage and 15 at the
   gate**, against the 8 it was written for. The stages are named because the sixth review
   caught this same sentence claiming the ticket stage for things that fail at the gate, and
   for two behaviours that had no rule behind them at all. It is a count of what has been

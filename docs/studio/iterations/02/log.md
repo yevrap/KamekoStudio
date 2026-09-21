@@ -186,3 +186,27 @@ previous state's, so all four states read as loose. The rule was right and the o
 was taken at the wrong moment — the same error as measuring in a configuration where
 nothing can fail, at the scale of a single frame. Caught by the check's own baseline before
 it could be written up as evidence.
+
+## After the eighth review — rejected
+
+- **Independent Reviewer** — *Verdict:* **REJECTED.** All three rules the previous round
+  added were satisfied by the defect they named: a back link rule that accepted
+  `index.html`, a states-must-differ rule satisfied by four greys one unit apart, and an
+  unticked-criteria rule that missed ordered items.
+- **QA Engineer** — *Done:* SS-035. Rules about the thing rather than the spelling — pages
+  compared, colours compared, declarations counted.
+
+## After the ninth review — rejected
+
+- **Independent Reviewer** — *Verdict:* **REJECTED.** `withoutHiddenText` fails *open*: it
+  deletes text CommonMark renders, which promotes a draft Result over the real one. Five
+  payloads, one invisible on the page. Two more spellings of the back link, a fourth
+  spelling of an unticked criterion, and the criterion claiming `review.md` was sorted was
+  itself false.
+- **QA Engineer** — *Done:* SS-036. The document is scanned rather than stripped, and an
+  unterminated block makes the ticket unreadable rather than half-read. *Next:* nothing
+  outstanding.
+- **Technical Writer** — *Done:* `review.md` sorted **by construction**, the headline split
+  computed from the per-set table rather than carried forward, and every stale count
+  corrected. *Reflection:* the order was wrong twice because each fix moved the section the
+  author could see. Sorting is not an edit; it is a property to be produced.

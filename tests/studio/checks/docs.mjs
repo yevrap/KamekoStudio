@@ -4,6 +4,7 @@
 // breaks when the paper trail is thin. That is exactly why they are automated.
 
 import path from 'node:path';
+import { readableLines } from '../lib/markdown.mjs';
 import { promises as fs } from 'node:fs';
 import { walk, exists, readIfPresent } from '../lib/shell.mjs';
 import { scanDocCleanliness } from '../lib/rules.mjs';
@@ -52,6 +53,14 @@ export const docsCurrent = {
       // criteria check below was skipped. Stripping the known hiding places is
       // a game of spellings; requiring the ticket to declare its status exactly
       // once ends it, whatever the next hiding place turns out to be.
+      // A ticket with an unterminated fence, comment or raw block cannot be
+      // read with confidence, and guessing is how the previous version let
+      // five payloads through. Say so instead.
+      const { unterminated } = visible(text);
+      if (unterminated) {
+        problems.push(`${f}: ${unterminated} is never closed — the ticket cannot be read`);
+        continue;
+      }
       const declared = statusLineCount(text);
       if (declared > 1) {
         problems.push(`${f}: ${declared} Status lines — a ticket declares its status once`);
@@ -130,19 +139,21 @@ export const STATUSES = ['Ready', 'In progress', 'Blocked', 'Done', "Won't do"];
  *    below it.
  */
 /**
- * Everything a reader would not see as prose: fenced blocks of any style,
- * indented up to three spaces as CommonMark allows, and HTML comments.
+ * The document as a reader sees it, and whether it can be read at all.
  *
- * Unclosed forms run to the end of the document, because that is what they do
- * when rendered — an unclosed fence swallowing the rest of the file was one of
- * the four ways a ticket still shipped with an empty Result.
+ * Delegates to `lib/markdown.mjs`, which *scans* rather than strips. The
+ * stripping version was defeated five ways in one round, and the diagnosis is
+ * the part worth keeping: its regex deleted text CommonMark renders, and since
+ * the Result is taken from the last heading in the processed copy and criteria
+ * are counted in it, deleting too much promoted a draft Result to final and
+ * made unticked criteria vanish. It failed **open**.
  */
+function visible(text) {
+  return readableLines(text);
+}
+
 function withoutHiddenText(text) {
-  return text
-    .replace(/^[ \t]{0,3}(```+|~~~+)[\s\S]*?^[ \t]{0,3}\1/gm, '')
-    .replace(/^[ \t]{0,3}(```+|~~~+)[\s\S]*$/m, '')
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<!--[\s\S]*$/, '');
+  return visible(text).lines.join('\n');
 }
 
 /**

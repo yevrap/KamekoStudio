@@ -156,11 +156,13 @@ export function judgeGeneric(obs = {}) {
     // raw attribute rejected `#` and accepted `#top`, `./` and a blank — three
     // more spellings of a back link that leaves you where you are, under a rule
     // whose own message is "leaving the page is a hunt".
-    if (back.fragmentOnly || back.samePage) {
+    if (back.samePage === undefined) {
+      fail.push('the back link was never resolved, so nothing knows where it goes');
+    } else if (back.fragmentOnly || back.samePage) {
       fail.push(`the back link goes nowhere (href="${back.href}" resolves to this page):`
         + ' leaving the page is still a hunt');
-    } else if (back.samePage === undefined) {
-      fail.push('the back link was never resolved, so nothing knows where it goes');
+    } else if (back.reachable === false) {
+      fail.push(`the back link points at ${back.resolved}, which is not there`);
     }
     if (back.height < MIN_TARGET) {
       fail.push(`the back link is ${back.height}px tall, under the ${MIN_TARGET}px floor`);
