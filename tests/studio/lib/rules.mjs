@@ -477,6 +477,26 @@ export function commitTicketId(subject) {
 }
 
 /**
+ * The ticket each non-merge commit names, from log entries `{ sha, parents, subject }`
+ * where `parents` is git's space-separated parent list.
+ *
+ * A merge is skipped: git wrote it, its subject names a branch as well as a
+ * ticket, and the ticket is named by the commit below it. Decided by the parent
+ * count, as `commit-lint` decides it, not by the subject's wording. A commit
+ * names the ticket in its subject's ticket position only — `docs(studio):
+ * SHS-046 record the SHS-099 finding` names SHS-046, and mentions SHS-099.
+ */
+export function ticketsNamedByLog(entries) {
+  const named = [];
+  for (const { sha, parents, subject } of entries) {
+    if (String(parents ?? '').trim().split(/\s+/).filter(Boolean).length > 1) continue;
+    const id = commitTicketId(subject);
+    if (id) named.push({ id, sha });
+  }
+  return named;
+}
+
+/**
  * A ticket file's name: its ID, a hyphen, a slug. The ID is followed by a
  * hyphen, so `SS-0411-x.md` is not a file for `SS-041` — it is a malformed name.
  */
@@ -511,6 +531,11 @@ export function ticketFileProblems(files, named) {
       problems.push(`${file.path}: not named <ID>-<slug>.md, so it is no ticket's file`);
       continue;
     }
+    // The file's ID obeys the same sequence as a commit's: no new `SS-` number,
+    // no `SHS-` number that belongs to an `SS-` ticket.
+    const [prefix, number] = id.split('-');
+    const sequence = ticketIdProblem(prefix, Number(number));
+    if (sequence) problems.push(`${file.path}: ${sequence}`);
     // The file's first line is its H1, and the H1 names the same ticket. A file
     // named for one ticket and headed with another is a record that disagrees
     // with itself; neither half can be trusted.

@@ -17,8 +17,8 @@ iteration 02 complete.
 
 ## Acceptance criteria
 
-- [x] Every ticket ID named in the subject of a non-merge studio commit, anywhere in the
-      history, has exactly one ticket file under `docs/studio/iterations/*/tickets/`,
+- [x] The ticket each non-merge studio commit names — the ID in its subject's ticket
+      position — anywhere in the history, has exactly one ticket file under `docs/studio/iterations/*/tickets/`,
       whose file name starts with that ID and whose first heading names the same ID.
       A missing file, a second file, or a file whose heading names another ticket fails.
 - [x] A ticket file for an ID named by a commit in this iteration's range is held to the
@@ -38,9 +38,10 @@ before the backfill (fails, naming the three IDs) and after (passes).
 
 ## Out of scope
 
-- Validating the content of ticket files from earlier iterations beyond this iteration's
-  range. They passed the rules of their own day, and re-judging them by today's is a
-  different piece of work.
+- Validating the content of ticket files from earlier iterations that this iteration
+  neither names nor changes. They passed the rules of their own day, and re-judging them by
+  today's is a different piece of work. A file this iteration *does* change is held to
+  today's rules wherever it lives.
 - Branch names.
 
 ---
@@ -57,6 +58,16 @@ before the backfill (fails, naming the three IDs) and after (passes).
   files in `iterations/02/tickets/`: `SS-039-the-verdict.md`, `SS-041-flaky-production-e2e.md`,
   `SS-042-reviewer-model-diversity.md`, each marked as reconstructed and saying which parts
   were read off the commit and which were assigned. `self-checks.md`'s `docs-current` row.
+  **Fix round 1**, from the QA review and one reviewer nit: content rules now also apply to
+  every ticket file the iteration's commits changed (`committedPaths`), which catches an
+  edit to a reconstructed file no commit subject names; a file name must obey the ticket
+  sequence (`ticketIdProblem`), so `SHS-041-…` and `SS-050-…` fail; files are read
+  case-insensitively, so `X.MD` fails for its name instead of sitting unseen beside the
+  real one; the merge exclusion moved into a pure, tested `ticketsNamedByLog`; the history
+  read is filtered to commits containing `(studio):`. The first criterion and
+  `self-checks.md` said *every ticket ID in the subject* while the rule reads the one in
+  the ticket position — the words now say what the rule does, because a later mention is
+  not a claim to be that ticket.
 
 - **Tested by:** eight new tests in `tests/studio/rules.test.mjs` — a whole record; an ID
   with no file, reported with its commit; an ID named twice, reported once; two files for
@@ -73,8 +84,14 @@ before the backfill (fails, naming the three IDs) and after (passes).
   SHS-043's file in iteration 02 (*"SHS-043: 2 ticket files"*); `SS-038-mislabelled.md`
   headed `# SHS-099` (*"first line should be "# SS-038 — …""*); `ss-044-lowercase.md`
   (*"not named <ID>-<slug>.md"*). SS-040's file, in range and in iteration 02, passes the
-  content rules unchanged.
+  content rules unchanged. Fix round 1: four more tests (82/82) — the two out-of-sequence
+  names, an upper-case extension beside the real file, a merge with a conforming subject,
+  a second ID mentioned in a description. On the real tree, reverted afterwards: SS-039's
+  reconstructed file set to `Shipped ✅` → *"iterations/02/tickets/SS-039-the-verdict.md:
+  unknown status"*, reached only through the changed-files rule, since no commit in range
+  names SS-039; `SHS-041-collides.md`, `SS-050-retired.md` and `SHS-045-copy.MD` in
+  iteration 03 → one message each.
 
 - **Deferred:** nothing.
 
-- **Fix rounds used:** 0 / 2
+- **Fix rounds used:** 1 / 2
