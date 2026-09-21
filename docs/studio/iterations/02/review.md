@@ -10,6 +10,9 @@
 | SS-024 | The boot check's exemption anchored, its blind spots closed | opened by review |
 | SS-025 | Overtighten's input, focus and live region | opened by review |
 | SS-026 | The design hypothesis recorded as false | opened by review |
+| SS-027 | The exemption removed rather than anchored; nine more attacks closed | opened by the **second** review |
+| SS-028 | The record corrected, including about itself | opened by the second review |
+| SS-029 | One hold runs one animation loop | opened by the second review |
 
 Live: <https://yevrap.github.io/KamekoStudio/studio/> · <https://yevrap.github.io/KamekoStudio/studio/games/overtighten/>
 
@@ -68,6 +71,56 @@ stopped working entirely (`preventDefault` suppressed focus and nothing restored
 choosing a plate from the picker scrolled every bolt off the top of a phone screen — at
 320×568 there was nothing playable visible at all.
 
+## The second review — rejected again
+
+The three closing tickets were then reviewed with fresh context, and rejected. This is the
+finding that matters:
+
+### Anchoring the exemption was never going to work
+
+SS-024 tightened the exemption from "any path ending in `shared/settings.js`" to "this
+page's origin, and exactly that path", and tested it against every path attack the first
+review had built. The second review ignored the path entirely and attacked the **frame**:
+
+```js
+new Function('throw new DOMException("denied","SecurityError")\n//# sourceURL=' +
+             location.origin + '/shared/settings.js')
+```
+
+Origin matched, path matched, kind matched, check passed. **A stack frame's URL is minted
+by the script that throws**, so no amount of anchoring turns a self-reported frame into
+evidence. Two passes had been spent making a fundamentally untrustworthy input more
+precise.
+
+The fix was to delete the exemption. The blocked-storage pass now serves an empty script in
+place of production's, so nothing in that pass is production's and there is nothing left to
+forge — at the cost of proving something narrower, and true: *studio code* survives blocked
+storage. The general rule is now in `self-checks.md`: **decide only from what the driver
+observed, never from what the page said about itself.** A requested URL, a measured box, a
+computed style and a screenshot are observations. A stack frame is a claim.
+
+### Seven more mutations passed, and one of them was the empty shelf again
+
+Three dead control listeners, two blanked labels, a gauge stroked in `transparent`, and —
+worst — dropping the shelf card's url or emptying `SHELF`, either of which closes the only
+route to the game. That last one lands exactly where iteration 01's lesson did: the
+three-card fixture proved the *component* and this document had already claimed it closed
+the empty-shelf configuration. It closed it for `shelf.js`. The realm's own shelf was still
+asserted by nothing.
+
+### A ticket shipped Done with an empty Result, and the check agreed
+
+`docs-current` matched evidence with `\s*(.*)`, and `\s` matches a newline — so each label
+was answered by the label below it and an entirely unfilled template read as complete.
+SS-023 shipped that way with all six criteria ticked.
+
+### What the second review credited
+
+The input fixes, verified by driving real multi-pointer events. Every measured claim about
+the plates, re-derived from a model it wrote itself: 146 orderings, 142 falling, the four
+exceptions missing by 0.219–2.750, round-robin worst case 3 passes. Public-repo hygiene
+across 113 files. It called the new tests genuinely adversarial.
+
 ### What the reviews credited
 
 The pure/driver split is real rather than cosmetic. The unit tests are adversarial where it
@@ -81,9 +134,11 @@ visually identical and numerically different, so it now asserts the named treatm
 > Yev: strike through what you disagree with and write your own verdict. These are the
 > team's, and the team is not the judge of them.
 
-- **`studio-boot` — Keep.** It closed TD-004 and then earned its place twice over: it is the
-  only reason three of the defects above were found at all, and the reviews' attacks on it
-  made it considerably stronger than the version that shipped.
+- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Three
+  reviews attacked it and it is a much stronger thing than the version that first shipped:
+  28 mutations now fail it, against the 8 it was written for. It also caught a real accident
+  rather than a planted one — a parameter in SS-029 that shadowed an imported function and
+  silently killed every hold — within an hour of the error-collection rule being added.
 - **Overtighten — Iterate, not Keep.** It is a well-built, pleasant, tactile thing, and it is
   not the game it was designed to be. The experiment succeeded: it returned a clear "no" on a
   specific question, with a measurement. What it needs is a mechanic change, not tuning.

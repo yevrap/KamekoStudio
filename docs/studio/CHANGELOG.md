@@ -73,6 +73,27 @@ returns a "no".
   that moves a bolt to the middle of its band converges whatever the numbers. The assertions
   now state what is true and are named so a redesign inverts them.
 
+### Also fixed, after a second review
+
+- **The boot check's exemption was removed rather than tightened.** Anchoring it to an
+  origin and an exact path was still wrong: a stack frame's URL is minted by the script
+  that throws, so a `//# sourceURL` comment lets any studio file claim production's
+  identity — demonstrated in six lines. The blocked-storage pass now serves an empty script
+  in place of production's `shared/settings.js`, so nothing in that pass is production's and
+  there is nothing left to forge. What the pass proves is narrower and true.
+- **Seven more mutations inside `studio/**` passed the whole ticket stage:** three control
+  listeners emptied (restart, the picker, "next plate" — each a dead button), the plate's
+  name, hint and status line blanked, the gauge stroked in `transparent`, and the shelf
+  losing its only link to the game. Each is now covered by an observation: every control is
+  pressed, every label read, the bolt's own pixels compared before and during a turn, the
+  gauge's computed strokes checked for visibility, and the **realm's own shelf** required to
+  offer at least one card whose link is a page the check itself booted.
+- **`docs-current` accepted a Done ticket with an entirely empty Result**, because its
+  evidence match used `\s*(.*)` and `\s` matches a newline, so each label was answered by
+  the label below it. One ticket had shipped that way.
+- **One hold now runs one animation loop.** A frame pending from a previous hold carried on
+  beside the new one; six rapid press/release pairs left seven concurrent loops.
+
 ### Debt
 
 - **TD-004 closed** by SS-020. **TD-007 opened**: the static file server now exists twice,
