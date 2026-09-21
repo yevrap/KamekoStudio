@@ -20,6 +20,7 @@
 | SS-034 | The status word; two rules satisfied by the defect they named | opened by the **seventh** review |
 | SS-035 | Three more of the same; rules that generalise instead of spelling | opened by the **eighth** review |
 | SS-036 | Stop stripping the document and read it | opened by the **ninth** review |
+| SS-037 | Stop trying to read Markdown; count declarations | opened by the **tenth** review |
 
 Live: <https://yevrap.github.io/KamekoStudio/studio/> · <https://yevrap.github.io/KamekoStudio/studio/games/overtighten/>
 
@@ -78,6 +79,14 @@ stopped working entirely (`preventDefault` suppressed focus and nothing restored
 choosing a plate from the picker scrolled every bolt off the top of a phone screen — at
 320×568 there was nothing playable visible at all.
 
+### What the reviews credited
+
+The pure/driver split is real rather than cosmetic. The unit tests are adversarial where it
+counts: inclusive band boundaries tested *at* the boundary, stripping outranking solving,
+`"1e999"` granting nothing rather than unlocking everything. `judgeKilledTreatment`
+asserting a *difference* is the right shape — and QA then defeated it with a card that was
+visually identical and numerically different, so it now asserts the named treatment too.
+
 ## The second review — rejected again
 
 The three closing tickets were then reviewed with fresh context, and rejected. This is the
@@ -121,6 +130,14 @@ asserted by nothing.
 was answered by the label below it and an entirely unfilled template read as complete.
 SS-023 shipped that way with all six criteria ticked.
 
+### What the second review credited
+
+The input fixes, verified by driving real multi-pointer events. Every measured claim about
+the plates, re-derived from a model it wrote itself: 146 orderings, 142 falling, the four
+exceptions missing by 0.219–2.750, round-robin worst case 3 passes. Public-repo hygiene
+across 113 files. It called the new tests genuinely adversarial.
+
+
 ## The third review — rejected again
 
 Reviewed once more with fresh context, and rejected. Two of the three headline claims were
@@ -160,6 +177,14 @@ written the round before to stop exactly that defect. Coupling lines and torque 
 An unvalidated status word, a label inside a fenced example elsewhere in the file, and an
 earlier draft Result answering for the final one.
 
+### What the third review credited
+
+The `turnId` and `causes` hold logic, attacked with dispatched multi-pointer events and CDP
+touch: no stuck state, no unstoppable hold, no concurrent loops. Every plate claim exact,
+re-derived from a model it wrote itself. The fail-closed shape of the new judges. Public-repo
+hygiene across the whole diff.
+
+
 ## The fourth review — rejected
 
 Rejected on three things, one of which is the iteration's own pattern in its purest form.
@@ -187,6 +212,13 @@ SS-023 ticked a criterion saying `review.md` records the reviewer's verdict line
 SS-028 — the ticket whose subject was record truth — wrote "**Both are true now**" about
 it. The line did not exist. The criterion has been removed rather than re-explained: a
 ticket cannot tick a line the reviewer writes.
+
+### What the fourth review credited
+
+Every plate claim exact, re-derived from `constants.js` without the studio's helpers. No
+error filter remaining. The gap disclosure in `self-checks.md` judged as "honest and
+correctly shaped". Public-repo hygiene clean across the whole diff.
+
 
 ## The fifth review — rejected, and on what
 
@@ -281,33 +313,6 @@ sets, no false entry found in the per-set table. The shelf-card rule unevadable.
 second-release rule sound. Gate green on everything substantive, hygiene clean across 121
 files.
 
-### What the fourth review credited
-
-Every plate claim exact, re-derived from `constants.js` without the studio's helpers. No
-error filter remaining. The gap disclosure in `self-checks.md` judged as "honest and
-correctly shaped". Public-repo hygiene clean across the whole diff.
-
-### What the third review credited
-
-The `turnId` and `causes` hold logic, attacked with dispatched multi-pointer events and CDP
-touch: no stuck state, no unstoppable hold, no concurrent loops. Every plate claim exact,
-re-derived from a model it wrote itself. The fail-closed shape of the new judges. Public-repo
-hygiene across the whole diff.
-
-### What the second review credited
-
-The input fixes, verified by driving real multi-pointer events. Every measured claim about
-the plates, re-derived from a model it wrote itself: 146 orderings, 142 falling, the four
-exceptions missing by 0.219–2.750, round-robin worst case 3 passes. Public-repo hygiene
-across 113 files. It called the new tests genuinely adversarial.
-
-### What the reviews credited
-
-The pure/driver split is real rather than cosmetic. The unit tests are adversarial where it
-counts: inclusive band boundaries tested *at* the boundary, stripping outranking solving,
-`"1e999"` granting nothing rather than unlocking everything. `judgeKilledTreatment`
-asserting a *difference* is the right shape — and QA then defeated it with a card that was
-visually identical and numerically different, so it now asserts the named treatment too.
 ## The eighth review — every rule written last round was satisfied by its own defect
 
 Three for three, and it is the clearest statement of the iteration's deepest habit.
@@ -341,14 +346,60 @@ state-fixture transition fix, and SS-034's honesty about the rule failing on its
 baseline first, as "the best moment in the iteration". Hygiene clean across 122 files.
 
 
+## The ninth review — the stripper was deleting text a reader sees
+
+`withoutHiddenText` **failed open**. Seven rounds had removed hiding places from the text
+one spelling at a time, and the eighth round's harder stripping was worse than the softer:
+its pattern deleted text CommonMark *renders*, and because the Result is taken from the last
+heading in the processed copy and criteria are counted in it, deleting too much promoted a
+draft Result over the real one and made unticked criteria vanish. Five payloads walked
+through, one of them completely invisible on the rendered page.
+
+Two further spellings of "the page it is on" — `%69ndex.html` and `Index.html` — and a
+fourth spelling of an unticked criterion, `> - [ ]`.
+
+The answer at the time was to stop stripping and *scan* the document as CommonMark instead.
+
+### What the ninth review credited
+
+`page()` as the first fix in that area about the thing rather than the spelling. The
+arithmetic of the per-set count reconciling exactly. Hygiene clean across 123 files.
+
+## The tenth review — the scanner was a CommonMark implementation, and it was not one
+
+The scan was better than the strip and still lost, in the other direction: a comment or a
+`<script>` **inside a blockquote** was never recognised as an opener, so the scanner
+reported hidden text as visible; an HTML block interrupting a paragraph was missed; and a
+nested list's four-space indent was read as a code block, hiding a visibly unticked
+criterion. Four more ways past the gate, three of them rendering to nothing a reader sees.
+
+**This is where the approach changed rather than the patch.** Ten rounds had all been the
+same bet — that this checker could work out which text a Markdown renderer would show. The
+surface is the whole of CommonMark. So it stopped competing: **a ticket declares each thing
+exactly once**, counted in the raw file, and a second declaration is a failure wherever it
+is and however it is hidden. Every payload from all ten rounds beat the old checks by
+adding a second declaration, so one rule now catches all of them, and
+`tests/studio/lib/markdown.mjs` was deleted.
+
+The review also found `review.md` itself missing its ninth round and carrying four credit
+subsections stranded under the seventh in reverse order — the sort in the previous round
+had moved only top-level headings.
+
+### What the tenth review credited
+
+The scanner's fence rules as exact against CommonMark, and reporting an unterminated block
+rather than guessing as a genuine fail-closed. All thirteen previously-closed payloads still
+failing. The back link as no longer defeatable — `%2e/`, `index%2ehtml`, `IND%45X.html`,
+`%2569ndex.html` and `?x=1` all caught. Hygiene clean across 126 files.
+
 ## Keep / Iterate / Kill
 
 > Yev: strike through what you disagree with and write your own verdict. These are the
 > team's, and the team is not the judge of them.
 
-- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Nine
+- **`studio-boot` — Keep.** It closed TD-004 and then earned its place repeatedly. Ten
   rounds of review attacked it, and it is a far stronger thing than the version that
-  shipped: **78 mutations across eleven sets now fail — 63 at the ticket stage and 15 at the
+  shipped: **84 mutations across twelve sets now fail — 63 at the ticket stage and 21 at the
   gate**, against the 8 it was written for. The stages are named because the sixth review
   caught this same sentence claiming the ticket stage for things that fail at the gate, and
   for two behaviours that had no rule behind them at all. It is a count of what has been

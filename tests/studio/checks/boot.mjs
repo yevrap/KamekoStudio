@@ -101,7 +101,7 @@ async function discoverPages(root) {
 }
 
 /** Whether a url answers with something other than a 404. */
-async function headOk(url) {
+async function answers(url) {
   try {
     const res = await fetch(url, { method: 'GET' });
     return res.status >= 200 && res.status < 400;
@@ -1070,7 +1070,7 @@ async function run(ctx) {
       // page that 404s passed as long as it was a different path.
       if (obs.backLink && obs.backLink.present && obs.backLink.resolved) {
         const target = obs.backLink.resolved.replace(/\/+$/, '/');
-        obs.backLink.reachable = await headOk(site.origin + obs.backLink.resolved)
+        obs.backLink.reachable = await answers(site.origin + obs.backLink.resolved)
           || pages.some(p => '/' + p.replace(/index\.html$/, '') === target);
       }
 
