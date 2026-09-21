@@ -657,3 +657,16 @@ export function moduleImports(source, fromUrl) {
   }
   return found;
 }
+
+/**
+ * `--key=value` into `[key, value]`, splitting at the **first** `=` only.
+ *
+ * `split('=')` kept the text before the second `=` and dropped the rest, so a
+ * marker such as a line of code — `a = b` — was searched for as `a ` without a
+ * word of warning, and a shorter string is easier to find by accident.
+ */
+export function splitArg(arg) {
+  if (!arg.startsWith('--')) return [null, null];
+  const eq = arg.indexOf('=');
+  return eq === -1 ? [arg.slice(2), undefined] : [arg.slice(2, eq), arg.slice(eq + 1)];
+}

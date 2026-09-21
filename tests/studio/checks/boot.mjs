@@ -1123,7 +1123,7 @@ async function run(ctx) {
 
 export const studioBoot = {
   id: 'studio-boot',
-  stages: ['ticket', 'gate'],
+  stages: ['ticket', 'gate', 'push'],
   description: 'Every page under studio/ boots in a real browser and holds its contract',
   run
 };

@@ -67,11 +67,37 @@ export function refExists(root, ref) {
   return attempt(gitPath(), ['rev-parse', '--verify', '--quiet', ref + '^{commit}'], { cwd: root }).ok;
 }
 
-/** The most recent studio iteration tag, or null. */
-export function latestIterationTag(root) {
+/** Every studio iteration tag, newest first. */
+function iterationTags(root) {
   const out = attempt(gitPath(), ['tag', '--list', 'studio-iteration-*', '--sort=-v:refname'], { cwd: root });
-  const first = out.out.split('\n').map(s => s.trim()).filter(Boolean)[0];
-  return first || null;
+  return out.out.split('\n').map(s => s.trim()).filter(Boolean);
+}
+
+/** The commit a ref names, or null when it names none. */
+function commitOf(root, ref) {
+  const r = attempt(gitPath(), ['rev-parse', '--verify', '--quiet', ref + '^{commit}'], { cwd: root });
+  return r.ok ? r.out : null;
+}
+
+/**
+ * The newest studio iteration tag that does not point at HEAD, or null.
+ *
+ * This is what "the previous release" means to every check that compares
+ * against one. The newest tag is right while an iteration is being built and
+ * wrong the moment its own tag is pushed: HEAD then *is* the newest tag, the
+ * comparison covers nothing, and a check built to prove production was not
+ * touched passes having proved nothing (TD-011). Skipping every tag on HEAD —
+ * there can be more than one — gives the release before this one.
+ */
+export function previousIterationTag(root) {
+  const head = commitOf(root, 'HEAD');
+  return iterationTags(root).find(tag => commitOf(root, tag) !== head) ?? null;
+}
+
+/** How many commits are reachable from HEAD and not from `ref`. */
+export function commitsSince(root, ref) {
+  const r = attempt(gitPath(), ['rev-list', '--count', `${ref}..HEAD`], { cwd: root });
+  return r.ok ? Number(r.out) : null;
 }
 
 /**

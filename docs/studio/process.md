@@ -14,7 +14,7 @@ what blocked it.
 | 3 | **Fix, bounded** | At most 2 fix rounds per ticket, then the ticket is marked Blocked |
 | 4 | **Independent review** | QA and Independent Reviewer findings → fixes or new tickets |
 | 5 | **Document** | Tickets closed, `CHANGELOG.md`, `learning-log.md`, studio log entries |
-| 6 | **Gate** | `npm run studio:check --stage=gate` green, or the iteration is not tagged. Each ticket's own push needs its ticket stage and the full suite green first |
+| 6 | **Gate** | `npm run studio:check -- --stage=gate` green, or the iteration is not tagged. Each push before it needs `--stage=push` green first |
 | 7 | **Publish** | The last push, tag `studio-iteration-NN`, post-deploy checks |
 | 8 | **Review and retro** | `iterations/NN/review.md`, `iterations/NN/retro.md` |
 | 9 | **Stop** | Handoff written; the run ends |
@@ -60,9 +60,10 @@ is testing and how its retrospective judges it.
 - Commit to `main`. No ticket branches, no merge commits. A ticket is one or more small
   commits, each naming it.
 - Every commit leaves `main` releasable: `npm run studio:check -- --stage=ticket` green
-  before committing, and `--stage=gate --skip-slow` on any commit that changes code.
-- When a ticket is done: the ticket stage and the full repository suite green, then push,
-  then `--stage=postdeploy`. Pages deploys every push, so every push is a release.
+  before committing.
+- When a ticket is done: `--stage=push` green — the gate's checks short of the review ones,
+  the full repository suite included — then push, then `--stage=postdeploy` with a
+  `--marker` only the new build has. Pages deploys every push, so every push is a release.
 - A page a player could reach but that is not ready stays off the shelf until its ticket
   is done.
 - Review findings are fixed forward. A push that breaks the live site is undone with one

@@ -6,7 +6,7 @@
 
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { gitRaw, committedPaths, workingTreePaths, refExists, latestIterationTag } from '../lib/shell.mjs';
+import { gitRaw, committedPaths, workingTreePaths, refExists, previousIterationTag, commitsSince } from '../lib/shell.mjs';
 import { classifyPaths, PATH_EXCEPTIONS } from '../lib/rules.mjs';
 
 function changedPaths(root, base) {
@@ -56,7 +56,7 @@ async function evaluate(root, base, paths) {
 
 export const pathGuard = {
   id: 'path-guard',
-  stages: ['ticket', 'gate'],
+  stages: ['ticket', 'gate', 'push'],
   description: 'Every changed path is inside the allowed list, or is a recorded exception',
   async run(ctx) {
     // A base that does not resolve is a failure, not a skip: an unverifiable
@@ -73,13 +73,23 @@ export const productionUnchanged = {
   stages: ['postdeploy'],
   description: "No file outside the allowed paths differs from the previous iteration's tag",
   async run(ctx) {
-    const tag = ctx.previousTag ?? latestIterationTag(ctx.root);
+    const tag = ctx.previousTag ?? previousIterationTag(ctx.root);
     if (!tag) {
       return { status: 'skip', detail: 'no previous studio-iteration tag to compare against (expected for iteration 00)' };
     }
+    if (!refExists(ctx.root, tag)) {
+      return { status: 'fail', detail: `"${tag}" does not name a commit, so nothing could be compared` };
+    }
+    // A comparison that covers no commits proves nothing, and saying "pass"
+    // about it is how TD-011 hid: the release compared with itself reported
+    // "nothing outside the guard changed" with a zero nobody had to read.
+    const commits = commitsSince(ctx.root, tag);
+    if (commits === 0) {
+      return { status: 'skip', detail: `${tag} is HEAD or ahead of it, so the comparison covers no commits — pass --previous-tag=<the release before this one>` };
+    }
     const result = await evaluate(ctx.root, tag, committedPaths(ctx.root, tag));
     return result.status === 'pass'
-      ? { status: 'pass', detail: `nothing outside the guard changed since ${tag} (${result.detail})` }
+      ? { status: 'pass', detail: `nothing outside the guard changed in ${commits} commit(s) since ${tag} (${result.detail})` }
       : { status: 'fail', detail: `since ${tag}: ${result.detail}` };
   }
 };

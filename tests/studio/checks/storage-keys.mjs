@@ -12,7 +12,7 @@ const SOURCE = /\.(js|mjs|html)$/;
 
 export const storageKeys = {
   id: 'storage-keys',
-  stages: ['ticket', 'gate'],
+  stages: ['ticket', 'gate', 'push'],
   description: 'Studio code reaches storage only through studio_-prefixed keys it can be shown to use',
   async run(ctx) {
     const dir = path.join(ctx.root, 'studio');

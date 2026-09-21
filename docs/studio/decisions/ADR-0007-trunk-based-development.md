@@ -30,11 +30,11 @@ From iteration 04, as a trial:
 1. **Commit to `main`.** No ticket branches and no merge commits. A ticket is one or more
    small commits, each naming it, exactly as before.
 2. **Every commit leaves `main` releasable.** The ticket stage of `npm run studio:check` is
-   green before each commit, and the gate stage with `--skip-slow` on any commit that
-   changes code, so a gate-only check fails on the commit responsible.
-3. **Push when a ticket is done**, not once per iteration: the ticket stage and the full
-   repository suite green, then push, then the post-deploy checks. Small, frequent
-   deploys, each verified.
+   green before each commit.
+3. **Push when a ticket is done**, not once per iteration: the `push` stage green — the
+   gate's checks short of the review ones, the full repository suite included, so a
+   gate-only check fails on the ticket responsible — then push, then the post-deploy
+   checks. Small, frequent deploys, each verified.
 4. **Unfinished work a player could see stays dark.** For the realm, the switch is the
    shelf: a page is not listed in `studio/shelf-data.js` until its ticket is done, so it is
    reachable only by someone who already has its address.
@@ -46,9 +46,9 @@ From iteration 04, as a trial:
 Nothing in the checks has to change for this. `commit-lint` already exempts merges by their
 parent count, so a history without them is simply a history without exemptions;
 `docs-current` reads commit subjects, not branches; `path-guard` and `production-unchanged`
-diff against the previous tag. Iteration 04 adds a `push` stage to the checker — the gate
-without the two checks that only make sense once the iteration is reviewed — so step 3 is
-one command rather than three.
+diff against the previous tag. Iteration 04 added a `push` stage to the checker (SHS-050) — the
+gate without the two checks that only make sense once the iteration is reviewed, plus
+`on-main` and `no-stop-file` — so step 3 is one command rather than three.
 
 ## What the trial is testing
 

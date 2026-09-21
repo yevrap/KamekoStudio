@@ -5,7 +5,7 @@ import { lintCommit } from '../lib/rules.mjs';
 
 export const commitLint = {
   id: 'commit-lint',
-  stages: ['gate'],
+  stages: ['gate', 'push'],
   description: 'Every studio commit is conventional, scoped studio, and names a ticket',
   run(ctx) {
     if (!refExists(ctx.root, ctx.base)) {

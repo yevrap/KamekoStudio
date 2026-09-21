@@ -8,7 +8,7 @@ export const treeClean = {
   // Also at the gate: the document checks read the filesystem, so a clean tree
   // is what makes them statements about what will actually be pushed. Iteration
   // 00's review caught a green gate sitting on nine untracked ticket files.
-  stages: ['preflight', 'gate'],
+  stages: ['preflight', 'gate', 'push'],
   description: 'No uncommitted work is about to be swept into the iteration, or missed by it',
   run(ctx) {
     const dirty = git(ctx.root, 'status', '--porcelain');
@@ -20,7 +20,7 @@ export const treeClean = {
 
 export const onMain = {
   id: 'on-main',
-  stages: ['preflight'],
+  stages: ['preflight', 'push'],
   description: 'The iteration starts from the branch that deploys',
   run(ctx) {
     const branch = git(ctx.root, 'rev-parse', '--abbrev-ref', 'HEAD');
@@ -41,7 +41,7 @@ export const onMain = {
 
 export const noStopFile = {
   id: 'no-stop-file',
-  stages: ['preflight'],
+  stages: ['preflight', 'push'],
   description: 'The executive has not asked for a halt',
   async run(ctx) {
     for (const dir of ctx.stopFileRoots) {

@@ -19,7 +19,7 @@ const CONSTANTS = 'shared/3d/constants.js';
 
 export const portalCapacityCheck = {
   id: 'portal-capacity',
-  stages: ['ticket', 'gate'],
+  stages: ['ticket', 'gate', 'push'],
   description: 'The 3D landing page has a portal position for every game in ARCADE_GAMES',
   async run(ctx) {
     const files = [GAMEPLAY, CONSTANTS].map(f => path.join(ctx.root, f));

@@ -1,6 +1,6 @@
 # SHS-050 — Every push is checked by one stage before it and one after, and the after-stage cannot pass on a stale build or a vacuous baseline
 
-- **Status:** In progress
+- **Status:** Done
 - **Size:** M
 - **Iteration:** 04
 - **Role lead:** QA Engineer
@@ -18,22 +18,23 @@ command rather than three.
 
 ## Acceptance criteria
 
-- [ ] `studio-live` fetches the page, and the files it loads, again on every attempt until
+- [x] `studio-live` fetches the page, and the files it loads, again on every attempt until
       the marker is found or the attempts run out. A build that arrives after the first
       attempt passes with no re-run by hand, and the report says which attempt found it.
       (TD-010)
-- [ ] `studio-live` takes `--marker-at=<site path>`, defaulting to `/studio/`, so a push
+- [x] `studio-live` takes `--marker-at=<site path>`, defaulting to `/studio/`, so a push
       that changes only a file outside the realm can still prove its build is being served.
-- [ ] Without `--previous-tag`, `production-unchanged` compares with the newest
+- [x] Without `--previous-tag`, `production-unchanged` compares with the newest
       `studio-iteration-*` tag that does not point at `HEAD`. Run straight after tagging,
       it compares with the previous iteration. The same default applies to `--base`.
       (TD-011)
-- [ ] A comparison that covers no commits at all — the baseline *is* `HEAD` — reports
+- [x] A comparison that covers no commits at all — the baseline *is* `HEAD` — reports
       `not run` with the reason, never `pass`.
-- [ ] A `push` stage runs the gate's checks except `docs-current` and `reviewer-verdict`,
-      the two that only make sense once the iteration is reviewed, and, like the gate,
-      treats `not run` as a failure.
-- [ ] `self-checks.md` documents the stage, `--marker-at` and the new defaults;
+- [x] A `push` stage runs the gate's checks except `docs-current` and `reviewer-verdict`,
+      the two that only make sense once the iteration is reviewed, plus `on-main` and
+      `no-stop-file`, since the push goes straight to the branch that deploys and must
+      respect a halt; like the gate, it treats `not run` as a failure.
+- [x] `self-checks.md` documents the stage, `--marker-at` and the new defaults;
       `process.md` names the stage where it says what runs before a push; TD-010 and
       TD-011 are closed in `tech-debt.md` with this ticket's ID.
 
@@ -58,9 +59,40 @@ command rather than three.
 
 ## Result
 
-*Filled in as the ticket is worked. Empty until then.*
-
 - **What changed:**
+  - `tests/studio/checks/deploy.mjs` — `studio-live` is `searchForMarker` (one search of a
+    page and the same-origin files it loads, starting from a script when the page is one)
+    inside `pollForMarker` (a fresh search on every attempt). Its report names the attempt
+    that found the build. It takes `--marker-at`, joined to the site's address and refused
+    if the result leaves the site.
+  - `tests/studio/lib/shell.mjs` — `previousIterationTag` (the newest iteration tag not on
+    `HEAD`) and `commitsSince`. `latestIterationTag` is gone; nothing else used it.
+  - `tests/studio/checks/path-guard.mjs` — `production-unchanged` defaults to the previous
+    release, fails on a baseline that names no commit, reports `not run` on one that covers
+    no commits, and says how many commits it compared.
+  - `tests/studio/check.mjs` — `--base` defaults to the previous release; `--marker-at`;
+    `not run` fails the `push` stage as it fails the gate.
+  - `tests/studio/checks/index.mjs` — the `push` stage and `CONCLUSIVE_STAGES`, and
+    `push` added to the ten checks that belong in it.
+  - **Found on the way:** arguments were split with `split('=')`, so a `--marker` holding a
+    `=` was silently cut at it — the line that fixes TD-009 would have been searched for as
+    `if (!bh) particles `. `splitArg` in `lib/rules.mjs` splits at the first `=` only.
+  - Docs: `self-checks.md` (usage, stage table, both checks' rows, the defaults), `process.md`,
+    `definition-of-done.md`, ADR-0007's decision points 2 and 3, `tests/studio/README.md`;
+    TD-010 and TD-011 closed in `tech-debt.md`.
 - **Tested by:**
-- **Deferred:**
+  - `tests/studio/deploy.test.mjs` (6 tests), `tests/studio/baseline.test.mjs` (7, over a
+    throwaway git repository tagged the way an iteration is), `tests/studio/stages.test.mjs`
+    (4). 17 of 17 pass.
+  - Each was run against a mutation putting back the defect it exists for, in this
+    working tree, and each mutation failed it: the newest tag even when it is `HEAD` (3 of
+    7 baseline tests fail), no zero-commit guard (1 of 7), a search on the first attempt
+    only (3 of 6 deploy tests), splitting at every `=` (1 of 4 stage tests). Files
+    restored after each.
+  - TD-010 itself, seen live on this iteration's first push, with the old check: run 8 s
+    after pushing, *"marker … not found … after 1 attempt(s)"*; the new build was being
+    served 27 s after the push, and the same command then passed.
+  - This ticket's own push: `--stage=push`, then `--stage=postdeploy` straight after, with
+    `--marker-at` pointed at the check file this ticket changed — results in `log.md`.
+- **Deferred:** nothing.
 - **Fix rounds used:** 0 / 2

@@ -38,7 +38,20 @@ export const CHECKS = [
   changelog
 ];
 
-export const STAGES = ['preflight', 'ticket', 'gate', 'postdeploy', 'closeout'];
+export const STAGES = ['preflight', 'ticket', 'gate', 'push', 'postdeploy', 'closeout'];
+
+/**
+ * Stages whose purpose is to be conclusive: a check they could not run is a
+ * failure, not a gap. The gate decides whether an iteration is tagged; `push`
+ * decides whether a finished ticket goes to `main`, and under trunk-based work
+ * every push is a deploy of the whole arcade (ADR-0007).
+ *
+ * `push` is the gate without the two checks that only make sense once the
+ * iteration has been reviewed — `docs-current` and `reviewer-verdict` — plus
+ * `on-main` and `no-stop-file`, because the push goes straight to the branch
+ * that deploys and must respect a halt.
+ */
+export const CONCLUSIVE_STAGES = ['gate', 'push'];
 
 /** Checks belonging to a stage, in registry order. */
 export function checksForStage(stage) {

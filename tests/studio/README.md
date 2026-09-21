@@ -33,8 +33,9 @@ not executed by the test runner — it is invoked by `npm run studio:check`.
 ```
 npm run studio:check                        # every stage
 npm run studio:check -- --stage=gate        # one stage
+npm run studio:check -- --stage=push        # before every push to main
 npm run studio:check -- --list              # what exists, without running it
-npm run studio:check -- --skip-slow         # no test suites (fails the gate, by design)
+npm run studio:check -- --skip-slow         # no test suites (fails gate and push, by design)
 npm run studio:check -- --offline           # no network requests
 npm run studio:check -- --base=<ref>        # what the path guard diffs against
 ```

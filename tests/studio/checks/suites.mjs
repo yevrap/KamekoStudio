@@ -65,7 +65,7 @@ export const baselineSuites = {
 
 export const fullSuites = {
   id: 'full-suites',
-  stages: ['gate'],
+  stages: ['gate', 'push'],
   description: 'npm test, smoke and e2e are green — production included',
   run: runSuites
 };

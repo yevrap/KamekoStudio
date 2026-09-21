@@ -15,7 +15,7 @@ const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|bmp|mp3|wav|ogg|m4a|mp4|webm|woff
 
 export const hygiene = {
   id: 'hygiene',
-  stages: ['gate'],
+  stages: ['gate', 'push'],
   description: 'No secrets, personal identifiers, private paths, note-vault syntax or oversized files',
   async run(ctx) {
     const findings = [];
