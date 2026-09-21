@@ -5,8 +5,8 @@
 
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { walk, exists, readIfPresent } from '../lib/shell.mjs';
-import { scanDocCleanliness } from '../lib/rules.mjs';
+import { walk, exists, readIfPresent, git, refExists } from '../lib/shell.mjs';
+import { scanDocCleanliness, commitTicketId, ticketFileId, ticketFileProblems } from '../lib/rules.mjs';
 
 const iterationDir = ctx => path.join(ctx.root, 'docs/studio/iterations', ctx.iteration);
 const REQUIRED = ['plan.md', 'log.md', 'review.md', 'retro.md'];
@@ -34,17 +34,34 @@ export const iterationDocs = {
 export const docsCurrent = {
   id: 'docs-current',
   stages: ['gate'],
-  description: 'Every ticket in the iteration has a file, a status and evidence',
+  description: 'Every ticket a commit names has exactly one file; every ticket in the iteration has a status and evidence',
   async run(ctx) {
     const ticketDir = path.join(iterationDir(ctx), 'tickets');
     if (!(await exists(ticketDir))) return { status: 'fail', detail: `no tickets/ directory for iteration ${ctx.iteration}` };
 
     const files = (await fs.readdir(ticketDir)).filter(f => f.endsWith('.md'));
     if (!files.length) return { status: 'fail', detail: 'no ticket files' };
+    if (!refExists(ctx.root, ctx.base)) {
+      return { status: 'fail', detail: `base ref "${ctx.base}" does not exist, so the tickets this iteration's commits name could not be read; pass --base=<ref>` };
+    }
 
-    const problems = [];
-    for (const f of files) {
-      const text = await fs.readFile(path.join(ticketDir, f), 'utf8');
+    // Existence, across the whole history. Reading only the files that exist
+    // made a ticket with no file invisible, and three shipped that way while
+    // this check reported their iteration complete.
+    const everyFile = await allTicketFiles(ctx.root);
+    const problems = ticketFileProblems(everyFile, namedTickets(ctx.root));
+
+    // Content: this iteration's own tickets, plus the file of every ticket a
+    // commit in this iteration's range names, wherever that file lives — so a
+    // file placed in an older iteration's directory is held to the same rules.
+    const inRange = new Set(namedTickets(ctx.root, `${ctx.base}..HEAD`).map(n => n.id));
+    const toCheck = new Map(files.map(f => [path.join(ticketDir, f), f]));
+    for (const file of everyFile) {
+      if (inRange.has(ticketFileId(file.name)) && !toCheck.has(file.abs)) toCheck.set(file.abs, file.path);
+    }
+
+    for (const [abs, f] of toCheck) {
+      const text = await fs.readFile(abs, 'utf8');
       // One Status line, counted in the **raw** file. This is the general form
       // of a defect found twice: a status hidden above the real one in an HTML
       // comment, then in a fenced block, then in a raw `<script>` block, each
@@ -102,9 +119,45 @@ export const docsCurrent = {
     }
     return problems.length
       ? { status: 'fail', detail: problems.join('\n') }
-      : { status: 'pass', detail: `${files.length} ticket(s) complete` };
+      : {
+        status: 'pass',
+        detail: `${toCheck.size} ticket(s) complete (${files.length} in iteration ${ctx.iteration}); ` +
+          `${everyFile.length} ticket file(s), one for every ticket a commit names`
+      };
   }
 };
+
+/** Every `.md` file in any `docs/studio/iterations/NN/tickets/` directory, with its first line. */
+async function allTicketFiles(root) {
+  const iterations = path.join(root, 'docs/studio/iterations');
+  const out = [];
+  for (const entry of await fs.readdir(iterations, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const dir = path.join(iterations, entry.name, 'tickets');
+    if (!(await exists(dir))) continue;
+    for (const name of (await fs.readdir(dir)).filter(f => f.endsWith('.md')).sort()) {
+      const abs = path.join(dir, name);
+      const firstLine = (await fs.readFile(abs, 'utf8')).split('\n')[0].replace(/\r$/, '');
+      out.push({ abs, name, firstLine, path: path.relative(path.join(root, 'docs/studio'), abs) });
+    }
+  }
+  return out;
+}
+
+/** The ticket each non-merge studio commit names: in `range`, or in all of HEAD's history. */
+function namedTickets(root, range) {
+  const log = git(root, 'log', '--format=%H%x1f%P%x1f%s', ...(range ? [range] : []));
+  const named = [];
+  for (const line of log ? log.split('\n') : []) {
+    const [sha, parents, subject] = line.split('\x1f');
+    // More than one parent means git wrote the commit; its subject names a
+    // branch as well as a ticket, and the ticket is named by the commit below.
+    if (parents.trim().split(/\s+/).length > 1) continue;
+    const id = commitTicketId(subject);
+    if (id) named.push({ id, sha });
+  }
+  return named;
+}
 
 export const reviewerVerdict = {
   id: 'reviewer-verdict',

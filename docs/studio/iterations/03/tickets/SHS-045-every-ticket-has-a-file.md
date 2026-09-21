@@ -1,6 +1,6 @@
 # SHS-045 — Every ticket a commit names has exactly one ticket file
 
-- **Status:** Ready
+- **Status:** Done
 - **Size:** S
 - **Iteration:** 03
 - **Role lead:** Tech Lead / Architect
@@ -17,19 +17,19 @@ iteration 02 complete.
 
 ## Acceptance criteria
 
-- [ ] Every ticket ID named in the subject of a non-merge studio commit, anywhere in the
+- [x] Every ticket ID named in the subject of a non-merge studio commit, anywhere in the
       history, has exactly one ticket file under `docs/studio/iterations/*/tickets/`,
       whose file name starts with that ID and whose first heading names the same ID.
       A missing file, a second file, or a file whose heading names another ticket fails.
-- [ ] A ticket file for an ID named by a commit in this iteration's range is held to the
+- [x] A ticket file for an ID named by a commit in this iteration's range is held to the
       same content rules as this iteration's own tickets, wherever it lives — so a file
       placed in an older iteration's directory is not a way around them.
-- [ ] The decision is pure and unit-tested with the inputs that defeat it: an ID with no
+- [x] The decision is pure and unit-tested with the inputs that defeat it: an ID with no
       file, an ID with two, a file whose heading disagrees with its name, a near-miss name
       (`SS-0411-…`), and a merge subject that mentions an ID.
-- [ ] `SS-039`, `SS-041` and `SS-042` have ticket files, reconstructed from their commits
+- [x] `SS-039`, `SS-041` and `SS-042` have ticket files, reconstructed from their commits
       and marked as reconstructed, in iteration 02's directory where the work belongs.
-- [ ] `self-checks.md` describes what `docs-current` now proves, and no longer claims more.
+- [x] `self-checks.md` describes what `docs-current` now proves, and no longer claims more.
 
 ## Evidence plan
 
@@ -47,7 +47,34 @@ before the backfill (fails, naming the three IDs) and after (passes).
 
 ## Result
 
-- **What changed:**
-- **Tested by:**
-- **Deferred:**
+- **What changed:** `tests/studio/lib/rules.mjs` — `TICKET_FILE_RE`, `ticketFileId` and
+  `ticketFileProblems`, pure. `tests/studio/checks/docs.mjs` — `docs-current` reads every
+  ticket file in every iteration with its first line, and the ticket each non-merge studio
+  commit names, both across the whole history and in this iteration's range; it reports
+  the existence problems, then runs the unchanged content rules over this iteration's
+  tickets plus the file of every ticket named in range, wherever it lives. It now needs
+  the base ref, and fails with a clear message without one. Three reconstructed ticket
+  files in `iterations/02/tickets/`: `SS-039-the-verdict.md`, `SS-041-flaky-production-e2e.md`,
+  `SS-042-reviewer-model-diversity.md`, each marked as reconstructed and saying which parts
+  were read off the commit and which were assigned. `self-checks.md`'s `docs-current` row.
+
+- **Tested by:** eight new tests in `tests/studio/rules.test.mjs` — a whole record; an ID
+  with no file, reported with its commit; an ID named twice, reported once; two files for
+  one ID, with and without a commit naming it; a heading naming another ticket; six first
+  lines that are not the right heading (empty, no `#`, an H2, `SHS-0501`, `SHS-050-x`,
+  `About SHS-050`); a near-miss file name `SS-0411-…` that must not satisfy `SS-041`, plus
+  five malformed names; a merge subject naming nothing. 77/77 in that file; `npm test`
+  693/693. Against the real repository at the gate stage: **before the backfill**, *"SS-042
+  is named by commit 5416876 and has no ticket file"*, likewise SS-041 (`72afe9d`) and
+  SS-039 (`ff69efb`) — exactly the three; **after**, none. Four mutations applied to the
+  real tree and reverted, each failing with its own message: SS-041's reconstructed file
+  set back to `Ready` in iteration 02's directory (*"iterations/02/tickets/SS-041-…: still
+  "Ready" at the gate"* — the in-range content rule reaching an older directory); a copy of
+  SHS-043's file in iteration 02 (*"SHS-043: 2 ticket files"*); `SS-038-mislabelled.md`
+  headed `# SHS-099` (*"first line should be "# SS-038 — …""*); `ss-044-lowercase.md`
+  (*"not named <ID>-<slug>.md"*). SS-040's file, in range and in iteration 02, passes the
+  content rules unchanged.
+
+- **Deferred:** nothing.
+
 - **Fix rounds used:** 0 / 2

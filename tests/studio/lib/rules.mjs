@@ -477,6 +477,62 @@ export function commitTicketId(subject) {
 }
 
 /**
+ * A ticket file's name: its ID, a hyphen, a slug. The ID is followed by a
+ * hyphen, so `SS-0411-x.md` is not a file for `SS-041` — it is a malformed name.
+ */
+export const TICKET_FILE_RE = /^((?:SHS|SS)-\d{3})-[^/\\]+\.md$/;
+
+/** The ID a ticket file's name declares, or null. */
+export function ticketFileId(name) {
+  return TICKET_FILE_RE.exec(String(name ?? ''))?.[1] ?? null;
+}
+
+/**
+ * Every ticket the history names has exactly one file, and every file says
+ * which ticket it is.
+ *
+ * `docs-current` used to read only the files that existed, so a ticket with no
+ * file was invisible to it: three IDs on `main` had commits and no file while
+ * the gate reported the iteration complete. This is decided from two things the
+ * checker observes rather than interprets — commit subjects, and file names with
+ * their first line — so no Markdown is read here at all.
+ *
+ * @param files  `[{ path, name, firstLine }]` — every `.md` under any
+ *               `iterations/NN/tickets/` directory.
+ * @param named  `[{ id, sha }]` — the ID each non-merge studio commit names.
+ * @returns      one message per problem; empty when the record is whole.
+ */
+export function ticketFileProblems(files, named) {
+  const problems = [];
+  const byId = new Map();
+  for (const file of files) {
+    const id = ticketFileId(file.name);
+    if (!id) {
+      problems.push(`${file.path}: not named <ID>-<slug>.md, so it is no ticket's file`);
+      continue;
+    }
+    // The file's first line is its H1, and the H1 names the same ticket. A file
+    // named for one ticket and headed with another is a record that disagrees
+    // with itself; neither half can be trusted.
+    const heading = new RegExp(`^#[ \\t]+${id}(?![\\w-])`);
+    if (!heading.test(String(file.firstLine ?? ''))) {
+      problems.push(`${file.path}: first line should be "# ${id} — …", found ${JSON.stringify(String(file.firstLine ?? '').slice(0, 60))}`);
+    }
+    byId.set(id, [...(byId.get(id) ?? []), file.path]);
+  }
+  for (const [id, paths] of byId) {
+    if (paths.length > 1) problems.push(`${id}: ${paths.length} ticket files (${paths.join(', ')}) — a ticket has one`);
+  }
+  const reported = new Set();
+  for (const { id, sha } of named) {
+    if (byId.has(id) || reported.has(id)) continue;
+    reported.add(id);
+    problems.push(`${id} is named by commit ${String(sha ?? '').slice(0, 7)} and has no ticket file`);
+  }
+  return problems;
+}
+
+/**
  * Commits that fail the lint and cannot be fixed: they are on the remote's
  * `main`, and amending them would rewrite published history, which the studio
  * does not do.

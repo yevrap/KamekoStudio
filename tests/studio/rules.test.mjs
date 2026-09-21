@@ -9,7 +9,8 @@ import {
   extractStorageKeys, badStorageKeys, findStorageViolations,
   scanHygiene, scanDocCleanliness, HYGIENE_PRAGMA,
   lintCommitSubject, moduleImports, sameOriginAssets,
-  LAST_SS_TICKET, ticketIdProblem, commitTicketId, lintCommit, LINT_WAIVERS
+  LAST_SS_TICKET, ticketIdProblem, commitTicketId, lintCommit, LINT_WAIVERS,
+  ticketFileProblems, ticketFileId
 } from './lib/rules.mjs';
 
 test('path guard: studio-owned paths are allowed', () => {
@@ -322,6 +323,79 @@ test('lintCommit: every waiver is keyed by a full 40-character hash and gives a 
     assert.match(sha, /^[0-9a-f]{40}$/);
     assert.match(reason, /\b(SHS|SS)-\d{3}\b/);
   }
+});
+
+// --- Every ticket a commit names has exactly one file ---------------------------
+
+const ticketFile = (dir, name, firstLine) => ({ path: `iterations/${dir}/tickets/${name}`, name, firstLine });
+
+test('ticketFileProblems: a whole record has no problems', () => {
+  const files = [
+    ticketFile('02', 'SS-041-flaky.md', '# SS-041 — A flaky test registered'),
+    ticketFile('03', 'SHS-043-prefix.md', '# SHS-043 — New tickets are named SHS-NNN')
+  ];
+  assert.deepEqual(ticketFileProblems(files, [{ id: 'SS-041', sha: 'a'.repeat(40) }, { id: 'SHS-043', sha: 'b'.repeat(40) }]), []);
+});
+
+test('ticketFileProblems: a ticket a commit names with no file is reported, with the commit', () => {
+  // The defect this rule exists for: SS-039, SS-041 and SS-042 on main, no files.
+  const problems = ticketFileProblems([], [{ id: 'SS-041', sha: '72afe9d' + '0'.repeat(33) }]);
+  assert.deepEqual(problems, ['SS-041 is named by commit 72afe9d and has no ticket file']);
+});
+
+test('ticketFileProblems: a ticket named by several commits is reported once', () => {
+  const named = [{ id: 'SHS-050', sha: 'a'.repeat(40) }, { id: 'SHS-050', sha: 'b'.repeat(40) }];
+  assert.equal(ticketFileProblems([], named).length, 1);
+});
+
+test('ticketFileProblems: two files for one ticket fail, wherever the second one is', () => {
+  const files = [
+    ticketFile('02', 'SS-041-flaky.md', '# SS-041 — one'),
+    ticketFile('03', 'SS-041-again.md', '# SS-041 — two')
+  ];
+  assert.match(ticketFileProblems(files, [{ id: 'SS-041', sha: 'a'.repeat(40) }]).join('\n'), /SS-041: 2 ticket files/);
+  // …and without any commit naming it: one ID, one file, always.
+  assert.match(ticketFileProblems(files, []).join('\n'), /SS-041: 2 ticket files/);
+});
+
+test('ticketFileProblems: a file whose heading names another ticket fails', () => {
+  const files = [ticketFile('03', 'SHS-050-x.md', '# SHS-051 — a different ticket')];
+  assert.match(ticketFileProblems(files, [{ id: 'SHS-050', sha: 'a'.repeat(40) }]).join('\n'), /first line should be "# SHS-050/);
+});
+
+test('ticketFileProblems: the heading must be the first line and must name the ID exactly', () => {
+  const bad = [
+    '',                                   // empty first line, heading further down
+    'SHS-050 — no hash',                  // not a heading
+    '## SHS-050 — an H2',                 // not the document's title
+    '# SHS-0501 — a longer number',       // shares a prefix, is another ID
+    '# SHS-050-x — part of a slug',       // the ID followed by more ID-like text
+    '# About SHS-050'                     // names it, but is not it
+  ];
+  for (const firstLine of bad) {
+    const problems = ticketFileProblems([ticketFile('03', 'SHS-050-x.md', firstLine)], []);
+    assert.match(problems.join('\n'), /first line should be/, JSON.stringify(firstLine));
+  }
+  assert.deepEqual(ticketFileProblems([ticketFile('03', 'SHS-050-x.md', '# SHS-050 — fine')], []), []);
+  assert.deepEqual(ticketFileProblems([ticketFile('03', 'SHS-050-x.md', '#\tSHS-050')], []), []);
+});
+
+test('ticketFileProblems: a near-miss file name is no ticket\'s file', () => {
+  // `SS-0411-…` shares a prefix with SS-041 and must not satisfy it.
+  const files = [ticketFile('02', 'SS-0411-flaky.md', '# SS-0411 — near miss')];
+  const problems = ticketFileProblems(files, [{ id: 'SS-041', sha: 'a'.repeat(40) }]).join('\n');
+  assert.match(problems, /SS-0411-flaky\.md: not named/);
+  assert.match(problems, /SS-041 is named by commit/);
+  for (const name of ['ss-041-lower.md', 'SS-041.md', 'SS-041-x.txt.md.bak', 'notes.md', 'SHS-43-x.md']) {
+    assert.equal(ticketFileId(name), null, name);
+  }
+  assert.equal(ticketFileId('SS-041-x.md'), 'SS-041');
+});
+
+test('ticketFileProblems: a merge subject names no ticket, so it cannot supply one', () => {
+  // The ID comes from the commit below the merge. commitTicketId returns null
+  // for a merge subject, and the check skips commits with two parents anyway.
+  assert.equal(commitTicketId('Merge ss-099-x: SS-099 something'), null);
 });
 
 test('commitTicketId: the ID a conforming subject names, and nothing else', () => {
