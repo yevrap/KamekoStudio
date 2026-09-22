@@ -4,47 +4,71 @@
 // the live site. For studio work that is the trial (ADR-0007). For a production fix
 // it put a change players see live before any independent review had seen it —
 // which is what happened to the studio's first one. So a production fix is the one
-// exception: it is pushed only once a review covering its latest commit is recorded.
-// See ADR-0008 for what this proves and what it cannot.
+// exception: it is pushed only once a review of exactly what is being pushed is
+// recorded. See ADR-0008 for what this proves and what it cannot.
+//
+// **Decided from content, not from history.** The first version asked whether
+// every commit that changed a fix's files was an ancestor of the reviewed commit,
+// and looked only at files that still differed from the release. Both were
+// defeated in its own review: putting one of the fix's files back to the release
+// after the review — deleting its regression tests — dropped that file from what
+// was checked, and a merge taking a file from its side parent changed it with no
+// commit to examine. Content has neither hole: every file the ticket owns must be,
+// at HEAD, exactly what the reviewers saw.
 
 import path from 'node:path';
-import { attempt, gitPath, committedPaths, readIfPresent } from '../lib/shell.mjs';
-import { PRODUCTION_FIXES, productionReviewProblem } from '../lib/rules.mjs';
-import { commitsTouching } from './path-guard.mjs';
+import { attempt, gitPath, readIfPresent, previousIterationTag, refExists } from '../lib/shell.mjs';
+import { PRODUCTION_FIXES, readReviewRecord } from '../lib/rules.mjs';
 
-const contains = root => (ancestor, descendant) =>
+const isAncestor = (root, ancestor, descendant) =>
   attempt(gitPath(), ['merge-base', '--is-ancestor', ancestor, descendant], { cwd: root }).ok;
+
+/** Files among `files` whose content differs between two revisions. */
+function differing(root, from, to, files) {
+  return files.filter(f => !attempt(gitPath(), ['diff', '--quiet', from, to, '--', f], { cwd: root }).ok);
+}
 
 export const productionFixReviewed = {
   id: 'production-fix-reviewed',
   stages: ['gate', 'push'],
-  description: 'Every production fix in range was reviewed at a commit that contains all of its changes',
+  description: 'Every production fix differing from the previous release is, at HEAD, exactly what its review saw',
   async run(ctx) {
+    // Measured from the previous release, not from --base: whether a fix needs a
+    // review depends on what goes live, and a narrow --base could leave an
+    // unreviewed, unpushed fix out of view.
+    const release = ctx.previousTag ?? previousIterationTag(ctx.root) ?? ctx.base;
+    if (!refExists(ctx.root, release)) {
+      return { status: 'fail', detail: `"${release}" names no commit, so no fix could be compared with the release` };
+    }
     const fixes = ctx.productionFixes ?? PRODUCTION_FIXES;
-    const changed = new Set(committedPaths(ctx.root, ctx.base));
     const byTicket = new Map();
     for (const f of fixes) {
-      if (f.iteration !== ctx.iteration || !changed.has(f.path)) continue;
+      if (f.iteration !== ctx.iteration) continue;
       byTicket.set(f.ticket, [...(byTicket.get(f.ticket) ?? []), f.path]);
     }
-    if (!byTicket.size) return { status: 'pass', detail: `no production fix of iteration ${ctx.iteration} changed since ${ctx.base}` };
 
     const problems = [];
     const notes = [];
     for (const [ticket, files] of byTicket) {
-      const commits = [...new Set(files.flatMap(f => commitsTouching(ctx.root, ctx.base, f).map(c => c.sha)))];
-      const record = path.join('docs/studio/iterations', ctx.iteration, 'reviews', `${ticket}.md`);
-      const text = await readIfPresent(path.join(ctx.root, record));
-      const problem = productionReviewProblem(ticket, { text, commits, contains: contains(ctx.root) });
-      // The reviewed commit must be one this branch actually has, or "contains"
-      // would be decided about a commit from somewhere else.
-      const sha = /^- \*\*Reviewed:\*\* `?([0-9a-f]{40})`?\s*$/m.exec(text ?? '')?.[1];
-      if (problem) problems.push(`${record}: ${problem}`);
-      else if (!contains(ctx.root)(sha, 'HEAD')) problems.push(`${record}: the reviewed commit ${sha.slice(0, 7)} is not in HEAD's history`);
-      else notes.push(`${ticket}: reviewed at ${sha.slice(0, 7)}, covering ${commits.length} commit(s) to ${files.length} file(s)`);
+      // Every file equal to the release: nothing of this fix goes live, or the
+      // whole fix has been reverted. Either way there is nothing to review.
+      if (!differing(ctx.root, release, 'HEAD', files).length) continue;
+      const recordPath = path.join('docs/studio/iterations', ctx.iteration, 'reviews', `${ticket}.md`);
+      const record = readReviewRecord(ticket, await readIfPresent(path.join(ctx.root, recordPath)));
+      if (record.problem) { problems.push(`${recordPath}: ${record.problem}`); continue; }
+      // The reviewed commit must be one this branch actually has.
+      if (!isAncestor(ctx.root, record.sha, 'HEAD')) {
+        problems.push(`${recordPath}: the reviewed commit ${record.sha.slice(0, 7)} is not in HEAD's history`);
+        continue;
+      }
+      const changed = differing(ctx.root, record.sha, 'HEAD', files);
+      if (changed.length) {
+        problems.push(`${recordPath}: ${changed.join(', ')} changed since the review at ${record.sha.slice(0, 7)} — review it again`);
+        continue;
+      }
+      notes.push(`${ticket}: ${files.length} file(s) at HEAD exactly as reviewed at ${record.sha.slice(0, 7)}`);
     }
-    return problems.length
-      ? { status: 'fail', detail: problems.join('\n  ') }
-      : { status: 'pass', detail: notes.join('\n  ') };
+    if (problems.length) return { status: 'fail', detail: problems.join('\n  ') };
+    return { status: 'pass', detail: notes.length ? notes.join('\n  ') : `no production fix of iteration ${ctx.iteration} differs from ${release}` };
   }
 };

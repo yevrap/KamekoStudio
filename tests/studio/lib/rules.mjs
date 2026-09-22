@@ -767,43 +767,32 @@ export function splitArg(arg) {
 }
 
 /**
- * Why a production fix's pre-push review record does not cover the fix, or null.
+ * A production fix's pre-push review record, read strictly: `{ sha }` when it is
+ * well formed and approves, `{ problem }` otherwise.
  *
  * A production fix is reviewed before it is pushed (ADR-0008), and the review is
  * recorded in `iterations/NN/reviews/<TICKET>.md`. The record is written by the
- * studio, like everything else here, so this makes the review impossible to
- * forget rather than impossible to fake — ADR-0008 says so.
+ * studio, like everything else here, so the check built on it makes the review
+ * impossible to forget rather than impossible to fake — ADR-0008 says so.
  *
  * Read the way `docs-current` reads a ticket: each thing is declared **exactly
- * once**, counted in the raw text, wherever a second one is hidden. The record
- * names the commit the reviewers saw, and every commit that changed one of the
- * ticket's production files must be contained in it — so a fix changed after its
- * review is refused until it is reviewed again.
- *
- * @param ticket    the ticket the record is for, such as `SHS-052`
- * @param text      the record's text, or null when there is none
- * @param commits   every commit in range that changed one of the ticket's files
- * @param contains  `(ancestor, descendant) => boolean`, from git
+ * once**, counted in the raw text, wherever a second one is hidden. What the
+ * record's commit must match is decided by the check, from file content.
  */
-export function productionReviewProblem(ticket, { text, commits = [], contains }) {
-  if (text === null || text === undefined) return `${ticket} changed production files and has no pre-push review record`;
-  const firstLine = String(text).split('\n')[0];
-  if (!new RegExp(`^#[ \\t]+${ticket}(?![\\w-])`).test(firstLine)) {
-    return `${ticket}'s review record should begin "# ${ticket} — …"`;
+export function readReviewRecord(ticket, text) {
+  if (text === null || text === undefined) return { problem: `${ticket} changed production files and has no pre-push review record` };
+  const lines = String(text).split('\n');
+  if (!new RegExp(`^#[ \\t]+${ticket}(?![\\w-])`).test(lines[0])) {
+    return { problem: `${ticket}'s review record should begin "# ${ticket} — …"` };
   }
-  const reviewedLines = String(text).split('\n').filter(line => line.includes('**Reviewed:**'));
-  if (reviewedLines.length !== 1) return `${ticket}'s review record declares "**Reviewed:**" ${reviewedLines.length} times; it declares it once`;
-  const sha = /^- \*\*Reviewed:\*\* `?([0-9a-f]{40})`?\s*$/.exec(reviewedLines[0])?.[1];
-  if (!sha) return `${ticket}'s "**Reviewed:**" line must be "- **Reviewed:** <the full 40-character commit hash>"`;
-  const verdictLines = String(text).split('\n').filter(line => line.includes('**Verdict:**'));
-  if (verdictLines.length !== 1) return `${ticket}'s review record declares "**Verdict:**" ${verdictLines.length} times; it declares it once`;
-  if (!/^- \*\*Verdict:\*\* APPROVED(?: WITH FINDINGS)?(?:\s|$)/.test(verdictLines[0])) {
-    return `${ticket}'s verdict is not an approval: ${JSON.stringify(verdictLines[0].trim().slice(0, 80))}`;
+  const reviewed = lines.filter(line => line.includes('**Reviewed:**'));
+  if (reviewed.length !== 1) return { problem: `${ticket}'s review record declares "**Reviewed:**" ${reviewed.length} times; it declares it once` };
+  const sha = /^- \*\*Reviewed:\*\* `?([0-9a-f]{40})`?\s*$/.exec(reviewed[0])?.[1];
+  if (!sha) return { problem: `${ticket}'s "**Reviewed:**" line must be "- **Reviewed:** <the full 40-character commit hash>"` };
+  const verdicts = lines.filter(line => line.includes('**Verdict:**'));
+  if (verdicts.length !== 1) return { problem: `${ticket}'s review record declares "**Verdict:**" ${verdicts.length} times; it declares it once` };
+  if (!/^- \*\*Verdict:\*\* APPROVED(?: WITH FINDINGS)?(?:\s|$)/.test(verdicts[0])) {
+    return { problem: `${ticket}'s verdict is not an approval: ${JSON.stringify(verdicts[0].trim().slice(0, 80))}` };
   }
-  for (const commit of commits) {
-    if (!contains(commit, sha)) {
-      return `${ticket}'s review saw ${sha.slice(0, 7)}, and commit ${String(commit).slice(0, 7)} changed its production files outside what was reviewed — review it again`;
-    }
-  }
-  return null;
+  return { sha };
 }

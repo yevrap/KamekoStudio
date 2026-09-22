@@ -27,12 +27,13 @@ forget.
       hash of the commit it reviewed on exactly one `**Reviewed:**` line and gives exactly
       one `**Verdict:**` line.
 - [x] A new check, `production-fix-reviewed`, in the `push` and `gate` stages, fails
-      unless, for every ticket whose production files changed since the previous release:
+      unless, for every ticket with a production file that differs from the previous
+      release:
       - the record exists;
       - its verdict begins with `APPROVED`;
       - the reviewed commit is in `HEAD`'s history;
-      - **every commit that changed one of the ticket's production files is contained in
-        the reviewed commit.**
+      - **every file the ticket owns is, at `HEAD`, exactly what the reviewed commit
+        holds.**
 
       A fix changed after it was reviewed is refused until it is reviewed again.
 - [x] ADR-0008 says plainly what this proves and what it cannot. The record is written by
@@ -97,6 +98,34 @@ to SHS-052's files is refused until a review covers it.
       also uses a real commit on another branch, and the mutation fails it.
   - This ticket's own push: `push` 11 of 11, with the check admitting SHS-052 as reviewed
     at `7b8a0fe`. Results in `log.md`.
+- **Fix round 1 — from review round 2.** QA rejected the iteration on this ticket's central
+  claim, and was right:
+  - **A file put back to the release after its review escaped the check** (QA N1). The
+    check looked only at files that still differed from the release, and decided coverage
+    by commit ancestry. QA approved `b378402` in a scratch clone, then restored iteration
+    03's `scripts/e2e.mjs`, deleting all three TD-009 tests, under a docs subject. The
+    whole `push` stage passed 11 of 11.
+  - **A merge taking a file from its side parent** hid the change from `git log` (QA N2,
+    in SHS-051's `path-guard`).
+  - **A narrow `--base`** left an unpushed fix out of view (QA N3).
+  - **All three are closed by deciding from content.** Every file the ticket owns must be,
+    at `HEAD`, exactly what the reviewed commit holds. The need for a review is measured
+    from the previous release, not from `--base`. The ticket is exempt only when every
+    one of its files equals the release.
+  - `productionReviewProblem` became `readReviewRecord`, which only parses the record;
+    the check does the comparisons.
+  - Tests: `production-fix.test.mjs` now has QA's three reproductions as regression
+    tests, plus a whole-fix revert that needs no review, alongside the earlier cycle.
+    Four mutations, each putting one hole back, and each failed:
+    - covering only files that still differ from the release: 2 tests;
+    - measuring from `--base`: 1;
+    - dropping the history check: 1;
+    - dropping the content comparison: 3.
+  - The Independent Reviewer's two round-2 nits: the unused release-tag argument is gone
+    with the ancestry code. Two tickets owning one file now means both reviews must have
+    seen that file as it is pushed, which ADR-0008 states.
+  - **No review has seen this fix round.** Round 2 was the last; the review record says
+    what a third round would most likely have found.
 - **Deferred:** an approval from outside the repository, the only thing that would make the
   review impossible to fake. It is offered to the executive as a choice.
-- **Fix rounds used:** 0 / 2
+- **Fix rounds used:** 1 / 2

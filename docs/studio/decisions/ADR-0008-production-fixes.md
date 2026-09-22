@@ -44,8 +44,12 @@ permission has to be something the guard can check.
 
 - an entry for that exact path names the iteration being checked;
 - that entry's ticket has a file in that iteration's `tickets/` directory;
-- every commit since the previous release that changed the file names that ticket — a
-  merge commit included, when the merge itself made a change to the file.
+- every commit since the previous release that changed the file names that ticket. A
+  merge commit counts when git's history lists it for the file, which it does when the
+  merge's result differs from every parent. A merge that takes the file from one of its
+  parents — a rollback to a version already in the history — is not listed, and the guard
+  admits it with no commit examined (TD-013). `production-fix-reviewed`, below, refuses
+  that change at the push and at the gate, because it compares content, not history.
 
 It also refuses a fix file that was **deleted**, and any commit to a fix file made **after
 the iteration's own tag** exists: once an iteration is released, its fixes are closed.
@@ -94,10 +98,21 @@ production fix is the one exception to "push when a ticket is done"**:
 - `production-fix-reviewed`, in the `push` and `gate` stages, refuses the push unless:
   - the verdict begins with `APPROVED`;
   - the reviewed commit is in `HEAD`'s history;
-  - **every commit that changed one of the ticket's production files is contained in the
-    reviewed commit**.
+  - **every file the ticket owns is, at `HEAD`, exactly what the reviewed commit holds**.
 
-  A fix changed after its review is refused until it is reviewed again.
+  A fix changed after its review is refused until it is reviewed again. That includes one
+  of its files being put back to the release, and a merge taking a file from its side
+  parent.
+
+The check is decided from **content, not history**. The first version asked whether every
+commit that changed a fix's files was an ancestor of the reviewed commit, and looked only
+at files that still differed from the release. Its own review defeated it twice. Putting
+the regression tests back to the release after approval dropped that file from what was
+checked. A merge that git's history simplification hides changed a file with no commit to
+examine. Whether a ticket needs a review is measured from the previous release, not from
+`--base`, so a narrow base cannot hide an unpushed fix. A ticket needs no review only when
+every one of its files equals the release, which is the whole-fix revert described
+below.
 
 The check makes the review impossible to forget. It cannot make it impossible to fake,
 for the reason given above.
@@ -140,7 +155,8 @@ for the reason given above.
 - `PRODUCTION_FIXES` grows with every fix and is never pruned. It is the record of every
   production file the studio has changed, and why.
 - A production file that another ticket also changed in the same iteration fails the
-  guard. Two tickets fixing one file must both be listed for it.
+  guard. Two tickets fixing one file must both be listed for it, and each ticket's review
+  must have seen the file exactly as it is pushed.
 
 ## Alternatives considered
 
