@@ -10,6 +10,9 @@ the handoff.
 
 - **Handbook (authoritative for process):** `docs/studio/` — read `README.md`, `process.md`,
   `guardrails.md` and `definition-of-done.md` at the start of every run.
+- **Direction (the executive's standing goal):** `docs/studio/steering/direction.md` — the
+  product goal, the current epic, its iteration budget and the rules that bind this run. Plan
+  against it; where it and the handbook disagree, direction wins until the handbook is updated.
 - **Steering (the executive's views and inputs):** `docs/studio/steering/` — `handoff.md`,
   `board.md`, `scorecard.md`, `inbox.md`, `input-ledger.md`, `questionnaire.md`, and the
   design in `design.md`. When a steering view disagrees with the handbook or the repo, the
@@ -49,8 +52,10 @@ Owner picks from the board and the inbox.
 
 ### 0. Preflight
 
-1. Read `steering/handoff.md`, `steering/board.md`, `steering/inbox.md` and
-   `steering/questionnaire.md`. Read the direction in chat.
+1. Read `steering/direction.md` first, then `steering/handoff.md`, `steering/board.md`,
+   `steering/inbox.md` and `steering/questionnaire.md`. Read the direction in chat. If the
+   handoff says `resume at phase N`, resume that iteration from phase N rather than starting a
+   new one.
 2. **Log every input in `steering/input-ledger.md` before acting on it** — date, source, the
    input restated in neutral language, and (filled in later) what it became.
 3. Run `npm run studio:check -- --stage=preflight`.
@@ -60,7 +65,7 @@ Owner picks from the board and the inbox.
 
 - The iteration number NN is one past the last folder in `docs/studio/iterations/`. Create
   `docs/studio/iterations/NN/`.
-- Write `plan.md`: the goal in one sentence, committed tickets, reserved capacity (about 20% for
+- Write `plan.md`: which epic and budget iteration this is (e.g. *E1 · 2 of 3*), the goal in one sentence, committed tickets, reserved capacity (about 20% for
   debt, docs and learning — pull real rows from `docs/studio/tech-debt.md`), risks, out of
   scope.
 - One ticket file per item in `tickets/`, from `docs/studio/templates/ticket.md`. Every ticket
@@ -154,6 +159,7 @@ Report in chat, compact, the same content as `steering/handoff.md`:
 - **Summary** — 3–5 lines: shipped, cut, blocked
 - **Checks** — every one, pass / fail / not run
 - **Live URL**
+- **Budget** — the epic, iterations used of those granted, and whether the retro claims the reserve or closes the epic early
 - **Trend** — this iteration against the last three, from the scorecard
 - **Efficiency changes** — what the retro changed, and whether the last change helped
 - **Needs you** — only genuine decisions, one or two lines

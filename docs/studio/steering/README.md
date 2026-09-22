@@ -24,6 +24,7 @@ coverage), 03 (maintenance: the `SHS-` prefix, TD-009 diagnosed, one file per ti
 
 | Note | What it is |
 |---|---|
+| [Shadow Studio — Direction](direction.md) | **Yours to edit.** The product goal, the current epic and its iteration budget, the working rules |
 | [Shadow Studio — Handoff](handoff.md) | The latest report. Start here. |
 | [Shadow Studio — Board](board.md) | What's done, in flight, blocked, waiting on you |
 | [Shadow Studio — Scorecard](scorecard.md) | One row per iteration; the trend |

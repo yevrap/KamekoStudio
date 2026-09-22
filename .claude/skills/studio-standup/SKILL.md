@@ -14,15 +14,17 @@ description: "Read-only status of the Shadow Studio company: where it is, what's
    - `git log --oneline --grep "(studio)" -12` — recent studio work
    - `git tag --list "studio-iteration-*" --sort=-v:refname | head -3` — iterations shipped
    - `git log origin/main..main --oneline` — unpushed
-2. **The latest iteration** — `docs/studio/iterations/<highest>/`: `plan.md` for what was
+2. **Direction** — `docs/studio/steering/direction.md`: the current epic, its goal and done-when,
+   and the budget (iterations used of those granted, reserve claimed or not). Report it first.
+3. **The latest iteration** — `docs/studio/iterations/<highest>/`: `plan.md` for what was
    committed, `review.md` for what landed and the reviewer's verdict, `retro.md` for what the
    team changed about itself.
-3. **Open work** — open rows in `docs/studio/tech-debt.md`, and any ticket marked Blocked.
-4. **Waiting on Yevster** — unanswered items in `docs/studio/steering/questionnaire.md`,
+4. **Open work** — open rows in `docs/studio/tech-debt.md`, and any ticket marked Blocked.
+5. **Waiting on Yevster** — unanswered items in `docs/studio/steering/questionnaire.md`,
    unresolved entries in `steering/input-ledger.md`, untriaged lines in `steering/inbox.md`, and
    any Keep / Iterate / Kill line in the latest review with no verdict.
-5. **Trend** — the last three rows of `docs/studio/steering/scorecard.md`.
-6. **Live** — is `https://yevrap.github.io/KamekoStudio/studio/` serving?
+6. **Trend** — the last three rows of `docs/studio/steering/scorecard.md`.
+7. **Live** — is `https://yevrap.github.io/KamekoStudio/studio/` serving?
 
 ## Delta rule
 

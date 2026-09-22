@@ -13,7 +13,7 @@ This repository is the whole studio — code, planning, decisions and the agent 
 | Playtest verdicts | `docs/playtest-log.md` — newest first; the strongest steering input |
 | Per-game design | `docs/games/<slug>/` — `README.md` (what it is, decisions and why), `ideas.md` (idea inbox), `plans/` (build plans) |
 | Studio-wide direction | `docs/brief.md` (taste brief), `docs/mission.md`, `docs/planning/` |
-| Shadow Studio | `studio/` (the realm), `docs/studio/` (its handbook), `docs/studio/steering/` (board, handoff, inbox, open questions) |
+| Shadow Studio | `studio/` (the realm), `docs/studio/` (its handbook), `docs/studio/steering/` (direction — the current epic and its budget — board, handoff, inbox, open questions) |
 | Agent workflows | `.claude/skills/` — see *Skills* under AI Workflow |
 
 ## What This Project Is

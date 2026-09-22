@@ -21,6 +21,22 @@ folder means changing a live URL, so it gets cheaper the sooner it's decided.
 - [ ] B. Keep the folder, change the label shown to people: ______
 - [ ] C. Change both. Name: ______  Folder: ______
 
+**Q11. Which game gets forked first, and what is its first experiment?** *(new, epic E1 —
+see [Direction](direction.md))*
+The first studio fork decides what the Studio Wing opens with. Once a game is forked, its
+feature work moves to the fork and the production copy gets bug fixes only, so the best
+first fork is a game with an open design question and little production work in flight.
+- [ ] A. ⭐ **Maze Warden: rethink the shooting.** Its own questionnaire
+  (`docs/questionnaires/maze-warden-iteration-8.md`) found the shooting flat and the
+  towers' constant blinking unwelcome, but chose no direction. The fork tries one: calmer
+  towers that only animate when they fire, plus one real choice per tower (such as
+  targeting), under a hard cap on effects on screen at once. The production game's
+  planned Iteration 8 (idle rotation, glow cost, Volt's shot identity) moves into the
+  fork, and production Maze Warden stays as it is.
+- [ ] B. **Black Hole in One.** The most ideas (100+), but also the game with the most
+  recent production work, so the fork and the original would drift apart fastest.
+- [ ] C. Another game, and what to try in it: ______
+
 **Q10. Should a production fix also need your approval before it goes live?** *(new, iteration 04)*
 Iteration 04 made the studio's first production fix, TD-009 in Black Hole in One. Its
 review then showed that the studio's own checks can't tell a real fix from a made-up one:
