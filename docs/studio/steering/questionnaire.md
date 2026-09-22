@@ -4,7 +4,7 @@ Open decisions only. Everything else is decided in [Shadow Studio](design.md). T
 or just tell me in chat. Anything you leave blank takes the default (⭐). Answered questions
 are folded into the design and removed from here.
 
-*Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
+*Answered: Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
 02 builds → the first experiment), Q7 (Overtighten → left on the shelf as an honest
 prototype, ⭐ by silence), Q8 (process → keep the gate and break ties yourself, keep
 `docs-current`, cap planned work only — all ⭐ by silence), Q4 (3D zone → the studio's
@@ -21,21 +21,18 @@ folder means changing a live URL, so it gets cheaper the sooner it's decided.
 - [ ] B. Keep the folder, change the label shown to people: ______
 - [ ] C. Change both. Name: ______  Folder: ______
 
-**Q11. Which game gets forked first, and what is its first experiment?** *(new, epic E1 —
-see [Direction](direction.md))*
-The first studio fork decides what the Studio Wing opens with. Once a game is forked, its
-feature work moves to the fork and the production copy gets bug fixes only, so the best
-first fork is a game with an open design question and little production work in flight.
-- [ ] A. ⭐ **Maze Warden: rethink the shooting.** Its own questionnaire
-  (`docs/questionnaires/maze-warden-iteration-8.md`) found the shooting flat and the
-  towers' constant blinking unwelcome, but chose no direction. The fork tries one: calmer
-  towers that only animate when they fire, plus one real choice per tower (such as
-  targeting), under a hard cap on effects on screen at once. The production game's
-  planned Iteration 8 (idle rotation, glow cost, Volt's shot identity) moves into the
-  fork, and production Maze Warden stays as it is.
-- [ ] B. **Black Hole in One.** The most ideas (100+), but also the game with the most
-  recent production work, so the fork and the original would drift apart fastest.
-- [ ] C. Another game, and what to try in it: ______
+**Q12. Which River Run experiment goes first?** *(new, sprint 05)*
+River Run is the first fork (your call in chat, 2026-09-22, answering Q11). Its own
+modernization questionnaire (`docs/questionnaires/river-run-modernization.md`) is answered
+but none of it is built, so the fork starts with a queue. Sprint 06 builds one of these and
+you give it a Keep / Iterate / Kill.
+- [ ] A. ⭐ **Power-ups:** a shield (one extra hit) and rapid-fire / spread shot, floating
+  on the river. Both of your answers on the hit model and on pickups point here.
+- [ ] B. **A near-miss streak:** tight dodges build a streak on the HUD; a hit or a wide
+  pass resets it.
+- [ ] C. **Biomes that change play:** the river's stretches handle differently (friction)
+  and carry their own hazards, and you can tell when one starts.
+- [ ] D. Something else: ______
 
 **Q10. Should a production fix also need your approval before it goes live?** *(new, iteration 04)*
 Iteration 04 made the studio's first production fix, TD-009 in Black Hole in One. Its

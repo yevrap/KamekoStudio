@@ -13,9 +13,9 @@
  * iterations ship past it.
  */
 export const PULSE = {
-  iteration: '04',
-  shipped: '2026-09-21',
-  summary: 'The studio made its first fix to a production game — Black Hole in One no longer throws when you enter Explore — under a written permission, with the fix reviewed before it went out. Every push was checked before and after it landed.'
+  iteration: '05',
+  shipped: '2026-09-22',
+  summary: 'In progress: the Studio Wing opens. River Run is the first game the studio forks: its own copy, its own saves, and the 3D landing page\'s River Run portal leads to it.'
 };
 
 /**

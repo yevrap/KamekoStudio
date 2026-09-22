@@ -36,9 +36,10 @@ sprint pulls comes from the ordered [Backlog](backlog.md).
 - the rules below are in the handbook, not only in this file;
 - an epic retro has proposed E2, with the budget it asks for.
 
-**First fork:** Q11 in the [Questionnaire](questionnaire.md). ⭐ Maze Warden, whose open
-design question (the shooting mechanic feels flat; the board shouldn't turn into visual
-noise) is exactly the kind of experiment a fork exists for.
+**First fork:** River Run, the executive's choice in chat on 2026-09-22 (Q11, option C).
+It is on the arcade's Invest list and its modernization questionnaire is answered but not
+built, so the fork starts with a queue of experiments; Q12 picks the first. Maze Warden,
+the earlier ⭐, stays in the arcade.
 
 **Out of scope for E1:** new games, feature work on production games, renaming the realm.
 
