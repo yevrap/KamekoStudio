@@ -22,3 +22,4 @@ they always show the current state — and the history lives here.
 | [0007](ADR-0007-trunk-based-development.md) | Trunk-based development, as a trial from iteration 04 |
 | [0008](ADR-0008-production-fixes.md) | The studio fixes production, under the full process, one ticket per file |
 | [0009](ADR-0009-one-step-per-session.md) | One step per session, an ordered backlog, and an epic budget |
+| [0010](ADR-0010-fork-portal-url.md) | `shared/3d/constants.js` gets one recorded exception: River Run's portal opens the studio fork |

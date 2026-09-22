@@ -31,7 +31,9 @@ test('the base revision is read whole, trailing newline included', { skip: !refE
 test('a file unchanged since the base revision compares equal to the file on disk', () => {
   // This is the comparison every content-checked exception performs. If it
   // cannot hold for an untouched file, no exception can ever pass.
-  const unchanged = 'shared/3d/constants.js';
+  // A file no studio exception covers. It was constants.js until SHS-057 gave
+  // that file an exception and changed it.
+  const unchanged = 'shared/3d/state.js';
   assert.ok(existsSync(path.join(ROOT, unchanged)));
   assert.equal(textAt(ROOT, BASE, unchanged), readFileSync(path.join(ROOT, unchanged), 'utf8'));
 });

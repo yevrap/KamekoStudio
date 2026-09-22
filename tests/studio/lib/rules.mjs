@@ -38,6 +38,11 @@ export const PATH_EXCEPTIONS = [
     path: 'shared/3d/gameplay.js',
     reason: 'the front-wall portal row that restores the dropped games (ADR-0005)',
     allow: allowOnlyFrontPortalRow
+  },
+  {
+    path: 'shared/3d/constants.js',
+    reason: "River Run's portal url opens the studio fork (ADR-0010)",
+    allow: allowOnlyStudioForkPortal
   }
 ];
 
@@ -153,6 +158,46 @@ export function allowOnlyFrontPortalRow(before, after) {
   }
   if (revertFrontPortalRow(after) === before) return null;
   return 'changes beyond the front-wall portal row in createEnvironment()';
+}
+
+/**
+ * The portals on the 3D landing page that open a studio fork instead of the
+ * production game, by the entry's name. One today (ADR-0010). A second fork's
+ * portal is a new approval and a new row, never an edit to this one.
+ */
+export const STUDIO_FORK_PORTALS = [
+  { name: 'River Run Rapids', from: 'games/river-run/', to: 'studio/games/river-run/' }
+];
+
+const quoted = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * The approved edits to shared/3d/constants.js, undone: each fork's `url` goes
+ * back to its production game, matched on that entry's own line — the name
+ * immediately before the url — so the fork's url on any other entry is not
+ * undone and fails the comparison.
+ */
+export function revertStudioForkPortal(text) {
+  let out = String(text ?? '');
+  for (const { name, from, to } of STUDIO_FORK_PORTALS) {
+    const entry = new RegExp(`(\\{ name: "${quoted(name)}", url: ")${quoted(to)}(")`);
+    out = out.replace(entry, `$1${from}$2`);
+  }
+  return out;
+}
+
+/**
+ * The frontPositions rule's shape, for one value: remove the approved change
+ * from both sides and require byte equality. Both sides, because once the
+ * change is released it is in the base, and the next iteration must see it as
+ * unchanged rather than as a url the base "did not have". Pointing River Run
+ * back at production passes too: that is the rollback, not a new change.
+ */
+export function allowOnlyStudioForkPortal(before, after) {
+  if (before === after) return null;
+  if (!before) return 'the file did not exist at the base revision';
+  if (revertStudioForkPortal(after) === revertStudioForkPortal(before)) return null;
+  return "changes beyond River Run's portal url in ARCADE_GAMES";
 }
 
 /**

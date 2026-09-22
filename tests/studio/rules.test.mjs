@@ -845,6 +845,81 @@ test('exception: the rotation entry must be the real statement, not the words in
   assert.match(allowOnlyFrontPortalRow(before, faked), /no matching rotation entry/);
 });
 
+// --- The shared/3d/constants.js exception (SHS-057, ADR-0010) ---------------
+//
+// One value of one entry: River Run's portal opens the studio fork. The rule is
+// the frontPositions rule's shape — undo the approved edit, then demand the base
+// byte for byte — so everything below is an edit that must not ride along.
+
+import { allowOnlyStudioForkPortal, revertStudioForkPortal, STUDIO_FORK_PORTALS } from './lib/rules.mjs';
+
+const PORTAL_LIST = url => `export const LOOK_FRICTION = 0.88; \n\nexport const ARCADE_GAMES = [
+    { name: "Keypad Quest", url: "games/keypad-quest/", color: 0xffff00 },
+    { name: "River Run Rapids", url: "${url}", color: 0x0088ff },
+    { name: "Maze Warden", url: "games/maze-warden/", color: 0x2fe6ff }
+];
+`;
+const portalBefore = PORTAL_LIST('games/river-run/');
+const portalAfter = PORTAL_LIST('studio/games/river-run/');
+
+test('constants exception: the one approved fork is River Run', () => {
+  assert.deepEqual(STUDIO_FORK_PORTALS, [
+    { name: 'River Run Rapids', from: 'games/river-run/', to: 'studio/games/river-run/' }
+  ]);
+  assert.ok(PATH_EXCEPTIONS.some(e => e.path === 'shared/3d/constants.js'));
+});
+
+test('constants exception: River Run pointed at its fork is allowed', () => {
+  assert.equal(revertStudioForkPortal(portalAfter), portalBefore);
+  assert.equal(allowOnlyStudioForkPortal(portalBefore, portalAfter), null);
+});
+
+test('constants exception: an unchanged file is allowed, before and after the change lands', () => {
+  assert.equal(allowOnlyStudioForkPortal(portalBefore, portalBefore), null);
+  // Once the change is the base, the next iteration sees an unchanged file.
+  assert.equal(allowOnlyStudioForkPortal(portalAfter, portalAfter), null);
+});
+
+test('constants exception: any other edit riding along is rejected', () => {
+  const smuggled = portalAfter.replace('0x0088ff', '0x0088fe');
+  assert.match(allowOnlyStudioForkPortal(portalBefore, smuggled), /changes beyond River Run's portal url/);
+  const elsewhere = portalAfter.replace('LOOK_FRICTION = 0.88', 'LOOK_FRICTION = 0.5');
+  assert.match(allowOnlyStudioForkPortal(portalBefore, elsewhere), /changes beyond River Run's portal url/);
+});
+
+test('constants exception: a second url changed is rejected', () => {
+  const two = portalAfter.replace('url: "games/keypad-quest/"', 'url: "studio/games/keypad-quest/"');
+  assert.match(allowOnlyStudioForkPortal(portalBefore, two), /changes beyond River Run's portal url/);
+});
+
+test('constants exception: River Run pointed anywhere but its fork is rejected', () => {
+  for (const url of ['studio/', 'studio/games/river-run/index.html', 'https://example.com/', 'studio/games/maze-warden/']) {
+    assert.match(allowOnlyStudioForkPortal(portalBefore, PORTAL_LIST(url)), /changes beyond River Run's portal url/, url);
+  }
+});
+
+test('constants exception: the fork url on another entry is rejected', () => {
+  // The value is approved for River Run's entry, not wherever it appears.
+  const moved = portalBefore.replace('url: "games/keypad-quest/"', 'url: "studio/games/river-run/"');
+  assert.match(allowOnlyStudioForkPortal(portalBefore, moved), /changes beyond River Run's portal url/);
+});
+
+test('constants exception: a duplicated River Run entry is rejected', () => {
+  const dup = portalAfter.replace('    { name: "Maze Warden"',
+    '    { name: "River Run Rapids", url: "studio/games/river-run/", color: 0x0088ff },\n    { name: "Maze Warden"');
+  assert.match(allowOnlyStudioForkPortal(portalBefore, dup), /changes beyond River Run's portal url/);
+});
+
+test('constants exception: a trailing newline is content, and a missing base is refused', () => {
+  assert.match(allowOnlyStudioForkPortal(portalBefore.trimEnd(), portalAfter), /changes beyond River Run's portal url/);
+  assert.match(allowOnlyStudioForkPortal('', portalAfter), /did not exist at the base revision/);
+});
+
+test('constants exception: undoing the fork portal returns the production url, and is allowed', () => {
+  // Pointing River Run back at production is the rollback, not a new change.
+  assert.equal(allowOnlyStudioForkPortal(portalAfter, portalBefore), null);
+});
+
 // ---- What a deploy check can actually see ------------------------------------
 
 test('sameOriginAssets finds the scripts and stylesheets a page loads', () => {
