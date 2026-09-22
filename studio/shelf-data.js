@@ -51,5 +51,13 @@ export const SHELF = [
     iteration: '02',
     changed: '2026-09-20',
     url: 'games/overtighten/'
+  },
+  {
+    title: 'River Runner 3D',
+    status: 'ITERATING',
+    blurb: 'The arcade\'s river runner, forked into the studio with saves of its own. It plays exactly like the original for now; River Run\'s experiments happen here from the next sprint on.',
+    iteration: '05',
+    changed: '2026-09-22',
+    url: 'games/river-run/'
   }
 ];

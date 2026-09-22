@@ -18,6 +18,7 @@ This file covers what is in this folder and the rules that apply to its code.
 | `shelf.js` | Pure functions from that data to markup. No DOM, so every rendered state is unit-tested without a browser. |
 | `main.js` | The only file that touches the document, plus the visit logbook that exercises the storage rule. |
 | `games/overtighten/` | *Overtighten* — the studio's first experiment. See below. |
+| `games/river-run/` | *River Runner 3D* — the studio's fork of the arcade's River Run. See below. |
 
 ### The status tags
 
@@ -64,6 +65,19 @@ topping-up. The hypothesis that the coupling makes a plate an ordering puzzle is
 for this build, and the tests assert that rather than the intention. See
 [`../docs/studio/iterations/02/review.md`](../docs/studio/iterations/02/review.md).
 
+### `games/river-run/` — ITERATING
+
+The studio's own copy of the arcade's River Runner 3D, forked in iteration 05 (SHS-056) so
+that River Run's experiments happen here rather than in production. It starts as a faithful
+copy: production's `games/river-run/index.html` at commit `082943a`, with its saves renamed
+into the `studio_` namespace and the four edits every studio page needs (a back link, a 44px
+mute button, a no-script message, and surviving blocked site data). Every difference is
+listed in `tests/studio/lib/river-run-fork.mjs`, and a test proves the list is complete.
+
+It is one inline-script file, as production's is; the ES module split is fork debt on the
+backlog. From the fork onward, production River Run takes bug fixes only. See
+[`../docs/studio/forking.md`](../docs/studio/forking.md).
+
 ## Rules for code in this folder
 
 - **Same stack as production:** vanilla JS, native ES modules, no framework, no build step,
@@ -92,6 +106,11 @@ Documented before use, and checked by `npm run studio:check`.
 | `studio_visitCount` | `main.js` | integer string | How many times it has been opened |
 | `studio_overtighten_progress` | `games/overtighten/main.js` | integer string | How many plates have been cleared. Clamped to the number of plates that exist; anything unreadable counts as none |
 | `studio_overtighten_muted` | `games/overtighten/main.js` | `'1'` or `'0'` | Whether the game's synthesized audio is muted |
+| `studio_riverRun_highScore` | `games/river-run/index.html` | integer string | Best run score in the fork. Production's is `riverRunHighScore`, never read |
+| `studio_riverRun_muted` | `games/river-run/index.html` | `'true'` or `'false'` | Music muted; unset means muted. Production's is the unnamespaced `muted`, never read |
+| `studio_riverRun_invertControls` | `games/river-run/index.html` | `'true'` or `'false'` | The drawer's Invert Drag toggle |
+| `studio_riverRun_lastPlayed` | `games/river-run/index.html` | timestamp (ms) | Set when a run or Watch Mode starts |
+| `studio_riverRun_autoPlay` | `games/river-run/index.html`, and `shared/settings.js` from the prefix the fork registers | `'true'` or `'false'` | Watch Mode on/off. The drawer writes it because the fork registers its Watch section under the prefix `studio_riverRun` |
 
 Clearing all game data from the settings drawer does **not** clear these: the drawer's key
 list lives in `shared/settings.js`, a production file the studio changes only as a reviewed

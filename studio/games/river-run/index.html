@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<!-- Shadow Studio fork of games/river-run/index.html at 082943a6a874c1a3d9200fbf17087c62261e14ac. Every difference from that file is listed in tests/studio/lib/river-run-fork.mjs; the procedure is docs/studio/forking.md. -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>River Runner 3D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        /* Define CSS Variables for theming */
+        :root {
+            --body-bg-color: #e0f2fe;
+            --container-border-color: #0c4a6e;
+            --container-bg-color: #000;
+            --text-color-light: #ffffff;
+            --text-color-dark: #0c4a6e;
+            --button-text-color: #ffffff;
+            --button-bg-start: #f97316;
+            --button-bg-end: #ea580c;
+            --fire-btn-bg-start: #dc2626;
+            --fire-btn-bg-end: #b91c1c;
+            --message-box-bg: rgba(12, 74, 110, 0.9);
+            --message-box-text: #ffffff;
+            --score-bg: rgba(0, 0, 0, 0.5);
+            --score-text: #ffffff;
+            --scene-bg-color: 0x38bdf8;
+            --fog-color: 0x38bdf8;
+        }
+
+        /* Dark Mode Overrides */
+        body.dark-mode {
+            --body-bg-color: #1f2937;
+            --container-border-color: #9ca3af;
+            --container-bg-color: #000;
+            --text-color-light: #f3f4f6;
+            --text-color-dark: #d1d5db;
+            --button-text-color: #ffffff;
+            --button-bg-start: #1d4ed8;
+            --button-bg-end: #2563eb;
+            --fire-btn-bg-start: #f43f5e;
+            --fire-btn-bg-end: #e11d48;
+            --message-box-bg: rgba(55, 65, 81, 0.9);
+            --message-box-text: #f3f4f6;
+            --score-bg: rgba(255, 255, 255, 0.2);
+            --score-text: #f3f4f6;
+            --scene-bg-color: 0x1a2a3a;
+            --fog-color: 0x1a2a3a;
+        }
+
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Center vertically */
+            align-items: center; /* Center horizontally */
+            min-height: 100vh;
+            min-height: 100dvh;
+            height: 100vh; /* fallback */
+            height: 100dvh; /* dynamic: excludes browser toolbar on iOS Safari */
+            margin: 0;
+            padding: 0; /* Remove default padding */
+            background-color: var(--body-bg-color);
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden; /* Prevent body scrollbars */
+            transition: background-color 0.3s ease;
+            -webkit-user-select: none; /* Prevent text selection */
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent; /* Prevent tap highlight */
+            position: relative;
+            /* Keep manipulation on body for buttons outside container */
+            touch-action: manipulation;
+        }
+
+        #game-container {
+            position: relative;
+            border: 5px solid var(--container-border-color);
+            border-radius: 10px;
+            overflow: hidden; /* Keep canvas contained */
+            background-color: var(--container-bg-color);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            width: 95%; /* Use slightly more width */
+            max-width: 500px;
+            height: calc(100vh - 55px - 80px); /* fallback */
+            height: calc(100dvh - 55px - 80px - env(safe-area-inset-bottom));
+            max-height: 900px; /* Optional: prevent extreme height on very tall/narrow screens */
+            cursor: grab;
+            transition: border-color 0.3s ease;
+            margin-bottom: 0;
+            touch-action: none; /* Prevent ALL default touch actions (zoom, scroll) on container */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        #game-container:active {
+             cursor: grabbing;
+        }
+
+        #game-container canvas {
+             display: block;
+             width: 100%;
+             height: 100%;
+             touch-action: none; /* Also apply directly to canvas */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--score-text);
+            font-size: 1.2em;
+            background-color: var(--score-bg);
+            padding: 5px 15px;
+            border-radius: 5px;
+            z-index: 5;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--message-box-bg);
+            color: var(--message-box-text);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.2em;
+            z-index: 10;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+         #message-box[style*="display: block"] {
+            pointer-events: auto;
+         }
+        #message-box p {
+            margin-bottom: 20px;
+        }
+
+        /* General button style */
+         button {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.9em;
+            padding: 8px 16px;
+            color: var(--button-text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.3s ease;
+            margin: 5px;
+            pointer-events: auto;
+         }
+         button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+         }
+         button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+         }
+
+         /* Specific button backgrounds */
+        #message-box button, #start-button { /* Start/Restart button */
+             background: linear-gradient(180deg, var(--button-bg-start), var(--button-bg-end));
+        }
+
+        /* --- Top Right Buttons Container --- */
+        #top-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 20;
+            display: flex; /* Arrange buttons side-by-side */
+            gap: 5px; /* Space between buttons */
+        }
+
+        /* Mute Toggle Button Styling */
+        #mute-toggle {
+             font-size: 0.7em;
+             padding: 5px 10px;
+             background-color: #555;
+             margin: 0;
+        }
+         body.dark-mode #mute-toggle {
+             background-color: #aaa;
+             color: #333;
+         }
+         /* Style for muted state */
+         #mute-toggle.muted {
+             background-color: #888;
+         }
+         body.dark-mode #mute-toggle.muted {
+              background-color: #666;
+         }
+
+        /* --- Controls Bar (below canvas) --- */
+        #controls-bar {
+            display: flex;
+            width: 95%;
+            max-width: 500px;
+            height: 80px;
+            height: calc(80px + env(safe-area-inset-bottom));
+            gap: 8px;
+            padding: 8px;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+        #btn-left, #btn-right {
+            flex: 1;
+            background: rgba(20, 60, 130, 0.85);
+            color: white;
+            border: 2px solid rgba(100, 160, 255, 0.5);
+            border-radius: 12px;
+            font-size: 0.65em;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+            min-height: 44px;
+            margin: 0;
+            padding: 0;
+            transition: background 0.1s;
+        }
+        #btn-left:active, #btn-right:active {
+            background: rgba(40, 100, 200, 0.9);
+        }
+        #btn-fire {
+            flex: 1.4;
+            background: linear-gradient(180deg, var(--fire-btn-bg-start), var(--fire-btn-bg-end));
+            color: white;
+            border: 2px solid rgba(255, 100, 100, 0.5);
+            border-radius: 12px;
+            font-size: 0.75em;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+            min-height: 44px;
+            margin: 0;
+            padding: 0;
+            transition: opacity 0.1s;
+        }
+        #btn-fire:active { opacity: 0.8; }
+
+        /* Studio fork: the page contract every studio page holds (docs/studio/forking.md). */
+        #mute-toggle { min-height: 44px; }
+        #top-controls .back { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; font-size: 0.7em; color: #fff; background-color: #555; text-decoration: none; border-radius: 4px; }
+        body.dark-mode #top-controls .back { background-color: #aaa; color: #333; }
+
+    </style>
+</head>
+<body>
+    <noscript><p style="color: var(--text-color-dark); padding: 16px; text-align: center; line-height: 1.6;">River Runner 3D is drawn in the browser, so it needs JavaScript. Turn it on and reload to play.</p></noscript>
+    <div id="top-controls">
+        <a class="back" data-back href="../../">← Studio</a>
+        <button id="mute-toggle">Mute</button>
+    </div>
+
+    <div id="game-container">
+        <div id="score">Score: 0</div>
+        <div id="message-box">
+            <p id="message-text">River Runner 3D!</p>
+            <button id="start-button">Start Game</button>
+            <br><button id="start-watch-button" style="margin-top: 10px; background: linear-gradient(180deg, #10b981, #059669);">▶ Watch</button>
+        </div>
+        </div>
+
+    <div id="controls-bar">
+        <button id="btn-left">◄ LEFT</button>
+        <button id="btn-fire">FIRE</button>
+        <button id="btn-right">RIGHT ►</button>
+    </div>
+
+
+    <script>
+        // --- DOM Elements ---
+        const gameContainer = document.getElementById('game-container');
+        const scoreElement = document.getElementById('score');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const startButton = document.getElementById('start-button');
+        const muteToggle = document.getElementById('mute-toggle');
+        const btnLeftEl  = document.getElementById('btn-left');
+        const btnRightEl = document.getElementById('btn-right');
+        const btnFireEl  = document.getElementById('btn-fire');
+
+        // --- Three.js Variables ---
+        let scene, camera, renderer;
+        let boat, boatBox;
+        let waterParticles;
+        let obstacles = [];
+        let ambientLight, directionalLight;
+        const riverWidth = 15;
+        const riverLength = 50;
+        const waterParticleCount = 5000;
+
+        // --- Projectile Variables ---
+        const PROJECTILE_POOL_SIZE = 30;
+        const PROJECTILE_SPEED = 0.4;
+        const PROJECTILE_BONUS_POINTS = 5;
+        let projectilePool = [];
+        let activeProjectiles = [];
+        // let lastShootTime = 0; // Cooldown logic removed
+        let projectileMaterial;
+        let projectileGeometry;
+        const defaultProjectileDirection = new THREE.Vector3(0, 0, 1);
+
+        // --- Explosion Particle System ---
+        const MAX_EXPLOSION_PARTICLES = 100;
+        const EXPLOSION_PARTICLE_LIFETIME = 25;
+        const EXPLOSION_PARTICLE_SPEED = 0.08;
+        let explosionParticles;
+        let explosionParticleInfo = [];
+        let currentExplosionParticleIndex = 0;
+
+        // --- Audio Variables (Tone.js) ---
+        let musicSynth;
+        let musicSequence;
+        let isMuted = true;
+        let audioStarted = false;
+        const musicMelodies = [
+            [["C4", "E4", "G4"], null, "E4", null, "G4", null, "C5", null],
+            [["G4", "B4", "D5"], null, "B4", null, "D5", null, "G5", null],
+            [["F4", "A4", "C5"], null, "A4", null, "C5", null, "F5", null],
+            [["A3", "C4", "E4"], null, "C4", null, "E4", null, "A4", null],
+            [["D4", "F4", "A4"], null, "F4", null, "A4", null, "D5", null]
+        ];
+
+
+        // --- Game Variables ---
+        let score = 0;
+        let gameSpeed = 0.1;
+        const GAME_SPEED_INCREASE = 0.02;
+        const MAX_GAME_SPEED = 0.35;
+        let obstacleSpawnTimer = 0;
+        let obstacleSpawnInterval = 100;
+        const MIN_SPAWN_INTERVAL = 40;
+        let animationFrameId;
+        let isGameOver = true;
+        let keys = {};
+        let containerWidth, containerHeight;
+        let isDragging = false;
+        let dragStartX = 0;
+        let boatStartX = 0;
+
+        // --- Tap-to-shoot detection ---
+        let hasMoved = false;
+        let pointerTapStartX = 0;
+        let pointerTapStartY = 0;
+
+        // --- Controls bar button state ---
+        let btnLeft = false;
+        let btnRight = false;
+
+        // --- Per-game options ---
+        let autoShootCooldown = 0;
+        let invertControls = false;
+
+        // --- Theme Variable ---
+        let isDarkMode = true;
+
+        // --- Color Progression ---
+        const waterColorsLight = [0x0055aa, 0x007799, 0x008877, 0x440088, 0x003388];
+        const waterColorsDark = [0x4477aa, 0x4499bb, 0x44aaaa, 0x7744aa, 0x4466aa];
+        let currentWaterColorIndex = 0;
+        const SCORE_THRESHOLD_COLOR_CHANGE = 25;
+        let nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
+
+        // --- Constants ---
+        const BOAT_SPEED_X = 0.15;
+        const WATER_LEVEL = -0.5;
+        const CAMERA_OFFSET = new THREE.Vector3(0, 5, -10);
+        const BOAT_LENGTH = 2;
+        const BOAT_WIDTH = 1;
+        const PARTICLE_ABSORB_WIDTH_FACTOR = 1.5;
+        const PARTICLE_ABSORB_LENGTH_FACTOR = 1.2;
+        const TARGETING_MAX_ANGLE_DEG = 15;
+
+        // --- Initialization ---
+        function initThree() {
+            containerWidth = gameContainer.clientWidth;
+            containerHeight = gameContainer.clientHeight;
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, containerWidth / containerHeight, 0.1, 100);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(containerWidth, containerHeight);
+
+            const existingCanvas = gameContainer.querySelector('canvas');
+            if (existingCanvas) gameContainer.removeChild(existingCanvas);
+            gameContainer.insertBefore(renderer.domElement, gameContainer.firstChild);
+
+            ambientLight = new THREE.AmbientLight(0xffffff);
+            scene.add(ambientLight);
+            directionalLight = new THREE.DirectionalLight(0xffffff);
+            directionalLight.position.set(5, 10, 7.5);
+            scene.add(directionalLight);
+
+            createBoat();
+            createWater();
+            createProjectilePool();
+            createExplosionSystem();
+            setupMusic();
+            applyTheme();
+            applyMuteState();
+        }
+
+        // --- Create Game Objects ---
+        // createBoat, createWater, createProjectilePool, createExplosionSystem, spawnObstacle
+        // findNearestObstacleAhead, shootProjectile, triggerExplosion remain the same
+        // (Code omitted for brevity, assume identical)
+         function createBoat() {
+             if (!boat) {
+                const boatGeo = new THREE.BoxGeometry(BOAT_WIDTH, 0.5, BOAT_LENGTH);
+                const boatMat = new THREE.MeshStandardMaterial({ color: 0xf97316 });
+                boat = new THREE.Mesh(boatGeo, boatMat);
+                boatBox = new THREE.Box3();
+            }
+            boat.position.set(0, WATER_LEVEL, 0);
+            scene.add(boat);
+            boatBox.setFromObject(boat);
+        }
+
+        function createWater() {
+             if (!waterParticles) {
+                const positions = [];
+                const waterMaterial = new THREE.PointsMaterial({
+                     size: 0.15, sizeAttenuation: true, transparent: true, opacity: 0.7
+                });
+                for (let i = 0; i < waterParticleCount; i++) {
+                    const x = (Math.random() - 0.5) * riverWidth * 1.2;
+                    const y = WATER_LEVEL;
+                    const z = (Math.random()) * riverLength;
+                    positions.push(x, y, z);
+                }
+                const waterGeometry = new THREE.BufferGeometry();
+                waterGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                waterParticles = new THREE.Points(waterGeometry, waterMaterial);
+             }
+             const positions = waterParticles.geometry.attributes.position.array;
+             for(let i=0; i < waterParticleCount; i++) {
+                 if(positions[i*3+1] < WATER_LEVEL - 1) positions[i*3+1] = WATER_LEVEL;
+             }
+             waterParticles.geometry.attributes.position.needsUpdate = true;
+             scene.add(waterParticles);
+        }
+
+        function createProjectilePool() {
+            projectileGeometry = new THREE.SphereGeometry(0.15, 6, 4);
+            projectileMaterial = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            projectilePool = [];
+            activeProjectiles = [];
+            for (let i = 0; i < PROJECTILE_POOL_SIZE; i++) { // Uses updated pool size
+                const projectile = new THREE.Mesh(projectileGeometry, projectileMaterial);
+                projectile.visible = false;
+                scene.add(projectile);
+                projectilePool.push(projectile);
+            }
+        }
+
+        function createExplosionSystem() {
+            if (!explosionParticles) {
+                const positions = new Float32Array(MAX_EXPLOSION_PARTICLES * 3);
+                explosionParticleInfo = [];
+                for (let i = 0; i < MAX_EXPLOSION_PARTICLES; i++) {
+                    positions[i * 3] = 0; positions[i * 3 + 1] = -100; positions[i * 3 + 2] = 0;
+                    explosionParticleInfo.push({ lifetime: 0, velocity: new THREE.Vector3() });
+                }
+                const explosionGeometry = new THREE.BufferGeometry();
+                explosionGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                const explosionMaterial = new THREE.PointsMaterial({
+                    color: 0xff8800, size: 0.2, sizeAttenuation: true, transparent: true, opacity: 0.9
+                });
+                explosionParticles = new THREE.Points(explosionGeometry, explosionMaterial);
+            }
+            scene.add(explosionParticles);
+             explosionParticleInfo.forEach(p => p.lifetime = 0);
+             const positions = explosionParticles.geometry.attributes.position.array;
+             for (let i = 0; i < MAX_EXPLOSION_PARTICLES; i++) positions[i * 3 + 1] = -100;
+             explosionParticles.geometry.attributes.position.needsUpdate = true;
+        }
+
+
+        function spawnObstacle() {
+             const type = Math.random() < 0.5 ? 'rock' : 'log';
+             let obstacleGeo, obstacleMat, obstacleMesh;
+             const scale = Math.random() * 0.5 + 0.8;
+             const rockColor = isDarkMode ? 0x888888 : 0x6b7280;
+             const logColor = isDarkMode ? 0xab7a3e : 0x854d0e;
+
+             if (type === 'rock') {
+                 obstacleGeo = new THREE.SphereGeometry(0.6 * scale, 8, 6);
+                 obstacleMat = new THREE.MeshStandardMaterial({ color: rockColor });
+             } else {
+                 obstacleGeo = new THREE.BoxGeometry(0.5 * scale, 0.5 * scale, 2.5 * scale);
+                 obstacleMat = new THREE.MeshStandardMaterial({ color: logColor });
+             }
+             obstacleMesh = new THREE.Mesh(obstacleGeo, obstacleMat);
+             const x = (Math.random() - 0.5) * (riverWidth - scale);
+             const y = WATER_LEVEL;
+             const z = riverLength * 0.8;
+             obstacleMesh.position.set(x, y, z);
+             scene.add(obstacleMesh);
+             const boundingBox = new THREE.Box3().setFromObject(obstacleMesh);
+             obstacles.push({ mesh: obstacleMesh, boundingBox: boundingBox });
+             obstacleSpawnTimer = 0;
+        }
+
+         // --- Targeting Logic ---
+         function findNearestObstacleAhead() {
+             let nearestObstacle = null;
+             let minDistanceSq = Infinity;
+             const boatWorldPos = boat.position;
+
+             obstacles.forEach(obs => {
+                 const obsPos = obs.mesh.position;
+                 if (obsPos.z > boatWorldPos.z) { // Check if obstacle is ahead
+                     const distanceSq = obsPos.distanceToSquared(boatWorldPos);
+                     const horizontalDist = Math.abs(obsPos.x - boatWorldPos.x);
+                     // Check if within horizontal threshold and closer
+                     if (horizontalDist < BOAT_WIDTH * 1.5 && distanceSq < minDistanceSq) {
+                         minDistanceSq = distanceSq;
+                         nearestObstacle = obs;
+                     }
+                 }
+             });
+             return nearestObstacle;
+         }
+
+
+        // --- Shooting ---
+        function shootProjectile(targetObstacle = null) {
+            if (isGameOver) return;
+            // Cooldown check removed
+
+            const projectileMesh = projectilePool.pop();
+            if (projectileMesh) {
+                projectileMesh.visible = true;
+                const spawnPos = new THREE.Vector3(
+                    boat.position.x, boat.position.y, boat.position.z + BOAT_LENGTH / 2
+                );
+                projectileMesh.position.copy(spawnPos);
+
+                let direction = defaultProjectileDirection.clone();
+                if (targetObstacle) {
+                     direction = targetObstacle.mesh.position.clone().sub(spawnPos).normalize();
+                }
+
+                const projectileBox = new THREE.Box3().setFromObject(projectileMesh);
+                activeProjectiles.push({ mesh: projectileMesh, boundingBox: projectileBox, direction: direction });
+                // lastShootTime update removed
+            }
+        }
+
+         // --- Explosion ---
+         function triggerExplosion(position) {
+             if (!explosionParticles) return;
+             const explosionParticlesToSpawn = 15;
+             const positions = explosionParticles.geometry.attributes.position.array;
+             for (let i = 0; i < explosionParticlesToSpawn; i++) {
+                  let index = currentExplosionParticleIndex;
+                  if (explosionParticleInfo[index].lifetime <= 0) {
+                      explosionParticleInfo[index].lifetime = EXPLOSION_PARTICLE_LIFETIME;
+                      explosionParticleInfo[index].velocity.set(
+                          (Math.random() - 0.5), (Math.random() - 0.2) * 0.8, (Math.random() - 0.5)
+                      ).normalize().multiplyScalar(EXPLOSION_PARTICLE_SPEED);
+                      positions[index * 3] = position.x + (Math.random()-0.5)*0.1;
+                      positions[index * 3 + 1] = position.y + (Math.random()-0.5)*0.1;
+                      positions[index * 3 + 2] = position.z + (Math.random()-0.5)*0.1;
+                      currentExplosionParticleIndex = (currentExplosionParticleIndex + 1) % MAX_EXPLOSION_PARTICLES;
+                  } else {
+                       currentExplosionParticleIndex = (currentExplosionParticleIndex + 1) % MAX_EXPLOSION_PARTICLES;
+                  }
+             }
+              explosionParticles.geometry.attributes.position.needsUpdate = true;
+         }
+
+
+        // --- Music Setup (Tone.js) ---
+        function setupMusic() {
+            if (musicSynth) return;
+
+            musicSynth = new Tone.FMSynth({ /* ... synth settings ... */ }).toDestination();
+            musicSynth.volume.value = -18;
+
+            // Sequence created/updated in initGame and updateGame
+        }
+
+        // --- Game Logic ---
+        async function initGame() {
+             obstacles.forEach(obs => scene.remove(obs.mesh)); obstacles = [];
+             activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
+             if (explosionParticles) {
+                 explosionParticleInfo.forEach(p => p.lifetime = 0);
+                 const positions = explosionParticles.geometry.attributes.position.array;
+                 for (let i = 0; i < MAX_EXPLOSION_PARTICLES; i++) positions[i * 3 + 1] = -100;
+                 explosionParticles.geometry.attributes.position.needsUpdate = true;
+             }
+             isGameOver = false; score = 0; gameSpeed = 0.1;
+             obstacleSpawnInterval = 100; obstacleSpawnTimer = 0; keys = {}; isDragging = false;
+             dragStartX = 0; boatStartX = 0; hasMoved = false;
+             autoShootCooldown = 0; btnLeft = false; btnRight = false;
+             scoreElement.textContent = `Score: ${score}`; messageBox.style.display = 'none';
+             currentWaterColorIndex = 0; nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
+
+             if (!audioStarted) {
+                 await Tone.start(); audioStarted = true; console.log('Audio context started');
+             }
+             if (musicSequence) { musicSequence.stop(); musicSequence.dispose(); }
+             musicSequence = new Tone.Sequence((time, note) => {
+                 if(musicSynth) musicSynth.triggerAttackRelease(note, "8n", time);
+             }, musicMelodies[currentWaterColorIndex], "4n").start(0);
+             Tone.Transport.loop = true; Tone.Transport.loopEnd = "2m"; Tone.Transport.bpm.value = 90;
+             Tone.Transport.start();
+
+             createBoat(); createWater(); applyTheme(); updateCamera();
+             if (animationFrameId) cancelAnimationFrame(animationFrameId);
+             gameLoop();
+        }
+
+        function updateGame() {
+            if (isGameOver) return;
+
+            // Update Boat Position
+            if (!isDragging) {
+                const keyLeft  = keys['arrowleft'] || keys['a'];
+                const keyRight = keys['arrowright'] || keys['d'];
+                const effLeft  = (invertControls ? keyRight : keyLeft) || btnLeft;
+                const effRight = (invertControls ? keyLeft  : keyRight) || btnRight;
+                let keyboardDeltaX = 0;
+                if (effLeft)  keyboardDeltaX -= BOAT_SPEED_X;
+                if (effRight) keyboardDeltaX += BOAT_SPEED_X;
+                if (keyboardDeltaX !== 0) {
+                    let targetX = boat.position.x + keyboardDeltaX;
+                    const halfBoatWidth = BOAT_WIDTH / 2; const halfRiver = riverWidth / 2;
+                    const minX = -halfRiver + halfBoatWidth; const maxX = halfRiver - halfBoatWidth;
+                    boat.position.x = THREE.MathUtils.clamp(targetX, minX, maxX);
+                }
+            }
+            // Auto-Avoid: steer away from closest obstacle directly ahead
+            if (autoPlay) {
+                const halfBW = BOAT_WIDTH / 2; const halfR = riverWidth / 2;
+                let closestThreat = null; let closestDZ = Infinity;
+                obstacles.forEach(obs => {
+                    const dz = obs.mesh.position.z - boat.position.z;
+                    if (dz > 0 && dz < 10 && Math.abs(obs.mesh.position.x - boat.position.x) < BOAT_WIDTH * 2.5 && dz < closestDZ) {
+                        closestDZ = dz; closestThreat = obs;
+                    }
+                });
+                if (closestThreat) {
+                    const dir = boat.position.x <= closestThreat.mesh.position.x ? -1 : 1;
+                    boat.position.x = THREE.MathUtils.clamp(boat.position.x + dir * BOAT_SPEED_X * 1.5, -halfR + halfBW, halfR - halfBW);
+                }
+            }
+            boatBox.setFromObject(boat);
+
+            // Update Water Particles & Absorption
+            if (waterParticles) {
+                const positions = waterParticles.geometry.attributes.position.array;
+                const boatPosX = boat.position.x; const boatPosZ = boat.position.z;
+                const absorbMinX = boatPosX - (BOAT_WIDTH * PARTICLE_ABSORB_WIDTH_FACTOR / 2);
+                const absorbMaxX = boatPosX + (BOAT_WIDTH * PARTICLE_ABSORB_WIDTH_FACTOR / 2);
+                const absorbMinZ = boatPosZ - (BOAT_LENGTH * PARTICLE_ABSORB_LENGTH_FACTOR / 2);
+                const absorbMaxZ = boatPosZ + (BOAT_LENGTH * PARTICLE_ABSORB_LENGTH_FACTOR / 2);
+                for (let i = 0; i < waterParticleCount; i++) {
+                    const indexOffset = i * 3; const particleX = positions[indexOffset];
+                    let particleY = positions[indexOffset + 1]; let particleZ = positions[indexOffset + 2];
+                    particleZ -= gameSpeed; // Use current gameSpeed for flow
+                    if (particleZ < -riverLength * 0.2) {
+                        particleZ = riverLength * 0.8 + Math.random() * riverLength * 0.2;
+                        positions[indexOffset] = (Math.random() - 0.5) * riverWidth * 1.2; particleY = WATER_LEVEL;
+                    } else { if (particleY > WATER_LEVEL - 1) { if (particleX >= absorbMinX && particleX <= absorbMaxX && particleZ >= absorbMinZ && particleZ <= absorbMaxZ) { particleY = -100; } } }
+                    positions[indexOffset + 1] = particleY; positions[indexOffset + 2] = particleZ;
+                }
+                waterParticles.geometry.attributes.position.needsUpdate = true;
+            }
+
+            // Update Projectiles
+            for (let i = activeProjectiles.length - 1; i >= 0; i--) {
+                const projData = activeProjectiles[i];
+                projData.mesh.position.addScaledVector(projData.direction, PROJECTILE_SPEED);
+                projData.boundingBox.setFromObject(projData.mesh);
+                let hit = false;
+                for (let j = obstacles.length - 1; j >= 0; j--) {
+                    const obsData = obstacles[j];
+                    if (obsData.mesh.parent === scene && projData.boundingBox.intersectsBox(obsData.boundingBox)) {
+                        hit = true;
+                        triggerExplosion(obsData.mesh.position.clone());
+                        scene.remove(obsData.mesh); obstacles.splice(j, 1);
+                        score += PROJECTILE_BONUS_POINTS; scoreElement.textContent = `Score: ${score}`;
+                        // --- Check for Progression Threshold ---
+                        if (score >= nextColorChangeScore) {
+                            if(waterParticles){ const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight; currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length; waterParticles.material.color.set(colorPalette[currentWaterColorIndex]); }
+                            gameSpeed += GAME_SPEED_INCREASE; gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED);
+                            if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) { obstacleSpawnInterval -= 5; }
+                            if (musicSequence) { musicSequence.events = musicMelodies[currentWaterColorIndex % musicMelodies.length]; }
+                            nextColorChangeScore += SCORE_THRESHOLD_COLOR_CHANGE;
+                        }
+                        // --- End Progression Check ---
+                        break;
+                    }
+                }
+                if (hit || projData.mesh.position.z > riverLength * 1.1) {
+                    projData.mesh.visible = false; projectilePool.push(projData.mesh); activeProjectiles.splice(i, 1);
+                }
+            }
+
+             // Update Explosion Particles
+             if (explosionParticles) {
+                 const positions = explosionParticles.geometry.attributes.position.array;
+                 let needsUpdate = false;
+                 for (let i = 0; i < MAX_EXPLOSION_PARTICLES; i++) {
+                     if (explosionParticleInfo[i].lifetime > 0) {
+                         explosionParticleInfo[i].lifetime--;
+                         positions[i * 3] += explosionParticleInfo[i].velocity.x;
+                         positions[i * 3 + 1] += explosionParticleInfo[i].velocity.y;
+                         positions[i * 3 + 2] += explosionParticleInfo[i].velocity.z;
+                         if (explosionParticleInfo[i].lifetime <= 0) {
+                             positions[i * 3 + 1] = -100; // Hide
+                         }
+                         needsUpdate = true;
+                     }
+                 }
+                 if (needsUpdate) explosionParticles.geometry.attributes.position.needsUpdate = true;
+             }
+
+            // Update Obstacles & Score (passing check)
+            obstacleSpawnTimer++;
+            if (obstacleSpawnTimer > obstacleSpawnInterval) spawnObstacle();
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                const obsData = obstacles[i];
+                if (obsData.mesh.parent !== scene) {
+                    obstacles.splice(i, 1); continue;
+                }
+                obsData.mesh.position.z -= gameSpeed; // Move obstacle by current gameSpeed
+                obsData.boundingBox.setFromObject(obsData.mesh);
+                if (boatBox.intersectsBox(obsData.boundingBox)) { gameOver(); return; }
+                if (obsData.mesh.position.z < boat.position.z - BOAT_LENGTH * 1.5) {
+                    scene.remove(obsData.mesh); obstacles.splice(i, 1);
+                    score++; scoreElement.textContent = `Score: ${score}`;
+                     // --- Check for Progression Threshold ---
+                     if (score >= nextColorChangeScore) {
+                         if(waterParticles){ const colorPalette = isDarkMode ? waterColorsDark : waterColorsLight; currentWaterColorIndex = (currentWaterColorIndex + 1) % colorPalette.length; waterParticles.material.color.set(colorPalette[currentWaterColorIndex]); }
+                         gameSpeed += GAME_SPEED_INCREASE; gameSpeed = Math.min(gameSpeed, MAX_GAME_SPEED);
+                         if (obstacleSpawnInterval > MIN_SPAWN_INTERVAL) { obstacleSpawnInterval -= 5; }
+                         if (musicSequence) { musicSequence.events = musicMelodies[currentWaterColorIndex % musicMelodies.length]; }
+                         nextColorChangeScore += SCORE_THRESHOLD_COLOR_CHANGE;
+                     }
+                     // --- End Progression Check ---
+                }
+            }
+
+            // Auto-Shoot
+            if (autoPlay) {
+                if (autoShootCooldown > 0) { autoShootCooldown--; } else {
+                    const target = findNearestObstacleAhead();
+                    if (target) { shootProjectile(target); autoShootCooldown = 20; }
+                }
+            }
+
+            // Update Camera
+            updateCamera();
+        }
+
+        function updateCamera() {
+             if(boat) {
+                 camera.position.x += (boat.position.x - camera.position.x) * 0.1;
+                 camera.position.y = boat.position.y + CAMERA_OFFSET.y;
+                 camera.position.z = boat.position.z + CAMERA_OFFSET.z;
+                 camera.lookAt(boat.position.x, boat.position.y, boat.position.z + 5);
+             }
+        }
+
+        function gameOver() {
+            isGameOver = true; isDragging = false; keys = {};
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null;
+            activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
+             if (Tone && Tone.Transport.state === "started") { Tone.Transport.stop(); }
+            const _prevRR = parseInt(readStored(() => localStorage.getItem('studio_riverRun_highScore')) || '0', 10); if (score > _prevRR) try { localStorage.setItem('studio_riverRun_highScore', score); } catch (e) { /* site data blocked: play on unsaved */ }
+
+            messageText.innerHTML = `Game Over!<br>Final Score: ${score}`; startButton.textContent = 'Restart Game'; messageBox.style.display = 'block';
+        }
+
+        function gameLoop() {
+            if (isGameOver) { if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null; return; }
+            updateGame(); renderer.render(scene, camera); animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        // --- Theme Handling ---
+        function applyTheme() {
+            const body = document.body; const needsDark = isDarkMode;
+            if (needsDark) body.classList.add('dark-mode'); else body.classList.remove('dark-mode');
+            if (scene) {
+                 const bgColor = needsDark ? 0x1a2a3a : 0x38bdf8;
+                 scene.background = new THREE.Color(bgColor); if (scene.fog) scene.fog.color.set(bgColor);
+                 ambientLight.intensity = needsDark ? 0.4 : 0.6; directionalLight.intensity = needsDark ? 0.9 : 0.8;
+                 if (waterParticles) { const colorPalette = needsDark ? waterColorsDark : waterColorsLight; waterParticles.material.color.set(colorPalette[currentWaterColorIndex]); }
+                 if (!isGameOver) { obstacles.forEach(obs => { const rockColor = needsDark ? 0x888888 : 0x6b7280; const logColor = needsDark ? 0xab7a3e : 0x854d0e; obs.mesh.material.color.set(obs.mesh.geometry.type === 'SphereGeometry' ? rockColor : logColor); }); }
+            }
+        }
+
+        // --- Mute Handling ---
+        function applyMuteState() {
+             if (typeof Tone !== 'undefined') { Tone.Destination.mute = isMuted; }
+             if (muteToggle) { muteToggle.textContent = isMuted ? "Unmute" : "Mute"; if (isMuted) { muteToggle.classList.add('muted'); } else { muteToggle.classList.remove('muted'); } }
+        }
+        function toggleMute() { isMuted = !isMuted; try { localStorage.setItem('studio_riverRun_muted', isMuted); } catch (e) { /* site data blocked: play on unsaved */ } applyMuteState(); }
+
+
+        // --- Event Listeners ---
+        function onWindowResize() {
+            containerWidth = gameContainer.clientWidth; containerHeight = gameContainer.clientHeight;
+            if (camera && renderer) { camera.aspect = containerWidth / containerHeight; camera.updateProjectionMatrix(); renderer.setSize(containerWidth, containerHeight); }
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // Keyboard controls
+        window.addEventListener('keydown', (e) => {
+            // --- Allow spacebar even if dragging ---
+            const key = e.key.toLowerCase();
+            if (key === ' ') {
+                 const target = findNearestObstacleAhead();
+                 shootProjectile(target);
+                 e.preventDefault();
+                 return; // Prevent spacebar from doing anything else
+            }
+            // Only prevent movement keys if dragging
+            if (isDragging) return;
+
+            keys[key] = true;
+            if (['arrowleft', 'arrowright', 'a', 'd'].includes(key)) e.preventDefault();
+        });
+        window.addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+
+        // --- Drag Controls + Tap-to-Shoot ---
+        gameContainer.addEventListener('pointerdown', (e) => {
+            if (isGameOver || messageBox.style.display === 'block' || e.target !== renderer.domElement) return;
+            e.preventDefault();
+            
+            // Abort Watch Mode on manual interaction
+            if (autoPlay) {
+                autoPlay = false;
+                try { localStorage.setItem('studio_riverRun_autoPlay', 'false'); } catch (e) { /* site data blocked: play on unsaved */ }
+            }
+
+            pointerTapStartX = e.clientX; pointerTapStartY = e.clientY; hasMoved = false;
+            isDragging = true;
+            dragStartX = e.clientX;
+            boatStartX = boat.position.x;
+            keys = {};
+            gameContainer.style.cursor = 'grabbing';
+        });
+
+        gameContainer.addEventListener('pointermove', (e) => {
+            if (!isDragging || isGameOver) return;
+            e.preventDefault();
+            if (Math.abs(e.clientX - pointerTapStartX) > 10 || Math.abs(e.clientY - pointerTapStartY) > 10) hasMoved = true;
+            const currentX = e.clientX;
+            const deltaScreenX_from_drag_start = currentX - dragStartX;
+            const currentContainerWidth = gameContainer.clientWidth; if (currentContainerWidth === 0) return;
+            const worldUnitsPerPixel = riverWidth / currentContainerWidth;
+            const deltaWorldX = deltaScreenX_from_drag_start * worldUnitsPerPixel * (invertControls ? -1 : 1);
+            let targetWorldX = boatStartX + deltaWorldX;
+            const halfBoatWidth = BOAT_WIDTH / 2; const halfRiver = riverWidth / 2;
+            const minX = -halfRiver + halfBoatWidth; const maxX = halfRiver - halfBoatWidth;
+            boat.position.x = THREE.MathUtils.clamp(targetWorldX, minX, maxX);
+        });
+
+        function stopDragging(e) {
+            if (isDragging) {
+                e.preventDefault();
+                if (!hasMoved && !isGameOver) {
+                    shootProjectile(findNearestObstacleAhead());
+                }
+                isDragging = false;
+                dragStartX = 0; boatStartX = 0; gameContainer.style.cursor = 'grab';
+            }
+        }
+        gameContainer.addEventListener('pointerup', stopDragging);
+        gameContainer.addEventListener('pointerleave', stopDragging);
+
+
+        // --- Controls Bar Listeners ---
+        [btnLeftEl, btnRightEl].forEach(btn => {
+            btn.addEventListener('pointerdown', (e) => { 
+                e.preventDefault(); e.stopPropagation(); 
+                if (autoPlay) { autoPlay = false; try { localStorage.setItem('studio_riverRun_autoPlay', 'false'); } catch (e) { /* site data blocked: play on unsaved */ } }
+                if (btn === btnLeftEl) btnLeft = true; else btnRight = true; 
+            });
+            btn.addEventListener('pointerup',    (e) => { if (btn === btnLeftEl) btnLeft = false; else btnRight = false; });
+            btn.addEventListener('pointerleave', (e) => { if (btn === btnLeftEl) btnLeft = false; else btnRight = false; });
+            btn.addEventListener('pointercancel',(e) => { if (btn === btnLeftEl) btnLeft = false; else btnRight = false; });
+        });
+        btnFireEl.addEventListener('pointerdown', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            if (autoPlay) { autoPlay = false; try { localStorage.setItem('studio_riverRun_autoPlay', 'false'); } catch (e) { /* site data blocked: play on unsaved */ } }
+            if (!isGameOver) shootProjectile(findNearestObstacleAhead());
+        });
+
+
+        // Start/Restart button
+        startButton.addEventListener('click', (e) => {
+             autoPlay = false;
+             try { localStorage.setItem('studio_riverRun_autoPlay', 'false'); } catch (e) { /* site data blocked: play on unsaved */ }
+             try { localStorage.setItem('studio_riverRun_lastPlayed', Date.now()); } catch (e) { /* site data blocked: play on unsaved */ }
+             initGame();
+             e.stopPropagation();
+             e.currentTarget.blur();
+        });
+
+        const startWatchButton = document.getElementById('start-watch-button');
+        startWatchButton.addEventListener('click', (e) => {
+             autoPlay = true;
+             try { localStorage.setItem('studio_riverRun_autoPlay', 'true'); } catch (e) { /* site data blocked: play on unsaved */ }
+             try { localStorage.setItem('studio_riverRun_lastPlayed', Date.now()); } catch (e) { /* site data blocked: play on unsaved */ }
+             initGame();
+             e.stopPropagation();
+             e.currentTarget.blur();
+        });
+
+        // Mute Toggle Button Listener
+        muteToggle.addEventListener('click', (e) => {
+             toggleMute();
+             e.currentTarget.blur();
+        });
+
+        // Studio fork: with site data blocked every storage call throws. A read
+        // falls back to "never saved" and a write is skipped, so play goes on.
+        function readStored(read) { try { return read(); } catch (e) { return null; } }
+
+        // --- Initial Setup ---
+        let autoPlay = false;
+
+        window.onload = () => {
+            isDarkMode = document.body.classList.contains('dark-mode');
+            const savedMute = readStored(() => localStorage.getItem('studio_riverRun_muted'));
+            if (savedMute !== null) { isMuted = savedMute === 'true'; } else { isMuted = true; }
+            autoPlay       = readStored(() => localStorage.getItem('studio_riverRun_autoPlay'))       === 'true';
+            invertControls = readStored(() => localStorage.getItem('studio_riverRun_invertControls')) === 'true';
+
+            initThree();
+            messageText.textContent = 'River Runner 3D!';
+            startButton.textContent = 'Start Game';
+            messageBox.style.display = 'block';
+            updateCamera();
+            renderer.render(scene, camera);
+        };
+
+        // --- Settings panel registration ---
+        // Deferred to DOMContentLoaded: shared/settings.js loads AFTER this inline
+        // script, so window.KamekoSettings does not exist yet at parse time.
+        window.addEventListener('DOMContentLoaded', () => {
+        if (window.KamekoSettings) {
+            window.KamekoSettings.registerWatchSection('studio_riverRun', {
+                hasSpeed: false,
+                hasAutoRestart: false,
+                onStart: () => {
+                    autoPlay = true;
+                    // From the start/game-over screen, Watch also starts the run.
+                    if (messageBox.style.display === 'block') initGame();
+                },
+                onStop: () => { autoPlay = false; }
+            });
+
+            window.KamekoSettings.registerSection('riverrun-settings-section', {
+                title: 'River Run Settings',
+                render: function(container) {
+                    const options = [
+                        { label: '\uD83D\uDD04 Invert Drag', get: () => invertControls,  set: (v) => { invertControls = v; try { localStorage.setItem('studio_riverRun_invertControls', v); } catch (e) { /* site data blocked: play on unsaved */ } } },
+                    ];
+
+                    options.forEach(opt => {
+                        const row = document.createElement('div');
+                        row.className = 'settings-row';
+                        row.style.background = 'transparent';
+                        row.style.border = 'none';
+                        row.style.padding = '0';
+
+                        const lbl = document.createElement('label');
+                        lbl.textContent = opt.label;
+                        lbl.style.cursor = 'pointer';
+
+                        const toggle = document.createElement('label');
+                        toggle.className = 'kameko-switch';
+                        const inp = document.createElement('input');
+                        inp.type = 'checkbox';
+                        inp.checked = opt.get();
+                        const slider = document.createElement('span');
+                        slider.className = 'kameko-slider';
+                        toggle.appendChild(inp);
+                        toggle.appendChild(slider);
+
+                        row.appendChild(lbl);
+                        row.appendChild(toggle);
+                        
+                        inp.addEventListener('change', (e) => {
+                            const newVal = e.target.checked;
+                            opt.set(newVal);
+                        });
+
+                        container.appendChild(row);
+                    });
+                }
+            });
+        }
+        });
+
+        // --- Settings pause/resume + theme sync ---
+        window.addEventListener('settingsOpened', () => {
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        });
+        window.addEventListener('settingsClosed', () => {
+            isDarkMode = document.body.classList.contains('dark-mode');
+            autoPlay = readStored(() => localStorage.getItem('studio_riverRun_autoPlay')) === 'true';
+            applyTheme();
+            if (!isGameOver) animationFrameId = requestAnimationFrame(gameLoop);
+        });
+    </script>
+<script src="../../../shared/settings.js" data-gallery-depth="3"></script>
+</body>
+</html>
