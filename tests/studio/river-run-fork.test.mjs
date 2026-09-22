@@ -163,9 +163,26 @@ test('in a browser, playing the fork leaves every non-studio key exactly as it w
       // The arcade's invert setting did not leak in.
       assert.equal(await page.evaluate(() => invertControls), false);
 
-      // Play until the river ends the run on its own.
+      // Play a run to game over with a point on the board, so the high score is
+      // written. Left to chance, an unattended run outlived the 60-second wait
+      // about one time in three (it failed the push stage twice in sprint 05),
+      // and one hit by the first rock ends at zero and never saves. So the test
+      // waits for a point, restarting a run that ends without one, then moves a
+      // rock onto the boat. The game's own collision code still ends the run.
       await page.click('#start-button');
-      await page.waitForFunction(() => isGameOver === true && score > 0, { timeout: 60_000, polling: 250 });
+      for (let attempt = 1; ; attempt++) {
+        await page.waitForFunction(() => score > 0 || isGameOver, { timeout: 60_000, polling: 100 });
+        if (await page.evaluate(() => score > 0)) break;
+        assert.ok(attempt < 3, 'three runs in a row ended before scoring a point');
+        await page.click('#start-button');
+      }
+      await page.waitForFunction(() => {
+        if (isGameOver) return true;
+        const rock = obstacles.find(o => o.mesh.parent === scene);
+        if (rock) rock.mesh.position.set(boat.position.x, rock.mesh.position.y, boat.position.z + gameSpeed);
+        return false;
+      }, { timeout: 10_000, polling: 100 });
+      assert.ok(await page.evaluate(() => score > 0), 'the run ended with a point on the board');
 
       // Mute, then Watch Mode from the start screen.
       await page.click('#mute-toggle');
