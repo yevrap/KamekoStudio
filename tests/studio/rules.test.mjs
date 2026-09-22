@@ -10,7 +10,8 @@ import {
   scanHygiene, scanDocCleanliness, HYGIENE_PRAGMA,
   lintCommitSubject, moduleImports, sameOriginAssets,
   LAST_SS_TICKET, ticketIdProblem, commitTicketId, lintCommit, LINT_WAIVERS,
-  ticketFileProblems, ticketFileId, ticketsNamedByLog
+  ticketFileProblems, ticketFileId, ticketsNamedByLog,
+  commitKind, sortCommitsByKind, COMMIT_EXEMPTIONS
 } from './lib/rules.mjs';
 
 test('path guard: studio-owned paths are allowed', () => {
@@ -323,6 +324,97 @@ test('lintCommit: every waiver is keyed by a full 40-character hash and gives a 
     assert.match(sha, /^[0-9a-f]{40}$/);
     assert.match(reason, /\b(SHS|SS)-\d{3}\b/);
   }
+});
+
+// --- Studio commits and arcade commits on the shared main (SHS-055) -----------
+
+test('commitKind: the (studio) scope makes a studio commit, whatever its type or ticket', () => {
+  for (const subject of [
+    'feat(studio): SHS-055 x',
+    'docs(studio): no ticket at all',
+    'wip(studio): an unknown type',
+    'fix(studio)!: SHS-055 breaking'
+  ]) assert.equal(commitKind({ sha: 'a'.repeat(40), subject }).kind, 'studio', subject);
+});
+
+test('commitKind: anything else is an arcade commit, including near misses of the scope', () => {
+  for (const subject of [
+    'feat: p1-22 ship the thing',
+    'chore: make the repo the home',
+    'studio: SHS-055 no parentheses',
+    'feat(studios): SHS-055 plural',
+    'feat(studio,arcade): SHS-055 two scopes',
+    'feat (studio): SHS-055 a space',
+    'Merge branch studio'
+  ]) assert.equal(commitKind({ sha: 'a'.repeat(40), subject }).kind, 'arcade', subject);
+});
+
+test('commitKind: a merge is decided by its parents, before its subject', () => {
+  assert.equal(commitKind({ sha: 'a'.repeat(40), parentCount: 2, subject: 'feat(studio): SHS-055 x' }).kind, 'merge');
+  assert.equal(commitKind({ sha: 'a'.repeat(40), parentCount: 2, subject: 'chore: x' }).kind, 'merge');
+});
+
+test('commitKind: the recorded executive commits are exempt by full hash, with their reason', () => {
+  for (const short of ['7712cf2', 'fecf7ea', 'd454f79']) {
+    const sha = [...COMMIT_EXEMPTIONS.keys()].find(k => k.startsWith(short));
+    assert.ok(sha, `${short} is recorded`);
+    const kind = commitKind({ sha, subject: 'docs(studio): anything' });
+    assert.equal(kind.kind, 'exempt');
+    assert.match(kind.reason, /SHS-055/);
+    // Only the exact hash: abbreviated or altered, it is an ordinary commit.
+    assert.equal(commitKind({ sha: short, subject: 'docs(studio): anything' }).kind, 'studio');
+    assert.equal(commitKind({ sha: sha.toUpperCase(), subject: 'docs(studio): anything' }).kind, 'studio');
+  }
+  for (const [sha, reason] of COMMIT_EXEMPTIONS) {
+    assert.match(sha, /^[0-9a-f]{40}$/);
+    assert.match(reason, /\b(SHS|SS)-\d{3}\b/);
+  }
+});
+
+test('a new unnumbered (studio) commit is a studio commit, so the lint still fails it', () => {
+  const commit = { sha: 'b'.repeat(40), subject: 'docs(studio): direction for epic E2' };
+  assert.equal(commitKind(commit).kind, 'studio');
+  assert.equal(lintCommit(commit).status, 'fail');
+});
+
+const C = (subject, paths, extra = {}) => ({ sha: `${subject.length}`.padEnd(40, 'c'), parentCount: 1, subject, paths, ...extra });
+
+test('sortCommitsByKind: only studio commits feed the guard; arcade paths are not its business', () => {
+  const r = sortCommitsByKind([
+    C('feat(studio): SHS-055 x', ['studio/a.js', 'package.json']),
+    C('feat: p1-22 arcade ship', ['games/durak/main.js', 'CLAUDE.md', '.claude/settings.json'])
+  ]);
+  assert.deepEqual(r.studioPaths.sort(), ['package.json', 'studio/a.js']);
+  assert.deepEqual(r.problems, []);
+  assert.deepEqual(r.counts, { studio: 1, arcade: 1, merge: 0, exempt: 0 });
+});
+
+test('sortCommitsByKind: an arcade commit that changes a studio path is a violation, each path named', () => {
+  const r = sortCommitsByKind([C('chore: tidy', ['studio/index.html', 'tests/studio/x.mjs', 'docs/studio/a.md', 'docs/roadmap.md'])]);
+  assert.equal(r.problems.length, 3);
+  assert.match(r.problems[0], /^studio\/index\.html \(changed by arcade commit .{7}, which is not scoped \(studio\)/);
+  assert.deepEqual(r.studioPaths, []);
+});
+
+test('sortCommitsByKind: a merge is judged by what it brings in, and a mixed one is a violation', () => {
+  const studioOnly = sortCommitsByKind([C('Merge a', ['studio/a.js', 'docs/studio/b.md'], { parentCount: 2 })]);
+  assert.deepEqual(studioOnly.problems, []);
+  assert.deepEqual(studioOnly.studioPaths, ['studio/a.js', 'docs/studio/b.md']);
+  const arcadeOnly = sortCommitsByKind([C('Merge b', ['games/x/a.js'], { parentCount: 2 })]);
+  assert.deepEqual(arcadeOnly.problems, []);
+  assert.deepEqual(arcadeOnly.studioPaths, []);
+  const mixed = sortCommitsByKind([C('Merge c', ['studio/a.js', 'games/x/a.js'], { parentCount: 2 })]);
+  assert.equal(mixed.problems.length, 1);
+  assert.match(mixed.problems[0], /^merge .{7} changes studio paths and other paths together \(1 and 1\)/);
+});
+
+test('sortCommitsByKind: an exempt commit is reported with its reason, never silently passed', () => {
+  const [sha, reason] = [...COMMIT_EXEMPTIONS][0];
+  const r = sortCommitsByKind([{ sha, parentCount: 1, subject: 'docs: x', paths: ['docs/studio/a.md', '.claude/x'] }]);
+  assert.deepEqual(r.problems, []);
+  assert.deepEqual(r.studioPaths, []);
+  assert.deepEqual(r.notes, [`exempt commit ${sha.slice(0, 7)}: ${reason}`]);
+  assert.equal(r.counts.exempt, 1);
 });
 
 // --- Every ticket a commit names has exactly one file ---------------------------

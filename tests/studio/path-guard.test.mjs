@@ -13,7 +13,9 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { textAt } from './checks/path-guard.mjs';
+import { textAt, pathGuard, productionUnchanged } from './checks/path-guard.mjs';
+import { commitLint } from './checks/commit-lint.mjs';
+import { scratchRepo } from './lib/scratch-repo.mjs';
 import { refExists } from './lib/shell.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -36,4 +38,100 @@ test('a file unchanged since the base revision compares equal to the file on dis
 
 test('a path absent at the base revision reads as empty, not as a throw', () => {
   assert.equal(textAt(ROOT, BASE, 'no/such/file/at/that/revision.js'), '');
+});
+
+// --- Studio commits and arcade commits on one main (SHS-055) -------------------
+//
+// The arcade and the studio share `main`, so the range since a studio tag holds
+// both. Each verdict below is read from a real repository, merges included.
+
+/** A repository tagged `studio-iteration-04`, and the context every check needs. */
+function sharedMain(t) {
+  const r = scratchRepo();
+  t.after(r.done);
+  r.commit('docs(studio): SHS-053 the release');
+  r.git('tag', 'studio-iteration-04');
+  const ctx = { root: r.root, base: 'studio-iteration-04', previousTag: 'studio-iteration-04', iteration: '05', productionFixes: [] };
+  return { r, ctx };
+}
+
+test('an arcade commit outside the studio paths is not a studio violation', async t => {
+  const { r, ctx } = sharedMain(t);
+  r.commit('docs(studio): SHS-055 studio work', ['studio/a.js', 'docs/studio/b.md']);
+  r.commit('chore: the arcade moves its skills', ['.claude/settings.json', 'CLAUDE.md', 'games/g/main.js']);
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'pass', guard.detail);
+  assert.match(guard.detail, /2 path\(s\) inside the guard/);
+  assert.match(guard.detail, /commits: 1 studio, 1 arcade, 0 merge, 0 exempt/);
+  const deployed = await productionUnchanged.run(ctx);
+  assert.equal(deployed.status, 'pass', deployed.detail);
+  const lint = commitLint.run(ctx);
+  assert.equal(lint.status, 'pass', lint.detail);
+  assert.match(lint.detail, /1 studio commit\(s\) conventional; 1 arcade commit\(s\) not linted/);
+});
+
+test('a studio commit outside the studio paths is still a violation', async t => {
+  const { r, ctx } = sharedMain(t);
+  r.commit('feat(studio): SHS-055 reaches into the arcade', ['games/g/main.js']);
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'fail');
+  assert.match(guard.detail, /games\/g\/main\.js/);
+  assert.equal((await productionUnchanged.run(ctx)).status, 'fail');
+});
+
+test('dropping the scope does not get a studio change past the guard', async t => {
+  const { r, ctx } = sharedMain(t);
+  const sha = r.commit('chore: just a tidy-up', ['studio/index.html', 'tests/studio/x.mjs']);
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'fail');
+  assert.match(guard.detail, new RegExp(`studio/index\\.html \\(changed by arcade commit ${sha.slice(0, 7)}`));
+  assert.match(guard.detail, /tests\/studio\/x\.mjs \(changed by arcade commit/);
+  const deployed = await productionUnchanged.run(ctx);
+  assert.equal(deployed.status, 'fail');
+  assert.match(deployed.detail, /changed by arcade commit/);
+});
+
+test('a merge that brings in studio and arcade paths together is a violation', async t => {
+  const { r, ctx } = sharedMain(t);
+  r.git('checkout', '--quiet', '-b', 'side');
+  r.commit('docs(studio): SHS-055 on a branch', ['studio/side.js']);
+  r.commit('feat: p1-99 also on the branch', ['games/g/side.js']);
+  r.git('checkout', '--quiet', 'main');
+  r.commit('docs(studio): SHS-055 on main', ['studio/main.js']);
+  r.git('merge', '--quiet', '--no-ff', '-m', 'Merge side', 'side');
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'fail');
+  assert.match(guard.detail, /merge .{7} changes studio paths and other paths together \(1 and 1\)/);
+  // Each commit the merge brings in is judged on its own too, and both are clean.
+  assert.doesNotMatch(guard.detail, /changed by arcade commit/);
+});
+
+test('a merge that brings in one kind only is that kind', async t => {
+  const { r, ctx } = sharedMain(t);
+  r.git('checkout', '--quiet', '-b', 'side');
+  r.commit('feat: p1-99 arcade on a branch', ['games/g/side.js']);
+  r.git('checkout', '--quiet', 'main');
+  r.commit('docs(studio): SHS-055 on main', ['studio/main.js']);
+  r.git('merge', '--quiet', '--no-ff', '-m', 'Merge side', 'side');
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'pass', guard.detail);
+  assert.match(guard.detail, /commits: 1 studio, 1 arcade, 1 merge, 0 exempt/);
+});
+
+test('commit-lint fails a new unnumbered (studio) commit and ignores arcade subjects', t => {
+  const { r, ctx } = sharedMain(t);
+  r.commit('feat: p1-22 an arcade subject the studio lint would reject', ['games/g/a.js']);
+  const bad = r.commit('docs(studio): direction for epic E2', ['docs/studio/steering/direction.md']);
+  const lint = commitLint.run(ctx);
+  assert.equal(lint.status, 'fail');
+  assert.match(lint.detail, new RegExp(`^1 of 1 studio commit\\(s\\):\\n  ${bad.slice(0, 7)} expected`));
+  assert.doesNotMatch(lint.detail, /p1-22/);
+});
+
+test('commit-lint does not call a range with no studio commit a pass', t => {
+  const { r, ctx } = sharedMain(t);
+  r.commit('feat: p1-22 arcade only', ['games/g/a.js']);
+  const lint = commitLint.run(ctx);
+  assert.equal(lint.status, 'skip');
+  assert.match(lint.detail, /no studio commits since studio-iteration-04, so nothing was linted; 1 arcade commit\(s\) not linted/);
 });

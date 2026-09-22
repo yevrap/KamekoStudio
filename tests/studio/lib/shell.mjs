@@ -148,8 +148,29 @@ export function workingTreePaths(root) {
  * while deleting a production file. Found by review of iteration 00.
  */
 export function committedPaths(root, base) {
-  const parts = gitRaw(root, 'diff', '--name-status', '-M', '-z', `${base}...HEAD`)
-    .split('\0').filter(Boolean);
+  return nameStatusPaths(gitRaw(root, 'diff', '--name-status', '-M', '-z', `${base}...HEAD`));
+}
+
+/**
+ * Every commit in `base..HEAD`, newest first, as `{ sha, parentCount, subject, paths }`.
+ * `paths` is what the commit changes against its first parent (both sides of a
+ * rename), so a merge carries everything it brings in.
+ */
+export function commitsWithPaths(root, base) {
+  const log = git(root, 'log', '--format=%H%x1f%P%x1f%s', `${base}..HEAD`);
+  if (!log) return [];
+  return log.split('\n').map(line => {
+    const [sha, parents, subject] = line.split('\x1f');
+    const parentList = parents.trim() ? parents.trim().split(/\s+/) : [];
+    const out = parentList.length
+      ? gitRaw(root, 'diff', '--name-status', '-M', '-z', parentList[0], sha)
+      : gitRaw(root, 'diff-tree', '--root', '-r', '--no-commit-id', '--name-status', '-M', '-z', sha);
+    return { sha, parentCount: parentList.length, subject, paths: nameStatusPaths(out) };
+  });
+}
+
+function nameStatusPaths(out) {
+  const parts = out.split('\0').filter(Boolean);
   const paths = [];
   for (let i = 0; i < parts.length; ) {
     const status = parts[i++];

@@ -695,6 +695,93 @@ export function lintCommitSubject(subject, { parentCount = 1 } = {}) {
 }
 
 /**
+ * The studio and the arcade share `main`, so every range the checks read holds
+ * both kinds of commit. A commit is a **studio commit** when its subject's scope
+ * is `(studio)`, whatever its type or ticket — a malformed studio subject is
+ * still the studio's, and `commit-lint` says what is wrong with it.
+ *
+ * The scope is a claim the author makes, so it is never the only test: an
+ * arcade commit that changes a studio path is itself a violation (see
+ * `sortCommitsByKind`). Dropping the scope moves a commit out of the lint and
+ * into that rule; it does not move it past the guard.
+ */
+export const STUDIO_SCOPE_RE = /^[A-Za-z]+\(studio\)!?:/;
+
+/**
+ * Commits on the remote's `main` that fit neither kind and cannot be rewritten.
+ * Keyed by the full hash, like `LINT_WAIVERS`, so an entry names one commit
+ * forever. An exempt commit is judged by neither `commit-lint` nor the path
+ * guard, and every check that meets one reports it with its reason.
+ */
+export const COMMIT_EXEMPTIONS = new Map([
+  ['7712cf2e30e0db4e049feb90e84490e5df7946e7',
+    'the executive\'s 2026-09-22 migration: moved the steering views into docs/studio/steering/ in an arcade commit (SHS-055)'],
+  ['fecf7eafc8e36ba65a11c341edc43f94209bb357',
+    'the executive\'s direction for epic E1: scoped (studio) with no ticket, and edits .claude/ skills and the arcade docs (SHS-055)'],
+  ['d454f79c835aa52d4c4ce9466e70c766b87f73cc',
+    'the executive\'s ADR-0009, one step per session: scoped (studio) with no ticket, and edits .claude/ and the arcade docs (SHS-055)']
+]);
+
+/**
+ * Which kind a commit is: `merge` (more than one parent), `exempt` (its hash is
+ * in `COMMIT_EXEMPTIONS`, with the `reason`), `studio` or `arcade`. The one place
+ * this is decided; `commit-lint`, `path-guard` and `production-unchanged` all
+ * ask here.
+ */
+export function commitKind({ sha, parentCount = 1, subject }) {
+  if (parentCount > 1) return { kind: 'merge' };
+  const reason = COMMIT_EXEMPTIONS.get(String(sha ?? ''));
+  if (reason) return { kind: 'exempt', reason };
+  return { kind: STUDIO_SCOPE_RE.test(String(subject ?? '')) ? 'studio' : 'arcade' };
+}
+
+const isStudioPath = p => ALLOWED_PREFIXES.some(prefix => p.startsWith(prefix));
+
+/**
+ * Sort a range's commits by kind, for the path guard.
+ *
+ * - A studio commit's paths are the ones the guard judges (`studioPaths`).
+ * - An arcade commit may change anything except the studio's own paths; one
+ *   that does is a problem.
+ * - A merge is judged by what it changes against its first parent: only studio
+ *   paths, or only other paths, is that kind; both at once is a problem, since
+ *   the merge itself cannot say which side a file came from. The commits it
+ *   brings in are in the range too and are judged one by one.
+ * - An exempt commit is reported, never silently passed.
+ *
+ * @param commits `[{ sha, parentCount, subject, paths }]`, `paths` against the first parent
+ * @returns `{ studioPaths, problems, notes, counts }`
+ */
+export function sortCommitsByKind(commits) {
+  const studioPaths = new Set();
+  const problems = [];
+  const notes = [];
+  const counts = { studio: 0, arcade: 0, merge: 0, exempt: 0 };
+  for (const { sha, parentCount, subject, paths = [] } of commits) {
+    const short = String(sha ?? '').slice(0, 7);
+    const { kind, reason } = commitKind({ sha, parentCount, subject });
+    counts[kind]++;
+    if (kind === 'exempt') {
+      notes.push(`exempt commit ${short}: ${reason}`);
+    } else if (kind === 'studio') {
+      for (const p of paths) studioPaths.add(p);
+    } else if (kind === 'arcade') {
+      for (const p of paths.filter(isStudioPath)) {
+        problems.push(`${p} (changed by arcade commit ${short}, which is not scoped (studio): only a studio commit may change the studio's paths)`);
+      }
+    } else {
+      const inside = paths.filter(isStudioPath);
+      if (inside.length && inside.length < paths.length) {
+        problems.push(`merge ${short} changes studio paths and other paths together (${inside.length} and ${paths.length - inside.length}), so neither kind can be assumed`);
+      } else {
+        for (const p of inside) studioPaths.add(p);
+      }
+    }
+  }
+  return { studioPaths: [...studioPaths], problems, notes, counts };
+}
+
+/**
  * The same-origin scripts and stylesheets a page loads, as absolute urls.
  *
  * Used by `studio-live`, because the realm's home page is a shell: everything

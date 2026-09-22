@@ -6,11 +6,20 @@
 
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { git, gitRaw, attempt, gitPath, exists, committedPaths, workingTreePaths, refExists, previousIterationTag, commitsSince } from '../lib/shell.mjs';
-import { classifyPaths, PATH_EXCEPTIONS, PRODUCTION_FIXES, productionFixProblem, productionFixEntryProblems, ticketFileId } from '../lib/rules.mjs';
+import { git, gitRaw, attempt, gitPath, exists, commitsWithPaths, workingTreePaths, refExists, previousIterationTag, commitsSince } from '../lib/shell.mjs';
+import { classifyPaths, PATH_EXCEPTIONS, PRODUCTION_FIXES, productionFixProblem, productionFixEntryProblems, ticketFileId, sortCommitsByKind } from '../lib/rules.mjs';
 
-function changedPaths(root, base) {
-  return [...new Set([...committedPaths(root, base), ...workingTreePaths(root)])];
+/**
+ * The paths the guard judges, from the commits in `base..HEAD` sorted by kind
+ * (SHS-055): what studio commits changed, plus — when `withTree` — everything
+ * uncommitted, which the guard counts as studio work because it cannot tell.
+ */
+function studioChanges(root, base, { withTree }) {
+  const sorted = sortCommitsByKind(commitsWithPaths(root, base));
+  const paths = withTree ? [...new Set([...sorted.studioPaths, ...workingTreePaths(root)])] : sorted.studioPaths;
+  const { studio, arcade, merge, exempt } = sorted.counts;
+  const tally = `commits: ${studio} studio, ${arcade} arcade, ${merge} merge, ${exempt} exempt`;
+  return { paths, problems: sorted.problems, notes: [tally, ...sorted.notes] };
 }
 
 /**
@@ -73,13 +82,14 @@ function lineCounts(root, base, file) {
   return /^\d+$/.test(added ?? '') ? `+${added} −${removed}` : 'binary or unreadable';
 }
 
-async function evaluate(root, base, paths, { iteration, fixes = PRODUCTION_FIXES } = {}) {
+async function evaluate(root, base, changes, { iteration, fixes = PRODUCTION_FIXES } = {}) {
   const entryProblems = productionFixEntryProblems(fixes);
   if (entryProblems.length) {
     return { status: 'fail', detail: `malformed production-fix entries:\n  ${entryProblems.join('\n  ')}` };
   }
-  const { allowed, exceptions, fixes: fixed, violations } = classifyPaths(paths, { iteration, fixes });
-  const notes = [];
+  const { allowed, exceptions, fixes: fixed, violations } = classifyPaths(changes.paths, { iteration, fixes });
+  violations.push(...changes.problems);
+  const notes = [...changes.notes];
 
   // A production fix is admitted, and named, only for the ticket that owns it
   // (ADR-0008). Never silently: every admitted path is reported with its ticket.
@@ -124,7 +134,7 @@ async function evaluate(root, base, paths, { iteration, fixes = PRODUCTION_FIXES
 export const pathGuard = {
   id: 'path-guard',
   stages: ['ticket', 'gate', 'push'],
-  description: 'Every changed path is inside the allowed list, a recorded exception, or a production fix its own ticket owns',
+  description: 'Every path a studio commit changed is inside the allowed list, a recorded exception, or a production fix its own ticket owns; no arcade commit changed a studio path',
   async run(ctx) {
     // A base that does not resolve is a failure, not a skip: an unverifiable
     // guard at the ticket stage is exactly where a stray write would slip out.
@@ -136,14 +146,14 @@ export const pathGuard = {
     if (commitsSince(ctx.root, ctx.base) === 0 && workingTreePaths(ctx.root).length === 0) {
       return { status: 'skip', detail: `no commits since ${ctx.base} and nothing uncommitted, so nothing was compared` };
     }
-    return evaluate(ctx.root, ctx.base, changedPaths(ctx.root, ctx.base), { iteration: ctx.iteration, fixes: ctx.productionFixes });
+    return evaluate(ctx.root, ctx.base, studioChanges(ctx.root, ctx.base, { withTree: true }), { iteration: ctx.iteration, fixes: ctx.productionFixes });
   }
 };
 
 export const productionUnchanged = {
   id: 'production-unchanged',
   stages: ['postdeploy'],
-  description: 'No file outside the allowed paths differs from the previous release, except the production fixes this iteration owns',
+  description: 'No studio commit since the previous release changed a file outside the allowed paths, except the production fixes this iteration owns',
   async run(ctx) {
     const tag = ctx.previousTag ?? previousIterationTag(ctx.root);
     if (!tag) {
@@ -159,15 +169,15 @@ export const productionUnchanged = {
     if (commits === 0) {
       return { status: 'skip', detail: `${tag} is HEAD or ahead of it, so the comparison covers no commits — pass --previous-tag=<the release before this one>` };
     }
-    const result = await evaluate(ctx.root, tag, committedPaths(ctx.root, tag), { iteration: ctx.iteration, fixes: ctx.productionFixes });
+    const result = await evaluate(ctx.root, tag, studioChanges(ctx.root, tag, { withTree: false }), { iteration: ctx.iteration, fixes: ctx.productionFixes });
     return result.status === 'pass'
       ? {
           status: 'pass',
           // "Nothing outside the guard changed" is only true when nothing was
           // admitted; a fix or an exception is a change outside it, reported as one.
           detail: result.admitted
-            ? `in ${commits} commit(s) since ${tag}, the only changes outside the guard are the ${result.admitted} admitted below — ${result.detail}`
-            : `nothing outside the guard changed in ${commits} commit(s) since ${tag} (${result.detail})`
+            ? `in ${commits} commit(s) since ${tag}, the only studio changes outside the guard are the ${result.admitted} admitted below — ${result.detail}`
+            : `no studio commit changed anything outside the guard in ${commits} commit(s) since ${tag} (${result.detail})`
         }
       : { status: 'fail', detail: `since ${tag}: ${result.detail}` };
   }
