@@ -6,7 +6,7 @@
 // one search + POLL_MS) — a few minutes at the defaults — after which it
 // reports a failure with the reason rather than hanging indefinitely.
 
-import { fetchUrl, previousIterationTag, refExists } from '../lib/shell.mjs';
+import { fetchUrl, previousIterationTag, refExists, attempt, gitPath } from '../lib/shell.mjs';
 import { moduleImports, sameOriginAssets } from '../lib/rules.mjs';
 import { textAt } from './path-guard.mjs';
 
@@ -134,7 +134,13 @@ export const studioLive = {
     const result = await pollForMarker(url, marker, { attempts: ctx.pollAttempts, fetch: ctx.fetch, wait: ctx.wait });
     if (result.ok) {
       const tag = ctx.previousTag ?? previousIterationTag(ctx.root);
-      const file = repoPathFor(result.where, ctx.siteUrl);
+      let file = repoPathFor(result.where, ctx.siteUrl);
+      // A directory named without its trailing slash is served by its index.html;
+      // read as it stands, `git show` would return a tree listing, which never
+      // holds the marker, and every marker would look new.
+      if (file && tag && attempt(gitPath(), ['cat-file', '-t', `${tag}:${file}`], { cwd: ctx.root }).out === 'tree') {
+        file = `${file}/index.html`;
+      }
       let against = 'no previous release to compare the marker with';
       if (tag && refExists(ctx.root, tag) && file) {
         const stale = staleMarkerProblem(marker, textAt(ctx.root, tag, file), `${tag}:${file}`);

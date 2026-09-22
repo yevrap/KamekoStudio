@@ -115,5 +115,12 @@ command rather than three.
     iteration), `deploy.test.mjs` +4 (URL to file, stale marker, no marker never fetches,
     stale marker refused against a scratch repository's release), `stages.test.mjs`
     (postdeploy conclusive).
+- **Fix round 2 — from review round 2, the last this ticket may use (QA N4).** The
+  stale-marker check compared a directory named without its trailing slash —
+  `--marker-at=/games/black-hole-in-one` — with the tree listing `git show` returns for a
+  directory. The listing never holds a marker, so every marker looked new. A path that is
+  a tree at the release is now compared by its `index.html`. It is held by a test in
+  `deploy.test.mjs`, and removing the tree handling fails it. No review has seen this
+  round.
 - **Deferred:** nothing.
-- **Fix rounds used:** 1 / 2
+- **Fix rounds used:** 2 / 2

@@ -138,3 +138,16 @@ test('studio-live fails a marker that the previous release\'s copy of the file a
   assert.equal(fresh.status, 'pass', fresh.detail);
   assert.match(fresh.detail, /absent from studio-iteration-03:games\/g\/ui\.js/);
 });
+
+test('a directory named without its trailing slash is compared by its index.html, not a tree listing', async t => {
+  const r = scratchRepo(); t.after(r.done);
+  r.write('games/g/index.html', '<title>The Game</title>\n');
+  r.git('add', '--all'); r.git('commit', '--quiet', '-m', 'docs(studio): SHS-050 release');
+  r.git('tag', 'studio-iteration-03');
+  const served = { [`${SITE}/games/g`]: '<title>The Game</title>' };
+  const fetch = async url => (url in served ? { status: 200, body: served[url] } : { status: 404, body: '' });
+  const ctx = { root: r.root, siteUrl: SITE, pollAttempts: 1, fetch, previousTag: 'studio-iteration-03', deployMarker: '<title>The Game</title>' };
+  const bare = await studioLive.run({ ...ctx, markerAt: '/games/g' });
+  assert.equal(bare.status, 'fail', bare.detail);
+  assert.match(bare.detail, /studio-iteration-03:games\/g\/index\.html/);
+});
