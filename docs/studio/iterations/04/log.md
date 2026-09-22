@@ -129,3 +129,26 @@ committed.
     - a test-name rule for production's harness, registered as debt instead (QA M2b).
 
   *Next:* SHS-050. *Blocked:* nothing.
+
+## After the round-1 fixes
+
+- **QA Engineer** — *Done:* SHS-050's fix round is pushed. No check passes on a comparison
+  of no commits, on a stale marker, or on a stage that verified nothing. SHS-051's second
+  and last fix round and SHS-054 went out in one push: merges, post-release changes and
+  deletions are refused, and a production fix is now reviewed before it is pushed. Each
+  new rule was run against a mutation that put the hole back. One mutation survived — the
+  history check, which the only test for it could not reach — until the test used a real
+  commit on another branch. `push` 11 of 11, `production-fix-reviewed` admitting SHS-052
+  as reviewed at `7b8a0fe`. *Next:* SHS-052's fix round. *Blocked:* nothing.
+- **QA Engineer** — *Done:* the first post-deploy run after that push **failed**, and it was
+  right to. The marker was a phrase that exists in the source only across a line break,
+  so no deployed file contained it; the check polled all twelve attempts and said so.
+  Run again with a string the file does contain: found on attempt 1, and absent from
+  iteration 03's copy. Recorded because a check that fails on the operator's mistake is
+  the check working. *Next:* SHS-052. *Blocked:* nothing.
+- **Front-end / Gameplay Dev** — *Done:* SHS-052's fix round is written and **not pushed**:
+  it changes the ticket's production files, so under SHS-054 it waits for round 2. The
+  direct test now also bursts particles in a colour nothing else draws and requires them
+  to survive; QA's over-broad decoy, `if (!bh) particles = [];`, fails it. The fix line
+  skips the filter when there are no spirals to drop. *Next:* round 2. *Blocked:* on
+  review, by design.
