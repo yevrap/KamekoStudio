@@ -144,5 +144,14 @@ exceptions, so the permission needs a rule the guard can enforce, not only a sen
     malformed entry through the check, the note's line counts and uncommitted changes).
     Three mutations, each putting back one hole in this working tree, and each failed one
     test: `--no-merges` restored, the release tag ignored, deletion ignored.
-- **Deferred:** TD-012.
+- **After fix round 2 — what review round 2 found, recorded because the ticket is at its
+  cap.** The merge fix above is incomplete (QA N2). Git's history simplification leaves out
+  a merge that takes a file from one of its parents, so such a merge — a rollback to a
+  version already in the history — changes a fix file with no commit examined, and this
+  guard admits it as *"0 commit(s)"*. The ticket cannot take a third fix round. The change
+  cannot reach the live site unreviewed, because SHS-054's `production-fix-reviewed` now
+  compares content and refuses it at the push and at the gate. The guard's own gap is
+  registered as **TD-013**, and ADR-0008 and `self-checks.md` say what the guard does and
+  does not see.
+- **Deferred:** TD-012, TD-013.
 - **Fix rounds used:** 2 / 2

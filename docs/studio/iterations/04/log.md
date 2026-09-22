@@ -152,3 +152,32 @@ committed.
   to survive; QA's over-broad decoy, `if (!bh) particles = [];`, fails it. The fix line
   skips the filter when there are no spirals to drop. *Next:* round 2. *Blocked:* on
   review, by design.
+
+## After review round 2 — the last
+
+- **Scrum Master** — *Done:* round 2 ran on fresh context, on the same pairing of models.
+  The **Independent Reviewer approved with findings**: every round-1 blocker and major
+  fixed, and two nits. **QA rejected**, on two gaps in central claims:
+  - SHS-054's check could be escaped by putting a file back to the release after the
+    review. QA did it with SHS-052's own regression tests, and the whole push passed.
+  - SHS-051's merge fix missed a merge that takes a file from its side parent.
+
+  **Both passes approved SHS-052 on its own at `b378402`.** Two rounds is the cap, so
+  there is no third. The findings are closed below, and the call on shipping is the team's
+  (`review.md`). *Next:* the gate. *Blocked:* nothing.
+- **Tech Lead** — *Done:* QA was right, and the fix was to stop deciding from history.
+  `production-fix-reviewed` now requires every file a fix owns to be, at `HEAD`, exactly
+  what the reviewed commit holds, and it measures the need for a review from the release
+  rather than `--base`. That closes QA's blocker, its narrow-base finding, and the merge
+  case at the push and the gate. SHS-051 is at its cap, so its guard's own merge gap is
+  TD-013. SHS-050's last round fixed the directory-marker comparison. Each fix has its
+  reproduction as a test, and each mutation that puts a hole back fails it. *Next:* the
+  gate. *Blocked:* nothing.
+- **Product Owner** — *Done:*
+  - QA's nit on SHS-052 is **carried to the next iteration**. It is a production file, and
+    under the rule this iteration wrote it cannot go out without a review, and there are
+    no rounds left. The rule applies to its authors too.
+  - SHS-052's fix round goes out now, after review, with `reviews/SHS-052.md` naming
+    `b378402`.
+
+  *Next:* the record. *Blocked:* nothing.
