@@ -19,3 +19,14 @@ is committed.
   it lands. Named the fork's storage traps in the plan: River Run reads `theme` and writes
   the unnamespaced `muted`, and its Watch Mode prefix makes production `settings.js` write
   the keys. *Next:* SHS-055. *Blocked:* nothing.
+
+## Session 2 — build SHS-055 (2026-09-22)
+
+- **Tech Lead** — *Done:* SHS-055. `commitKind` in `rules.mjs` sorts every commit on the
+  shared `main` into studio, arcade, merge or exempt; `commit-lint` lints studio commits
+  only, and `path-guard` / `production-unchanged` judge what studio commits changed while
+  refusing an arcade commit or a mixed merge that touches a studio path. The executive's
+  three 2026-09-22 commits are exempt by hash, `7712cf2` included (the ticket named two;
+  the migration moved the steering views, so the reverse rule caught it too). 17 new
+  tests, six red first; 300 of 300; the real history since `studio-iteration-04` passes
+  both checks. *Next:* build SHS-056. *Blocked:* nothing.
