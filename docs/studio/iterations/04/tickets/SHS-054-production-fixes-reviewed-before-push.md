@@ -126,6 +126,11 @@ to SHS-052's files is refused until a review covers it.
     seen that file as it is pushed, which ADR-0008 states.
   - **No review has seen this fix round.** Round 2 was the last; the review record says
     what a third round would most likely have found.
+- **Fix round 2 — found by the author before the gate, the last this ticket may use.** The
+  rewritten check measured from `--previous-tag` when it was given, and
+  `--previous-tag=HEAD` made it compare the release with itself. It passed, having found no
+  fix that differed. It now reports `not run`, which `push` and `gate` turn into a failure.
+  A test holds it, and removing the guard fails that test. No review has seen this round.
 - **Deferred:** an approval from outside the repository, the only thing that would make the
   review impossible to fake. It is offered to the executive as a choice.
-- **Fix rounds used:** 1 / 2
+- **Fix rounds used:** 2 / 2

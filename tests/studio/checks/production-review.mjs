@@ -17,7 +17,7 @@
 // at HEAD, exactly what the reviewers saw.
 
 import path from 'node:path';
-import { attempt, gitPath, readIfPresent, previousIterationTag, refExists } from '../lib/shell.mjs';
+import { attempt, gitPath, readIfPresent, previousIterationTag, refExists, commitsSince } from '../lib/shell.mjs';
 import { PRODUCTION_FIXES, readReviewRecord } from '../lib/rules.mjs';
 
 const isAncestor = (root, ancestor, descendant) =>
@@ -39,6 +39,11 @@ export const productionFixReviewed = {
     const release = ctx.previousTag ?? previousIterationTag(ctx.root) ?? ctx.base;
     if (!refExists(ctx.root, release)) {
       return { status: 'fail', detail: `"${release}" names no commit, so no fix could be compared with the release` };
+    }
+    // The release compared with itself — `--previous-tag=HEAD` — would find no fix
+    // differing from it and pass having compared nothing: TD-011's shape again.
+    if (commitsSince(ctx.root, release) === 0) {
+      return { status: 'skip', detail: `${release} is HEAD or ahead of it, so no fix could be compared with the release` };
     }
     const fixes = ctx.productionFixes ?? PRODUCTION_FIXES;
     const byTicket = new Map();

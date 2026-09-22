@@ -335,3 +335,10 @@ test('with no production fix differing from the release, there is nothing to rev
   const result = await productionFixReviewed.run(ctxFor(r));
   assert.equal(result.status, 'pass', result.detail);
 });
+
+test('a release that is HEAD itself is "not run", never a pass', async t => {
+  const r = releasedRepo(t);
+  r.commit('fix(studio): SHS-052 the fix', [FIX.path]);
+  const result = await productionFixReviewed.run({ ...ctxFor(r), previousTag: 'HEAD' });
+  assert.equal(result.status, 'skip', result.detail);
+});
