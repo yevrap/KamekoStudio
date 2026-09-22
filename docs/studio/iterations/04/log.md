@@ -181,3 +181,11 @@ committed.
     `b378402`.
 
   *Next:* the record. *Blocked:* nothing.
+
+## Before publishing — the gate
+
+- **Scrum Master** — *Done:* the review and retrospective are written from what happened,
+  and the gate is green, 11 of 11, the whole repository suite included.
+  `production-fix-reviewed` admits SHS-052 as exactly what round 2 approved. There were
+  eleven pushes before this one, each checked before and after. *Next:* the last push, the
+  tag, post-deploy, close-out. *Blocked:* nothing.

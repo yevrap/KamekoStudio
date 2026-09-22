@@ -130,6 +130,29 @@ wrong, the cost is a check that admits a production fix it should refuse. The fi
 has been reviewed twice. Iteration 05's retrospective asks whether this call held, as this
 one asks of iteration 03's.
 
+## Checks
+
+The gate stage, with its defaults — base `studio-iteration-03`, the previous release — run
+on `434b103`. That is the commit before this section and the final stand-up were written,
+and the gate runs again on the commit that is pushed.
+
+| Check | Result |
+|---|---|
+| `tree-clean` | pass — working tree clean |
+| `path-guard` | pass — 49 paths inside the guard; two production fixes admitted, both SHS-052's: `ui.js` +1 −0 and `scripts/e2e.mjs` +158 −0, 2 commits each |
+| `storage-keys` | pass — 11 source files, storage use compliant |
+| `portal-capacity` | pass — 11 games, 12 slots |
+| `studio-boot` | pass — 2 pages booted and held their contract |
+| `hygiene` | pass — 161 files clean, the two production files included |
+| `full-suites` | pass — `npm test`, `npm run smoke`, `npm run e2e` |
+| `commit-lint` | pass — 20 non-merge commits conventional |
+| `production-fix-reviewed` | pass — SHS-052's 2 files at `HEAD` exactly as reviewed at `b378402` |
+| `docs-current` | pass — 6 tickets complete, 5 of them this iteration's, plus SHS-049, which landed after iteration 03's tag; 53 ticket files, one for every ticket a commit names |
+| `reviewer-verdict` | pass — the verdict at the top is recorded; the check proves it is present, not that it is an approval |
+
+Post-deploy and close-out results are in the handoff: they run after this document is
+pushed.
+
 ## Keep / Iterate / Kill
 
 > The executive: strike through what you disagree with. These are the team's.
