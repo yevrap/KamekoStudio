@@ -792,21 +792,42 @@ await test('black-hole-in-one: spirals whose black hole is gone are dropped, not
         try { ui.stepParticles(0); } finally { Math.random = real; world.blackHole = hole; }
         return reads;
       };
+      // Particles that are not spirals — a burst, in a colour nothing else draws —
+      // must survive: the fix drops what orbited the black hole, not everything.
+      // Counted by what the renderer draws, since the particle list is private.
+      const MARK = '#0f1e2d';
+      const drawnInMark = () => {
+        const proto = CanvasRenderingContext2D.prototype;
+        const real = Object.getOwnPropertyDescriptor(proto, 'fillStyle');
+        let hits = 0;
+        Object.defineProperty(proto, 'fillStyle', {
+          configurable: true,
+          get() { return real.get.call(this); },
+          set(v) { if (v === MARK) hits++; real.set.call(this, v); }
+        });
+        try { ui.render(); } finally { Object.defineProperty(proto, 'fillStyle', real); }
+        return hits;
+      };
       Math.random = () => 0;
       try { for (let i = 0; i < 10; i++) ui.stepParticles(1 / 60); } finally { Math.random = real; }
+      ui.burst(hole.x, hole.y, 5, MARK, 0);
       const before = count();
+      const burstBefore = drawnInMark();
       world.blackHole = null;
       let threw = null;
       Math.random = () => 1;
       try { ui.stepParticles(1 / 60); } catch (err) { threw = String(err && err.message || err); }
       finally { Math.random = real; world.blackHole = hole; }
       const after = count();
-      return { before, threw, after };
+      const burstAfter = drawnInMark();
+      return { before, threw, after, burstBefore, burstAfter };
     });
     assert(!r.noHole, 'precondition not met: a golf round has no black hole');
     assert(r.before > 0, 'precondition not met: no spiral could be created in a golf round');
+    assert(r.burstBefore > 0, 'precondition not met: the marked burst was never drawn');
     assert(r.threw === null, 'stepping ' + r.before + ' spiral(s) with no black hole threw: ' + r.threw);
     assert(r.after === 0, r.after + ' spiral(s) survived their black hole and would orbit the next one');
+    assert(r.burstAfter > 0, 'the burst was dropped with the spirals — only particles orbiting the black hole should go');
   }));
 
 await test('durak-alchemist: Play is free and starts the game', async page => {

@@ -93,5 +93,21 @@ out of bounds.
     `hygiene` scanned both and found nothing.
   - The deploy: `--stage=postdeploy --marker-at=/games/black-hole-in-one/ui.js` with a
     marker only the fixed file has — result in `log.md`.
+- **Fix round 1 — from review round 1 (QA m1, n3).**
+  - **The direct test accepted an over-broad fix.** `if (!bh) particles = [];` passed all
+    three tests, while it also dropped the Explore bursts. The direct test now bursts
+    particles in a colour nothing else draws, proves the renderer draws them, and requires
+    them to survive the step. Counted by spying on the canvas's `fillStyle`, since the
+    particle list is private.
+    - That decoy now fails exactly the new assertion: *"the burst was dropped with the
+      spirals"*.
+    - The unfixed file still fails all three tests with TD-009's error: 65 and 59
+      uncaught errors, then *"stepping 12 spiral(s)… threw"*.
+    - With the fix, e2e passed 26 of 26, three runs in a row on this machine.
+  - **The fix line allocated a new array on every Explore frame.** It now filters only
+    when a spiral is there to drop. `ui.js` is still one line away from iteration 03.
+  - **Not pushed until reviewed.** It changes this ticket's production files, so under
+    SHS-054 the `push` stage refuses it until review round 2 has seen it and
+    `reviews/SHS-052.md` names that commit.
 - **Deferred:** nothing.
-- **Fix rounds used:** 0 / 2
+- **Fix rounds used:** 1 / 2
