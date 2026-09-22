@@ -49,3 +49,16 @@ is committed.
   returned success. `npm test`, smoke and e2e then passed one by one, and the full push
   stage passed on the same commit. Which suite flaked wasn't captured. Lesson: gate the
   push on the stage's own exit code, never on a filter of its output.
+
+## Session 4 — build SHS-057 (2026-09-22)
+
+- **Tech Lead** — *Done:* SHS-057. River Run's portal on `3d.html` now opens
+  `studio/games/river-run/`. `shared/3d/constants.js` is a recorded exception (ADR-0010),
+  scoped to that one url and checked like `frontPositions`. A headless test walks into
+  the portal and lands on the fork. Ticket, push and postdeploy stages green. *Next:*
+  review. *Blocked:* nothing.
+- **Scrum Master (for the retro)** — the push stage's first run failed. Following the last
+  retro note, the push was gated on the stage's exit code, and it held. The failure was
+  SHS-056's browser test waiting on chance: 1 run in 3 outlived its 60 s wait. It's fixed
+  in `045f031`, so the run now ends deterministically. Lesson: a browser test waits on
+  something the test causes, never on something the game might do.
