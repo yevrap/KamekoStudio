@@ -17,6 +17,7 @@ why any given decision was made, without any outside context.
 | [`definition-of-ready.md`](definition-of-ready.md) | When a ticket may be started |
 | [`definition-of-done.md`](definition-of-done.md) | When a ticket may be closed, per role |
 | [`guardrails.md`](guardrails.md) | The path guard, the storage-key rule, the stop rules |
+| [`forking.md`](forking.md) | Copying a production game into the studio: what is copied, renamed and proved |
 | [`public-repo-hygiene.md`](public-repo-hygiene.md) | What may never appear in a public commit |
 | [`self-checks.md`](self-checks.md) | `npm run studio:check` — what each check proves |
 | [`tech-debt.md`](tech-debt.md) | Debt policy and the live register |
@@ -52,4 +53,5 @@ Kameko Studio (the production arcade) is described in the repository root `CLAUD
 `docs/mission.md`. Shadow Studio runs *inside* that repo and inherits its stack
 constraints — vanilla JS, no build step, no backend, static hosting — but keeps its own
 process, its own folder and its own tests. A studio game only becomes a production game
-through an explicit promotion, described in [`promotion.md`](promotion.md).
+through an explicit promotion, described in [`promotion.md`](promotion.md). A production
+game comes the other way, into the studio, as a fork: [`forking.md`](forking.md).

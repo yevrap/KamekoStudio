@@ -16,7 +16,7 @@ one per sprint). **Size:** S or M; an L is split before it's pulled.
 | # | Item | Type | Size | Source | Status |
 |---|---|---|---|---|---|
 | 1 | Studio checks tell studio work from arcade work (by commit scope), so arcade commits on the shared `main` don't read as studio violations in `path-guard`, `production-unchanged` or `commit-lint` | process | M | Inbox 2026-09-22 — blocks the next gate | in sprint 05 (SHS-055) — built |
-| 2 | Fork mechanism, and the first fork: River Run copied into `studio/games/river-run/` with every storage key renamed under `studio_`, shared paths re-pointed, boot coverage, and the procedure written down | feature | M | Direction E1 · chat 2026-09-22: River Run first (Q11 → C) | in sprint 05 (SHS-056) |
+| 2 | Fork mechanism, and the first fork: River Run copied into `studio/games/river-run/` with every storage key renamed under `studio_`, shared paths re-pointed, boot coverage, and the procedure written down | feature | M | Direction E1 · chat 2026-09-22: River Run first (Q11 → C) | in sprint 05 (SHS-056) — built |
 | 3 | The River Run portal on the 3D page opens the studio fork; every other portal still opens its production game. A recorded exception for `shared/3d/constants.js` | feature | S | Direction E1 · Q4 | in sprint 05 (SHS-057) |
 | 4 | River Run fork — the first experiment: floating power-ups, a shield (one extra hit) and rapid-fire / spread shot, one at a time on the river | feature | M | Q12 ⭐ · arcade `docs/questionnaires/river-run-modernization.md` Q1 (other: power-ups) and Q2=A | Needs refinement: waits on Q12 |
 | 5 | River Run fork — split the inline script into ES modules (constants/state/gameplay/main) and add its first unit tests, so experiments are testable. Size L: split per module at plan | debt | L | Arcade roadmap b-01, now the fork's | Needs refinement |
@@ -36,6 +36,7 @@ one per sprint). **Size:** S or M; an L is split before it's pulled.
 | 19 | TD-007: the studio's browser harness duplicates `scripts/smoke.mjs`'s static server | debt | S | Tech-debt register | Needs refinement |
 | 20 | Maze Warden fork — calm the board, then one real choice per tower under a cap on effects. Held: E1's first fork went to River Run, so Maze Warden's Iteration 8 stays on the arcade roadmap unless a later fork takes it | feature | M | Former #4 and #5, Q11 ⭐ not taken | Parked |
 | 21 | An executive edit to `docs/studio/steering/` (an inbox line, a questionnaire answer) has a commit form the checks accept, recorded in `process.md`: today it is either an arcade commit touching a studio path or an unnumbered `(studio)` commit, and both fail | process | S | SHS-055 build, iteration 05 | Needs refinement |
+| 22 | River Run fork: its music restarts a Tone.js sequence on every new run, and now and then Tone rejects a start time a hair below zero (`RangeError … got: -1e-12`, uncaught in promise). Inherited from production, not caused by the fork. Fix in the fork (clamp or schedule from `Tone.now()`) and drop the named exemption in `tests/studio/river-run-fork.test.mjs`; production gets the same fix under ADR-0008 if still identical | fix | S | SHS-056 build, iteration 05 | Needs refinement |
 
 ---
 
