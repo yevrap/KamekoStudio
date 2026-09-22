@@ -21,3 +21,4 @@ they always show the current state — and the history lives here.
 | [0006](ADR-0006-ticket-prefix.md) | Tickets are numbered `SHS-NNN`; the `SS-` prefix is retired at 042 |
 | [0007](ADR-0007-trunk-based-development.md) | Trunk-based development, as a trial from iteration 04 |
 | [0008](ADR-0008-production-fixes.md) | The studio fixes production, under the full process, one ticket per file |
+| [0009](ADR-0009-one-step-per-session.md) | One step per session, an ordered backlog, and an epic budget |

@@ -14,8 +14,10 @@ description: "Read-only status of the Shadow Studio company: where it is, what's
    - `git log --oneline --grep "(studio)" -12` — recent studio work
    - `git tag --list "studio-iteration-*" --sort=-v:refname | head -3` — iterations shipped
    - `git log origin/main..main --oneline` — unpushed
-2. **Direction** — `docs/studio/steering/direction.md`: the current epic, its goal and done-when,
-   and the budget (iterations used of those granted, reserve claimed or not). Report it first.
+2. **Direction and position** — `docs/studio/steering/next.md` (the step due and the sprint),
+   `docs/studio/steering/direction.md` (the epic, its done-when, sprints used of those granted,
+   reserve claimed or not) and the top five of `docs/studio/steering/backlog.md`. Report these
+   first, ending with the prompt: `studio next`.
 3. **The latest iteration** — `docs/studio/iterations/<highest>/`: `plan.md` for what was
    committed, `review.md` for what landed and the reviewer's verdict, `retro.md` for what the
    team changed about itself.

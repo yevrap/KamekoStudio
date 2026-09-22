@@ -24,19 +24,12 @@ in a fix round no reviewer has seen. The team shipped under your standing hand-b
 | Name the realm, if "Shadow Studio" isn't it | Q1, same note |
 | Anything else about how the company runs | Q5, same note (it stays open) |
 
-## Next iteration — 05
+## Next
 
-In the order the team intends:
-
-1. **A real repository README.** It is production documentation, so it goes through the
-   production-fix rule: a ticket, an entry, a review before the push. Carried twice now.
-2. **Tighten the TD-009 direct test** (QA's round-2 nit): the test should refuse a fix
-   that keeps only one burst particle. It is one assertion in a production file, and the
-   first production change to go through "reviewed before it is pushed" from the start.
-3. **TD-013:** `path-guard` should refuse a fix file that changed with no commit examined.
-4. **The 3D zone as the studio's window** (Q4): design its shape.
-5. **Try the other way:** a checker ticket starts from QA's attack list, written before the
-   code (the 04 retro).
+The next step is in [Shadow Studio — Next step](next.md): `plan` sprint 05, the first of
+epic E1 ([Direction](direction.md)). What sprint 05 pulls comes from the top of
+[Shadow Studio — Backlog](backlog.md), which now holds everything this board used to list
+here, in order. From here on the team runs one step per session (ADR-0009).
 
 ## Blocked
 

@@ -134,6 +134,6 @@ left as sentences didn't hold.
    `docs/studio/iterations/04/review.md`. The team says Keep for the fix and the checks,
    and Iterate for review-before-push and for trunk-based.
 
-**Say next:** "run a studio iteration". 05 starts with the repo README, as a production fix
-through the new rule. Then it tightens the TD-009 test (QA's nit, the first production
-change reviewed before push from the start), fixes TD-013, and designs the 3D zone.
+**Say next:** `studio next`, in a new session. Since 2026-09-22 the team runs one step per
+session (ADR-0009); [Shadow Studio — Next step](next.md) says which step is due, and
+[Shadow Studio — Backlog](backlog.md) holds the order of work that this handoff used to list.

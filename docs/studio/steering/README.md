@@ -14,7 +14,8 @@ coverage), 03 (maintenance: the `SHS-` prefix, TD-009 diagnosed, one file per ti
 
 | You say | What happens |
 |---|---|
-| **"run a studio iteration"** | One bounded iteration, then a report. Skill: `studio-iteration` |
+| **"studio next"** | The team does the next step of its sprint (plan, build one ticket, review, close or retro), then stops and tells you. Start a new session for each. Skill: `studio-iteration` |
+| **"studio next — focus: X"** | The same, and the next sprint is planned around X |
 | **"studio status"** | Read-only: where it is, what's open, the trend. Skill: `studio-standup` |
 | **"promote X"** | Prepares a move into the production arcade, for your approval. Skill: `studio-promote` |
 | **anything, in chat** | Logged in [Shadow Studio — Input Ledger](input-ledger.md), triaged, and reported back |
@@ -24,7 +25,9 @@ coverage), 03 (maintenance: the `SHS-` prefix, TD-009 diagnosed, one file per ti
 
 | Note | What it is |
 |---|---|
-| [Shadow Studio — Direction](direction.md) | **Yours to edit.** The product goal, the current epic and its iteration budget, the working rules |
+| [Shadow Studio — Next step](next.md) | Where the team is and what the next session will do. Loaded into every new session |
+| [Shadow Studio — Direction](direction.md) | **Yours to edit.** The product goal, the current epic and its sprint budget, the working rules |
+| [Shadow Studio — Backlog](backlog.md) | **Yours to reorder.** What the team does next, top first |
 | [Shadow Studio — Handoff](handoff.md) | The latest report. Start here. |
 | [Shadow Studio — Board](board.md) | What's done, in flight, blocked, waiting on you |
 | [Shadow Studio — Scorecard](scorecard.md) | One row per iteration; the trend |

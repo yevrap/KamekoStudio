@@ -18,5 +18,18 @@
       "Bash(gh run list*)",
       "Bash(gh run watch*)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/docs/studio/steering/next.md\"; [ -f \"$f\" ] && { echo \"[Shadow Studio] Where the studio team is (docs/studio/steering/next.md). \\\"studio next\\\" runs this step with the studio-iteration skill; ignore it for arcade work.\"; cat \"$f\"; }; true",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   }
 }

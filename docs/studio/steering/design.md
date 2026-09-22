@@ -90,9 +90,9 @@ Each persona has a file in the repo (`docs/studio/team/`): name and one-line rol
 - **Iteration size:** 2–3 *planned* tickets, so the trail and the plan usage stay
   judgeable. The cap is on planned work only; tickets a review opens are allowed, and
   recorded as review-opened. (Q8, iteration 03.)
-- **Shipping:** the gate needs the Independent Reviewer's verdict recorded, and review is
-  capped at **two rounds**. After the second, the findings are closed and what a third
-  round would likely have found is written down instead of run. If the second round still
+- **Shipping:** the gate needs the Independent Reviewer's verdict recorded. Review is **one round
+  by default**; a second runs only when the first rejects on something a player would hit, a
+  production file or a save, and there is never a third (ADR-0009, 22 Sept). If the last round still
   rejects, the run asks you — and in iteration 03 you handed the call back: *decide by the
   team's goals and practices, try it, and let a retro judge it.* So the team decides, writes
   down why in `review.md`, and the next retro checks whether the call held. `docs-current`
@@ -153,7 +153,7 @@ Reserved capacity: roughly 20% of each iteration goes to tech debt, refactoring,
 
 ## The iteration protocol
 
-One run is one iteration: a small set of tickets (default 2–3, see the questionnaire), then a clean stop so the next run starts in a fresh chat with clean context.
+An iteration is a sprint of 2–3 planned tickets, run **one step per session** (ADR-0009): `plan`, `build` (one ticket per session), `review`, `close`, `retro`. You say `studio next` in a fresh session each time; `steering/next.md` says which step is due, and a SessionStart hook loads it. What to pull comes from the ordered [backlog](backlog.md); how many sprints the current epic gets comes from [Direction](direction.md). The numbered steps below are the protocol those sessions share out.
 
 0. **Preflight.** Read the last Handoff, the Board, the Feedback Inbox and any chat direction. Log each input in the Input Ledger *before* acting. Confirm the working tree is clean, `main` is up to date, `STOP` is absent, and the baseline tests are green.
 1. **Refine and plan.** Write the iteration goal and tickets, including the reserved debt/docs/learning work.

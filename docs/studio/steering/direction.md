@@ -1,8 +1,8 @@
 # Shadow Studio — Direction
 
-The executive's standing direction: what the studio is working toward, how many iterations
-it has to get there, and the rules it works under while it does. **Every run reads this in
-preflight, before the board**, and plans against it. It changes rarely. It changes when the
+The executive's standing direction: what the studio is working toward, how many sprints
+it has to get there, and the rules it works under while it does. **Every session reads this
+right after `next.md`**, and plans against it. It changes rarely. It changes when the
 executive edits it, or when chat direction is recorded here (and logged in the
 [Input Ledger](input-ledger.md) like any other input).
 
@@ -24,7 +24,8 @@ A fork that turns out better than its original can go back to the arcade only th
 **Goal:** the first forked game is live behind its 3D portal, and has had at least one
 real gameplay experiment the executive can play and judge.
 
-**Budget:** 3 iterations (05, 06, 07) + 1 reserve. See [the budget](#the-budget).
+**Budget:** 3 sprints (05, 06, 07) + 1 reserve. See [the budget](#the-budget). What each
+sprint pulls comes from the ordered [Backlog](backlog.md).
 
 **Done when:**
 - a 3D portal leads to a studio fork, and every portal without a fork still leads to its
@@ -43,7 +44,7 @@ noise) is exactly the kind of experiment a fork exists for.
 
 ### Suggested shape (the team owns the plan and may change it)
 
-| Iteration | Goal | What a player can see afterwards |
+| Sprint | Goal | What you can see afterwards |
 |---|---|---|
 | 05 | Unblock and open the wing: the studio checks tell studio commits from arcade commits (the blocker in the inbox); a fork mechanism; the first fork live behind its portal | The first fork's portal on the 3D page opens the studio copy |
 | 06 | The first experiment in the fork | A changed game to play and judge |
@@ -51,24 +52,24 @@ noise) is exactly the kind of experiment a fork exists for.
 
 ## Rules for this epic
 
-These apply from iteration 05 on. Part of 05's reserved capacity is writing them into the
-handbook (`process.md`, `definition-of-done.md`, the `studio-iteration` skill), where they
-are enforced from then on.
+These apply from sprint 05 on. The process parts are in the handbook (`process.md`,
+[ADR-0009](../decisions/ADR-0009-one-step-per-session.md)) and the `studio-iteration` skill.
 
-1. **Every iteration ships something a player can see.** `plan.md` names it; `review.md`
-   links it on the live site. An iteration that only changed the studio's own machinery
-   says so in its first line.
-2. **One planned process ticket per iteration, at most.** Checks, docs and process work
-   share the reserved ~20% slot. Carried items (the repository README, the TD-009 test,
-   TD-013) compete for that slot, and the team picks. A new check is built only for a
-   defect that reached the live site, or for a retro lesson that has recurred.
+1. **Every sprint has a goal you can see.** The goal names what the executive will be able
+   to see, play or read afterwards: a game change, a test suite that now exists, a doc.
+   `review.md` links it.
+2. **Tests, docs and tech debt are real work.** Work on the games (their tests, docs and
+   debt) is welcome and not capped. What is capped is work on the studio's **own**
+   machinery (its checks, handbook and steering views): at most one planned ticket per
+   sprint. A new studio check is built only for a defect that reached the live site, or
+   for a retro lesson that has recurred.
 3. **One review round by default.** QA and the Independent Reviewer each make one pass. A
    second round runs only when the first one rejects on something a player would hit, a
    production file, or a save. Production fixes still follow ADR-0008.
-4. **Size each iteration for one session.** 2–3 planned tickets. If a run nears its
-   context or usage limit, it stops at a phase boundary and the handoff says
-   `resume at phase N`. The next "run a studio iteration" then **resumes** that iteration
-   instead of starting a new one.
+4. **One step per session.** A sprint is `plan` → `build` (one ticket per session) →
+   `review` → `close` → `retro`. Each session does the step
+   [Next step](next.md) names and stops. Tickets are S or M; a ticket that outgrows its
+   session is split, never carried.
 5. **Fork on first change.** A game is copied to `studio/games/<slug>/` the first time the
    studio works on it, and not before. Every storage key in the copy is renamed under
    `studio_`. After a game is forked, feature work on it happens in the fork; production
@@ -83,20 +84,25 @@ are enforced from then on.
 
 ## The budget
 
-- **Granted:** 3 iterations. **Reserve:** 1, which the team may claim. To claim it, the
-  retro writes why: what the extra iteration buys, and what happens if it isn't spent.
+- **Granted:** 3 sprints. **Reserve:** 1, which the team may claim. To claim it, the
+  retro writes why: what the extra sprint buys, and what happens if it isn't spent.
   The claim then shows on the board. Anything beyond the reserve is a questionnaire item.
 - **Finishing early is a good outcome.** If the done-when is met, the retro says so and
-  proposes the next epic rather than filling the remaining iterations.
-- **The board shows the count** — for example *E1 · iteration 2 of 3 (+1 reserve)* — and
-  so do the handoff and the scorecard.
-- **The executive sets the pace** by choosing when to say "run a studio iteration". One
-  run is one iteration, and one iteration is one session, or two if it resumes.
+  proposes the next epic rather than filling the remaining sprints.
+- **The count shows** in [Next step](next.md), the board, the handoff and the scorecard —
+  for example *E1 · sprint 2 of 3 (+1 reserve)*.
+- **When the budget is spent, the team stops and asks.** The last retro proposes the next
+  epic and its budget as a questionnaire item, and `plan` won't start a sprint until this
+  file names an epic with sprints left.
+- **The executive sets the pace** by choosing when to say `studio next`. A sprint is about
+  six short sessions.
 
 ## How to steer
 
 | To | Do this |
 |---|---|
+| Keep it going | `studio next`, in a new session each time |
+| Point the next sprint at something | `studio next — focus: <X>`, or move rows in the [Backlog](backlog.md) |
 | Change the goal, the budget or a rule | Edit this file, or say it in chat |
 | Say anything else: an idea, a complaint, a verdict | One line in the [Feedback Inbox](inbox.md) |
 | Judge what shipped | The Keep / Iterate / Kill lines at the end of the iteration's `review.md`, or a line in the inbox |

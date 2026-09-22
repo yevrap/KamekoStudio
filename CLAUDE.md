@@ -13,7 +13,7 @@ This repository is the whole studio — code, planning, decisions and the agent 
 | Playtest verdicts | `docs/playtest-log.md` — newest first; the strongest steering input |
 | Per-game design | `docs/games/<slug>/` — `README.md` (what it is, decisions and why), `ideas.md` (idea inbox), `plans/` (build plans) |
 | Studio-wide direction | `docs/brief.md` (taste brief), `docs/mission.md`, `docs/planning/` |
-| Shadow Studio | `studio/` (the realm), `docs/studio/` (its handbook), `docs/studio/steering/` (direction — the current epic and its budget — board, handoff, inbox, open questions) |
+| Shadow Studio | `studio/` (the realm), `docs/studio/` (its handbook), `docs/studio/steering/` — `next.md` (the step due), `direction.md` (the epic and its budget), `backlog.md` (ordered work), board, handoff, inbox, open questions |
 | Agent workflows | `.claude/skills/` — see *Skills* under AI Workflow |
 
 ## What This Project Is
@@ -320,7 +320,7 @@ Agents do not have a human's time pressure and can afford to double-check before
 | `refine` | "act on the maze warden answers", "plan a sprint for tysiacha" | Ideas, answers and verdicts → agent-shippable roadmap rows and questionnaires; ends with a prompt list |
 | `improve` | "quality scan" | Read-only codebase scan → ranked issue list |
 | `new-game` | "jam a new game" | Three original pitches → a single-file Lab prototype → deployed, documented, with a verdict questionnaire |
-| `studio-iteration` · `studio-standup` · `studio-promote` | "run a studio iteration" · "studio status" · "promote X" | Shadow Studio — see `docs/studio/` |
+| `studio-iteration` · `studio-standup` · `studio-promote` | "studio next" · "studio status" · "promote X" | Shadow Studio's scrum team, one step per session (plan, build one ticket, review, close, retro); `docs/studio/steering/next.md` says which step is due and a SessionStart hook loads it — see `docs/studio/` |
 
 <!-- GEMINI-OVERRIDE:ai-workflow-tool-section -->
 ### Claude Code notes

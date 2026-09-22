@@ -1,8 +1,9 @@
 # Process
 
-One run is one iteration. An iteration is a small, bounded batch of tickets that ends with
-everything on `main`, reviewed, documented and tagged — or with a clean stop and a report of
-what blocked it.
+An iteration is a sprint: a small, bounded batch of tickets that ends with everything on
+`main`, reviewed, documented and tagged — or with a clean stop and a report of what blocked
+it. It is run **one step per session** ([ADR-0009](decisions/ADR-0009-one-step-per-session.md)):
+each session does the step `steering/next.md` names, rewrites that file, and stops.
 
 ## The iteration protocol
 
@@ -19,8 +20,34 @@ what blocked it.
 | 8 | **Review and retro** | `iterations/NN/review.md`, `iterations/NN/retro.md` |
 | 9 | **Stop** | Handoff written; the run ends |
 
-Step 9 is a rule, not a suggestion. A run does not start a second iteration because there
-is capacity left.
+## Sessions
+
+The protocol above is spread over short sessions, one step each. The prompt is always
+`studio next`; a SessionStart hook loads `steering/next.md` into every new session.
+
+| Session step | Covers protocol steps | Ends with `next.md` at |
+|---|---|---|
+| `plan` | 0–1: preflight, inputs logged, backlog refined, sprint goal, 2–3 tickets pulled | the first `build` |
+| `build <ticket>` | 2–3 for **one** ticket: implement, test, commit, push, deploy-check | the next ticket, or `review` |
+| `review` | 4: one round of QA and the Independent Reviewer | `close`, or `review round 2` |
+| `close` | 5–7: document, gate, publish, tag; `review.md` with *In plain words* | `retro` |
+| `retro` | 8–9: retro, learning log, backlog, budget, steering views | the next `plan`, or waiting on the executive |
+
+A session does its one step and stops, even with capacity left. A session that runs long
+stops at a green commit and leaves `next.md` saying exactly what remains.
+
+## Backlog and budget
+
+- **The product backlog** is `steering/backlog.md`, ordered. The top is next. The executive
+  re-orders it, writes in the inbox, or says `studio next — focus: <X>`. With no direction,
+  `plan` pulls from the top. The Product Owner keeps the top five Ready.
+- **The epic and its budget** are in `steering/direction.md`: a number of sprints plus one
+  reserve, which the team may claim with a written reason in a retro. Past the reserve the
+  team asks. When the budget is spent, `plan` does not start a sprint.
+- **Tickets are S or M**, one in progress at a time. A ticket that outgrows its session is
+  split, and the remainder goes back to the backlog. At most one planned ticket per sprint
+  goes to the studio's own machinery (checks, handbook, steering views). Tests, docs and
+  tech debt for the games are ordinary work.
 
 ## Ceremonies
 
@@ -42,7 +69,8 @@ so and the next plan carries it forward.
 
 ## Stop rules
 
-A run stops early, writes the handoff and reports, on any of:
+A session stops early, leaves `steering/next.md` saying exactly what remains, and reports, on
+any of:
 
 - a red gate;
 - two failed fix rounds on the same ticket;
@@ -114,10 +142,11 @@ context buys independence of *memory*; it does not buy independence of *priors*.
 independently — read at the time as corroboration, equally consistent with a shared blind
 spot. See `team/independent-reviewer.md` for the pairing and the reasoning.
 
-**Review rounds are capped at two.** Iteration 02 ran ten; the last four found paperwork
-defects and drift in the record rather than anything a player would hit. An adversarial
-search over an unbounded surface does not terminate on its own, so the stopping rule lives
-here. After the second pass: close the findings, write down what a third pass would most
-likely have found, and stop.
+**One review round by default** ([ADR-0009](decisions/ADR-0009-one-step-per-session.md)).
+A second round runs only when the first rejects on something a player would hit, a
+production file, or a save. There is never a third: write down what it would most likely
+have found, and stop. Iteration 02 ran ten rounds; the last four found paperwork defects
+and drift in the record rather than anything a player would hit. An adversarial search over
+an unbounded surface does not terminate on its own, so the stopping rule lives here.
 
 Role definitions live in [`team/`](team/).

@@ -1,168 +1,183 @@
 ---
 name: studio-iteration
-description: "Runs one bounded Shadow Studio iteration: preflight, plan, build ticket by ticket, independent review, gate, publish, review and retro, then stop and report. Use when Yevster says 'run a studio iteration', 'shadow studio', 'run the studio', or asks the studio company to build something."
+description: "Runs the Shadow Studio scrum team one step per session: reads docs/studio/steering/next.md, does exactly that step of the current sprint (plan, build one ticket, review, close, retro), updates next.md, and stops with the prompt for the next session. Use when Yevster says 'studio next', 'run a studio iteration', 'continue the sprint', 'shadow studio', or asks the studio team to build something. 'studio next — focus: X' steers the next sprint toward X."
 ---
 
-# Studio Iteration
+# Studio — one step per session
 
-One run is **one iteration**, then a clean stop. The next run starts in a fresh session from
-the handoff.
+The studio is a scrum team whose sprint (an **iteration**, `NN`) is spread over several short
+sessions. Each session does **exactly one step**, writes where it left off into
+`docs/studio/steering/next.md`, and stops. The next session, fresh, reads that file and does
+the next step. Small sessions keep each one focused, cheap and recoverable. A failure costs
+one step, not a sprint.
 
-- **Handbook (authoritative for process):** `docs/studio/` — read `README.md`, `process.md`,
-  `guardrails.md` and `definition-of-done.md` at the start of every run.
-- **Direction (the executive's standing goal):** `docs/studio/steering/direction.md` — the
-  product goal, the current epic, its iteration budget and the rules that bind this run. Plan
-  against it; where it and the handbook disagree, direction wins until the handbook is updated.
-- **Steering (the executive's views and inputs):** `docs/studio/steering/` — `handoff.md`,
-  `board.md`, `scorecard.md`, `inbox.md`, `input-ledger.md`, `questionnaire.md`, and the
-  design in `design.md`. When a steering view disagrees with the handbook or the repo, the
-  repo is right and this run fixes the view.
+```
+plan  →  build (one ticket per session, repeated)  →  review  →  close  →  retro  →  plan …
+```
 
-**Argument:** `$ARGUMENTS` — optional direction for this iteration. If omitted, the Product
-Owner picks from the board and the inbox.
+## Read first, every session
+
+1. **`docs/studio/steering/next.md`**: which step, which ticket, anything the last session
+   left for this one. A SessionStart hook usually has it in context already.
+2. **`docs/studio/steering/direction.md`**: the epic, its budget, and the rules that bind
+   the team. Direction outranks the backlog; the handbook outranks this skill.
+3. **Only what the step needs.** `docs/studio/process.md` for the protocol;
+   `guardrails.md` before touching code; `definition-of-done.md` before closing a ticket;
+   `docs/studio/steering/backlog.md` at plan and retro. Don't read the whole handbook
+   every session.
+
+## The one rule
+
+**Do the step `next.md` names, and only that step.** Then end the session (below). If the
+step finishes with room to spare, stop anyway: the next session starts clean. The one
+exception is a step whose result makes the next step empty (for example, a review with
+nothing to fix). It may say so in `next.md` and hand straight on. It still doesn't start
+another step itself.
+
+## Steering from the prompt (`$ARGUMENTS`)
+
+- **Empty** → follow `next.md`.
+- **`focus: <X>`** at a `plan` step → the Product Owner refines X into backlog items at the
+  top and builds the sprint goal around it.
+- **`focus: <X>`** mid-sprint → X goes to the top of the backlog for the next plan, and this
+  session does the step `next.md` names. Say that in the report. If the prompt says
+  **"now"** or "change the sprint", the Scrum Master re-plans instead: this session becomes
+  a `plan` step for the rest of the sprint, and dropped tickets go back to the backlog with
+  the reason.
+- **Any other direction** → log it in `steering/input-ledger.md` and treat it as a focus.
 
 ## Hard rules
 
 - **Path guard.** Write only inside `studio/**`, `docs/studio/**`, `tests/studio/**`, plus the
   exceptions recorded in `docs/studio/guardrails.md`, plus **production fixes** under ADR-0008:
   each one a ticket that lists its production files, an entry per file in `PRODUCTION_FIXES`
-  (`tests/studio/lib/rules.mjs`), a regression test shown red then green, and the full process.
-  A feature, a design choice, a promotion, or anything touching releases, accounts or money is
-  stop-and-ask.
+  (`tests/studio/lib/rules.mjs`), a regression test shown red then green, and review before
+  push. A feature, a design choice, a promotion, or anything touching releases, accounts or
+  money is stop-and-ask.
 - **Storage.** Every `localStorage` key starts with `studio_`. Never read or write a production
-  key.
+  key. A fork of a production game renames every key it copies.
 - **Public repo.** Follow `docs/studio/public-repo-hygiene.md`: no private context, no
-  personal identifiers, no verbatim executive messages — record decisions in neutral technical
+  personal identifiers, no verbatim executive messages. Record decisions in neutral technical
   language.
-- **Caps.** Two fix rounds per ticket, then Blocked. One iteration per run. Ticket count per
-  the size setting in `steering/questionnaire.md` (default 2–3).
-- **Review rounds: two, unless Q8 in `steering/questionnaire.md` says otherwise.** After the
-  second pass, close the findings, **write down what a third pass would most likely have
-  found**, and stop. An unbounded adversarial search never terminates on its own; the stopping
-  rule has to come from here. If the second round still rejects, decide by the team's goals and
-  practices, write the reasons in `review.md`, and let the next retro judge whether the call
-  held.
-- **Try one way, retro, try another.** Practices are experiments. When a retro names a practice
-  to try the other way, the next iteration does, and its retro judges it.
-- **Stop** on a red gate, two failed fix rounds, a blocker needing Yevster, a path-guard
-  violation, long context, or a `STOP` file at the repo root (`no-stop-file` checks for it).
+- **Small work only.** A ticket is S or M. An L is split at plan. One ticket in progress at a
+  time. A ticket that outgrows its session is split, never carried along.
+- **Caps.** Two fix rounds per ticket, then Blocked. 2–3 planned tickets per sprint. At most
+  one planned ticket per sprint on the studio's own machinery (its checks, handbook and
+  steering views). Tests, docs and tech debt for the games are welcome and not capped.
+- **Review: one round by default** (see `review`).
+- **Stop** on a red check you can't fix within the caps, a blocker needing Yevster, a
+  path-guard violation, a `STOP` file at the repo root, or a session running long. Stopping
+  means ending the session properly (below) with `next.md` saying exactly what's left.
 - **Never** report a check as passed when it did not run.
 
-## Phases
+## The steps
 
-### 0. Preflight
+### `plan` — sprint planning
 
-1. Read `steering/direction.md` first, then `steering/handoff.md`, `steering/board.md`,
-   `steering/inbox.md` and `steering/questionnaire.md`. Read the direction in chat. If the
-   handoff says `resume at phase N`, resume that iteration from phase N rather than starting a
-   new one.
-2. **Log every input in `steering/input-ledger.md` before acting on it** — date, source, the
-   input restated in neutral language, and (filled in later) what it became.
-3. Run `npm run studio:check -- --stage=preflight`.
-4. A red preflight ends the run with a report. Don't "fix up" a dirty tree you didn't make.
+1. `npm run studio:check -- --stage=preflight` (full). A red preflight ends the session with a
+   report; don't fix up a tree you didn't dirty.
+2. **Budget.** Read the epic in `direction.md`. If its budget is spent (reserve included, or
+   not claimed), or no epic is active, don't plan: set `next.md` to *waiting on you: approve
+   the next epic* and stop.
+3. **Inputs.** Log every new input in `steering/input-ledger.md`: inbox lines, chat
+   direction, newly answered questionnaire items. Triage each inbox line into the backlog, a
+   reasoned "won't do", or "already covered", then clear the triaged lines.
+4. **Refine the top of `steering/backlog.md`.** Keep the top five Ready per
+   `definition-of-ready.md`: sized, split, with acceptance criteria. An open product question
+   goes to `steering/questionnaire.md`, and its item waits.
+5. **Sprint goal.** One sentence naming what Yevster will be able to see, play or read
+   afterwards. Vary it: the retro flags a theme that has run three sprints in a row.
+6. **Pull** 2–3 Ready items from the top, in order, unless a focus says otherwise. Create
+   `docs/studio/iterations/NN/`, write `plan.md` (epic and budget position such as
+   *E1 · sprint 1 of 3*, goal, tickets, what will be visible, risks, out of scope) and one
+   ticket file per item from `docs/studio/templates/ticket.md`. Also open a **record ticket**
+   for the sprint's ceremony commits. Numbers continue the `SHS-` sequence.
+7. Mark the pulled backlog rows `in sprint NN`. Set `next.md` to `build <first ticket>`.
 
-### 1. Refine and plan
+### `build <SHS-NNN>` — one ticket
 
-- The iteration number NN is one past the last folder in `docs/studio/iterations/`. Create
-  `docs/studio/iterations/NN/`.
-- Write `plan.md`: which epic and budget iteration this is (e.g. *E1 · 2 of 3*), the goal in one sentence, committed tickets, reserved capacity (about 20% for
-  debt, docs and learning — pull real rows from `docs/studio/tech-debt.md`), risks, out of
-  scope.
-- One ticket file per item in `tickets/`, from `docs/studio/templates/ticket.md`. Every ticket
-  passes `docs/studio/definition-of-ready.md`.
-- An open product question doesn't go in a ticket. It goes into `steering/questionnaire.md`,
-  and the ticket waits.
+1. `npm run studio:check -- --stage=preflight --skip-slow` (the push stage runs the full
+   suites later).
+2. Read the ticket and `guardrails.md`. Implement on `main` in small commits (ADR-0007): add
+   tests → `--stage=ticket` green → commit `type(studio): SHS-NNN description`. When the
+   ticket is done, run `--stage=push` → `git push origin main` →
+   `--stage=postdeploy --marker="<a string only the new build has>"` (plus `--marker-at=<path>`
+   when the change isn't on the realm page).
+3. **A production fix is not pushed yet.** Commit locally and note the commits in `next.md`.
+   The `review` step reviews them, and then they're pushed (ADR-0008).
+4. **If it grows:** stop at the last green commit, finish the ticket as Done for what landed,
+   and put the rest in the backlog as a new item. Don't carry scope.
+5. Fill in the ticket's Result with evidence. Add a stand-up line to `iterations/NN/log.md`
+   (done / next / blocked).
+6. Set `next.md` to the next planned ticket, or to `review` when none are left.
 
-### 2. Build
+### `review` — independent review, one round
 
-**Trunk-based** (ADR-0007; `process.md` is authoritative). Per ticket: implement on `main` in
-small commits → add tests → `npm run studio:check -- --stage=ticket` green before each commit
-→ commit `type(studio): SHS-NNN description` → when the ticket is done,
-`npm run studio:check -- --stage=push` green → `git push origin main` →
-`--stage=postdeploy --marker="<a string only the new build has>"`, plus
-`--marker-at=<site path>` when the change isn't on the realm's page. `studio-live` polls until
-the build arrives, so run it straight after the push. Ceremony records — the plan, each
-stand-up, the review, the retro — are pushed the same way as soon as they're committed. No
-ticket branches, no merge commits. A page that isn't ready stays off the shelf.
-
-**A production fix is the one exception to push-when-done** (ADR-0008). Commit it locally and
-don't push it. Run the independent review (phase 3) on those commits, asking each pass for a
-verdict on the fix alone at the exact commit. Record it in `iterations/NN/reviews/<TICKET>.md`
-with one `- **Reviewed:** <full hash>` line and one `- **Verdict:** APPROVED…` line. Then push.
-`production-fix-reviewed` refuses the push unless every file the fix owns is, at `HEAD`,
-exactly what the reviewed commit holds. With only two review rounds, a production change found
-late is carried to the next iteration rather than shipped unreviewed. Tickets are `SHS-NNN`;
-`commit-lint` rejects the retired `SS-` prefix for anything new (ADR-0006).
-
-Add a stand-up entry to `iterations/NN/log.md` between tickets: done / next / blocked, per role
-that acted.
-
-### 3. Independent review
-
-Run **QA** and the **Independent Reviewer** as separate subagents with fresh context, given the
-diff and the tickets, briefed from `docs/studio/team/qa-engineer.md` and
-`docs/studio/team/independent-reviewer.md`.
-
-**Spawn them on these models.** Pass `model` explicitly to the Agent tool; don't let them
-inherit:
+Run **QA** and the **Independent Reviewer** as separate subagents with fresh context. Give
+them the sprint's diff (`git diff <previous tag>..HEAD`), the tickets and their team files
+(`docs/studio/team/qa-engineer.md`, `docs/studio/team/independent-reviewer.md`). Pass
+`model` explicitly:
 
 | Role | `model` | Why |
 |---|---|---|
-| Independent Reviewer | `fable` | A **different model from the author.** Two passes on the author's model finding the same defects reads as corroboration and is equally consistent with shared blind spots. Model diversity is the cheapest attack on correlated priors. |
-| QA Engineer | `opus` | Keeps one pass on the author's model, so the two passes differ from each other as well as from the author. |
+| Independent Reviewer | `fable` | A different model from the author, against shared blind spots |
+| QA Engineer | `opus` | One pass on the author's model, so the two passes differ from each other too |
 
-Don't drop these to a cheap model: here the subagent is the most intelligence-sensitive role in
-the system.
+- Every finding becomes one of three things: a fix made now (if S), a backlog item, or a
+  recorded decline with a reason.
+- Record each reviewer's `**Verdict:**` line in `iterations/NN/review.md` (the gate checks
+  for it), including a rejection.
+- Production fixes: write `iterations/NN/reviews/<TICKET>.md` with the `**Reviewed:** <full
+  hash>` and `**Verdict:**` lines, then push through the `push` stage.
+- **A second round** runs only when the first rejects on something a player would hit, a
+  production file, or a save. Set `next.md` to `review round 2` and stop. There is never a
+  third round: write down what it would likely have found.
+- Set `next.md` to `close`.
 
-Every finding becomes a fix, a ticket, or a recorded decline with a reason. Record the
-reviewer's `**Verdict:**` line in `iterations/NN/review.md` — the gate checks for it — and
-record the true verdict even when it's a rejection that shipped anyway.
+### `close` — gate and publish
 
-**Before spawning, re-read the brief.** Say plainly which claims are *new this round*: a
-reviewer that re-derives a previous round's findings burns a pass.
+1. `npm run studio:check -- --stage=gate --base=<previous iteration tag>`. Red → fix within
+   the caps, or stop with `next.md` saying what is red.
+2. Publish: `git push origin main`, `git tag -a studio-iteration-NN -m "…"`,
+   `git push origin studio-iteration-NN`, then `--stage=postdeploy --marker="…"`.
+3. Finish `review.md`. It opens with **In plain words**: five sentences a stranger could
+   follow — what changed, why, and what Yevster is asked. Then the demo list with live URLs,
+   and a Keep / Iterate / Kill line per item for Yevster.
+4. Update `CHANGELOG.md` and close the tickets. Set `next.md` to `retro`.
 
-### 4. Document
+### `retro` — retrospective and the steering views
 
-Close the tickets with evidence, update `CHANGELOG.md`, `tech-debt.md` and `learning-log.md`,
-and write `review.md` and `retro.md` from what actually happened.
+1. Write `iterations/NN/retro.md`: went well, didn't, what to change. Did the last retro's
+   changes hold? Each change becomes a backlog item or an edit to a process doc.
+2. `learning-log.md`: add the sprint's lessons, and keep the **Active rules** list at the top
+   (ten at most). Promote a new rule, turn a rule that has recurred into a check or skill edit
+   (a backlog item), or retire a rule that no longer earns its place.
+3. **Backlog.** Add the review's and the retro's items, re-order by value, and keep the top
+   five Ready. Yevster's own ordering is kept unless the retro says why not.
+4. **Budget.** Count this sprint against the epic. If the done-when is met, or this was the
+   last granted sprint: write the epic review (a paragraph in the retro). Propose the next
+   epic with the budget it asks for as a `steering/questionnaire.md` item, and set `next.md` to
+   *waiting on you*. To claim the reserve sprint, say what it buys and what happens without
+   it. The claim shows on the board.
+5. Update `tech-debt.md`. Run `npm run studio:check -- --stage=closeout`. Regenerate
+   `steering/board.md`, `steering/scorecard.md` (one row) and `steering/handoff.md`, and keep
+   the iteration count in `steering/README.md` current.
+6. Set `next.md` to `plan NN+1`, or to waiting on Yevster.
 
-### 5. Gate
+## Ending every session
 
-```
-npm run studio:check -- --stage=gate --base=<previous iteration tag>
-```
+1. **Rewrite `docs/studio/steering/next.md`** in its fixed format: the next step, the say
+   line, epic and sprint position, the step trail, and at most five notes the next session
+   needs that aren't in a ticket (for example, *production fix committed locally, not pushed:
+   `abc1234`*). Keep it under 30 lines, because every new session loads it.
+2. **Commit and push** the session's records through the `push` stage, like any ceremony
+   record (commit subject names the sprint's record ticket).
+3. **Report in chat, compact:**
+   - **Did** — 2–3 lines
+   - **Checks** — each one, pass / fail / not run
+   - **Live** — URL, if anything changed that a player can see
+   - **Needs you** — only genuine decisions
+   - **Next** — the step, and the prompt in a code block: `studio next`, to be sent in a
+     **new session** (or after `/clear`); the SessionStart hook loads `next.md` there.
 
-Red means nothing is pushed. Fix within the caps, or stop and report.
-
-### 6. Publish
-
-1. `git push origin main` — the last push of the iteration.
-2. `git tag -a studio-iteration-NN -m "..."` and `git push origin studio-iteration-NN`.
-3. `npm run studio:check -- --stage=postdeploy --marker="<a string only the new build has>"`.
-
-### 7. Close out
-
-`npm run studio:check -- --stage=closeout`. Then regenerate the steering views from the repo —
-`steering/board.md`, `steering/scorecard.md` (one new row), `steering/handoff.md` — resolve
-every `input-ledger.md` entry to what it became, clear the inbox lines that were triaged, and
-keep the iteration count in `steering/README.md` current. Commit and push them like any other
-ceremony record.
-
-Toggle `/fast` on for the mechanical phases (doc sweeps, record regeneration, close-out) and
-off for planning and for reading review findings.
-
-### 8. Report and stop
-
-Report in chat, compact, the same content as `steering/handoff.md`:
-
-- **Where the docs are** — exact paths added or changed
-- **Summary** — 3–5 lines: shipped, cut, blocked
-- **Checks** — every one, pass / fail / not run
-- **Live URL**
-- **Budget** — the epic, iterations used of those granted, and whether the retro claims the reserve or closes the epic early
-- **Trend** — this iteration against the last three, from the scorecard
-- **Efficiency changes** — what the retro changed, and whether the last change helped
-- **Needs you** — only genuine decisions, one or two lines
-- **Say next** — usually "run a studio iteration"
-
-Then stop. Don't start another iteration.
+Then stop.
