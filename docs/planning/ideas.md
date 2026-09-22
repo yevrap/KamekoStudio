@@ -7,7 +7,7 @@
 
 ## Backlog
 
-- [ ] **Backlog · b-30 — Obsidian Intranet: docs organization, interlinking & Studio Dashboard.** Prioritized 2026-09-22 from Yevster's chat steer: *"i opened this project in obsidian and now it's somewhat an obsidian project too. would it be a good idea to start working on links and organtization of files not the code in a better way? is that possible? i want this added to the backlog to be worked on in the next planned itteration"*.
+- [ ] **P0 · p0-16 — Obsidian Intranet: docs organization, interlinking & Studio Dashboard.** Prioritized 2026-09-22 as the **top-priority next item** to be executed immediately once the current iteration closes out (Yevster steer): *"no, add it as a priority, next thing thats going to be done after this current itteration is closed out"*.
   - **What ships:**
     1. **Master Dashboard / MOC in `docs/README.md`:** Upgrade `docs/README.md` into an Obsidian hub (Active games gallery grouped by tier, quick links to design docs & idea inboxes, open questionnaires, roadmap priority tiers, steering and Shadow Studio links).
     2. **YAML Frontmatter / Obsidian Properties:** Add clean frontmatter to key documents (game READMEs in `docs/games/<slug>/README.md`, open questionnaires) with `title`, `tier`, `status`, `tags`, and `play_url` so Obsidian's properties and graph views function cleanly.
@@ -16,7 +16,7 @@
   - *Done when:* `docs/README.md` acts as an Obsidian dashboard; all game READMEs have valid YAML frontmatter and tags; cross-links between roadmap, games, questionnaires, and playtest logs resolve cleanly on both GitHub and Obsidian; `npm test` remains green.
   - **Ready-to-paste prompt for the next planned session:**
     ```
-    Ship b-30 from docs/roadmap.md: Obsidian Intranet & documentation interlinking pass.
+    Ship p0-16 from docs/roadmap.md: Obsidian Intranet & documentation interlinking pass.
     1. Upgrade docs/README.md into a Studio Dashboard / Map of Content (MOC) with active games by tier, open questionnaires, roadmap priorities, and steering links.
     2. Add standard YAML frontmatter (title, status, tier, tags) to all game READMEs in docs/games/ and open questionnaires in docs/questionnaires/.
     3. Cross-link roadmap items, playtest log entries, and game specs with standard relative Markdown links.
