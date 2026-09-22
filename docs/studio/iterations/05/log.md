@@ -44,3 +44,8 @@ is committed.
 - **Scrum Master** — *Done:* preflight was red on an untracked `.obsidian/` (editor
   config, not the team's). It is excluded locally in `.git/info/exclude`, and no
   repository file changed. *Next:* SHS-057. *Blocked:* nothing.
+- **Scrum Master (for the retro)** — the push stage for `98d542f` (records only) failed
+  `full-suites` once. The command chain pushed anyway, because a `grep` after the stage
+  returned success. `npm test`, smoke and e2e then passed one by one, and the full push
+  stage passed on the same commit. Which suite flaked wasn't captured. Lesson: gate the
+  push on the stage's own exit code, never on a filter of its output.
