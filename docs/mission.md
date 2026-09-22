@@ -16,7 +16,7 @@ The studio framing also leaves room for growth. If a project takes off or a coll
 
 The original plan was native Apple apps (SwiftUI for Mac, iPhone, and Watch). The pivot to HTML5 progressive web apps came down to a few things:
 
-- **Reach.** A PWA runs on any device with a browser. Friends with Android phones can play too. No App Store gatekeeping.
+- **Reach.** A PWA runs on any device with a browser — iOS, Android or desktop. No App Store gatekeeping.
 - **Simplicity.** HTML, CSS, and JavaScript with no backend is about as simple as a tech stack gets. No Xcode project management, no provisioning profiles, no separate builds per platform.
 - **Free hosting.** GitHub Pages is free, deploys from git push, and just works.
 - **Offline-capable.** Service workers make PWAs work offline, so the "native app" feel is still there — home screen icon, no browser chrome, works without signal.

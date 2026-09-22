@@ -1,6 +1,6 @@
 # Kameko Studio — Taste Brief
 
-The steering wheel for new-game generation. `/new-game` reads this first (Phase 1) before pitching. Written 2026-07-13 from the answered vault questionnaire `Kameko Studio Questionnaire — Taste and Tiers.md`; genre directions updated 2026-07-14 from the answered `Kameko Studio Questionnaire — New Game Directions.md` (archived in the vault). Edit those notes to re-steer and re-derive this.
+The steering wheel for new-game generation. The `new-game` skill reads this first, before pitching. Written 2026-07-13 from the answered questionnaire [Kameko Studio Questionnaire — Taste and Tiers](questionnaires/taste-and-tiers.md); genre directions updated 2026-07-14 from the answered [Kameko Studio Questionnaire — New Game Directions](archive/questionnaires/kameko-studio-new-game-directions.md). Edit those questionnaires (or answer new ones) to re-steer, and re-derive this.
 
 Games are built **for Yev to play on his phone**, ~5 minutes at a time. He does the taste; agents do the generative grind. A draft's only job is to earn a verdict.
 
@@ -29,7 +29,7 @@ Jams happen when Yev says "jam kameko." No scheduled auto-drafts yet — revisit
 
 ## Genre directions — ANSWERED (Q3 closed 2026-07-14)
 
-Q3 was answered via the vault's `Kameko Studio Questionnaire — New Game Directions.md` (nine worked-up concepts; four winners). The jam queue lives as roadmap rows **p3-06…p3-09** — a seeded jam should build from its row, not re-pitch. In queue order:
+Q3 was answered via [Kameko Studio Questionnaire — New Game Directions](archive/questionnaires/kameko-studio-new-game-directions.md) (nine worked-up concepts; four winners). The jam queue lives as roadmap rows **p3-06…p3-09** — a seeded jam should build from its row, not re-pitch. In queue order:
 
 1. ~~**Flow Glider (A1, p3-06).**~~ Jammed and **killed same day (2026-07-14)** — shipped as a Tiny Wings copy; see the no-reskins rule under Things to avoid.
 2. **Pachinko roguelike (C3, p3-07).** Peglin-style orbs-through-pegs; double-counts as physics + mechanic-blend.
@@ -54,10 +54,11 @@ New steering from the same questionnaire:
 ## Things to avoid
 
 - **No reskins of cited prior art (the Flow Glider lesson, 2026-07-14).** Games named in a design source ("Tiny Wings energy", "Desert Golfing proved the loop") are tone/feel references only, never blueprints. Before building, name what in the concept is genuinely new versus lifted — the core hook must be original. Flow Glider died for reproducing Tiny Wings' signature day/night-clock hook verbatim; Yev: "if I want a copy I'll ask."
-- Don't re-pitch anything with a **kill** verdict in `Kameko Playtest Log.md` (read it every jam — kills are hard constraints, mehs are iteration requests, keeps are "more of this").
+- Don't re-pitch anything with a **kill** verdict in [Kameko Playtest Log](playtest-log.md) (read it every jam — kills are hard constraints, mehs are iteration requests, keeps are "more of this").
 - Don't rebuild something the arcade already has (see the Games table in `CLAUDE.md`) unless the twist *is* the point.
 - Don't assume deep strategy is the draw — see Q2 above.
 - Don't spend polish before a keep-verdict.
+- Don't pitch games aimed at children. The arcade is made for Yev's own play.
 
 ## Free space (Q7)
 

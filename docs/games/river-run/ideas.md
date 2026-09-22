@@ -1,0 +1,10 @@
+> Idea inbox for River Run (no dedicated overview note yet — link one here if it gets created). Invest-tier ("cool visualiser but needs better auto run and maybe other features"). Active roadmap: `docs/roadmap.md`.
+
+**Triaged 2026-07-22** into a full modernization pass — score-display fix + juice polish (roadmap **p1-48…p1-51**) plus mechanic depth (**p2-40…p2-44**), on top of the pre-existing open rows **b-01**, **p1-05**, **p2-10**, **p2-29** (all reconfirmed against the actual code and sequenced — `b-01` module split first, since it unblocks unit tests and de-risks the rest). Creative-direction forks (hit/death model, power-ups, obstacle/enemy variety, near-miss scoring, mode structure, and whether biome transitions should touch gameplay) are in [River Run Questionnaire — Modernization Direction](../../questionnaires/river-run-modernization.md) — answer there, not here.
+
+- [ ] Not saving top score? — checked against the code again: `riverRunHighScore` **is** written to localStorage on every game over, so it isn't actually lost. The real gap now has its own row: **p1-48** — the game-over overlay never displays a score/best-score at all.
+- [ ] more interesting flow — vague; this triage split it into concrete pieces. Juice with no creative fork: **p1-49…p1-51** (collision impact feedback, destroy SFX, near-miss cue), agent-shippable now. Real mechanic-depth forks: **p2-40…p2-44** (hit/death model, power-ups, obstacle/enemy variety, near-miss scoring, mode structure), gated on the questionnaire above.
+- [ ] better auto play that moves around in a fun way — still **p2-29**, still open, unchanged (already fully specified with Done-when criteria). Sequenced after **b-01** (module split) per the roadmap's own note.
+- [ ] Ghost run (record best run, replay as a transparent ghost) — still **p1-05**, still open, unchanged.
+
+*(b-20, river-run drawer lifecycle, and the Watch Mode takeover/registration bugs — b-25 — are both shipped; see the top-level [Dev Log](../../archive/dev-logs/arcade.md) for details.)*

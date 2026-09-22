@@ -562,10 +562,10 @@ test('i18n: custom names override defaults and flip player 0 to third person', a
     const { setCustomName, playerName, setLang } = await import('../games/tysiacha/i18n.js');
     const { eventText } = await import('../games/tysiacha/log.js');
     setCustomName(0, 'Yev');
-    setCustomName(1, 'Masha');
+    setCustomName(1, 'Sasha');
     try {
         assert.equal(playerName(0), 'Yev');
-        assert.equal(playerName(1), 'Masha');
+        assert.equal(playerName(1), 'Sasha');
         assert.equal(eventText({ type: 'pass', p: 0 }), 'Yev passes');
         assert.equal(eventText({ type: 'bid', p: 0, amount: 110 }), 'Yev bids 110');
         setLang('ru');

@@ -142,7 +142,7 @@ export const HAPPY = {
 // sign (zodiac order = clockwise on our wheel) takes the next house. The
 // rising sign itself uses the simplified sunrise rule: at sunrise the sun
 // sign is rising, and the ascendant advances one sign every ~2 hours.
-// Known simplifications (recorded in the vault design note): latitude,
+// Known simplifications (recorded in docs/games/astro-salon/): latitude,
 // season, and exact dawn time are ignored — the arithmetic is the lesson.
 
 export const CHART_GUESTS = 4;

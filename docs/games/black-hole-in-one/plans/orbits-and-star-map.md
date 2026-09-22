@@ -1,0 +1,119 @@
+# Black Hole in One — Orbits & Star Map Build Plan (July 2026)
+
+> **Status (updated 2026-07-19): Wave 1's tap system is fully shipped — ORB-1 → reworked by TAP-1 → TAP-2 → TAP-3 → TAP-4, all live** (`301effb` and the TAP commits — see [Dev Log](../../../archive/dev-logs/black-hole-in-one.md) and [Improvements](../ideas.md) for the full trail). **ORB-4 (stardust rings) shipped 2026-07-19 (`53784ba`) — see its checklist entry below and in [Improvements](../ideas.md) for full implementation detail.** **Still open: ORB-3 (station-orbit refuel trickle + Town refuel).** **MAP-1 (Wave 2, star map landmarks) shipped 2026-07-19 (`368e161`) out of the documented order** — Yev was asked directly whether to hold for the Wave 1 checkpoint (ORB-3/ORB-4 + his playtest verdict) or jump to MAP-1, and chose to jump. **MAP-2 (fast travel) shipped 2026-07-19 (`68d1948`), same call as MAP-1** — asked directly again whether to hold for ORB-3/the checkpoint or jump to MAP-2, and Yev chose to jump. See [Improvements](../ideas.md) for full implementation detail. ORB-3 and the Wave 1 checkpoint are still open; MAP-3 remains gated behind it as originally written — don't auto-start it without asking the same question again. The tap-to-land/orbit redesign itself (the how of ORB-1/TAP-1-4) is fully spec'd in the now-archived [Black Hole in One — Tap to Land or Orbit Build Plan (July 2026)](../../../archive/plans/black-hole-in-one-tap-to-land-or-orbit-build-plan-july-2026.md) (`docs/archive/`) — this doc's own ORB-2 spec below is superseded history only, don't build it. Overview: [Black Hole in One](../README.md) · repo `games/black-hole-in-one/`.
+>
+> **This arc replaces the reverted OW-11 (Orbit Aim Assist)** — instead of snapping the *aim* onto an orbit trajectory (grid-search ghost simulation, the thing that killed OW-11 on performance and reliability), the *orbit band itself* captures the comet. No trajectory search exists anywhere in this design. That is the load-bearing lesson: **no per-frame ghost physics, ever.**
+
+## North star (Yev's words, 2026-07-18)
+
+> "orbits being the things that attract like black holes and then need another jump to get to the planet or object. i also want the orbits to do something… i want things to be easy to use and understand and look nice and cool and modern and be responsive and good performance"
+
+The traversal grammar changes from *aim well or miss* to **approach → swing into orbit → deliberate second jump to land**. Orbits become the anchor points of the world — the way black holes already work since OW-10 — and they *do* things (refuel, collect). The star map then makes those anchors legible and tappable (landmarks + free fast travel).
+
+## Decisions consumed (chat, 2026-07-18)
+
+| Question | Decision | Consequence |
+|---|---|---|
+| Orbit-attract: item or default? | **Inventory item, ON by default** | Testbed convention (INV-1) preserved — toggling OFF restores today's strict physics capture for A/B. New + existing saves both get it ON (registry-driven default, see ORB-1). |
+| How does "another jump to land" work? | **Flick aimed at the planet = guaranteed scripted landing** | From orbit, a flick whose ray hits the orbited planet's disc plays a short descent and always lands. Flicks aimed elsewhere eject exactly as today. |
+| Which orbit effects? | **Refuel trickle at stations + orbital collectibles** (orbit-scan and slingshot-boost were offered and *not* picked — parked, not declined) | ORB-3 and ORB-4 below. |
+| Fast travel: targets + cost? | **Discovered black holes + Town, free** | Black holes are the warp network — on-theme, reuses OW-3's warp/arrival plumbing. Tap on the star map. |
+
+## Architecture principles
+
+- **Golf stays byte-identical.** `physics.js`'s `orbitCapture()` (strict, backs golf + item-OFF Explore) is untouched. The new loose capture is a *separate* pure function used only by Explore behind the item gate. Full suite (325 tests) green after every item.
+- **No ghost simulation.** Band capture is one distance check per active body per step — O(active bodies), same cost class as the existing collision loop. The star map generates chunk content only on open (snapshot contract from OW-9), never per frame.
+- **Determinism is sacred.** Every new seeded roll (stardust rings) is consumed **last** in its rng stream, after all existing rolls — the established FUEL-2/OW-3/OW-5 convention — so existing world layouts are byte-identical for a given seed. Determinism unit tests required.
+- **Everything optional.** Magnet OFF = today's game. Orbit effects are ambient. Fast travel is QoL — flying remains the game.
+- **Quality bar (applies to every item's Done-when):** verified in-browser at 375px *and* desktop widths; a discoverability affordance ships with each new mechanic (toast/marker — specified per item, not left to taste); no new per-frame allocations in hot loops; fuel = green, stardust = gold as the consistent color language.
+
+---
+
+## Wave 1 — Orbits attract & orbits do things
+
+Ship order **ORB-1 → ORB-2 → ORB-3 → ORB-4** (ORB-2 depends on ORB-1; ORB-3/4 are independent but land after so tuning is judged against the new traversal feel). One session per item, sequential on `main`, `git pull` first, full suite before commit — the Sprint 2 execution model.
+
+- [x] **P1 · ORB-1 — 🧲 Orbit Magnet: the orbit band captures you (item, ON by default).** ✅ **Shipped 2026-07-18 (`301effb`), then reworked the same day by TAP-1** (the item now gates a deliberate tap instead of auto-firing — see the archived [Black Hole in One — Tap to Land or Orbit Build Plan (July 2026)](../../../archive/plans/black-hole-in-one-tap-to-land-or-orbit-build-plan-july-2026.md)). Spec below kept for the original architecture (registry, `magnetCapture()`, capture-ring affordance), which all still stands.
+  - **Registry:** add to `ITEMS` (`constants.js:179`): `{ key: 'orbitMagnet', icon: '🧲', label: 'Orbit Magnet', desc: 'Planets catch you — pass close and you swing into orbit. Flick at the planet to land.', defaultOn: true }`. Add `defaultOn` support to `defaultInventory()` (`state.js:8`): `enabled: item.defaultOn ?? false`. `mergeInventory()` already gives saves-from-before-the-item the registry default (per-key shallow assign), so existing players get it ON with no migration — add a unit test asserting exactly that.
+  - **Physics:** new pure `magnetCapture(p, b)` in `physics.js`, beside `orbitCapture()`: same body types (`planet`/`blackhole`) and the same band (`gap` in `[ORBIT_MIN_GAP, ORBIT_MAX_GAP]`, `constants.js:35-36`) but **no velocity conditions** — any entry into the band captures. Returns the same `{ radius, omega, ang }` shape: radius = current distance, omega direction = sign of tangential velocity (`+1` if |vt| < 1e-6), magnitude `circularSpeed(b.m, d) / d`. Do **not** modify `orbitCapture()`.
+  - **Hook:** in `explore.step()`'s capture loop (`explore.js:528`), when `S.inventory.orbitMagnet?.enabled`, try `magnetCapture` instead of `orbitCapture`. All existing guards stay: `phase === 'flight'`, `throttle === 0`, `orbitCooldown <= 0`. The black-hole warp dive check (`explore.js:478`, `< b.r * 0.3`) runs earlier in `step()` and orbit radii sit far outside it — no conflict, but assert it in a test.
+  - **Affordance:** while in flight with the item ON, draw a faint dashed capture ring (band mid-radius) around active bodies inside the viewport (`ui.js` world render pass) — "these will catch you." One arc stroke per visible body, no allocations per frame (precompute nothing per body beyond the arc call).
+  - *Done when:* flying anywhere into a planet's band swings you into a clean orbit regardless of approach speed/angle; item OFF reproduces today's strict-capture behavior exactly (integration test drives `step()` both ways on the same trajectory); launching from rest doesn't instantly re-capture on the way out (existing `ORBIT_COOLDOWN` covers this — regression test); golf untouched, full suite green; `magnetCapture` unit-tested (band edges, direction sign, zero-velocity fallback, non-planet types); capture rings render only with item ON; verified in-browser at 375px + desktop.
+  - **Sub-decisions (defaulted, revisit after play):** capture snap is instant (reusing the proven BH-4 snap path) — a ~0.3s eased radius lerp is the polish option if the snap feels harsh · weak launches from rest that re-enter the band after cooldown *do* capture (arguably the feature; add a band-exit-required guard for the launch body only if it feels yanked-back) · capture speed is uncapped (a screaming flyby converts to orbit — the point is "you can always get into orbit"); add a max-speed pass-through only if fast travel across the sector starts feeling sticky.
+
+- [ ] ~~**P1 · ORB-2 — 🛬 Flick at the planet to land (guaranteed descent).**~~ ❌ **Retired 2026-07-18 — replaced by TAP-2 in [Black Hole in One — Tap to Land or Orbit Build Plan (July 2026)](../../../archive/plans/black-hole-in-one-tap-to-land-or-orbit-build-plan-july-2026.md). Spec below is history only, do not build.**
+  - **Targeting:** pure helper `flickHitsBody(x, y, dx, dy, b)` (in `physics.js` or `constants.js` — DOM-free, unit-tested): forward ray-circle intersection against a disc of radius `b.r + COMET_R + 1`.
+  - **Hook:** `explore.launch()` (`explore.js:330`). When `world.orbit` is set **and** `orbitMagnet` is enabled **and** the flick targets `world.orbit.b` **and** the body is a `planet`: instead of the impulse eject, begin a scripted descent — `world.descent = { b, r0: o.radius, a0: o.ang, omega: o.omega, t: 0 }`, `S.phase = 'descend'`. New `stepDescent(dt)` (mirror `stepWarp`, `explore.js:578`): radius eases from `r0` to `b.r + COMET_R` over ~0.7s while the angle keeps advancing (decaying omega), then lands through the normal rest path — `comet.rest`, `placeOnRest()`, land sfx/burst, **refuel-station check included** (`explore.js:498`). Wire `'descend'` into `main.js`'s frame loop beside `'warp'`.
+  - Flick aimed anywhere else, item OFF, or orbiting a **black hole**: exact today's eject. (Flick *toward* a black hole ejects inward and the existing `< b.r * 0.3` dive check fires the Town warp — that *is* the black hole's "second jump," no new code.)
+  - Fuel: the descent costs the normal flick 15 (`launch()` burns before branching — leave it). It's a jump, not a freebie.
+  - **Affordances:** first capture with magnet ON → one-time toast `🛬 Flick at the planet to land` (pattern: `shownPushHint`, `explore.js:343`); while orbiting with magnet ON, a small landing chevron on the surface point radially beneath the comet.
+  - *Done when:* from orbit, a flick at the planet always lands (integration test: capture → flick at disc → within N ticks `phase === 'rest'` on that body, zero bounces); landing on a refuel station via descent refuels; flick away ejects bit-identically to today (test both item states); descent can't be re-captured mid-way (capture only runs in `'flight'`); `flickHitsBody` unit-tested (hit, miss, behind-the-ray); toast fires once and persists nothing new beyond its flag; verified at 375px + desktop.
+  - **Sub-decisions (defaulted):** descent duration 0.7s, angle decay by feel — tune constants only · descent is uninterruptible (short enough; add thrust-cancel only if it feels like lost control) · the landing chevron is the discoverability minimum — a fancier arc preview is polish, not scope.
+
+- [ ] **P1 · ORB-3 — ⛽ Orbits do something #1: refuel trickle in station orbits (+ Town refuels).**
+  - New constant `ORBIT_REFUEL_RATE = 7` fuel/s (`constants.js`, beside `REFUEL_STATION_CHANCE`). Base tank fills from empty in ~14s of orbiting — slower than landing (instant full, FUEL-2), so landing stays the committed choice and orbiting the lazy/safe one.
+  - **Hook:** `stepOrbit()` (`explore.js:720`): if `isRefuelStation(o.b)` and fuel below max, add `ORBIT_REFUEL_RATE * dt` (cap `tankMaxFuel`). Update the HUD via `hooks.bar()` only on integer fuel crossings, not per tick. Feedback: occasional green particle drift from planet to comet (`hooks.burst`, low rate), one-time-per-orbit toast `⛽ Refueling in orbit…`.
+  - Works with Orbit Magnet ON **or** OFF — it's a property of orbits, not of the item.
+  - **Folded in (consumes the Improvements P2 line "Town should refuel you"):** make Town refuel — extend `isRefuelStation()` (`explore.js:658`) to return true for `body.type === 'tee'`, and call `refuelFull()` in `completeWarp()` (`explore.js:592`) so warp arrivals top up too.
+  - *Done when:* orbiting a station visibly ticks fuel up to full and stops at cap; non-station orbits don't trickle; landing on the tee rock and warping to Town both refuel; existing FUEL-2 tests untouched; trickle math unit-tested (rate, cap, station-only); Endless Flight interaction sane (locked tank simply stays full); verified at 375px + desktop.
+  - **Sub-decisions (defaulted):** rate 7/s — tune against play · trickle is free (no stardust/time price; it already costs the time of orbiting) · no trickle *sound* loop (visual + toast only) unless it reads as broken silent.
+
+- [x] **P1 · ORB-4 — ✨ Orbits do something #2: stardust rings you orbit to collect.** ✅ **Shipped 2026-07-19 (`53784ba`)** — full implementation detail in [Improvements](../ideas.md). *(Consumes the backlog lines "Orbital Collectibles" and "P3 color-code fuel vs. stardust pickups".)*
+  - **Seeding:** in `getChunkBodies()` (`explore.js:74`), a new roll consumed **last** (after moons/rings, same stream — existing layouts stay byte-identical): each non-blackhole planet has `STARDUST_RING_CHANCE = 0.25` of `b.stardustRing = { radius, count, ang0 }` — radius inside the capture band (`b.r + COMET_R + ORBIT_MIN_GAP + (0.3..0.7) × (ORBIT_MAX_GAP − ORBIT_MIN_GAP)`), count 5–8.
+  - **Pickups:** `getChunkPickups()` (`explore.js:196`) already receives `bodies` — for bodies **belonging to this chunk** (id prefix `c${cx}_${cy}_`, avoids 3×3-neighborhood duplicates) with `stardustRing`, emit evenly-spaced stardust pickups (`type: 'stardust'`, `r: 1.2`, ids `pr${cx}_${cy}_…`) on the ring, after all existing rolls in the `pickups_` stream; skip a dot if `pickupBlockedByBody` says another body covers it (exclude the host from that check).
+  - **The ring is the orbit:** in `explore.step()`'s capture branch, when the captured body has `stardustRing` and Orbit Magnet is ON, snap the orbit radius to the ring radius — riding the orbit sweeps the dots. Strict capture (item OFF) is untouched; you can still graze dots in free flight.
+  - **Collection while orbiting:** extract `step()`'s pickup loop (`explore.js:510`) into a shared `collectPickups()` and call it from both `step()` and `stepOrbit()` — today orbiting collects nothing, which would make the whole item dead on arrival.
+  - **Color language (the folded-in P3 fix):** stardust pickups render gold (`#ffd98a`, already the stardust-burst/Town color) in `drawPickup()` (`ui.js`); fuel stays green. Ring dots read as a golden halo — draw a faint gold guide arc connecting them so the ring reads from a distance (distinct from OW-5's decorative palette-colored rings).
+  - *Done when:* seeded rings appear on ~a quarter of planets, deterministic per seed (unit test: same seed → identical ring params + dot layout; existing chunks byte-identical vs. before the change); capturing onto a ringed planet with magnet ON orbits at ring radius and sweeps all dots in ≤ one revolution (integration test through `stepOrbit()`); stardust is gold / fuel is green everywhere (pickups, bursts); collection from free flight still works; full suite green; verified at 375px + desktop.
+  - **Sub-decisions (defaulted):** rings respawn with chunk reload like all pickups (known "respawn too fast" behavior is a separate tuning item — don't fix it here) · refuel-station planets *can* also have rings (jackpot planets are fun) · black holes never have rings (dots near a warp radius read as bait).
+
+**⏸️ Wave 1 checkpoint:** Yev plays. The verdict question: *does approach → orbit → flick-to-land feel like the game now, and do station orbits + rings give orbits enough purpose?* Only then Wave 2 (map work is independent, but its landmark/fast-travel value assumes orbits feel good to arrive into — MAP-2 arrivals drop you into orbit).
+
+---
+
+## Wave 2 — Star map: landmarks, fast travel, pan/zoom
+
+Builds directly on OW-9's snapshot-render star map (`ui.js:745-821`). Ship order **MAP-1 → MAP-2 → MAP-3** (2 depends on 1; 3 polishes both and becomes the base for Wave 3's editor minimap).
+
+- [x] **P1 · MAP-1 — Landmarks on the star map (black holes ⚫ + refuel stations ⛽).** ✅ **Shipped 2026-07-19 (`368e161`)** — out of order, ahead of the Wave 1 checkpoint (see status line above).
+  - New pure `chunkLandmarks(cx, cy, seed)` in `explore.js`: runs `getChunkBodies()` and returns `[{ kind: 'blackhole' | 'station', x, y, id }]`. Unit-tested for determinism and agreement with the body flags.
+  - `renderStarMap()` (`ui.js:773`): after the fog pass, for each **discovered** chunk call `chunkLandmarks` and draw — black hole: violet-white swirl dot with a soft glow, visually louder than a station; station: small green dot; Town keeps its gold dot (always shown, as today). Cache per-open in a `Map` so MAP-3's interactive re-renders don't regenerate (≤361 chunk gens on first paint is fine for a tap-triggered snapshot — measure, and if first paint stutters on phone, build the cache lazily per re-render instead).
+  - A slim HTML legend row on the `#starMap` overlay (`index.html`): ⌂ Town · ⚫ Black hole · ⛽ Station · fog = uncharted. Responsive, wraps at 375px.
+  - *Done when:* discovered chunks show their black holes and stations at correct positions, undiscovered chunks show nothing but fog; legend reads at 375px + desktop; landmark extraction unit-tested; map open time has no visible hitch on a phone-size viewport; suite green.
+  - **Sub-decisions (defaulted):** stations shown as landmarks (drop them if the map gets noisy — black holes are the load-bearing ones) · moons/giants/rings are *not* landmarks · no landmark labels/names (OW-6 stays parked).
+
+- [x] **P1 · MAP-2 — Fast travel: tap a charted black hole (or Town) → free warp.** ✅ **Shipped 2026-07-19 (`68d1948`)** — full implementation detail in [Improvements](../ideas.md).
+  - **Hit model:** while rendering, record screen-space hit targets (`{ x, y, r ≥ 22 CSS px, kind, id, wx, wy }`) for Town + discovered black holes (stations are informational, not travel targets). Pure hit-test helper, unit-tested.
+  - **Interaction (two-tap confirm, mobile-friendly):** first tap selects — highlight ring + a label in the legend bar (`⚫ Black hole — Travel?` with a **Go** button); second tap on the same target (or the button) travels; tap elsewhere deselects. No accidental warps.
+  - **Travel:** close the map, then — Town: arrive at the tee rock via the `completeWarp()` arrival path (rest on tee, chunk refresh, camera snap; refuels once ORB-3 is in). Black hole: arrive **in orbit** around it — extract `useReturnPortal()`'s orbit-injection (`explore.js:629-637`) into a shared `arriveInOrbit(b)` and reuse it (proven safe: radius clears the dive-warp trigger by construction). Warp flash + existing warp sfx + toast. Free, any phase, works at 0 fuel.
+  - **Deliberate consequence, noted:** free fast travel + Town refuel = a stranded comet can self-rescue via the map. This intentionally softens FUEL-1's stranded state from "restart" to "limp home" — the restart pulse stays for players who don't find the map. **Reconfirmed free 2026-07-19** (asked directly when greenlighting MAP-2) — build it free, no fuel-cost gate. The "fast travel requires fuel > 0" fallback is no longer a build-time option; if it ever comes up again it's a fresh decision, not a pre-built toggle.
+  - `exploreHome` (the Return Portal bookmark) is **not** touched by fast travel — it still records only real black-hole dives.
+  - *Done when:* tapping a discovered black hole warps you into a stable orbit around it; tapping Town lands you on the tee; undiscovered black holes are not tappable; two-tap confirm works with touch at 375px and mouse at desktop; arrival can't instantly re-trigger the dive warp (test); `arriveInOrbit` + hit-testing unit-tested; Return Portal behavior unchanged (regression test); suite green.
+  - **Sub-decisions:** **free forever — reconfirmed 2026-07-19, not just defaulted** · arrival at a black hole is always into orbit, never free-fall · no cooldown between fast travels.
+
+- [ ] **P2 · MAP-3 — Pan, zoom & look pass (and the base for the editor minimap).**
+  - Drag pans; wheel + two-finger pinch zooms (1×–4×, 1× = whole sector as today); double-tap zooms in a step. Pan clamped to sector bounds. A single `mapView = { panX, panY, zoom }` and one shared world→screen transform used by both rendering and MAP-2's hit-testing.
+  - Re-render **only during interaction** (pointer/wheel events drive renders; no idle rAF loop) — the OW-9 snapshot/pause contract stays intact.
+  - Look pass, honoring "nice, cool, modern": softer fog edges, landmark glow, comet pulse, legend styling — all canvas/CSS, zero external assets, dark-space palette consistent with the game (`#05060f` ground, gold/green/violet accents).
+  - *Done when:* pinch + drag feel right on a real phone viewport and wheel + drag on desktop; landmarks stay tappable at every zoom (hit-testing shares the transform — test at 1× and 4×); zoomed-in fog/landmarks stay crisp on retina (`dpr` respected); no rendering while idle (assert via a render-count probe in tests); suite green.
+  - **Sub-decisions (defaulted):** zoom range 1–4× · no tap-to-set-waypoint (that's fast travel's job now) · no minimap-in-HUD while flying — the full-screen map remains the single map surface this arc.
+
+**⏸️ Wave 2 checkpoint:** Yev plays. Verdict: is the map now a *place you go on purpose* (orient → pick a landmark → travel)? Plus the FUEL-1 self-rescue question above.
+
+---
+
+## Wave 3 — Map Maker minimap (design-gated, do NOT build from this note)
+
+Yev's Q2 write-in also asked: *"i also want the mini map to be used in making maps, so you can place landmarks and items. we need some way for this to work on multiple map sizes. could be a good time to add scrolling and zooming."*
+
+This is a real design area, not a backlog item yet — the editor (`editor.js`) is single-screen today, and map size (MM-6, open) is a prerequisite for a minimap having anything to scroll. **After Wave 2 ships**, a planning session should produce a short design note + questionnaire covering: editor world sizes (MM-6 folded in), whether the minimap places objects directly or navigates the viewport, how custom-map landmarks interact with the Explore star map, and MM-15 (planet size options) as a possible rider. MAP-3's pan/zoom canvas + transform is the intended shared component. Logged as **MM-16** in Improvements so it isn't lost.
+
+## Parked from this arc's decisions (not declined)
+
+- **Orbit-scan** (orbiting charts surrounding fog chunks) and **slingshot eject boost** — offered as orbit effects, not picked. Natural Wave-1-follow-up candidates if orbits still feel thin after ORB-3/4.
+- **OW-7 wormhole pairs / OW-8 derelict loot** — still parked from Sprint 2; their map markers would layer onto MAP-1's landmark pass if ever built.
+- **Beacons** (player-placed fast-travel points, the original Sprint 3 idea) — partially superseded: black holes now *are* the fast-travel network. Revisit only if discovered black holes turn out too sparse to serve as anchors.
+
+---
+
+*Convention, same as every arc: each item, as it ships, gets checked off in [Improvements](../ideas.md) (the checklist there is the source of truth for what's done; this doc holds the full spec) plus a Dev Log entry. Don't auto-start the next wave past a ⏸️ checkpoint. When the arc closes, the overview note's current-state section gets a pass and this note's status line flips.*

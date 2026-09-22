@@ -1,6 +1,6 @@
 # Promotion Checklist — Draft → Arcade Game
 
-What a prototype in `drafts/<slug>/` pays to graduate into `games/<slug>/`. Run this when a draft gets a **keep** verdict in the vault's Kameko Playtest Log (`30-39 Indy App Dev/31 Kameko Arcade/Kameko Arcade/Kameko Playtest Log.md`). Written so `/ship promote <slug>` can execute it without follow-up questions.
+What a prototype in `drafts/<slug>/` pays to graduate into `games/<slug>/`. Run this when a draft gets a **keep** verdict in [the playtest log](playtest-log.md). Written so the `ship` skill can execute it without follow-up questions.
 
 Work through the phases in order — each builds on the previous.
 
@@ -47,7 +47,7 @@ Work through the phases in order — each builds on the previous.
 
 ## Phase 6 — Verify & ship
 
-- [ ] Full manual pass in browser via `npx serve .`: start → play → game over → restart; settings open/close pauses; token spend/earn visible; zero console errors.
+- [ ] Full manual pass in browser via `npx serve .`: start → play → game over → restart; settings open/close pauses; zero console errors.
 - [ ] `node --test tests/` green, `node scripts/generate-context-docs.js --check` clean.
 - [ ] `node scripts/bump-version.js`, commit (`feat: promote <slug> from drafts to arcade`), push, watch the Pages deploy, confirm the live URL serves the game.
-- [ ] Vault close-loop: Dev Log entry; move/annotate the playtest-log line that triggered the promotion.
+- [ ] Docs close-loop: `docs/games/<slug>/README.md` updated to production status; the playtest-log line that triggered the promotion annotated.

@@ -10,7 +10,7 @@
 2. **Is the sun-clock the right run structure?** Perfect landings extend daylight (+3s, +5s in fever), so a skilled run stretches well past the 78s baseline — does that create "one more run", or does the timer feel like pressure the flow doesn't want? Note: a highly skilled player can currently sustain daylight indefinitely — is that a feature (mastery) or does it need a hard ramp?
 3. **Does the spectacle earn the "looks cool" brief?** Day→sunset→night sky, fever rainbow trail, banded hills, parallax — is the beauty actually motivating (the design bet: the sky IS the reward), and does it read at phone size in daylight?
 
-## Verdict line for the vault log
+## Verdict line for `docs/playtest-log.md`
 
 ```
 YYYY-MM-DD — flow-glider (draft) — keep|meh|kill — <why>
