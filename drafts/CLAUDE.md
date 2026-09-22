@@ -1,6 +1,6 @@
 # drafts/ — The Lab (Prototypes & WIP)
 
-Game prototypes from `/new-game` jam sessions, plus non-game experiments. Nothing here is production. Prototypes are single-file (`<slug>/index.html`, inline CSS+JS), have no tests/token hooks/settings.js integration, and graduate to `games/` only after a **keep** verdict in the vault's Kameko Playtest Log — see `docs/promotion-checklist.md` for what promotion requires.
+Game prototypes from `new-game` jam sessions, plus non-game experiments. Nothing here is production. Prototypes are single-file (`<slug>/index.html`, inline CSS+JS), have no tests or settings.js integration, and graduate to `games/` only after a **keep** verdict in `docs/playtest-log.md` — see `docs/promotion-checklist.md` for what promotion requires. Each prototype's design notes live in `docs/games/<slug>/`.
 
 ## Files
 

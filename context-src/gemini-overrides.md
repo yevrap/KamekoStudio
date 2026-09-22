@@ -10,22 +10,9 @@ top-level `CLAUDE.md`). See `scripts/generate-context-docs.js`.
 GEMINI.md           — This file
 
 <!-- OVERRIDE:root:ai-workflow-tool-section -->
-### Workflow
+### Antigravity / Gemini notes
 
-When starting a session:
-1. Read `docs/roadmap.md` to understand current priorities.
-2. Read relevant game files before proposing any changes.
-3. Present a plan (max 7 bullet points) and wait for Yevster's explicit approval before writing code.
-4. After implementation, run `node --test tests/` and confirm all tests pass.
-5. Commit with a clear message (`feat:`, `fix:`, `refactor:`, `chore:`, etc.) and push to main.
-6. Mark the roadmap item complete and note the date.
-
-### Claude Code Skills
-
-Claude Code users have three additional slash commands in `.claude/commands/`:
-- **`/triage`** — presents a prioritized menu from `docs/roadmap.md` for Yevster to choose from
-- **`/improve`** — read-only quality scan across the codebase
-- **`/ship [item-id]`** — fully autonomous: pick item → plan → implement → test → commit → push → mark complete
+Antigravity discovers the same skills through the `.agents/skills` symlink (→ `.claude/skills`). When a skill isn't auto-discovered, read its `SKILL.md` and follow it — "ship p1-22" means follow `.claude/skills/ship/SKILL.md`. The working agreements and the definition of done are the same for every agent.
 
 <!-- OVERRIDE:root:games-file-ref -->
 `games/GEMINI.md`

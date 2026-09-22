@@ -2,21 +2,25 @@
 # Kameko Studio — Claude Context
 <!-- /GEMINI-OVERRIDE -->
 
-## Vault Context
+## Where Things Live
 
-Product planning, backlogs, and design decisions live in the Obsidian vault:
-- **Vault:** `~/Library/Mobile Documents/iCloud~md~obsidian/Documents/Optimistic Staircase/`
-- **Project notes:** `30-39 Indy App Dev/31 Kameko Arcade/`
-- **Development Index:** `30-39 Indy App Dev/Development Index.md`
-- **Active roadmap:** `docs/roadmap.md` (this repo — the vault links here)
+This repository is the whole studio — code, planning, decisions and the agent workflows — built in public. Nothing depends on files outside it, and everything committed is public and permanent (see *Public repo* under Working agreements).
 
-Read the vault notes for product context. Keep this file technical-only.
+| What | Where |
+|---|---|
+| What's next | `docs/roadmap.md` — open items by tier; shipped history in `docs/archive/roadmap-history.md` |
+| Decisions waiting on Yevster | `docs/questionnaires/` — one file per open decision; consumed ones move to `docs/archive/questionnaires/` |
+| Playtest verdicts | `docs/playtest-log.md` — newest first; the strongest steering input |
+| Per-game design | `docs/games/<slug>/` — `README.md` (what it is, decisions and why), `ideas.md` (idea inbox), `plans/` (build plans) |
+| Studio-wide direction | `docs/brief.md` (taste brief), `docs/mission.md`, `docs/planning/` |
+| Shadow Studio | `studio/` (the realm), `docs/studio/` (its handbook), `docs/studio/steering/` (board, handoff, inbox, open questions) |
+| Agent workflows | `.claude/skills/` — see *Skills* under AI Workflow |
 
 ## What This Project Is
 
 Kameko Studio is a one-person web game studio. All games are mobile-first progressive web apps built with vanilla HTML, CSS, and JavaScript — no frameworks, no backend, no build step. Everything is static files deployed on GitHub Pages at https://yevrap.github.io/KamekoStudio/.
 
-The studio is a solo creative project with serious engineering habits: version control, clean code, documented decisions. Pace is roughly one hour per day.
+The studio is a solo creative project with serious engineering habits: version control, clean code, documented decisions. Pace is roughly one hour per day. The games are made for Yevster's own play; nothing is aimed at children.
 
 See `docs/mission.md` for the full studio philosophy.
 
@@ -47,8 +51,10 @@ tests/
 CLAUDE.md           — This file
 <!-- /GEMINI-OVERRIDE -->
 README.md           — GitHub Pages URL
-docs/               — Design docs and studio notes
-  mission.md        — Studio philosophy and principles
+.claude/skills/     — Agent workflows: ship, fix, triage, refine, improve, new-game, studio-*
+.agents/skills      — Symlink to .claude/skills (Antigravity discovers skills here)
+docs/               — Planning, decisions and design docs (see docs/CLAUDE.md and "Where Things Live")
+studio/             — Shadow Studio's experimental realm (handbook: docs/studio/)
 drafts/             — WIP files not yet in production (see drafts/CLAUDE.md)
   arcadeHome.html   — Alternate arcade home, not yet linked
 games/              — One subdirectory per game (see games/CLAUDE.md)
@@ -260,13 +266,14 @@ Pure utility functions in `shared/utils.js`, and pure game-logic modules in `gam
 - `games/durak/` (`durak.test.mjs`): constants, state, gameplay rules, AI logic (`_test_aiTurn`)
 - `games/durak-alchemist/` (`durak-alchemist.test.mjs`): `gridLogic.js`, `combatLogic.js`, `constants.js`
 - `games/tysiacha/` (`tysiacha.test.mjs`): `constants.js`, `state.js`, `gameplay.js`
+- Repo hygiene (`repo-hygiene.test.mjs`): every tracked markdown file outside `node_modules/` is scanned with the studio's `scanHygiene` patterns — secrets, emails, phone numbers, street addresses, absolute personal paths, cloud-drive paths, note-vault wikilinks. A finding fails `npm test`; a line that must quote a pattern carries the `studio-check:allow` pragma.
 
 Browser-side logic (game loops, DOM state, T9 input state machine) is not unit-tested — verify by running the game in a browser.
 
 ## Development Notes
 
 - Each game is self-contained in its own directory — editing one never affects others
-- When adding a new game: create `games/<name>/` with `index.html`, `style.css`, and ES module files (`main.js` + supporting modules per <!-- GEMINI-OVERRIDE:games-file-ref -->`games/CLAUDE.md`<!-- /GEMINI-OVERRIDE -->); add a card to `index.html` and a portal link to `3d.html`; use `href="games/<name>/"` (trailing slash — see below); include `shared/utils.js` (if needed) + `settings.js`; add token gate + `lastPlayed` write; add `settingsOpened`/`settingsClosed` pause/resume listeners
+- When adding a new game: create `games/<name>/` with `index.html`, `style.css`, and ES module files (`main.js` + supporting modules per <!-- GEMINI-OVERRIDE:games-file-ref -->`games/CLAUDE.md`<!-- /GEMINI-OVERRIDE -->); add a card to `index.html` and a portal link to `3d.html`; use `href="games/<name>/"` (trailing slash — see below); include `shared/utils.js` (if needed) + `settings.js`; add the `lastPlayed` write; add `settingsOpened`/`settingsClosed` pause/resume listeners
 - **Game link trailing slash** — links to games in `index.html` and `3d.html` must use `href="games/<name>/"` with a trailing slash, **not** `href="games/<name>/index.html"`. `npx serve` redirects `foo/index.html` → `foo/index` → `foo` (strips extension then `index`), landing without a trailing slash. At that URL the browser treats `<name>` as a filename, so relative assets (`style.css`, `main.js`) resolve from the wrong directory and 404. Trailing slash avoids the redirect entirely.
 - Inline `//` comments inside single-line JS functions comment out everything after them including closing braces — avoid this pattern; it causes silent syntax errors
 - Game state in materials-run uses a `gameState` string: `'menu'`, `'playing'`, `'gameover'`, `'won'`
@@ -275,11 +282,11 @@ Browser-side logic (game loops, DOM state, T9 input state machine) is not unit-t
 
 ## AI Workflow
 
-Kameko Studio uses AI agents (Claude Code, Antigravity/Gemini) as development partners. Yevster acts as engineering director: picks what to build, approves plans, and reviews results. Agents implement and ship.
+Kameko Studio is built by AI agents (Claude Code, Antigravity/Gemini) with Yevster as engineering director: he sets direction, answers questionnaires, gives playtest verdicts and reviews results. Agents plan, implement, test, ship and keep the docs current. The workflow is hands-off by design — agents carry work end to end rather than waiting in chat.
 
 ### Roadmap
 
-The source of truth for priorities is `docs/roadmap.md`. It has four tiers (P0–P3) plus a Backlog. Items have IDs (e.g. `p1-01`), effort estimates (S/M/L), and a status field (`open`, `🚧 in progress`, `✅`). Update status and mark complete when work ships.
+The source of truth for priorities is `docs/roadmap.md`. It has four tiers (P0–P3) plus a Backlog. Items have IDs (e.g. `p1-01`), effort estimates (S/M/L), and a status field (`open`, `🚧 in progress`, `✅`). Shipped rows move to `docs/archive/roadmap-history.md` when the tables get long.
 
 **The roadmap is agent-authored and can be stale.** It is not derived from the code — it's a snapshot someone (human or agent) wrote down, and it drifts whenever work ships without a matching roadmap edit (e.g. a feature lands as a side effect of an unrelated redesign commit). Do not treat an item's `open` status as proof the work doesn't exist yet. This has already happened once: `p1-01` (Durak card animations) sat marked `open` for months after it fully shipped in commit `b663dfa`, because the roadmap was generated fresh without cross-checking existing code and docs. Before planning or implementing *any* roadmap item, verify it against the current codebase first — see "Verification discipline" below.
 
@@ -287,21 +294,38 @@ The source of truth for priorities is `docs/roadmap.md`. It has four tiers (P0�
 
 Agents do not have a human's time pressure and can afford to double-check before acting — an extra grep or file read is nearly free, while implementing something that already exists (or duplicating/conflicting with it) burns a full plan → implement → test cycle and erodes trust in the roadmap itself. Default to more verification, not less speed:
 - Before implementing a roadmap item, grep the relevant files for the behavior it describes and read that game's row in `games/CLAUDE.md` — it documents shipped subsystems in real detail and often already answers whether the item is done.
-- Before *adding* a new item to the roadmap (via `/improve` or otherwise), do the same check in the other direction: confirm the gap is real in the code, not just plausible from a title or a skim.
+- Before *adding* a new item to the roadmap (via the `improve` or `refine` skill, or otherwise), do the same check in the other direction: confirm the gap is real in the code, not just plausible from a title or a skim.
 - If an item turns out to be already done, don't implement anything — mark it `✅` with a note explaining what already covers it and point to the commit if you can find it, then stop and report rather than proceeding on autopilot.
 
+### Working agreements
+
+- **Autonomy.** A well-specified item — clear scope and a verifiable outcome, or an unambiguous small fix — ships end to end without pausing for plan approval. Stop and report only when two reasonable implementations would differ in product behavior (write a questionnaire instead of guessing), an action is destructive or hard to reverse (history rewrite, force push, dropping players' saved data), something touches accounts, money or paid services, or tests can only go green by changing what they assert.
+- **Done means shipped.** Tests green → version bumped → committed → pushed → the Pages deploy succeeded → the live URL serves the change → the docs are updated. Pushed is not shipped.
+- **Docs are part of done.** Every ship marks its roadmap row `✅` with the date. A ship that adds or changes a product surface (a game, mode, mechanic, ruleset) also updates `docs/games/<slug>/README.md` (what it is, decisions and why, cut scope), puts cut or discovered ideas in that game's `ideas.md`, and turns each open judgment call into a questionnaire in `docs/questionnaires/`. A fresh agent reading only `docs/` should know what exists, why it's shaped that way, and what's waiting on a decision.
+- **Direction arrives in chat; record it in the repo.** When Yevster gives a verdict, answers a question or drops an idea, write it into the right file — verdicts to `docs/playtest-log.md`, answers into the questionnaire, ideas into `docs/games/<slug>/ideas.md` or `docs/planning/ideas.md` — and commit it with the work it drives. Nothing that matters lives only in chat or in one tool's private memory.
+- **Questionnaires over chat back-and-forth.** When a product decision needs Yevster, write the options into `docs/questionnaires/<topic>.md` as checkboxes with a recommendation, and keep working on whatever doesn't depend on the answer.
+- **Jams.** A new game needs an original hook: games named in a brief are references for genre and feel, never blueprints. Split a concept's core mechanic from its secondary layers (meta-progression, a second mode) into separate playable iterations, each with its own verdict, and ask before bundling them.
+- **Bugs.** Reproduce before fixing. A "not reproducible" verdict must come from walking the exact screen or flow the report names, not the nearest analog.
+- **Planning ends with prompts.** A planning session that produces roadmap items ends with one ready-to-paste prompt per item, in ship order, each naming the item ID, the doc that holds its spec, and the skill to run.
+- **Multi-agent.** Claude and Gemini agents work the same flow: plain markdown, state in repo files, skills in one place. Products never get per-model personas or model-vs-model branding.
+- **Public repo.** Everything committed is public and permanent. Never commit personal or household details (family, health, money, employment), private file paths or note-vault syntax, secrets, or anyone's contact details. `npm test` runs a hygiene scan over the repo's markdown, but it can't recognize names — that part is on the author. Studio documents follow the stricter `docs/studio/public-repo-hygiene.md`.
+
+### Skills (`.claude/skills/`)
+
+| Skill | Say | What it does |
+|---|---|---|
+| `ship` | "ship p1-22", "ship the next thing" | A roadmap item end to end: verify it's real → plan → implement → test → commit → push → verify the deploy → update docs |
+| `fix` | "the drawer shows the wrong label", "log this bug" | Bug lane: capture a 🐞 row, or reproduce → root-cause → regression test → ship |
+| `triage` | "what should I work on" | Read-only briefing: open rows, decisions waiting, verdicts to act on; recommends and hands over prompts |
+| `refine` | "act on the maze warden answers", "plan a sprint for tysiacha" | Ideas, answers and verdicts → agent-shippable roadmap rows and questionnaires; ends with a prompt list |
+| `improve` | "quality scan" | Read-only codebase scan → ranked issue list |
+| `new-game` | "jam a new game" | Three original pitches → a single-file Lab prototype → deployed, documented, with a verdict questionnaire |
+| `studio-iteration` · `studio-standup` · `studio-promote` | "run a studio iteration" · "studio status" · "promote X" | Shadow Studio — see `docs/studio/` |
+
 <!-- GEMINI-OVERRIDE:ai-workflow-tool-section -->
-### Claude Code Skills (`.claude/commands/`)
+### Claude Code notes
 
-Three custom slash commands are available when using Claude Code:
-
-- **`/triage`** — Engineering director briefing. Reads `docs/roadmap.md`, groups open items by tier and effort, presents a numbered menu. Yevster picks an item; the agent reads relevant files, forms a plan, and waits for approval before writing code.
-- **`/improve`** — Read-only quality scan. Checks for structural debt (monoliths, dead code), test gaps, mobile pattern violations, and missing shared infrastructure hooks. Returns a ranked issue list with effort estimates. Makes no changes.
-- **`/ship [item-id]`** — Autonomous end-to-end workflow. Picks the top open roadmap item (or uses the provided ID), reads all relevant files, plans, waits for approval, implements, runs `node --test tests/`, commits, pushes to main (which deploys to GitHub Pages), and marks the item complete in `docs/roadmap.md`.
-
-### Workflow for Antigravity / Gemini
-
-The same `docs/roadmap.md` is the shared priority list. Use `GEMINI.md` as your context file. Follow the same plan-before-implement discipline: read the relevant files, present a plan, wait for Yevster's approval, then execute. Run `node --test tests/` before committing.
+Skills load automatically from `.claude/skills/` and can be invoked as `/ship`, `/triage` and so on. For a hand-off prompt, wrap it in `/goal …` naming the whole done checklist (tests green, pushed, deploy verified, docs updated) so the session doesn't stop at "implemented". For an item with a known architectural unknown, add a line telling it to stop and report rather than guess.
 <!-- /GEMINI-OVERRIDE -->
 
 ### Sync discipline: CLAUDE.md → GEMINI.md
