@@ -106,7 +106,11 @@ is testing and how its retrospective judges it.
   conventional subject naming a ticket — `fix(studio): SHS-NNN revert <short sha>` —
   because `commit-lint` reads every subject, and git's own `Revert "…"` fails it.
 - Conventional commits scoped `studio`, with the ticket ID:
-  `feat(studio): SHS-043 retire the SS- prefix`.
+  `feat(studio): SHS-043 retire the SS- prefix`. The scope is what makes a commit the
+  studio's: the arcade commits to the same `main`, and the checks lint and guard only
+  commits scoped `(studio)`, while refusing any other commit that touches a studio path.
+  How each kind is judged, and what that does not prove, is in
+  [guardrails.md](guardrails.md#studio-commits-and-arcade-commits).
 - One annotated tag per iteration, `studio-iteration-NN`, on the reviewed state.
 - The whole studio history filters with `git log --grep "(studio)"` or `git log -- studio/`.
 - Ticket numbers are one sequence. `SS-001` to `SS-042` keep the prefix they were issued

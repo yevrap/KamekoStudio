@@ -17,6 +17,31 @@ The studio may create or modify only these paths:
 Everything else is out of bounds. A change outside the list stops the run and asks,
 unless it is a **recorded exception** or a **production fix**, both below.
 
+### Studio commits and arcade commits
+
+The arcade ships on the same `main`, so every range the checks read holds both kinds of
+commit. `commitKind` in `tests/studio/lib/rules.mjs` sorts each one, and `commit-lint`,
+`path-guard` and `production-unchanged` all ask it:
+
+| Kind | How it is recognised | How it is judged |
+|---|---|---|
+| Studio | The subject's scope is `(studio)`, whatever the type or ticket | `commit-lint` requires `type(studio): SHS-NNN …`; the path guard judges every file it changed |
+| Arcade | Any other subject | Not linted, and free to change anything **except** `studio/**`, `docs/studio/**` and `tests/studio/**`: a studio path it changed is a violation |
+| Merge | More than one parent | Judged by what it changes against its first parent: only studio paths or only other paths is that kind, both at once is a violation. The commits it brings in are judged one by one as well |
+| Exempt | Its full hash is in `COMMIT_EXEMPTIONS`, with a reason | Neither linted nor guarded, and reported by both checks with its reason. Today: the executive's three 2026-09-22 commits (the migration, the E1 direction, ADR-0009) |
+
+Uncommitted changes count as studio work: the guard cannot tell whose they are.
+
+**What this proves, and what it does not.** The scope is a claim the author makes. The
+checks prove that a commit claiming to be the studio's stayed inside the studio's paths, and
+that a commit not claiming it stayed out of them, so dropping the scope moves a change from
+the lint to the path guard rather than past both. They do not prove who wrote a commit, and
+an arcade commit is free to change any production file: the arcade is not the studio's to
+guard. Two edges keep their earlier rules: a recorded exception still compares the whole
+file at the base with the file now, so an arcade edit to `package.json` in the same range
+shows up there; and a production fix is still refused when any commit in the range, arcade
+or studio, changed its file without naming its ticket.
+
 ### Recorded exceptions
 
 An exception is a path outside the list that the executive has explicitly approved, for a
