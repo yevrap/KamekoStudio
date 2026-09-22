@@ -15,7 +15,7 @@
 export const PULSE = {
   iteration: '04',
   shipped: '2026-09-21',
-  summary: 'In progress, and visible as it goes: the studio makes its first fix to a production game, under a written permission its own checks enforce, and every push is now checked before and after it lands.'
+  summary: 'The studio made its first fix to a production game — Black Hole in One no longer throws when you enter Explore — under a written permission, with the fix reviewed before it went out. Every push was checked before and after it landed.'
 };
 
 /**
@@ -27,8 +27,8 @@ export const PULSE = {
  * updating this line fails before it reaches the page.
  */
 export const LEARNED = {
-  iteration: '03',
-  line: 'A check that can say "fixed" has to test the defect itself and prove its own precondition first. Ours was fooled twice by partial fixes: once by testing only the route it was built from, once by testing in the very state those fixes keyed off.'
+  iteration: '04',
+  line: 'A check that reads only what the checked party writes proves consistency, not legitimacy. Ours proved a production fix was planned and recorded; only a review before the push could say it was right — and that review is now required, against the exact commit.'
 };
 
 /**

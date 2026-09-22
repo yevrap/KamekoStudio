@@ -199,3 +199,41 @@ that are really decisions go to `decisions/` instead.
   between two on the same one.** In iteration 02, two passes on the author's model found
   the same defects — corroboration, or a shared blind spot. In round 2 here the reviewer, on
   a different model, and QA, on the author's, found the same defect independently.
+
+## Iteration 04
+
+- **A check that reads only what the checked party writes proves consistency, not
+  legitimacy.** The production-fix guard reads an entry, a ticket file and commit subjects.
+  The studio writes all three, and the guard's own rules besides. A fabricated fix that
+  agrees with itself passes. The guard is still worth having, because it catches a
+  production write nobody planned. But a check has to say which of the two it proves, and
+  the control for the other lives elsewhere: here, an independent review before the push.
+- **Where the thing matters, compare content, not the shape of history.** Three checks in a
+  row were defeated by history that looked right while the content was wrong:
+  - excluding merges hid a change made in a merge;
+  - git's history simplification hid a merge that took a file from its side parent;
+  - "every commit is an ancestor of the reviewed one" missed a file put back to the
+    release after its review.
+
+  "Is every file exactly what the reviewers saw?" has none of those holes.
+- **A comparison of nothing must never pass, anywhere.** Closing TD-011 in one check left
+  the same shape in four others: an empty commit range, a missing marker, a marker the old
+  build already had, a stage that ran nothing, a release compared with itself. The rule is
+  about any two things being compared: if they are the same thing, or nothing, the answer
+  is *not run*.
+- **A trial finds the exceptions a plan did not.** Trunk-based work put the first
+  production fix live before review. For studio pages that was an accepted cost; for a
+  production game it was the wrong order. The exception — production fixes wait for
+  review — came from running the trial, not from designing it.
+- **Two reviewers on different models found different kinds of thing.** The reviewer on the
+  other model found that the guard proves nothing about legitimacy. The reviewer on the
+  author's model found the merge, release, empty-range and stale-marker holes. Neither
+  found the other's.
+- **A mutation that survives can mean the test cannot reach the rule.** The review check's
+  history test used a commit that exists nowhere, which a different rule refuses first.
+  Removing the history check changed nothing until the test used a real commit on another
+  branch.
+- **Copy a marker from the diff, and a count from a command.** A marker typed from memory
+  wrapped across two lines in the source and was found nowhere. A push count typed from
+  memory was a different number that happened to be on screen.
+

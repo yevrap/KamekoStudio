@@ -3,6 +3,66 @@
 All notable changes to Shadow Studio, one section per iteration. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are iteration tags.
 
+## [studio-iteration-04] — 2026-09-21
+
+The studio's first production fix, under a written permission its checks enforce, in the
+first trunk-based iteration: every finished ticket and every ceremony record was pushed and
+checked as it landed.
+
+### Added
+
+- **Production fixes, under the full process** — ADR-0008. The studio may fix production
+  files as tickets. The path guard admits a production file only when all of these hold:
+  - an entry in `PRODUCTION_FIXES` names it for the iteration being checked;
+  - the ticket has a file in that iteration;
+  - every commit that changed the file names that ticket, a merge that changed it
+    included.
+
+  A deletion, or a change after the iteration's tag, is refused. A merge that takes a file
+  from one of its parents is not seen by this guard (TD-013); the review check refuses
+  it. The guard proves a write
+  was planned and recorded; ADR-0008 says plainly that it cannot prove the plan was
+  legitimate.
+- **A production fix is reviewed before it is pushed** — SHS-054, opened by review.
+  `production-fix-reviewed`, in `push` and `gate`, refuses a production fix unless
+  `iterations/NN/reviews/<TICKET>.md` names a reviewed commit and an approving verdict, and
+  every file the fix owns is, at `HEAD`, exactly what that commit holds. It is decided
+  from content, and measured from the previous release. It makes the review impossible to
+  forget, not impossible to fake.
+- **A `push` stage** — the gate's checks short of the two review checks, plus `on-main`
+  and `no-stop-file`, run before every push.
+- **`--marker-at`** — `studio-live` can prove a build is served at any path on the site,
+  a production script included.
+
+### Changed
+
+- **Trunk-based development, as a trial** (ADR-0007): commits to `main`, each ticket and
+  each ceremony record pushed and deploy-checked when it lands.
+- **`--base` and `--previous-tag` default to the previous release**, the newest iteration
+  tag that is not `HEAD`.
+- **`gate`, `push` and `postdeploy` are conclusive**: a check they could not run fails
+  them.
+- **The iteration is the newest one git tracks**, not the newest directory on disk.
+
+### Fixed
+
+- **Black Hole in One: entering Explore with spiral particles alive threw on every frame
+  for about a second** (TD-009, SHS-052). The studio's first production fix, one line in
+  `stepParticles`. Three regression tests in `scripts/e2e.mjs`, each in its own browser
+  profile and each proving its precondition. They failed on the unfixed file and pass on
+  the fixed one, and they refuse partial and over-broad fixes.
+- **`studio-live` never waited for the new build** (TD-010). It searches afresh on every
+  attempt.
+- **`production-unchanged` compared a tagged release with itself** (TD-011). No check now
+  passes on a comparison of no commits, a marker the last release already had, or a stage
+  that verified nothing.
+- **A `--marker` containing `=` was silently cut short.**
+
+### Removed
+
+- `tests/studio/diagnostics/td-009.mjs`, retired once its checks lived in production's
+  suite.
+
 ## [studio-iteration-03] — 2026-09-21
 
 A maintenance iteration: the ticket prefix is retired, a production defect is diagnosed
