@@ -30,3 +30,17 @@ is committed.
   the migration moved the steering views, so the reverse rule caught it too). 17 new
   tests, six red first; 300 of 300; the real history since `studio-iteration-04` passes
   both checks. *Next:* build SHS-056. *Blocked:* nothing.
+
+## Session 3 — build SHS-056 (2026-09-22)
+
+- **Front-end / Gameplay Dev** — *Done:* SHS-056. River Run is forked into
+  `studio/games/river-run/` from `082943a`. Its saves are `studio_riverRun_*`, its theme
+  comes from the body class, and its Watch Mode prefix is `studio_riverRun`. Every
+  difference is listed in `tests/studio/lib/river-run-fork.mjs` and proved byte for byte.
+  The first boot showed that production River Run fails the studio page contract in four
+  places, so the fork carries four more listed edits: a back link, a 44px mute button, a
+  noscript message, and guarded storage. A headless run leaves every production key as it
+  was. The fork is live and on the shelf. *Next:* build SHS-057. *Blocked:* nothing.
+- **Scrum Master** — *Done:* preflight was red on an untracked `.obsidian/` (editor
+  config, not the team's). It is excluded locally in `.git/info/exclude`, and no
+  repository file changed. *Next:* SHS-057. *Blocked:* nothing.
