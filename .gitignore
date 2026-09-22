@@ -3,6 +3,18 @@
 .AppleDouble
 .LSOverride
 ._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor backups & swap files
+*~
+*.swp
+*.swo
 
 # JetBrains IDEs (IntelliJ, WebStorm, etc.)
 .idea/
@@ -10,16 +22,48 @@
 # VS Code
 .vscode/
 
-# Claude Code — track project settings and commands; ignore only personal/local settings
-.claude/settings.local.json
+# Obsidian — workspace state, window layouts, caches, and local plugins
+.obsidian/
+**/.obsidian/
+*.sync-conflict-*
 
-# Antigravity / Google AI tools — track project context; ignore only local/personal files
+# Claude Code — track project settings, commands, and skills; ignore runtime/local state
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/scheduled_tasks.json
+.claude/routines/.state/
+.claude/worktrees/
+.claude/checkpoints/
+.claude/mailbox/
+.claude/agent-registry.json
+.claude/agent-memory-local*
+.claude/first-run
+.claude/assistant-daemon-state.json
+
+# Antigravity / Google AI tools — track project context; ignore local/personal files
 .antigravity/local/
 .gemini/local/
+.agents/local/
 
-# Node (if ever added)
+# Node & Package Managers
 node_modules/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-debug.log*
 
-# Logs
+# Environment & local secrets/overrides
+.env
+.env.local
+.env.*.local
+*.local
+
+# Test & coverage artifacts
+coverage/
+.nyc_output/
+
+# Logs & temp files
 *.log
+*.tmp
+tmp/
