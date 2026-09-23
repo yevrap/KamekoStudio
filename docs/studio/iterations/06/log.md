@@ -39,3 +39,13 @@ is committed.
   as the record. Four browser subtests, each shown red by a mutation. `--stage=push` 11/11,
   live at `/studio/games/river-run/`. Found the top controls covering the score on a phone
   (pre-existing, backlog #35). *Next:* build [SHS-061](tickets/SHS-061-river-run-tone-start-time.md). *Blocked:* nothing.
+
+## Session 4 — build [SHS-061](tickets/SHS-061-river-run-tone-start-time.md) (2026-09-22)
+
+- **Audio / Juice** — *Done:* [SHS-061](tickets/SHS-061-river-run-tone-start-time.md). Reproduced with a stack before fixing: the
+  throw was `musicSequence.stop()` against a stopped Transport, not a start time, and it
+  aborted `initGame` before the game loop, so a restart could freeze the river. The fork
+  disposes the old sequence instead and guards the music restart. The exemption is gone,
+  TD-014 closed, and a 20-restart browser test was red, then green three runs in a row.
+  `--stage=push` 11/11, live at `/studio/games/river-run/`. Backlog #33 (production's twin)
+  now names the freeze. *Next:* review. *Blocked:* nothing.
