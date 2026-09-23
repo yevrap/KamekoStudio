@@ -144,7 +144,7 @@ These apply from sprint 05 on. The process parts are in the handbook (`process.m
 
 | To | Do this |
 |---|---|
-| Run it and watch | "run the studio" (the `studio-sprint` workflow, to the end of the sprint; watch in `/workflows`), optionally "… with focus: <X>" or "… for 2 sprints"; or `studio next` for a single step in a new session |
+| Run it and watch | "run the studio", in Claude Code (the `studio-sprint` workflow, to the end of the sprint; watch in `/workflows`) or Antigravity (the `studio-sprint` skill, step by step in the chat), optionally "… with focus: <X>" or "… for 2 sprints"; or `studio next` for a single step in a new session |
 | Stop it | Stop the workflow in `/workflows`, or "stop the studio" (a `STOP` file: it ends after the current step) |
 | Ask for a feature, a game, a fix | "studio request: <X>" (files a `studio` issue), or open one on GitHub with a `priority:` label; it becomes a backlog row at the next plan |
 | Point the next sprint at something | `studio next — focus: <X>`, or move rows in the [Backlog](backlog.md) |

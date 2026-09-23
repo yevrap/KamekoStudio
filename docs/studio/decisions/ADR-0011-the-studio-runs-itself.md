@@ -51,6 +51,13 @@ with a focus). It:
 - stops early when a step fails, makes no progress, or writes a `**Next:**` line that isn't
   a step (a hard stop, below).
 
+**In Antigravity** (or any tool that reads `.agents/skills/`, which links to
+`.claude/skills/`), "run the studio" loads the `studio-sprint` skill, and the agent conducts
+the same sprint itself: a subagent per step and per reviewer where the tool can start one,
+the same prompts (`references/prompts.md`, mirrored in the workflow script), the same stop
+rules. Antigravity has deprecated its own markdown workflows in favour of skills, so the
+skill is the shared entry point. Only one tool runs the studio in a checkout at a time.
+
 The executive stops it from `/workflows`, or by saying "stop the studio", which creates a
 `STOP` file so it ends after the current step. Permission prompts reach the executive, who
 is present. `studio next` in a fresh session still runs a single step by hand.
