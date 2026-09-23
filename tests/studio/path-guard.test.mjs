@@ -15,6 +15,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { textAt, pathGuard, productionUnchanged } from './checks/path-guard.mjs';
 import { commitLint } from './checks/commit-lint.mjs';
+import { hygiene } from './checks/hygiene.mjs';
 import { scratchRepo } from './lib/scratch-repo.mjs';
 import { refExists } from './lib/shell.mjs';
 
@@ -147,4 +148,107 @@ test('commit-lint does not call a range with no studio commit a pass', t => {
   const lint = commitLint.run(ctx);
   assert.equal(lint.status, 'skip');
   assert.match(lint.detail, /no studio commits since studio-iteration-04, so nothing was linted; 1 arcade commit\(s\) not linted/);
+});
+
+// --- The studio's own skills and conductor (ADR-0011 §6, SHS-065) --------------
+//
+// A retro changes how the team works in the files that run the work: the
+// studio's skills and the Claude Code conductor. The path guard admits them in
+// a ticketed studio commit, names the exception every time, and still refuses
+// the files §6 keeps the executive's.
+
+const WORKFLOW_FILES = [
+  '.claude/skills/studio-sprint/SKILL.md',
+  '.claude/skills/studio-iteration/SKILL.md',
+  '.claude/workflows/studio-sprint.js'
+];
+
+test('a ticketed studio commit may change the studio\'s skills and conductor, and the report names the exception', async t => {
+  const { r, ctx } = sharedMain(t);
+  r.commit('docs(studio): SHS-065 the retro changes how the team works', [...WORKFLOW_FILES, 'docs/studio/process.md']);
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'pass', guard.detail);
+  for (const file of WORKFLOW_FILES) {
+    assert.match(guard.detail, new RegExp(`exception used: ${file.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')} — .*ADR-0011 §6`));
+  }
+  const deployed = await productionUnchanged.run(ctx);
+  assert.equal(deployed.status, 'pass', deployed.detail);
+  assert.match(deployed.detail, /the 3 admitted below/);
+});
+
+test('an uncommitted change to a studio skill is admitted at the ticket stage, and says it is uncommitted', async t => {
+  const { r, ctx } = sharedMain(t);
+  r.commit('docs(studio): SHS-065 start', ['docs/studio/a.md']);
+  r.write('.claude/skills/studio-iteration/SKILL.md', 'edited');
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'pass', guard.detail);
+  assert.match(guard.detail, /exception used: \.claude\/skills\/studio-iteration\/SKILL\.md — .*ADR-0011 §6.*uncommitted/);
+});
+
+test('the same change in an unticketed (studio) commit is a violation', async t => {
+  const { r, ctx } = sharedMain(t);
+  const sha = r.commit('docs(studio): tidy the conductor', ['.claude/workflows/studio-sprint.js']);
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'fail');
+  assert.match(guard.detail, new RegExp(`\\.claude/workflows/studio-sprint\\.js \\(changed by studio commit ${sha.slice(0, 7)}, which names no ticket`));
+  assert.doesNotMatch(guard.detail, /exception used/);
+  assert.equal((await productionUnchanged.run(ctx)).status, 'fail');
+});
+
+test('a studio commit that names a ticket outside the conventional subject is still unticketed for the exception', async t => {
+  const { r, ctx } = sharedMain(t);
+  r.commit('fix: SHS-065 tidy the skill', ['.claude/skills/studio-sprint/SKILL.md']);
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'fail');
+  assert.match(guard.detail, /\.claude\/skills\/studio-sprint\/SKILL\.md \(changed by studio commit .{7}, which names no ticket/);
+});
+
+test('an arcade commit to the studio\'s skills is judged by the arcade\'s rules, not waved through by the exception', async t => {
+  const { r, ctx } = sharedMain(t);
+  r.commit('chore: the arcade edits the studio skills', WORKFLOW_FILES);
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'pass', guard.detail);
+  assert.match(guard.detail, /commits: 0 studio, 1 arcade/);
+  assert.doesNotMatch(guard.detail, /exception used/);
+  // And the exception lends it nothing: the studio path beside it is still refused.
+  r.commit('chore: and the handbook too', ['.claude/skills/studio-sprint/SKILL.md', 'docs/studio/process.md']);
+  const mixed = await pathGuard.run(ctx);
+  assert.equal(mixed.status, 'fail');
+  assert.match(mixed.detail, /docs\/studio\/process\.md \(changed by arcade commit/);
+  assert.doesNotMatch(mixed.detail, /SKILL\.md/);
+});
+
+test('a studio commit to the arcade\'s skills, CI or ADR-0011 is a violation, each one named', async t => {
+  const { r, ctx } = sharedMain(t);
+  const adr = 'docs/studio/decisions/ADR-0011-the-studio-runs-itself.md';
+  r.commit('docs(studio): SHS-065 reaches past section 6', ['.claude/skills/ship/SKILL.md', '.github/workflows/checks.yml', adr]);
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'fail');
+  assert.match(guard.detail, /\.claude\/skills\/ship\/SKILL\.md/);
+  assert.match(guard.detail, /\.github\/workflows\/checks\.yml/);
+  assert.match(guard.detail, /ADR-0011-the-studio-runs-itself\.md \(executive-only: /);
+  assert.doesNotMatch(guard.detail, /exception used/);
+  assert.equal((await productionUnchanged.run(ctx)).status, 'fail');
+});
+
+test('an uncommitted edit to ADR-0011 is a violation too', async t => {
+  const { r, ctx } = sharedMain(t);
+  r.commit('docs(studio): SHS-065 start', ['docs/studio/a.md']);
+  r.write('docs/studio/decisions/ADR-0011-the-studio-runs-itself.md', 'rewritten');
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'fail');
+  assert.match(guard.detail, /ADR-0011-the-studio-runs-itself\.md \(executive-only: /);
+});
+
+test('hygiene scans the studio\'s skills and conductor, and not the arcade\'s skills', async t => {
+  const { r } = sharedMain(t);
+  const leak = ['/Us', 'ers/someone/notes'].join('');  // built here, so this file stays clean
+  r.write('.claude/skills/studio-sprint/references/prompts.md', `see ${leak}\n`);
+  r.write('.claude/workflows/studio-sprint.js', `// ${leak}\n`);
+  r.write('.claude/skills/ship/SKILL.md', `see ${leak}\n`);
+  const result = await hygiene.run({ root: r.root, studioRoots: [], iteration: '07', productionFixes: [] });
+  assert.equal(result.status, 'fail');
+  assert.match(result.detail, /\.claude\/skills\/studio-sprint\/references\/prompts\.md:1: absolute personal path/);
+  assert.match(result.detail, /\.claude\/workflows\/studio-sprint\.js:1: absolute personal path/);
+  assert.doesNotMatch(result.detail, /ship\/SKILL\.md/);
 });

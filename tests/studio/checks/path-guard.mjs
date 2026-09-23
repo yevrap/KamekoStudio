@@ -7,7 +7,7 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { git, gitRaw, attempt, gitPath, exists, commitsWithPaths, workingTreePaths, refExists, previousIterationTag, commitsSince } from '../lib/shell.mjs';
-import { classifyPaths, PATH_EXCEPTIONS, PRODUCTION_FIXES, productionFixProblem, productionFixEntryProblems, ticketFileId, sortCommitsByKind } from '../lib/rules.mjs';
+import { classifyPaths, PATH_EXCEPTIONS, WORKFLOW_EXCEPTION, PRODUCTION_FIXES, productionFixProblem, productionFixEntryProblems, ticketFileId, sortCommitsByKind } from '../lib/rules.mjs';
 
 /**
  * The paths the guard judges, from the commits in `base..HEAD` sorted by kind
@@ -87,7 +87,7 @@ async function evaluate(root, base, changes, { iteration, fixes = PRODUCTION_FIX
   if (entryProblems.length) {
     return { status: 'fail', detail: `malformed production-fix entries:\n  ${entryProblems.join('\n  ')}` };
   }
-  const { allowed, exceptions, fixes: fixed, violations } = classifyPaths(changes.paths, { iteration, fixes });
+  const { allowed, exceptions, workflow, fixes: fixed, violations } = classifyPaths(changes.paths, { iteration, fixes });
   violations.push(...changes.problems);
   const notes = [...changes.notes];
 
@@ -120,6 +120,16 @@ async function evaluate(root, base, changes, { iteration, fixes = PRODUCTION_FIX
     else notes.push(`exception used: ${p} — ${rule.reason}`);
   }
 
+  // The studio's skills and conductor (ADR-0011 §6): whether each commit that
+  // changed one named a ticket was decided in `sortCommitsByKind`; an uncommitted
+  // change is admitted and said to be uncommitted, since its subject is unwritten.
+  if (workflow.length) {
+    const dirty = new Set(workingTreePaths(root));
+    for (const p of workflow) {
+      notes.push(`exception used: ${p} — ${WORKFLOW_EXCEPTION.reason}${dirty.has(p) ? ', uncommitted: commit it under its ticket' : ''}`);
+    }
+  }
+
   if (violations.length) {
     return { status: 'fail', detail: `outside the guard:\n  ${violations.join('\n  ')}` };
   }
@@ -127,14 +137,14 @@ async function evaluate(root, base, changes, { iteration, fixes = PRODUCTION_FIX
   return {
     status: 'pass',
     detail: notes.length ? `${summary}\n  ${notes.join('\n  ')}` : summary,
-    admitted: exceptions.length + fixed.length
+    admitted: exceptions.length + workflow.length + fixed.length
   };
 }
 
 export const pathGuard = {
   id: 'path-guard',
   stages: ['ticket', 'gate', 'push'],
-  description: 'Every path a studio commit changed is inside the allowed list, a recorded exception, or a production fix its own ticket owns; no arcade commit changed a studio path',
+  description: 'Every path a studio commit changed is inside the allowed list, a recorded exception, the studio\'s own skills and conductor in a ticketed commit, or a production fix its own ticket owns; nothing executive-only changed; no arcade commit changed a studio path',
   async run(ctx) {
     // A base that does not resolve is a failure, not a skip: an unverifiable
     // guard at the ticket stage is exactly where a stray write would slip out.

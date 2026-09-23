@@ -11,7 +11,8 @@ import {
   lintCommitSubject, moduleImports, sameOriginAssets,
   LAST_SS_TICKET, ticketIdProblem, commitTicketId, lintCommit, LINT_WAIVERS,
   ticketFileProblems, ticketFileId, ticketsNamedByLog,
-  commitKind, sortCommitsByKind, COMMIT_EXEMPTIONS
+  commitKind, sortCommitsByKind, COMMIT_EXEMPTIONS,
+  isWorkflowPath, WORKFLOW_EXCEPTION, EXECUTIVE_ONLY_PATHS
 } from './lib/rules.mjs';
 
 test('path guard: studio-owned paths are allowed', () => {
@@ -441,6 +442,69 @@ test('sortCommitsByKind: an exempt commit is reported with its reason, never sil
   assert.deepEqual(r.studioPaths, []);
   assert.deepEqual(r.notes, [`exempt commit ${sha.slice(0, 7)}: ${reason}`]);
   assert.equal(r.counts.exempt, 1);
+});
+
+// --- The studio's own skills and conductor (ADR-0011 §6, SHS-065) --------------
+
+test('isWorkflowPath: the studio\'s skills and its conductor, and nothing beside them', () => {
+  for (const p of [
+    '.claude/skills/studio-sprint/SKILL.md',
+    '.claude/skills/studio-iteration/SKILL.md',
+    '.claude/skills/studio-sprint/references/prompts.md',
+    '.claude/skills/studio-request/SKILL.md',
+    '.claude/workflows/studio-sprint.js'
+  ]) assert.equal(isWorkflowPath(p), true, p);
+  for (const p of [
+    '.claude/skills/ship/SKILL.md',
+    '.claude/skills/studios/SKILL.md',
+    '.claude/skills/studio-/SKILL.md',
+    '.claude/skills/studio-sprint',
+    '.claude/skills/studio-x/../ship/SKILL.md',
+    '.claude/skills/studio-x/./SKILL.md',
+    '.claude/workflows/studio-sprint.js.bak',
+    '.claude/workflows/other.js',
+    '.claude/settings.json',
+    '.github/workflows/checks.yml',
+    'x/.claude/skills/studio-sprint/SKILL.md'
+  ]) assert.equal(isWorkflowPath(p), false, p);
+  assert.match(WORKFLOW_EXCEPTION.reason, /ADR-0011 §6/);
+});
+
+test('classifyPaths: the workflow files are an exception of their own; ADR-0011 is executive-only though under docs/studio/', () => {
+  const adr = 'docs/studio/decisions/ADR-0011-the-studio-runs-itself.md';
+  assert.ok(EXECUTIVE_ONLY_PATHS.some(e => e.path === adr));
+  const r = classifyPaths(['.claude/skills/studio-sprint/SKILL.md', '.claude/workflows/studio-sprint.js', '.claude/skills/ship/SKILL.md', '.github/workflows/checks.yml', adr, 'docs/studio/process.md']);
+  assert.deepEqual(r.workflow, ['.claude/skills/studio-sprint/SKILL.md', '.claude/workflows/studio-sprint.js']);
+  assert.deepEqual(r.allowed, ['docs/studio/process.md']);
+  assert.deepEqual(r.exceptions, []);
+  assert.deepEqual(r.violations.slice(0, 2), ['.claude/skills/ship/SKILL.md', '.github/workflows/checks.yml']);
+  assert.match(r.violations[2], /^docs\/studio\/decisions\/ADR-0011-the-studio-runs-itself\.md \(executive-only: /);
+  assert.equal(r.violations.length, 3);
+});
+
+test('sortCommitsByKind: a workflow file needs a ticketed studio commit; an arcade commit keeps the arcade\'s rules', () => {
+  const ticketed = sortCommitsByKind([C('docs(studio): SHS-065 retro change', ['.claude/skills/studio-sprint/SKILL.md'])]);
+  assert.deepEqual(ticketed.problems, []);
+  assert.deepEqual(ticketed.studioPaths, ['.claude/skills/studio-sprint/SKILL.md']);
+  for (const subject of ['docs(studio): tidy the skill', 'fix: SHS-065 tidy the skill']) {
+    const r = sortCommitsByKind([C(subject, ['.claude/workflows/studio-sprint.js', 'studio/a.js'])]);
+    assert.equal(r.problems.length, 1, subject);
+    assert.match(r.problems[0], /^\.claude\/workflows\/studio-sprint\.js \(changed by studio commit .{7}, which names no ticket: .*ADR-0011 §6/);
+    assert.deepEqual(r.studioPaths, ['studio/a.js']);
+  }
+  const arcade = sortCommitsByKind([C('chore: arcade edit', ['.claude/skills/studio-sprint/SKILL.md'])]);
+  assert.deepEqual(arcade.problems, []);
+  assert.deepEqual(arcade.studioPaths, []);
+});
+
+test('sortCommitsByKind: a merge of studio work that includes a workflow file is a studio merge, not a mixed one', () => {
+  const r = sortCommitsByKind([C('Merge studio/x', ['studio/a.js', '.claude/skills/studio-sprint/SKILL.md'], { parentCount: 2 })]);
+  assert.deepEqual(r.problems, []);
+  assert.deepEqual(r.studioPaths.sort(), ['.claude/skills/studio-sprint/SKILL.md', 'studio/a.js']);
+  const onlyWorkflow = sortCommitsByKind([C('Merge y', ['.claude/workflows/studio-sprint.js'], { parentCount: 2 })]);
+  assert.deepEqual(onlyWorkflow.studioPaths, []);
+  const mixed = sortCommitsByKind([C('Merge z', ['studio/a.js', '.claude/skills/studio-sprint/SKILL.md', 'games/x/a.js'], { parentCount: 2 })]);
+  assert.match(mixed.problems[0], /changes studio paths and other paths together \(2 and 1\)/);
 });
 
 // --- Every ticket a commit names has exactly one file ---------------------------

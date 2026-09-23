@@ -4,7 +4,7 @@
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
 import { walk, exists } from '../lib/shell.mjs';
-import { scanHygiene, PATH_EXCEPTIONS, PRODUCTION_FIXES } from '../lib/rules.mjs';
+import { scanHygiene, PATH_EXCEPTIONS, PRODUCTION_FIXES, isWorkflowPath } from '../lib/rules.mjs';
 
 const MAX_BYTES = 1024 * 1024;
 
@@ -34,6 +34,16 @@ export const hygiene = {
       ...PATH_EXCEPTIONS.map(e => e.path),
       ...(ctx.productionFixes ?? PRODUCTION_FIXES).filter(f => f.iteration === ctx.iteration).map(f => f.path)
     ];
+    // So are the studio's own skills and conductor, which its commits may now
+    // change (ADR-0011 §6, SHS-065).
+    const skills = path.join(ctx.root, '.claude/skills');
+    if (await exists(skills)) {
+      for (const name of await fs.readdir(skills)) {
+        if (!isWorkflowPath(`.claude/skills/${name}/x`)) continue;
+        for (const full of await walk(path.join(skills, name))) touched.push(path.relative(ctx.root, full));
+      }
+    }
+    touched.push('.claude/workflows/studio-sprint.js');
     for (const rel of new Set(touched)) {
       const full = path.join(ctx.root, rel);
       if (await exists(full)) files.push(full);

@@ -46,6 +46,41 @@ export const PATH_EXCEPTIONS = [
   }
 ];
 
+/**
+ * The studio's own workflow — its skills and the Claude Code conductor — which a
+ * retro must be able to change (direction rule 8). ADR-0011 §6 makes them a
+ * recorded exception (backlog #41, SHS-065), different in kind from the ones
+ * above: a whole family of files rather than one approved edit, admitted only
+ * in a **ticketed** studio commit (`sortCommitsByKind`), and reported as used
+ * every time. They are not studio paths: an arcade commit that changes them is
+ * the arcade's own work, judged by the arcade's rules and never reported here.
+ */
+export const WORKFLOW_EXCEPTION = {
+  reason: "the studio's own skills and conductor, in ticketed studio commits (ADR-0011 §6)"
+};
+
+/** Any file under a `.claude/skills/studio-` directory, or `.claude/workflows/studio-sprint.js`. */
+export function isWorkflowPath(p) {
+  const text = String(p ?? '');
+  if (text.split('/').some(seg => seg === '' || seg === '.' || seg === '..')) return false;
+  return /^\.claude\/skills\/studio-[^/]+\/./.test(text) || text === '.claude/workflows/studio-sprint.js';
+}
+
+/**
+ * Files inside the studio's own paths that ADR-0011 §6 keeps the executive's.
+ * A studio commit, or an uncommitted change, to one is a violation; the
+ * executive's own commits reach them through `COMMIT_EXEMPTIONS`.
+ *
+ * Only ADR-0011 itself is listed. The rest of what §6 keeps executive-only — the
+ * hard-stop list, the guard's allowed paths and exceptions, the storage and
+ * hygiene rules — lives in files the studio edits for other reasons (this one
+ * included), so no path rule can hold it; the independent review does
+ * (guardrails.md).
+ */
+export const EXECUTIVE_ONLY_PATHS = [
+  { path: 'docs/studio/decisions/ADR-0011-the-studio-runs-itself.md', reason: 'ADR-0011 itself, which its section 6 keeps the executive\'s' }
+];
+
 /** Every dotted key path at which two JSON values differ. */
 export function jsonDiffPaths(before, after, prefix = '') {
   const plain = v => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -331,21 +366,28 @@ export const PRODUCTION_FIXES = [
  *
  * @param {string[]} paths
  * @param {{ iteration?: string, fixes?: object[] }} [opts]
- * @returns {{allowed: string[], exceptions: string[], fixes: string[], violations: string[]}}
+ * A workflow path (ADR-0011 §6) is its own kind, `workflow`; a path in
+ * `EXECUTIVE_ONLY_PATHS` is a violation although it sits under `docs/studio/`.
+ *
+ * @returns {{allowed: string[], exceptions: string[], workflow: string[], fixes: string[], violations: string[]}}
  */
 export function classifyPaths(paths, { iteration, fixes = PRODUCTION_FIXES } = {}) {
   const allowed = [];
   const exceptions = [];
+  const workflow = [];
   const fixed = [];
   const violations = [];
   for (const p of paths) {
-    if (ALLOWED_PREFIXES.some(prefix => p.startsWith(prefix))) allowed.push(p);
+    const executive = EXECUTIVE_ONLY_PATHS.find(e => e.path === p);
+    if (executive) violations.push(`${p} (executive-only: ${executive.reason})`);
+    else if (ALLOWED_PREFIXES.some(prefix => p.startsWith(prefix))) allowed.push(p);
+    else if (isWorkflowPath(p)) workflow.push(p);
     else if (fixes.some(f => f.path === p && f.iteration === iteration)) fixed.push(p);
     else if (PATH_EXCEPTIONS.some(e => e.path === p)) exceptions.push(p);
     else if (fixes.some(f => f.path === p)) fixed.push(p);
     else violations.push(p);
   }
-  return { allowed, exceptions, fixes: fixed, violations };
+  return { allowed, exceptions, workflow, fixes: fixed, violations };
 }
 
 /**
@@ -825,17 +867,30 @@ export function sortCommitsByKind(commits) {
     if (kind === 'exempt') {
       notes.push(`exempt commit ${short}: ${reason}`);
     } else if (kind === 'studio') {
-      for (const p of paths) studioPaths.add(p);
+      // ADR-0011 §6: the studio's skills and conductor only in a ticketed commit.
+      const ticketed = commitTicketId(subject) !== null;
+      for (const p of paths) {
+        if (isWorkflowPath(p) && !ticketed) {
+          problems.push(`${p} (changed by studio commit ${short}, which names no ticket: ${WORKFLOW_EXCEPTION.reason})`);
+        } else {
+          studioPaths.add(p);
+        }
+      }
     } else if (kind === 'arcade') {
       for (const p of paths.filter(isStudioPath)) {
         problems.push(`${p} (changed by arcade commit ${short}, which is not scoped (studio) and names no studio ticket: only a studio commit may change the studio's paths)`);
       }
     } else {
+      // A workflow file (ADR-0011 §6) sides with the studio paths it arrives with,
+      // so merging a studio branch that changed a skill is a studio merge; the
+      // commits it brings in answer for their tickets one by one.
       const inside = paths.filter(isStudioPath);
-      if (inside.length && inside.length < paths.length) {
-        problems.push(`merge ${short} changes studio paths and other paths together (${inside.length} and ${paths.length - inside.length}), so neither kind can be assumed`);
-      } else {
-        for (const p of inside) studioPaths.add(p);
+      const workflow = paths.filter(isWorkflowPath);
+      const outside = paths.length - inside.length - workflow.length;
+      if (inside.length && outside) {
+        problems.push(`merge ${short} changes studio paths and other paths together (${inside.length + workflow.length} and ${outside}), so neither kind can be assumed`);
+      } else if (inside.length) {
+        for (const p of [...inside, ...workflow]) studioPaths.add(p);
       }
     }
   }

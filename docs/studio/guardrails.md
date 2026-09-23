@@ -15,7 +15,8 @@ The studio may create or modify only these paths:
 | `tests/studio/**` | Its tests and self-check runner |
 
 Everything else is out of bounds. A change outside the list stops the run and asks,
-unless it is a **recorded exception** or a **production fix**, both below.
+unless it is a **recorded exception** or a **production fix**, both below. One file inside
+the list is out of bounds too: ADR-0011, which its section 6 keeps the executive's.
 
 ### Studio commits and arcade commits
 
@@ -70,6 +71,20 @@ the check. The check reports an exception as *used*, never silently, and verifie
 | `package.json` | The single `"studio:check"` entry in `scripts`, with exactly the value `node tests/studio/check.mjs`. No other key, and no other value. | Iteration 00 brief, deliverable 4 |
 | `shared/3d/gameplay.js` | The `frontPositions` table in `createEnvironment()` — three front-wall positions, spread into `positions` and `rotations`. The scope is the table, not a particular set of coordinates: moving a position within it is inside the exception, a fourth position or any other statement is not. Nothing else in the file. | Iteration 01, as a production bug fix. ADR-0005 |
 | `shared/3d/constants.js` | The `url` of the `ARCADE_GAMES` entry named `"River Run Rapids"`, with exactly the value `studio/games/river-run/`. No other entry, no other value, nothing else in the file. The approved forks are listed in `STUDIO_FORK_PORTALS`. | Iteration 05, [SHS-057](iterations/05/tickets/SHS-057-portal-opens-fork.md). The E1 direction's done-when (*a 3D portal leads to a studio fork*) and Q4. ADR-0010 |
+| `.claude/skills/studio-*/**`, `.claude/workflows/studio-sprint.js` | The studio's own skills (the `studio-sprint` conductor and its `references/prompts.md` included) and the Claude Code conductor, so a retro can change how the team works in the files that run the work. Any content, but only in a **ticketed** studio commit (`type(studio): SHS-NNN …`); the same change in an unticketed `(studio)` commit is a violation. An arcade commit that changes them is the arcade's own work, judged by the arcade's rules, and not reported as this exception. `hygiene` scans every file in them. | Iteration 07, [SHS-065](iterations/07/tickets/SHS-065-studio-edits-its-own-workflow.md). **[ADR-0011](decisions/ADR-0011-the-studio-runs-itself.md) §6**, backlog #41 |
+
+**What ADR-0011 §6 keeps the executive's.** The studio may not change on its own the
+hard-stop list, the path guard's allowed paths and exceptions, the storage and hygiene
+rules, or ADR-0011 itself, and `.github/workflows/checks.yml` stays arcade-owned. The guard
+holds two of these by path: `EXECUTIVE_ONLY_PATHS` in `rules.mjs` makes
+`decisions/ADR-0011-the-studio-runs-itself.md` a violation for any studio commit or
+uncommitted change although it sits under `docs/studio/` (the executive's own commits reach
+it through `COMMIT_EXEMPTIONS`), and CI, like every other path outside the lists, is a
+violation already. The rest live in files the studio edits for other reasons (`rules.mjs`,
+this page), so no path rule can hold them: a change there is a questionnaire item for the
+executive, and the independent review is what catches one that isn't. The workflow
+exception is checked per commit, not per edit: it proves the change was ticketed, not that
+the change was wise.
 
 The second and third exceptions are checked by removing exactly the approved change and
 requiring what remains to equal the base revision byte for byte, so an edit riding along
