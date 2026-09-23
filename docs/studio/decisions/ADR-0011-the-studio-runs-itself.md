@@ -103,6 +103,12 @@ it `in backlog`. The repository is public: an issue from anyone else is public t
 direction, and is never acted on. At `close`, every issue whose work shipped is closed with
 a comment naming the iteration and the live URL.
 
+The same channel carries **feedback on how a run went** (label `feedback`: the next retro
+makes each one a rule, an edit or a check, then closes it saying which) and **verdicts**
+(label `verdict`: a Keep / Iterate / Kill that overrides the Playtester's at the next plan).
+Nothing the executive says needs an edit to the working tree, so it never collides with a
+running sprint or with the checks.
+
 Editing `backlog.md` directly — moving rows, deleting them — remains the executive's
 strongest steer, between runs.
 
@@ -122,9 +128,21 @@ The studio moves from trunk (ADR-0007) to **a branch and a pull request per tick
 
 This takes effect **when backlog #40 is Done**; until then `build` stays on trunk under
 ADR-0007. #40 changes the checks that assume trunk (`on-main` and others) and the
-`studio-iteration` skill, and it makes `.claude/skills/studio-*/**` a recorded exception, so
-the studio can edit its own workflow in reviewed, ticketed commits.
-`.github/workflows/checks.yml` and `.claude/workflows/` stay arcade-owned.
+`studio-iteration` skill's `build` and `review` steps.
+
+### 6. The studio improves its own workflow — within limits
+
+A retro that finds a better way to work has to be able to change the thing that runs the
+work. Backlog #41 makes these a recorded exception, edited in reviewed, ticketed commits:
+`.claude/skills/studio-*/**` (the studio's skills, including the `studio-sprint`
+conductor and its `references/prompts.md`) and `.claude/workflows/studio-sprint.js` (the
+Claude Code conductor, which mirrors those prompts and changes with them).
+
+**What the studio may not change on its own:** this record's hard-stop list, the path
+guard's allowed paths and exceptions, the storage and hygiene rules, and ADR-0011 itself.
+A change there is a questionnaire item for the executive, and waits.
+`.github/workflows/checks.yml` stays arcade-owned: CI is the one check the studio doesn't
+write.
 
 ### What still stops the studio and waits
 

@@ -122,7 +122,10 @@ These apply from sprint 05 on. The process parts are in the handbook (`process.m
    each piece becomes a rule, a skill or workflow edit, or a check — never only a note. The
    `studio-sprint` workflow measures each step's output tokens; the scorecard keeps the
    trend, and each retro names the costliest step and makes one change aimed at it, then
-   checks next retro whether it worked.
+   checks next retro whether it worked. **Prefer removing:** a change that deletes a step,
+   a read or a rule beats one that adds; a new check names the defect that reached the
+   live site or the rule it replaces; the Active rules cap of ten holds. Better means
+   leaner, not more ceremony.
 
 ## The budget
 
@@ -147,6 +150,8 @@ These apply from sprint 05 on. The process parts are in the handbook (`process.m
 | Run it and watch | "run the studio", in Claude Code (the `studio-sprint` workflow, to the end of the sprint; watch in `/workflows`) or Antigravity (the `studio-sprint` skill, step by step in the chat), optionally "… with focus: <X>" or "… for 2 sprints"; or `studio next` for a single step in a new session |
 | Stop it | Stop the workflow in `/workflows`, or "stop the studio" (a `STOP` file: it ends after the current step) |
 | Ask for a feature, a game, a fix | "studio request: <X>" (files a `studio` issue), or open one on GitHub with a `priority:` label; it becomes a backlog row at the next plan |
+| Say how a run went | "studio feedback: <X>" (a `studio` + `feedback` issue); the next retro turns it into a rule, an edit or a check |
+| Give a verdict | "studio verdict: Keep / Iterate / Kill <item>" (a `studio` + `verdict` issue); it overrides the Playtester's at the next plan |
 | Point the next sprint at something | `studio next — focus: <X>`, or move rows in the [Backlog](backlog.md) |
 | Change the goal, the budget or a rule | Edit this file, or say it in chat |
 | Say anything else: an idea, a complaint, a verdict | One line in the [Feedback Inbox](inbox.md) |
