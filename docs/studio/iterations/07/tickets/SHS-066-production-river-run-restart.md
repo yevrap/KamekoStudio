@@ -1,6 +1,6 @@
 # SHS-066 — Production River Run: Restart Game never freezes the river
 
-- **Status:** Ready
+- **Status:** Done
 - **Size:** S
 - **Iteration:** 07
 - **Role lead:** Tech Lead
@@ -27,16 +27,16 @@ commit.
 - [ ] `games/river-run/index.html` restarts its music without `Sequence.stop()` (it
       disposes the old sequence, as the fork does), and a failure in the music restart
       can't stop the run from starting.
-- [ ] A browser test in `scripts/e2e.mjs` restarts the game 20 times and sees every
+- [x] A browser test in `scripts/e2e.mjs` restarts the game 20 times and sees every
       restart's game loop and music running, with no uncaught error or rejection.
-- [ ] A deterministic case: with `Tone.Sequence.prototype.stop` made to throw whenever the
+- [x] A deterministic case: with `Tone.Sequence.prototype.stop` made to throw whenever the
       Transport is stopped, every restart still runs. Shown red against the unfixed file
       in 5 runs of 5.
-- [ ] `PRODUCTION_FIXES` in `tests/studio/lib/rules.mjs` has an entry for each production
+- [x] `PRODUCTION_FIXES` in `tests/studio/lib/rules.mjs` has an entry for each production
       file, naming this ticket.
 - [ ] The commits stay local until `iterations/07/reviews/SHS-066.md` records the
       reviewed hash and verdict; `production-fix-reviewed` passes at the push.
-- [ ] Arcade 🐞 p0-17 is marked ✅ with the date and this ticket, and backlog #33 is done.
+- [x] Arcade 🐞 p0-17 is marked ✅ with the date and this ticket, and backlog #33 is done.
 
 ## Evidence plan
 
@@ -55,7 +55,24 @@ The review step writes `reviews/SHS-066.md` and pushes through `--stage=push`.
 
 *Filled in as the ticket is worked. Empty until then.*
 
-- **What changed:**
-- **Tested by:**
-- **Deferred:** (each item also filed as a ticket or a debt row)
+- **What changed:** `games/river-run/index.html` `initGame` disposes the old music
+  sequence without calling `stop()`, and the whole music restart (dispose, new sequence,
+  Transport start) sits in a `try`/`catch` that logs and lets the run start, the fork's
+  SHS-061 fix line for line (commit `1414dab`). `scripts/e2e.mjs` gains three River Run
+  cases (same commit). `PRODUCTION_FIXES` names both files for SHS-066, iteration 07.
+  Arcade roadmap p0-17 marked ✅ in the arcade commit `61e69c6`; backlog #33 marked done.
+- **Tested by:** `npm run e2e`, five runs before the fix and five after:
+
+  | Case | Unfixed (red) | Fixed (green) |
+  |---|---|---|
+  | Twenty restarts in a row, loop and music each time, then 1–4 notes in 1.5 s | 2 of 5 (the natural throw, runs 3 and 5) | 5 of 5 |
+  | `Tone.Sequence.prototype.stop` throws whenever the Transport is stopped; five restarts | red 5 of 5 (`restart 2 froze … Uncaught (in promise) RangeError`) | 5 of 5 |
+  | `Tone.Transport.start` throws on a restart; the run must still start | red 5 of 5 (`Uncaught (in promise) Error`) | 5 of 5 |
+
+  Each fixed run: `E2E passed: 29 test(s)`. `npm run smoke` green; `npm test` 840/840;
+  `--stage=ticket` 5/5 (path-guard names both files as production fix SHS-066).
+- **Not pushed yet:** `1414dab` and `61e69c6`, and this session's records, stay local; the
+  review step writes `reviews/SHS-066.md` and pushes through `--stage=push` (the fifth
+  criterion is ticked then).
+- **Deferred:** none. The fork's own deterministic restart test stays #37, as planned.
 - **Fix rounds used:** 0 / 2

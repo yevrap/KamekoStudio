@@ -40,3 +40,14 @@ is committed.
   studio's skills. Tests red first (6 of 18 in `path-guard`, the new `rules` cases on missing
   exports), then green; `--stage=ticket` 5/5. *Next:* build
   [SHS-066](tickets/SHS-066-production-river-run-restart.md). *Blocked:* nothing.
+
+## Session 4 — build SHS-066 (2026-09-23)
+
+- **Tech Lead** — *Done:* [SHS-066](tickets/SHS-066-production-river-run-restart.md) (`1414dab`, production fix under
+  ADR-0008): the arcade's River Run disposes the old music sequence without `stop()` and
+  guards the music restart, as the fork does. Three new `scripts/e2e.mjs` cases, run five
+  times each way: the always-throwing `Sequence.stop` and the Transport that won't start
+  were red 5 of 5 before the fix, the twenty restarts red 2 of 5; all green 5 of 5 after
+  (29/29 each run). `npm run smoke` green, `npm test` 840/840, `--stage=ticket` 5/5. Arcade
+  p0-17 marked ✅ in the arcade commit `61e69c6`. Nothing pushed: the review step reviews
+  `1414dab`, writes `reviews/SHS-066.md`, then pushes. *Next:* review. *Blocked:* nothing.
