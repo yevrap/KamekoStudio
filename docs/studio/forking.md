@@ -75,7 +75,8 @@ were really written, because a fork that saved nothing would pass the first half
 - It fails the studio's page contract in four places: no back link, a 21px mute button,
   no `<noscript>`, and an uncaught throw with site data blocked. Each is fixed in the fork
   as a listed edit. The same four hold in production, where the arcade's own rules apply.
-- Its music restarts a Tone.js sequence on every new run, and now and then Tone rejects a
-  start time a hair below zero. The audio code is untouched by the fork, so the error is
-  inherited. The browser test names that one error signature exactly rather than ignoring
-  errors in general, and the backlog carries the fix.
+- Its music restarts a Tone.js sequence on every new run, and now and then Tone rejected a
+  time a hair below zero, which froze the restart. The error was inherited, so the browser
+  test first named that one signature exactly rather than ignoring errors in general, and
+  the backlog carried the fix. [SHS-061](iterations/06/tickets/SHS-061-river-run-tone-start-time.md) fixed it in the fork and removed the exemption;
+  production's twin is backlog #33.

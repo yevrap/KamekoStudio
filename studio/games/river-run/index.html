@@ -733,12 +733,19 @@
              if (!audioStarted) {
                  await Tone.start(); audioStarted = true; console.log('Audio context started');
              }
-             if (musicSequence) { musicSequence.stop(); musicSequence.dispose(); }
-             musicSequence = new Tone.Sequence((time, note) => {
-                 if(musicSynth) musicSynth.triggerAttackRelease(note, "8n", time);
-             }, musicMelodies[currentWaterColorIndex], "4n").start(0);
-             Tone.Transport.loop = true; Tone.Transport.loopEnd = "2m"; Tone.Transport.bpm.value = 90;
-             Tone.Transport.start();
+             // The old sequence is disposed, never stopped: stop() with no time turns
+             // "now" into Transport ticks, and with the Transport stopped (gameOver
+             // stops it) that came out a hair below zero, Tone threw, and the restart
+             // froze before the game loop (SHS-061). A music failure is logged, but
+             // never keeps the run from starting.
+             try {
+                 if (musicSequence) { musicSequence.dispose(); }
+                 musicSequence = new Tone.Sequence((time, note) => {
+                     if(musicSynth) musicSynth.triggerAttackRelease(note, "8n", time);
+                 }, musicMelodies[currentWaterColorIndex], "4n").start(0);
+                 Tone.Transport.loop = true; Tone.Transport.loopEnd = "2m"; Tone.Transport.bpm.value = 90;
+                 Tone.Transport.start();
+             } catch (err) { console.error('River Run music failed to restart', err); }
 
              createBoat(); createWater(); applyTheme(); updateCamera();
              if (animationFrameId) cancelAnimationFrame(animationFrameId);

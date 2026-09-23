@@ -17,6 +17,10 @@
 //  3. The power-ups (SHS-060), in a real browser: the shield takes one hit, the
 //     spread shot fires three for its time and then one, the pickup sounds keep
 //     to the fork's mute, and Watch Mode plays through a pickup.
+//  4. Twenty new runs in a row (SHS-061): each restart gets its game loop and its
+//     music back, and not one of them throws. Until SHS-061 the music restart
+//     threw now and then (Tone.js RangeError, a stop time a hair below zero),
+//     which aborted the restart and froze the run; a named exemption let it by.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -121,18 +125,6 @@ const PRODUCTION_SAVES = {
   lastPlayed_riverRun: '1',
   mazeWarden_bestWave: '7'
 };
-
-/**
- * One error the fork inherits rather than causes. River Run's music restarts a
- * Tone.js sequence on every new run, and now and then Tone computes a start time
- * a hair below zero (-1e-12) and rejects it. The music code (setupMusic's synth,
- * initGame's sequence restart) is still production's as copied: SHS-060 added a
- * second synth for pickup sounds and left those lines alone, though with the
- * equality test retired that is now a claim read from the diff, not a proof.
- * Matched exactly: negative values only, this message only. SHS-061 fixes it in
- * the fork and removes this exemption (TD-014).
- */
-const INHERITED_TONE_RANGE = /^uncaught: Uncaught \(in promise\) RangeError: Value must be within \[0, Infinity\], got: -\d(\.\d+)?e-\d+$/;
 
 /**
  * What shared/settings.js does on every page load, the arcade's too: it drops the
@@ -264,9 +256,7 @@ test('in a browser, playing the fork leaves every non-studio key exactly as it w
       assert.ok(Number(after.studio_riverRun_lastPlayed) > 0);
       assert.equal(after.studio_riverRun_invertControls, 'true');
 
-      const inherited = errors.filter(e => INHERITED_TONE_RANGE.test(e.text));
-      if (inherited.length) t.diagnostic(`inherited Tone.js RangeError seen ${inherited.length}×`);
-      assert.deepEqual(errors.filter(e => !inherited.includes(e)).map(e => e.text), []);
+      assert.deepEqual(errors.map(e => e.text), []);
       await page.evaluate(() => localStorage.clear());
     } finally {
       await browser.close();
@@ -313,7 +303,7 @@ async function openFork(browser, origin) {
     rock.mesh.position.set(boat.position.x, rock.mesh.position.y, boat.position.z + 1);
   });
   const hud = () => page.evaluate(() => ({ text: powerHud.textContent, shown: getComputedStyle(powerHud).display !== 'none' }));
-  const unexpected = () => errors.filter(e => !INHERITED_TONE_RANGE.test(e.text)).map(e => e.text);
+  const unexpected = () => errors.map(e => e.text);
   return { page, start, quiet, pickupAhead, rockOnBoat, hud, unexpected };
 }
 
@@ -420,6 +410,47 @@ test('in a browser, the fork\'s power-ups do what they say',
         assert.deepEqual(f.unexpected(), []);
         await f.page.close();
       });
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+// ---- 4. Restarts (SHS-061) ------------------------------------------------------
+
+test('in a browser, twenty new runs in a row each start cleanly, with the loop and the music running',
+  { skip: chromeAvailable() ? false : 'no Chrome; set CHROME_PATH', timeout: 120_000 },
+  async () => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      const f = await openFork(browser, site.origin);
+      await f.start('#start-button');
+      for (let run = 2; run <= 20; run++) {
+        // A short run, ended the way a rock ends it, then Restart. Uneven run
+        // lengths, because the throw depended on where the Transport stopped.
+        await settle(20 + (run * 37) % 180);
+        await f.page.evaluate(() => gameOver());
+        await f.start('#start-button');
+        await f.page.waitForFunction(() => animationFrameId !== null && Tone.Transport.state === 'started',
+          { timeout: 5_000, polling: 20 }).catch(() => {
+          throw new Error(`run ${run} did not start its game loop and music: ${JSON.stringify(f.unexpected())}`);
+        });
+        assert.deepEqual(f.unexpected(), [], `run ${run} threw`);
+      }
+      // And the music is really playing the restarted sequence, not a stale one.
+      const beats = await f.page.evaluate(() => new Promise(resolve => {
+        let n = 0;
+        const play = musicSynth.triggerAttackRelease.bind(musicSynth);
+        musicSynth.triggerAttackRelease = (...args) => { n++; return play(...args); };
+        setTimeout(() => resolve(n), 1500);
+      }));
+      assert.ok(beats > 0, 'no music note played after the twentieth restart');
+      // 90 bpm quarter notes: two or three in 1.5 s. Old sequences left on the
+      // Transport would play alongside it, many times over.
+      assert.ok(beats <= 4, `${beats} notes in 1.5 s: earlier runs' sequences are still playing`);
+      assert.deepEqual(f.unexpected(), []);
+      await f.page.close();
     } finally {
       await browser.close();
       await site.close();
