@@ -1,5 +1,7 @@
 # River Run Questionnaire — Modernization Direction
 
+> **Consumed 2026-09-22.** River Run became the Shadow Studio's first fork, and its feature work moved there with these answers: Q1 + Q2 → studio backlog #4 (power-ups: shield, rapid-fire/spread), Q3 → #6 (a near-miss streak), Q4 + Q6 → #7 (biomes that change play, moving and biome hazards), Q5 = A closed p2-44. The studio's own Q12 picks which goes first. See `docs/studio/steering/backlog.md`.
+
 > Created 2026-07-22, from planning session. Yev asked to plan a sprint to make River Run "more interesting and complete." The resulting backlog is in the repo `docs/roadmap.md`: **p1-48…p1-51** (score-display fix + juice polish, no open questions — agent-shippable as-is) plus the pre-existing **b-01, p1-05, p2-29** (also agent-shippable, already fully specified) and **p2-10** (biome transitions — visual-only baseline is agent-shippable). **p2-40…p2-44** below each have a real creative fork gated on this note. Answer in chat or edit this file; write-ins welcome after any answer.
 
 ## Q1 — Hit/death model (gates p2-40)

@@ -37,7 +37,7 @@ See `docs/mission.md` for the full studio philosophy.
 
 ```
 index.html          — Main arcade dashboard (dark arcade theme, custom CSS)
-3d.html             — 3D interactive landing page (Three.js), links to all games
+3d.html             — 3D interactive landing page (Three.js), links to all games; the River Run portal opens the studio fork (studio/games/river-run/)
 shared/
   settings.js       — Global settings panel + token system (included in every page)
   utils.js          — Pure utility functions (tested; loaded by keypad-quest)
@@ -85,7 +85,7 @@ games/              — One subdirectory per game (see games/CLAUDE.md)
 | `games/materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Tap to place movement pins; physics with material types. Score and survival modes. |
 | `games/hidden-object/` | Hidden Object Game | DOM | Emoji-finding challenge. Mobile-vertical layout. |
 | `games/keypad-quest/` | Keypad Quest | Canvas 2D | T9 tower defense: answer flashcard questions to place towers. Circular enemy path, multiple named decks, deck import/export. Saves `keypadQuestHighWave`. |
-| `games/river-run/` | River Runner 3D | Three.js | 3D obstacle-dodging river runner. Watch Mode (▶ Watch on start screen; auto-avoid + auto-shoot while watching) + invert-drag setting. Note: the inline script runs before `shared/settings.js`, so `KamekoSettings` registration is deferred to `DOMContentLoaded`. Saves `riverRunHighScore`. |
+| `games/river-run/` | River Runner 3D | Three.js | **Forked 2026-09-22 — two builds.** The 🎮 gallery (`index.html`) opens this arcade build; the 3D page's River Run portal opens the Shadow Studio fork at `studio/games/river-run/`, which keeps its own `studio_riverRun_*` saves and never touches the keys below. Feature work now happens in the fork (studio backlog, `docs/studio/steering/backlog.md`); this build gets bug fixes only, and a better fork returns here only through `studio-promote`. 3D obstacle-dodging river runner. Watch Mode (▶ Watch on start screen; auto-avoid + auto-shoot while watching) + invert-drag setting. Note: the inline script runs before `shared/settings.js`, so `KamekoSettings` registration is deferred to `DOMContentLoaded`. Saves `riverRunHighScore`. |
 | `games/blob-zapper/` | Blob Zapper (internally: Lava Plasma Flow) | Canvas 2D | **Lab** (shelved from the gallery 2026-07-15, Yev's call; controls rework p1-31 still open). Push blobs with electricity. Saves `blobZapperHighScore`. |
 | `games/durak-alchemist/` | Durak Alchemist | DOM/CSS grid | **Lab** (shelved from the gallery 2026-07-12, p1-29). Grid-based puzzle game using Durak card mechanics. Place cards on a grid to trigger chain reactions. Saves `alchemistHighScore`. |
 | `games/durak/` | Durak | DOM | Classic Russian card game for 2–6 players. Modes: vs Computer (1 human + 2–5 AI) or Hot-seat (2–6 humans sharing a device, with a pass-device cover at 3+ players). Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap, pile-on during the defender's take, ordered end-of-bout draws (attacker → contributors → defender), elimination when hand and deck are both empty. Last player holding cards is the Durak. |

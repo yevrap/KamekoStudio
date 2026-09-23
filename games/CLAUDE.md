@@ -37,7 +37,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `hidden-object/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; canvas rendering tightly coupled to physics/collision state, merged into gameplay.js like durak-tactics) |
 | `materials-run/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; rendering tightly coupled to physics/state updates, merged into gameplay.js like durak-tactics) |
 | `blob-zapper/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; canvas rendering tightly coupled to physics/particle state, merged into gameplay.js like durak-tactics) |
-| `river-run/` | — | ⏸ Lower priority | Three.js; complex event + audio setup; different architecture |
+| `river-run/` | — | ⏸ Moved to the studio fork | Three.js; complex event + audio setup; different architecture. Forked 2026-09-22: the module split (was b-01) now happens in the studio fork (`studio/games/river-run/`); this arcade build gets bug fixes only |
 | `astro-salon/` | — | ✅ Done | constants/i18n/content/state/gameplay/ui/main.js. Promoted from `drafts/astro-salon` 2026-07-14 (round-3 playtest **keep**). `content.js` holds pure text-generation (chip labels, rule/hint text) shared by `ui.js` and its tests — kept separate so `gameplay.js` → `ui.js` stays one-directional (no import cycle, same shape as tysiacha's `log.js`). |
 | `pachinko-bazaar/` | — | ✅ Done | constants/state/gameplay/main.js (no ui.js; canvas rendering merged into gameplay.js like durak-tactics). Promoted from `drafts/pachinko-bazaar` 2026-07-14. |
 | `black-hole-in-one/` | — | ✅ Done | constants/state/physics/gameplay/sfx/ui/main.js. Promoted from `drafts/black-hole-in-one` 2026-07-15 (playtest **keep**). `physics.js` and `gameplay.js` are DOM-free — presentation goes through an injected `hooks` object (no-op defaults), so the whole game flow runs headless under `node --test`. `ui.js` owns canvas rendering AND the letterbox view transform (fixed 100×170 course centered in any viewport — device difficulty parity). |
@@ -60,7 +60,7 @@ Single-file older games (`game.js`) are acceptable until they grow unwieldy. `ga
 | `keypad-quest/` | Keypad Quest | Canvas 2D | Stable |
 | `materials-run/` | Grid Step Game — Pin Movement | DOM/CSS grid | Stable |
 | `tysiacha/` | Tysiacha (1000) | DOM | Stable |
-| `river-run/` | River Runner 3D | Three.js r128 | Stable |
+| `river-run/` | River Runner 3D | Three.js r128 | Stable — bug fixes only; feature work happens in the studio fork `studio/games/river-run/` (opened from the 3D page's portal) since 2026-09-22 |
 | `astro-salon/` | Astro Salon | DOM/SVG | Stable — two session types: Salon and Chart Reading (rising + 12 whole-sign houses, Sprint 2 2026-07-15) |
 | `pachinko-bazaar/` | Pachinko Bazaar | Canvas 2D | Stable |
 | `black-hole-in-one/` | Black Hole in One | Canvas 2D | Stable |
