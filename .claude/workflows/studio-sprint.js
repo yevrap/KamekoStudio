@@ -16,6 +16,8 @@ export const meta = {
 // Each step of the sprint is a fresh agent that follows the studio-iteration skill for the
 // one step docs/studio/steering/next.md names (ADR-0009). The workflow owns the order, the
 // reviewers and the stop conditions; the agents own the work.
+// Other tools (Antigravity) run the same sprint through the studio-sprint skill, whose
+// references/prompts.md mirrors the prompts below: change both together.
 
 const opts = typeof args === 'string' ? { focus: args } : (args || {})
 const MAX_SPRINTS = opts.sprints || 1

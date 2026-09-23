@@ -12,7 +12,7 @@ GEMINI.md           — This file
 <!-- OVERRIDE:root:ai-workflow-tool-section -->
 ### Antigravity / Gemini notes
 
-Antigravity discovers the same skills through the `.agents/skills` symlink (→ `.claude/skills`). When a skill isn't auto-discovered, read its `SKILL.md` and follow it — "ship p1-22" means follow `.claude/skills/ship/SKILL.md`. The working agreements and the definition of done are the same for every agent.
+Antigravity discovers the same skills through the `.agents/skills` symlink (→ `.claude/skills`). When a skill isn't auto-discovered, read its `SKILL.md` and follow it — "ship p1-22" means follow `.claude/skills/ship/SKILL.md`. The working agreements and the definition of done are the same for every agent. "Run the studio" loads the `studio-sprint` skill: follow its *Anywhere else* section and conduct the sprint yourself (the Claude Code workflow it mentions isn't available here).
 
 <!-- OVERRIDE:root:games-file-ref -->
 `games/GEMINI.md`
