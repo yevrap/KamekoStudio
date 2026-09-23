@@ -30,3 +30,12 @@ is committed.
   their own `docs:` commit. `process.md` and the ticket template carry the rule, and the
   retro runs the script. `npm test` 815/815, `--stage=ticket` green. *Next:* build
   [SHS-060](tickets/SHS-060-river-run-power-ups.md). *Blocked:* nothing.
+
+## Session 3 — build [SHS-060](tickets/SHS-060-river-run-power-ups.md) (2026-09-22)
+
+- **Game Designer** — *Done:* [SHS-060](tickets/SHS-060-river-run-power-ups.md), both power-ups in one session, so no split. The
+  shield and the spread shot float in the fork, with a HUD, sounds that respect mute, and
+  Watch Mode unaffected. The equality test is retired with a note and the edit list is kept
+  as the record. Four browser subtests, each shown red by a mutation. `--stage=push` 11/11,
+  live at `/studio/games/river-run/`. Found the top controls covering the score on a phone
+  (pre-existing, backlog #35). *Next:* build [SHS-061](tickets/SHS-061-river-run-tone-start-time.md). *Blocked:* nothing.
