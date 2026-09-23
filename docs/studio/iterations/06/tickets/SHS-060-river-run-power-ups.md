@@ -89,5 +89,10 @@ build has. A phone-size screenshot of each effect for the review.
   binary assets. The review can regenerate them with the same test helpers.
 - **Deferred:** the fork's top controls (← Studio, Mute) cover the score readout on a
   390px phone. It's visible in both screenshots and dates from [SHS-056](../../05/tickets/SHS-056-river-run-fork.md), not from this ticket:
-  backlog #35.
-- **Fix rounds used:** 0 / 2
+  backlog #35. The review found that the power-up HUD also covers the score at 320 and
+  375 wide, so #35 now covers that too.
+- **Review fix** (iteration 06 review, QA F1; `8a7a604`): fast taps with the spread shot
+  ran the 30-shot pool dry. The pool is 90, and a shot past the river bank goes back to
+  it. The spread subtest fires a 25-volley burst (red at 30, green at 90) and follows a
+  side shot off the river.
+- **Fix rounds used:** 1 / 2

@@ -49,3 +49,17 @@ is committed.
   TD-014 closed, and a 20-restart browser test was red, then green three runs in a row.
   `--stage=push` 11/11, live at `/studio/games/river-run/`. Backlog #33 (production's twin)
   now names the freeze. *Next:* review. *Blocked:* nothing.
+
+## Session 5 — review (2026-09-22)
+
+- **QA** (`opus`) — *Done:* walked every criterion (17/17 met), played the fork at
+  375×667 with a storage-write log, and ran 30 restarts. **Approve with findings.**
+  *Next:* none. *Blocked:* nothing.
+- **Independent Reviewer** (`fable`) — *Done:* read the diff in full, mutation-tested the
+  restart test, and reproduced production's freeze (28 of 39 restarts). **Approve with
+  findings.** *Next:* none. *Blocked:* nothing.
+- **Scrum Master** — *Done:* every finding answered in `review.md`. Two fixes were made now:
+  the spread shot's shot pool (`8a7a604`, player-facing) and the link lib's header
+  (`c361b17`). Backlog #33 and #35 were reworded, #36 and #37 are new, and the arcade bug
+  row p0-17 went in its own `docs:` commit. Two findings were declined with reasons. No
+  second round. *Next:* close. *Blocked:* nothing.
