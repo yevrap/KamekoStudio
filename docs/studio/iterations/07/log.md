@@ -20,3 +20,13 @@ is committed.
   and that production still calls `musicSequence.stop()` at `games/river-run/index.html`
   L614. Merged #35 and #38 into one M, with the layout as the fallback if it grows.
   *Next:* build [SHS-064](tickets/SHS-064-river-run-power-up-hud-real-time.md). *Blocked:* nothing.
+
+## Session 2 — build SHS-064 (2026-09-23)
+
+- **Game Designer / Developer** — *Done:* [SHS-064](tickets/SHS-064-river-run-power-up-hud-real-time.md) whole, both halves (`fee743d`): the
+  score and the power-up label stack below the top row and the score stays on one line at
+  320 and 390; the spread shot, the first pickup and the pickup gap count wall-clock
+  seconds and stop for the drawer. Tests red first (4 of 6 subtests), then the fork's file
+  25/25; `--stage=ticket` 5/5; `--stage=push` 11/11 after one commit subject was shortened
+  (commit-lint, 95 > 80 characters, fixed before the push). *Next:* build
+  [SHS-065](tickets/SHS-065-studio-edits-its-own-workflow.md). *Blocked:* nothing.
