@@ -769,7 +769,17 @@ export const COMMIT_EXEMPTIONS = new Map([
   ['fecf7eafc8e36ba65a11c341edc43f94209bb357',
     'the executive\'s direction for epic E1: scoped (studio) with no ticket, and edits .claude/ skills and the arcade docs (SHS-055)'],
   ['d454f79c835aa52d4c4ce9466e70c766b87f73cc',
-    'the executive\'s ADR-0009, one step per session: scoped (studio) with no ticket, and edits .claude/ and the arcade docs (SHS-055)']
+    'the executive\'s ADR-0009, one step per session: scoped (studio) with no ticket, and edits .claude/ and the arcade docs (SHS-055)'],
+  ['412163133f0b83b5cd014bc6cb5bc539d40ef077',
+    'the executive\'s 2026-09-23 direction, ADR-0011 (the studio runs itself): scoped (studio) with no ticket (SHS-063)'],
+  ['49e21c6a93d5dbf48a9cebcde89e378f4a2b8026',
+    'the executive\'s 2026-09-23 direction, ADR-0011 (local first, Opus as the largest model): scoped (studio) with no ticket (SHS-063)'],
+  ['7492551bdc2af945e2747a4f07591ef19c6d784b',
+    'the executive\'s 2026-09-23 direction, ADR-0011 (every sprint a little better and cheaper, direction rule 8): scoped (studio) with no ticket (SHS-063)'],
+  ['6376a2f53a16c72de1061789190c003eaf9439d4',
+    'the executive\'s 2026-09-23 direction, ADR-0011 (running the studio from Antigravity): scoped (studio) with no ticket (SHS-063)'],
+  ['00bd3a5f57758515a1bea75793dc788a304f2261',
+    'the executive\'s 2026-09-23 direction, ADR-0011 (self-improvement within limits, ADR-0011 section 6): scoped (studio) with no ticket (SHS-063)']
 ]);
 
 /**

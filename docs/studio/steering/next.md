@@ -13,16 +13,16 @@
 ## Notes for the next session
 
 - **New direction first:** [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md),
-  the studio runs itself (inbox, 2026-09-23). Log it; #39 is sprint 07's **first build**:
-  every `--stage=push` fails `commit-lint` on the ADR-0011 commit until it lands; #40 (branches and PRs) is split here and takes the process slot. Games first:
+  the studio runs itself (inbox, 2026-09-23). Log it. #39 is Done as
+  [SHS-063](../iterations/06/tickets/SHS-063-exempt-adr-0011-commits.md) (done before plan); #41 takes the process slot, #40 starts in 08. Games first:
   two planned tickets change what a player sees. Triage open `studio` issues (ADR-0011 §4).
-- Before pulling, run the [Playtester](../team/playtester.md) on the power-ups (SHS-060) as
-  a fresh subagent and record its verdict in 06's `review.md`; then #35 + #38 on Iterate or
+- Before pulling, record the [Playtester](../team/playtester.md)'s verdict on the power-ups
+  (SHS-060; the workflow runs it before plan, or run it as a subagent) in 06's `review.md`; then #35 + #38 on Iterate or
   Keep, a removal ticket on Kill. Then #33 (skip only if the arcade shipped 🐞 p0-17), #37.
 - Sprint 07's retro writes the epic review and puts E2 under *Proposed next epic* in
   `direction.md`; plan 08 adopts it. Original studio games are in scope for E2.
 - New in the ticket template: a regression test's red count, layout evidence at 320.
-- The next new backlog item is #41, the next ticket SHS-063.
+- The next new backlog item is #41, the next ticket SHS-064.
 
 *Rewritten by every session (the studio-iteration skill). Loaded into every new Claude Code
 session by the SessionStart hook in `.claude/settings.json`.*
