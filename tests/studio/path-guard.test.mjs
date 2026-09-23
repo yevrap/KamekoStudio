@@ -81,7 +81,7 @@ test('a studio commit outside the studio paths is still a violation', async t =>
   assert.equal((await productionUnchanged.run(ctx)).status, 'fail');
 });
 
-test('dropping the scope does not get a studio change past the guard', async t => {
+test('an arcade commit that changes a studio path is a violation', async t => {
   const { r, ctx } = sharedMain(t);
   const sha = r.commit('chore: just a tidy-up', ['studio/index.html', 'tests/studio/x.mjs']);
   const guard = await pathGuard.run(ctx);
@@ -91,6 +91,17 @@ test('dropping the scope does not get a studio change past the guard', async t =
   const deployed = await productionUnchanged.run(ctx);
   assert.equal(deployed.status, 'fail');
   assert.match(deployed.detail, /changed by arcade commit/);
+});
+
+test('dropping the scope but naming the ticket does not get a production change past the guard', async t => {
+  // Iteration 05 review, finding 1: a production-only change is judged only
+  // when the commit is sorted as the studio's.
+  const { r, ctx } = sharedMain(t);
+  r.commit('fix: SHS-060 clamp the drawer width', ['shared/settings.js']);
+  const guard = await pathGuard.run(ctx);
+  assert.equal(guard.status, 'fail');
+  assert.match(guard.detail, /shared\/settings\.js/);
+  assert.equal(commitLint.run(ctx).status, 'fail');
 });
 
 test('a merge that brings in studio and arcade paths together is a violation', async t => {

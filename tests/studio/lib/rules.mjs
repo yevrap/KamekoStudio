@@ -742,15 +742,20 @@ export function lintCommitSubject(subject, { parentCount = 1 } = {}) {
 /**
  * The studio and the arcade share `main`, so every range the checks read holds
  * both kinds of commit. A commit is a **studio commit** when its subject's scope
- * is `(studio)`, whatever its type or ticket — a malformed studio subject is
- * still the studio's, and `commit-lint` says what is wrong with it.
+ * is `(studio)`, whatever its type or ticket, or when its subject names a studio
+ * ticket (`SHS-NNN`, or the retired `SS-NNN`), whatever its scope — a malformed
+ * studio subject is still the studio's, and `commit-lint` says what is wrong
+ * with it.
  *
- * The scope is a claim the author makes, so it is never the only test: an
- * arcade commit that changes a studio path is itself a violation (see
- * `sortCommitsByKind`). Dropping the scope moves a commit out of the lint and
- * into that rule; it does not move it past the guard.
+ * Both are claims the author makes, so neither is the only test: an arcade
+ * commit that changes a studio path is itself a violation (see
+ * `sortCommitsByKind`). Dropping the scope and the ticket moves a commit out of
+ * the lint and into that rule. A commit that names neither and changes only
+ * production paths is the arcade's, and the checks do not judge it: the arcade
+ * is not the studio's to guard (iteration 05 review, finding 1).
  */
 export const STUDIO_SCOPE_RE = /^[A-Za-z]+\(studio\)!?:/;
+export const STUDIO_TICKET_RE = /(?<![A-Za-z0-9-])(SHS|SS)-\d{3}\b/;
 
 /**
  * Commits on the remote's `main` that fit neither kind and cannot be rewritten.
@@ -777,7 +782,8 @@ export function commitKind({ sha, parentCount = 1, subject }) {
   if (parentCount > 1) return { kind: 'merge' };
   const reason = COMMIT_EXEMPTIONS.get(String(sha ?? ''));
   if (reason) return { kind: 'exempt', reason };
-  return { kind: STUDIO_SCOPE_RE.test(String(subject ?? '')) ? 'studio' : 'arcade' };
+  const text = String(subject ?? '');
+  return { kind: STUDIO_SCOPE_RE.test(text) || STUDIO_TICKET_RE.test(text) ? 'studio' : 'arcade' };
 }
 
 const isStudioPath = p => ALLOWED_PREFIXES.some(prefix => p.startsWith(prefix));
@@ -812,7 +818,7 @@ export function sortCommitsByKind(commits) {
       for (const p of paths) studioPaths.add(p);
     } else if (kind === 'arcade') {
       for (const p of paths.filter(isStudioPath)) {
-        problems.push(`${p} (changed by arcade commit ${short}, which is not scoped (studio): only a studio commit may change the studio's paths)`);
+        problems.push(`${p} (changed by arcade commit ${short}, which is not scoped (studio) and names no studio ticket: only a studio commit may change the studio's paths)`);
       }
     } else {
       const inside = paths.filter(isStudioPath);

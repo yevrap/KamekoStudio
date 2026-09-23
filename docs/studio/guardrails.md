@@ -25,17 +25,20 @@ commit. `commitKind` in `tests/studio/lib/rules.mjs` sorts each one, and `commit
 
 | Kind | How it is recognised | How it is judged |
 |---|---|---|
-| Studio | The subject's scope is `(studio)`, whatever the type or ticket | `commit-lint` requires `type(studio): SHS-NNN …`; the path guard judges every file it changed |
-| Arcade | Any other subject | Not linted, and free to change anything **except** `studio/**`, `docs/studio/**` and `tests/studio/**`: a studio path it changed is a violation |
+| Studio | The subject's scope is `(studio)`, whatever the type or ticket, **or** the subject names a studio ticket (`SHS-NNN`, the retired `SS-NNN`), whatever the scope (iteration 05 review) | `commit-lint` requires `type(studio): SHS-NNN …`; the path guard judges every file it changed |
+| Arcade | Any other subject: no `(studio)` scope and no studio ticket | Not linted, and free to change anything **except** `studio/**`, `docs/studio/**` and `tests/studio/**`: a studio path it changed is a violation |
 | Merge | More than one parent | Judged by what it changes against its first parent: only studio paths or only other paths is that kind, both at once is a violation. The commits it brings in are judged one by one as well |
 | Exempt | Its full hash is in `COMMIT_EXEMPTIONS`, with a reason | Neither linted nor guarded, and reported by both checks with its reason. Today: the executive's three 2026-09-22 commits (the migration, the E1 direction, ADR-0009) |
 
 Uncommitted changes count as studio work: the guard cannot tell whose they are.
 
-**What this proves, and what it does not.** The scope is a claim the author makes. The
-checks prove that a commit claiming to be the studio's stayed inside the studio's paths, and
-that a commit not claiming it stayed out of them, so dropping the scope moves a change from
-the lint to the path guard rather than past both. They do not prove who wrote a commit, and
+**What this proves, and what it does not.** The scope and the ticket are claims the author
+makes. The checks prove that a commit claiming to be the studio's stayed inside the studio's
+paths, and that a commit not claiming it stayed out of them, so dropping the scope and the
+ticket moves a change to studio paths from the lint to the path guard rather than past both.
+A commit that claims neither and changes only production paths is judged by nothing: that is
+the arcade's own work, and the studio's discipline, not a check, keeps its sessions from
+disguising a production change that way (iteration 05 review). They do not prove who wrote a commit, and
 an arcade commit is free to change any production file: the arcade is not the studio's to
 guard. Two edges keep their earlier rules: a recorded exception still compares the whole
 file at the base with the file now, so an arcade edit to `package.json` in the same range
@@ -48,8 +51,8 @@ When studio work makes an arcade document stale (a game's row in `CLAUDE.md` or
 `games/CLAUDE.md`, rows in `docs/roadmap.md`, a game's `docs/games/<slug>/` pages, a
 questionnaire the studio has consumed), the studio session updates it itself rather than
 handing it to the executive (chat direction, 2026-09-22). The edit goes in its own arcade
-commit (`docs: …`, no `(studio)` scope, no studio path in it), so the checks sort it as
-arcade work, and it follows the arcade's rules: regenerate the `GEMINI.md` files, `npm test`
+commit (`docs: …`, no `(studio)` scope, no studio ticket and no studio path in it), so the
+checks sort it as arcade work, and it follows the arcade's rules: regenerate the `GEMINI.md` files, `npm test`
 green. It covers **documentation only**. Game code, shared code and tests outside the studio
 paths stay under the recorded exceptions and production fixes below.
 

@@ -337,14 +337,29 @@ test('commitKind: the (studio) scope makes a studio commit, whatever its type or
   ]) assert.equal(commitKind({ sha: 'a'.repeat(40), subject }).kind, 'studio', subject);
 });
 
-test('commitKind: anything else is an arcade commit, including near misses of the scope', () => {
+test('commitKind: a subject naming a studio ticket is a studio commit, scoped or not', () => {
+  // Iteration 05 review: with the scope as the only signal, `fix: SHS-060 …`
+  // touching a production file was judged by nothing. Naming the ticket is a
+  // claim too, so it puts the commit under the lint and the path guard.
   for (const subject of [
-    'feat: p1-22 ship the thing',
-    'chore: make the repo the home',
+    'fix: SHS-060 clamp the drawer width',
+    'feat(river-run): SHS-060 scoped as a game',
     'studio: SHS-055 no parentheses',
     'feat(studios): SHS-055 plural',
     'feat(studio,arcade): SHS-055 two scopes',
     'feat (studio): SHS-055 a space',
+    'docs: SS-042 the old prefix'
+  ]) assert.equal(commitKind({ sha: 'a'.repeat(40), subject }).kind, 'studio', subject);
+});
+
+test('commitKind: anything else is an arcade commit, including near misses of the scope and the ticket', () => {
+  for (const subject of [
+    'feat: p1-22 ship the thing',
+    'chore: make the repo the home',
+    'feat(studios): plural, no ticket',
+    'feat (studio): a space, no ticket',
+    'docs: SHS-55 too few digits',
+    'docs: XSHS-055 inside a word',
     'Merge branch studio'
   ]) assert.equal(commitKind({ sha: 'a'.repeat(40), subject }).kind, 'arcade', subject);
 });
