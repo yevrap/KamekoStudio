@@ -53,6 +53,8 @@ CLAUDE.md           — This file
 <!-- /GEMINI-OVERRIDE -->
 README.md           — GitHub Pages URL
 .claude/skills/     — Agent workflows: ship, fix, triage, refine, improve, new-game, studio-*
+.claude/workflows/  — Saved multi-agent workflows: studio-sprint ("run the studio")
+.github/workflows/  — CI: npm test + smoke on every pull request and push to main
 .agents/skills      — Symlink to .claude/skills (Antigravity discovers skills here)
 docs/               — Planning, decisions and design docs (see docs/CLAUDE.md and "Where Things Live")
 studio/             — Shadow Studio's experimental realm (handbook: docs/studio/)
@@ -323,6 +325,8 @@ Agents do not have a human's time pressure and can afford to double-check before
 | `improve` | "quality scan" | Read-only codebase scan → ranked issue list |
 | `new-game` | "jam a new game" | Three original pitches → a single-file Lab prototype → deployed, documented, with a verdict questionnaire |
 | `studio-iteration` · `studio-standup` · `studio-promote` | "studio next" · "studio status" · "promote X" | Shadow Studio's scrum team, one step per session (plan, build one ticket, review, close, retro); `docs/studio/steering/next.md` says which step is due and a SessionStart hook loads it — see `docs/studio/` |
+| `studio-sprint` workflow (`.claude/workflows/`) | "run the studio" (optionally "… with focus: X") | Runs the studio's current sprint to its retro, one fresh agent per step, with QA, the Independent Reviewer and the Playtester in parallel at review; watch it in `/workflows` (ADR-0011). Saying this is the explicit opt-in to run the workflow |
+| `studio-request` | "studio request: X", "prioritize X" | Files a `studio` GitHub issue with a `priority:` label; the next studio plan turns it into a backlog row, and close closes it when it ships |
 
 <!-- GEMINI-OVERRIDE:ai-workflow-tool-section -->
 ### Claude Code notes

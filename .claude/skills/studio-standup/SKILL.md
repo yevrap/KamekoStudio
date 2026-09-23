@@ -22,9 +22,10 @@ description: "Read-only status of the Shadow Studio company: where it is, what's
    committed, `review.md` for what landed and the reviewer's verdict, `retro.md` for what the
    team changed about itself.
 4. **Open work** — open rows in `docs/studio/tech-debt.md`, and any ticket marked Blocked.
-5. **Waiting on Yevster** — unanswered items in `docs/studio/steering/questionnaire.md`,
-   unresolved entries in `steering/input-ledger.md`, untriaged lines in `steering/inbox.md`, and
-   any Keep / Iterate / Kill line in the latest review with no verdict.
+5. **Waiting on Yevster** — since ADR-0011 only hard stops wait (a `**Next:** waiting on
+   you` line). Also list what Yevster may want to override: ⭐s the team took on open
+   questionnaire items, and the Playtester's Keep / Iterate / Kill lines in the latest
+   review. And requests: open `studio` issues and whether each is in the backlog yet.
 6. **Trend** — the last three rows of `docs/studio/steering/scorecard.md`.
 7. **Live** — is `https://yevrap.github.io/KamekoStudio/studio/` serving?
 
@@ -39,6 +40,7 @@ Compact, in chat:
 
 - **Where it is:** the last iteration, what it shipped, what's live.
 - **Open:** blocked tickets, debt rows worth naming.
-- **Waiting on you:** unanswered questions and unresolved verdicts — the short list.
+- **Waiting on you:** hard stops, if any. **Yours to override:** the ⭐s taken and the
+  Playtester's verdicts — the short list.
 - **Trend:** three lines from the scorecard.
 - **Say next:** the sentence that moves it forward.

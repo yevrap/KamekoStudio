@@ -1,0 +1,28 @@
+# The repository's checks, on every pull request and every push to main.
+# The first check the studio does not write itself (docs/studio/decisions/ADR-0011-the-studio-runs-itself.md).
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CHROME_PATH: /usr/bin/google-chrome
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # Ubuntu 24.04 blocks the unprivileged user namespaces Chrome's sandbox needs.
+      - run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - run: npm test
+      - run: npm run smoke
