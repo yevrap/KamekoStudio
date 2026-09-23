@@ -120,6 +120,10 @@ let nextLine = start.nextLine
 let focus = opts.focus ? `Executive direction for this step ($ARGUMENTS): focus: ${opts.focus}` : ''
 let sprintsDone = 0
 const done = []
+// Efficiency (direction rule 8): output tokens per step, reviewers included, for the retro.
+const cost = []
+const tokens = () => (typeof budget !== 'undefined' && budget.spent) ? budget.spent() : null
+let mark = tokens()
 log(`The studio is at: ${nextLine.replace(/^\*\*Next:\*\*\s*/, '')}${opts.focus ? ` — focus: ${opts.focus}` : ''}`)
 
 while (done.length < MAX_STEPS) {
@@ -134,6 +138,10 @@ while (done.length < MAX_STEPS) {
   phase(cap(kind))
   let extra = focus
   focus = ''
+
+  if (kind === 'retro' && cost.length) {
+    extra += `\n\nThis run's output tokens per step so far (direction rule 8 — record the sprint's total and costliest step in the scorecard, compare with the last sprint, and make one change aimed at the costliest step):\n${cost.map(c => `- ${c.step}: ${c.tokens ?? 'not measured'}`).join('\n')}\nSteps run by hand in earlier sessions weren't measured; say so rather than guessing.`
+  }
 
   if (kind === 'plan') {
     const pt = await agent(PLAYTESTER(
@@ -166,6 +174,9 @@ while (done.length < MAX_STEPS) {
   const r = await agent(STEP_PROMPT(extra), { label: name, phase: cap(kind), schema: STEP_RESULT })
   if (!r) { log(`Stopping: the ${name} agent didn't return. next.md says where the studio is.`); break }
   done.push(r)
+  const now = tokens()
+  cost.push({ step: r.step, tokens: now !== null && mark !== null ? now - mark : null })
+  mark = now
   log(`${r.ok ? '✓' : '✗'} ${r.step}: ${r.summary}${r.live ? ` — ${r.live}` : ''}`)
   if (!r.ok) { log('Stopping: that step did not finish cleanly. Its report is above; next.md says what remains.'); break }
   if (r.nextLine === nextLine) { log('Stopping: next.md did not move, so the step made no progress.'); break }
@@ -174,7 +185,12 @@ while (done.length < MAX_STEPS) {
 }
 if (done.length >= MAX_STEPS) log(`Stopping: reached the ${MAX_STEPS}-step limit for one run.`)
 
+const total = cost.reduce((n, c) => n + (c.tokens || 0), 0)
+if (cost.length) log(`Output tokens this run: ${total}${cost.length ? `; costliest step: ${cost.reduce((a, b) => ((b.tokens || 0) > (a.tokens || 0) ? b : a)).step}` : ''}`)
+log('How did this run go? Anything you tell me about how the team worked goes in the inbox, and the next retro turns it into a rule or a workflow change (direction rule 8).')
+
 return {
-  steps: done.map(d => ({ step: d.step, ok: d.ok, summary: d.summary, checks: d.checks, live: d.live })),
+  steps: done.map((d, i) => ({ step: d.step, ok: d.ok, summary: d.summary, checks: d.checks, live: d.live, tokens: cost[i] ? cost[i].tokens : null })),
+  outputTokens: total,
   next: nextLine,
 }
