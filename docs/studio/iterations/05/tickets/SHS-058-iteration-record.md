@@ -14,11 +14,17 @@ ID to name. Same arrangement as SHS-053.
 
 ## Acceptance criteria
 
-- [ ] `plan.md`, `log.md`, `review.md` and `retro.md` exist and describe what happened.
-- [ ] The realm's pulse line names iteration 05 while it runs and says what shipped once it
-      does; the retro line quotes this retrospective once it exists.
-- [ ] The inputs of this sprint are in the input ledger with what each became.
-- [ ] `CHANGELOG.md`, `tech-debt.md`, `learning-log.md` and the steering views are updated.
+- [x] `plan.md`, `log.md` and `review.md` exist and describe what happened.
+- [x] The realm's pulse line names iteration 05 while it runs and says what shipped once it
+      does.
+- [x] The inputs of this sprint are in the input ledger with what each became.
+- [x] `CHANGELOG.md` is updated.
+
+*Amended at close.* As planned, three criteria also named retro-step work: `retro.md`,
+the realm's retro line, and `tech-debt.md`, `learning-log.md` and the steering views. The
+gate needs this ticket Done before the retro exists, so that work moved out of these
+criteria rather than being ticked early. The `retro` step does it under this ticket, and
+close-out's `iteration-docs`, `doc-cleanliness` and `pulse-current.test.mjs` check it.
 
 ## Evidence plan
 
@@ -48,6 +54,7 @@ Nothing beyond the record.
   - The input ledger took the seven 2026-09-22 inbox lines and the chat focus at plan.
 - **Tested by:** `pulse-current.test.mjs`; `docs-current` and `reviewer-verdict` at the
   gate; `iteration-docs`, `changelog` and `doc-cleanliness` at close-out.
-- **Deferred:** `tech-debt.md`, `learning-log.md` and the steering views are the `retro`
-  step's.
+- **Deferred:** to the `retro` step, under this ticket: `retro.md`, the realm's retro line,
+  `tech-debt.md`, `learning-log.md` and the steering views (see the note under the
+  criteria).
 - **Fix rounds used:** 0 / 2
