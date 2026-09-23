@@ -22,7 +22,8 @@ export const meta = {
 const opts = typeof args === 'string' ? { focus: args } : (args || {})
 const MAX_SPRINTS = opts.sprints || 1
 const MAX_STEPS = opts.steps || 14
-const RUNNABLE = /^\*\*Next:\*\*\s*`(plan|build|review|close|retro)\b/
+// Agents return the **Next:** line with or without its bold prefix; accept both.
+const RUNNABLE = /^\s*(?:\*\*Next:\*\*\s*)?`(plan|build|review|close|retro)\b/
 const SKILL = '.claude/skills/studio-iteration/SKILL.md'
 // Local first (executive, 2026-09-23): everything is checked on a local server; Pages is
 // slow to update, so the live site is checked once, by the close step. Opus is the largest
