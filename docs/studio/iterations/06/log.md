@@ -63,3 +63,15 @@ is committed.
   (`c361b17`). Backlog #33 and #35 were reworded, #36 and #37 are new, and the arcade bug
   row p0-17 went in its own `docs:` commit. Two findings were declined with reasons. No
   second round. *Next:* close. *Blocked:* nothing.
+
+## Session 6 — close (2026-09-22)
+
+- **Scrum Master** — *Done:* the gate's first run was red on one check, `docs-current`
+  (the record ticket still open), and green after the close records: `review.md`'s *In
+  plain words*, demo list and Keep / Iterate / Kill, the changelog, the pulse line, the
+  record ticket closed. Pushed, tagged `studio-iteration-06`, postdeploy checked. *Next:*
+  retro. *Blocked:* nothing.
+- **Product Owner** — *Done:* the team's Keep / Iterate / Kill: power-ups Iterate (the HUD
+  over the score, frame-counted timers), the restart fix and ticket links Keep. The
+  executive's verdict on the power-ups is what E1's done-when still needs. *Next:* retro.
+  *Blocked:* nothing.

@@ -15,7 +15,7 @@
 export const PULSE = {
   iteration: '06',
   shipped: '2026-09-22',
-  summary: 'In progress: River Run\'s first experiment. A shield and rapid-fire float down the fork\'s river, and every ticket number in the studio\'s docs becomes a link to its ticket.'
+  summary: 'Shipped: River Run\'s first experiment. A shield and a spread shot float down the fork\'s river, a restart can no longer freeze it, and every ticket number in the studio\'s docs links to its ticket.'
 };
 
 /**

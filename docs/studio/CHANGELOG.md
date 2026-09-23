@@ -3,6 +3,41 @@
 All notable changes to Shadow Studio, one section per iteration. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are iteration tags.
 
+## [studio-iteration-06] — 2026-09-22
+
+River Run's first experiment: a shield and a spread shot float down the fork's river, a
+restart can no longer freeze the fork, and every studio ticket number in the docs links to
+its ticket. Sprint 2 of 3 of epic E1.
+
+### Added
+
+- **Power-ups on the fork's river** ([SHS-060](iterations/06/tickets/SHS-060-river-run-power-ups.md))
+  — one pickup at a time, the first about 5 s into a run. A **shield** (cyan) puts a bubble
+  on the boat that takes the next rock or log; a **spread shot** (pink) makes every shot
+  three for about 6 s. A HUD under the score shows each, with the spread's countdown; the
+  pickup sounds respect mute, the drawer's pause pauses them, and nothing new is saved.
+  The fork's byte-for-byte equality test is retired; its edit list stays as the record of
+  the copy.
+- **Ticket numbers link to their tickets** ([SHS-059](iterations/06/tickets/SHS-059-ticket-mentions-link-to-tickets.md))
+  — `tests/studio/link-tickets.mjs` linked 378 `SHS-NNN` mentions in 48 Markdown files and
+  leaves code, title lines, commit subjects, numbers with no ticket and self-mentions
+  plain. The retro runs it; a second run changes nothing.
+
+### Fixed
+
+- **A restart could freeze the fork's river** ([SHS-061](iterations/06/tickets/SHS-061-river-run-tone-start-time.md))
+  — `musicSequence.stop()` threw against a stopped Tone Transport and aborted the new run
+  before its game loop. The fork disposes the old sequence instead, and a music failure can
+  no longer stop a run starting. A 20-restart browser test covers it, and the fork's
+  browser tests now accept no error at all (TD-014 closed).
+- **Fast taps with the spread shot fired nothing** — the 30-shot pool ran dry; it is 90,
+  and a shot past the river bank returns to it (`8a7a604`, review).
+
+### Changed
+
+- **The link lib names the Markdown shapes it would mislink** (`c361b17`, review); none is
+  in the repo, and guarding them is backlog #36.
+
 ## [studio-iteration-05] — 2026-09-22
 
 The Studio Wing opens: River Run is the studio's first fork, with saves of its own, and the

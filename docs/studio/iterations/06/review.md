@@ -7,15 +7,48 @@ second round (direction rule 3).
 
 ## In plain words
 
-*Written at close.*
+The studio's copy of River Run now has its first experiment: a shield and a spread shot
+float down the river one at a time, and the boat picks them up by touching them. The same
+sprint fixed a bug in the copy where restarting a run could leave the river frozen, and
+made every studio ticket number in the docs a link to that ticket's file. Two independent
+reviewers approved with findings; the one new problem a player would hit (fast taps with
+the spread shot sometimes fired nothing) was fixed before this close. The reviewers also
+found that the arcade's own River Run has the same freeze on restart, which is now queued
+in both the arcade's bug lane (p0-17) and the studio's next plan (#33). You are asked for a
+Keep / Iterate / Kill on the power-ups below: epic E1 needs your verdict on one experiment
+before it can finish.
 
 ## Demo
 
-*Written at close.*
+- **The fork:** https://yevrap.github.io/KamekoStudio/studio/games/river-run/ (or the River
+  Run portal on https://yevrap.github.io/KamekoStudio/3d.html).
+  1. Start a run. About 5 s in, a glowing shape floats down the river: a cyan one is the
+     shield, a pink one the spread shot. Steer into it.
+  2. **Shield:** a bubble follows the boat and the HUD under the score reads `🛡 SHIELD`.
+     Hit a rock or a log: it bursts instead of ending the run, and the bubble goes.
+  3. **Spread shot:** for about 6 s every shot is three, fanned left, straight and right,
+     and the HUD counts down `✦ SPREAD 4.7s`. Tap FIRE fast; every tap fires.
+  4. Die and restart many times in a row: every run starts, and the music comes back.
+  5. Try ▶ Watch: the auto-boat picks power-ups up when they come its way.
+- **Linked ticket numbers:** open any studio doc on GitHub, for example
+  [the plan](plan.md) or [the backlog](../../steering/backlog.md): every `SHS-NNN` is a link
+  to its ticket.
 
 ## Keep / Iterate / Kill
 
-*Written at close.*
+> The executive: strike through what you disagree with. These are the team's.
+
+- **[SHS-060](tickets/SHS-060-river-run-power-ups.md), power-ups on the river — Iterate.**
+  Both work and change how a run feels, but on a narrow phone their HUD sits over the
+  score (#35), and their timers count frames, so on a 120 Hz phone "6.0s" lasts 3 s (QA F5).
+  Sprint 07 would fix the layout and, on your Keep, tune them from your play. A **Kill**
+  removes both and returns the fork to the arcade's gameplay.
+- **[SHS-061](tickets/SHS-061-river-run-tone-start-time.md), restart never freezes the
+  fork — Keep.** A real freeze, reproduced and fixed. Its test catches a regression only
+  most of the time; #37 makes it deterministic, and production's twin is #33 / p0-17.
+- **[SHS-059](tickets/SHS-059-ticket-mentions-link-to-tickets.md), ticket numbers link —
+  Keep.** 378 mentions linked, and the retro keeps new ones linked. Seven Markdown shapes it
+  would mislink are named in its lib (none is in the repo); guarding them is #36.
 
 ## What was reviewed
 
