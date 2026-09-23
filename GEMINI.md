@@ -324,7 +324,7 @@ Agents do not have a human's time pressure and can afford to double-check before
 | `new-game` | "jam a new game" | Three original pitches → a single-file Lab prototype → deployed, documented, with a verdict questionnaire |
 | `studio-iteration` · `studio-standup` · `studio-promote` | "studio next" · "studio status" · "promote X" | Shadow Studio's scrum team, one step per session (plan, build one ticket, review, close, retro); `docs/studio/steering/next.md` says which step is due and a SessionStart hook loads it — see `docs/studio/` |
 | `studio-sprint` (skill + workflow) | "run the studio" (optionally "… with focus: X") | Runs the studio's current sprint to its retro with QA, the Independent Reviewer and the Playtester at review (ADR-0011). In Claude Code the skill starts the saved workflow (`.claude/workflows/`), one fresh agent per step, watched in `/workflows` — saying this is the explicit opt-in. In Antigravity the skill conducts the steps itself, with subagents where it can |
-| `studio-request` | "studio request: X", "prioritize X" | Files a `studio` GitHub issue with a `priority:` label; the next studio plan turns it into a backlog row, and close closes it when it ships |
+| `studio-request` | "studio request: X", "studio feedback: X", "studio verdict: Keep X" | Files a `studio` GitHub issue: a request (with a `priority:` label) becomes a backlog row at the next plan and is closed when it ships; `feedback` on how a run went goes to the next retro (direction rule 8); a `verdict` overrides the Playtester's |
 
 ### Antigravity / Gemini notes
 

@@ -1,6 +1,6 @@
 ---
 name: studio-request
-description: "Files a request for the Shadow Studio team — a feature, a game idea, a fix for a studio game, a priority change for a backlog row — as a GitHub issue that the next sprint's plan triages into the backlog. Also lists open requests. Use when Yevster says 'studio request: …', 'ask the studio for …', 'I want the studio to make …', 'add X to the studio backlog', 'prioritize X', 'move #N up', or 'what have I asked the studio for'."
+description: "Files something for the Shadow Studio team as a GitHub issue — a request (feature, game idea, fix for a studio game, priority change for a backlog row), feedback on how a run went, or a Keep / Iterate / Kill verdict that overrides the Playtester's. Also lists open ones. Use when Yevster says 'studio request: …', 'ask the studio for …', 'prioritize X', 'move #N up', 'studio feedback: …', 'that run was too slow / wasteful / …', 'studio verdict: …', 'keep / kill the power-ups', or 'what have I asked the studio for'."
 ---
 
 # Studio request
@@ -37,10 +37,23 @@ is Yevster's own edit, between runs.
    _Filed with studio-request. The next studio plan puts it in the backlog (ADR-0011)._"
    ```
    If a label is missing, create it once: `studio`, `priority: now`, `priority: next`,
-   `priority: later`, `in backlog`.
+   `priority: later`, `in backlog`, `feedback`, `verdict`.
 5. **Report** in two lines: the issue URL, and when it'll be picked up — at the next
    `plan`, which a running sprint reaches after its retro. `priority: now` doesn't interrupt
    a running sprint.
+
+## Feedback and verdicts
+
+Same channel, different label — never an edit to the working tree (a sprint may be
+running, and an unticketed studio commit fails the checks):
+
+- **Feedback on how a run went** (too slow, too much ceremony, a step that should be
+  skipped, what worked): `--label studio --label feedback`, no priority. The next retro
+  turns it into a rule, a skill or workflow edit, or a check (direction rule 8) and closes
+  the issue saying which.
+- **A verdict** on something the studio shipped: `--label studio --label verdict`, title
+  `Keep | Iterate | Kill: <item>`, body the why. It overrides the Playtester's verdict at
+  the next plan, which closes the issue saying what changed.
 
 ## List requests
 

@@ -189,7 +189,7 @@ if (done.length >= MAX_STEPS) log(`Stopping: reached the ${MAX_STEPS}-step limit
 
 const total = cost.reduce((n, c) => n + (c.tokens || 0), 0)
 if (cost.length) log(`Output tokens this run: ${total}${cost.length ? `; costliest step: ${cost.reduce((a, b) => ((b.tokens || 0) > (a.tokens || 0) ? b : a)).step}` : ''}`)
-log('How did this run go? Anything you tell me about how the team worked goes in the inbox, and the next retro turns it into a rule or a workflow change (direction rule 8).')
+log('How did this run go? Say "studio feedback: …" (or "studio verdict: …" to overrule the Playtester) and it becomes an issue the next retro or plan acts on (direction rule 8).')
 
 return {
   steps: done.map((d, i) => ({ step: d.step, ok: d.ok, summary: d.summary, checks: d.checks, live: d.live, tokens: cost[i] ? cost[i].tokens : null })),

@@ -46,8 +46,8 @@ runs the reviewers, and measures tokens per step.
 4. **Efficiency.** You can't measure tokens per step: when the retro asks, say "not
    measured in this tool" rather than guessing.
 5. **End** with the steps done, what to play, where the studio is now, and one question:
-   how did this run go? What Yevster says about how the team worked goes into
-   `docs/studio/steering/inbox.md`, and the next retro turns it into a rule or a change
-   (direction rule 8).
+   how did this run go? File the answer with the `studio-request` skill as a `feedback`
+   issue (a verdict as a `verdict` issue) — never as an edit to the working tree — and the
+   next retro turns it into a rule or a change (direction rule 8).
 
 Opus-class models only where you can choose (no Fable).
