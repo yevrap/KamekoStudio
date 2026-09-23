@@ -128,6 +128,12 @@ const PRODUCTION_SAVES = {
  */
 const INHERITED_TONE_RANGE = /^uncaught: Uncaught \(in promise\) RangeError: Value must be within \[0, Infinity\], got: -\d(\.\d+)?e-\d+$/;
 
+/**
+ * What shared/settings.js does on every page load, the arcade's too: it drops the
+ * retired token keys (ADR-0003). Not the fork's doing, and not a save.
+ */
+const SETTINGS_LOAD_REMOVALS = ['removeItem tokens', 'removeItem tokenHistory'];
+
 const notStudio = store => Object.fromEntries(Object.entries(store).filter(([k]) => !k.startsWith('studio_')).sort());
 
 test('in a browser, playing the fork leaves every non-studio key exactly as it was',
@@ -151,6 +157,24 @@ test('in a browser, playing the fork leaves every non-studio key exactly as it w
         localStorage.clear();
         for (const [k, v] of Object.entries(saves)) localStorage.setItem(k, v);
       }, PRODUCTION_SAVES);
+      // Record every localStorage write from here on. Comparing the store
+      // before and after cannot see a write that puts back the value a key
+      // already had (iteration 05 review, finding 3); the log can.
+      await page.evaluateOnNewDocument(() => {
+        window.__storageWrites = [];
+        for (const name of ['setItem', 'removeItem']) {
+          const original = Storage.prototype[name];
+          Storage.prototype[name] = function (key, ...rest) {
+            if (this === window.localStorage) window.__storageWrites.push(`${name} ${key}`);
+            return original.call(this, key, ...rest);
+          };
+        }
+        const clear = Storage.prototype.clear;
+        Storage.prototype.clear = function () {
+          if (this === window.localStorage) window.__storageWrites.push('clear');
+          return clear.call(this);
+        };
+      });
       await page.reload({ waitUntil: 'networkidle2' });
       await settle();
 
@@ -222,6 +246,10 @@ test('in a browser, playing the fork leaves every non-studio key exactly as it w
 
       const after = await dump();
       assert.deepEqual(notStudio(after), before, 'a non-studio key changed');
+      const writes = await page.evaluate(() => window.__storageWrites);
+      assert.ok(writes.some(w => w.startsWith('setItem studio_')), 'the write log saw no studio write, so it is not recording');
+      assert.deepEqual(writes.filter(w => !w.split(' ')[1]?.startsWith('studio_') && !SETTINGS_LOAD_REMOVALS.includes(w)), [],
+        'a non-studio key was written, even if back to the value it had');
 
       // And the studio's own saves were really made.
       assert.ok(Number(after.studio_riverRun_highScore) > 0, 'no high score was saved');
