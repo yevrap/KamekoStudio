@@ -10,7 +10,7 @@ The Studio Wing opens: River Run is the studio's first fork, with saves of its o
 
 ### Added
 
-- **River Run, forked into the studio** (SHS-056) — `studio/games/river-run/`, copied
+- **River Run, forked into the studio** ([SHS-056](iterations/05/tickets/SHS-056-river-run-fork.md)) — `studio/games/river-run/`, copied
   from production at `082943a`. Every save is `studio_riverRun_*`, Watch Mode registers
   under `studio_riverRun`, and the theme comes from the body class instead of the shared
   `theme` key. Every difference from production is a closed list in
@@ -18,14 +18,14 @@ The Studio Wing opens: River Run is the studio's first fork, with saves of its o
   studio page contract needed (a back link, a 44px mute button, a no-script message,
   guarded storage). A headless run logs every `localStorage` write and refuses any
   non-`studio_` key. The procedure is `docs/studio/forking.md`.
-- **The 3D River Run portal opens the fork** (SHS-057) — one `url` in
+- **The 3D River Run portal opens the fork** ([SHS-057](iterations/05/tickets/SHS-057-portal-opens-fork.md)) — one `url` in
   `shared/3d/constants.js`, a recorded exception (ADR-0010) scoped to that value and
   checked like the front-wall row. A headless test walks into the portal and lands on the
   fork.
 
 ### Changed
 
-- **The checks tell studio commits from arcade commits** (SHS-055). `commitKind` sorts
+- **The checks tell studio commits from arcade commits** ([SHS-055](iterations/05/tickets/SHS-055-checks-tell-studio-from-arcade.md)). `commitKind` sorts
   every commit on the shared `main` into studio, arcade, merge or exempt. `commit-lint`
   lints studio commits only; `path-guard` and `production-unchanged` judge what studio
   commits changed and refuse an arcade commit or a mixed merge that touches a studio path.
@@ -64,7 +64,7 @@ checked as it landed.
   it. The guard proves a write
   was planned and recorded; ADR-0008 says plainly that it cannot prove the plan was
   legitimate.
-- **A production fix is reviewed before it is pushed** — SHS-054, opened by review.
+- **A production fix is reviewed before it is pushed** — [SHS-054](iterations/04/tickets/SHS-054-production-fixes-reviewed-before-push.md), opened by review.
   `production-fix-reviewed`, in `push` and `gate`, refuses a production fix unless
   `iterations/NN/reviews/<TICKET>.md` names a reviewed commit and an approving verdict, and
   every file the fix owns is, at `HEAD`, exactly what that commit holds. It is decided
@@ -88,7 +88,7 @@ checked as it landed.
 ### Fixed
 
 - **Black Hole in One: entering Explore with spiral particles alive threw on every frame
-  for about a second** (TD-009, SHS-052). The studio's first production fix, one line in
+  for about a second** (TD-009, [SHS-052](iterations/04/tickets/SHS-052-td-009-fixed.md)). The studio's first production fix, one line in
   `stepParticles`. Three regression tests in `scripts/e2e.mjs`, each in its own browser
   profile and each proving its precondition. They failed on the unfixed file and pass on
   the fixed one, and they refuse partial and over-broad fixes.
@@ -157,7 +157,7 @@ rather than called flaky, and the gate stops accepting a ticket that has no file
 - **The post-deploy stage proved less than it said, twice.** `studio-live` never waits for
   the new build, so a correct deploy read as a failure; `production-unchanged`, run after
   the tag, compared the release with itself and passed. Registered as TD-010 and TD-011 by
-  SHS-049, which landed after the tag; the deploy itself was verified with the right
+  [SHS-049](iterations/03/tickets/SHS-049-postdeploy-gaps.md), which landed after the tag; the deploy itself was verified with the right
   baseline.
 
 ### Review

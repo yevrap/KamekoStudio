@@ -10,7 +10,7 @@
 ## Motivation
 
 The sprint's ceremony paperwork, carried as a ticket so the commits that write it have an
-ID to name. Same arrangement as SHS-053.
+ID to name. Same arrangement as [SHS-053](../../04/tickets/SHS-053-iteration-record.md).
 
 ## Acceptance criteria
 
@@ -43,7 +43,7 @@ Nothing beyond the record.
   - `iterations/05/`: `plan.md`, `log.md` (a stand-up per session, each pushed as it
     landed), `review.md` (one round, both passes approve with findings, *In plain words*,
     the demo list and Keep / Iterate / Kill). `retro.md` is written at the `retro` step
-    under this ticket, as SHS-053's was.
+    under this ticket, as [SHS-053](../../04/tickets/SHS-053-iteration-record.md)'s was.
   - Review-step fixes under this ticket: `b897707` (a subject naming a studio ticket is a
     studio commit), `607d40b` (the fork's browser test logs every storage write), and
     `process.md` (rebase, don't merge).

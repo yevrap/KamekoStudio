@@ -4,7 +4,7 @@
 - **Size:** S
 - **Iteration:** 03
 - **Role lead:** Tech Lead / Architect
-- **Depends on:** SHS-043
+- **Depends on:** [SHS-043](SHS-043-ticket-prefix.md)
 - **Branch:** `shs-045-every-ticket-has-a-file`
 
 ## Motivation
@@ -81,7 +81,7 @@ before the backfill (fails, naming the three IDs) and after (passes).
   real tree and reverted, each failing with its own message: SS-041's reconstructed file
   set back to `Ready` in iteration 02's directory (*"iterations/02/tickets/SS-041-…: still
   "Ready" at the gate"* — the in-range content rule reaching an older directory); a copy of
-  SHS-043's file in iteration 02 (*"SHS-043: 2 ticket files"*); `SS-038-mislabelled.md`
+  [SHS-043](SHS-043-ticket-prefix.md)'s file in iteration 02 (*"[SHS-043](SHS-043-ticket-prefix.md): 2 ticket files"*); `SS-038-mislabelled.md`
   headed `# SHS-099` (*"first line should be "# SS-038 — …""*); `ss-044-lowercase.md`
   (*"not named <ID>-<slug>.md"*). SS-040's file, in range and in iteration 02, passes the
   content rules unchanged. Fix round 1: four more tests (82/82) — the two out-of-sequence

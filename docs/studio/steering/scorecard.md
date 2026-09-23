@@ -13,13 +13,13 @@ One row per iteration, written at close-out. The point is the trend, not the num
 
 ## Iteration 05 — what the row means
 
-- **Tickets, 4 against 3.** SHS-055, 056 and 057 were committed; SHS-058 is the record.
+- **Tickets, 4 against 3.** [SHS-055](../iterations/05/tickets/SHS-055-checks-tell-studio-from-arcade.md), 056 and 057 were committed; [SHS-058](../iterations/05/tickets/SHS-058-iteration-record.md) is the record.
   None was opened by review: under the one-round rule, the findings went to the backlog
   (#26–#31) or were fixed in the review step as S fixes under the record ticket.
 - **The one that matters to a player shipped.** The River Run portal on the 3D page opens
   the studio's fork, and the fork keeps its own saves.
 - **Fix rounds, 0.** The first sprint with none, against 7 in 04. The refusal cases were
-  in SHS-055's criteria from plan, its tests went red first, and there was one review
+  in [SHS-055](../iterations/05/tickets/SHS-055-checks-tell-studio-from-arcade.md)'s criteria from plan, its tests went red first, and there was one review
   round, not two.
 - **Checks caught, 6 + 12.**
   - Built:
@@ -27,7 +27,7 @@ One row per iteration, written at close-out. The point is the trend, not the num
     - `studio-boot` on four places production River Run fails the studio page contract;
     - `full-suites` twice in the push stage: once unexplained, once a browser test
       waiting on chance;
-    - `commit-lint` on a SHS-056 subject;
+    - `commit-lint` on a [SHS-056](../iterations/05/tickets/SHS-056-river-run-fork.md) subject;
     - `docs-current` on the record ticket's criteria.
   - Reviewed: 12 distinct findings from the two passes, 3 fixed in the step.
 - **Debt +1 / −0.** TD-014 opened: the fork test's named Tone.js exemption.
@@ -39,15 +39,15 @@ One row per iteration, written at close-out. The point is the trend, not the num
 
 ## Iteration 04 — what the row means
 
-- **Tickets, 5 against 3.** SHS-050, 051 and 052 were committed; SHS-053 is the record.
-  SHS-054 was **opened by review**: a production fix is reviewed before it is pushed. That
+- **Tickets, 5 against 3.** [SHS-050](../iterations/04/tickets/SHS-050-checks-every-push-can-trust.md), 051 and 052 were committed; [SHS-053](../iterations/04/tickets/SHS-053-iteration-record.md) is the record.
+  [SHS-054](../iterations/04/tickets/SHS-054-production-fixes-reviewed-before-push.md) was **opened by review**: a production fix is reviewed before it is pushed. That
   is one review-opened ticket, against 0 in 03 and 15 in 02.
 - **The one that matters to a player shipped.** Black Hole in One no longer throws when
   you enter Explore (TD-009). It is the studio's first fix to a production game. Both
   review rounds approved it on its own, and QA measured it with real taps: 0 of 20
   trials threw on the fixed build, 20 of 20 on the unfixed one.
-- **Fix rounds, 7.** Two each on SHS-050, SHS-051 and SHS-054, all three at the cap, and
-  one on SHS-052. SHS-051 ended with a gap it may not fix, TD-013.
+- **Fix rounds, 7.** Two each on [SHS-050](../iterations/04/tickets/SHS-050-checks-every-push-can-trust.md), [SHS-051](../iterations/04/tickets/SHS-051-production-fixes-under-full-process.md) and [SHS-054](../iterations/04/tickets/SHS-054-production-fixes-reviewed-before-push.md), all three at the cap, and
+  one on [SHS-052](../iterations/04/tickets/SHS-052-td-009-fixed.md). [SHS-051](../iterations/04/tickets/SHS-051-production-fixes-under-full-process.md) ended with a gap it may not fix, TD-013.
 - **Checks caught, 4 + 24.**
   - Built:
     - TD-010, live on the first push;
@@ -74,13 +74,13 @@ One row per iteration, written at close-out. The point is the trend, not the num
 
 ## Iteration 03 — what the row means
 
-- **Tickets, 7 against 3.** SHS-043, 044 and 045 were committed; SHS-046 is the record.
-  SHS-047 was opened by the build, SHS-048 by your direction after review (trunk-based
-  development, written down), and SHS-049 by the publish step. **None was opened by a
+- **Tickets, 7 against 3.** [SHS-043](../iterations/03/tickets/SHS-043-ticket-prefix.md), 044 and 045 were committed; [SHS-046](../iterations/03/tickets/SHS-046-iteration-record.md) is the record.
+  [SHS-047](../iterations/03/tickets/SHS-047-pushed-commit-waiver.md) was opened by the build, [SHS-048](../iterations/03/tickets/SHS-048-trunk-based-trial.md) by your direction after review (trunk-based
+  development, written down), and [SHS-049](../iterations/03/tickets/SHS-049-postdeploy-gaps.md) by the publish step. **None was opened by a
   review** — every finding went into a fix round on its own ticket. Iteration 02 had
   fifteen review-opened tickets.
-- **Fix rounds, 6.** Two each on SHS-043 and SHS-044 — both at the cap, neither over it —
-  one on SHS-045, one on SHS-047's record.
+- **Fix rounds, 6.** Two each on [SHS-043](../iterations/03/tickets/SHS-043-ticket-prefix.md) and [SHS-044](../iterations/03/tickets/SHS-044-td-009-diagnosed.md) — both at the cap, neither over it —
+  one on [SHS-045](../iterations/03/tickets/SHS-045-every-ticket-has-a-file.md), one on [SHS-047](../iterations/03/tickets/SHS-047-pushed-commit-waiver.md)'s record.
 - **Checks caught, 7 + 19.** Built: `docs-current` found three shipped tickets with no file
   on its first run over the history; the full-history lint found a pushed commit the last
   gate never saw; the example test found the handbook contradicting its own rule; the

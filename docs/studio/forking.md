@@ -7,7 +7,7 @@ copy, and production gets bug fixes only. A fork is the opposite direction to a
 exception to the path guard. It only reads production, and it writes only under `studio/`,
 `tests/studio/` and `docs/studio/`.
 
-The first fork is River Run (iteration 05, SHS-056). This page is the procedure it followed,
+The first fork is River Run (iteration 05, [SHS-056](iterations/05/tickets/SHS-056-river-run-fork.md)). This page is the procedure it followed,
 written down so the second fork can follow it. There is no fork script: a tool is built only
 if the second fork shows the procedure needs one.
 

@@ -4,14 +4,14 @@
 - **Size:** S
 - **Iteration:** 06
 - **Role lead:** Audio / Juice
-- **Depends on:** SHS-060 (it retires the equality test this exemption rests on)
+- **Depends on:** [SHS-060](SHS-060-river-run-power-ups.md) (it retires the equality test this exemption rests on)
 - **Branch:** none — trunk-based, commits to `main` (ADR-0007)
 
 ## Motivation
 
 The fork restarts a Tone.js sequence on every new run, and now and then Tone rejects a
 start time a hair below zero (`RangeError … got: -1e-12`, uncaught in promise). It was
-inherited from production, found at SHS-056's build and carried as a named exemption in the
+inherited from production, found at [SHS-056](../../05/tickets/SHS-056-river-run-fork.md)'s build and carried as a named exemption in the
 fork's browser test and as TD-014 (backlog #22).
 
 ## Acceptance criteria

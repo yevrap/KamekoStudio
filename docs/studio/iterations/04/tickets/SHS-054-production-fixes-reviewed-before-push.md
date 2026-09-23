@@ -4,7 +4,7 @@
 - **Size:** M
 - **Iteration:** 04
 - **Role lead:** Tech Lead / Architect
-- **Depends on:** SHS-051
+- **Depends on:** [SHS-051](SHS-051-production-fixes-under-full-process.md)
 - **Branch:** none — trunk-based, commits to `main` (ADR-0007)
 
 ## Motivation
@@ -12,7 +12,7 @@
 Opened by the Independent Reviewer's round-1 blocker. The production-fix rule decides from
 an entry, a ticket file and commit subjects, and the studio writes all three itself. So a
 fabricated fix passes every check, and under trunk-based work it reaches the live site
-before any independent review has seen it. SHS-052, the first production fix, went live
+before any independent review has seen it. [SHS-052](SHS-052-td-009-fixed.md), the first production fix, went live
 before review in exactly that way. Nothing in the repository can stop the author, since
 the guard's own rules live in studio paths. What the process can do is put an independent
 review between a production fix and the live site, and make that step impossible to
@@ -47,8 +47,8 @@ forget.
 ## Evidence plan
 
 `production-fix.test.mjs`; the `push` stage on this iteration's own production fix. The
-record for SHS-052 is written from the reviews that actually saw it, and the next change
-to SHS-052's files is refused until a review covers it.
+record for [SHS-052](SHS-052-td-009-fixed.md) is written from the reviews that actually saw it, and the next change
+to [SHS-052](SHS-052-td-009-fixed.md)'s files is refused until a review covers it.
 
 ## Out of scope
 
@@ -70,7 +70,7 @@ to SHS-052's files is refused until a review covers it.
     `push` and `gate`. It also refuses a reviewed commit that is not in `HEAD`'s history.
     `commitsTouching` is exported from `path-guard.mjs` so both use the same commit list.
   - `docs/studio/iterations/04/reviews/SHS-052.md` — the first record. It is written from
-    review round 1's reports and says so, because SHS-052 went live before this rule
+    review round 1's reports and says so, because [SHS-052](SHS-052-td-009-fixed.md) went live before this rule
     existed.
   - Docs:
     - ADR-0008 (item 4, and *Reviewed before it is pushed*);
@@ -96,7 +96,7 @@ to SHS-052's files is refused until a review covers it.
     - skipping the history check failed none at first, because the only test for it used
       a hash that exists nowhere, which the coverage check refuses first. The test now
       also uses a real commit on another branch, and the mutation fails it.
-  - This ticket's own push: `push` 11 of 11, with the check admitting SHS-052 as reviewed
+  - This ticket's own push: `push` 11 of 11, with the check admitting [SHS-052](SHS-052-td-009-fixed.md) as reviewed
     at `7b8a0fe`. Results in `log.md`.
 - **Fix round 1 — from review round 2.** QA rejected the iteration on this ticket's central
   claim, and was right:
@@ -106,7 +106,7 @@ to SHS-052's files is refused until a review covers it.
     03's `scripts/e2e.mjs`, deleting all three TD-009 tests, under a docs subject. The
     whole `push` stage passed 11 of 11.
   - **A merge taking a file from its side parent** hid the change from `git log` (QA N2,
-    in SHS-051's `path-guard`).
+    in [SHS-051](SHS-051-production-fixes-under-full-process.md)'s `path-guard`).
   - **A narrow `--base`** left an unpushed fix out of view (QA N3).
   - **All three are closed by deciding from content.** Every file the ticket owns must be,
     at `HEAD`, exactly what the reviewed commit holds. The need for a review is measured

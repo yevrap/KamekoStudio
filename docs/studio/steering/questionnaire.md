@@ -4,7 +4,7 @@ Open decisions only. Everything else is decided in [Shadow Studio](design.md). T
 or just tell me in chat. Anything you leave blank takes the default (⭐). Answered questions
 are folded into the design and removed from here.
 
-*Answered: Q12 (first River Run experiment → ⭐ power-ups, blank at sprint 06's plan; built as SHS-060), Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
+*Answered: Q12 (first River Run experiment → ⭐ power-ups, blank at sprint 06's plan; built as [SHS-060](../iterations/06/tickets/SHS-060-river-run-power-ups.md)), Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
 02 builds → the first experiment), Q7 (Overtighten → left on the shelf as an honest
 prototype, ⭐ by silence), Q8 (process → keep the gate and break ties yourself, keep
 `docs-current`, cap planned work only — all ⭐ by silence), Q4 (3D zone → the studio's
@@ -26,7 +26,7 @@ Iteration 04 made the studio's first production fix, TD-009 in Black Hole in One
 review then showed that the studio's own checks can't tell a real fix from a made-up one:
 the studio writes everything they read, including the checks themselves. So from now on a
 production fix waits for an independent review before it's pushed, and the push is refused
-until that review covers the exact commit (SHS-054). That makes the review impossible to
+until that review covers the exact commit ([SHS-054](../iterations/04/tickets/SHS-054-production-fixes-reviewed-before-push.md)). That makes the review impossible to
 *forget*. It can't make it impossible to *fake*, because the studio also writes the review
 record. Only something outside the repo can do that, such as a GitHub pull request that you
 merge.

@@ -10,7 +10,7 @@ The executive's direction for epic E1 makes the 3D landing page the studio's win
 first done-when line reads: *a 3D portal leads to a studio fork, and every portal without a
 fork still leads to its production game*. Q4 (decided 2026-09-21) approved the 3D page as
 the studio's window, and the executive chose River Run as the first fork (Q11, option C).
-SHS-056 put that fork live at `studio/games/river-run/`.
+[SHS-056](../iterations/05/tickets/SHS-056-river-run-fork.md) put that fork live at `studio/games/river-run/`.
 
 The portal list is `ARCADE_GAMES` in `shared/3d/constants.js`. The landing page builds one
 portal per entry and navigates to the entry's `url`. The file is production code, outside

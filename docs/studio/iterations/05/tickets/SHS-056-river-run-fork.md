@@ -4,7 +4,7 @@
 - **Size:** M
 - **Iteration:** 05
 - **Role lead:** Front-end / Gameplay Dev
-- **Depends on:** SHS-055 (so the push can pass the guard)
+- **Depends on:** [SHS-055](SHS-055-checks-tell-studio-from-arcade.md) (so the push can pass the guard)
 - **Branch:** none — trunk-based, commits to `main` (ADR-0007)
 
 ## Motivation
@@ -45,7 +45,7 @@ Postdeploy with a marker from the fork's page.
 ## Out of scope
 
 Any gameplay change; the ES module split (backlog); a fork script (the procedure is written
-down, and a tool comes only if the second fork needs one); the 3D portal (SHS-057).
+down, and a tool comes only if the second fork needs one); the 3D portal ([SHS-057](SHS-057-portal-opens-fork.md)).
 
 ---
 

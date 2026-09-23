@@ -7,12 +7,12 @@
 - **Depends on:** none recorded
 - **Branch:** `ss-042-reviewer-model-diversity`
 
-*Reconstructed in iteration 03 by SHS-045 from commit `5416876`, which named this ticket
+*Reconstructed in iteration 03 by [SHS-045](../../03/tickets/SHS-045-every-ticket-has-a-file.md) from commit `5416876`, which named this ticket
 and had no ticket file. The motivation, criteria and result are read off that commit,
 its merge and the files it changed; the size and role lead are this reconstruction's
 assignment. Nothing is recalled. The work landed after the `studio-iteration-02` tag, as a process
 change from that iteration's retrospective. Its subject line is 81 characters, one over
-the lint's limit; see SHS-047.*
+the lint's limit; see [SHS-047](../../03/tickets/SHS-047-pushed-commit-waiver.md).*
 
 ## Motivation
 

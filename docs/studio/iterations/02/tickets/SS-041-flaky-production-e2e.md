@@ -7,7 +7,7 @@
 - **Depends on:** none recorded
 - **Branch:** `ss-041-flaky-production-e2e`
 
-*Reconstructed in iteration 03 by SHS-045 from commit `72afe9d`, which named this ticket
+*Reconstructed in iteration 03 by [SHS-045](../../03/tickets/SHS-045-every-ticket-has-a-file.md) from commit `72afe9d`, which named this ticket
 and had no ticket file. The motivation, criteria and result are read off that commit,
 its merge and the files it changed; the size and role lead are this reconstruction's
 assignment. Nothing is recalled. The work landed after the `studio-iteration-02` tag, during that
@@ -35,7 +35,7 @@ Three consecutive runs of `npm run e2e` on an unchanged tree.
 ## Out of scope
 
 - Diagnosing or fixing it. Production code; the studio records it. Diagnosed later, in
-  iteration 03, by SHS-044.
+  iteration 03, by [SHS-044](../../03/tickets/SHS-044-td-009-diagnosed.md).
 
 ---
 
@@ -45,5 +45,5 @@ Three consecutive runs of `npm run e2e` on an unchanged tree.
   — *One thing found on the way out*, 13 lines. Commit `72afe9d`.
 - **Tested by:** one failure in three consecutive `npm run e2e` runs on an unchanged tree,
   as recorded in the row; `production-unchanged` at the iteration-02 deploy.
-- **Deferred:** the diagnosis, done in iteration 03 as SHS-044.
+- **Deferred:** the diagnosis, done in iteration 03 as [SHS-044](../../03/tickets/SHS-044-td-009-diagnosed.md).
 - **Fix rounds used:** 0 / 2

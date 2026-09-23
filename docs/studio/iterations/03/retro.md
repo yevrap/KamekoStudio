@@ -34,7 +34,7 @@
   example the new rule rejects, sitting in the paragraph that states the rule. Lesson 15
   from iteration 02, *write the rule about the thing, not about the spelling*, applied to
   the lint and not to the check for leftovers.
-- **Numbers again.** SHS-047's counts were taken on uncommitted trees and did not say so;
+- **Numbers again.** [SHS-047](tickets/SHS-047-pushed-commit-waiver.md)'s counts were taken on uncommitted trees and did not say so;
   TD-009's first write-up stated a one-in-three rate measured over three runs, and its
   second stated counts from a harness outside the repository. Lesson 9, *a number in a
   Result is evidence*, needed a sharper form: say where it was measured, and don't put a
@@ -50,14 +50,14 @@
 
 1. **A diagnostic's *fixed* verdict tests the defect itself, in a state the fix cannot key
    off, and proves its own precondition first.** Added to `team/qa-engineer.md`'s working
-   notes and the learning log. SHS-046.
-2. **Before calling a test flaky, run the player's path.** `team/qa-engineer.md`. SHS-046.
+   notes and the learning log. [SHS-046](tickets/SHS-046-iteration-record.md).
+2. **Before calling a test flaky, run the player's path.** `team/qa-engineer.md`. [SHS-046](tickets/SHS-046-iteration-record.md).
 3. **A convention change is checked for violations of the new rule, not for leftovers of
-   the old spelling** — and the check is a test, not a search. Made concrete by SHS-043's
-   example-subject test; stated in the learning log. SHS-046.
-4. **Every browser trial gets its own profile.** Learning log. SHS-046.
+   the old spelling** — and the check is a test, not a search. Made concrete by [SHS-043](tickets/SHS-043-ticket-prefix.md)'s
+   example-subject test; stated in the learning log. [SHS-046](tickets/SHS-046-iteration-record.md).
+4. **Every browser trial gets its own profile.** Learning log. [SHS-046](tickets/SHS-046-iteration-record.md).
 5. **A number in the public record names where it was measured, and is reproducible from
-   the repository or left out.** Learning log. SHS-046.
+   the repository or left out.** Learning log. [SHS-046](tickets/SHS-046-iteration-record.md).
 
 ## Tried this way, next time the other
 
@@ -67,7 +67,7 @@ another, hold a retro. Two things this iteration did one way are tried the other
 - **Branch per ticket → trunk-based.** Every ticket here was a branch merged with `--no-ff`,
   and the whole iteration reached the live site in one push at the end. Iteration 04
   commits to `main` and pushes each ticket when it is green. ADR-0007 says what that is
-  testing and the questions its retro answers. SHS-048.
+  testing and the questions its retro answers. [SHS-048](tickets/SHS-048-trunk-based-trial.md).
 - **The executive breaks a rejected review's tie → the team does.** Asked to break this
   one, the executive handed it back to the team. The team shipped, and gave its reasons in
   `review.md`. Iteration 04's retro asks whether that was right: did anything in the
@@ -108,7 +108,7 @@ lands on, and whether the last check's fixes held. This is the first.
 
 Partly, and the pattern named in iteration 02 held again.
 
-- **Held:** *an exemption ships with its attacks in the same commit* — SHS-047's waiver
+- **Held:** *an exemption ships with its attacks in the same commit* — [SHS-047](tickets/SHS-047-pushed-commit-waiver.md)'s waiver
   shipped with four, and no review defeated it. *A claim about another document is checked
   against that document in the same edit* — the reconstructed tickets' first draft claimed
   everything in them was read off the commit, and that was caught and corrected before
@@ -126,5 +126,5 @@ possible, and the TD-009 check's own verdict logic now encodes change 1.
 
 ## Reserved capacity
 
-Used, and more than a fifth: SHS-044 worked an open debt row and SHS-045 closed a gap in a
+Used, and more than a fifth: [SHS-044](tickets/SHS-044-td-009-diagnosed.md) worked an open debt row and [SHS-045](tickets/SHS-045-every-ticket-has-a-file.md) closed a gap in a
 gate check before it was ever registered. Two of three committed tickets were debt.

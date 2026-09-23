@@ -10,7 +10,7 @@
 ## Motivation
 
 The iteration's own paperwork, carried as a ticket so the commits that write it have an ID
-to name — the same arrangement as SHS-046. This iteration it also writes down one change
+to name — the same arrangement as [SHS-046](../../03/tickets/SHS-046-iteration-record.md). This iteration it also writes down one change
 to how the studio pushes: the executive asked that work in flight, ceremony records
 included, be on the remote as it happens.
 

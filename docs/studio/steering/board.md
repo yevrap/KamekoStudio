@@ -42,10 +42,10 @@ Nothing.
 
 | Ticket | What |
 |---|---|
-| SHS-055 | The studio checks tell studio commits from arcade commits on the shared `main` |
-| SHS-056 | **River Run forked** into `studio/games/river-run/`, with `studio_` saves only |
-| SHS-057 | **The 3D page's River Run portal opens the fork** (ADR-0010) |
-| SHS-058 | The iteration's record |
+| [SHS-055](../iterations/05/tickets/SHS-055-checks-tell-studio-from-arcade.md) | The studio checks tell studio commits from arcade commits on the shared `main` |
+| [SHS-056](../iterations/05/tickets/SHS-056-river-run-fork.md) | **River Run forked** into `studio/games/river-run/`, with `studio_` saves only |
+| [SHS-057](../iterations/05/tickets/SHS-057-portal-opens-fork.md) | **The 3D page's River Run portal opens the fork** (ADR-0010) |
+| [SHS-058](../iterations/05/tickets/SHS-058-iteration-record.md) | The iteration's record |
 
 ## Open debt
 

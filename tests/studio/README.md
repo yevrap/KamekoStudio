@@ -8,6 +8,8 @@ lib/boot-contract.mjs  what a booted studio page must be true of, as pure predic
 lib/shell.mjs          git, filesystem and network plumbing
 lib/browser.mjs        a static server and headless Chrome, for `studio-boot`
 lib/scratch-repo.mjs   a throwaway git repository, for tests that need real history
+lib/ticket-links.mjs   which SHS-NNN mentions in Markdown become links to ticket files
+link-tickets.mjs       applies it to the repository — run by the retro, not a test
 rules.test.mjs         unit tests for lib/rules.mjs
 boot-contract.test.mjs unit tests for lib/boot-contract.mjs — no browser needed
 docs-evidence.test.mjs unit tests for the Result-evidence rule in checks/docs.mjs
@@ -17,6 +19,7 @@ path-guard.test.mjs    the path guard against the repository, not through the pu
 production-fix.test.mjs the production-fix rule, pure and against a scratch repository
 baseline.test.mjs      which tag is "the previous release", against a scratch repository
 deploy.test.mjs        studio-live's search and polling, against a fake web server
+ticket-links.test.mjs  unit tests for lib/ticket-links.mjs
 stages.test.mjs        which checks each stage runs, and how arguments are read
 overtighten-gameplay.test.mjs  the torque rules and the progress rules
 overtighten-plates.test.mjs    every shipped plate: reachable, and what clears it

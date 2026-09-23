@@ -50,7 +50,7 @@ the boundary (042 and 043 for both prefixes). `git grep` for the old convention 
 - **What changed:** `tests/studio/lib/rules.mjs` — `COMMIT_RE` accepts `SHS` or `SS`;
   `ticketIdProblem` decides the sequence (an `SS-` number above `LAST_SS_TICKET`, 42, is
   retired; an `SHS-` number at or below it collides); `commitTicketId` returns the ID a
-  conforming subject names, for SHS-045. `lintCommitSubject` reports which rule failed.
+  conforming subject names, for [SHS-045](SHS-045-every-ticket-has-a-file.md). `lintCommitSubject` reports which rule failed.
   `docs/studio/process.md` carries the executive's two convention lines, a line on the
   single sequence, and a new *Naming* section. `templates/ticket.md` carries the
   executive's edit unchanged. New `decisions/ADR-0006-ticket-prefix.md`, indexed.
@@ -77,7 +77,7 @@ the boundary (042 and 043 for both prefixes). `git grep` for the old convention 
   `npm test` 681/681, `tests/studio/` 215/215. Every studio commit subject in the whole
   history, 49 of them, read with the studio's own git helper and linted under the new
   rule: **all pass the prefix rule**; one, SS-042's, fails the *length* rule at 81
-  characters — it was failing before this change, and is SHS-047. `git grep` for the old
+  characters — it was failing before this change, and is [SHS-047](SHS-047-pushed-commit-waiver.md). `git grep` for the old
   convention outside `iterations/` and `decisions/` finds only the `commit-lint` row, which
   names it as the retired range. `--stage=ticket` green; `--stage=gate --skip-slow`:
   `path-guard`, `storage-keys`, `portal-capacity`, `studio-boot` and `hygiene` pass, the
@@ -90,7 +90,7 @@ the boundary (042 and 043 for both prefixes). `git grep` for the old convention 
   …` in `process.md`, `feat(studio): SHS-003 …` in ADR-0006, `fix(studio): SS-060 …` in
   `team/qa-engineer.md` — now fails the test; the handbook as committed passes, 82/82.
 
-- **Deferred:** SS-042's over-length subject, opened as SHS-047. Branch names remain
+- **Deferred:** SS-042's over-length subject, opened as [SHS-047](SHS-047-pushed-commit-waiver.md). Branch names remain
   unchecked, as ADR-0006 says.
 
 - **Fix rounds used:** 2 / 2

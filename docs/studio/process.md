@@ -119,6 +119,13 @@ is testing and how its retrospective judges it.
 - Ticket numbers are one sequence. `SS-001` to `SS-042` keep the prefix they were issued
   under; every ticket from 043 on is `SHS-NNN`. `commit-lint` enforces the split in both
   directions. See [ADR-0006](decisions/ADR-0006-ticket-prefix.md).
+- **A ticket number in prose is a link to its ticket file**, relative to the document it
+  sits in: `[SHS-052](iterations/04/tickets/SHS-052-td-009-fixed.md)` from here.
+  `node tests/studio/link-tickets.mjs` links every bare mention in the repository's
+  Markdown, and leaves plain what a check or a reader takes as text: code, commit subjects,
+  file names, a file's title line, numbers with no ticket file, and a ticket's mentions of
+  itself. The retro runs it before regenerating the steering views; a document it changes
+  outside the studio paths goes in its own arcade `docs:` commit.
 
 ## Naming
 

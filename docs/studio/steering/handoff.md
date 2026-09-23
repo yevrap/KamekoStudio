@@ -8,15 +8,15 @@
 
 **Summary**
 
-- **River Run is forked into the studio** (SHS-056). `studio/games/river-run/` is a copy
+- **River Run is forked into the studio** ([SHS-056](../iterations/05/tickets/SHS-056-river-run-fork.md)). `studio/games/river-run/` is a copy
   of the arcade game with `studio_riverRun_*` saves.
   - Every difference from production is listed and proved byte for byte.
   - A browser test logs every storage write and refuses any production key.
   - It plays exactly like the original; the experiments start in sprint 06.
-- **The 3D page's River Run portal opens the fork** (SHS-057). It is a recorded exception
+- **The 3D page's River Run portal opens the fork** ([SHS-057](../iterations/05/tickets/SHS-057-portal-opens-fork.md)). It is a recorded exception
   to one value in `shared/3d/constants.js` (ADR-0010). The other portals still open their
   arcade games.
-- **The checks tell studio commits from arcade commits** (SHS-055), so the studio and the
+- **The checks tell studio commits from arcade commits** ([SHS-055](../iterations/05/tickets/SHS-055-checks-tell-studio-from-arcade.md)), so the studio and the
   arcade share `main` without either failing the other's checks.
 - **The arcade docs about River Run are current.** `CLAUDE.md` names both builds, and
   River Run's feature rows moved from the arcade roadmap to the studio backlog. Your
@@ -39,7 +39,7 @@ https://yevrap.github.io/KamekoStudio/studio/games/river-run/ · **Tag:**
 **Where the docs are**
 
 - **Iteration record:** `docs/studio/iterations/05/`. It has the plan, the log (a
-  stand-up per session), the review, the retro, and 4 tickets (SHS-055 to SHS-058).
+  stand-up per session), the review, the retro, and 4 tickets ([SHS-055](../iterations/05/tickets/SHS-055-checks-tell-studio-from-arcade.md) to [SHS-058](../iterations/05/tickets/SHS-058-iteration-record.md)).
 - **Decisions:** `ADR-0010-fork-portal-url.md` (new). ADR-0009 (one step per session) was
   yours, from the start of the sprint.
 - **Handbook:** `forking.md` (new), `guardrails.md`, `process.md`, `templates/ticket.md`,

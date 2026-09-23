@@ -10,7 +10,7 @@
 ## Motivation
 
 The sprint's ceremony paperwork, carried as a ticket so the commits that write it have an
-ID to name. Same arrangement as SHS-058.
+ID to name. Same arrangement as [SHS-058](../../05/tickets/SHS-058-iteration-record.md).
 
 ## Acceptance criteria
 
@@ -22,7 +22,7 @@ ID to name. Same arrangement as SHS-058.
 
 *Done at the retro* (not criteria; the gate needs this ticket Done before the retro
 exists): `retro.md`, the realm's retro line, `learning-log.md`, `tech-debt.md`, the
-ticket-link script's run (SHS-059), and the steering views.
+ticket-link script's run ([SHS-059](SHS-059-ticket-mentions-link-to-tickets.md)), and the steering views.
 
 ## Evidence plan
 

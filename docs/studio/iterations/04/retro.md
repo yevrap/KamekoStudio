@@ -15,7 +15,7 @@
     with no waiting by hand.
   - The one post-deploy failure was the operator's: a marker copied from a line that wraps
     in the source. The check was right to fail it.
-- **The new review rule worked on its first real use.** It refused SHS-052's fix round,
+- **The new review rule worked on its first real use.** It refused [SHS-052](tickets/SHS-052-td-009-fixed.md)'s fix round,
   quoting the commit it had not seen, until round 2 approved that exact commit. Only then
   was the fix round pushed.
 - **The two reviewers found different kinds of thing.**
@@ -40,7 +40,7 @@
 - **The trunk-based trial put the first production fix live before any review saw it.**
   ADR-0007 accepted "review sees work that is already live" for a realm with no player
   saves at stake, then applied it without asking whether a production game is the same
-  case. SHS-052 went live at 15:58 and was first reviewed after 16:01. Nothing broke. But
+  case. [SHS-052](tickets/SHS-052-td-009-fixed.md) went live at 15:58 and was first reviewed after 16:01. Nothing broke. But
   the ordering was wrong, and review found it rather than the plan.
 - **Checks that decided from the shape of history were defeated three times in one
   iteration.**
@@ -63,8 +63,8 @@
   The number came from another figure in view, not from a command.
 - **The cap bound for the second iteration in a row, on checker code.**
   - Seven fix rounds, across four tickets.
-  - SHS-050, SHS-051 and SHS-054 each used both of their rounds.
-  - SHS-051 ended with a known gap it may not fix (TD-013).
+  - [SHS-050](tickets/SHS-050-checks-every-push-can-trust.md), [SHS-051](tickets/SHS-051-production-fixes-under-full-process.md) and [SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md) each used both of their rounds.
+  - [SHS-051](tickets/SHS-051-production-fixes-under-full-process.md) ended with a known gap it may not fix (TD-013).
   - As in iteration 03, the final fix round shipped unreviewed. This time it was the
     rewritten review check.
 
@@ -72,13 +72,13 @@
 
 1. **A production fix waits for an independent review before it is pushed, and is pushed
    exactly as reviewed.** `production-fix-reviewed`, ADR-0008, ADR-0007, `process.md`.
-   SHS-054.
+   [SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md).
 2. **A check that asks "is this what was reviewed, or released?" compares content, not
    history.** ADR-0008 and the learning log.
 3. **No check passes on a comparison of nothing.** It is encoded in each check that
    compares two revisions: `path-guard`, `commit-lint`, `production-unchanged`,
    `studio-live`, `production-fix-reviewed`. `postdeploy` is conclusive, so a `not run`
-   fails it. SHS-050 and SHS-054.
+   fails it. [SHS-050](tickets/SHS-050-checks-every-push-can-trust.md) and [SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md).
 4. **A check says what it proves.** ADR-0008's *What the guard proves, and what it
    cannot* is the model. The learning log.
 5. **A marker is copied from the diff, a number from a command.** The learning log. The
@@ -99,8 +99,8 @@ what happened.
 - **Did a post-deploy check on a ticket's push catch something an end-of-iteration push
   would have caught later?** Yes, twice.
   - TD-010 showed on the very first push.
-  - SHS-052's post-deploy output said "nothing outside the guard changed" above a list of
-    two admitted production files. That was fixed as SHS-051's first fix round.
+  - [SHS-052](tickets/SHS-052-td-009-fixed.md)'s post-deploy output said "nothing outside the guard changed" above a list of
+    two admitted production files. That was fixed as [SHS-051](tickets/SHS-051-production-fixes-under-full-process.md)'s first fix round.
 - **Did review find more or less than in 03, and of what kind?** More: 24 findings against
   19.
   - Round 1: 17. Round 2: 7.

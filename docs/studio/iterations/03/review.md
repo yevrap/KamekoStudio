@@ -4,15 +4,15 @@
 
 | # | Item | Where |
 |---|---|---|
-| SHS-043 | New tickets are `SHS-NNN`; the `SS-` series closes at 042, enforced both ways | `tests/studio/lib/rules.mjs`, `process.md`, `decisions/ADR-0006-ticket-prefix.md` |
-| SHS-044 | TD-009 diagnosed: a real player-facing defect, a reproduction that says *fixed* only when the defect is gone, the production fix specified | `tests/studio/diagnostics/td-009.mjs`, `tech-debt.md` |
-| SHS-045 | Every ticket a commit names has exactly one file; content rules reach every ticket the iteration names or edits | `tests/studio/checks/docs.mjs`, `rules.mjs`, three reconstructed files in `iterations/02/tickets/` |
-| SHS-046 | This record | `iterations/03/`, `studio/shelf-data.js`, `CHANGELOG.md`, `learning-log.md` |
-| SHS-047 | One pushed commit waived by its full hash, visibly | `tests/studio/checks/commit-lint.mjs`, `rules.mjs` |
-| SHS-048 | Trunk-based development written down as a trial for iteration 04 | `decisions/ADR-0007-trunk-based-development.md`, `process.md` |
+| [SHS-043](tickets/SHS-043-ticket-prefix.md) | New tickets are `SHS-NNN`; the `SS-` series closes at 042, enforced both ways | `tests/studio/lib/rules.mjs`, `process.md`, `decisions/ADR-0006-ticket-prefix.md` |
+| [SHS-044](tickets/SHS-044-td-009-diagnosed.md) | TD-009 diagnosed: a real player-facing defect, a reproduction that says *fixed* only when the defect is gone, the production fix specified | `tests/studio/diagnostics/td-009.mjs`, `tech-debt.md` |
+| [SHS-045](tickets/SHS-045-every-ticket-has-a-file.md) | Every ticket a commit names has exactly one file; content rules reach every ticket the iteration names or edits | `tests/studio/checks/docs.mjs`, `rules.mjs`, three reconstructed files in `iterations/02/tickets/` |
+| [SHS-046](tickets/SHS-046-iteration-record.md) | This record | `iterations/03/`, `studio/shelf-data.js`, `CHANGELOG.md`, `learning-log.md` |
+| [SHS-047](tickets/SHS-047-pushed-commit-waiver.md) | One pushed commit waived by its full hash, visibly | `tests/studio/checks/commit-lint.mjs`, `rules.mjs` |
+| [SHS-048](tickets/SHS-048-trunk-based-trial.md) | Trunk-based development written down as a trial for iteration 04 | `decisions/ADR-0007-trunk-based-development.md`, `process.md` |
 
-Three committed tickets, the record, SHS-047 — opened during the build by SHS-043's own
-verification — and SHS-048, opened after review on the executive's direction and not
+Three committed tickets, the record, [SHS-047](tickets/SHS-047-pushed-commit-waiver.md) — opened during the build by [SHS-043](tickets/SHS-043-ticket-prefix.md)'s own
+verification — and [SHS-048](tickets/SHS-048-trunk-based-trial.md), opened after review on the executive's direction and not
 reviewed. **No ticket was opened by a review**: every finding went into a fix round on
 the ticket it was about, and none reached the cap of two.
 
@@ -32,12 +32,12 @@ one nit. QA failed the iteration on one major finding, four minor and four nits.
 
 | Finding | Severity | Disposition |
 |---|---|---|
-| The TD-009 reproduction printed "looks fixed, close the row" under a fix that stopped spirals on the menu only, while leaving a golf round through ☰ Menu still threw every time; and its own crash exited with the code for *present* | Major | Fixed — SHS-044 fix round 1: a second route, a direct check, *broken* separated from *present* |
-| TD-009 named one exposed end-to-end test of two, and stated a one-in-three rate measured over three runs | Minor | Fixed — SHS-044 fix round 1 |
-| The handbook's own example commit, `SHS-003`, was rejected by the new rule | Minor | Fixed — SHS-043 fix round 1, with a test over the handbook's examples |
-| A reconstructed ticket edited in this iteration escaped the content rules, because no commit subject named it | Minor | Fixed — SHS-045 fix round 1: content rules reach every ticket file the range changed |
-| The docs said *every ticket ID in the subject*; the rule reads the one in the ticket position | Minor | Fixed — SHS-045 fix round 1: the words now say what the rule does, because a later mention is not a claim to be that ticket |
-| Out-of-sequence ticket file names were accepted; an upper-case `.MD` copy was invisible; the merge exclusion was untested; SHS-047's counts did not say where they were taken | Nits | Fixed — SHS-045 and SHS-047 fix round 1 |
+| The TD-009 reproduction printed "looks fixed, close the row" under a fix that stopped spirals on the menu only, while leaving a golf round through ☰ Menu still threw every time; and its own crash exited with the code for *present* | Major | Fixed — [SHS-044](tickets/SHS-044-td-009-diagnosed.md) fix round 1: a second route, a direct check, *broken* separated from *present* |
+| TD-009 named one exposed end-to-end test of two, and stated a one-in-three rate measured over three runs | Minor | Fixed — [SHS-044](tickets/SHS-044-td-009-diagnosed.md) fix round 1 |
+| The handbook's own example commit, `SHS-003`, was rejected by the new rule | Minor | Fixed — [SHS-043](tickets/SHS-043-ticket-prefix.md) fix round 1, with a test over the handbook's examples |
+| A reconstructed ticket edited in this iteration escaped the content rules, because no commit subject named it | Minor | Fixed — [SHS-045](tickets/SHS-045-every-ticket-has-a-file.md) fix round 1: content rules reach every ticket file the range changed |
+| The docs said *every ticket ID in the subject*; the rule reads the one in the ticket position | Minor | Fixed — [SHS-045](tickets/SHS-045-every-ticket-has-a-file.md) fix round 1: the words now say what the rule does, because a later mention is not a claim to be that ticket |
+| Out-of-sequence ticket file names were accepted; an upper-case `.MD` copy was invisible; the merge exclusion was untested; [SHS-047](tickets/SHS-047-pushed-commit-waiver.md)'s counts did not say where they were taken | Nits | Fixed — [SHS-045](tickets/SHS-045-every-ticket-has-a-file.md) and [SHS-047](tickets/SHS-047-pushed-commit-waiver.md) fix round 1 |
 | The whole history was read unfiltered | Reviewer nit | Fixed — filtered to commits containing `(studio):` |
 | `PULSE.shipped` is dated before the iteration ships | Reviewer minor | **Declined.** The line reaches the live page only in the push that ships the iteration — nothing is pushed until the gate is green — and the date is confirmed at close-out. The test that ties it to the repository was designed for the page to run one iteration ahead while that iteration is built |
 
@@ -45,9 +45,9 @@ one nit. QA failed the iteration on one major finding, four minor and four nits.
 
 | Finding | Severity | Disposition |
 |---|---|---|
-| The direct check added in round 1 ran in the start menu's state and never confirmed a spiral existed. A patch that stopped spirals while any menu showed and cleared them on ☰ Menu was reported *fixed*, while two routes the script did not try — a golf round left through ⚙️ and the Play tab, and a shared map left through its own ☰ Menu — still threw. QA called it major; the reviewer called it a blocker and verified a one-line correction | Major / Blocker | Fixed — SHS-044 fix round 2, the last one: the direct check runs in a golf round and proves the spirals it spawned exist before removing the black hole; the two routes are tried. The reviewer's decoy, and three of QA's, are reported *present* or *unclear*, never *fixed* |
-| A start menu with no black hole behind it made the script report *broken* and discard a *present* result from another route | Minor | Fixed — SHS-044 fix round 2: an empty start menu is a clean route |
-| The example-subject test matched only inline code with an allowed type, in top-level files | Minor, and a reviewer nit | Fixed — SHS-043 fix round 2: any type, inline or fenced, at any depth, excluding only the records |
+| The direct check added in round 1 ran in the start menu's state and never confirmed a spiral existed. A patch that stopped spirals while any menu showed and cleared them on ☰ Menu was reported *fixed*, while two routes the script did not try — a golf round left through ⚙️ and the Play tab, and a shared map left through its own ☰ Menu — still threw. QA called it major; the reviewer called it a blocker and verified a one-line correction | Major / Blocker | Fixed — [SHS-044](tickets/SHS-044-td-009-diagnosed.md) fix round 2, the last one: the direct check runs in a golf round and proves the spirals it spawned exist before removing the black hole; the two routes are tried. The reviewer's decoy, and three of QA's, are reported *present* or *unclear*, never *fixed* |
+| A start menu with no black hole behind it made the script report *broken* and discard a *present* result from another route | Minor | Fixed — [SHS-044](tickets/SHS-044-td-009-diagnosed.md) fix round 2: an empty start menu is a clean route |
+| The example-subject test matched only inline code with an allowed type, in top-level files | Minor, and a reviewer nit | Fixed — [SHS-043](tickets/SHS-043-ticket-prefix.md) fix round 2: any type, inline or fenced, at any depth, excluding only the records |
 | TD-009 stated two failure counts measured outside the repository | Reviewer minor | Fixed — the row no longer states a rate it cannot reproduce |
 | `log.md` pointed to a reason in `review.md` before `review.md` existed | Nit | Closed by this document. A forward reference in a log written between tickets, true once the iteration's record is complete |
 | `namedTickets` reads a range with `..` while `committedPaths` diffs with `...` | Reviewer nit | **Declined.** The two commands mean different things by the same syntax: for `git log`, `A...B` is the symmetric difference, and would add commits that are on the base but not on `HEAD`; for `git diff`, `A...B` compares against the merge base. With the base an ancestor of `HEAD`, as it always is here, `log A..B` and `diff A...B` describe the same range |
@@ -82,7 +82,7 @@ Nothing in that list is a defect a player would hit.
 ## Checks
 
 The gate stage, `--base=studio-iteration-02`, run on `4f413e4` — the merge before this
-section was written; the only change after it is this section and one line of SHS-046's
+section was written; the only change after it is this section and one line of [SHS-046](tickets/SHS-046-iteration-record.md)'s
 Result, and the gate runs again on the commit that is pushed.
 
 | Check | Result |
@@ -94,7 +94,7 @@ Result, and the gate runs again on the commit that is pushed.
 | `studio-boot` | pass — 2 pages booted and held their contract |
 | `hygiene` | pass — 142 files clean |
 | `full-suites` | pass — `npm test`, `npm run smoke`, `npm run e2e` |
-| `commit-lint` | pass — 22 non-merge commits conventional, 1 waived by hash (SS-042, SHS-047) |
+| `commit-lint` | pass — 22 non-merge commits conventional, 1 waived by hash (SS-042, [SHS-047](tickets/SHS-047-pushed-commit-waiver.md)) |
 | `docs-current` | pass — 10 tickets complete, 6 of them this iteration's; 47 ticket files, one for every ticket a commit names |
 | `reviewer-verdict` | pass — the verdict below is recorded; the check proves it is present, not that it is an approval |
 
@@ -155,5 +155,5 @@ right.
 - **The two-round cap — Keep.** It ended a review that would otherwise have continued, and
   put the decision where the standing answer said it belonged — which then handed it back
   to the team.
-- **SHS-048, trunk-based development as a trial — Iterate.** Written down, not yet tried.
+- **[SHS-048](tickets/SHS-048-trunk-based-trial.md), trunk-based development as a trial — Iterate.** Written down, not yet tried.
   Iteration 04 is built that way and its retrospective judges it.

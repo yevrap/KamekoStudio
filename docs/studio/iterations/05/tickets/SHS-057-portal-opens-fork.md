@@ -4,7 +4,7 @@
 - **Size:** S
 - **Iteration:** 05
 - **Role lead:** Tech Lead / Architect
-- **Depends on:** SHS-056
+- **Depends on:** [SHS-056](SHS-056-river-run-fork.md)
 - **Branch:** none — trunk-based, commits to `main` (ADR-0007)
 
 ## Motivation
@@ -64,7 +64,7 @@ wants one.
   Postdeploy green: the marker was served from the live `shared/3d/constants.js` on attempt
   3, and production-unchanged admits only this exception.
 - **Deferred:** none from the ticket. **Unplanned, in this ticket:** the first push stage
-  failed on SHS-056's browser test, not this ticket's. An unattended run outlived its
+  failed on [SHS-056](SHS-056-river-run-fork.md)'s browser test, not this ticket's. An unattended run outlived its
   60 s wait (1 in 3 alone, measured). That's the flake the last session couldn't name.
   `045f031` makes the run end on purpose: it waits for a point, then a rock is moved onto
   the boat and the game's own collision ends the run. 5/5 green, 15 s instead of 45–63 s.

@@ -34,22 +34,22 @@ tries first (it takes ⭐ power-ups if left blank at the next plan).
 
 > The executive: strike through what you disagree with. These are the team's.
 
-- **SHS-056, River Run forked — Keep.** A byte-for-byte copy with a closed list of edits,
+- **[SHS-056](tickets/SHS-056-river-run-fork.md), River Run forked — Keep.** A byte-for-byte copy with a closed list of edits,
   and a browser test that logs every storage write. Sprint 06 runs its first experiment.
-- **SHS-057, the portal opens the fork — Iterate.** It works, but the 3D page's River Run
+- **[SHS-057](tickets/SHS-057-portal-opens-fork.md), the portal opens the fork — Iterate.** It works, but the 3D page's River Run
   trophy still reads the arcade's score, and the drawer's 🌊 switcher leads back to the
   arcade build (backlog #26, production code, stop-and-ask). There is no way back to the
   3D page but the browser's back button (#31).
-- **SHS-055, the checks tell studio from arcade commits — Keep.** It lets the studio and
+- **[SHS-055](tickets/SHS-055-checks-tell-studio-from-arcade.md), the checks tell studio from arcade commits — Keep.** It lets the studio and
   the arcade share `main` without either blocking the other, and review tightened it: a
   subject naming a studio ticket is a studio commit whatever its scope.
 
 ## What was reviewed
 
-The 13 studio commits of sprint 05, `studio-iteration-04..9d48713`: SHS-055 (the checks
-tell studio commits from arcade commits), SHS-056 (River Run forked into
-`studio/games/river-run/` with `studio_` saves only), SHS-057 (the 3D page's River Run
-portal opens the fork, recorded exception ADR-0010), and SHS-058's records. The arcade
+The 13 studio commits of sprint 05, `studio-iteration-04..9d48713`: [SHS-055](tickets/SHS-055-checks-tell-studio-from-arcade.md) (the checks
+tell studio commits from arcade commits), [SHS-056](tickets/SHS-056-river-run-fork.md) (River Run forked into
+`studio/games/river-run/` with `studio_` saves only), [SHS-057](tickets/SHS-057-portal-opens-fork.md) (the 3D page's River Run
+portal opens the fork, recorded exception ADR-0010), and [SHS-058](tickets/SHS-058-iteration-record.md)'s records. The arcade
 commits in the same range were out of scope. There are no ADR-0008 production fixes this
 sprint, so no `reviews/<TICKET>.md`.
 
@@ -58,7 +58,7 @@ Each reviewer ran with fresh context and the studio-only patch.
 - **Independent Reviewer.** Ran `node --test tests/studio/` (327/327), ran path-guard and
   commit-lint on the real range, fed the portal rule edge cases (CRLF, a comment decoy with
   the fork url, rollback), and mutation-tested the fork's browser test in a throwaway clone.
-- **QA.** Walked every acceptance criterion of SHS-055/056/057 (all met), ran the suites
+- **QA.** Walked every acceptance criterion of [SHS-055](tickets/SHS-055-checks-tell-studio-from-arcade.md)/056/057 (all met), ran the suites
   and the `ticket` and `gate` stages in a clean clone, walked the fork in headless Chrome
   with a storage-write log across reloads, checked all 11 portal targets on `3d.html`, and
   confirmed the live fork, `constants.js` and production River Run are byte-identical to

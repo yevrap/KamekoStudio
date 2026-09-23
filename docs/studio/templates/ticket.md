@@ -11,6 +11,8 @@
 
 Two sentences at most. What is wrong or missing, and where the request came from
 (a direction, a review finding, a bug, the debt register). Neutral technical language.
+Another ticket's number is a link to its file, `[SHS-NNN](../../NN/tickets/SHS-NNN-slug.md)`
+(process.md, *Trunk, commits, tags*).
 
 ## Acceptance criteria
 

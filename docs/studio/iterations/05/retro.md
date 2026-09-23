@@ -10,7 +10,7 @@
   write the fork makes and refuses any production key.
 - **No fix rounds.** 0 of 2 used on every ticket, against 7 in iteration 04. Three things
   changed at once, so no single one gets the credit:
-  - the refusal cases were written into SHS-055's criteria at plan;
+  - the refusal cases were written into [SHS-055](tickets/SHS-055-checks-tell-studio-from-arcade.md)'s criteria at plan;
   - its tests went red first (six of seven failed on the old checks);
   - the one-round review rule (direction rule 3) means findings go to the backlog rather
     than into a second round.
@@ -35,7 +35,7 @@
   `full-suites` failed, because a `grep` after the stage returned success. The suites
   passed on a rerun, but which one flaked wasn't captured. Session 4 followed the rule
   from the log and gated on the stage itself, and it held.
-- **A browser test waited on chance** (session 4). SHS-056's test waited for the game to do
+- **A browser test waited on chance** (session 4). [SHS-056](tickets/SHS-056-river-run-fork.md)'s test waited for the game to do
   something on its own, and one run in three outlived its 60-second wait. Fixed in
   `045f031` so the run ends deterministically.
 - **The studio handed arcade doc edits back to the executive** (session 5). The executive
@@ -43,10 +43,10 @@
   its own work current, in its own arcade `docs:` commit.
 - **A 115-character commit subject was caught only by the reviewer.** Ceremony commits
   skipped `--stage=ticket`, which would have refused it.
-- **The record ticket's criteria spanned two steps** (session 6). SHS-058 listed retro-step
+- **The record ticket's criteria spanned two steps** (session 6). [SHS-058](tickets/SHS-058-iteration-record.md) listed retro-step
   work as criteria, but the gate needs the ticket Done before the retro exists.
   `docs-current` failed twice before the criteria were amended at close, with a note.
-  Iteration 04's SHS-053 had avoided the failure only by ticking `retro.md` early.
+  Iteration 04's [SHS-053](../04/tickets/SHS-053-iteration-record.md) had avoided the failure only by ticking `retro.md` early.
 - **Iteration 04's unreviewed fix round is still unjudged.** Iteration 04 shipped
   `production-fix-reviewed`'s content comparison without a review and asked this retro to
   judge it. This sprint had no production fix, so the check ran only on a range with
@@ -78,7 +78,7 @@ Iteration 04 said a checker ticket's attack list should come first, written by Q
 the code.
 
 - **What was tried.** Not quite that. No QA pass ran at plan. The Tech Lead wrote the
-  refusal cases into SHS-055's criteria: the reverse rule, a mixed merge, an unnumbered
+  refusal cases into [SHS-055](tickets/SHS-055-checks-tell-studio-from-arcade.md)'s criteria: the reverse rule, a mixed merge, an unnumbered
   `(studio)` commit. The tests were written from them and shown red first.
 - **What it cost.** Zero fix rounds, against 7 in 04. One review round, against two.
 - **What it missed.** A commit naming a studio ticket without the `(studio)` scope, which
@@ -118,11 +118,11 @@ the code.
 
 - **Held.**
   - *A production fix waits for review.* Not exercised: there was no production fix.
-  - *Compare content, not history.* SHS-056's fork list is byte for byte, and SHS-057's
+  - *Compare content, not history.* [SHS-056](tickets/SHS-056-river-run-fork.md)'s fork list is byte for byte, and [SHS-057](tickets/SHS-057-portal-opens-fork.md)'s
     exception compares the file with the approved value undone.
   - *No comparison of nothing passes.* It was designed in from the start this time:
     `commit-lint` on a range with no studio commit is a skip, not a pass.
-  - *A check says what it proves.* SHS-055 wrote a *What this proves, and what it does
+  - *A check says what it proves.* [SHS-055](tickets/SHS-055-checks-tell-studio-from-arcade.md) wrote a *What this proves, and what it does
     not* section before review asked for one.
   - *A marker from the diff, a count from a command.* No incident in the log. The counts in
     this retro come from `git log` and the review table.
@@ -139,8 +139,8 @@ Sprint 05 is **1 of 3** granted, with the reserve unclaimed.
 
 | E1 done-when | Where it stands |
 |---|---|
-| A 3D portal leads to a studio fork; every other portal still leads to production | **Met** (SHS-057; QA checked all 11 portal targets) |
-| The fork never reads or writes a production save | **Met** (SHS-056; the write log refuses any non-`studio_` key) |
+| A 3D portal leads to a studio fork; every other portal still leads to production | **Met** ([SHS-057](tickets/SHS-057-portal-opens-fork.md); QA checked all 11 portal targets) |
+| The fork never reads or writes a production save | **Met** ([SHS-056](tickets/SHS-056-river-run-fork.md); the write log refuses any non-`studio_` key) |
 | One gameplay change with a Keep / Iterate / Kill verdict | Open: sprint 06's experiment (Q12, ⭐ power-ups if blank) |
 | The epic's rules are in the handbook | Partly: `process.md` and ADR-0009 have one step per session and one review round; the Active rules list lands here. The rest go in with sprint 07's epic review |
 | An epic retro proposes E2 | Open: sprint 07 |

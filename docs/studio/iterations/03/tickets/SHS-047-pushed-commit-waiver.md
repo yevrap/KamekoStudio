@@ -4,12 +4,12 @@
 - **Size:** S
 - **Iteration:** 03
 - **Role lead:** Tech Lead / Architect
-- **Depends on:** SHS-043
+- **Depends on:** [SHS-043](SHS-043-ticket-prefix.md)
 - **Branch:** `shs-047-pushed-commit-waiver`
 
 ## Motivation
 
-Opened during the build, by SHS-043's own verification. SS-042's commit subject is 81
+Opened during the build, by [SHS-043](SHS-043-ticket-prefix.md)'s own verification. SS-042's commit subject is 81
 characters against `commit-lint`'s limit of 80. It reached the remote's `main` after the
 iteration-02 gate had run, and it is inside this iteration's range, so this iteration's
 gate fails on it whatever else is true. It cannot be fixed without rewriting published
@@ -54,7 +54,7 @@ real range, before and after.
   40-character lower-case hash with a reason naming a ticket. `tests/studio/rules.test.mjs`
   69/69. `commit-lint` against the real range, `studio-iteration-02..HEAD`, at two points
   that were **uncommitted working trees**, not commits: before the waiver, run during
-  SHS-043 before its own commit, *"1 of 5 commit(s): 5416876 subject is 81 characters"*;
+  [SHS-043](SHS-043-ticket-prefix.md) before its own commit, *"1 of 5 commit(s): 5416876 subject is 81 characters"*;
   after, run on this ticket's branch before its commit, *"6 non-merge commit(s)
   conventional, 1 waived by hash: 5416876 waived — SS-042: subject is 81 characters…"*.
   Re-measured at commits by the QA review — the parent of this ticket's merge gives "1 of

@@ -9,11 +9,11 @@ under [The call](#the-call).
 
 | # | Item | Where |
 |---|---|---|
-| SHS-050 | Every push is checked before and after it lands: a `push` stage, a `studio-live` that waits for the new build and refuses a stale marker, a baseline that is never the release itself, and no check that passes on a comparison of nothing | `tests/studio/checks/deploy.mjs`, `path-guard.mjs`, `commit-lint.mjs`, `index.mjs`, `check.mjs`, `lib/shell.mjs`; `self-checks.md` |
-| SHS-051 | The studio may fix production under the full process; the path guard admits a production file only for the ticket that owns it, in its own iteration | `decisions/ADR-0008-production-fixes.md`, `guardrails.md`, `tests/studio/lib/rules.mjs`, `checks/path-guard.mjs`, `checks/hygiene.mjs` |
-| SHS-052 | **Black Hole in One no longer throws when Explore starts with spiral particles alive** — the studio's first production fix | `games/black-hole-in-one/ui.js` (one line), `scripts/e2e.mjs` (three tests) |
-| SHS-053 | This record, and ceremony records pushed as they land | `iterations/04/`, `process.md`, ADR-0007, `templates/ticket.md`, `studio/shelf-data.js` |
-| SHS-054 | *Opened by review:* a production fix is reviewed before it is pushed, and pushed exactly as reviewed | `tests/studio/checks/production-review.mjs`, `rules.mjs`, `iterations/04/reviews/SHS-052.md`, ADR-0008 |
+| [SHS-050](tickets/SHS-050-checks-every-push-can-trust.md) | Every push is checked before and after it lands: a `push` stage, a `studio-live` that waits for the new build and refuses a stale marker, a baseline that is never the release itself, and no check that passes on a comparison of nothing | `tests/studio/checks/deploy.mjs`, `path-guard.mjs`, `commit-lint.mjs`, `index.mjs`, `check.mjs`, `lib/shell.mjs`; `self-checks.md` |
+| [SHS-051](tickets/SHS-051-production-fixes-under-full-process.md) | The studio may fix production under the full process; the path guard admits a production file only for the ticket that owns it, in its own iteration | `decisions/ADR-0008-production-fixes.md`, `guardrails.md`, `tests/studio/lib/rules.mjs`, `checks/path-guard.mjs`, `checks/hygiene.mjs` |
+| [SHS-052](tickets/SHS-052-td-009-fixed.md) | **Black Hole in One no longer throws when Explore starts with spiral particles alive** — the studio's first production fix | `games/black-hole-in-one/ui.js` (one line), `scripts/e2e.mjs` (three tests) |
+| [SHS-053](tickets/SHS-053-iteration-record.md) | This record, and ceremony records pushed as they land | `iterations/04/`, `process.md`, ADR-0007, `templates/ticket.md`, `studio/shelf-data.js` |
+| [SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md) | *Opened by review:* a production fix is reviewed before it is pushed, and pushed exactly as reviewed | `tests/studio/checks/production-review.mjs`, `rules.mjs`, `iterations/04/reviews/SHS-052.md`, ADR-0008 |
 
 **Demo**
 
@@ -46,17 +46,17 @@ wrong with the TD-009 fix itself. QA confirmed it by real taps on all four playe
 
 | Finding | From | Severity | Disposition |
 |---|---|---|---|
-| Every input the production-fix guard reads is written by the studio, so a fabricated fix passes it. Shown with a made-up SHS-999 editing `index.html`. Under trunk-based work that edit goes live before any review | Reviewer | Blocker | ADR-0008 now says what the guard proves (a write was planned and recorded) and what it cannot (that the plan was legitimate). **SHS-054 opened:** a production fix is reviewed before it is pushed |
-| A change made inside a merge commit passed with no commit subject checked | Reviewer, QA | Minor / Blocker | Fixed — SHS-051 fix round 2 — incompletely; see round 2 |
-| `path-guard` and `commit-lint` passed on a comparison of no commits | QA | Blocker | Fixed — SHS-050 fix round 1 |
-| A commit after the iteration's tag was still admitted as a fix | QA | Blocker | Fixed — SHS-051 fix round 2 |
-| `studio-live` passed with no marker, or with a marker the last release already had | QA | Major | Fixed — SHS-050 fix round 1 |
-| A fix entry admitted deleting its file | QA | Major | Fixed — SHS-051 fix round 2 |
+| Every input the production-fix guard reads is written by the studio, so a fabricated fix passes it. Shown with a made-up SHS-999 editing `index.html`. Under trunk-based work that edit goes live before any review | Reviewer | Blocker | ADR-0008 now says what the guard proves (a write was planned and recorded) and what it cannot (that the plan was legitimate). **[SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md) opened:** a production fix is reviewed before it is pushed |
+| A change made inside a merge commit passed with no commit subject checked | Reviewer, QA | Minor / Blocker | Fixed — [SHS-051](tickets/SHS-051-production-fixes-under-full-process.md) fix round 2 — incompletely; see round 2 |
+| `path-guard` and `commit-lint` passed on a comparison of no commits | QA | Blocker | Fixed — [SHS-050](tickets/SHS-050-checks-every-push-can-trust.md) fix round 1 |
+| A commit after the iteration's tag was still admitted as a fix | QA | Blocker | Fixed — [SHS-051](tickets/SHS-051-production-fixes-under-full-process.md) fix round 2 |
+| `studio-live` passed with no marker, or with a marker the last release already had | QA | Major | Fixed — [SHS-050](tickets/SHS-050-checks-every-push-can-trust.md) fix round 1 |
+| A fix entry admitted deleting its file | QA | Major | Fixed — [SHS-051](tickets/SHS-051-production-fixes-under-full-process.md) fix round 2 |
 | A fix entry for a test harness admits emptying it | QA | Major | **Declined** — registered as TD-012. The pre-push review is the control; a test-name rule is its own change |
-| The direct TD-009 test accepted a fix that dropped every particle | QA | Minor | Fixed — SHS-052 fix round 1 |
+| The direct TD-009 test accepted a fix that dropped every particle | QA | Minor | Fixed — [SHS-052](tickets/SHS-052-td-009-fixed.md) fix round 1 |
 | The documented rollback fails `commit-lint` | QA | Minor | Fixed — the command and a conventional subject are documented |
 | The stages table lost a row; two passages still said production was off-limits; the log's push count was wrong | QA | Minor | Fixed. The count said eight where there had been five: it came from another number in view, not from a command |
-| An untracked directory changed the iteration; `postdeploy` exited 0 having verified nothing | QA | Minor | Fixed — SHS-050 fix round 1 |
+| An untracked directory changed the iteration; `postdeploy` exited 0 having verified nothing | QA | Minor | Fixed — [SHS-050](tickets/SHS-050-checks-every-push-can-trust.md) fix round 1 |
 | Two nits on the admission note, and one on a per-frame allocation | QA | Nit | Fixed |
 | An entry for the current iteration takes precedence over the narrow `gameplay.js` exception | Reviewer | Part of the blocker | **Declined.** The exception's grammar exists because that edit needs no review, and a production fix gets one before it is pushed. Both round-2 passes accepted the reason |
 
@@ -66,17 +66,17 @@ The Independent Reviewer's verdict was APPROVED WITH FINDINGS. It re-verified ev
 round-1 blocker and major by running them, including QA's over-broad decoy against the
 strengthened test. QA's verdict was REJECTED, on two gaps in central claims.
 
-**Both passes approved SHS-052 on its own** at `b378402`, the commit that waited for them.
+**Both passes approved [SHS-052](tickets/SHS-052-td-009-fixed.md) on its own** at `b378402`, the commit that waited for them.
 The reviewer said APPROVED and QA said APPROVED WITH FINDINGS. Their words are in
 `reviews/SHS-052.md`.
 
 | Finding | From | Severity | Disposition |
 |---|---|---|---|
-| **SHS-054's check could be escaped** by putting one of a fix's files back to the release after its review. QA approved `b378402` in a scratch clone, then restored iteration 03's `e2e.mjs`, deleting the three TD-009 tests, under a docs subject. The whole `push` stage passed 11 of 11 | QA | Blocker | Fixed — SHS-054 fix round 1. The check now decides from content: every file a fix owns must be, at `HEAD`, exactly what the reviewed commit holds. QA's reproduction is a regression test |
-| A merge taking a fix file from its side parent is hidden by git's history simplification, so the guard admits the change as "0 commit(s)" | QA | Major | Closed at the push and the gate by the same content rule, which refuses it; a regression test holds it. `path-guard`'s own gap is **TD-013**: SHS-051 was at its fix-round cap |
+| **[SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md)'s check could be escaped** by putting one of a fix's files back to the release after its review. QA approved `b378402` in a scratch clone, then restored iteration 03's `e2e.mjs`, deleting the three TD-009 tests, under a docs subject. The whole `push` stage passed 11 of 11 | QA | Blocker | Fixed — [SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md) fix round 1. The check now decides from content: every file a fix owns must be, at `HEAD`, exactly what the reviewed commit holds. QA's reproduction is a regression test |
+| A merge taking a fix file from its side parent is hidden by git's history simplification, so the guard admits the change as "0 commit(s)" | QA | Major | Closed at the push and the gate by the same content rule, which refuses it; a regression test holds it. `path-guard`'s own gap is **TD-013**: [SHS-051](tickets/SHS-051-production-fixes-under-full-process.md) was at its fix-round cap |
 | A narrow `--base` hid an unpushed fix from the review check | QA | Minor | Fixed — the need for a review is measured from the previous release |
-| The stale-marker check read a git tree listing for a directory named without its trailing slash | QA | Minor | Fixed — SHS-050 fix round 2, the last |
-| The direct test accepts a fix that keeps only one burst particle | QA | Nit | **Carried to the next iteration.** It is one assertion in a production file. Under SHS-054 it cannot be pushed without a review, and there are no rounds left |
+| The stale-marker check read a git tree listing for a directory named without its trailing slash | QA | Minor | Fixed — [SHS-050](tickets/SHS-050-checks-every-push-can-trust.md) fix round 2, the last |
+| The direct test accepts a fix that keeps only one burst particle | QA | Nit | **Carried to the next iteration.** It is one assertion in a production file. Under [SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md) it cannot be pushed without a review, and there are no rounds left |
 | The review check called `commitsTouching` without the release tag | Reviewer | Nit | Gone with the ancestry code it belonged to |
 | Two tickets owning one file: each review must cover the other's commits | Reviewer | Nit | Stated in ADR-0008: each ticket's review must have seen the file exactly as it is pushed |
 
@@ -95,7 +95,7 @@ The team agrees with both, and adds what it found before the gate:
 
 - **One more of QA's predicted shape turned up after round 2.** The rewritten review check
   compared the release with itself when told `--previous-tag=HEAD`, and passed — TD-011's
-  vacuous comparison, for the fourth time. It is fixed in SHS-054's second and last fix
+  vacuous comparison, for the fourth time. It is fixed in [SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md)'s second and last fix
   round, which no reviewer has seen either. A third round would most likely find another
   comparison of two revisions that can be pointed at the same one.
 
@@ -112,7 +112,7 @@ Reviewer approved, and it was QA that rejected.
 **Why the team ships:**
 
 1. **The player-facing change was approved by both passes, in both rounds, on its own.**
-   SHS-052 is correct and minimal, red without the fix and green with it, and clean on
+   [SHS-052](tickets/SHS-052-td-009-fixed.md) is correct and minimal, red without the fix and green with it, and clean on
    all four player routes by real taps.
 2. **QA's rejection is about the new review check, and the fix is the one QA proposed.**
    QA's own words: "each has a small content-based fix". That fix is made, and QA's
@@ -139,15 +139,15 @@ and the gate runs again on the commit that is pushed.
 | Check | Result |
 |---|---|
 | `tree-clean` | pass — working tree clean |
-| `path-guard` | pass — 49 paths inside the guard; two production fixes admitted, both SHS-052's: `ui.js` +1 −0 and `scripts/e2e.mjs` +158 −0, 2 commits each |
+| `path-guard` | pass — 49 paths inside the guard; two production fixes admitted, both [SHS-052](tickets/SHS-052-td-009-fixed.md)'s: `ui.js` +1 −0 and `scripts/e2e.mjs` +158 −0, 2 commits each |
 | `storage-keys` | pass — 11 source files, storage use compliant |
 | `portal-capacity` | pass — 11 games, 12 slots |
 | `studio-boot` | pass — 2 pages booted and held their contract |
 | `hygiene` | pass — 161 files clean, the two production files included |
 | `full-suites` | pass — `npm test`, `npm run smoke`, `npm run e2e` |
 | `commit-lint` | pass — 20 non-merge commits conventional |
-| `production-fix-reviewed` | pass — SHS-052's 2 files at `HEAD` exactly as reviewed at `b378402` |
-| `docs-current` | pass — 6 tickets complete, 5 of them this iteration's, plus SHS-049, which landed after iteration 03's tag; 53 ticket files, one for every ticket a commit names |
+| `production-fix-reviewed` | pass — [SHS-052](tickets/SHS-052-td-009-fixed.md)'s 2 files at `HEAD` exactly as reviewed at `b378402` |
+| `docs-current` | pass — 6 tickets complete, 5 of them this iteration's, plus [SHS-049](../03/tickets/SHS-049-postdeploy-gaps.md), which landed after iteration 03's tag; 53 ticket files, one for every ticket a commit names |
 | `reviewer-verdict` | pass — the verdict at the top is recorded; the check proves it is present, not that it is an approval |
 
 Post-deploy and close-out results are in the handoff: they run after this document is
@@ -157,15 +157,15 @@ pushed.
 
 > The executive: strike through what you disagree with. These are the team's.
 
-- **SHS-052, the TD-009 fix — Keep.** A player-facing defect, found as a "flaky test" in
+- **[SHS-052](tickets/SHS-052-td-009-fixed.md), the TD-009 fix — Keep.** A player-facing defect, found as a "flaky test" in
   iteration 02, diagnosed in 03, and fixed and verified here.
-- **SHS-051, production fixes under the full process — Keep, with TD-013 next.** It
+- **[SHS-051](tickets/SHS-051-production-fixes-under-full-process.md), production fixes under the full process — Keep, with TD-013 next.** It
   catches unplanned production writes and says plainly that it cannot catch planned
   fabricated ones.
-- **SHS-054, reviewed before it is pushed — Iterate.** It worked on its first real use:
-  it refused SHS-052's fix round until round 2 had seen it. Its second version has had no
+- **[SHS-054](tickets/SHS-054-production-fixes-reviewed-before-push.md), reviewed before it is pushed — Iterate.** It worked on its first real use:
+  it refused [SHS-052](tickets/SHS-052-td-009-fixed.md)'s fix round until round 2 had seen it. Its second version has had no
   review. Whether you also approve each production fix from outside the repository is Q10.
-- **SHS-050, the push and post-deploy checks — Keep.** Across the iteration's pushes it
+- **[SHS-050](tickets/SHS-050-checks-every-push-can-trust.md), the push and post-deploy checks — Keep.** Across the iteration's pushes it
   found each new build on the wire, between the first attempt and the eighth, with no
   re-run by hand.
 - **Trunk-based development — Iterate.** Its retrospective has the detail. In short: keep

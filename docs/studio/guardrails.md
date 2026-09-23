@@ -69,7 +69,7 @@ the check. The check reports an exception as *used*, never silently, and verifie
 |---|---|---|
 | `package.json` | The single `"studio:check"` entry in `scripts`, with exactly the value `node tests/studio/check.mjs`. No other key, and no other value. | Iteration 00 brief, deliverable 4 |
 | `shared/3d/gameplay.js` | The `frontPositions` table in `createEnvironment()` — three front-wall positions, spread into `positions` and `rotations`. The scope is the table, not a particular set of coordinates: moving a position within it is inside the exception, a fourth position or any other statement is not. Nothing else in the file. | Iteration 01, as a production bug fix. ADR-0005 |
-| `shared/3d/constants.js` | The `url` of the `ARCADE_GAMES` entry named `"River Run Rapids"`, with exactly the value `studio/games/river-run/`. No other entry, no other value, nothing else in the file. The approved forks are listed in `STUDIO_FORK_PORTALS`. | Iteration 05, SHS-057. The E1 direction's done-when (*a 3D portal leads to a studio fork*) and Q4. ADR-0010 |
+| `shared/3d/constants.js` | The `url` of the `ARCADE_GAMES` entry named `"River Run Rapids"`, with exactly the value `studio/games/river-run/`. No other entry, no other value, nothing else in the file. The approved forks are listed in `STUDIO_FORK_PORTALS`. | Iteration 05, [SHS-057](iterations/05/tickets/SHS-057-portal-opens-fork.md). The E1 direction's done-when (*a 3D portal leads to a studio fork*) and Q4. ADR-0010 |
 
 The second and third exceptions are checked by removing exactly the approved change and
 requiring what remains to equal the base revision byte for byte, so an edit riding along

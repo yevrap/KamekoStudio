@@ -88,7 +88,7 @@ approval the executive gives on the hosting platform. That choice is the executi
 
 Under trunk-based work a finished ticket is pushed at once, and so is live at once
 (ADR-0007). For a production fix that put a change players see live before any
-independent review had seen it. The first fix, SHS-052, went out that way. So **a
+independent review had seen it. The first fix, [SHS-052](../iterations/04/tickets/SHS-052-td-009-fixed.md), went out that way. So **a
 production fix is the one exception to "push when a ticket is done"**:
 
 - its commits are committed and stay local until an independent review has passed them —

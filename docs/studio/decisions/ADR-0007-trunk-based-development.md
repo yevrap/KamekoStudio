@@ -52,7 +52,7 @@ From iteration 04, as a trial:
 Nothing in the checks has to change for this. `commit-lint` already exempts merges by their
 parent count, so a history without them is simply a history without exemptions;
 `docs-current` reads commit subjects, not branches; `path-guard` and `production-unchanged`
-diff against the previous tag. Iteration 04 added a `push` stage to the checker (SHS-050) — the
+diff against the previous tag. Iteration 04 added a `push` stage to the checker ([SHS-050](../iterations/04/tickets/SHS-050-checks-every-push-can-trust.md)) — the
 gate without the two checks that only make sense once the iteration is reviewed, plus
 `on-main` and `no-stop-file` — so step 3 is one command rather than three.
 

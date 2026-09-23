@@ -4,7 +4,7 @@
 - **Size:** S
 - **Iteration:** 04
 - **Role lead:** Front-end / Gameplay Dev
-- **Depends on:** SHS-051 (the rule that admits the production files)
+- **Depends on:** [SHS-051](SHS-051-production-fixes-under-full-process.md) (the rule that admits the production files)
 - **Branch:** none — trunk-based, commits to `main` (ADR-0007)
 
 ## Motivation
@@ -67,8 +67,8 @@ out of bounds.
   - `tests/studio/lib/rules.mjs` — two `PRODUCTION_FIXES` entries, both files, SHS-052,
     iteration 04.
   - Retired: `tests/studio/diagnostics/td-009.mjs` and its line in
-    `tests/studio/README.md`, whose layout also gained the five test files SHS-050 and
-    SHS-051 added. TD-009 closed in `tech-debt.md`.
+    `tests/studio/README.md`, whose layout also gained the five test files [SHS-050](SHS-050-checks-every-push-can-trust.md) and
+    [SHS-051](SHS-051-production-fixes-under-full-process.md) added. TD-009 closed in `tech-debt.md`.
 - **Tested by:**
   - **Red first.** `npm run e2e` with the new tests and the unfixed `ui.js`: exactly the
     three new tests failed, each with TD-009's error — the start-menu route with 65
@@ -107,7 +107,7 @@ out of bounds.
   - **The fix line allocated a new array on every Explore frame.** It now filters only
     when a spiral is there to drop. `ui.js` is still one line away from iteration 03.
   - **Not pushed until reviewed.** It changes this ticket's production files, so under
-    SHS-054 the `push` stage refused it, as intended: *"review saw 7b8a0fe, and commit
+    [SHS-054](SHS-054-production-fixes-reviewed-before-push.md) the `push` stage refused it, as intended: *"review saw 7b8a0fe, and commit
     b378402 changed its production files outside what was reviewed — review it again"*.
     Review round 2 then saw `b378402`, and both passes approved SHS-052 on its own there:
     the Independent Reviewer *APPROVED*, and QA *APPROVED WITH FINDINGS*, re-measured with
@@ -115,6 +115,6 @@ out of bounds.
     `reviews/SHS-052.md` names that commit, and the push went out after it.
 - **Deferred:** QA's round-2 nit, that the direct test would accept a fix that keeps only
   one of the burst's particles. It is one assertion in `scripts/e2e.mjs`, a production
-  file, so under SHS-054 it could not be pushed without another review, and round 2 was the
+  file, so under [SHS-054](SHS-054-production-fixes-reviewed-before-push.md) it could not be pushed without another review, and round 2 was the
   last. It is carried to the next iteration.
 - **Fix rounds used:** 1 / 2

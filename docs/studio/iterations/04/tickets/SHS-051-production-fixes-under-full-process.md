@@ -4,7 +4,7 @@
 - **Size:** M
 - **Iteration:** 04
 - **Role lead:** Tech Lead / Architect
-- **Depends on:** SHS-050 (the post-deploy stage this rule extends)
+- **Depends on:** [SHS-050](SHS-050-checks-every-push-can-trust.md) (the post-deploy stage this rule extends)
 - **Branch:** none — trunk-based, commits to `main` (ADR-0007)
 
 ## Motivation
@@ -44,11 +44,11 @@ exceptions, so the permission needs a rule the guard can enforce, not only a sen
 - `production-fix.test.mjs`: the pure rule, and the two checks run against a scratch
   repository, since the rule's evidence lives in git.
 - `npm run studio:check -- --stage=ticket` on this ticket's commits (no entries yet,
-  nothing admitted), and on SHS-052's (both of its files admitted, named).
+  nothing admitted), and on [SHS-052](SHS-052-td-009-fixed.md)'s (both of its files admitted, named).
 
 ## Out of scope
 
-- Using the permission. SHS-052 is the first use.
+- Using the permission. [SHS-052](SHS-052-td-009-fixed.md) is the first use.
 - Promotion of a studio game into the arcade, which keeps its own process and approval
   (`promotion.md`).
 - The two existing exceptions, which stay exactly as they are.
@@ -61,7 +61,7 @@ exceptions, so the permission needs a rule the guard can enforce, not only a sen
   - `decisions/ADR-0008-production-fixes.md` — the permission, what is and is not a fix,
     what still stops the run, the mechanism, and the alternatives. ADR-0001's status
     notes the amendment; the decisions index lists it.
-  - `tests/studio/lib/rules.mjs` — `PRODUCTION_FIXES` (empty until SHS-052),
+  - `tests/studio/lib/rules.mjs` — `PRODUCTION_FIXES` (empty until [SHS-052](SHS-052-td-009-fixed.md)),
     `productionFixProblem` (the three conditions), `productionFixEntryProblems` (a
     malformed entry fails loudly instead of never matching), and `classifyPaths` with a
     `fixes` bucket. An entry for the iteration being checked takes precedence over an
@@ -106,7 +106,7 @@ exceptions, so the permission needs a rule the guard can enforce, not only a sen
     (1). Files restored after each.
   - `npm run studio:check -- --stage=ticket` green on this ticket: no entries yet, nothing
     admitted, 41 paths inside the guard.
-- **Fix round 1 — found by the author on SHS-052's deploy.** With the first real fix
+- **Fix round 1 — found by the author on [SHS-052](SHS-052-td-009-fixed.md)'s deploy.** With the first real fix
   admitted, `production-unchanged` reported *"nothing outside the guard changed in 8
   commit(s)"* and then listed the two production files it had admitted — the sentence
   contradicted the list under it. It now says *"the only changes outside the guard are the
@@ -120,7 +120,7 @@ exceptions, so the permission needs a rule the guard can enforce, not only a sen
     `index.html` — passes. ADR-0008, `guardrails.md` and `self-checks.md` now say what the
     guard proves: that a write was *planned and recorded*, not that the plan was
     legitimate. The control against a wrong or fabricated fix is a review before it is
-    pushed, which is **SHS-054**, opened by this finding.
+    pushed, which is **[SHS-054](SHS-054-production-fixes-reviewed-before-push.md)**, opened by this finding.
   - **A merge commit could carry a change past the guard** (reviewer minor, QA B1).
     `--no-merges` is gone. Git's history simplification keeps a merge only when the merge
     itself changed the file, and such a merge names no ticket. An ordinary merge of a
@@ -149,7 +149,7 @@ exceptions, so the permission needs a rule the guard can enforce, not only a sen
   a merge that takes a file from one of its parents, so such a merge — a rollback to a
   version already in the history — changes a fix file with no commit examined, and this
   guard admits it as *"0 commit(s)"*. The ticket cannot take a third fix round. The change
-  cannot reach the live site unreviewed, because SHS-054's `production-fix-reviewed` now
+  cannot reach the live site unreviewed, because [SHS-054](SHS-054-production-fixes-reviewed-before-push.md)'s `production-fix-reviewed` now
   compares content and refuses it at the push and at the gate. The guard's own gap is
   registered as **TD-013**, and ADR-0008 and `self-checks.md` say what the guard does and
   does not see.

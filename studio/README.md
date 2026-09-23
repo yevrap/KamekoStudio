@@ -67,7 +67,7 @@ for this build, and the tests assert that rather than the intention. See
 
 ### `games/river-run/` — ITERATING
 
-The studio's own copy of the arcade's River Runner 3D, forked in iteration 05 (SHS-056) so
+The studio's own copy of the arcade's River Runner 3D, forked in iteration 05 ([SHS-056](../docs/studio/iterations/05/tickets/SHS-056-river-run-fork.md)) so
 that River Run's experiments happen here rather than in production. It starts as a faithful
 copy: production's `games/river-run/index.html` at commit `082943a`, with its saves renamed
 into the `studio_` namespace and the four edits every studio page needs (a back link, a 44px
