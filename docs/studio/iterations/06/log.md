@@ -18,3 +18,15 @@ is committed.
   ticketed numbers in 52 Markdown files, none linked, and the examples and code spans
   that must stay plain. Ordered [SHS-061](tickets/SHS-061-river-run-tone-start-time.md) after [SHS-060](tickets/SHS-060-river-run-power-ups.md), since its exemption rests on the
   equality test [SHS-060](tickets/SHS-060-river-run-power-ups.md) retires. *Next:* build [SHS-059](tickets/SHS-059-ticket-mentions-link-to-tickets.md). *Blocked:* nothing.
+
+## Session 2 — build [SHS-059](tickets/SHS-059-ticket-mentions-link-to-tickets.md) (2026-09-22)
+
+- **Technical Writer / Learning Lead** — *Done:* [SHS-059](tickets/SHS-059-ticket-mentions-link-to-tickets.md). `tests/studio/link-tickets.mjs`
+  linked 378 ticket mentions in 48 files; a second run changes nothing. Of the 390
+  mentions of [SHS-043](../03/tickets/SHS-043-ticket-prefix.md)…058, 349 are links now. The 41 left plain are code, title lines and
+  self-mentions. Two cases were added at build because the checks read them: a file's
+  title line (`# ID — …`, read by `ticketFileProblems` and `readReviewRecord`) and commit
+  subjects (`commit-lint`'s handbook test). The arcade's two Black Hole in One docs went in
+  their own `docs:` commit. `process.md` and the ticket template carry the rule, and the
+  retro runs the script. `npm test` 815/815, `--stage=ticket` green. *Next:* build
+  [SHS-060](tickets/SHS-060-river-run-power-ups.md). *Blocked:* nothing.
