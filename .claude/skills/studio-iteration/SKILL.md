@@ -134,16 +134,22 @@ them the sprint's diff (`git diff <previous tag>..HEAD`), the tickets and their 
   third round: write down what it would likely have found.
 - Set `next.md` to `close`.
 
-### `close` — gate and publish
+### `close` — records, gate, publish
 
-1. `npm run studio:check -- --stage=gate --base=<previous iteration tag>`. Red → fix within
-   the caps, or stop with `next.md` saying what is red.
-2. Publish: `git push origin main`, `git tag -a studio-iteration-NN -m "…"`,
-   `git push origin studio-iteration-NN`, then `--stage=postdeploy --marker="…"`.
-3. Finish `review.md`. It opens with **In plain words**: five sentences a stranger could
+The records come first: the gate's `docs-current` needs every ticket Done, the record ticket
+included (iteration 06 retro; `process.md` has the same order).
+
+1. Finish `review.md`. It opens with **In plain words**: five sentences a stranger could
    follow — what changed, why, and what Yevster is asked. Then the demo list with live URLs,
    and a Keep / Iterate / Kill line per item for Yevster.
-4. Update `CHANGELOG.md` and close the tickets. Set `next.md` to `retro`.
+2. Update `CHANGELOG.md`, the realm's pulse line, and the shelf entry of every game the
+   sprint changed (`studio/shelf-data.js`; no test ties a blurb to the sprint). Close the
+   tickets, the record ticket too. Commit.
+3. `npm run studio:check -- --stage=gate --base=<previous iteration tag>`. Red → fix within
+   the caps, or stop with `next.md` saying what is red.
+4. Publish: `git push origin main`, `git tag -a studio-iteration-NN -m "…"`,
+   `git push origin studio-iteration-NN`, then `--stage=postdeploy --marker="…"`.
+   Set `next.md` to `retro`.
 
 ### `retro` — retrospective and the steering views
 
