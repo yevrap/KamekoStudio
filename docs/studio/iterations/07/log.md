@@ -30,3 +30,13 @@ is committed.
   25/25; `--stage=ticket` 5/5; `--stage=push` 11/11 after one commit subject was shortened
   (commit-lint, 95 > 80 characters, fixed before the push). *Next:* build
   [SHS-065](tickets/SHS-065-studio-edits-its-own-workflow.md). *Blocked:* nothing.
+
+## Session 3 — build SHS-065 (2026-09-23)
+
+- **Tech Lead** — *Done:* [SHS-065](tickets/SHS-065-studio-edits-its-own-workflow.md) (`1209d09`): the path guard admits
+  `.claude/skills/studio-*/**` and `.claude/workflows/studio-sprint.js` in ticketed studio
+  commits and names the exception (ADR-0011 §6); unticketed `(studio)` commits are refused;
+  arcade commits keep the arcade's rules; ADR-0011 is executive-only; hygiene scans the
+  studio's skills. Tests red first (6 of 18 in `path-guard`, the new `rules` cases on missing
+  exports), then green; `--stage=ticket` 5/5. *Next:* build
+  [SHS-066](tickets/SHS-066-production-river-run-restart.md). *Blocked:* nothing.
