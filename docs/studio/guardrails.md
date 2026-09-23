@@ -42,6 +42,17 @@ file at the base with the file now, so an arcade edit to `package.json` in the s
 shows up there; and a production fix is still refused when any commit in the range, arcade
 or studio, changed its file without naming its ticket.
 
+### Arcade docs about studio work
+
+When studio work makes an arcade document stale (a game's row in `CLAUDE.md` or
+`games/CLAUDE.md`, rows in `docs/roadmap.md`, a game's `docs/games/<slug>/` pages, a
+questionnaire the studio has consumed), the studio session updates it itself rather than
+handing it to the executive (chat direction, 2026-09-22). The edit goes in its own arcade
+commit (`docs: …`, no `(studio)` scope, no studio path in it), so the checks sort it as
+arcade work, and it follows the arcade's rules: regenerate the `GEMINI.md` files, `npm test`
+green. It covers **documentation only**. Game code, shared code and tests outside the studio
+paths stay under the recorded exceptions and production fixes below.
+
 ### Recorded exceptions
 
 An exception is a path outside the list that the executive has explicitly approved, for a

@@ -23,7 +23,7 @@ folder means changing a live URL, so it gets cheaper the sooner it's decided.
 
 **Q12. Which River Run experiment goes first?** *(new, sprint 05)*
 River Run is the first fork (your call in chat, 2026-09-22, answering Q11). Its own
-modernization questionnaire (`docs/questionnaires/river-run-modernization.md`) is answered
+modernization questionnaire (`docs/archive/questionnaires/river-run-modernization.md`) is answered
 but none of it is built, so the fork starts with a queue. Sprint 06 builds one of these and
 you give it a Keep / Iterate / Kill.
 - [ ] A. ⭐ **Power-ups:** a shield (one extra hit) and rapid-fire / spread shot, floating
