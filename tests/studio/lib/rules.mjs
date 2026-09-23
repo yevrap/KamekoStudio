@@ -352,7 +352,11 @@ export const PRODUCTION_FIXES = [
   // TD-009: spirals left orbiting a removed black hole threw on every frame.
   { path: 'games/black-hole-in-one/ui.js', ticket: 'SHS-052', iteration: '04' },
   // Its regression tests, in production's own suite.
-  { path: 'scripts/e2e.mjs', ticket: 'SHS-052', iteration: '04' }
+  { path: 'scripts/e2e.mjs', ticket: 'SHS-052', iteration: '04' },
+  // p0-17: River Run's Restart Game could freeze the river until reload.
+  { path: 'games/river-run/index.html', ticket: 'SHS-066', iteration: '07' },
+  // Its regression tests, in production's own suite.
+  { path: 'scripts/e2e.mjs', ticket: 'SHS-066', iteration: '07' }
 ];
 
 /**

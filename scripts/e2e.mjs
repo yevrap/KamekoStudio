@@ -217,6 +217,78 @@ await test('river-run: drawer "Take Over / Stop" disengages autoplay', async pag
   assert(await rrAutoPlay(page) === false, 'in-memory autoPlay should be false after stop');
 });
 
+// Restart Game must never freeze the river (arcade 🐞 p0-17, studio SHS-066). The
+// music restart used to call `musicSequence.stop()` after game over had stopped the
+// Tone Transport; now and then Tone threw, `initGame` aborted before the game loop,
+// and since the old sequence was never disposed every later restart froze too.
+// A run counts as started when its game loop is scheduled and the Transport plays.
+const rrRunStarted = page => page.waitForFunction(
+  () => !isGameOver && animationFrameId != null && Tone.Transport.state === 'started',
+  { timeout: 5000, polling: 20 });
+
+async function rrRestarts(page, pageErrors, runs) {
+  await page.click('#start-button');
+  await rrRunStarted(page).catch(() => { throw new Error('run 1 did not start its game loop and music'); });
+  for (let run = 2; run <= runs; run++) {
+    // A short run, ended the way a rock ends it, then Restart Game. Uneven run
+    // lengths, because the natural throw depended on where the Transport stopped.
+    await sleep(20 + (run * 37) % 180);
+    await page.evaluate(() => gameOver());
+    await page.click('#start-button');
+    await rrRunStarted(page).catch(() => {
+      throw new Error('restart ' + run + ' froze: no game loop or no music' +
+        (pageErrors.length ? ' — ' + pageErrors[0] : ''));
+    });
+    assert(!pageErrors.length, 'restart ' + run + ' threw: ' + pageErrors.join(' | '));
+  }
+}
+
+await test('river-run: twenty restarts in a row each start the game loop and the music (SHS-066, p0-17)', async (page, pageErrors) => {
+  await page.goto(RR, { waitUntil: 'load' });
+  await sleep(1000);
+  await rrRestarts(page, pageErrors, 20);
+  // The music is the restarted sequence alone: 90 bpm quarter notes are two or
+  // three in 1.5 s, and old sequences left on the Transport would add to them.
+  const notes = await page.evaluate(() => new Promise(resolve => {
+    let n = 0;
+    const play = musicSynth.triggerAttackRelease.bind(musicSynth);
+    musicSynth.triggerAttackRelease = (...args) => { n++; return play(...args); };
+    setTimeout(() => resolve(n), 1500);
+  }));
+  assert(notes > 0, 'no music note played after the twentieth restart');
+  assert(notes <= 4, notes + ' notes in 1.5 s: earlier runs\' sequences are still playing');
+});
+
+await test('river-run: restarts run even when Sequence.stop throws on a stopped Transport (SHS-066)', async (page, pageErrors) => {
+  await page.goto(RR, { waitUntil: 'load' });
+  await sleep(1000);
+  // The fault made certain: what Tone did now and then, it now does every time.
+  await page.evaluate(() => {
+    const stop = Tone.Sequence.prototype.stop;
+    Tone.Sequence.prototype.stop = function (...args) {
+      if (Tone.Transport.state !== 'started') throw new RangeError('SHS-066 test: stop on a stopped Transport');
+      return stop.apply(this, args);
+    };
+  });
+  await rrRestarts(page, pageErrors, 5);
+});
+
+await test('river-run: a music restart that fails still starts the run (SHS-066)', async (page, pageErrors) => {
+  await page.goto(RR, { waitUntil: 'load' });
+  await sleep(1000);
+  await page.click('#start-button');
+  await rrRunStarted(page);
+  await page.evaluate(() => gameOver());
+  // Every music call the restart makes fails; the run must start without music.
+  await page.evaluate(() => {
+    Tone.Transport.start = () => { throw new Error('SHS-066 test: the Transport will not start'); };
+  });
+  await page.click('#start-button');
+  await page.waitForFunction(() => !isGameOver && animationFrameId != null, { timeout: 5000, polling: 20 })
+    .catch(() => { throw new Error('a failed music restart kept the run from starting' +
+      (pageErrors.length ? ' — ' + pageErrors[0] : '')); });
+});
+
 // ── Shared drawer: Clear All Game Data must not crash (post-token removal) ──
 
 await test('gallery: Clear All Game Data completes without throwing', async page => {
