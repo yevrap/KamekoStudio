@@ -2,7 +2,7 @@
 
 ## 2026-09-21 — 🐞 Fix: Explore threw for about a second when entered with spirals alive (TD-009)
 
-**Shipped by Shadow Studio, iteration 04 (SHS-052): the studio's first fix to a production
+**Shipped by Shadow Studio, iteration 04 ([SHS-052](../../studio/iterations/04/tickets/SHS-052-td-009-fixed.md)): the studio's first fix to a production
 game**, done under the standing permission in Q9 (ADR-0008 in the repo). The full record
 is in the repo at `docs/studio/iterations/04/`.
 
