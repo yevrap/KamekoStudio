@@ -52,6 +52,10 @@ see [Shadow Studio — Feedback Inbox](inbox.md) 2026-09-21.)
 
 *Standing addition, 2026-09-21 — commit and push often:* Yev wants progress saved and live on GitHub continuously, visible while it's in flight. The studio commits and pushes frequently throughout an iteration — code, docs, and every scrum-ceremony artifact (planning, standups, review, retro) — not one big push at the end. Work may live on a branch (per the `shs-NNN-short-slug` convention, merged to main after testing and the gate), but the branch must be pushed regularly so the new work is watchable as it happens.
 
+*Team note, iteration 06 retro:* the branch part predates [ADR-0007](../decisions/ADR-0007-trunk-based-development.md), which made the studio
+trunk-based in iteration 04. Commits go to `main` and are pushed as each one lands, which
+keeps the rest of this answer.
+
 Q5 stays open for additions.
 
 ---

@@ -33,6 +33,13 @@ criterion (iteration 05 retro).
 
 Which test, which page, which command proves each criterion.
 
+*A regression test* is shown red against the unfixed code in every run of several, and
+the Result gives the count ("red 5 of 5"). Red most of the time means it waits for the
+bug instead of causing it (iteration 06 retro).
+
+*Layout evidence* is taken at the narrowest width the game supports (320) as well as a
+typical phone (390) (iteration 06 retro).
+
 ## Out of scope
 
 What this ticket deliberately does not do, so the reviewer does not look for it.

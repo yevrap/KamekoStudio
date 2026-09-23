@@ -27,8 +27,8 @@ export const PULSE = {
  * updating this line fails before it reaches the page.
  */
 export const LEARNED = {
-  iteration: '05',
-  line: 'A ticket\'s criteria belong to the step that checks them. Our record ticket listed retro work the gate needed done before the retro existed, so the template now splits the two.'
+  iteration: '06',
+  line: 'A regression test that is red most of the time is waiting for the bug, not causing it. Ours caught a reverted fix four runs in six, so a regression test now has to show red every run, with the count.'
 };
 
 /**
@@ -55,8 +55,8 @@ export const SHELF = [
   {
     title: 'River Runner 3D',
     status: 'ITERATING',
-    blurb: 'The arcade\'s river runner, forked into the studio with saves of its own. It plays exactly like the original for now; River Run\'s experiments happen here from the next sprint on.',
-    iteration: '05',
+    blurb: 'The arcade\'s river runner, forked into the studio with saves of its own. Its first experiment: a shield and a spread shot float down the river, one at a time. The arcade\'s build stays as it was.',
+    iteration: '06',
     changed: '2026-09-22',
     url: 'games/river-run/'
   }

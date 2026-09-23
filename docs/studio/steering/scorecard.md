@@ -10,6 +10,30 @@ One row per iteration, written at close-out. The point is the trend, not the num
 | 03 | Maintenance: ticket prefix, TD-009 diagnosed, one file per ticket | 7/3 | 6 | 7 built + 19 reviewed | +2 / −0 | 7 tickets + 3 reconstructed, 2 ADRs, 9 repo docs, 9 planning notes | 4 (2 rounds × QA + reviewer) | 2 | pending |
 | 04 | First production fix, under a written permission; trunk-based trial | 5/3 | 7 | 4 built + 24 reviewed | +2 / −3 | 5 tickets, 1 ADR, 1 review record, 16 repo docs, 9 planning notes, 3 context files, 1 skill | 4 (2 rounds × QA + reviewer) | 0 | pending |
 | 05 | E1 · 1 of 3: River Run forked, the 3D portal opens it | 4/3 | 0 | 6 built + 12 reviewed | +1 / −0 | 4 tickets, 1 ADR, the fork procedure, the ticket template, the first Active rules list, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | pending |
+| 06 | E1 · 2 of 3: River Run's first experiment (power-ups), ticket numbers link | 4/3 | 1 | 3 built + 7 reviewed | +0 / −1 | 4 tickets, the ticket-link script, the ticket template, Active rules revised, 1 skill edit, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | pending |
+
+## Iteration 06 — what the row means
+
+- **Tickets, 4 against 3.** [SHS-059](../iterations/06/tickets/SHS-059-ticket-mentions-link-to-tickets.md), 060 and 061 were committed; [SHS-062](../iterations/06/tickets/SHS-062-iteration-record.md) is the record.
+  None was opened by review: the findings went to the backlog (#33, #35–#37) or were fixed
+  in the review step.
+- **The one that matters to a player shipped.** The fork has its first gameplay change,
+  and a restart can no longer freeze it.
+- **Fix rounds, 1.** The spread shot's shot pool ran dry on fast taps (QA F1), fixed in the
+  review step under [SHS-060](../iterations/06/tickets/SHS-060-river-run-power-ups.md).
+- **Checks caught, 3 + 7.**
+  - Built:
+    - `docs-current` at the gate, on the record ticket still open (the skill's close order);
+    - the ticket linker's own reading of two parsers, the title line and commit subjects,
+      before either check failed;
+    - [SHS-061](../iterations/06/tickets/SHS-061-river-run-tone-start-time.md)'s restart test, red before the fix on the freeze nobody had named.
+  - Reviewed: 7 distinct findings in the review table, 2 fixed in the step.
+- **Debt +0 / −1.** TD-014 closed.
+- **Stops for you, 0.** Your focus at plan came unasked; the verdict is asked in the
+  review, not as a stop.
+- **The honest summary.** The first sprint where the epic's point, a changed game to play,
+  is live. What it can't do on its own is finish: E1 now waits on your Keep / Iterate /
+  Kill.
 
 ## Iteration 05 — what the row means
 

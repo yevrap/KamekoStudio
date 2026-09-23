@@ -10,29 +10,35 @@ Ten at most (direction rule 7). Each retro promotes a lesson here, turns a rule 
 recurred into a check or a template or skill edit, or retires one that no longer earns its
 place. The iteration sections below are the history, and they don't bind on their own.
 
-1. **A comparison of nothing never passes.** If the two things compared are the same thing,
-   or nothing, the answer is *not run*. (04; encoded in every check that compares two
-   revisions)
-2. **Where it matters, compare content, not the shape of history.** (04)
-3. **A check says what it proves:** that the record is consistent, or that it is
+1. **Where it matters, compare content, not the shape of history.** (04)
+2. **A check says what it proves:** that the record is consistent, or that it is
    legitimate. A test's name says no more than the test proves. (04, slipped once in 05)
-4. **An adversarial test fails against the rule it attacks.** Show it red before the fix
+3. **An adversarial test fails against the rule it attacks.** Show it red before the fix
    (01, 02). A checker ticket lists its refusal cases in its criteria (05; now in
    `templates/ticket.md`)
-5. **Copy a marker from the diff and a number from a command.** A number in the record
+4. **Copy a marker from the diff and a number from a command.** A number in the record
    names where it was measured. (03, 04)
-6. **Run the player's path before calling a test flaky.** A browser test waits on something
-   the test causes, never on something the game might do, and every browser trial gets its
-   own profile. (03, 05)
-7. **Gate a push on the stage's own exit code**, never on a filter of its output. (05)
-8. **Run `--stage=ticket` before every commit**, ceremony commits included. (05)
-9. **A convention change is checked for violations of the new rule by a test**, not a
+5. **Gate a push on the stage's own exit code**, never on a filter of its output. (05)
+6. **Run `--stage=ticket` before every commit**, ceremony commits included. (05)
+7. **A convention change is checked for violations of the new rule by a test**, not a
    search. (03, 04)
-10. **A check that reads only what exists can't see what is missing.** Decide existence
-    from an independent source. (03)
+8. **A check that reads only what exists can't see what is missing.** Decide existence
+   from an independent source. (03)
+9. **A game's clock is not the player's clock.** A number a player reads as seconds is
+   measured in real time, whatever the game counts internally. (06)
+10. **Every browser trial gets its own profile**, so one trial's saves can't decide
+    another's. (03, 05; the half of the old rule 6 the template doesn't carry)
 
-*Retired or converted at the 05 retro:* none yet. This is the first list. The record
-ticket's two-step criteria became a template edit, not a rule.
+*Converted at the 06 retro:*
+- *A comparison of nothing never passes* (04) is encoded in every check that compares two
+  revisions: an empty range, a missing marker or a release compared with itself reports
+  *not run*.
+- *A browser test waits on what it causes, never on what the game might do* (03, 05)
+  recurred in 06: a regression test that caught its bug four runs in six. It is now in
+  `templates/ticket.md`: a regression test shows red on every run, with the count. Its
+  other half, a profile per trial, stays on the list as rule 10.
+
+*Retired or converted at the 05 retro:* none. That was the first list.
 
 ## Iteration 00
 
@@ -287,3 +293,32 @@ ticket's two-step criteria became a template edit, not a rule.
   before any reviewer looked.
 - **The arcade docs about studio work are the studio's to keep current.** Handing them back
   cost the executive a message. Now a guardrail.
+
+## Iteration 06
+
+- **A red-then-green regression test can still be luck.** [SHS-061](iterations/06/tickets/SHS-061-river-run-tone-start-time.md)'s restart test was red
+  before the fix and green after, but against the fix reverted it went red 6 of 7 and 4 of
+  6 runs: it waited for Tone's race rather than forcing it. "Shown red" needs a count.
+  Now in the ticket template (#37 makes this test deterministic).
+- **Reproduce with a stack before choosing the fix.** The ticket named a start time; the
+  stack named `Sequence.stop()` on a stopped Transport, turning "now" into ticks a hair
+  below zero. It also showed the real cost: `initGame` is async, the throw aborted it
+  before the game loop, and the river froze. The planned clamp would have hidden that.
+- **In Tone.js, dispose a sequence to replace it; don't stop it.** `dispose()` cancels the
+  sequence's Transport events without converting a time. `stop()` with no argument reads
+  the Transport's "now", which is invalid while the Transport is stopped.
+- **River Run counts frames.** Every timer in the game is frames, so on a 120 Hz screen it
+  runs twice as fast in real time. Fine for pacing a run; wrong for a number the HUD shows
+  as seconds. Active rule 9.
+- **Layout breaks at the narrow end first.** The score wraps to two lines below about 380
+  px, so the power-up HUD placed under it overlapped at 320 and 375 while 390 looked
+  fine. Evidence at 320 is now in the ticket template.
+- **Before rewriting text the checks read, list what they read.** The ticket linker would
+  have broken two checks (a ticket's `# ID — …` title line, and the handbook's example
+  commit subjects). Both were found at build by reading the parsers, not by a failing gate.
+- **A fork is also a test rig for its original.** The fork's restart loop, pointed at the
+  arcade's River Run, reproduced a production freeze nobody had reported.
+- **A skill and the handbook can disagree for sprints.** The skill's `close` step ran the
+  gate before the records the gate needs, while `process.md` had them the right way round.
+  The gate went red at close two sprints running. When a step fails the same way twice, compare the skill
+  with the handbook before blaming the ticket.

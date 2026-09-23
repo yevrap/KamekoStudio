@@ -6,8 +6,9 @@ is doing and to steer it.
 **Iterations shipped:** 00 (setup), 01 (identity, shelf, portals), 02 (the first game, boot
 coverage), 03 (maintenance: the `SHS-` prefix, TD-009 diagnosed, one file per ticket), 04
 (the first production fix, under a written permission; trunk-based, as a trial), 05 (E1 ·
-sprint 1 of 3: River Run forked, and the 3D page's River Run portal opens the fork) ·
-latest tag `studio-iteration-05`
+sprint 1 of 3: River Run forked, and the 3D page's River Run portal opens the fork), 06
+(E1 · sprint 2 of 3: the fork's first experiment, power-ups; ticket numbers link) ·
+latest tag `studio-iteration-06`
 **Live:** https://yevrap.github.io/KamekoStudio/studio/ ·
 [Overtighten](https://yevrap.github.io/KamekoStudio/studio/games/overtighten/) ·
 [River Runner 3D, the fork](https://yevrap.github.io/KamekoStudio/studio/games/river-run/)
@@ -89,13 +90,17 @@ goes out exactly as reviewed.
 
 Iteration 05 opened epic E1, the Studio Wing: the 3D landing page becomes the studio's
 window. River Run is the first fork, a copy in `studio/games/river-run/` with saves of its
-own, and the 3D page's River Run portal now leads to it. Sprint 06 runs its first
-experiment.
+own, and the 3D page's River Run portal now leads to it.
 
-**Open decisions:** Q12 (which River Run experiment goes first; ⭐ power-ups if blank at
-plan 06), Q10 (should a production fix also need your approval?), Q1 (the name) and Q5
-(anything else), in [Shadow Studio — Questionnaire](questionnaire.md). Keep / Iterate / Kill on
-iteration 05 is in `docs/studio/iterations/05/review.md`.
+Iteration 06 ran the fork's first experiment: a shield and a spread shot float down the
+river. It also fixed a restart that could freeze the fork, found the same freeze in the
+arcade's River Run (queued in both lanes), and made every studio ticket number in the docs
+a link. Sprint 07 is E1's last granted sprint.
+
+**Open decisions:** the Keep / Iterate / Kill on the power-ups, in
+`docs/studio/iterations/06/review.md` (E1 needs it to finish); Q10 (should a production fix
+also need your approval?), Q1 (the name) and Q5 (anything else), in
+[Shadow Studio — Questionnaire](questionnaire.md).
 
 ---
 

@@ -36,8 +36,6 @@ start); `--stage=ticket`, `--stage=push`, `--stage=postdeploy`.
 
 ## Result
 
-*Filled in as the ticket is worked. Empty until then.*
-
 - **What changed:** Reproduced first, with a stack: 38 of 40 fast restarts threw, and the
   throw came from `musicSequence.stop()` in `initGame`, not from a start. With no time
   given, `stop()` turns "now" into Transport ticks; `gameOver` has stopped the Transport, so
