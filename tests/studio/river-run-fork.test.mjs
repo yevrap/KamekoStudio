@@ -15,8 +15,8 @@
 //     keys really are written. The second half matters: a fork that saved
 //     nothing at all would pass the first half on its own.
 //  3. The power-ups (SHS-060), in a real browser: the shield takes one hit, the
-//     spread shot fires three for its time and then one, the pickup sounds keep
-//     to the fork's mute, and Watch Mode plays through a pickup.
+//     spread shot fires three for its time (a fast burst too) and then one, the
+//     pickup sounds keep to the fork's mute, and Watch Mode plays through a pickup.
 //  4. Twenty new runs in a row (SHS-061): each restart gets its game loop and its
 //     music back, and not one of them throws. Until SHS-061 the music restart
 //     threw now and then (Tone.js RangeError, a stop time a hair below zero),
@@ -356,6 +356,25 @@ test('in a browser, the fork\'s power-ups do what they say',
         await settle(400);
         const later = await f.hud();
         assert.ok(parseFloat(later.text.split(' ')[2]) < parseFloat(first.text.split(' ')[2]), 'the timer is not counting down');
+
+        // Iteration 06 review (QA F1): fast taps ran the 30-shot pool dry, and a tap fired nothing.
+        const burst = await f.page.evaluate(() => {
+          const sizes = [];
+          for (let i = 0; i < 25; i++) {
+            const before = activeProjectiles.length;
+            shootProjectile();
+            sizes.push(activeProjectiles.length - before);
+          }
+          return sizes;
+        });
+        assert.deepEqual(burst, Array(25).fill(3), 'a fast burst of spread volleys ran out of shots');
+        assert.ok(await f.page.evaluate(() => activeProjectiles.some(p => p.direction.x > 0.1)), 'no side shot to follow');
+        await f.page.evaluate(() => {
+          const p = activeProjectiles.find(q => q.direction.x > 0.1);
+          p.mesh.position.x = riverWidth; window.__offRiver = p.mesh;
+        });
+        await f.page.waitForFunction(() => !activeProjectiles.some(p => p.mesh === window.__offRiver),
+          { timeout: 5_000, polling: 50 }).catch(() => assert.fail('a shot past the river bank stays in flight'));
 
         await f.page.evaluate(() => { rapidFireFrames = 3; });
         await f.page.waitForFunction(() => rapidFireFrames === 0, { timeout: 5_000, polling: 50 });

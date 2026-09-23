@@ -329,7 +329,8 @@
         const waterParticleCount = 5000;
 
         // --- Projectile Variables ---
-        const PROJECTILE_POOL_SIZE = 30;
+        // Studio fork: 90, not 30 — a spread volley takes three, and at ten taps a second 30 ran dry (iteration 06 review).
+        const PROJECTILE_POOL_SIZE = 90;
         const PROJECTILE_SPEED = 0.4;
         const PROJECTILE_BONUS_POINTS = 5;
         let projectilePool = [];
@@ -835,7 +836,8 @@
                         break;
                     }
                 }
-                if (hit || projData.mesh.position.z > riverLength * 1.1) {
+                // Studio fork: a spread shot past the river bank can hit nothing, so it goes back to the pool.
+                if (hit || projData.mesh.position.z > riverLength * 1.1 || Math.abs(projData.mesh.position.x) > riverWidth / 2 + 1) {
                     projData.mesh.visible = false; projectilePool.push(projData.mesh); activeProjectiles.splice(i, 1);
                 }
             }
