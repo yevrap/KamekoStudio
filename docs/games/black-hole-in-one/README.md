@@ -1,4 +1,17 @@
+---
+title: "Black Hole in One"
+type: game
+slug: black-hole-in-one
+tier: invest
+status: arcade
+play_url: https://yevrap.github.io/KamekoStudio/games/black-hole-in-one/
+code: games/black-hole-in-one/
+tags: [game, physics, golf]
+---
+
 # Black Hole in One
+
+**Links:** [Studio Dashboard](../../README.md) · [Lineup](../README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md) · [Ideas](ideas.md)
 
 Bug - when new region clicked the mini map does not hide everything but shows the path discovered 
 

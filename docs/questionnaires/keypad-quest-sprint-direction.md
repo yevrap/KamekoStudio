@@ -1,4 +1,16 @@
+---
+title: "Keypad Quest Questionnaire — Sprint Direction"
+type: questionnaire
+status: partly-answered
+game: keypad-quest
+created: 2026-07-22
+gates: [p2-04, p2-45, p2-46, p2-47, p2-49]
+tags: [questionnaire, keypad-quest]
+---
+
 # Keypad Quest Questionnaire — Sprint Direction
+
+**Related:** [Studio Dashboard](../README.md) · [Keypad Quest](../games/keypad-quest/README.md) · [Roadmap](../roadmap.md) · [Playtest log](../playtest-log.md)
 
 > Created 2026-07-22, from planning session. Yev asked to plan a sprint to make [Keypad Quest](../games/keypad-quest/README.md) "more interesting and complete." The two real gaps found reading the code: **no fail state** (waves scale forever but nothing ever goes wrong) and **no player agency in the tower-defense half** (tower type is streak-automatic, placement is auto-greedy, upgrades are random-automatic — the only real decision in the whole game is "answer correctly, fast"). One ship-now item (an in-game help overlay, roadmap **p1-52**) needs no answer here. Everything below is a genuine creative-direction fork — answer in chat or edit this file; write-ins welcome after any answer.
 

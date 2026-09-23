@@ -1,4 +1,16 @@
+---
+title: "Pachinko Bazaar Questionnaire — Arcade Polish"
+type: questionnaire
+status: partly-answered
+game: pachinko-bazaar
+created: 2026-07-14
+gates: []
+tags: [questionnaire, pachinko-bazaar]
+---
+
 # Pachinko Bazaar Questionnaire — Arcade Polish
+
+**Related:** [Studio Dashboard](../README.md) · [Pachinko Bazaar](../games/pachinko-bazaar/README.md) · [Roadmap](../roadmap.md) · [Playtest log](../playtest-log.md)
 
 > **Status: PARTIALLY ANSWERED.** Created July 14, 2026; Q3–Q6 answered July 15, 2026. **Q1 and Q2 are still open — play the arcade version (https://yevrap.github.io/KamekoStudio/games/pachinko-bazaar/) for a run or two and check them off.** Write-ins welcome after any answer. Overview: [Pachinko Bazaar](../games/pachinko-bazaar/README.md).
 

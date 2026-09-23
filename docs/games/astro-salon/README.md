@@ -1,4 +1,17 @@
+---
+title: "Astro Salon"
+type: game
+slug: astro-salon
+tier: invest
+status: arcade
+play_url: https://yevrap.github.io/KamekoStudio/games/astro-salon/
+code: games/astro-salon/
+tags: [game, teaching]
+---
+
 # Astro Salon 🔮
+
+**Links:** [Studio Dashboard](../../README.md) · [Lineup](../README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md) · [Ideas](ideas.md) · [Open questionnaire](../../questionnaires/astro-salon-promotion-decisions.md)
 
 > Jammed July 13, 2026 from the arcade-wide inbox ask: *"new game to teach astrology with dialogue and rules… major names and rules… relationships and times of year… daily horoscope?"* Promoted to the arcade July 14, 2026; depth sprint (Chart Reading room + year-of-horoscopes) shipped July 15, 2026.
 

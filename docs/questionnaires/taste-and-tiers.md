@@ -1,4 +1,14 @@
+---
+title: "Kameko Studio Questionnaire — Taste and Tiers"
+type: questionnaire
+status: partly-answered
+gates: []
+tags: [questionnaire, studio-wide]
+---
+
 # Kameko Studio Questionnaire — Taste and Tiers
+
+**Related:** [Studio Dashboard](../README.md) · [Roadmap](../roadmap.md) · [Playtest log](../playtest-log.md)
 
 > Answer in chat or edit this file (~15 min). It seeds the steering for [Kameko Studio — Agent Game Loop Roadmap](../planning/agent-game-loop.md): an agent reads it in the next kameko session, applies the tiers to the repo roadmap, and writes `docs/brief.md` from your answers. Mark checkboxes with `x`, type directly into the table.
 >

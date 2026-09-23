@@ -8,6 +8,7 @@ This repository is the whole studio — code, planning, decisions and the agent 
 
 | What | Where |
 |---|---|
+| The map of all of it | `docs/README.md` — the Studio Dashboard (games by tier, open questionnaires, steering); the Obsidian home note |
 | What's next | `docs/roadmap.md` — open items by tier; shipped history in `docs/archive/roadmap-history.md` |
 | Decisions waiting on Yevster | `docs/questionnaires/` — one file per open decision; consumed ones move to `docs/archive/questionnaires/` |
 | Playtest verdicts | `docs/playtest-log.md` — newest first; the strongest steering input |
@@ -264,6 +265,7 @@ Pure utility functions in `shared/utils.js`, and pure game-logic modules in `gam
 - `games/durak/` (`durak.test.mjs`): constants, state, gameplay rules, AI logic (`_test_aiTurn`)
 - `games/durak-alchemist/` (`durak-alchemist.test.mjs`): `gridLogic.js`, `combatLogic.js`, `constants.js`
 - `games/tysiacha/` (`tysiacha.test.mjs`): `constants.js`, `state.js`, `gameplay.js`
+- Docs links (`docs-links.test.mjs`): every relative link in `docs/` resolves; game design docs and open questionnaires carry the frontmatter schema in `docs/CLAUDE.md`; the Studio Dashboard lists each of them with its current status.
 - Repo hygiene (`repo-hygiene.test.mjs`): every tracked markdown file outside `node_modules/` is scanned with the studio's `scanHygiene` patterns — secrets, emails, phone numbers, street addresses, absolute personal paths, cloud-drive paths, note-vault wikilinks. A finding fails `npm test`; a line that must quote a pattern carries the `studio-check:allow` pragma.
 
 Browser-side logic (game loops, DOM state, T9 input state machine) is not unit-tested — verify by running the game in a browser.

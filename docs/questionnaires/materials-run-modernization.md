@@ -1,4 +1,16 @@
+---
+title: "Materials Run Questionnaire — Modernization Direction"
+type: questionnaire
+status: partly-answered
+game: materials-run
+created: 2026-07-22
+gates: [p2-06, p2-37, p2-38]
+tags: [questionnaire, materials-run]
+---
+
 # Materials Run Questionnaire — Modernization Direction
+
+**Related:** [Studio Dashboard](../README.md) · [Materials Run](../games/materials-run/README.md) · [Roadmap](../roadmap.md) · [Playtest log](../playtest-log.md)
 
 > Created 2026-07-22, from planning session. Yev asked to plan improvements to make [Materials Run](../games/materials-run/README.md) feel more modern and visually interesting, and to develop the mechanic further — he likes it and called it "somewhat chaotic play" in the taste questionnaire (keep that quality, don't smooth it away). The resulting backlog is in the repo `docs/roadmap.md`: **p1-42…p1-47** (visual/juice polish, no open questions — agent-shippable as-is) and **p2-06, p2-37…p2-39** (mechanic depth — each below has a real creative fork gated on this note). Answer in chat or edit this file; write-ins welcome after any answer.
 

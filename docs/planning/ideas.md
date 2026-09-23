@@ -7,7 +7,7 @@
 
 ## Backlog
 
-- [ ] **P0 · p0-16 — Obsidian Intranet: docs organization, interlinking & Studio Dashboard.** Prioritized 2026-09-22 as the **top-priority next item** to be executed immediately once the current iteration closes out (Yevster steer): *"no, add it as a priority, next thing thats going to be done after this current itteration is closed out"*.
+- [x] **P0 · p0-16 — Obsidian Intranet: docs organization, interlinking & Studio Dashboard.** ✅ **Shipped 2026-09-22** — see the roadmap row. Prioritized 2026-09-22 as the **top-priority next item** to be executed immediately once the current iteration closes out (Yevster steer): *"no, add it as a priority, next thing thats going to be done after this current itteration is closed out"*.
   - **What ships:**
     1. **Master Dashboard / MOC in `docs/README.md`:** Upgrade `docs/README.md` into an Obsidian hub (Active games gallery grouped by tier, quick links to design docs & idea inboxes, open questionnaires, roadmap priority tiers, steering and Shadow Studio links).
     2. **YAML Frontmatter / Obsidian Properties:** Add clean frontmatter to key documents (game READMEs in `docs/games/<slug>/README.md`, open questionnaires) with `title`, `tier`, `status`, `tags`, and `play_url` so Obsidian's properties and graph views function cleanly.

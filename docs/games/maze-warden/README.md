@@ -1,4 +1,17 @@
+---
+title: "Maze Warden"
+type: game
+slug: maze-warden
+tier: invest
+status: arcade
+play_url: https://yevrap.github.io/KamekoStudio/games/maze-warden/
+code: games/maze-warden/
+tags: [game, tower-defense, roguelike]
+---
+
 # Maze Warden
+
+**Links:** [Studio Dashboard](../../README.md) · [Lineup](../README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md) · [Ideas](ideas.md) · [Open questionnaire](../../questionnaires/maze-warden-iteration-8.md)
 
 > ⚫ **Arcade game — promoted from the Lab 2026-07-21** (commit `bc34fa9`, deploy verified via Pages), following iteration 7's gold-sink fix. Jammed 2026-07-21 (iteration 1, `keep`); iterations 2–6 all shipped the same day (iteration 5's original 🧨 Breaker enemy proved unreachable in a normal maze and was superseded same-day by the fuse-based 💣 **Bomber**; iteration 6's deeper Upgrades tree + late-game wave retune came back **Meh** from Yev's own playtest — the real gap was the in-run gold economy, not tree/curve depth). **Iteration 7 (same day)** shipped escalating tower-cost inflation as the gold sink, plus root-caused a bundled Bomber-damage report as working-as-intended (a Bomber's HP matches a regular grunt's, so tower fire in a well-defended maze reliably kills it before its fuse expires). Yev's own playtest of iteration 7 confirmed **Keep** — "i want to keep the game and promote it" — and the draft was promoted the same day: split into `games/maze-warden/`'s ES-module convention (canvas rendering merged into `gameplay.js`, no `ui.js`, per the durak-tactics/materials-run precedent), `tests/maze-warden.test.mjs` added (BFS/`wouldSeal()`, wave scaling through the iteration-6 breakpoint, the inflation multiplier, Bomber/essence/gold formulas), shared settings/theme/mobile patterns wired, registered across the gallery. Full ship detail: [Improvements](ideas.md).
 > **Play:** https://yevrap.github.io/KamekoStudio/games/maze-warden/ · **Repo:** `games/maze-warden/` · **Roadmap:** p3-22 ✅

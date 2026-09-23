@@ -1,4 +1,16 @@
+---
+title: "Astro Salon Questionnaire — Promotion Decisions"
+type: questionnaire
+status: answered
+game: astro-salon
+created: 2026-07-14
+gates: [p2-35]
+tags: [questionnaire, astro-salon]
+---
+
 # Astro Salon Questionnaire — Promotion Decisions
+
+**Related:** [Studio Dashboard](../README.md) · [Astro Salon](../games/astro-salon/README.md) · [Roadmap](../roadmap.md) · [Playtest log](../playtest-log.md)
 
 > Opened July 14, 2026 alongside the (now-archived) [Astro Salon — Promotion & Depth Sprints (July 2026)](../archive/plans/astro-salon-promotion-and-depth-sprints-july-2026.md) sprint plan. Q1–Q3 are consumed — Sprint 2 shipped 2026-07-15 acting on them. **Q4 is answered (write-in, below) but not yet picked up by a dev session** — it's the one live item in this file, and it gates roadmap row p2-35 (expert mode). Rounds 1–3 of the older verdict questionnaire are archived: [Astro Salon Questionnaire — Verdict & Direction](../archive/questionnaires/astro-salon-verdict-and-direction.md).
 

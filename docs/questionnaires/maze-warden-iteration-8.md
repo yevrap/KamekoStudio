@@ -1,4 +1,16 @@
+---
+title: "Maze Warden Questionnaire — Iteration 8 Direction"
+type: questionnaire
+status: partly-answered
+game: maze-warden
+created: 2026-07-22
+gates: []
+tags: [questionnaire, maze-warden]
+---
+
 # Maze Warden Questionnaire — Iteration 8 Direction
+
+**Related:** [Studio Dashboard](../README.md) · [Maze Warden](../games/maze-warden/README.md) · [Roadmap](../roadmap.md) · [Playtest log](../playtest-log.md)
 
 > **Status: Q1–Q3 answered (Q3 auto-resolved to default 2026-07-30), Q4 free space still open — asked 2026-07-22.** Triaged from a fresh raw note at the top of [Improvements](../games/maze-warden/ideas.md): *"Too much blinking animation on towers that slow maybe? I want to rethink the shooting mechanic. I don't want to end up like Bloons TD where at the end it's too much and doesn't make sense and look good and with so much stuff going on it's hard on performance."* This is the first post-promotion pass on the live `games/maze-warden/` build (promoted 2026-07-21 after iteration 7's Keep verdict).
 >

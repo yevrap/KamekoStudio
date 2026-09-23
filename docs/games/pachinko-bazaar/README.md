@@ -1,4 +1,17 @@
+---
+title: "Pachinko Bazaar"
+type: game
+slug: pachinko-bazaar
+tier: invest
+status: arcade
+play_url: https://yevrap.github.io/KamekoStudio/games/pachinko-bazaar/
+code: games/pachinko-bazaar/
+tags: [game, physics, roguelike]
+---
+
 # Pachinko Bazaar
+
+**Links:** [Studio Dashboard](../../README.md) · [Lineup](../README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md) · [Ideas](ideas.md) · [Open questionnaire](../../questionnaires/pachinko-bazaar-arcade-polish.md)
 
 > **Status: Arcade game — promoted July 14, 2026.**
 > **Play it:** https://yevrap.github.io/KamekoStudio/games/pachinko-bazaar/

@@ -33,9 +33,11 @@ questionnaires for whatever is still undecided, and a list of prompts.
    judgeable step.
 4. **Open product questions → a questionnaire** in `docs/questionnaires/<game>-<topic>.md`:
    numbered questions, checkbox options, a recommendation on each, and the rows waiting on it.
-   Mark those rows *waiting on <file> Qn*. Don't stall waiting for answers in chat.
+   Mark those rows *waiting on <file> Qn* and link the file. Give it frontmatter (`gates:` lists
+   those rows) and a row in `docs/README.md`, per `docs/CLAUDE.md`. Don't stall waiting for
+   answers in chat.
 5. **Consumed questionnaires** — every question answered and reflected in rows — move to
-   `docs/archive/questionnaires/`.
+   `docs/archive/questionnaires/`, and their row leaves `docs/README.md`.
 6. **Commit and push** the planning changes (`docs: plan <topic>`).
 
 ## Report

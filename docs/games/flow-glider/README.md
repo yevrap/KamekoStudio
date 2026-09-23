@@ -1,4 +1,17 @@
+---
+title: "Flow Glider"
+type: game
+slug: flow-glider
+tier: killed
+status: lab
+play_url: https://yevrap.github.io/KamekoStudio/drafts/flow-glider/
+code: drafts/flow-glider/
+tags: [game, physics]
+---
+
 # Flow Glider
+
+**Links:** [Studio Dashboard](../../README.md) · [Lineup](../README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md) · [Ideas](ideas.md)
 
 > **Status: 🚫 Killed July 14, 2026 — same-day verdict.** Too derivative of Tiny Wings; the "sunset pushed back by skill" hook (below) turned out to be Tiny Wings' own signature mechanic reproduced, not an original twist. Stays in the Lab as a curio; not being promoted or iterated as-is. See [Kameko Playtest Log](../../playtest-log.md) and the agent-facing correction this triggered (games built off cited prior art need a genuinely original hook, not the closest analog to the reference game).
 > **Play it:** https://yevrap.github.io/KamekoStudio/drafts/flow-glider/

@@ -1,4 +1,17 @@
+---
+title: "Tysiacha (1000)"
+type: game
+slug: tysiacha
+tier: invest
+status: arcade
+play_url: https://yevrap.github.io/KamekoStudio/games/tysiacha/
+code: games/tysiacha/
+tags: [game, card-game]
+---
+
 # Tysiacha (1000)
+
+**Links:** [Studio Dashboard](../../README.md) · [Lineup](../README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md) · [Ideas](ideas.md)
 
 > **Status:** arcade game · roadmap `p3-04` ✅
 > **Play:** https://yevrap.github.io/KamekoStudio/games/tysiacha/

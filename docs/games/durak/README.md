@@ -1,4 +1,17 @@
+---
+title: "Durak"
+type: game
+slug: durak
+tier: invest
+status: arcade
+play_url: https://yevrap.github.io/KamekoStudio/games/durak/
+code: games/durak/
+tags: [game, card-game]
+---
+
 # Durak
+
+**Links:** [Studio Dashboard](../../README.md) · [Lineup](../README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md) · [Ideas](ideas.md)
 
 Durak is a classic Russian card game for 2–6 players. Modes include vs Computer (1 human + 2–5 AI) and Hot-seat (2–6 humans sharing a device, with a pass-device cover at 3+ players).
 

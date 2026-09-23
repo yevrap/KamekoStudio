@@ -88,6 +88,8 @@ over, restart — at phone width, with zero console errors. Fix whatever breaks.
 - `docs/questionnaires/<slug>-verdict.md` — the verdict (keep / meh / kill) plus every product
   judgment call you made (rules depth, session length, difficulty, tutorial style), as
   checkboxes with your recommendation.
+- Frontmatter on both files, a row for each in `docs/README.md` (the Studio Dashboard), and
+  relative links only — schema and link rules in `docs/CLAUDE.md`.
 - `docs/roadmap.md` — a P3 row for the jam (🚧 while it's in the Lab awaiting a verdict).
 - `docs/playtest-log.md` — only if you verified the loop yourself, a line marked
   *agent-verified, not a Yevster play session*. Never record a keep on Yevster's behalf.

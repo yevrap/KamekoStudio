@@ -15,6 +15,7 @@ Requires Node.js 18+. No npm install needed.
 | `durak.test.mjs` | `games/durak/`: constants, state, gameplay rules, AI logic (`_test_aiTurn`) |
 | `durak-alchemist.test.mjs` | `gridLogic.js` (`spawnCard`, `getEmptyCells`, `spawnRandomBaseCard`, `slideGrid`, `isGameOver`), `combatLogic.js` (`canBeat`, `canTransfer`, `getExposedRanks`), `constants.js` (`getRankLabel`) |
 | `durak-dungeon.test.mjs` | `constants.js` (`mulberry32`, `seedFromString`, `shuffle`, `displayValue`, `suitEmoji`, `suitName`), `state.js` (`hasRelic`, `getActiveTrumpSuit`, `canDefend` incl. the `no-trumps` mutation branch) |
+| `docs-links.test.mjs` | `docs/`: relative links resolve, game-doc and questionnaire frontmatter, the Studio Dashboard lists every game doc and questionnaire with its status |
 | `durak-tactics.test.mjs` | `constants.js` (`getDisplayVal`). Combat/map logic lives in `gameplay.js`, which reads DOM elements at module load and can't be unit-tested without a DOM shim. |
 
 Browser-side logic (game loop, DOM, T9 input state machine) is verified manually by playing the game.

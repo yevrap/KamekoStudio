@@ -1,4 +1,15 @@
+---
+title: "What to Build Next — Proposals & Questionnaire (July 2026)"
+type: questionnaire
+status: answered
+created: 2026-07-13
+gates: []
+tags: [questionnaire, studio-wide]
+---
+
 # What to Build Next — Proposals & Questionnaire (July 2026)
+
+**Related:** [Studio Dashboard](../README.md) · [Roadmap](../roadmap.md) · [Playtest log](../playtest-log.md)
 
 > Rewritten July 13, 2026 (evening) after Yev's redirect: not a triage of existing backlogs — **new games and experiences** that agents can plan and build, that Yev then plays with. (The morning version of this note recommended the Health App MVP; that's parked as a lane he didn't pick. Watch/Xcode work explicitly deferred — his call.)
 >

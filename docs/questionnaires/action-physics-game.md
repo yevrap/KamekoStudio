@@ -1,4 +1,15 @@
+---
+title: "Kameko Studio Questionnaire — Action Physics Game (July 2026)"
+type: questionnaire
+status: answered
+created: 2026-07-21
+gates: []
+tags: [questionnaire, studio-wide]
+---
+
 # Kameko Studio Questionnaire — Action Physics Game (July 2026)
+
+**Related:** [Studio Dashboard](../README.md) · [Roadmap](../roadmap.md) · [Playtest log](../playtest-log.md)
 
 > Answer in chat or edit this file — check a letter, add write-ins freely. Design source with full concept details: [Kameko Studio — Action Physics Directions (July 2026)](../planning/action-physics-directions.md). Each question has a **recommended default** marked ⭐ so you can skip any you don't care about and I'll take the default.
 >

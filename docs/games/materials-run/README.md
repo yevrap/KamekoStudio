@@ -1,4 +1,17 @@
+---
+title: "Materials Run"
+type: game
+slug: materials-run
+tier: invest
+status: arcade
+play_url: https://yevrap.github.io/KamekoStudio/games/materials-run/
+code: games/materials-run/
+tags: [game, action]
+---
+
 # Materials Run
+
+**Links:** [Studio Dashboard](../../README.md) · [Lineup](../README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md) · [Ideas](ideas.md) · [Open questionnaire](../../questionnaires/materials-run-modernization.md)
 
 **Status:** Live (Production)
 **Repo Path:** `games/materials-run/`

@@ -1,4 +1,17 @@
+---
+title: "Keypad Quest"
+type: game
+slug: keypad-quest
+tier: invest
+status: arcade
+play_url: https://yevrap.github.io/KamekoStudio/games/keypad-quest/
+code: games/keypad-quest/
+tags: [game, tower-defense, learning]
+---
+
 # Keypad Quest
+
+**Links:** [Studio Dashboard](../../README.md) · [Lineup](../README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md) · [Ideas](ideas.md) · [Open questionnaire](../../questionnaires/keypad-quest-sprint-direction.md)
 
 **Status:** Live (Production) — Invest tier, no dedicated design documentation until this pass (2026-07-22)
 **Repo Path:** `games/keypad-quest/`
