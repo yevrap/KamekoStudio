@@ -12,7 +12,7 @@ verdict when the executive hasn't played ([ADR-0011](../decisions/ADR-0011-the-s
 
 ## Reviews
 
-The live build (or the pull request's build, served locally), **by playing it**, never by
+A local build served from the checkout (`npx serve -l 5173 .`), **by playing it**, never by
 reading the diff first. Headless Chrome through puppeteer at 390×780 and 320×640, with a
 fresh profile per session, driving real pointer or key input. Several full runs, not one:
 the first minute, a long run, a restart, game over and back. Screenshots at the moments

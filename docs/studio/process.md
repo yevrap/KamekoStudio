@@ -106,8 +106,10 @@ is testing and how its retrospective judges it.
 - Every commit leaves `main` releasable: `npm run studio:check -- --stage=ticket` green
   before committing.
 - When a ticket is done: `--stage=push` green — the gate's checks short of the review ones,
-  the full repository suite included — then push, then `--stage=postdeploy` with a
-  `--marker` only the new build has. Pages deploys every push, so every push is a release.
+  the full repository suite included — then push. Pages deploys every push, but the
+  ticket is verified locally; the live site is checked once per sprint, at `close`, with
+  `--stage=postdeploy` and a `--marker` per changed page (executive, 2026-09-23: Pages is
+  slow to update, and the local build is the same files).
 - **A production fix waits for review.** Its commits stay local until an independent review
   has passed them and `iterations/NN/reviews/<TICKET>.md` names the commit it saw; the
   `push` stage refuses the push otherwise, and again whenever the fix changes after its

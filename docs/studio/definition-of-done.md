@@ -13,7 +13,9 @@ code works.
       the push stage before the ticket is pushed**. The push stage runs every gate-only
       check, such as `hygiene`, so one fails on the ticket responsible rather than after the
       work is merged. Iteration 01 learned this the expensive way.
-- [ ] After the push, `--stage=postdeploy` passes with a `--marker` only the new build has.
+- [ ] Verified on a local server. The live site is checked once per sprint, at `close`:
+      `--stage=postdeploy` passes with a `--marker` only the new build has, for every page
+      the sprint changed.
 - [ ] Only allowed paths changed (see [`guardrails.md`](guardrails.md)). A production fix
       also has a regression test shown failing without the fix and passing with it, and a
       pre-push review record naming a commit that holds exactly what is pushed of every

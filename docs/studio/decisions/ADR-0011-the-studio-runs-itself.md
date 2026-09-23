@@ -41,8 +41,11 @@ with a focus). It:
   with the workflow instead of the executive starting the next session;
 - shows every step in `/workflows` as it happens, with a one-line summary per step (what
   was done, what a player can now see, the live URL);
-- runs the reviewers itself at `review` — QA (`opus`), the Independent Reviewer (`fable`)
-  and the Playtester (`opus`) in parallel — and hands their results to the step's agent;
+- runs the reviewers itself at `review` — the Independent Reviewer (`opus`), QA (`sonnet`)
+  and the Playtester (`opus`) in parallel — and hands their results to the step's agent.
+  Opus is the largest model used;
+- **verifies locally**: builds, reviewers and the Playtester use a local server; the live
+  site is checked once per sprint, at `close`, because Pages is slow to update;
 - by default runs **from wherever `next.md` is to the end of the current sprint** (its
   retro), then stops; `sprints: N` runs more;
 - stops early when a step fails, makes no progress, or writes a `**Next:**` line that isn't
@@ -106,7 +109,7 @@ The studio moves from trunk (ADR-0007) to **a branch and a pull request per tick
 - the repository's CI workflow (`.github/workflows/checks.yml`) runs on the pull request;
 - the Independent Reviewer's verdict is posted on the pull request as a comment;
 - the studio squash-merges when CI is green and the review approves, then runs the
-  post-deploy checks on the live site. **The studio merges its own pull requests,
+  checks locally; the live site waits for `close`. **The studio merges its own pull requests,
   production fixes included** — the executive's answer to questionnaire Q10;
 - `review` at the end of the sprint stays: QA and the Playtester look at the sprint whole.
 
