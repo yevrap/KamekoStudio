@@ -45,8 +45,16 @@ for byte. This means:
   production game. The two entrances now lead to different builds of the same game, and
   that's the point of the Studio Wing.
 - Production River Run gets bug fixes only from now on (direction rule 5). Its feature rows
-  on the arcade roadmap are the executive's to re-home. `docs/roadmap.md` is outside the
-  path guard.
+  left the arcade roadmap for the studio backlog on 2026-09-22, in an arcade `docs:` commit
+  made by the studio at the executive's direction (see `guardrails.md`, *Arcade docs about
+  studio work*).
+- *Found in the iteration 05 review.* The rest of the 3D page and the drawer still assume
+  River Run has one build. The trophy beside the portal shows the arcade's
+  `riverRunHighScore`, which the fork never writes, so play through the portal never earns
+  it. The gallery's recently-played sort reads `lastPlayed_riverRun`, not the fork's key.
+  The drawer's game switcher (`shared/settings.js`) highlights 🌊 on the fork page, and
+  tapping it leaves for the production build. All three are production code, outside this
+  exception, and on the backlog.
 - `tests/studio/studio-portal.test.mjs` asserts that every portal url resolves to a page and
   that every portal without a fork still points at `games/<slug>/`. It also walks into the
   portal in a headless browser and checks that the fork is what opens.

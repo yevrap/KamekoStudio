@@ -62,3 +62,16 @@ is committed.
   SHS-056's browser test waiting on chance: 1 run in 3 outlived its 60 s wait. It's fixed
   in `045f031`, so the run now ends deterministically. Lesson: a browser test waits on
   something the test causes, never on something the game might do.
+
+## Session 5 — review (2026-09-22)
+
+- **Scrum Master** — *Done:* one review round. The Independent Reviewer (`fable`) and QA
+  (`opus`) each approved with findings; every finding is fixed, on the backlog, or declined
+  with a reason in `review.md`. Two S fixes landed in the step: a subject naming a studio
+  ticket is now a studio commit (`b897707`), and the fork's browser test logs every storage
+  write (`607d40b`). On the executive's chat direction, the arcade doc updates for River Run
+  were made here instead of being handed back (`63b8190`). *Next:* close. *Blocked:* nothing.
+- **Scrum Master (for the retro)** — the sprint report asked the executive to do arcade doc
+  edits the studio could have done itself; the executive said not to draw that line. Now a
+  guardrail. Also: a ceremony commit subject ran to 115 characters and only the reviewer
+  noticed. Lesson: run `--stage=ticket` before every commit, ceremony ones included.

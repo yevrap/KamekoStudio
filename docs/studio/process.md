@@ -87,6 +87,9 @@ is testing and how its retrospective judges it.
 
 - Commit to `main`. No ticket branches, no merge commits. A ticket is one or more small
   commits, each naming it.
+- **Rebase, don't merge.** The arcade ships on the same `main`, so when the remote has moved,
+  `git pull --rebase`. A merge that brings in studio and arcade commits together fails the
+  path guard, and only a hash exemption gets it through (iteration 05 review).
 - Every commit leaves `main` releasable: `npm run studio:check -- --stage=ticket` green
   before committing.
 - When a ticket is done: `--stage=push` green — the gate's checks short of the review ones,

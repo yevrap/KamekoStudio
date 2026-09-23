@@ -41,8 +41,9 @@ the arcade's own work, and the studio's discipline, not a check, keeps its sessi
 disguising a production change that way (iteration 05 review). They do not prove who wrote a commit, and
 an arcade commit is free to change any production file: the arcade is not the studio's to
 guard. Two edges keep their earlier rules: a recorded exception still compares the whole
-file at the base with the file now, so an arcade edit to `package.json` in the same range
-shows up there; and a production fix is still refused when any commit in the range, arcade
+file at the base with the file now, so an arcade edit to `package.json` or
+`shared/3d/constants.js` in the same range shows up there until the iteration is tagged (a
+new arcade portal is the likely case; iteration 05 review, backlog #29); and a production fix is still refused when any commit in the range, arcade
 or studio, changed its file without naming its ticket.
 
 ### Arcade docs about studio work
