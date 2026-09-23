@@ -112,10 +112,7 @@
         }
 
         #score {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+            white-space: nowrap; /* studio fork (SHS-064): one line, however many digits */
             color: var(--score-text);
             font-size: 1.2em;
             background-color: var(--score-bg);
@@ -261,12 +258,24 @@
         #top-controls .back { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; font-size: 0.7em; color: #fff; background-color: #555; text-decoration: none; border-radius: 4px; }
         body.dark-mode #top-controls .back { background-color: #aaa; color: #333; }
 
+        /* Studio fork (SHS-064): the score and the power-up label stack in a column of their own,
+           below the top row ("← Studio", Mute and the settings button), so none of them can
+           overlap at 320 wide. The column starts 42px into the game area: the top row ends
+           at 64px on screen (the settings button), and the game area starts at 27px. */
+        #hud-stack {
+            position: absolute;
+            top: 42px;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            z-index: 5;
+            pointer-events: none;
+        }
         /* Studio fork (SHS-060): what the boat is carrying — the shield, and the spread shot's time left. */
         #power-hud {
-            position: absolute;
-            top: 48px;
-            left: 50%;
-            transform: translateX(-50%);
             display: none;
             color: #fff;
             font-size: 0.7em;
@@ -289,8 +298,10 @@
     </div>
 
     <div id="game-container">
-        <div id="score">Score: 0</div>
-        <div id="power-hud"></div>
+        <div id="hud-stack">
+            <div id="score">Score: 0</div>
+            <div id="power-hud"></div>
+        </div>
         <div id="message-box">
             <p id="message-text">River Runner 3D!</p>
             <button id="start-button">Start Game</button>
@@ -342,10 +353,12 @@
 
         // --- Power-ups (studio fork, SHS-060) ---
         // One pickup floats down the river at a time; the boat takes it by touching it.
-        // Frame-counted, like the rest of the game, so the drawer's pause pauses them too.
-        const POWERUP_FIRST_SPAWN = 300;      // frames into a run before the first one (~5 s)
-        const POWERUP_SPAWN_INTERVAL = 600;   // frames between one leaving the river and the next (~10 s)
-        const RAPID_FIRE_FRAMES = 360;        // how long the spread shot lasts (~6 s)
+        // Their clocks count wall-clock seconds (SHS-064): counted in frames, "6.0s" lasted
+        // 3 s on a 120 Hz screen. The rest of the game still counts frames.
+        const POWERUP_FIRST_SPAWN_S = 5;      // seconds into a run before the first one
+        const POWERUP_SPAWN_INTERVAL_S = 10;  // seconds between one leaving the river and the next
+        const RAPID_FIRE_S = 6;               // how long the spread shot lasts
+        const POWERUP_MAX_STEP_S = 0.1;       // the most one update may count: a stalled frame is not play
         const RAPID_FIRE_AUTO_COOLDOWN = 8;   // Watch Mode's shot cooldown while it lasts (normally 20)
         const SPREAD_ANGLE_RAD = THREE.MathUtils.degToRad(12);
         const POWERUP_LOOK = {
@@ -354,10 +367,11 @@
         };
         const UP_AXIS = new THREE.Vector3(0, 1, 0);
         let powerUp = null;          // the floating pickup: { mesh, boundingBox, type }
-        let powerUpSpawnTimer = 0;
+        let powerUpSpawnClock = 0;   // seconds the river has been without a pickup
         let shieldActive = false;
         let shieldMesh;
-        let rapidFireFrames = 0;
+        let rapidFireLeft = 0;       // seconds of spread shot left
+        let powerUpLastTick = null;  // performance.now() of the last update; null = the clock was stopped
         let sfxSynth;
 
         // --- Explosion Particle System ---
@@ -583,7 +597,7 @@
             mesh.position.set((Math.random() - 0.5) * (riverWidth - 2), WATER_LEVEL + 0.3, riverLength * 0.8);
             scene.add(mesh);
             powerUp = { mesh, boundingBox: new THREE.Box3().setFromObject(mesh), type };
-            powerUpSpawnTimer = 0;
+            powerUpSpawnClock = 0;
         }
 
         function removePowerUp() {
@@ -595,7 +609,7 @@
         function collectPowerUp() {
             const type = powerUp.type;
             removePowerUp();
-            if (type === 'shield') setShield(true); else rapidFireFrames = RAPID_FIRE_FRAMES;
+            if (type === 'shield') setShield(true); else rapidFireLeft = RAPID_FIRE_S;
             playSfx(POWERUP_LOOK[type].notes);
             updatePowerHud();
         }
@@ -606,13 +620,23 @@
         }
 
         function clearPowerUps() {
-            removePowerUp(); setShield(false); rapidFireFrames = 0; updatePowerHud();
+            removePowerUp(); setShield(false); rapidFireLeft = 0; updatePowerHud();
+        }
+
+        // Seconds since the last update, for the power-up clocks. The first update after
+        // a stop (a new run, the drawer, a hidden tab) counts nothing, so a pause never
+        // eats into the spread shot or brings the next pickup early.
+        function powerUpStep() {
+            const now = performance.now();
+            const step = powerUpLastTick === null ? 0 : Math.min((now - powerUpLastTick) / 1000, POWERUP_MAX_STEP_S);
+            powerUpLastTick = now;
+            return step;
         }
 
         function updatePowerHud() {
             const parts = [];
             if (shieldActive) parts.push('\uD83D\uDEE1 SHIELD');
-            if (rapidFireFrames > 0) parts.push(`\u2726 SPREAD ${(rapidFireFrames / 60).toFixed(1)}s`);
+            if (rapidFireLeft > 0) parts.push(`\u2726 SPREAD ${rapidFireLeft.toFixed(1)}s`);
             const text = parts.join('   ');
             if (powerHud.textContent !== text) powerHud.textContent = text;
             powerHud.style.display = text ? 'block' : 'none';
@@ -662,7 +686,7 @@
             }
             launchProjectile(spawnPos, direction);
             // Studio fork (SHS-060): while the spread shot lasts, two more fan out either side.
-            if (rapidFireFrames > 0) {
+            if (rapidFireLeft > 0) {
                 launchProjectile(spawnPos, direction.clone().applyAxisAngle(UP_AXIS, SPREAD_ANGLE_RAD));
                 launchProjectile(spawnPos, direction.clone().applyAxisAngle(UP_AXIS, -SPREAD_ANGLE_RAD));
             }
@@ -729,7 +753,7 @@
              autoShootCooldown = 0; btnLeft = false; btnRight = false;
              scoreElement.textContent = `Score: ${score}`; messageBox.style.display = 'none';
              currentWaterColorIndex = 0; nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
-             clearPowerUps(); powerUpSpawnTimer = POWERUP_SPAWN_INTERVAL - POWERUP_FIRST_SPAWN;
+             clearPowerUps(); powerUpSpawnClock = POWERUP_SPAWN_INTERVAL_S - POWERUP_FIRST_SPAWN_S; powerUpLastTick = null;
 
              if (!audioStarted) {
                  await Tone.start(); audioStarted = true; console.log('Audio context started');
@@ -862,16 +886,17 @@
              }
 
             // Power-ups (studio fork, SHS-060): the floating one drifts with the river.
+            const powerStep = powerUpStep();
             if (powerUp) {
                 powerUp.mesh.position.z -= gameSpeed;
                 powerUp.mesh.rotation.y += 0.05;
                 powerUp.boundingBox.setFromObject(powerUp.mesh);
                 if (boatBox.intersectsBox(powerUp.boundingBox)) collectPowerUp();
                 else if (powerUp.mesh.position.z < boat.position.z - BOAT_LENGTH * 1.5) removePowerUp();
-            } else if (++powerUpSpawnTimer > POWERUP_SPAWN_INTERVAL) {
+            } else if ((powerUpSpawnClock += powerStep) >= POWERUP_SPAWN_INTERVAL_S) {
                 spawnPowerUp();
             }
-            if (rapidFireFrames > 0) { rapidFireFrames--; updatePowerHud(); }
+            if (rapidFireLeft > 0) { rapidFireLeft = Math.max(0, rapidFireLeft - powerStep); updatePowerHud(); }
 
             // Update Obstacles & Score (passing check)
             obstacleSpawnTimer++;
@@ -910,7 +935,7 @@
             if (autoPlay) {
                 if (autoShootCooldown > 0) { autoShootCooldown--; } else {
                     const target = findNearestObstacleAhead();
-                    if (target) { shootProjectile(target); autoShootCooldown = rapidFireFrames > 0 ? RAPID_FIRE_AUTO_COOLDOWN : 20; }
+                    if (target) { shootProjectile(target); autoShootCooldown = rapidFireLeft > 0 ? RAPID_FIRE_AUTO_COOLDOWN : 20; }
                 }
             }
 
@@ -1165,7 +1190,9 @@
         // --- Settings pause/resume + theme sync ---
         window.addEventListener('settingsOpened', () => {
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            powerUpLastTick = null; // the power-up clocks stop with the loop (SHS-064)
         });
+        document.addEventListener('visibilitychange', () => { if (document.hidden) powerUpLastTick = null; });
         window.addEventListener('settingsClosed', () => {
             isDarkMode = document.body.classList.contains('dark-mode');
             autoPlay = readStored(() => localStorage.getItem('studio_riverRun_autoPlay')) === 'true';

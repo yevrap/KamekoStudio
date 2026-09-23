@@ -21,6 +21,13 @@
 //     music back, and not one of them throws. Until SHS-061 the music restart
 //     threw now and then (Tone.js RangeError, a stop time a hair below zero),
 //     which aborted the restart and froze the run; a named exemption let it by.
+//  5. The power-up HUD (SHS-064): at 390 and 320 wide, with a shield and a spread
+//     shot active and a four-digit score, the score reads on one line and the
+//     score, the power-up label, "← Studio", Mute and the settings button each
+//     sit whole on screen with no two overlapping; and the power-up clocks (the
+//     spread shot, the first pickup, the gap between pickups) count wall-clock
+//     seconds at 60 and at 120 updates a second, and stand still while the
+//     settings drawer is open.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -271,14 +278,14 @@ test('in a browser, playing the fork leaves every non-studio key exactly as it w
  * a run. `quiet()` stops the river spawning rocks, logs and pickups by itself and
  * clears what is on it, so each test places exactly what it checks.
  */
-async function openFork(browser, origin) {
+async function openFork(browser, origin, { width = 390, height = 780 } = {}) {
   const page = await browser.newPage();
   const errors = collectErrors(page);
   await page.setRequestInterception(true);
   page.on('request', r => (new URL(r.url()).pathname === '/favicon.ico'
     ? r.respond({ status: 200, contentType: 'image/x-icon', body: '' })
     : r.continue()));
-  await page.setViewport({ width: 390, height: 780, isMobile: true, hasTouch: true });
+  await page.setViewport({ width, height, isMobile: true, hasTouch: true });
   await page.goto(`${origin}/studio/games/river-run/`, { waitUntil: 'networkidle2' });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: 'networkidle2' });
@@ -288,7 +295,7 @@ async function openFork(browser, origin) {
     await page.waitForFunction(() => !isGameOver && audioStarted, { timeout: 10_000, polling: 50 });
   };
   const quiet = () => page.evaluate(() => {
-    obstacleSpawnTimer = -1e9; powerUpSpawnTimer = -1e9;
+    obstacleSpawnTimer = -1e9; powerUpSpawnClock = -1e9;
     obstacles.forEach(o => scene.remove(o.mesh)); obstacles = [];
   });
   /** A pickup of `type`, floating toward the boat from `ahead` units up the river. */
@@ -349,7 +356,7 @@ test('in a browser, the fork\'s power-ups do what they say',
         assert.deepEqual(await volley(), [0], 'a normal shot is one, straight ahead');
 
         await f.pickupAhead('rapid');
-        await f.page.waitForFunction(() => rapidFireFrames > 0, { timeout: 10_000, polling: 50 });
+        await f.page.waitForFunction(() => rapidFireLeft > 0, { timeout: 10_000, polling: 50 });
         assert.deepEqual((await volley()).sort(), [-1, 0, 1], 'the spread is one straight and one to each side');
         const first = await f.hud();
         assert.ok(first.shown && /^✦ SPREAD \d\.\ds$/.test(first.text), `the timer reads "${first.text}"`);
@@ -376,8 +383,8 @@ test('in a browser, the fork\'s power-ups do what they say',
         await f.page.waitForFunction(() => !activeProjectiles.some(p => p.mesh === window.__offRiver),
           { timeout: 5_000, polling: 50 }).catch(() => assert.fail('a shot past the river bank stays in flight'));
 
-        await f.page.evaluate(() => { rapidFireFrames = 3; });
-        await f.page.waitForFunction(() => rapidFireFrames === 0, { timeout: 5_000, polling: 50 });
+        await f.page.evaluate(() => { rapidFireLeft = 0.05; });
+        await f.page.waitForFunction(() => rapidFireLeft === 0, { timeout: 5_000, polling: 50 });
         assert.equal((await f.hud()).shown, false, 'the timer outlived the spread shot');
         assert.deepEqual(await volley(), [0], 'shooting did not return to normal');
         assert.deepEqual(f.unexpected(), []);
@@ -398,7 +405,7 @@ test('in a browser, the fork\'s power-ups do what they say',
         await f.pickupAhead('shield');
         await f.page.waitForFunction(() => shieldActive, { timeout: 10_000, polling: 50 });
         await f.pickupAhead('rapid');
-        await f.page.waitForFunction(() => rapidFireFrames > 0, { timeout: 10_000, polling: 50 });
+        await f.page.waitForFunction(() => rapidFireLeft > 0, { timeout: 10_000, polling: 50 });
         assert.equal(await f.page.evaluate(() => window.__sfxNotes), 0, 'a pickup sounded while muted');
 
         await f.page.click('#mute-toggle');
@@ -417,8 +424,8 @@ test('in a browser, the fork\'s power-ups do what they say',
         await f.quiet();
         const x = await f.page.evaluate(() => boat.position.x);
         await f.pickupAhead('rapid', 8);
-        await f.page.waitForFunction(() => rapidFireFrames > 0 || powerUp === null, { timeout: 15_000, polling: 50 });
-        assert.equal(await f.page.evaluate(() => rapidFireFrames > 0), true, 'the auto boat did not take the pickup in its path');
+        await f.page.waitForFunction(() => rapidFireLeft > 0 || powerUp === null, { timeout: 15_000, polling: 50 });
+        assert.equal(await f.page.evaluate(() => rapidFireLeft > 0), true, 'the auto boat did not take the pickup in its path');
         assert.equal(await f.page.evaluate(() => boat.position.x), x, 'the auto boat swerved from a pickup');
         assert.equal(await f.page.evaluate(() => activeProjectiles.length), 0, 'the auto boat shot at a pickup');
 
@@ -470,6 +477,175 @@ test('in a browser, twenty new runs in a row each start cleanly, with the loop a
       assert.ok(beats <= 4, `${beats} notes in 1.5 s: earlier runs' sequences are still playing`);
       assert.deepEqual(f.unexpected(), []);
       await f.page.close();
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+// ---- 5. The power-up HUD at phone width, in real seconds (SHS-064) ------------
+
+test('in a browser, the score, the power-up label and the top buttons stay whole and apart at phone width',
+  { skip: chromeAvailable() ? false : 'no Chrome; set CHROME_PATH', timeout: 120_000 },
+  async t => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      for (const [width, height] of [[390, 780], [320, 640]]) {
+        await t.test(`${width}×${height}, shield and spread active, score 1234`, async () => {
+          const f = await openFork(browser, site.origin, { width, height });
+          await f.start('#start-button');
+          await f.quiet();
+          await f.pickupAhead('shield');
+          await f.page.waitForFunction(() => shieldActive, { timeout: 10_000, polling: 50 });
+          await f.pickupAhead('rapid');
+          await f.page.waitForFunction(() => /SPREAD/.test(powerHud.textContent), { timeout: 10_000, polling: 50 });
+          const seen = await f.page.evaluate(() => {
+            score = 1234; scoreElement.textContent = `Score: ${score}`;
+            const box = el => {
+              const b = el.getBoundingClientRect();
+              return { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height };
+            };
+            const text = document.createRange();
+            text.selectNodeContents(scoreElement);
+            return {
+              vw: innerWidth, vh: innerHeight, label: powerHud.textContent,
+              scoreLines: new Set([...text.getClientRects()].map(r => Math.round(r.top))).size,
+              boxes: {
+                'the score': box(scoreElement),
+                'the power-up label': box(powerHud),
+                '← Studio': box(document.querySelector('#top-controls .back')),
+                'Mute': box(muteToggle),
+                'the settings button': box(document.getElementById('settings-hamburger-btn'))
+              }
+            };
+          });
+          assert.match(seen.label, /SHIELD.*SPREAD/, 'the label is not showing both power-ups');
+          assert.equal(seen.scoreLines, 1, `"Score: 1234" wraps onto ${seen.scoreLines} lines`);
+          const named = Object.entries(seen.boxes);
+          for (const [name, b] of named) {
+            assert.ok(b.width > 0 && b.height > 0, `${name} is not showing`);
+            assert.ok(b.left >= -0.5 && b.top >= -0.5 && b.right <= seen.vw + 0.5 && b.bottom <= seen.vh + 0.5,
+              `${name} is cut off by the screen edge: ${JSON.stringify(b)}`);
+          }
+          for (let i = 0; i < named.length; i++) {
+            for (let j = i + 1; j < named.length; j++) {
+              const [a, p] = named[i]; const [b, q] = named[j];
+              const overlapX = Math.min(p.right, q.right) - Math.max(p.left, q.left);
+              const overlapY = Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top);
+              assert.ok(overlapX <= 0.5 || overlapY <= 0.5,
+                `${a} and ${b} overlap: ${JSON.stringify(p)} / ${JSON.stringify(q)}`);
+            }
+          }
+          for (const name of ['← Studio', 'Mute']) {
+            const b = seen.boxes[name];
+            assert.ok(b.width >= 44 && b.height >= 44, `${name}'s tap target is ${b.width}×${b.height}`);
+          }
+          assert.deepEqual(f.unexpected(), []);
+          await f.page.close();
+        });
+      }
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+/**
+ * One run on a quiet river, timed inside the page: when the first pickup
+ * appears (counted from the run's first update), how long the spread shot it
+ * turns into lasts, how far its label strays from the time really left, and
+ * the gap until the next pickup. `doubled` runs two updates per animation
+ * frame, which is what a 120 Hz screen does to a frame-counted clock.
+ */
+async function timePowerUps(f, doubled) {
+  await f.page.evaluate(doubled => {
+    const once = updateGame;
+    window.__firstUpdate = null;
+    updateGame = function () {
+      if (window.__firstUpdate === null) window.__firstUpdate = performance.now();
+      once();
+      if (doubled) once();
+    };
+  }, doubled);
+  await f.start('#start-button');
+  // No rocks or logs: the pickup clock runs on its own, and nothing ends the run.
+  await f.page.evaluate(() => { obstacleSpawnTimer = -1e9; });
+  return f.page.evaluate(() => new Promise((resolve, reject) => {
+    const out = { firstSpawn: null, spread: null, labelOff: 0, nextSpawn: null };
+    let spreadStart = null;
+    const tick = () => {
+      const now = (performance.now() - window.__firstUpdate) / 1000;
+      if (out.firstSpawn === null) {
+        if (powerUp) {
+          out.firstSpawn = now;
+          // Whatever came, make it a spread shot and put it on the boat.
+          spawnPowerUp('rapid');
+          powerUp.mesh.position.set(boat.position.x, powerUp.mesh.position.y, boat.position.z);
+        }
+      } else if (spreadStart === null) {
+        if (/SPREAD/.test(powerHud.textContent)) spreadStart = now;
+      } else {
+        const shown = powerHud.textContent.match(/SPREAD (\d+\.\d)s/);
+        if (shown && out.spread === null) {
+          out.labelOff = Math.max(out.labelOff, Math.abs(parseFloat(shown[1]) - (6 - (now - spreadStart))));
+        } else if (!shown && out.spread === null) {
+          out.spread = now - spreadStart;
+        }
+        if (powerUp) { out.nextSpawn = now - spreadStart; resolve(out); return; }
+      }
+      if (now > 40) { reject(new Error(`no second pickup within 40 s: ${JSON.stringify(out)}`)); return; }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }));
+}
+
+test('in a browser, the power-up clocks count real seconds at 60 and 120 updates a second, and stop for the drawer',
+  { skip: chromeAvailable() ? false : 'no Chrome; set CHROME_PATH', timeout: 180_000 },
+  async t => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      for (const doubled of [false, true]) {
+        await t.test(doubled ? 'two updates a frame (120 fps)' : 'one update a frame (60 fps)', async () => {
+          const f = await openFork(browser, site.origin);
+          const tl = await timePowerUps(f, doubled);
+          const near = (seen, want, what) => assert.ok(Math.abs(seen - want) <= 0.3,
+            `${what}: ${seen.toFixed(2)} s, not ${want} ± 0.3 s (${JSON.stringify(tl)})`);
+          near(tl.firstSpawn, 5, 'the first pickup came after');
+          near(tl.spread, 6, 'the spread shot lasted');
+          assert.ok(tl.labelOff <= 0.3, `the label strayed ${tl.labelOff.toFixed(2)} s from the time left`);
+          near(tl.nextSpawn, 10, 'the next pickup came after');
+          assert.deepEqual(f.unexpected(), []);
+          await f.page.close();
+        });
+      }
+
+      await t.test('with the drawer open, the spread timer and the pickup clock stand still, then carry on', async () => {
+        const f = await openFork(browser, site.origin);
+        await f.start('#start-button');
+        await f.quiet();
+        await f.pickupAhead('rapid');
+        await f.page.waitForFunction(() => rapidFireLeft > 0 && powerUp === null, { timeout: 10_000, polling: 50 });
+        await f.page.evaluate(() => { powerUpSpawnClock = 0; });
+        await settle(300);
+        const clocks = () => f.page.evaluate(() => ({ spread: rapidFireLeft, pickup: powerUpSpawnClock, label: powerHud.textContent }));
+        await f.page.evaluate(() => window.KamekoSettings.openDrawer());
+        await settle(100);
+        const opened = await clocks();
+        await settle(1500);
+        const stillOpen = await clocks();
+        assert.deepEqual(stillOpen, opened, 'a clock moved while the drawer was open');
+        await f.page.evaluate(() => window.KamekoSettings.closeDrawer());
+        await settle(1000);
+        const after = await clocks();
+        const ran = { spread: opened.spread - after.spread, pickup: after.pickup - opened.pickup };
+        assert.ok(ran.spread >= 0.7 && ran.spread <= 1.3, `the spread timer ran ${ran.spread.toFixed(2)} s in the second after closing`);
+        assert.ok(ran.pickup >= 0.7 && ran.pickup <= 1.3, `the pickup clock ran ${ran.pickup.toFixed(2)} s in the second after closing`);
+        assert.deepEqual(f.unexpected(), []);
+        await f.page.close();
+      });
     } finally {
       await browser.close();
       await site.close();
