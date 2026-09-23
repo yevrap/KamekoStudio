@@ -8,9 +8,10 @@
 //
 // Each edit names how many times its `from` text occurs in the source, so a
 // rename cannot silently miss an occurrence or catch one it was not meant to.
-// When the fork starts to diverge on purpose (sprint 06's first experiment),
-// this file stops describing it and the test that uses it is retired with a
-// note: it proves the fork *started* faithful, not that it stays identical.
+// The fork diverged on purpose at SHS-060 (power-ups, sprint 06's first
+// experiment), and the equality test was retired with a note. This file is now
+// the record of how the copy was made, not a description of the fork as it is:
+// it proves the fork *started* faithful, not that it stays identical.
 //
 // Procedure: docs/studio/forking.md.
 

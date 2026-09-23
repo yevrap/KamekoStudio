@@ -68,11 +68,24 @@ for this build, and the tests assert that rather than the intention. See
 ### `games/river-run/` — ITERATING
 
 The studio's own copy of the arcade's River Runner 3D, forked in iteration 05 ([SHS-056](../docs/studio/iterations/05/tickets/SHS-056-river-run-fork.md)) so
-that River Run's experiments happen here rather than in production. It starts as a faithful
+that River Run's experiments happen here rather than in production. It started as a faithful
 copy: production's `games/river-run/index.html` at commit `082943a`, with its saves renamed
 into the `studio_` namespace and the four edits every studio page needs (a back link, a 44px
-mute button, a no-script message, and surviving blocked site data). Every difference is
-listed in `tests/studio/lib/river-run-fork.mjs`, and a test proves the list is complete.
+mute button, a no-script message, and surviving blocked site data). Those edits are
+recorded in `tests/studio/lib/river-run-fork.mjs`, and until the first experiment a test
+proved the fork equal to them byte for byte.
+
+**It now differs from production on purpose.** The first experiment, power-ups
+([SHS-060](../docs/studio/iterations/06/tickets/SHS-060-river-run-power-ups.md), iteration 06), retired the equality test. One pickup at a time floats
+down the river (the first about 5 s into a run, then about 10 s after each one leaves the
+river), and the boat takes it by touching it:
+
+- **Shield** (cyan octahedron): a wireframe bubble around the boat. The next rock or log
+  bursts on it instead of ending the run, and the bubble goes.
+- **Spread shot** (pink icosahedron): for about 6 s every shot is three, one straight and
+  one 12° to each side, and Watch Mode fires faster. The HUD under the score counts down.
+
+Pickup sounds are silent while the fork is muted. The power-ups save nothing.
 
 It is one inline-script file, as production's is; the ES module split is fork debt on the
 backlog. From the fork onward, production River Run takes bug fixes only. See

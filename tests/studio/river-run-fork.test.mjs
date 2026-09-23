@@ -1,14 +1,22 @@
-// river-run-fork.test.mjs — SHS-056: the studio's copy of River Run.
+// river-run-fork.test.mjs — SHS-056: the studio's copy of River Run; SHS-060: its power-ups.
 //
-// Two claims, proved separately:
+// What is proved:
 //
-//  1. The fork is production's River Run at a named commit plus the closed
-//     list of edits in lib/river-run-fork.mjs, and nothing else.
+//  1. The copy's record. Until SHS-060 this file proved the fork equal, byte for
+//     byte, to production's River Run at a named commit plus the closed list of
+//     edits in lib/river-run-fork.mjs. SHS-060 retired that equality: the fork's
+//     first experiment (power-ups) changes the game on purpose, so "identical plus
+//     the list" stopped being true there. What stays is the record — the source
+//     commit, the edits, and a test that they still apply to that source — as the
+//     account of how the copy was made, not of what it is now.
 //  2. Played in a real browser — a run to game over, mute, Watch Mode from the
 //     start screen and from the drawer, the drawer's own toggle — it leaves every
 //     key outside the studio_ namespace exactly as it found it, while the studio
 //     keys really are written. The second half matters: a fork that saved
 //     nothing at all would pass the first half on its own.
+//  3. The power-ups (SHS-060), in a real browser: the shield takes one hit, the
+//     spread shot fires three for its time and then one, the pickup sounds keep
+//     to the fork's mute, and Watch Mode plays through a pickup.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -31,10 +39,14 @@ function sourceAtCommit() {
     { cwd: ROOT, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
 }
 
-// ---- 1. The copy --------------------------------------------------------------
+// ---- 1. The copy's record ----------------------------------------------------
+//
+// Retired at SHS-060: 'the fork is the source at its commit plus the listed
+// edits, byte for byte', and its companion 'an unlisted change to the fork breaks
+// the equality'. They held from SHS-056 until the power-ups landed.
 
-test('the fork is the source at its commit plus the listed edits, byte for byte', () => {
-  assert.equal(applyEdits(sourceAtCommit()), fork);
+test('the recorded edits still apply cleanly to the source at its commit', () => {
+  assert.doesNotThrow(() => applyEdits(sourceAtCommit()));
 });
 
 test('the fork names its source path and commit in the file itself', () => {
@@ -45,13 +57,6 @@ test('an edit whose text has moved is reported, not half-applied', () => {
   const source = sourceAtCommit();
   const wrongCount = EDITS.map((e, i) => (i === 1 ? { ...e, count: e.count + 1 } : e));
   assert.throws(() => applyEdits(source, wrongCount), /expected 3 occurrence/);
-});
-
-test('an unlisted change to the fork breaks the equality', () => {
-  // The kind of thing the list exists to catch: one tuning constant, nudged.
-  const tampered = fork.replace(/const BOAT_WIDTH = [^;]+;/, 'const BOAT_WIDTH = 99;');
-  assert.notEqual(tampered, fork, 'the fixture must actually change the fork');
-  assert.notEqual(applyEdits(sourceAtCommit()), tampered);
 });
 
 // ---- The saves ----------------------------------------------------------------
@@ -120,11 +125,12 @@ const PRODUCTION_SAVES = {
 /**
  * One error the fork inherits rather than causes. River Run's music restarts a
  * Tone.js sequence on every new run, and now and then Tone computes a start time
- * a hair below zero (-1e-12) and rejects it. The audio code is byte-identical to
- * production — no edit in lib/river-run-fork.mjs touches it, which the equality
- * test above proves — so this is production's defect travelling with the copy.
- * Matched exactly: negative values only, this message only. Backlog: SHS-056's
- * follow-up row in docs/studio/steering/backlog.md.
+ * a hair below zero (-1e-12) and rejects it. The music code (setupMusic's synth,
+ * initGame's sequence restart) is still production's as copied: SHS-060 added a
+ * second synth for pickup sounds and left those lines alone, though with the
+ * equality test retired that is now a claim read from the diff, not a proof.
+ * Matched exactly: negative values only, this message only. SHS-061 fixes it in
+ * the fork and removes this exemption (TD-014).
  */
 const INHERITED_TONE_RANGE = /^uncaught: Uncaught \(in promise\) RangeError: Value must be within \[0, Infinity\], got: -\d(\.\d+)?e-\d+$/;
 
@@ -262,6 +268,158 @@ test('in a browser, playing the fork leaves every non-studio key exactly as it w
       if (inherited.length) t.diagnostic(`inherited Tone.js RangeError seen ${inherited.length}×`);
       assert.deepEqual(errors.filter(e => !inherited.includes(e)).map(e => e.text), []);
       await page.evaluate(() => localStorage.clear());
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+// ---- 3. The power-ups (SHS-060) ----------------------------------------------
+
+/**
+ * Opens the fork on a fresh store, phone-sized, and returns helpers for driving
+ * a run. `quiet()` stops the river spawning rocks, logs and pickups by itself and
+ * clears what is on it, so each test places exactly what it checks.
+ */
+async function openFork(browser, origin) {
+  const page = await browser.newPage();
+  const errors = collectErrors(page);
+  await page.setRequestInterception(true);
+  page.on('request', r => (new URL(r.url()).pathname === '/favicon.ico'
+    ? r.respond({ status: 200, contentType: 'image/x-icon', body: '' })
+    : r.continue()));
+  await page.setViewport({ width: 390, height: 780, isMobile: true, hasTouch: true });
+  await page.goto(`${origin}/studio/games/river-run/`, { waitUntil: 'networkidle2' });
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: 'networkidle2' });
+  await settle();
+  const start = async selector => {
+    await page.click(selector);
+    await page.waitForFunction(() => !isGameOver && audioStarted, { timeout: 10_000, polling: 50 });
+  };
+  const quiet = () => page.evaluate(() => {
+    obstacleSpawnTimer = -1e9; powerUpSpawnTimer = -1e9;
+    obstacles.forEach(o => scene.remove(o.mesh)); obstacles = [];
+  });
+  /** A pickup of `type`, floating toward the boat from `ahead` units up the river. */
+  const pickupAhead = (type, ahead = 3) => page.evaluate((type, ahead) => {
+    spawnPowerUp(type);
+    powerUp.mesh.position.set(boat.position.x, powerUp.mesh.position.y, boat.position.z + ahead);
+  }, type, ahead);
+  /** A rock about to hit the boat. */
+  const rockOnBoat = () => page.evaluate(() => {
+    spawnObstacle();
+    const rock = obstacles[obstacles.length - 1];
+    rock.mesh.position.set(boat.position.x, rock.mesh.position.y, boat.position.z + 1);
+  });
+  const hud = () => page.evaluate(() => ({ text: powerHud.textContent, shown: getComputedStyle(powerHud).display !== 'none' }));
+  const unexpected = () => errors.filter(e => !INHERITED_TONE_RANGE.test(e.text)).map(e => e.text);
+  return { page, start, quiet, pickupAhead, rockOnBoat, hud, unexpected };
+}
+
+test('in a browser, the fork\'s power-ups do what they say',
+  { skip: chromeAvailable() ? false : 'no Chrome; set CHROME_PATH', timeout: 120_000 },
+  async t => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      await t.test('the shield takes the next hit instead of the run, and shows while it lasts', async () => {
+        const f = await openFork(browser, site.origin);
+        await f.start('#start-button');
+        await f.quiet();
+        assert.equal(await f.page.evaluate(() => shieldMesh.visible), false);
+        await f.pickupAhead('shield');
+        await f.page.waitForFunction(() => shieldActive, { timeout: 10_000, polling: 50 });
+        assert.equal(await f.page.evaluate(() => powerUp), null, 'the pickup is still floating after it was taken');
+        assert.equal(await f.page.evaluate(() => shieldMesh.visible), true, 'the shield does not show on the boat');
+        assert.deepEqual(await f.hud(), { text: '\u{1F6E1} SHIELD', shown: true });
+
+        await f.rockOnBoat();
+        await f.page.waitForFunction(() => !shieldActive || isGameOver, { timeout: 10_000, polling: 50 });
+        assert.equal(await f.page.evaluate(() => isGameOver), false, 'the shielded hit ended the run');
+        assert.equal(await f.page.evaluate(() => obstacles.length), 0, 'the rock the shield took is still on the river');
+        assert.equal(await f.page.evaluate(() => shieldMesh.visible), false, 'the used shield still shows');
+        assert.equal((await f.hud()).shown, false);
+
+        await f.rockOnBoat();
+        await f.page.waitForFunction(() => isGameOver, { timeout: 10_000, polling: 50 });
+        assert.deepEqual(f.unexpected(), []);
+        await f.page.close();
+      });
+
+      await t.test('the spread shot fires three for its time, counts down on screen, then fires one', async () => {
+        const f = await openFork(browser, site.origin);
+        await f.start('#start-button');
+        await f.quiet();
+        const volley = () => f.page.evaluate(() => {
+          const before = activeProjectiles.length;
+          shootProjectile();
+          return activeProjectiles.slice(before).map(p => Math.sign(Math.round(p.direction.x * 100)));
+        });
+        assert.deepEqual(await volley(), [0], 'a normal shot is one, straight ahead');
+
+        await f.pickupAhead('rapid');
+        await f.page.waitForFunction(() => rapidFireFrames > 0, { timeout: 10_000, polling: 50 });
+        assert.deepEqual((await volley()).sort(), [-1, 0, 1], 'the spread is one straight and one to each side');
+        const first = await f.hud();
+        assert.ok(first.shown && /^✦ SPREAD \d\.\ds$/.test(first.text), `the timer reads "${first.text}"`);
+        await settle(400);
+        const later = await f.hud();
+        assert.ok(parseFloat(later.text.split(' ')[2]) < parseFloat(first.text.split(' ')[2]), 'the timer is not counting down');
+
+        await f.page.evaluate(() => { rapidFireFrames = 3; });
+        await f.page.waitForFunction(() => rapidFireFrames === 0, { timeout: 5_000, polling: 50 });
+        assert.equal((await f.hud()).shown, false, 'the timer outlived the spread shot');
+        assert.deepEqual(await volley(), [0], 'shooting did not return to normal');
+        assert.deepEqual(f.unexpected(), []);
+        await f.page.close();
+      });
+
+      await t.test('pickup sounds play only when the fork is unmuted', async () => {
+        const f = await openFork(browser, site.origin);
+        await f.start('#start-button');
+        await f.quiet();
+        await f.page.evaluate(() => {
+          window.__sfxNotes = 0;
+          const play = sfxSynth.triggerAttackRelease.bind(sfxSynth);
+          sfxSynth.triggerAttackRelease = (...args) => { window.__sfxNotes++; return play(...args); };
+        });
+        // A fresh store starts muted.
+        assert.equal(await f.page.evaluate(() => isMuted), true);
+        await f.pickupAhead('shield');
+        await f.page.waitForFunction(() => shieldActive, { timeout: 10_000, polling: 50 });
+        await f.pickupAhead('rapid');
+        await f.page.waitForFunction(() => rapidFireFrames > 0, { timeout: 10_000, polling: 50 });
+        assert.equal(await f.page.evaluate(() => window.__sfxNotes), 0, 'a pickup sounded while muted');
+
+        await f.page.click('#mute-toggle');
+        assert.equal(await f.page.evaluate(() => localStorage.getItem('studio_riverRun_muted')), 'false');
+        await f.pickupAhead('rapid');
+        await f.page.waitForFunction(() => powerUp === null, { timeout: 10_000, polling: 50 });
+        assert.equal(await f.page.evaluate(() => window.__sfxNotes), 2, 'an unmuted pickup made no sound');
+        assert.deepEqual(f.unexpected(), []);
+        await f.page.close();
+      });
+
+      await t.test('Watch Mode plays through a pickup without steering from it or shooting at it', async () => {
+        const f = await openFork(browser, site.origin);
+        await f.start('#start-watch-button');
+        assert.equal(await f.page.evaluate(() => autoPlay), true);
+        await f.quiet();
+        const x = await f.page.evaluate(() => boat.position.x);
+        await f.pickupAhead('rapid', 8);
+        await f.page.waitForFunction(() => rapidFireFrames > 0 || powerUp === null, { timeout: 15_000, polling: 50 });
+        assert.equal(await f.page.evaluate(() => rapidFireFrames > 0), true, 'the auto boat did not take the pickup in its path');
+        assert.equal(await f.page.evaluate(() => boat.position.x), x, 'the auto boat swerved from a pickup');
+        assert.equal(await f.page.evaluate(() => activeProjectiles.length), 0, 'the auto boat shot at a pickup');
+
+        // And it still plays: the next rock is shot or dodged, and the run goes on.
+        await f.page.evaluate(() => { obstacleSpawnTimer = 0; });
+        await settle(3000);
+        assert.equal(await f.page.evaluate(() => autoPlay && !isGameOver), true);
+        assert.deepEqual(f.unexpected(), []);
+        await f.page.close();
+      });
     } finally {
       await browser.close();
       await site.close();

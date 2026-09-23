@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Shadow Studio fork of games/river-run/index.html at 082943a6a874c1a3d9200fbf17087c62261e14ac. Every difference from that file is listed in tests/studio/lib/river-run-fork.mjs; the procedure is docs/studio/forking.md. -->
+<!-- Shadow Studio fork of games/river-run/index.html at 082943a6a874c1a3d9200fbf17087c62261e14ac. The copy's edits are recorded in tests/studio/lib/river-run-fork.mjs; from SHS-060 (power-ups) on, the game differs from production on purpose. The procedure is docs/studio/forking.md. -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -261,6 +261,24 @@
         #top-controls .back { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; font-size: 0.7em; color: #fff; background-color: #555; text-decoration: none; border-radius: 4px; }
         body.dark-mode #top-controls .back { background-color: #aaa; color: #333; }
 
+        /* Studio fork (SHS-060): what the boat is carrying — the shield, and the spread shot's time left. */
+        #power-hud {
+            position: absolute;
+            top: 48px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+            color: #fff;
+            font-size: 0.7em;
+            white-space: nowrap;
+            background-color: rgba(0, 0, 0, 0.55);
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 5;
+            text-shadow: 1px 1px 2px black;
+            pointer-events: none;
+        }
+
     </style>
 </head>
 <body>
@@ -272,6 +290,7 @@
 
     <div id="game-container">
         <div id="score">Score: 0</div>
+        <div id="power-hud"></div>
         <div id="message-box">
             <p id="message-text">River Runner 3D!</p>
             <button id="start-button">Start Game</button>
@@ -297,6 +316,7 @@
         const btnLeftEl  = document.getElementById('btn-left');
         const btnRightEl = document.getElementById('btn-right');
         const btnFireEl  = document.getElementById('btn-fire');
+        const powerHud   = document.getElementById('power-hud');
 
         // --- Three.js Variables ---
         let scene, camera, renderer;
@@ -318,6 +338,26 @@
         let projectileMaterial;
         let projectileGeometry;
         const defaultProjectileDirection = new THREE.Vector3(0, 0, 1);
+
+        // --- Power-ups (studio fork, SHS-060) ---
+        // One pickup floats down the river at a time; the boat takes it by touching it.
+        // Frame-counted, like the rest of the game, so the drawer's pause pauses them too.
+        const POWERUP_FIRST_SPAWN = 300;      // frames into a run before the first one (~5 s)
+        const POWERUP_SPAWN_INTERVAL = 600;   // frames between one leaving the river and the next (~10 s)
+        const RAPID_FIRE_FRAMES = 360;        // how long the spread shot lasts (~6 s)
+        const RAPID_FIRE_AUTO_COOLDOWN = 8;   // Watch Mode's shot cooldown while it lasts (normally 20)
+        const SPREAD_ANGLE_RAD = THREE.MathUtils.degToRad(12);
+        const POWERUP_LOOK = {
+            shield: { color: 0x22d3ee, notes: ['C5', 'G5'] },
+            rapid:  { color: 0xf472b6, notes: ['E5', 'B5'] }
+        };
+        const UP_AXIS = new THREE.Vector3(0, 1, 0);
+        let powerUp = null;          // the floating pickup: { mesh, boundingBox, type }
+        let powerUpSpawnTimer = 0;
+        let shieldActive = false;
+        let shieldMesh;
+        let rapidFireFrames = 0;
+        let sfxSynth;
 
         // --- Explosion Particle System ---
         const MAX_EXPLOSION_PARTICLES = 100;
@@ -410,6 +450,7 @@
             scene.add(directionalLight);
 
             createBoat();
+            createShield();
             createWater();
             createProjectilePool();
             createExplosionSystem();
@@ -432,6 +473,18 @@
             boat.position.set(0, WATER_LEVEL, 0);
             scene.add(boat);
             boatBox.setFromObject(boat);
+        }
+
+        // Studio fork (SHS-060): the shield bubble. Kept out of the boat's children so
+        // it never widens boatBox, which setFromObject builds from every child.
+        function createShield() {
+            if (!shieldMesh) {
+                const geo = new THREE.SphereGeometry(1.4, 16, 12);
+                const mat = new THREE.MeshBasicMaterial({ color: POWERUP_LOOK.shield.color, wireframe: true, transparent: true, opacity: 0.45 });
+                shieldMesh = new THREE.Mesh(geo, mat);
+            }
+            shieldMesh.visible = shieldActive;
+            scene.add(shieldMesh);
         }
 
         function createWater() {
@@ -519,6 +572,59 @@
              obstacleSpawnTimer = 0;
         }
 
+        // --- Power-ups (studio fork, SHS-060) ---
+        function spawnPowerUp(type = Math.random() < 0.5 ? 'shield' : 'rapid') {
+            removePowerUp();
+            const geo = type === 'shield' ? new THREE.OctahedronGeometry(0.55) : new THREE.IcosahedronGeometry(0.5);
+            const color = POWERUP_LOOK[type].color;
+            const mat = new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.6 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set((Math.random() - 0.5) * (riverWidth - 2), WATER_LEVEL + 0.3, riverLength * 0.8);
+            scene.add(mesh);
+            powerUp = { mesh, boundingBox: new THREE.Box3().setFromObject(mesh), type };
+            powerUpSpawnTimer = 0;
+        }
+
+        function removePowerUp() {
+            if (!powerUp) return;
+            scene.remove(powerUp.mesh); powerUp.mesh.geometry.dispose(); powerUp.mesh.material.dispose();
+            powerUp = null;
+        }
+
+        function collectPowerUp() {
+            const type = powerUp.type;
+            removePowerUp();
+            if (type === 'shield') setShield(true); else rapidFireFrames = RAPID_FIRE_FRAMES;
+            playSfx(POWERUP_LOOK[type].notes);
+            updatePowerHud();
+        }
+
+        function setShield(on) {
+            shieldActive = on;
+            if (shieldMesh) shieldMesh.visible = on;
+        }
+
+        function clearPowerUps() {
+            removePowerUp(); setShield(false); rapidFireFrames = 0; updatePowerHud();
+        }
+
+        function updatePowerHud() {
+            const parts = [];
+            if (shieldActive) parts.push('\uD83D\uDEE1 SHIELD');
+            if (rapidFireFrames > 0) parts.push(`\u2726 SPREAD ${(rapidFireFrames / 60).toFixed(1)}s`);
+            const text = parts.join('   ');
+            if (powerHud.textContent !== text) powerHud.textContent = text;
+            powerHud.style.display = text ? 'block' : 'none';
+        }
+
+        // Pickup and shield sounds. Silent while the fork is muted, and scheduled
+        // from Tone.now(), never from a computed time.
+        function playSfx(notes) {
+            if (isMuted || !audioStarted || !sfxSynth) return;
+            const t = Tone.now();
+            notes.forEach((note, i) => sfxSynth.triggerAttackRelease(note, '32n', t + i * 0.07));
+        }
+
          // --- Targeting Logic ---
          function findNearestObstacleAhead() {
              let nearestObstacle = null;
@@ -546,23 +652,28 @@
             if (isGameOver) return;
             // Cooldown check removed
 
-            const projectileMesh = projectilePool.pop();
-            if (projectileMesh) {
-                projectileMesh.visible = true;
-                const spawnPos = new THREE.Vector3(
-                    boat.position.x, boat.position.y, boat.position.z + BOAT_LENGTH / 2
-                );
-                projectileMesh.position.copy(spawnPos);
-
-                let direction = defaultProjectileDirection.clone();
-                if (targetObstacle) {
-                     direction = targetObstacle.mesh.position.clone().sub(spawnPos).normalize();
-                }
-
-                const projectileBox = new THREE.Box3().setFromObject(projectileMesh);
-                activeProjectiles.push({ mesh: projectileMesh, boundingBox: projectileBox, direction: direction });
-                // lastShootTime update removed
+            const spawnPos = new THREE.Vector3(
+                boat.position.x, boat.position.y, boat.position.z + BOAT_LENGTH / 2
+            );
+            let direction = defaultProjectileDirection.clone();
+            if (targetObstacle) {
+                 direction = targetObstacle.mesh.position.clone().sub(spawnPos).normalize();
             }
+            launchProjectile(spawnPos, direction);
+            // Studio fork (SHS-060): while the spread shot lasts, two more fan out either side.
+            if (rapidFireFrames > 0) {
+                launchProjectile(spawnPos, direction.clone().applyAxisAngle(UP_AXIS, SPREAD_ANGLE_RAD));
+                launchProjectile(spawnPos, direction.clone().applyAxisAngle(UP_AXIS, -SPREAD_ANGLE_RAD));
+            }
+        }
+
+        function launchProjectile(spawnPos, direction) {
+            const projectileMesh = projectilePool.pop();
+            if (!projectileMesh) return;
+            projectileMesh.visible = true;
+            projectileMesh.position.copy(spawnPos);
+            const projectileBox = new THREE.Box3().setFromObject(projectileMesh);
+            activeProjectiles.push({ mesh: projectileMesh, boundingBox: projectileBox, direction: direction });
         }
 
          // --- Explosion ---
@@ -595,6 +706,8 @@
 
             musicSynth = new Tone.FMSynth({ /* ... synth settings ... */ }).toDestination();
             musicSynth.volume.value = -18;
+            sfxSynth = new Tone.Synth({ oscillator: { type: 'square' } }).toDestination();
+            sfxSynth.volume.value = -14;
 
             // Sequence created/updated in initGame and updateGame
         }
@@ -615,6 +728,7 @@
              autoShootCooldown = 0; btnLeft = false; btnRight = false;
              scoreElement.textContent = `Score: ${score}`; messageBox.style.display = 'none';
              currentWaterColorIndex = 0; nextColorChangeScore = SCORE_THRESHOLD_COLOR_CHANGE;
+             clearPowerUps(); powerUpSpawnTimer = POWERUP_SPAWN_INTERVAL - POWERUP_FIRST_SPAWN;
 
              if (!audioStarted) {
                  await Tone.start(); audioStarted = true; console.log('Audio context started');
@@ -666,6 +780,7 @@
                 }
             }
             boatBox.setFromObject(boat);
+            if (shieldMesh) { shieldMesh.position.copy(boat.position); shieldMesh.rotation.y += 0.03; }
 
             // Update Water Particles & Absorption
             if (waterParticles) {
@@ -737,6 +852,18 @@
                  if (needsUpdate) explosionParticles.geometry.attributes.position.needsUpdate = true;
              }
 
+            // Power-ups (studio fork, SHS-060): the floating one drifts with the river.
+            if (powerUp) {
+                powerUp.mesh.position.z -= gameSpeed;
+                powerUp.mesh.rotation.y += 0.05;
+                powerUp.boundingBox.setFromObject(powerUp.mesh);
+                if (boatBox.intersectsBox(powerUp.boundingBox)) collectPowerUp();
+                else if (powerUp.mesh.position.z < boat.position.z - BOAT_LENGTH * 1.5) removePowerUp();
+            } else if (++powerUpSpawnTimer > POWERUP_SPAWN_INTERVAL) {
+                spawnPowerUp();
+            }
+            if (rapidFireFrames > 0) { rapidFireFrames--; updatePowerHud(); }
+
             // Update Obstacles & Score (passing check)
             obstacleSpawnTimer++;
             if (obstacleSpawnTimer > obstacleSpawnInterval) spawnObstacle();
@@ -747,7 +874,14 @@
                 }
                 obsData.mesh.position.z -= gameSpeed; // Move obstacle by current gameSpeed
                 obsData.boundingBox.setFromObject(obsData.mesh);
-                if (boatBox.intersectsBox(obsData.boundingBox)) { gameOver(); return; }
+                if (boatBox.intersectsBox(obsData.boundingBox)) {
+                    if (!shieldActive) { gameOver(); return; }
+                    // Studio fork (SHS-060): the shield takes this hit instead of the run.
+                    setShield(false); updatePowerHud(); playSfx(['G4', 'C4']);
+                    triggerExplosion(obsData.mesh.position.clone());
+                    scene.remove(obsData.mesh); obstacles.splice(i, 1);
+                    continue;
+                }
                 if (obsData.mesh.position.z < boat.position.z - BOAT_LENGTH * 1.5) {
                     scene.remove(obsData.mesh); obstacles.splice(i, 1);
                     score++; scoreElement.textContent = `Score: ${score}`;
@@ -767,7 +901,7 @@
             if (autoPlay) {
                 if (autoShootCooldown > 0) { autoShootCooldown--; } else {
                     const target = findNearestObstacleAhead();
-                    if (target) { shootProjectile(target); autoShootCooldown = 20; }
+                    if (target) { shootProjectile(target); autoShootCooldown = rapidFireFrames > 0 ? RAPID_FIRE_AUTO_COOLDOWN : 20; }
                 }
             }
 
@@ -788,6 +922,7 @@
             isGameOver = true; isDragging = false; keys = {};
             if (animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null;
             activeProjectiles.forEach(proj => { proj.mesh.visible = false; projectilePool.push(proj.mesh); }); activeProjectiles = [];
+            clearPowerUps();
              if (Tone && Tone.Transport.state === "started") { Tone.Transport.stop(); }
             const _prevRR = parseInt(readStored(() => localStorage.getItem('studio_riverRun_highScore')) || '0', 10); if (score > _prevRR) try { localStorage.setItem('studio_riverRun_highScore', score); } catch (e) { /* site data blocked: play on unsaved */ }
 

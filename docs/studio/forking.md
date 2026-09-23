@@ -47,7 +47,9 @@ source throws instead of applying halfway. River Run's is
 
 That test proves the fork *started* faithful. Once the first experiment changes the game
 on purpose, the equality test is retired with a note in the ticket that retires it. The
-storage and browser tests stay.
+storage and browser tests stay, and so does a test that the recorded edits still apply to
+the source, so the record of the copy stays readable. River Run's was retired at
+[SHS-060](iterations/06/tickets/SHS-060-river-run-power-ups.md), its first experiment (power-ups); the note is at the top of its test file.
 
 Beside it, in a real browser: seed the production keys a player of the arcade would have,
 load the fork, play a run to game over, toggle mute, start and stop Watch Mode from the
