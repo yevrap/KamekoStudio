@@ -15,7 +15,7 @@
 export const PULSE = {
   iteration: '05',
   shipped: '2026-09-22',
-  summary: 'In progress: the Studio Wing opens. River Run is the first game the studio forks: its own copy, its own saves, and the 3D landing page\'s River Run portal leads to it.'
+  summary: 'Shipped: the Studio Wing opens. River Run is the studio\'s first fork, a copy with saves of its own, and the 3D landing page\'s River Run portal now leads to it.'
 };
 
 /**

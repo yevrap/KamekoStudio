@@ -3,6 +3,47 @@
 All notable changes to Shadow Studio, one section per iteration. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are iteration tags.
 
+## [studio-iteration-05] — 2026-09-22
+
+The Studio Wing opens: River Run is the studio's first fork, with saves of its own, and the
+3D landing page's River Run portal leads to it. Sprint 1 of 3 of epic E1.
+
+### Added
+
+- **River Run, forked into the studio** (SHS-056) — `studio/games/river-run/`, copied
+  from production at `082943a`. Every save is `studio_riverRun_*`, Watch Mode registers
+  under `studio_riverRun`, and the theme comes from the body class instead of the shared
+  `theme` key. Every difference from production is a closed list in
+  `tests/studio/lib/river-run-fork.mjs`, proved byte for byte, including four edits the
+  studio page contract needed (a back link, a 44px mute button, a no-script message,
+  guarded storage). A headless run logs every `localStorage` write and refuses any
+  non-`studio_` key. The procedure is `docs/studio/forking.md`.
+- **The 3D River Run portal opens the fork** (SHS-057) — one `url` in
+  `shared/3d/constants.js`, a recorded exception (ADR-0010) scoped to that value and
+  checked like the front-wall row. A headless test walks into the portal and lands on the
+  fork.
+
+### Changed
+
+- **The checks tell studio commits from arcade commits** (SHS-055). `commitKind` sorts
+  every commit on the shared `main` into studio, arcade, merge or exempt. `commit-lint`
+  lints studio commits only; `path-guard` and `production-unchanged` judge what studio
+  commits changed and refuse an arcade commit or a mixed merge that touches a studio path.
+  Three executive commits are exempt by full hash, each with its reason.
+- **A subject naming a studio ticket is a studio commit, whatever its scope** — opened by
+  review (`b897707`), so a production change cannot leave the guard by dropping `(studio)`.
+- **Rebase, don't merge**: a pull-merge that brings in both kinds of commit fails the guard
+  (`process.md`).
+- **The studio keeps the arcade docs about its own work current**, docs only, in its own
+  arcade commit (`guardrails.md`).
+
+### Fixed
+
+- **The fork's browser test could not see a write that restored a seeded value**; it now
+  logs every write (`607d40b`).
+- **The fork's browser test waited on chance** and outlived its 60 s wait 1 run in 3; the
+  run now ends on a collision the test causes (`045f031`).
+
 ## [studio-iteration-04] — 2026-09-21
 
 The studio's first production fix, under a written permission its checks enforce, in the

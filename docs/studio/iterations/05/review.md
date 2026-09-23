@@ -5,7 +5,44 @@
 QA (`opus`, round 1 of 1): **Approve with findings.** Neither pass rejected, so there is no
 second round (direction rule 3).
 
-*In plain words and the demo list are added at `close`.*
+## In plain words
+
+The studio now has its own copy of River Run, with saves of its own, and the River Run
+portal on the 3D landing page leads to that copy instead of the arcade's. The copy plays
+exactly like the original for now; it exists so that River Run's experiments can happen
+without touching the arcade game or anyone's arcade saves. To make that safe, the studio's
+checks learned to tell the studio's commits from the arcade's on the shared branch, and a
+browser test proves the copy writes only `studio_` saves. Two independent reviewers
+approved with findings, and every finding was fixed, put on the backlog, or declined with
+a reason. You are asked one thing, not urgently: Q12, which River Run experiment the studio
+tries first (it takes ⭐ power-ups if left blank at the next plan).
+
+## Demo
+
+- **The fork:** https://yevrap.github.io/KamekoStudio/studio/games/river-run/
+  1. Play a run. It plays like the arcade's River Run.
+  2. Your arcade River Run high score is not shown or changed; the fork keeps its own.
+  3. The `← Studio` link goes back to the realm.
+- **The portal:** https://yevrap.github.io/KamekoStudio/3d.html. Walk to the River Run
+  portal and step in (or press E): it opens the fork. The other ten portals open their
+  arcade games as before.
+- **The realm:** https://yevrap.github.io/KamekoStudio/studio/. River Runner 3D is on the
+  shelf as ITERATING, and the pulse line names this iteration.
+- **The permission and its limits:** `docs/studio/decisions/ADR-0010-fork-portal-url.md`.
+
+## Keep / Iterate / Kill
+
+> The executive: strike through what you disagree with. These are the team's.
+
+- **SHS-056, River Run forked — Keep.** A byte-for-byte copy with a closed list of edits,
+  and a browser test that logs every storage write. Sprint 06 runs its first experiment.
+- **SHS-057, the portal opens the fork — Iterate.** It works, but the 3D page's River Run
+  trophy still reads the arcade's score, and the drawer's 🌊 switcher leads back to the
+  arcade build (backlog #26, production code, stop-and-ask). There is no way back to the
+  3D page but the browser's back button (#31).
+- **SHS-055, the checks tell studio from arcade commits — Keep.** It lets the studio and
+  the arcade share `main` without either blocking the other, and review tightened it: a
+  subject naming a studio ticket is a studio commit whatever its scope.
 
 ## What was reviewed
 

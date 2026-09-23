@@ -43,8 +43,6 @@ wants one.
 
 ## Result
 
-*Filled in as the ticket is worked. Empty until then.*
-
 - **What changed:** `ARCADE_GAMES`' "River Run Rapids" entry now has the `url`
   `studio/games/river-run/` (one line, `71245fa`). `shared/3d/constants.js` is a recorded
   exception in `PATH_EXCEPTIONS`, with `STUDIO_FORK_PORTALS` listing the approved fork.
