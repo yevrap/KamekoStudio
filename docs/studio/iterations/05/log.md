@@ -90,3 +90,19 @@ is committed.
   step exists. The criteria were amended at close, with a note, rather than ticked early.
   Iteration 04's SHS-053 ticked `retro.md` at close. Lesson: the record-ticket template
   should say which criteria close checks and which the retro does.
+
+## Session 7 — retro (2026-09-22)
+
+- **Scrum Master** — *Done:* `retro.md`. All five of the log's retro inputs became a rule,
+  a template edit or a guardrail. `templates/ticket.md` now splits the record ticket's
+  close criteria from its retro work, and asks a checker ticket for its refusal cases.
+  Iteration 04's changes held; its unreviewed fix round is still unexercised. *Next:* plan
+  06. *Blocked:* nothing.
+- **Learning Lead** — *Done:* the learning log opens with an **Active rules** list of ten
+  (backlog #13, direction rule 7), and iteration 05's lessons are in. TD-014 opened (the
+  fork test's Tone.js exemption), TD-001 restated for E1. *Next:* nothing. *Blocked:* nothing.
+- **Product Owner** — *Done:* the backlog's top five are Ready: #4 power-ups (Q12 ⭐), #22
+  the Tone.js fix, #21 a commit form for the executive's steering edits (the process slot),
+  #8 best score, #31 a way back to the 3D page. Done rows removed. Budget: 1 of 3 spent,
+  reserve unclaimed, on track. *Next:* plan 06. *Blocked:* nothing.
+

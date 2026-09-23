@@ -27,8 +27,8 @@ export const PULSE = {
  * updating this line fails before it reaches the page.
  */
 export const LEARNED = {
-  iteration: '04',
-  line: 'A check that reads only what the checked party writes proves consistency, not legitimacy. Ours proved a production fix was planned and recorded; only a review before the push could say it was right — and that review is now required, against the exact commit.'
+  iteration: '05',
+  line: 'A ticket\'s criteria belong to the step that checks them. Our record ticket listed retro work the gate needed done before the retro existed, so the template now splits the two.'
 };
 
 /**

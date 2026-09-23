@@ -3,73 +3,63 @@
 *Regenerated from the repo by each run. Don't hand-edit — add anything you want to say to
 [Shadow Studio — Feedback Inbox](inbox.md) instead.*
 
-**Iteration 04 · shipped.** The studio's first fix to a production game, under a written
-permission its checks enforce. It was also the first trunk-based iteration: every ticket
-and every ceremony record was pushed and checked as it landed. Tag `studio-iteration-04`.
-Live: https://yevrap.github.io/KamekoStudio/studio/ · the fixed game:
-https://yevrap.github.io/KamekoStudio/games/black-hole-in-one/
+**Epic E1 · The Studio Wing opens · sprint 1 of 3 spent (+1 reserve, unclaimed).**
 
-**The second and last review round split.** The Independent Reviewer approved with
-findings, and QA rejected. Both approved the Black Hole in One fix on its own. QA's
-rejection was about the new review check. Its findings were closed the way QA proposed,
-in a fix round no reviewer has seen. The team shipped under your standing hand-back, and
-[Shadow Studio — Handoff](handoff.md) says why.
+**Iteration 05 · shipped.** The River Run portal on the 3D landing page opens the studio's
+own copy of River Run, which plays like the arcade's and keeps its own saves. Tag
+`studio-iteration-05`. Live: https://yevrap.github.io/KamekoStudio/3d.html (walk into the
+River Run portal) · the fork:
+https://yevrap.github.io/KamekoStudio/studio/games/river-run/
+
+One review round; both passes approved with findings. No fix rounds.
 
 ## Waiting on you
 
 | What | Where |
 |---|---|
-| **Should a production fix also need your approval before it goes live?** | Q10 in [Shadow Studio — Questionnaire](questionnaire.md) |
-| Keep / Iterate / Kill on what shipped | `docs/studio/iterations/04/review.md` |
+| **Which River Run experiment goes first?** Blank at plan 06 takes ⭐ power-ups | Q12 in [Shadow Studio — Questionnaire](questionnaire.md) |
+| Keep / Iterate / Kill on what shipped | `docs/studio/iterations/05/review.md` |
+| Should a production fix also need your approval? | Q10, same note |
 | Name the realm, if "Shadow Studio" isn't it | Q1, same note |
 | Anything else about how the company runs | Q5, same note (it stays open) |
 
 ## Next
 
-The next step is in [Shadow Studio — Next step](next.md): `plan` sprint 05, the first of
-epic E1 ([Direction](direction.md)). What sprint 05 pulls comes from the top of
-[Shadow Studio — Backlog](backlog.md), which now holds everything this board used to list
-here, in order. From here on the team runs one step per session (ADR-0009).
+`plan` sprint 06, **E1 · sprint 2 of 3**: the first experiment in the River Run fork. The
+top of [Shadow Studio — Backlog](backlog.md) is Ready:
+
+1. #4 power-ups (or whichever experiment Q12 picks)
+2. #22 the fork's Tone.js start-time fix
+3. #21 a commit form for your steering edits — the one process ticket
+4. #8 best score on the game-over screen
+5. #31 a way back to the 3D page from the fork
 
 ## Blocked
 
 Nothing.
 
-## Noticed, not yet ticketed
-
-- **Overtighten's torque readout rounds, and the state does not.** 45.6 shows "46 · loose"
-  while the band starts at 46.
-- **Overtighten's plates** could be framed tighter, as the hinge plate already is.
-- **A decision record for iteration 02's `docs-current` rewrite**, and a **claim-evidence
-  rule**: a Result that says *tested* or *closed* names the artifact that proves it.
-- **A test-name rule for production's test harnesses** (TD-012): the names at `HEAD`
-  must include every name at the base.
-
-## Done — iteration 04
+## Done — iteration 05
 
 | Ticket | What |
 |---|---|
-| SHS-050 | Every push checked before and after it lands: a `push` stage; `studio-live` waits for the build and refuses a stale marker; no check passes on a comparison of nothing |
-| SHS-051 | Production fixes under the full process (ADR-0008); the path guard admits a production file only for the ticket that owns it, in its own iteration |
-| SHS-052 | **Black Hole in One no longer throws when Explore starts with spirals alive** (TD-009) — the first production fix |
-| SHS-053 | The iteration's record; ceremony records pushed as they land |
-| SHS-054 | *Review-opened:* a production fix is reviewed before it is pushed, and pushed exactly as reviewed |
+| SHS-055 | The studio checks tell studio commits from arcade commits on the shared `main` |
+| SHS-056 | **River Run forked** into `studio/games/river-run/`, with `studio_` saves only |
+| SHS-057 | **The 3D page's River Run portal opens the fork** (ADR-0010) |
+| SHS-058 | The iteration's record |
 
 ## Open debt
 
 | | |
 |---|---|
-| TD-001 | The realm has no entrance. Q4 reframes it as the 3D zone becoming the studio's window; 05 designs it |
+| TD-001 | The realm's own home has no portal. E1 makes the 3D page the studio's window instead; the River Run portal is the first door |
 | TD-003 | The storage-key rule is implemented twice |
-| TD-005 | With site data blocked, the arcade's `settings.js` throws and `body.dark-mode` is never applied. Now eligible as a production fix |
-| TD-006 | The 3D landing page prefers a portal prompt to a trophy prompt at any range. Now eligible as a production fix |
+| TD-005 | With site data blocked, the arcade's `settings.js` throws and `body.dark-mode` is never applied |
+| TD-006 | The 3D landing page prefers a portal prompt to a trophy prompt at any range |
 | TD-007 | The static test server exists twice |
 | TD-008 | What `studio-boot` does not collect |
-| TD-012 | **New.** A production fix to a test harness could empty it with every check green before its review |
-| TD-013 | **New.** A merge that takes a fix file from one parent is invisible to `path-guard`; the review check refuses it |
-
-*Closed this iteration:* TD-009 (the Black Hole in One bug), TD-010 (`studio-live` never
-waited), TD-011 (a release compared with itself).
+| TD-012 | A production fix to a test harness could empty it with every check green before its review |
+| TD-013 | A merge that takes a fix file from one parent is invisible to `path-guard` |
+| TD-014 | **New.** The fork's browser test exempts one inherited Tone.js rejection; closes with #22 |
 
 Full register, with the cost of leaving each one: `docs/studio/tech-debt.md` in the repo.
 

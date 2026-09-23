@@ -1,27 +1,27 @@
 # Shadow Studio — Next step
 
-**Next:** `retro`: sprint 05 — retro, learning log, backlog, budget, steering views
+**Next:** `plan` sprint 06 — the first experiment in the River Run fork
 **Say:** `studio next` (in a new session) · or `studio next — focus: <what you want>`
 
 | | |
 |---|---|
-| Epic | E1 · The Studio Wing opens · sprint 1 of 3 (+1 reserve) |
-| Sprint | 05 · the River Run portal opens the studio's fork of River Run |
-| Steps | plan ✓ · build ✓ (SHS-055 ✓ → SHS-056 ✓ → SHS-057 ✓) · review ✓ · close ✓ · **retro ▶** |
-| Waiting on you | Nothing blocks. Q12 (first River Run experiment) takes ⭐ power-ups if blank at plan 06 |
+| Epic | E1 · The Studio Wing opens · sprint 2 of 3 (+1 reserve, unclaimed) |
+| Sprint | 06 · not planned yet |
+| Steps | **plan ▶** · build · review · close · retro |
+| Waiting on you | Nothing blocks. Q12 (first River Run experiment) takes ⭐ power-ups if blank at plan |
 
 ## Notes for the next session
 
-- `studio-iteration-05` is tagged at `d7e8e91` and live. The retro's commits land after the
-  tag and still name SHS-058, as SHS-053's did.
-- SHS-058 is Done. Its retro-step work moved out of its criteria at close (see the ticket's
-  note): `retro.md`, `LEARNED` in `studio/shelf-data.js` (iteration `'05'`),
-  `tech-debt.md`, `learning-log.md`, and the board, scorecard and handoff views.
-- Retro inputs in `log.md`: the push gated on a grep (session 3), a browser test waiting on
-  chance (session 4), arcade docs handed back (session 5), a 115-character subject, and the
-  record ticket's criteria spanning close and retro (session 6). The last one should become
-  a template edit.
-- Review's backlog items: #26–#31, plus #22 amended. The next ticket number is SHS-059.
+- Sprint 05 is closed: tag `studio-iteration-05`, retro written. Use `studio-iteration-05`
+  as the base for sprint 06's gate.
+- The backlog's top five are Ready: #4 power-ups (or Q12's pick), #22 Tone.js fix (pull it
+  with #4, which retires the fork's equality test), #21 a commit form for the executive's
+  steering edits (the process slot), #8 best score, #31 a way back to the 3D page. The
+  `#` is now an ID; row order is the priority. The next new item is #32, the next ticket SHS-059.
+- The record ticket follows the new note in `templates/ticket.md`: close criteria only,
+  and the retro work goes under *Done at the retro*.
+- Read Q12 in `steering/questionnaire.md` first. If it's still blank, record the ⭐ in the
+  input ledger and fold it into the design, as Q11 was.
 
 *Rewritten by every session (the studio-iteration skill). Loaded into every new Claude Code
 session by the SessionStart hook in `.claude/settings.json`.*

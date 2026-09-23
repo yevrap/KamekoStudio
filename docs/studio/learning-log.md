@@ -4,6 +4,36 @@ What the team learned, iteration by iteration. Entries are about the codebase, t
 or the process — things a future iteration would otherwise have to rediscover. Findings
 that are really decisions go to `decisions/` instead.
 
+## Active rules
+
+Ten at most (direction rule 7). Each retro promotes a lesson here, turns a rule that has
+recurred into a check or a template or skill edit, or retires one that no longer earns its
+place. The iteration sections below are the history, and they don't bind on their own.
+
+1. **A comparison of nothing never passes.** If the two things compared are the same thing,
+   or nothing, the answer is *not run*. (04; encoded in every check that compares two
+   revisions)
+2. **Where it matters, compare content, not the shape of history.** (04)
+3. **A check says what it proves:** that the record is consistent, or that it is
+   legitimate. A test's name says no more than the test proves. (04, slipped once in 05)
+4. **An adversarial test fails against the rule it attacks.** Show it red before the fix
+   (01, 02). A checker ticket lists its refusal cases in its criteria (05; now in
+   `templates/ticket.md`)
+5. **Copy a marker from the diff and a number from a command.** A number in the record
+   names where it was measured. (03, 04)
+6. **Run the player's path before calling a test flaky.** A browser test waits on something
+   the test causes, never on something the game might do, and every browser trial gets its
+   own profile. (03, 05)
+7. **Gate a push on the stage's own exit code**, never on a filter of its output. (05)
+8. **Run `--stage=ticket` before every commit**, ceremony commits included. (05)
+9. **A convention change is checked for violations of the new rule by a test**, not a
+   search. (03, 04)
+10. **A check that reads only what exists can't see what is missing.** Decide existence
+    from an independent source. (03)
+
+*Retired or converted at the 05 retro:* none yet. This is the first list. The record
+ticket's two-step criteria became a template edit, not a rule.
+
 ## Iteration 00
 
 - **The 3D landing page is not in `3d.html`.** The HTML file is 32 lines of scaffolding.
@@ -237,3 +267,23 @@ that are really decisions go to `decisions/` instead.
   wrapped across two lines in the source and was found nowhere. A push count typed from
   memory was a different number that happened to be on screen.
 
+## Iteration 05
+
+- **A pipeline's exit code is its last command's.** `stage && git push` is safe;
+  `stage | grep … && git push` pushes whenever the grep matches, whatever the stage said.
+  It happened once, on a records-only commit, and the rerun was green. Active rule 7.
+- **A browser test that waits for the game to act on its own is a test of luck.** The
+  fork's test waited up to 60 s for a run to end and lost one time in three. It now causes
+  the ending. Active rule 6.
+- **A ticket's criteria belong to the step that checks them.** The record ticket named
+  retro-step work, and the gate that needs the ticket Done runs before the retro. Now in
+  the ticket template.
+- **Scope is a claim, so it can't be the only signal.** A commit that named a studio ticket
+  without the `(studio)` scope was judged by nothing until review. A studio ticket in the
+  subject now makes it a studio commit, whatever the scope.
+- **A fork proves it is a copy by listing its differences, not by describing them.** The
+  list of edits in `tests/studio/lib/river-run-fork.mjs` is checked byte for byte. It is
+  what showed that production River Run fails the studio page contract in four places,
+  before any reviewer looked.
+- **The arcade docs about studio work are the studio's to keep current.** Handing them back
+  cost the executive a message. Now a guardrail.

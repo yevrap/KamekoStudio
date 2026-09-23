@@ -57,4 +57,8 @@ Nothing beyond the record.
 - **Deferred:** to the `retro` step, under this ticket: `retro.md`, the realm's retro line,
   `tech-debt.md`, `learning-log.md` and the steering views (see the note under the
   criteria).
+- **Done at the retro:** `retro.md`; the realm's retro line (`LEARNED`, iteration `'05'`);
+  `learning-log.md` with its first **Active rules** list (backlog #13); `tech-debt.md`
+  (TD-014 opened, TD-001 restated); the ticket template's record-ticket and refusal-case
+  notes; the backlog re-ordered; the board, scorecard, handoff and index regenerated.
 - **Fix rounds used:** 0 / 2

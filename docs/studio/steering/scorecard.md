@@ -9,6 +9,33 @@ One row per iteration, written at close-out. The point is the trend, not the num
 | 02 | First experiment + boot coverage | 18/2 | 14 | 84 built + 10 rejections | +2 / −1 | 18 tickets, 8 repo docs, 7 planning notes | 11 (10 review passes + QA) | 1 | pending |
 | 03 | Maintenance: ticket prefix, TD-009 diagnosed, one file per ticket | 7/3 | 6 | 7 built + 19 reviewed | +2 / −0 | 7 tickets + 3 reconstructed, 2 ADRs, 9 repo docs, 9 planning notes | 4 (2 rounds × QA + reviewer) | 2 | pending |
 | 04 | First production fix, under a written permission; trunk-based trial | 5/3 | 7 | 4 built + 24 reviewed | +2 / −3 | 5 tickets, 1 ADR, 1 review record, 16 repo docs, 9 planning notes, 3 context files, 1 skill | 4 (2 rounds × QA + reviewer) | 0 | pending |
+| 05 | E1 · 1 of 3: River Run forked, the 3D portal opens it | 4/3 | 0 | 6 built + 12 reviewed | +1 / −0 | 4 tickets, 1 ADR, the fork procedure, the ticket template, the first Active rules list, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | pending |
+
+## Iteration 05 — what the row means
+
+- **Tickets, 4 against 3.** SHS-055, 056 and 057 were committed; SHS-058 is the record.
+  None was opened by review: under the one-round rule, the findings went to the backlog
+  (#26–#31) or were fixed in the review step as S fixes under the record ticket.
+- **The one that matters to a player shipped.** The River Run portal on the 3D page opens
+  the studio's fork, and the fork keeps its own saves.
+- **Fix rounds, 0.** The first sprint with none, against 7 in 04. The refusal cases were
+  in SHS-055's criteria from plan, its tests went red first, and there was one review
+  round, not two.
+- **Checks caught, 6 + 12.**
+  - Built:
+    - `tree-clean` on an untracked editor folder;
+    - `studio-boot` on four places production River Run fails the studio page contract;
+    - `full-suites` twice in the push stage: once unexplained, once a browser test
+      waiting on chance;
+    - `commit-lint` on a SHS-056 subject;
+    - `docs-current` on the record ticket's criteria.
+  - Reviewed: 12 distinct findings from the two passes, 3 fixed in the step.
+- **Debt +1 / −0.** TD-014 opened: the fork test's named Tone.js exemption.
+- **Stops for you, 0.** Your chat direction at review, to do the arcade docs rather than
+  hand them back, came unasked and is now a guardrail.
+- **The honest summary.** The smallest sprint in cost so far, and the first one with a
+  goal a player can walk to. What it made is plumbing: a faithful copy and a door. The
+  gameplay change the epic is for is sprint 06's.
 
 ## Iteration 04 — what the row means
 
