@@ -4,7 +4,7 @@ Open decisions only. Everything else is decided in [Shadow Studio](design.md). T
 or just tell me in chat. Anything you leave blank takes the default (⭐). Answered questions
 are folded into the design and removed from here.
 
-*Answered: Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
+*Answered: Q12 (first River Run experiment → ⭐ power-ups, blank at sprint 06's plan; built as SHS-060), Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
 02 builds → the first experiment), Q7 (Overtighten → left on the shelf as an honest
 prototype, ⭐ by silence), Q8 (process → keep the gate and break ties yourself, keep
 `docs-current`, cap planned work only — all ⭐ by silence), Q4 (3D zone → the studio's
@@ -20,19 +20,6 @@ folder means changing a live URL, so it gets cheaper the sooner it's decided.
 - [ ] A. ⭐ Keep both. "Shadow Studio", `studio/`.
 - [ ] B. Keep the folder, change the label shown to people: ______
 - [ ] C. Change both. Name: ______  Folder: ______
-
-**Q12. Which River Run experiment goes first?** *(new, sprint 05)*
-River Run is the first fork (your call in chat, 2026-09-22, answering Q11). Its own
-modernization questionnaire (`docs/archive/questionnaires/river-run-modernization.md`) is answered
-but none of it is built, so the fork starts with a queue. Sprint 06 builds one of these and
-you give it a Keep / Iterate / Kill.
-- [ ] A. ⭐ **Power-ups:** a shield (one extra hit) and rapid-fire / spread shot, floating
-  on the river. Both of your answers on the hit model and on pickups point here.
-- [ ] B. **A near-miss streak:** tight dodges build a streak on the HUD; a hit or a wide
-  pass resets it.
-- [ ] C. **Biomes that change play:** the river's stretches handle differently (friction)
-  and carry their own hazards, and you can tell when one starts.
-- [ ] D. Something else: ______
 
 **Q10. Should a production fix also need your approval before it goes live?** *(new, iteration 04)*
 Iteration 04 made the studio's first production fix, TD-009 in Black Hole in One. Its

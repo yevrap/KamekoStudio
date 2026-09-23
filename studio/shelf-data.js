@@ -13,9 +13,9 @@
  * iterations ship past it.
  */
 export const PULSE = {
-  iteration: '05',
+  iteration: '06',
   shipped: '2026-09-22',
-  summary: 'Shipped: the Studio Wing opens. River Run is the studio\'s first fork, a copy with saves of its own, and the 3D landing page\'s River Run portal now leads to it.'
+  summary: 'In progress: River Run\'s first experiment. A shield and rapid-fire float down the fork\'s river, and every ticket number in the studio\'s docs becomes a link to its ticket.'
 };
 
 /**

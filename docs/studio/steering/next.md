@@ -1,27 +1,27 @@
 # Shadow Studio — Next step
 
-**Next:** `plan` sprint 06 — the first experiment in the River Run fork
-**Say:** `studio next` (in a new session) · or `studio next — focus: <what you want>`
+**Next:** `build SHS-059` — every `SHS-NNN` mention in the repo's Markdown links to its ticket file
+**Say:** `studio next` (in a new session)
 
 | | |
 |---|---|
 | Epic | E1 · The Studio Wing opens · sprint 2 of 3 (+1 reserve, unclaimed) |
-| Sprint | 06 · not planned yet |
-| Steps | **plan ▶** · build · review · close · retro |
-| Waiting on you | Nothing blocks. Q12 (first River Run experiment) takes ⭐ power-ups if blank at plan |
+| Sprint | 06 · power-ups on the river, and ticket numbers you can click |
+| Steps | plan ✓ · **build ▶** (SHS-059 → SHS-060 → SHS-061) · review · close · retro |
+| Waiting on you | Nothing blocks |
 
 ## Notes for the next session
 
-- Sprint 05 is closed: tag `studio-iteration-05`, retro written. Use `studio-iteration-05`
-  as the base for sprint 06's gate.
-- The backlog's top five are Ready: #4 power-ups (or Q12's pick), #22 Tone.js fix (pull it
-  with #4, which retires the fork's equality test), #21 a commit form for the executive's
-  steering edits (the process slot), #8 best score, #31 a way back to the 3D page. The
-  `#` is now an ID; row order is the priority. The next new item is #32, the next ticket SHS-059.
-- The record ticket follows the new note in `templates/ticket.md`: close criteria only,
-  and the retro work goes under *Done at the retro*.
-- Read Q12 in `steering/questionnaire.md` first. If it's still blank, record the ⭐ in the
-  input ledger and fold it into the design, as Q11 was.
+- Plan is in `docs/studio/iterations/06/plan.md`; the record ticket is SHS-062. Gate base:
+  `studio-iteration-05`.
+- SHS-059's scope was counted at plan: 383 mentions of SHS-043…058 in 52 Markdown files,
+  none linked. Two are arcade docs (`docs/archive/dev-logs/black-hole-in-one.md`,
+  `docs/games/black-hole-in-one/ideas.md`): link them in a separate arcade `docs:` commit.
+- Leave plain anything a check reads as text: the handbook's example commits (SHS-001,
+  SHS-003, SHS-999 have no ticket files), code spans, and `reviews/SHS-052.md`'s
+  `**Reviewed:**` line. Run `npm test` before the push.
+- Q12 was blank: ⭐ power-ups are SHS-060. #21 waits for sprint 07's process slot.
+  The next new backlog item is #35, the next ticket SHS-063.
 
 *Rewritten by every session (the studio-iteration skill). Loaded into every new Claude Code
 session by the SessionStart hook in `.claude/settings.json`.*
