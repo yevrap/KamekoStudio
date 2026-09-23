@@ -1,12 +1,13 @@
 # The team
 
-Twelve roles. Each file below says what the role owns, what it reviews, how it speaks,
+Thirteen roles. Each file below says what the role owns, what it reviews, how it speaks,
 what it refuses to do, and its line in the Definition of Done.
 
 Roles are **lenses, not processes.** A single agent can hold several in one run — the point
 of naming them is that each one asks a different question of the same work, and a question
-nobody is assigned is a question nobody asks. Two roles are deliberately run with fresh
-context, because their value is independence: **QA Engineer** and **Independent Reviewer**.
+nobody is assigned is a question nobody asks. Three roles are deliberately run with fresh
+context, because their value is independence: **QA Engineer**, **Independent Reviewer** and
+**Playtester**.
 
 | Role | Owns |
 |---|---|
@@ -22,6 +23,7 @@ context, because their value is independence: **QA Engineer** and **Independent 
 | [Audio / Juice](audio-juice.md) | Web-audio synthesis, screen shake, feedback feel |
 | [Technical Writer](technical-writer.md) | Docs, changelog, learning log, the executive-facing views |
 | [Independent Reviewer](independent-reviewer.md) | Fresh-context critique of the iteration's diff |
+| [Playtester](playtester.md) | Plays each player-visible change and gives its Keep / Iterate / Kill (ADR-0011) |
 
 ## What every role is bound by
 

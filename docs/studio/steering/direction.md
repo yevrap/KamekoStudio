@@ -8,6 +8,30 @@ executive edits it, or when chat direction is recorded here (and logged in the
 
 Day-to-day notes go in the [Feedback Inbox](inbox.md), not here.
 
+## Standing charter — the studio runs itself
+
+Since 2026-09-23 ([ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md)) the executive
+kicks off a run — "run the studio" — and watches it: the `studio-sprint` workflow runs one
+step per fresh agent, to the end of the current sprint, visible step by step in
+`/workflows`. Nothing in the normal flow waits for the executive:
+
+- **Epics roll over.** An epic's last retro writes the next one under
+  [Proposed next epic](#proposed-next-epic); the next `plan` adopts it unless the
+  executive has struck or changed it.
+- **The Playtester's verdict counts.** Keep / Iterate / Kill comes from the
+  [Playtester](../team/playtester.md) at `review`; the executive's verdict overrides it
+  whenever it arrives.
+- **Open questions take their ⭐** at once; the executive can overturn one later.
+- **Games first.** The studio makes games worth playing: forks of arcade games, and
+  original games of its own inside `studio/games/`. At least two of every sprint's planned
+  tickets change what a player sees or plays. The arcade gets bug fixes only; promotion is
+  the executive's call.
+- **Requests come in as issues.** A GitHub issue labelled `studio` and `priority: now`,
+  `next` or `later`, opened by the executive, becomes a backlog row at the next plan
+  (`studio-request` files one from chat).
+- **Hard stops** (promotion, accounts or money, destructive git, a red check past the caps)
+  still write *waiting on you* into `next.md`, and the run stops there.
+
 ## Product goal
 
 **The 3D landing page becomes the Studio Wing.** The arcade (the gallery at `index.html`
@@ -31,8 +55,8 @@ sprint pulls comes from the ordered [Backlog](backlog.md).
 - a 3D portal leads to a studio fork, and every portal without a fork still leads to its
   production game;
 - the fork never reads or writes a production save;
-- the fork has shipped at least one gameplay change the executive has given a
-  Keep / Iterate / Kill verdict on;
+- the fork has shipped at least one gameplay change with a Keep / Iterate / Kill verdict
+  (the Playtester's, or the executive's, which overrides it — ADR-0011);
 - the rules below are in the handbook, not only in this file;
 - an epic retro has proposed E2, with the budget it asks for.
 
@@ -42,6 +66,7 @@ built, so the fork starts with a queue of experiments; Q12 picks the first. Maze
 the earlier ⭐, stays in the arcade.
 
 **Out of scope for E1:** new games, feature work on production games, renaming the realm.
+(Later epics may take on original studio games; see the charter above.)
 
 ### Suggested shape (the team owns the plan and may change it)
 
@@ -50,6 +75,16 @@ the earlier ⭐, stays in the arcade.
 | 05 | Unblock and open the wing: the studio checks tell studio commits from arcade commits (the blocker in the inbox); a fork mechanism; the first fork live behind its portal | The first fork's portal on the 3D page opens the studio copy |
 | 06 | The first experiment in the fork | A changed game to play and judge |
 | 07 | Iterate on the verdict, or a second experiment; epic review and retro | The better version, and the proposal for E2 |
+
+## Proposed next epic
+
+*E1's last retro (sprint 07) writes E2 here: goal, done-when, budget, out of scope. The
+`plan` after it adopts it unless the executive strikes or edits it.*
+
+The executive's wish for E2 (2026-09-23): **games that are interesting to play.** E2 should
+be game-first — an original studio game with a hook of its own, or a River Run experiment
+deep enough that the Playtester calls it fun — rather than more of the studio's own
+machinery.
 
 ## Rules for this epic
 
@@ -92,24 +127,27 @@ These apply from sprint 05 on. The process parts are in the handbook (`process.m
   proposes the next epic rather than filling the remaining sprints.
 - **The count shows** in [Next step](next.md), the board, the handoff and the scorecard —
   for example *E1 · sprint 2 of 3 (+1 reserve)*.
-- **When the budget is spent, the team stops and asks.** The last retro proposes the next
-  epic and its budget as a questionnaire item, and `plan` won't start a sprint until this
-  file names an epic with sprints left.
-- **The executive sets the pace** by choosing when to say `studio next`. A sprint is about
-  six short sessions.
+- **When the budget is spent, the epic ends and the next one starts.** The last retro writes
+  the epic review and puts the next epic under [Proposed next epic](#proposed-next-epic);
+  the next `plan` adopts it (ADR-0011). The executive can strike or reshape it any time
+  before that plan runs.
+- **The executive sets the pace** by starting runs; a run goes to the end of the current
+  sprint. A sprint is about six to eight fresh agents, plus the reviewers.
 
 ## How to steer
 
 | To | Do this |
 |---|---|
-| Keep it going | `studio next`, in a new session each time |
+| Run it and watch | "run the studio" (the `studio-sprint` workflow, to the end of the sprint; watch in `/workflows`), optionally "… with focus: <X>" or "… for 2 sprints"; or `studio next` for a single step in a new session |
+| Stop it | Stop the workflow in `/workflows`, or "stop the studio" (a `STOP` file: it ends after the current step) |
+| Ask for a feature, a game, a fix | "studio request: <X>" (files a `studio` issue), or open one on GitHub with a `priority:` label; it becomes a backlog row at the next plan |
 | Point the next sprint at something | `studio next — focus: <X>`, or move rows in the [Backlog](backlog.md) |
 | Change the goal, the budget or a rule | Edit this file, or say it in chat |
 | Say anything else: an idea, a complaint, a verdict | One line in the [Feedback Inbox](inbox.md) |
-| Judge what shipped | The Keep / Iterate / Kill lines at the end of the iteration's `review.md`, or a line in the inbox |
+| Judge what shipped | Strike or rewrite the Playtester's Keep / Iterate / Kill in the iteration's `review.md`, or a line in the inbox; yours overrides |
 | Decide an open question | The [Questionnaire](questionnaire.md). A blank answer takes the ⭐ |
 | See where things stand | "studio status", or the [Board](board.md) |
-| Halt | "stop", or a `STOP` file at the repo root |
+| Halt | "stop the studio", or a `STOP` file at the repo root |
 
 ## Reading it later
 

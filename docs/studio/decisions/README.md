@@ -23,3 +23,4 @@ they always show the current state — and the history lives here.
 | [0008](ADR-0008-production-fixes.md) | The studio fixes production, under the full process, one ticket per file |
 | [0009](ADR-0009-one-step-per-session.md) | One step per session, an ordered backlog, and an epic budget |
 | [0010](ADR-0010-fork-portal-url.md) | `shared/3d/constants.js` gets one recorded exception: River Run's portal opens the studio fork |
+| [0011](ADR-0011-the-studio-runs-itself.md) | The studio runs itself: a watched workflow, rolling epics, Playtester verdicts, requests as issues, branches and pull requests |

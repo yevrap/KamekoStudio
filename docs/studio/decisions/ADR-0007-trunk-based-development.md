@@ -1,6 +1,8 @@
 # ADR-0007 — Trunk-based development, as a trial from iteration 04
 
 - **Status:** Accepted — as a trial. Iteration 04's retrospective decides whether it stays.
+  To be superseded by [ADR-0011](ADR-0011-the-studio-runs-itself.md) (branches and pull
+  requests) once backlog #40 is Done.
 - **Date:** 2026-09-21
 - **Iteration:** 03
 

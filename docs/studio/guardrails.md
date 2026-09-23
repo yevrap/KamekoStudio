@@ -179,10 +179,15 @@ The run halts and reports rather than deciding, when it hits:
 - a change outside the allowed paths that is neither a recorded exception nor an
   admissible production fix;
 - anything touching releases, accounts, credentials or money;
-- a destructive or hard-to-reverse git operation (force push, history rewrite, branch
-  deletion on the remote, reverting production work);
-- a product question whose answers would lead to materially different builds;
+- a destructive or hard-to-reverse git operation (force push, history rewrite, deleting a
+  remote branch other than the studio's own merged `studio/*` branches, reverting
+  production work);
+- a production change that would be a feature or a design choice rather than a fix;
 - a failing check it cannot fix within the fix-round cap.
+
+A product question whose answers would lead to materially different builds **inside the
+studio** does not stop the run: it goes to the questionnaire with options and a ⭐, and the
+team proceeds on the ⭐ ([ADR-0011](decisions/ADR-0011-the-studio-runs-itself.md)).
 
 ## The STOP file
 

@@ -31,10 +31,20 @@ The protocol above is spread over short sessions, one step each. The prompt is a
 | `build <ticket>` | 2–3 for **one** ticket: implement, test, commit, push, deploy-check | the next ticket, or `review` |
 | `review` | 4: one round of QA and the Independent Reviewer | `close`, or `review round 2` |
 | `close` | 5–7: document, gate, publish, tag; `review.md` with *In plain words* | `retro` |
-| `retro` | 8–9: retro, learning log, backlog, budget, steering views | the next `plan`, or waiting on the executive |
+| `retro` | 8–9: retro, learning log, backlog, budget, steering views | the next `plan` (only a hard stop waits on the executive — ADR-0011) |
 
 A session does its one step and stops, even with capacity left. A session that runs long
 stops at a green commit and leaves `next.md` saying exactly what remains.
+
+**Runs** ([ADR-0011](decisions/ADR-0011-the-studio-runs-itself.md)). "Run the studio"
+starts the `studio-sprint` workflow (`.claude/workflows/studio-sprint.js`), which runs each
+step as a fresh agent, back to back, to the end of the current sprint, while the executive
+watches in `/workflows`. The steps don't ask questions: a product question goes to the
+questionnaire with its ⭐ and the team proceeds on the ⭐. A step that hits a hard stop
+writes *waiting on you* as the `**Next:**` line, and the run stops there.
+
+**Requests** arrive as GitHub issues labelled `studio` with a `priority:` label, opened by
+the executive. `plan` triages them into the backlog; `close` closes the ones that shipped.
 
 ## Backlog and budget
 
@@ -42,8 +52,10 @@ stops at a green commit and leaves `next.md` saying exactly what remains.
   re-orders it, writes in the inbox, or says `studio next — focus: <X>`. With no direction,
   `plan` pulls from the top. The Product Owner keeps the top five Ready.
 - **The epic and its budget** are in `steering/direction.md`: a number of sprints plus one
-  reserve, which the team may claim with a written reason in a retro. Past the reserve the
-  team asks. When the budget is spent, `plan` does not start a sprint.
+  reserve, which the team may claim with a written reason in a retro. When the budget is
+  spent, the last retro writes the epic review and proposes the next epic in
+  `direction.md`, and the next `plan` adopts it unless the executive has struck or changed
+  it (ADR-0011).
 - **Tickets are S or M**, one in progress at a time. A ticket that outgrows its session is
   split, and the remainder goes back to the backlog. At most one planned ticket per sprint
   goes to the studio's own machinery (checks, handbook, steering views). Tests, docs and
@@ -57,7 +69,7 @@ stops at a green commit and leaves `next.md` saying exactly what remains.
 | Iteration planning | Start | Goal, committed tickets, capacity, risks (`plan.md`) |
 | Async stand-up | Between tickets | Three lines in `iterations/NN/log.md`: done / next / blocked, per role that acted |
 | Build and test loop | Middle | Small commits to `main`, each ticket pushed when done, test results recorded on the ticket |
-| Review / demo | End | Demo list, URLs, and a Keep / Iterate / Kill line per item (`review.md`) |
+| Review / demo | End | Demo list, URLs, and the Playtester's Keep / Iterate / Kill per item, which the executive may override (`review.md`) |
 | Retrospective | End | Went well / didn't / change next time; every change becomes a ticket or a doc edit (`retro.md`) |
 
 ## Reserved capacity
@@ -74,7 +86,8 @@ any of:
 
 - a red gate;
 - two failed fix rounds on the same ticket;
-- a blocker that needs a decision from outside the team;
+- a hard stop that needs the executive (ADR-0011: promotion, accounts or money, destructive
+  git) — a product question is not one: it takes its ⭐;
 - a change that would fall outside the path guard;
 - context exhaustion;
 - a `STOP` file appearing in the working directory the run was started from.

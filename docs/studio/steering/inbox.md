@@ -10,4 +10,11 @@ the Input Ledger.
 
 ---
 
-*(Empty. The 2026-09-22 lines were triaged at sprint 05's plan; see the Input Ledger.)*
+- 2026-09-23, executive (chat): the studio runs itself now — see
+  [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md) and the charter at the top of
+  [Direction](direction.md). No more waiting on me for epics, verdicts or product questions;
+  games first — make them interesting to play, and original studio games are in scope for
+  E2; my requests arrive as `studio` issues; work in branches and pull requests (backlog
+  #40). Q10 is answered: you merge your own pull requests, production fixes included.
+- 2026-09-23, executive (chat): the power-ups have no verdict from me yet. Get the
+  Playtester's at plan 07 and act on it; I'll override if I disagree after playing.
