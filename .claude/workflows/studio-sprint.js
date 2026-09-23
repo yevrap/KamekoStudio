@@ -22,7 +22,10 @@ const MAX_SPRINTS = opts.sprints || 1
 const MAX_STEPS = opts.steps || 14
 const RUNNABLE = /^\*\*Next:\*\*\s*`(plan|build|review|close|retro)\b/
 const SKILL = '.claude/skills/studio-iteration/SKILL.md'
-const LIVE = 'https://yevrap.github.io/KamekoStudio/studio/'
+// Local first (executive, 2026-09-23): everything is checked on a local server; Pages is
+// slow to update, so the live site is checked once, by the close step. Opus is the largest
+// model used.
+const LOCAL = 'serve the checkout yourself: start `npx serve -l <port> .` from the repository root in the background, on a free port between 5173 and 5199, open http://localhost:<port>/studio/ (the realm; the games are under /studio/games/<slug>/), and stop the server when you are done'
 
 const STEP_RESULT = {
   type: 'object',
@@ -82,7 +85,7 @@ const VERDICTS = {
 
 const STEP_PROMPT = extra => `You are one step of the Shadow Studio sprint, run by the studio-sprint workflow in Yevster's Claude Code session (docs/studio/decisions/ADR-0011-the-studio-runs-itself.md). Yevster is watching the run but not answering questions: never ask or wait for input — an open product question goes to docs/studio/steering/questionnaire.md with its ⭐ and you proceed on the ⭐.
 
-Read ${SKILL} and follow it exactly for the ONE step docs/studio/steering/next.md names — nothing more. Do not spawn subagents: where the skill asks for QA, the Independent Reviewer or the Playtester, this workflow has run them and their results are below. End the way the skill says (next.md rewritten, records committed and pushed through the checks), then return the structured result. Report checks honestly: never "pass" for a check that did not run.
+Read ${SKILL} and follow it exactly for the ONE step docs/studio/steering/next.md names — nothing more. Do not spawn subagents: where the skill asks for QA, the Independent Reviewer or the Playtester, this workflow has run them and their results are below. End the way the skill says (next.md rewritten, records committed and pushed through the checks), then return the structured result. Verify on a local server, not the live site: don't wait for GitHub Pages — only the close step checks the live site, once. Report checks honestly: never "pass" for a check that did not run.
 ${extra}`
 
 const PLAYTESTER = task => `You are the Playtester of Shadow Studio. Read docs/studio/team/playtester.md (your role) and docs/brief.md (the studio's taste) first.
@@ -95,7 +98,7 @@ Rules: write your throwaway scripts and screenshots OUTSIDE the repository, in t
 
 const REVIEWER = (role, file) => `You are the ${role} of Shadow Studio, with fresh context. Read docs/studio/team/${file} (your role) first.
 
-Review the current sprint: its diff is \`git diff <tag>..HEAD\`, where <tag> is the newest \`studio-iteration-*\` tag (\`git describe --tags --match 'studio-iteration-*' --abbrev=0\`), and its tickets are in the newest docs/studio/iterations/NN/tickets/. Check each ticket's claims against the code and against real runs; a finding is a reproduction or a file:line, not an opinion. Production fixes (ADR-0008) get extra care: name the full commit hash you reviewed.
+Review the current sprint: its diff is \`git diff <tag>..HEAD\`, where <tag> is the newest \`studio-iteration-*\` tag (\`git describe --tags --match 'studio-iteration-*' --abbrev=0\`), and its tickets are in the newest docs/studio/iterations/NN/tickets/. Check each ticket's claims against the code and against real runs on a local server (\`npx serve -l <free port 5173-5199> .\`), not the live site; a finding is a reproduction or a file:line, not an opinion. Production fixes (ADR-0008) get extra care: name the full commit hash you reviewed.
 
 Read-only: do not create, modify or commit any file in the repository; put any scratch files in the system temp directory. Return your verdict line and your findings.`
 
@@ -134,7 +137,7 @@ while (done.length < MAX_STEPS) {
 
   if (kind === 'plan') {
     const pt = await agent(PLAYTESTER(
-      `Open the newest docs/studio/iterations/NN/review.md and find its Keep / Iterate / Kill section. For each player-visible item there that has no verdict from the Playtester or from the executive (a line the team wrote about its own work does not count), play it on the live site (the review's demo list has the URLs; the realm is ${LIVE}) and give your verdict. If every item already has one, return an empty items list without playing.`),
+      `Open the newest docs/studio/iterations/NN/review.md and find its Keep / Iterate / Kill section. For each player-visible item there that has no verdict from the Playtester or from the executive (a line the team wrote about its own work does not count), play it locally — ${LOCAL} (the review's demo list names the pages) — and give your verdict. If every item already has one, return an empty items list without playing.`),
       { label: 'Playtester: open verdicts', phase: 'Plan', model: 'opus', schema: VERDICTS })
     if (pt && pt.items.length) {
       log(`Playtester: ${pt.items.map(i => `${i.item} → ${i.verdict}`).join('; ')}`)
@@ -145,11 +148,11 @@ while (done.length < MAX_STEPS) {
   if (kind === 'review') {
     const [ir, qa, pt] = await parallel([
       () => agent(REVIEWER('Independent Reviewer', 'independent-reviewer.md'),
-        { label: 'Independent Reviewer', phase: 'Review', model: 'fable', schema: FINDINGS }),
+        { label: 'Independent Reviewer', phase: 'Review', model: 'opus', schema: FINDINGS }),
       () => agent(REVIEWER('QA Engineer', 'qa-engineer.md'),
-        { label: 'QA Engineer', phase: 'Review', model: 'opus', schema: FINDINGS }),
+        { label: 'QA Engineer', phase: 'Review', model: 'sonnet', schema: FINDINGS }),
       () => agent(PLAYTESTER(
-        `Play every player-visible change this sprint made. The newest docs/studio/iterations/NN/plan.md says what will be visible (read only that section); the live realm is ${LIVE}. Give each one a Keep / Iterate / Kill.`),
+        `Play every player-visible change this sprint made. The newest docs/studio/iterations/NN/plan.md says what will be visible (read only that section). To play, ${LOCAL}. Give each one a Keep / Iterate / Kill.`),
         { label: 'Playtester', phase: 'Review', model: 'opus', schema: VERDICTS }),
     ])
     const missing = [['Independent Reviewer', ir], ['QA Engineer', qa], ['Playtester', pt]].filter(([, r]) => !r).map(([n]) => n)
@@ -157,7 +160,7 @@ while (done.length < MAX_STEPS) {
     if (ir) log(`Independent Reviewer: ${ir.verdict}`)
     if (qa) log(`QA: ${qa.verdict}`)
     if (pt) log(`Playtester: ${pt.items.map(i => `${i.item} → ${i.verdict}`).join('; ') || 'nothing player-visible'}`)
-    extra += `\n\nThe reviewers this workflow ran for you (one round). Record each verdict line in review.md as the skill says, turn every finding into a fix now (if S), a backlog item, or a recorded decline, and put the Playtester's verdicts in the Keep / Iterate / Kill section. A reviewer that is missing did not return: say so, don't invent its verdict.\n\nIndependent Reviewer (fable):\n${JSON.stringify(ir, null, 2)}\n\nQA Engineer (opus):\n${JSON.stringify(qa, null, 2)}\n\nPlaytester (opus):\n${JSON.stringify(pt, null, 2)}`
+    extra += `\n\nThe reviewers this workflow ran for you (one round). Record each verdict line in review.md as the skill says, turn every finding into a fix now (if S), a backlog item, or a recorded decline, and put the Playtester's verdicts in the Keep / Iterate / Kill section. A reviewer that is missing did not return: say so, don't invent its verdict.\n\nIndependent Reviewer (opus):\n${JSON.stringify(ir, null, 2)}\n\nQA Engineer (sonnet):\n${JSON.stringify(qa, null, 2)}\n\nPlaytester (opus):\n${JSON.stringify(pt, null, 2)}`
   }
 
   const r = await agent(STEP_PROMPT(extra), { label: name, phase: cap(kind), schema: STEP_RESULT })

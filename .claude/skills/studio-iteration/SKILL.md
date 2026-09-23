@@ -131,9 +131,11 @@ another step itself.
    branch-and-pull-request flow of ADR-0011 §4, and #40 rewrites it here; until then, trunk.)*
    Implement on `main` in small commits (ADR-0007): add
    tests → `--stage=ticket` green → commit `type(studio): SHS-NNN description`. When the
-   ticket is done, run `--stage=push` → `git push origin main` →
-   `--stage=postdeploy --marker="<a string only the new build has>"` (plus `--marker-at=<path>`
-   when the change isn't on the realm page).
+   ticket is done, run `--stage=push` → `git push origin main`. **Verify locally, not on the
+   live site** (executive, 2026-09-23): the checks and browser tests already serve the repo
+   locally; for a look by hand, `npx serve -l 5173 .` and open
+   `http://localhost:5173/studio/…`. Don't wait for Pages. The live site is checked once, at
+   `close`.
 3. **A production fix is not pushed yet.** Commit locally and note the commits in `next.md`.
    The `review` step reviews them, and then they're pushed (ADR-0008).
 4. **If it grows:** stop at the last green commit, finish the ticket as Done for what landed,
@@ -147,15 +149,17 @@ another step itself.
 Run **QA**, the **Independent Reviewer** and the **Playtester** as separate subagents with
 fresh context. Give QA and the Reviewer the sprint's diff (`git diff <previous tag>..HEAD`),
 the tickets and their team files (`docs/studio/team/qa-engineer.md`,
-`docs/studio/team/independent-reviewer.md`). Give the Playtester only the live URLs of the
-player-visible changes, one line on what each is meant to do, and
+`docs/studio/team/independent-reviewer.md`). Give the Playtester only local URLs of the
+player-visible changes (served from the checkout), one line on what each is meant to do, and
 `docs/studio/team/playtester.md` — not the diff or the tickets. Pass `model` explicitly:
 
 | Role | `model` | Why |
 |---|---|---|
-| Independent Reviewer | `fable` | A different model from the author, against shared blind spots |
-| QA Engineer | `opus` | One pass on the author's model, so the two passes differ from each other too |
-| Playtester | `opus` | Plays the build at phone width; its Keep / Iterate / Kill is the verdict the team acts on (ADR-0011) |
+| Independent Reviewer | `opus` | The strongest model available; its independence comes from fresh context |
+| QA Engineer | `sonnet` | A different model from the author, so the two passes don't share blind spots |
+| Playtester | `opus` | Plays a local build at phone width; its Keep / Iterate / Kill is the verdict the team acts on (ADR-0011) |
+
+Opus is the largest model to use; Fable isn't available.
 
 - The Playtester's verdicts go in `review.md`'s Keep / Iterate / Kill section, each with its
   evidence; every Iterate or Kill becomes backlog items at once.
@@ -187,7 +191,10 @@ included (iteration 06 retro; `process.md` has the same order).
 3. `npm run studio:check -- --stage=gate --base=<previous iteration tag>`. Red → fix within
    the caps, or stop with `next.md` saying what is red.
 4. Publish: `git push origin main`, `git tag -a studio-iteration-NN -m "…"`,
-   `git push origin studio-iteration-NN`, then `--stage=postdeploy --marker="…"`.
+   `git push origin studio-iteration-NN`, then `--stage=postdeploy --marker="…"` — **the
+   sprint's one live-site check**: once per page the sprint changed, each with a marker from
+   its newest change (`--marker-at=<path>` off the realm page). Pages can take minutes;
+   wait for it here, nowhere else.
    Set `next.md` to `retro`.
 
 ### `retro` — retrospective and the steering views
