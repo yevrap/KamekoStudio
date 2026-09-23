@@ -14,9 +14,12 @@
 //   no-ticket   a number with no ticket file (the handbook's examples: SHS-001, SHS-999)
 //   self        a ticket's mentions of itself, in its own file
 //
-// This is not a CommonMark parser, and does not need to be one: a construct it
-// misreads can only leave a mention plain or link it where a reader would have
-// wanted it linked anyway. Nothing here decides what a check passes.
+// This is not a CommonMark parser. Nothing here decides what a check passes, but
+// it can misread a construct and write a broken link into it. Known shapes (none
+// in the repo at iteration 06's review): link text wrapped across lines, a
+// shortcut reference `[SHS-NNN]`, a reference definition's title, and a
+// 4-space indented code block. Run the script with --dry-run and read the diff
+// before committing its output.
 //
 // The script that applies it to the repository is tests/studio/link-tickets.mjs.
 
