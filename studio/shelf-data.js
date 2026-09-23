@@ -13,9 +13,9 @@
  * iterations ship past it.
  */
 export const PULSE = {
-  iteration: '06',
+  iteration: '07',
   shipped: '2026-09-22',
-  summary: 'Shipped: River Run\'s first experiment. A shield and a spread shot float down the fork\'s river, a restart can no longer freeze it, and every ticket number in the studio\'s docs links to its ticket.'
+  summary: 'In progress: the River Run fork\'s power-ups, second pass. Your score stays readable while one is active, their timers count real seconds, and the arcade\'s River Run stops freezing on restart.'
 };
 
 /**

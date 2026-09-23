@@ -36,19 +36,54 @@ before it can finish.
 
 ## Keep / Iterate / Kill
 
-> The executive: strike through what you disagree with. These are the team's.
+> Since [ADR-0011](../../decisions/ADR-0011-the-studio-runs-itself.md) the Playtester's
+> verdict is the one the team acts on. The executive may strike it and write their own;
+> theirs overrides. The Playtester's verdicts were given before sprint 07's plan
+> (2026-09-23), from a local build at phone width; the team's verdicts from this review
+> are kept below them for the record.
 
-- **[SHS-060](tickets/SHS-060-river-run-power-ups.md), power-ups on the river — Iterate.**
-  Both work and change how a run feels, but on a narrow phone their HUD sits over the
-  score (#35), and their timers count frames, so on a 120 Hz phone "6.0s" lasts 3 s (QA F5).
-  Sprint 07 would fix the layout and, on your Keep, tune them from your play. A **Kill**
-  removes both and returns the fork to the arcade's gameplay.
+- **[SHS-060](tickets/SHS-060-river-run-power-ups.md), power-ups on the river —
+  Iterate** (Playtester). Six hand-steered runs at 390×780 and 320×640, each on a fresh
+  profile from the `/studio/` shelf, plus 90 s of Watch Mode. The first pickup arrives
+  3.5–4.7 s into every run and another about every 15 s; with drag steering 16 of 21 were
+  reached, the misses behind rocks. The shield is the stronger of the two: the bubble
+  spins round the boat without hiding it, and a rock hit pops bubble and rock and the run
+  goes on (5 saves). The spread shot visibly fans three shots, every tap at about 8 a
+  second fired, and it clears a lane for the +5 kill bonus. Both give a run a small goal
+  every 15 s that the bare fork lacked. **What spoils it:** while a power-up is active the
+  score can't be read at either width. At 390 "← Studio" covers the right half of
+  "Score: N", the score wraps at two digits, and the power-up label sits over the number;
+  at 320 the button hides "Score:" almost entirely and the label covers the digits
+  (measured at 320: score 84–236 × 38–86, label 78–242 × 76–104, top buttons 108–310 ×
+  10–54). Watch Mode took 3 spread shots by chance and no shield in 90 s; it doesn't steer
+  for them. No page errors. Far up the river a pickup is only a few pixels.
+  *Next, as the Playtester asked:* (1) the score, the label and the Studio / Mute buttons
+  never overlap at 320–390 wide, the score on one line and the label in a place of its own
+  (#35); (2) the spread timer and the spawn intervals count real seconds, so "6.0s" lasts
+  6 s on a 120 Hz phone (#38); optionally, the far-off pickup drawn larger or glowing
+  (#42). All three are in the backlog; #35 and #38 are sprint 07's
+  [SHS-064](../07/tickets/SHS-064-river-run-power-up-hud-real-time.md).
+  *Team, at this review:* Iterate, for the same two reasons.
 - **[SHS-061](tickets/SHS-061-river-run-tone-start-time.md), restart never freezes the
-  fork — Keep.** A real freeze, reproduced and fixed. Its test catches a regression only
-  most of the time; #37 makes it deterministic, and production's twin is #33 / p0-17.
+  fork — Keep** (Playtester). 52 restarts, all by tapping Restart Game: 20 after
+  deliberate crashes at 390×780 with music on, 20 at 320×640, 12 more at 390 counting the
+  synth's notes. Every restart had a moving river within 1.2 s (obstacles and power-ups
+  spawning, the score counting), and the music came back every time (3–5 notes in each
+  3 s window, audio running). No console or page errors. *Team:* Keep; #37 makes its test
+  deterministic, and production's twin is #33 / p0-17
+  ([SHS-066](../07/tickets/SHS-066-production-river-run-restart.md)).
 - **[SHS-059](tickets/SHS-059-ticket-mentions-link-to-tickets.md), ticket numbers link —
-  Keep.** 378 mentions linked, and the retro keeps new ones linked. Seven Markdown shapes it
-  would mislink are named in its lib (none is in the repo); guarding them is #36.
+  Keep** (team; not a player-facing change, so the Playtester didn't judge it). 378
+  mentions linked, and the retro keeps new ones linked. Seven Markdown shapes it would
+  mislink are named in its lib (none is in the repo); guarding them is #36.
+
+**Only a real phone can answer** (the Playtester's questions for the executive): on a
+120 Hz phone, does the spread shot run out in about 3 s instead of the 6 s its label shows,
+and does that feel too short (headless Chrome ran at 60 fps)? Can a pickup far up the
+river, a few pixels across, be picked out in normal light soon enough to steer for it? Is
+it comfortable to drag-steer with one thumb and tap FIRE fast with the other during a
+spread (tested with simulated two-finger touch)? The Playtester's screenshots stayed in its
+session's scratch space and are not committed.
 
 ## What was reviewed
 

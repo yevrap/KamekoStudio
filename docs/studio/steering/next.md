@@ -1,28 +1,26 @@
 # Shadow Studio — Next step
 
-**Next:** `plan 07` — E1's last granted sprint
+**Next:** `build SHS-064` — the River Run fork's power-up HUD: readable at phone width, real seconds
 **Say:** "run the studio" (the whole sprint, watched), or `studio next` (this one step, in a new session)
 
 | | |
 |---|---|
-| Epic | E1 · The Studio Wing opens · sprint 3 of 3 next (+1 reserve, unclaimed) |
-| Sprint | 06 · power-ups on the river, and ticket numbers you can click · shipped `studio-iteration-06` |
-| Steps | plan ✓ · build ✓ · review ✓ · close ✓ · retro ✓ ([retro.md](../iterations/06/retro.md)) |
-| Waiting on you | Nothing. Since ADR-0011 the Playtester gives the power-ups' verdict; the executive may override it ([review.md](../iterations/06/review.md)) |
+| Epic | E1 · The Studio Wing opens · sprint 3 of 3 (+1 reserve, unclaimed) — the last granted sprint |
+| Sprint | 07 · power-ups you can read, and a River Run that restarts ([plan.md](../iterations/07/plan.md)) |
+| Steps | plan ✓ · build [SHS-064](../iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md) · build [SHS-065](../iterations/07/tickets/SHS-065-studio-edits-its-own-workflow.md) · build [SHS-066](../iterations/07/tickets/SHS-066-production-river-run-restart.md) · review · close · retro |
+| Waiting on you | Nothing. The Playtester's verdicts (Iterate on the power-ups, Keep on the fork's restart fix) are in [06's review](../iterations/06/review.md); yours overrides |
 
 ## Notes for the next session
 
-- **New direction first:** [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md),
-  the studio runs itself (inbox, 2026-09-23). Log it. #39 is Done as
-  [SHS-063](../iterations/06/tickets/SHS-063-exempt-adr-0011-commits.md) (done before plan); #41 takes the process slot, #40 starts in 08. Games first:
-  two planned tickets change what a player sees. Triage open `studio` issues (ADR-0011 §4).
-- Before pulling, record the [Playtester](../team/playtester.md)'s verdict on the power-ups
-  (SHS-060; the workflow runs it before plan, or run it as a subagent) in 06's `review.md`; then #35 + #38 on Iterate or
-  Keep, a removal ticket on Kill. Then #33 (skip only if the arcade shipped 🐞 p0-17), #37.
-- Sprint 07's retro writes the epic review and puts E2 under *Proposed next epic* in
-  `direction.md`; plan 08 adopts it. Original studio games are in scope for E2.
-- New in the ticket template: a regression test's red count, layout evidence at 320.
-- The next new backlog item is #41, the next ticket SHS-064.
+- [SHS-064](../iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md) is #35 + #38 as one M. If it grows, land the layout
+  first and send the real-time timers back to the backlog as #38.
+- [SHS-066](../iterations/07/tickets/SHS-066-production-river-run-restart.md) (production, ADR-0008) is built last on purpose: its session
+  commits locally and pushes nothing, records included; review pushes after
+  `reviews/SHS-066.md`.
+- Layout evidence at 320 as well as 390; a regression test gives its red count.
+- Sprint 07's retro writes E1's epic review and puts E2 (game-first) under *Proposed next
+  epic* in `direction.md`; it can land its workflow change in the skills once [SHS-065](../iterations/07/tickets/SHS-065-studio-edits-its-own-workflow.md) is Done.
+- The next new backlog item is #43, the next ticket SHS-068.
 
 *Rewritten by every session (the studio-iteration skill). Loaded into every new Claude Code
 session by the SessionStart hook in `.claude/settings.json`.*
