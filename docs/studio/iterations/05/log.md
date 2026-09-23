@@ -75,3 +75,18 @@ is committed.
   edits the studio could have done itself; the executive said not to draw that line. Now a
   guardrail. Also: a ceremony commit subject ran to 115 characters and only the reviewer
   noticed. Lesson: run `--stage=ticket` before every commit, ceremony ones included.
+
+## Session 6 — close (2026-09-22)
+
+- **Scrum Master** — *Done:* the gate against `studio-iteration-04` passed 11 of 11, with
+  full suites. Pushed, tagged `studio-iteration-05` and pushed the tag. Postdeploy passed
+  3 of 3: the new pulse line was served live from `studio/shelf-data.js`. `review.md` now
+  opens with *In plain words*, the demo list and Keep / Iterate / Kill. `CHANGELOG.md` has
+  the iteration's section. SHS-058 is closed. *Next:* retro. *Blocked:* nothing.
+- **Scrum Master (for the retro)** — the first gate failed `docs-current` twice on
+  SHS-058. It was still In progress, and then it was Done with its criteria unticked. The
+  record ticket's criteria named retro-step work (`retro.md`, the retro line, the learning
+  log, tech debt, the steering views), but the gate needs the ticket Done before the retro
+  step exists. The criteria were amended at close, with a note, rather than ticked early.
+  Iteration 04's SHS-053 ticked `retro.md` at close. Lesson: the record-ticket template
+  should say which criteria close checks and which the retro does.
