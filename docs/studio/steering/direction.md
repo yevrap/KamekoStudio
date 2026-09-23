@@ -117,6 +117,12 @@ These apply from sprint 05 on. The process parts are in the handbook (`process.m
    list of ten at most. Each retro promotes a lesson into it, turns a rule that has
    recurred into a check or a skill edit, or retires a rule that no longer earns its
    place.
+8. **Every sprint runs a little better and cheaper than the last** (executive,
+   2026-09-23). The executive's feedback on how a run went is the retro's first input, and
+   each piece becomes a rule, a skill or workflow edit, or a check — never only a note. The
+   `studio-sprint` workflow measures each step's output tokens; the scorecard keeps the
+   trend, and each retro names the costliest step and makes one change aimed at it, then
+   checks next retro whether it worked.
 
 ## The budget
 

@@ -201,6 +201,14 @@ included (iteration 06 retro; `process.md` has the same order).
 
 1. Write `iterations/NN/retro.md`: went well, didn't, what to change. Did the last retro's
    changes hold? Each change becomes a backlog item or an edit to a process doc.
+   **Yevster's feedback on how the sessions went comes first** (direction rule 8): every
+   such line in the inbox or the Input Ledger since the last retro becomes a rule, a skill
+   or workflow edit, or a check, and the retro says which.
+   **Efficiency:** the workflow passes each step's output tokens (by hand: not measured, say
+   so). Add the sprint's total and its costliest step to the scorecard (add the columns if
+   they're missing; older rows read "—"), compare with the last sprint, and make **one**
+   change aimed at the costliest step — a smaller prompt, less to read, a cheaper model, a
+   check that saves a fix round. Next retro says whether it helped.
 2. `learning-log.md`: add the sprint's lessons, and keep the **Active rules** list at the top
    (ten at most). Promote a new rule, turn a rule that has recurred into a check or skill edit
    (a backlog item), or retire a rule that no longer earns its place.
