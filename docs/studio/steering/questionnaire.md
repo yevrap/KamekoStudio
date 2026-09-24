@@ -19,7 +19,7 @@ prefix → `SHS-`, your decision in [Shadow Studio — Naming Conventions](namin
 
 **Q1. Name.** "Shadow Studio" and the folder `studio/` are working names. Renaming the
 folder means changing a live URL, so it gets cheaper the sooner it's decided.
-- [ ] A. ⭐ Keep both. "Shadow Studio", `studio/`.
+- [x] A. ⭐ Keep both. "Shadow Studio", `studio/`.
 - [ ] B. Keep the folder, change the label shown to people: ______
 - [ ] C. Change both. Name: ______  Folder: ______
 
@@ -29,13 +29,14 @@ open only when `version.json` changes. The studio's production fixes ([SHS-052](
 never bumped it, because the path guard doesn't allow it, so a player with the arcade open
 keeps the unfixed page until a reload. It touches the arcade's release marker, so, unlike
 the other questions here, the team waits for a tick before building it.
-- [ ] A. ⭐ Yes: a production-fix ticket may list `version.json`, and its fix commit bumps
+- [x] A. ⭐ Yes: a production-fix ticket may list `version.json`, and its fix commit bumps
   it with the fix (reviewed with it, like any other production file).
 - [ ] B. No: the arcade bumps `version.json` the next time it ships, which carries the fix.
 - [ ] C. Leave it; a reload is enough.
 
 **Q5. Anything else** about how you want to run this company, what a good review looks
 like, or things it must never do?
+i want it to run like a scrum team, following ceremonies and getting better
 
 *Standing answer, 2026-09-21 — the quality bar:* keep everything professional and good
 practice across all three surfaces. **GitHub:** clean history, conventional commits with
