@@ -101,20 +101,22 @@ backlog. From the fork onward, production River Run takes bug fixes only. See
 ### `games/samovar/` — PROTOTYPE
 
 The studio's first original game, built in iteration 08 ([SHS-068](../docs/studio/iterations/08/tickets/SHS-068-samovar-core.md)) as its core
-mechanic alone. An evening is ten guests, one at a time; each brings a small cup, a teacup
-or a tall glass and wants their tea at a strength shown as a colour swatch. One button:
-hold to pour the dark brew, let go; hold again to top up with hot water, let go to serve.
-Strength is the brew's share of the cup, so the decision is how long to pour the brew for
-*this* cup before the water fixes it. Over the brim is a spill (0 stars); otherwise 0–3
+mechanic alone, and given glasses of three shapes in iteration 09 ([SHS-072](../docs/studio/iterations/09/tickets/SHS-072-samovar-cup-shapes.md)). An
+evening is ten guests, one at a time; each brings a straight tea glass, a tulip glass or a
+wide bowl and wants their tea at a strength shown as a colour swatch. One button: hold to
+pour the dark brew, let go; hold again to top up with hot water, let go to serve.
+Strength is the brew's share of the cup, and every glass fills in the same 2.5 s, so the
+decision is where to stop the brew in *this* glass: its shape puts the same share at a
+different height in each. Over the brim is a spill (0 stars); otherwise 0–3
 stars from the strength, minus one if the cup is short of the dashed fill line (at 90 % of
 the brim), two if it is under three quarters full.
 
 | File | What it is |
 |---|---|
-| `constants.js` | Cups, strengths, the colour ramp, the pour rate and the star bands. |
-| `gameplay.js` | The rules of a cup, pure: pour amounts from milliseconds, colour by ratio, judging. |
+| `constants.js` | Cups (each glass's profile), strengths, the colour ramp, the fill time and the star bands. |
+| `gameplay.js` | The rules of a cup, pure: pour amounts from milliseconds, a glass's volume share to its height share and back, colour by ratio, judging. |
 | `state.js` | An evening's guests (seeded generator) and reading the saved best, pure. |
-| `main.js` | The only file that touches the document: the hold, the loop, the cards, storage. |
+| `main.js` | The only file that touches the document: the hold, the loop, the glass drawn from its profile, the cards, storage. |
 
 Pours are timed from `performance.now()` at press and release, so a 120 Hz screen pours at
 the same rate as a 60 Hz one. The page stops a pour and holds the result timer while it

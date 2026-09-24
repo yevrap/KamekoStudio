@@ -1,22 +1,24 @@
 # Samovar — design note
 
-**Status:** PROTOTYPE, core mechanic only · built in iteration 08 ([SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md)) ·
-play it at `studio/games/samovar/` (the realm's shelf) · epic E2, *the studio's first
-original game worth playing* ([Direction](../steering/direction.md)).
+**Status:** PROTOTYPE, core mechanic only · built in iteration 08 ([SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md)), second
+pass in iteration 09 (glasses of three shapes, [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md)) · play it at `studio/games/samovar/`
+(the realm's shelf) · epic E2, *the studio's first original game worth playing*
+([Direction](../steering/direction.md)).
 
 ## What it is
 
-An evening at the tea table. Ten guests come one at a time; each brings a small cup, a
-teacup or a tall glass and wants their tea at a strength, shown as a colour swatch (Light,
-Golden, Amber, Dark) beside the cup. One button, one thumb: hold to pour the dark brew
+An evening at the tea table. Ten guests come one at a time; each brings a straight tea
+glass, a tulip glass or a wide bowl and wants their tea at a strength, shown as a colour
+swatch (Light, Golden, Amber, Dark) beside the cup. One button, one thumb: hold to pour the dark brew
 from the samovar's teapot, let go; hold again to top up with hot water, let go to serve.
-The liquid in the cup is always the colour of what is in it, and its level is the total
-against the brim.
+The liquid in the cup is always the colour of what is in it, drawn in the glass's shape,
+and its surface sits where that much tea reaches in that glass.
 
 A cup over the brim spills and scores nothing. Otherwise it scores 0–3 stars from the gap
 between the poured and the wanted strength, less one star if it is short of the dashed
 fill line at 90 % of the brim (two if it is under three quarters full). The result card shows the wanted and the poured
-colour side by side for a moment, then the next guest comes. After ten cups: the evening's
+colour side by side for a moment, low on the table so the glass's rim and dashed line stay
+in view, then the next guest comes. After ten cups: the evening's
 stars out of 30, the best evening so far, a strip of each cup's stars, and *Pour again*.
 
 ## The hook
@@ -40,22 +42,43 @@ is to stop at an imagined line at the wanted share of the cup, which is close to
 fill-to-a-line genre the hook set out to differ from. Sprint 09 acts on this with the
 Playtester's Iterate: [questionnaire](../steering/questionnaire.md) Q15 and backlog #51–#53.
 
+**What the player learns now (sprint 09, [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md)).** The glasses have shapes of their own,
+and every one fills from empty to the brim in the same 2.5 s. The glasses are round, so a
+slice of tea's volume goes as the square of the glass's width there: the level climbs
+slowly where the glass is wide and quickly where it is narrow. While the brew pours, the
+liquid is pure brew colour and its level is the only cue, so the right place to stop for
+one strength is a different height in each glass: about half-way up the straight glass
+for Amber, well under half-way in the tulip (its wide belly holds the tea low), two
+thirds of the way up the bowl (its narrow foot fills fast). Learning where each glass's
+stops sit is the skill. What the shapes don't change, said openly: with every cup filling
+in the same time, one strength's hold is the same on every cup, so a player who counts
+seconds could ignore the shape. The windows are fair only if the times match (the
+Playtester's ask), and counting to ±125 ms is harder than reading a level; the
+Playtester is asked at review which players do.
+
 ## The hypothesis (recorded before the build)
 
-**It is fun if** a player's misses shrink over an evening (they can see the estimate
-improving) and they start a second evening straight away. **It is not** if the cups feel
-random or the colour match can't be read at a glance on a phone. The Playtester judges it
-at iteration 08's review; its Keep / Iterate / Kill decides sprint 09.
+**Sprint 08.** **It is fun if** a player's misses shrink over an evening (they can see the
+estimate improving) and they start a second evening straight away. **It is not** if the
+cups feel random or the colour match can't be read at a glance on a phone. The Playtester
+judged it at iteration 08's review: Iterate (below).
+
+**Sprint 09** (from [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md), worked out at plan). **It is better than sprint 08 if** no
+cup is much harder than another, and a player's misses on the tulip and the bowl shrink
+across an evening as they learn where each one's stop sits. **It is not** if the shapes feel
+arbitrary, or the liquid's level can't be read in the tulip's narrow top at 320 wide. The
+Playtester judges it at iteration 09's review, and says whether players watch the glass or
+count seconds.
 
 ## Tuning, and why
 
 | Number | Value | Why |
 |---|---|---|
-| Pour rate | 80 units/s, brew and water alike | A tall glass takes about three seconds to fill, a small cup one and a half: long enough to judge, short enough for a ten-cup evening in about a minute |
-| Cups | 120, 180, 260 units | Drawn so the bigger cup looks bigger. *Review 08:* with one shape for every cup the three-star brew stops at the same share of each cup's height, so size changes how long a pour takes, not where it stops (IR08-1) |
+| Pour rate | Every cup fills from empty to the brim in 2.5 s (each holds 100 units, poured at 40 units/s), brew and water alike | *Sprint 09 (#52):* the same time on every cup makes the windows fair: three stars on strength is ±125 ms on every cup, where sprint 08's 80 units/s gave ±75 ms on the small cup and ±162 ms on the tall glass. An evening still lasts about a minute |
+| Cups | A straight tea glass (half-width `1`), a tulip glass (`1 − 0.42 · sin(π·h / 1.6)`: a wide belly, a waist at 80 % of the height, a slight flare) and a wide bowl (`0.5 + 0.5·h`: the foot half the rim's width), `h` from foot 0 to rim 1, in `constants.js` | *Sprint 09 (#53, Q15 ⭐ A):* one profile per glass, read by the drawing and the rules alike. The three-star brew stop, as built, in % of the glass's height (for a cup topped up to the brim; filling only to the dashed line lowers each stop by a tenth of its volume): **Light** 25 / 14 / 40, **Golden** 40 / 25 / 56, **Amber** 55 / 39 / 69, **Dark** 70 / 56 / 81 for straight / tulip / bowl; the dashed line at 90 / 85.5 / 94. For every strength two glasses' stops are at least 10.5 points apart (a test holds 10). *Review 08, before:* one shape for every cup put the stop at the same share of each cup's height (IR08-1) |
 | Strengths | 25 %, 40 %, 55 %, 70 % brew | Four colours far enough apart on the ramp to tell at a glance (a test holds their luminance at least 25 apart) |
-| Star bands | within 5 / 10 / 17 points of the wanted ratio | Three stars on a small cup needs the brew within about ±75 ms; on a tall glass about ±160 ms, so small weak cups are the hard ones |
-| Fill line | 90 % of the brim | A band, not a line, meant to make the water the lesser skill. *Review 08:* it isn't yet. The band (10 % of the cup) is as long in time as the three-star brew window (about 150 / 225 / 325 ms for small / teacup / tall), and a miss over the brim costs every star while a strength miss costs one per band (IR08-2) |
+| Star bands | within 5 / 10 / 17 points of the wanted ratio | Three stars needs the brew within ±125 ms on every cup (sprint 09); in sprint 08 it was ±75 ms on the small cup and ±162 ms on the tall glass, so small weak cups were the hard ones |
+| Fill line | 90 % of the cup's volume, drawn at the height that is in each glass | A band, not a line, meant to make the water the lesser skill. *Sprint 09:* the band lasts 250 ms on every cup (it was 150 / 225 / 325 ms); the forgiving brim is [SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md). *Review 08:* it isn't yet. The band (10 % of the cup) is as long in time as the three-star brew window (about 150 / 225 / 325 ms for small / teacup / tall), and a miss over the brim costs every star while a strength miss costs one per band (IR08-2) |
 | An evening | 10 of the 12 cup-and-strength pairs, drawn without replacement | Every cup and every strength turns up, and no pour is asked twice |
 
 Pours are timed from `performance.now()` at press and release, not counted in frames, so a
@@ -84,9 +107,12 @@ accident.
 
 ## Tests
 
-`tests/studio/samovar.test.mjs`: the rules without a browser, then in headless Chrome a
+`tests/studio/samovar.test.mjs`: the rules without a browser (sprint 09 adds the three
+profiles, each one's volume-to-height mapping and its inverse, the stops at least 10 % of
+a cup apart for every strength, and the same fill time on every cup), then in headless Chrome a
 full evening poured by real pointer holds (30 of 30 stars), a spill, the best evening
 surviving a reload under `studio_samovar_best` with no other key written, the pour at two
 frame rates, pausing when hidden, the open drawer still holding the result after a hide
-and show, Space pouring guest after guest without a Tab, and the layout at 320 and 390 wide with every cup size in
-both themes.
+and show, Space pouring guest after guest without a Tab, and the layout at 320 and 390 wide with every cup in
+both themes: the tea's surface and the dashed line where each glass's profile puts them,
+and the result card clear of the glass's top 15 %.
