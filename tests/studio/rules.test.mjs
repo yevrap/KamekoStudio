@@ -398,6 +398,14 @@ test('commitKind: the executive\'s ADR-0011 commits are exempt by full hash, wit
   }
 });
 
+test('commitKind: the executive\'s 2026-09-24 questionnaire answers are exempt by full hash (SHS-071)', () => {
+  const sha = [...COMMIT_EXEMPTIONS.keys()].find(k => k.startsWith('1b798e2'));
+  assert.ok(sha, '1b798e2 is recorded');
+  const kind = commitKind({ sha, subject: 'docs(studio): anything' });
+  assert.equal(kind.kind, 'exempt');
+  assert.match(kind.reason, /SHS-071/);
+});
+
 test('a new unnumbered (studio) commit is a studio commit, so the lint still fails it', () => {
   const commit = { sha: 'b'.repeat(40), subject: 'docs(studio): direction for epic E2' };
   assert.equal(commitKind(commit).kind, 'studio');

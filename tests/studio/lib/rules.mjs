@@ -825,7 +825,9 @@ export const COMMIT_EXEMPTIONS = new Map([
   ['6376a2f53a16c72de1061789190c003eaf9439d4',
     'the executive\'s 2026-09-23 direction, ADR-0011 (running the studio from Antigravity): scoped (studio) with no ticket (SHS-063)'],
   ['00bd3a5f57758515a1bea75793dc788a304f2261',
-    'the executive\'s 2026-09-23 direction, ADR-0011 (self-improvement within limits, ADR-0011 section 6): scoped (studio) with no ticket (SHS-063)']
+    'the executive\'s 2026-09-23 direction, ADR-0011 (self-improvement within limits, ADR-0011 section 6): scoped (studio) with no ticket (SHS-063)'],
+  ['1b798e2910999c5daeee36fd482264a064b00a4f',
+    'the executive\'s 2026-09-24 questionnaire answers (Q1, Q13, Q5): a steering edit scoped (studio) with no ticket, the form backlog #21 will accept (SHS-071)']
 ]);
 
 /**

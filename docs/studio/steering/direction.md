@@ -43,48 +43,10 @@ what the studio is working on right now, and can play it.
 A fork that turns out better than its original can go back to the arcade only through
 `studio-promote`, with the executive's approval.
 
-## Current epic — E1: The Studio Wing opens
+## Current epic — E2: The studio's first original game worth playing
 
-**Goal:** the first forked game is live behind its 3D portal, and has had at least one
-real gameplay experiment the executive can play and judge.
-
-**Status:** done at sprint 07's retro, inside its 3 sprints, reserve unclaimed; the epic
-review is in [07's retro](../iterations/07/retro.md). The next `plan` adopts E2 below.
-
-**Budget:** 3 sprints (05, 06, 07) + 1 reserve. See [the budget](#the-budget). What each
-sprint pulls comes from the ordered [Backlog](backlog.md).
-
-**Done when:**
-- a 3D portal leads to a studio fork, and every portal without a fork still leads to its
-  production game;
-- the fork never reads or writes a production save;
-- the fork has shipped at least one gameplay change with a Keep / Iterate / Kill verdict
-  (the Playtester's, or the executive's, which overrides it — ADR-0011);
-- the rules below are in the handbook, not only in this file;
-- an epic retro has proposed E2, with the budget it asks for.
-
-**First fork:** River Run, the executive's choice in chat on 2026-09-22 (Q11, option C).
-It is on the arcade's Invest list and its modernization questionnaire is answered but not
-built, so the fork starts with a queue of experiments; Q12 picks the first. Maze Warden,
-the earlier ⭐, stays in the arcade.
-
-**Out of scope for E1:** new games, feature work on production games, renaming the realm.
-(Later epics may take on original studio games; see the charter above.)
-
-### Suggested shape (the team owns the plan and may change it)
-
-| Sprint | Goal | What you can see afterwards |
-|---|---|---|
-| 05 | Unblock and open the wing: the studio checks tell studio commits from arcade commits (the blocker in the inbox); a fork mechanism; the first fork live behind its portal | The first fork's portal on the 3D page opens the studio copy |
-| 06 | The first experiment in the fork | A changed game to play and judge |
-| 07 | Iterate on the verdict, or a second experiment; epic review and retro | The better version, and the proposal for E2 |
-
-## Proposed next epic
-
-*Written by E1's last retro (sprint 07). The next `plan` adopts it unless the executive
-strikes or edits it first.*
-
-### E2 — The studio's first original game worth playing
+**Status:** adopted at plan 08 (2026-09-24) from *Proposed next epic*, written by E1's last
+retro; the executive did not strike or change it. Sprint 08 is sprint 1 of 3.
 
 **Why:** the executive's wish for E2 (2026-09-23) is games that are interesting to play. E1
 was a fork, and the charter asks epics to vary, so E2 is an original studio game with a
@@ -116,6 +78,18 @@ was kept; otherwise a second pass on the core; then the epic review.
 `shared/3d/`, production, and needs the executive's exception); new River Run experiments
 (#6, #7, #23). The River Run fork's Ready fixes (#42, #44) may take a sprint's second games
 slot, and #40 keeps the process slot.
+
+## Proposed next epic
+
+*Empty until E2's last retro writes E3 here. The next `plan` after that adopts it unless the
+executive strikes or edits it first.*
+
+## Earlier epics
+
+- **E1 — The Studio Wing opens** (sprints 05–07, reserve unclaimed): the first forked game,
+  River Run, live behind its 3D portal, with a gameplay change the Playtester kept. Its
+  goal, done-when and review are in [07's retro](../iterations/07/retro.md);
+  `git log -p` on this file has its full text.
 
 ## Rules for this epic
 

@@ -29,7 +29,7 @@ commit. `commitKind` in `tests/studio/lib/rules.mjs` sorts each one, and `commit
 | Studio | The subject's scope is `(studio)`, whatever the type or ticket, **or** the subject names a studio ticket (`SHS-NNN`, the retired `SS-NNN`), whatever the scope (iteration 05 review) | `commit-lint` requires `type(studio): SHS-NNN …`; the path guard judges every file it changed |
 | Arcade | Any other subject: no `(studio)` scope and no studio ticket | Not linted, and free to change anything **except** `studio/**`, `docs/studio/**` and `tests/studio/**`: a studio path it changed is a violation |
 | Merge | More than one parent | Judged by what it changes against its first parent: only studio paths or only other paths is that kind, both at once is a violation. The commits it brings in are judged one by one as well |
-| Exempt | Its full hash is in `COMMIT_EXEMPTIONS`, with a reason | Neither linted nor guarded, and reported by both checks with its reason. Today: the executive's three 2026-09-22 commits (the migration, the E1 direction, ADR-0009) and five 2026-09-23 commits recording ADR-0011 ([SHS-063](iterations/06/tickets/SHS-063-exempt-adr-0011-commits.md)) |
+| Exempt | Its full hash is in `COMMIT_EXEMPTIONS`, with a reason | Neither linted nor guarded, and reported by both checks with its reason. Today: the executive's three 2026-09-22 commits (the migration, the E1 direction, ADR-0009) five 2026-09-23 commits recording ADR-0011 ([SHS-063](iterations/06/tickets/SHS-063-exempt-adr-0011-commits.md)), and the 2026-09-24 questionnaire answers ([SHS-071](iterations/08/tickets/SHS-071-iteration-record.md)) |
 
 Uncommitted changes count as studio work: the guard cannot tell whose they are.
 

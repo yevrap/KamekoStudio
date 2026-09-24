@@ -13,9 +13,9 @@
  * iterations ship past it.
  */
 export const PULSE = {
-  iteration: '07',
+  iteration: '08',
   shipped: '2026-09-23',
-  summary: 'Shipped: the River Run fork\'s power-ups, second pass. Your score stays readable at phone width while one is active, the spread shot counts real seconds, and the arcade\'s River Run no longer freezes on restart.'
+  summary: 'In progress: the studio\'s first original game, Samovar, where you pour tea for an evening of guests by feel, and River Run\'s power-ups made easy to spot from far up the river.'
 };
 
 /**

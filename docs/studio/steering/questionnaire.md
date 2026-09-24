@@ -6,7 +6,7 @@ or just tell me in chat. Anything you leave blank takes the default (⭐), and s
 once rather than waiting; answering later overturns it. Answered questions
 are folded into the design and removed from here.
 
-*Answered: Q10 (production fixes → the studio merges them itself after its own review, through a pull request once backlog #40 lands; the executive, in chat 2026-09-23, recorded in [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md)), Q12 (first River Run experiment → ⭐ power-ups, blank at sprint 06's plan; built as [SHS-060](../iterations/06/tickets/SHS-060-river-run-power-ups.md)), Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
+*Answered: Q1 (name → keep "Shadow Studio" and `studio/`, ticked 2026-09-24; folded into [the design](design.md)), Q13 (a studio production fix bumps `version.json` → yes, ticked 2026-09-24; backlog #43 is Ready on it), Q10 (production fixes → the studio merges them itself after its own review, through a pull request once backlog #40 lands; the executive, in chat 2026-09-23, recorded in [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md)), Q12 (first River Run experiment → ⭐ power-ups, blank at sprint 06's plan; built as [SHS-060](../iterations/06/tickets/SHS-060-river-run-power-ups.md)), Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
 02 builds → the first experiment), Q7 (Overtighten → left on the shelf as an honest
 prototype, ⭐ by silence), Q8 (process → keep the gate and break ties yourself, keep
 `docs-current`, cap planned work only — all ⭐ by silence), Q4 (3D zone → the studio's
@@ -17,22 +17,18 @@ are now in [Shadow Studio](design.md) under *How the work is chosen*. The ticket
 prefix → `SHS-`, your decision in [Shadow Studio — Naming Conventions](naming-conventions.md). See
 [Shadow Studio — Input Ledger](input-ledger.md).*
 
-**Q1. Name.** "Shadow Studio" and the folder `studio/` are working names. Renaming the
-folder means changing a live URL, so it gets cheaper the sooner it's decided.
-- [x] A. ⭐ Keep both. "Shadow Studio", `studio/`.
-- [ ] B. Keep the folder, change the label shown to people: ______
-- [ ] C. Change both. Name: ______  Folder: ______
-
-**Q13. Should a studio production fix bump `version.json`?** (Sprint 07 review, IR-3;
-backlog #43.) The arcade offers "New version available" to a player who already has it
-open only when `version.json` changes. The studio's production fixes ([SHS-052](../iterations/04/tickets/SHS-052-td-009-fixed.md), [SHS-066](../iterations/07/tickets/SHS-066-production-river-run-restart.md))
-never bumped it, because the path guard doesn't allow it, so a player with the arcade open
-keeps the unfixed page until a reload. It touches the arcade's release marker, so, unlike
-the other questions here, the team waits for a tick before building it.
-- [x] A. ⭐ Yes: a production-fix ticket may list `version.json`, and its fix commit bumps
-  it with the fix (reviewed with it, like any other production file).
-- [ ] B. No: the arcade bumps `version.json` the next time it ships, which carries the fix.
-- [ ] C. Leave it; a reload is enough.
+**Q14. E2's first game** (plan 08, backlog #48). Three pitches, each with an original hook,
+are in [08's plan](../iterations/08/plan.md#three-pitches). The ⭐ is built this sprint as
+[SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md), core mechanic only. Ticking B or C instead makes that one plan 09's game; D sends it back
+for new pitches.
+- [ ] A. ⭐ *Samovar*: pour tea for an evening of guests. Hold to pour the brew, hold again
+  to top up with water; each cup's strength is the ratio, judged against a colour. One
+  thumb, one button.
+- [ ] B. *Nest*: nesting dolls in three stacks, each showing only its outermost doll; a
+  stack scores as a full set, so you remember what each one hides.
+- [ ] C. *Ice hole*: winter fishing where the lure is a rhythm you jig and the bite is a
+  twitch of the rod tip you have to read.
+- [ ] D. Something else: ______
 
 **Q5. Anything else** about how you want to run this company, what a good review looks
 like, or things it must never do?

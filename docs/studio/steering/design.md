@@ -125,6 +125,8 @@ Each persona has a file in the repo (`docs/studio/team/`): name and one-line rol
 - **A falsified experiment stays on the shelf** as a PROTOTYPE that says what it found. It
   is not re-tuned to rescue its hypothesis; changing the mechanic is a new decision, not a
   maintenance ticket. *Overtighten* is the first. (Q7, iteration 03.)
+- **The name** is "Shadow Studio", and the realm stays in `studio/` (Q1, ticked
+  2026-09-24). The live URL does not move.
 - **Ticket IDs** are `SHS-NNN`; `SS-001`–`SS-042` keep the retired prefix. Every name the
   studio coins gets read as a stranger would first. See [Shadow Studio — Naming Conventions](naming-conventions.md).
 - **The standing mix:** maintenance and tech debt lead. Improving the existing games —
