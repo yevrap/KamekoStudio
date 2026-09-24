@@ -103,6 +103,8 @@ const REVIEWER = (role, file) => `You are the ${role} of Shadow Studio, with fre
 
 Review the current sprint: its diff is \`git diff <tag>..HEAD\`, where <tag> is the newest \`studio-iteration-*\` tag (\`git describe --tags --match 'studio-iteration-*' --abbrev=0\`), and its tickets are in the newest docs/studio/iterations/NN/tickets/. Check each ticket's claims against the code and against real runs on a local server (\`npx serve -l <free port 5173-5199> .\`), not the live site; a finding is a reproduction or a file:line, not an opinion. Production fixes (ADR-0008) get extra care: name the full commit hash you reviewed.
 
+Don't repeat evidence the sprint already has: a red or green count a ticket records, or a suite the checks ran, is re-run only if you doubt it, and the Playtester is playing every player-visible change as you work, so play only to reproduce something you suspect. Spend your runs on the claims that evidence doesn't reach.
+
 Read-only: do not create, modify or commit any file in the repository; put any scratch files in the system temp directory. Return your verdict line and your findings.`
 
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1)

@@ -77,6 +77,11 @@ Append, when they apply: the executive's focus (first step only, as
 > opinion. Production fixes (ADR-0008) get extra care: name the full commit hash you
 > reviewed.
 >
+> Don't repeat evidence the sprint already has: a red or green count a ticket records, or a
+> suite the checks ran, is re-run only if you doubt it, and the Playtester is playing every
+> player-visible change as you work, so play only to reproduce something you suspect. Spend
+> your runs on the claims that evidence doesn't reach.
+>
 > Read-only: do not create, modify or commit any file in the repository; put scratch files
 > in the system temp directory. Return your **Verdict:** line (Approve, Approve with
 > findings, or Reject, with one line why) and your findings, each with an id, a severity
