@@ -106,7 +106,8 @@ or a tall glass and wants their tea at a strength shown as a colour swatch. One 
 hold to pour the dark brew, let go; hold again to top up with hot water, let go to serve.
 Strength is the brew's share of the cup, so the decision is how long to pour the brew for
 *this* cup before the water fixes it. Over the brim is a spill (0 stars); otherwise 0–3
-stars from the strength, minus one if the cup is short of the dashed fill line.
+stars from the strength, minus one if the cup is short of the dashed fill line (at 90 % of
+the brim), two if it is under three quarters full.
 
 | File | What it is |
 |---|---|
@@ -117,7 +118,8 @@ stars from the strength, minus one if the cup is short of the dashed fill line.
 
 Pours are timed from `performance.now()` at press and release, so a 120 Hz screen pours at
 the same rate as a 60 Hz one. The page stops a pour and holds the result timer while it
-is hidden or the settings drawer is open. The design note is
+is hidden or the settings drawer is open, until both have let go; a keyboard player keeps
+the button's focus from one guest to the next. The design note is
 [`docs/studio/games/samovar.md`](../docs/studio/games/samovar.md).
 
 ## Rules for code in this folder

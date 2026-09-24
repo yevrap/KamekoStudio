@@ -17,6 +17,10 @@
 //     - the pour follows real time: a one-second hold pours the same at
 //       ~120 and ~30 updates a second;
 //     - hiding the page stops a pour where it is and holds the result timer;
+//     - an open settings drawer keeps holding the result timer after the page
+//       is hidden and shown again (sprint 08 review, IR08-3);
+//     - a keyboard player can hold Space on the button for guest after guest,
+//       without tabbing back to it after each result card (IR08-4);
 //     - at 320×640 and 390×780, with each cup size, the cup, the wanted
 //       swatch and the pour button are all on screen, none overlapping, the
 //       button at least 44 px tall in the bottom third, nothing scrolls sideways.
@@ -334,6 +338,67 @@ test('in a browser: hiding the page stops a pour where it is and holds the resul
       assert.equal((await data(page)).phase, 'result', 'the result timer ran while the page was hidden');
       await setHidden(false);
       await page.waitForFunction(() => document.getElementById('game').dataset.guest === '2', { timeout: 4000 });
+      await page.close();
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+test('in a browser: the open drawer holds the result through a hide and show (IR08-3)',
+  { skip, timeout: 60_000 },
+  async () => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      const { page, errors } = await openGame(browser, site.origin);
+      const setHidden = hidden => page.evaluate(h => {
+        Object.defineProperty(document, 'hidden', { configurable: true, get: () => h });
+        document.dispatchEvent(new Event('visibilitychange'));
+      }, hidden);
+      await hold(page, 200);
+      await wait(40);
+      await hold(page, 200);
+      await page.waitForFunction(() => document.getElementById('game').dataset.phase === 'result');
+      await page.evaluate(() => window.KamekoSettings.openDrawer());
+      await setHidden(true);
+      await setHidden(false);
+      await wait(2600);
+      assert.equal((await data(page)).phase, 'result', 'the result timer ran behind the open drawer');
+      await page.evaluate(() => window.KamekoSettings.closeDrawer());
+      await page.waitForFunction(() => document.getElementById('game').dataset.guest === '2', { timeout: 4000 });
+      assert.deepEqual(errors.map(e => e.text), []);
+      await page.close();
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+test('in a browser: Space on the button pours guest after guest, with no Tab between (IR08-4)',
+  { skip, timeout: 60_000 },
+  async () => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      const { page, errors } = await openGame(browser, site.origin);
+      const spaceHold = async ms => {
+        await page.keyboard.down(' ');
+        await wait(ms);
+        await page.keyboard.up(' ');
+      };
+      await page.focus('#pour');
+      for (let guest = 1; guest <= 2; guest++) {
+        await spaceHold(250);
+        await wait(40);
+        assert.ok(Number((await data(page)).brew) > 0, `guest ${guest}: Space poured no tea`);
+        await spaceHold(250);
+        await page.waitForFunction(() => document.getElementById('game').dataset.phase === 'result');
+        await nextGuestOrEnd(page, guest);
+        assert.equal(await page.evaluate(() => document.activeElement?.id), 'pour',
+          `after guest ${guest}'s result the button lost the keyboard's focus`);
+      }
+      assert.deepEqual(errors.map(e => e.text), []);
       await page.close();
     } finally {
       await browser.close();

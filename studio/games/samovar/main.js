@@ -35,7 +35,10 @@ const s = {
   pour: null,           // { liquid: 'brew'|'water', start: ms, base: units }
   pointer: null,        // the pointer holding the button, if one is
   resultLeft: 0,
-  paused: false,
+  paused: false,        // hidden || drawer: either one holds the evening
+  hidden: false,
+  drawer: false,
+  keyFocus: false,      // the button had the keyboard's focus when a result card disabled it
   lastFrame: 0,
   best: 0,
   evenings: 0
@@ -226,7 +229,17 @@ function paint(t = now()) {
 
   const pour = el('pour');
   pour.textContent = LABELS[s.phase];
-  pour.disabled = s.phase === 'result' || s.phase === 'end';
+  const disabled = s.phase === 'result' || s.phase === 'end';
+  if (disabled && !pour.disabled && document.activeElement === pour) s.keyFocus = true;
+  pour.disabled = disabled;
+  // Disabling the button drops focus to the page; a keyboard player gets it back
+  // with the next guest instead of a Tab before every cup (sprint 08 review, IR08-4).
+  if (!disabled && s.keyFocus) {
+    s.keyFocus = false;
+    if (!s.drawer && (document.activeElement === document.body || !document.activeElement)) {
+      pour.focus({ preventScroll: true });
+    }
+  }
   pour.classList.toggle('pouring', !!s.pour);
   const hint = hintFor();
   if (el('hint').textContent !== hint) el('hint').textContent = hint;
@@ -275,14 +288,15 @@ function frame(t) {
   requestAnimationFrame(frame);
 }
 
-function pause() {
-  s.paused = true;
-  interrupt();
-}
-
-function resume() {
-  s.paused = false;
-  s.lastFrame = 0;
+// Two things pause the evening, and each lets go only of its own hold: showing
+// the page again must not start the result timer behind an open drawer
+// (sprint 08 review, IR08-3).
+function hold(reason, on) {
+  s[reason] = on;
+  const was = s.paused;
+  s.paused = s.hidden || s.drawer;
+  if (s.paused) interrupt();
+  else if (was) s.lastFrame = 0;
 }
 
 // --- Input -------------------------------------------------------------------
@@ -327,10 +341,10 @@ function wire() {
     el('pour').focus({ preventScroll: true });
   });
 
-  document.addEventListener('visibilitychange', () => (document.hidden ? pause() : resume()));
+  document.addEventListener('visibilitychange', () => hold('hidden', document.hidden));
   window.addEventListener('blur', () => interrupt());
-  window.addEventListener('settingsOpened', pause);
-  window.addEventListener('settingsClosed', resume);
+  window.addEventListener('settingsOpened', () => hold('drawer', true));
+  window.addEventListener('settingsClosed', () => hold('drawer', false));
 }
 
 // --- Boot --------------------------------------------------------------------
