@@ -86,6 +86,12 @@ river), and the boat takes it by touching it:
 - **Spread shot** (pink icosahedron): for about 6 s every shot is three, one straight and
   one 12° to each side, and Watch Mode fires faster. The HUD under the score counts down.
 
+Far up the river a pickup wears a glow of its colour about 26 px across on screen, so it can
+be spotted in time to steer for; the glow fades as the pickup comes near, and the pickup box
+is the pickup alone, so taking one needs the same contact as before. The label under the
+score keeps one height whichever power-ups it shows
+([SHS-069](../docs/studio/iterations/08/tickets/SHS-069-river-run-power-ups-read-at-a-glance.md), iteration 08).
+
 Pickup sounds are silent while the fork is muted. The power-ups save nothing.
 
 It is one inline-script file, as production's is; the ES module split is fork debt on the

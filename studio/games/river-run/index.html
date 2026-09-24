@@ -279,6 +279,10 @@
             color: #fff;
             font-size: 0.7em;
             white-space: nowrap;
+            /* SHS-069: a set line height, so the shield's emoji can't make the label taller
+               than the spread shot's text alone (it was 28px against 23px). */
+            line-height: 16px;
+            height: 16px;
             background-color: rgba(0, 0, 0, 0.55);
             padding: 5px 10px;
             border-radius: 5px;
@@ -363,8 +367,16 @@
             shield: { color: 0x22d3ee, notes: ['C5', 'G5'] },
             rapid:  { color: 0xf472b6, notes: ['E5', 'B5'] }
         };
+        // Studio fork (SHS-069): far up the river a pickup is a few pixels, too late to steer
+        // for, so a glow of its colour keeps it about this many pixels across on screen, and
+        // fades out as the pickup comes near enough to read on its own. The glow is its own
+        // object, never the mesh's child, so the pickup box stays the pickup itself.
+        const PICKUP_GLOW_PX = 26;
+        const PICKUP_GLOW_FULL_AT = 30;       // distance from the camera the glow is full at and beyond
+        const PICKUP_GLOW_GONE_AT = 18;       // ... and gone at and within
+        let pickupGlowTexture = null;
         const UP_AXIS = new THREE.Vector3(0, 1, 0);
-        let powerUp = null;          // the floating pickup: { mesh, boundingBox, type }
+        let powerUp = null;          // the floating pickup: { mesh, boundingBox, type, glow }
         let powerUpSpawnClock = 0;   // seconds the river has been without a pickup
         let shieldActive = false;
         let shieldMesh;
@@ -594,13 +606,49 @@
             const mesh = new THREE.Mesh(geo, mat);
             mesh.position.set((Math.random() - 0.5) * (riverWidth - 2), WATER_LEVEL + 0.3, riverLength * 0.8);
             scene.add(mesh);
-            powerUp = { mesh, boundingBox: new THREE.Box3().setFromObject(mesh), type };
+            const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+                map: getPickupGlowTexture(), color, transparent: true, depthWrite: false
+            }));
+            scene.add(glow);
+            powerUp = { mesh, boundingBox: new THREE.Box3().setFromObject(mesh), type, glow };
+            placePickupGlow();
             powerUpSpawnClock = 0;
+        }
+
+        // Studio fork (SHS-069): a soft white disc, tinted per pickup by its material colour.
+        function getPickupGlowTexture() {
+            if (pickupGlowTexture) return pickupGlowTexture;
+            const c = document.createElement('canvas');
+            c.width = c.height = 64;
+            const g = c.getContext('2d');
+            const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+            grad.addColorStop(0, 'rgba(255,255,255,1)');
+            grad.addColorStop(0.4, 'rgba(255,255,255,0.85)');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            g.fillStyle = grad;
+            g.fillRect(0, 0, 64, 64);
+            pickupGlowTexture = new THREE.CanvasTexture(c);
+            return pickupGlowTexture;
+        }
+
+        // The glow sits on the pickup, sized to PICKUP_GLOW_PX on screen whatever the distance.
+        function placePickupGlow() {
+            if (!powerUp || !camera) return;
+            const { mesh, glow } = powerUp;
+            glow.position.copy(mesh.position);
+            const distance = mesh.position.distanceTo(camera.position);
+            const viewHeight = containerHeight || renderer.domElement.clientHeight || 1;
+            const size = distance * 2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * PICKUP_GLOW_PX / viewHeight;
+            glow.scale.set(size, size, 1);
+            glow.material.opacity = THREE.MathUtils.clamp(
+                (distance - PICKUP_GLOW_GONE_AT) / (PICKUP_GLOW_FULL_AT - PICKUP_GLOW_GONE_AT), 0, 1);
+            glow.visible = glow.material.opacity > 0;
         }
 
         function removePowerUp() {
             if (!powerUp) return;
             scene.remove(powerUp.mesh); powerUp.mesh.geometry.dispose(); powerUp.mesh.material.dispose();
+            scene.remove(powerUp.glow); powerUp.glow.material.dispose();
             powerUp = null;
         }
 
@@ -889,6 +937,7 @@
                 powerUp.mesh.position.z -= gameSpeed;
                 powerUp.mesh.rotation.y += 0.05;
                 powerUp.boundingBox.setFromObject(powerUp.mesh);
+                placePickupGlow();
                 if (boatBox.intersectsBox(powerUp.boundingBox)) collectPowerUp();
                 else if (powerUp.mesh.position.z < boat.position.z - BOAT_LENGTH * 1.5) removePowerUp();
             } else if ((powerUpSpawnClock += powerStep) >= POWERUP_SPAWN_INTERVAL_S) {

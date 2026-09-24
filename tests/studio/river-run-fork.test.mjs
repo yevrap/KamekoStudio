@@ -28,6 +28,11 @@
 //     spread shot, the first pickup, the gap between pickups) count wall-clock
 //     seconds at 60 and at 120 updates a second, and stand still while the
 //     settings drawer is open.
+//  6. The power-ups read at a glance (SHS-069): at 390 and 320 wide, a pickup at
+//     its spawn distance draws at least 12 px across and keeps its colour, the
+//     pickup box is still the pickup alone (one passing just beside the boat is
+//     not taken), and the power-up label is one height with the shield, the
+//     spread shot, or both.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -643,6 +648,138 @@ test('in a browser, the power-up clocks count real seconds at 60 and 120 updates
         const ran = { spread: opened.spread - after.spread, pickup: after.pickup - opened.pickup };
         assert.ok(ran.spread >= 0.7 && ran.spread <= 1.3, `the spread timer ran ${ran.spread.toFixed(2)} s in the second after closing`);
         assert.ok(ran.pickup >= 0.7 && ran.pickup <= 1.3, `the pickup clock ran ${ran.pickup.toFixed(2)} s in the second after closing`);
+        assert.deepEqual(f.unexpected(), []);
+        await f.page.close();
+      });
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+// ---- 6. The power-ups read at a glance (SHS-069) ------------------------------
+//
+// A pickup at its spawn distance, measured by what it draws: the frame is
+// rendered twice, with and without whatever spawnPowerUp() added to the scene,
+// and the pixels that differ are the pickup as a player sees it.
+
+/** Spawns a `type` pickup in the middle of the river at its spawn distance and measures what it draws. */
+const measureFarPickup = type => {
+  const before = new Set(scene.children);
+  spawnPowerUp(type);
+  powerUp.mesh.position.x = boat.position.x;
+  const added = scene.children.filter(o => !before.has(o));
+  // Whatever follows the pickup is placed by the loop; one update's worth, with the river still.
+  const speed = gameSpeed; gameSpeed = 0;
+  try { updateGame(); } finally { gameSpeed = speed; }
+  const gl = renderer.getContext();
+  const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
+  const grab = () => {
+    renderer.render(scene, camera);
+    const px = new Uint8Array(w * h * 4);
+    gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    return px;
+  };
+  const shown = grab();
+  added.forEach(o => { o.userData.wasVisible = o.visible; o.visible = false; });
+  const hidden = grab();
+  added.forEach(o => { o.visible = o.userData.wasVisible; });
+  let minX = w, maxX = -1, minY = h, maxY = -1;
+  const changed = [];
+  for (let i = 0; i < w * h; i++) {
+    const d = Math.abs(shown[i * 4] - hidden[i * 4]) + Math.abs(shown[i * 4 + 1] - hidden[i * 4 + 1])
+      + Math.abs(shown[i * 4 + 2] - hidden[i * 4 + 2]);
+    if (d <= 24) continue;
+    const x = i % w, y = Math.floor(i / w);
+    minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y);
+    changed.push([d, shown[i * 4], shown[i * 4 + 1], shown[i * 4 + 2]]);
+  }
+  // The colour a player reads: the most-changed quarter of the pixels, averaged.
+  changed.sort((a, b) => b[0] - a[0]);
+  const core = changed.slice(0, Math.max(1, Math.ceil(changed.length / 4)));
+  const rgb = [1, 2, 3].map(k => core.reduce((s, p) => s + p[k], 0) / core.length);
+  const perCss = w / renderer.domElement.clientWidth;
+  return {
+    width: changed.length ? (maxX - minX + 1) / perCss : 0,
+    height: changed.length ? (maxY - minY + 1) / perCss : 0,
+    rgb, distance: powerUp.mesh.position.distanceTo(camera.position)
+  };
+};
+
+/** Hue in degrees of an [r, g, b]. */
+function hue([r, g, b]) {
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  if (max === min) return 0;
+  const d = max - min;
+  const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return (h * 60 + 360) % 360;
+}
+const hueGap = (a, b) => Math.min(Math.abs(a - b), 360 - Math.abs(a - b));
+const PICKUP_HUE = { shield: hue([0x22, 0xd3, 0xee]), rapid: hue([0xf4, 0x72, 0xb6]) };
+
+test('in a browser, a pickup far up the river is big enough to steer for, and the power-up label keeps one height',
+  { skip: chromeAvailable() ? false : 'no Chrome; set CHROME_PATH', timeout: 180_000 },
+  async t => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      for (const [width, height] of [[390, 780], [320, 640]]) {
+        await t.test(`${width}×${height}: at its spawn distance each pickup covers 12 px and keeps its colour`, async () => {
+          const f = await openFork(browser, site.origin, { width, height });
+          await f.start('#start-button');
+          await f.quiet();
+          for (const type of ['shield', 'rapid']) {
+            const seen = await f.page.evaluate(measureFarPickup, type);
+            assert.ok(seen.distance > 40, `the pickup was measured ${seen.distance.toFixed(1)} units away, not at spawn`);
+            assert.ok(seen.width >= 12 && seen.height >= 12,
+              `a far-off ${type} pickup covers ${seen.width.toFixed(1)}×${seen.height.toFixed(1)} px`);
+            const gap = hueGap(hue(seen.rgb), PICKUP_HUE[type]);
+            assert.ok(gap <= 30, `a far-off ${type} pickup reads as rgb(${seen.rgb.map(Math.round)}), ${gap.toFixed(0)}° off its colour`);
+          }
+          assert.deepEqual(f.unexpected(), []);
+          await f.page.close();
+        });
+
+        await t.test(`${width}×${height}: the power-up label is one height with the shield, the spread shot, or both`, async () => {
+          const f = await openFork(browser, site.origin, { width, height });
+          await f.start('#start-button');
+          await f.quiet();
+          const heights = await f.page.evaluate(() => {
+            const at = (shield, spread) => {
+              setShield(shield); rapidFireLeft = spread ? 5.4 : 0; updatePowerHud();
+              return powerHud.getBoundingClientRect().height;
+            };
+            const out = { shield: at(true, false), spread: at(false, true), both: at(true, true) };
+            clearPowerUps();
+            return out;
+          });
+          const all = Object.values(heights);
+          assert.ok(all.every(hh => hh > 0), `the label is not showing: ${JSON.stringify(heights)}`);
+          assert.ok(Math.max(...all) - Math.min(...all) <= 1, `the label's height changes: ${JSON.stringify(heights)}`);
+          assert.deepEqual(f.unexpected(), []);
+          await f.page.close();
+        });
+      }
+
+      await t.test('the pickup box is the pickup itself: a pickup passing just beside the boat is not taken', async () => {
+        const f = await openFork(browser, site.origin);
+        await f.start('#start-button');
+        await f.quiet();
+        const box = await f.page.evaluate(() => {
+          spawnPowerUp('shield');
+          const s = new THREE.Vector3(); powerUp.boundingBox.getSize(s);
+          const own = new THREE.Box3().setFromObject(powerUp.mesh).getSize(new THREE.Vector3());
+          const wide = new THREE.Box3().setFromObject(boat).getSize(new THREE.Vector3()).x;
+          // Beside the boat: clear of its box by 0.3, well inside any glow drawn around the pickup.
+          powerUp.mesh.position.set(boat.position.x + wide / 2 + s.x / 2 + 0.3, powerUp.mesh.position.y, boat.position.z + 3);
+          return { size: s.toArray(), own: own.toArray() };
+        });
+        assert.ok(box.size.every(v => v <= 1.1 + 1e-6), `the pickup box grew: ${box.size}`);
+        assert.deepEqual(box.size.map(v => v.toFixed(4)), box.own.map(v => v.toFixed(4)), 'the pickup box is not the pickup mesh\'s own');
+        await f.page.waitForFunction(() => powerUp === null, { timeout: 15_000, polling: 50 });
+        assert.equal(await f.page.evaluate(() => shieldActive), false, 'a pickup that passed beside the boat was taken');
+        await f.pickupAhead('shield');
+        await f.page.waitForFunction(() => shieldActive, { timeout: 10_000, polling: 50 });
         assert.deepEqual(f.unexpected(), []);
         await f.page.close();
       });
