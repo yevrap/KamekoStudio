@@ -38,3 +38,12 @@ is committed.
   the power-up label is 26 px in every state (was 28 / 23). Section 6 of the fork's test,
   red then green; `--stage=ticket` 5/5, `--stage=push` green. *Next:* build
   [SHS-070](tickets/SHS-070-checks-accept-studio-branches.md). *Blocked:* nothing.
+
+## Session 4 — build SHS-070 (2026-09-24)
+
+- **Tech Lead** — *Done:* [SHS-070](tickets/SHS-070-checks-accept-studio-branches.md) (`4b8dd72`): `on-main` is now `on-branch`, which
+  accepts `main` or `studio/SHS-NNN-slug` and still fails behind `origin/main`, and
+  `commit-lint` no longer counts a squash-merge's ` (#N)`. `branch-check.test.mjs` 18/18
+  on scratch repositories, red first against the old check and a loose `studio/*` rule;
+  three lint and guard cases in `rules.test.mjs`. `--stage=ticket` 5/5, `--stage=push`
+  green on `main`. *Next:* review. *Blocked:* nothing.
