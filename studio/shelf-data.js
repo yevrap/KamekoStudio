@@ -14,8 +14,8 @@
  */
 export const PULSE = {
   iteration: '07',
-  shipped: '2026-09-22',
-  summary: 'In progress: the River Run fork\'s power-ups, second pass. Your score stays readable while one is active, their timers count real seconds, and the arcade\'s River Run stops freezing on restart.'
+  shipped: '2026-09-23',
+  summary: 'Shipped: the River Run fork\'s power-ups, second pass. Your score stays readable at phone width while one is active, the spread shot counts real seconds, and the arcade\'s River Run no longer freezes on restart.'
 };
 
 /**
@@ -55,9 +55,9 @@ export const SHELF = [
   {
     title: 'River Runner 3D',
     status: 'ITERATING',
-    blurb: 'The arcade\'s river runner, forked into the studio with saves of its own. Its first experiment: a shield and a spread shot float down the river, one at a time. The arcade\'s build stays as it was.',
-    iteration: '06',
-    changed: '2026-09-22',
+    blurb: 'The arcade\'s river runner, forked into the studio with saves of its own. Its first experiment: a shield and a spread shot float down the river, one at a time, with a label of their own that leaves the score readable on a phone and a spread timer in real seconds. The arcade\'s build stays as it was.',
+    iteration: '07',
+    changed: '2026-09-23',
     url: 'games/river-run/'
   }
 ];

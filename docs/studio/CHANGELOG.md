@@ -3,6 +3,38 @@
 All notable changes to Shadow Studio, one section per iteration. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are iteration tags.
 
+## [studio-iteration-07] — 2026-09-23
+
+Power-ups you can read, and a River Run that restarts: the fork's score and power-up label
+stay readable at phone width and the spread shot counts real seconds, the arcade's own River
+Run no longer freezes on restart, and the studio can change its own skills. Sprint 3 of 3 of
+epic E1, the last granted sprint.
+
+### Fixed
+
+- **The fork's score and power-up label read at phone width** ([SHS-064](iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md))
+  — the score and the label stack below "← Studio", Mute and ☰; the score stays on one line
+  at 320 and 390 wide, and the label sits in a dark pill of its own. 44 px targets kept.
+- **The spread shot's "6.0s" is six real seconds** ([SHS-064](iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md))
+  — the spread shot, the first pickup and the gap between pickups count wall-clock time,
+  on a 60 Hz or a 120 Hz screen, and stop while the ☰ drawer is open. Below 10 fps a 0.1 s
+  cap per update slows them. The rest of the fork still counts frames (backlog #46).
+- **The arcade's River Run never freezes on restart** ([SHS-066](iterations/07/tickets/SHS-066-production-river-run-restart.md),
+  arcade p0-17) — a production fix under ADR-0008: the old music sequence is disposed
+  without `stop()`, and a music failure can no longer stop a run starting. Three browser
+  cases in `scripts/e2e.mjs`, red before and green after; reviewed before it was pushed
+  ([reviews/SHS-066.md](iterations/07/reviews/SHS-066.md)).
+
+### Changed
+
+- **The studio may change its own skills and conductor** ([SHS-065](iterations/07/tickets/SHS-065-studio-edits-its-own-workflow.md))
+  — `.claude/skills/studio-*/**` and `.claude/workflows/studio-sprint.js` are a recorded
+  exception for ticketed studio commits (ADR-0011 §6), so a retro's change to how the team
+  works can land in the files that run it. Unticketed studio commits there are refused, and
+  ADR-0011 stays the executive's.
+- **The Independent Reviewer's role file matches ADR-0011 on models** (review, IR-2) — its
+  independence is of context; QA on another model is the different-model pass.
+
 ## [studio-iteration-06] — 2026-09-22
 
 River Run's first experiment: a shield and a spread shot float down the fork's river, a
