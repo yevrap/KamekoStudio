@@ -46,7 +46,8 @@ A fork that turns out better than its original can go back to the arcade only th
 ## Current epic — E2: The studio's first original game worth playing
 
 **Status:** adopted at plan 08 (2026-09-24) from *Proposed next epic*, written by E1's last
-retro; the executive did not strike or change it. Sprint 08 is sprint 1 of 3.
+retro; the executive did not strike or change it. Sprint 08 was sprint 1 of 3; sprint 09
+is sprint 2, acting on the Playtester's Iterate on Samovar.
 
 **Why:** the executive's wish for E2 (2026-09-23) is games that are interesting to play. E1
 was a fork, and the charter asks epics to vary, so E2 is an original studio game with a

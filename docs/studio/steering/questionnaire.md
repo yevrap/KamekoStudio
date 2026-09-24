@@ -6,7 +6,7 @@ or just tell me in chat. Anything you leave blank takes the default (⭐), and s
 once rather than waiting; answering later overturns it. Answered questions
 are folded into the design and removed from here.
 
-*Answered: Q1 (name → keep "Shadow Studio" and `studio/`, ticked 2026-09-24; folded into [the design](design.md)), Q13 (a studio production fix bumps `version.json` → yes, ticked 2026-09-24; backlog #43 is Ready on it), Q10 (production fixes → the studio merges them itself after its own review, through a pull request once backlog #40 lands; the executive, in chat 2026-09-23, recorded in [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md)), Q12 (first River Run experiment → ⭐ power-ups, blank at sprint 06's plan; built as [SHS-060](../iterations/06/tickets/SHS-060-river-run-power-ups.md)), Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
+*Answered: Q14 (E2's first game → ⭐ Samovar, blank at plans 08 and 09; built as [SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md) and iterated in sprint 09), Q1 (name → keep "Shadow Studio" and `studio/`, ticked 2026-09-24; folded into [the design](design.md)), Q13 (a studio production fix bumps `version.json` → yes, ticked 2026-09-24; backlog #43 is Ready on it), Q10 (production fixes → the studio merges them itself after its own review, through a pull request once backlog #40 lands; the executive, in chat 2026-09-23, recorded in [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md)), Q12 (first River Run experiment → ⭐ power-ups, blank at sprint 06's plan; built as [SHS-060](../iterations/06/tickets/SHS-060-river-run-power-ups.md)), Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
 02 builds → the first experiment), Q7 (Overtighten → left on the shelf as an honest
 prototype, ⭐ by silence), Q8 (process → keep the gate and break ties yourself, keep
 `docs-current`, cap planned work only — all ⭐ by silence), Q4 (3D zone → the studio's
@@ -17,24 +17,12 @@ are now in [Shadow Studio](design.md) under *How the work is chosen*. The ticket
 prefix → `SHS-`, your decision in [Shadow Studio — Naming Conventions](naming-conventions.md). See
 [Shadow Studio — Input Ledger](input-ledger.md).*
 
-**Q14. E2's first game** (plan 08, backlog #48). Three pitches, each with an original hook,
-are in [08's plan](../iterations/08/plan.md#three-pitches). The ⭐ is built this sprint as
-[SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md), core mechanic only. Ticking B or C instead makes that one plan 09's game; D sends it back
-for new pitches.
-- [ ] A. ⭐ *Samovar*: pour tea for an evening of guests. Hold to pour the brew, hold again
-  to top up with water; each cup's strength is the ratio, judged against a colour. One
-  thumb, one button.
-- [ ] B. *Nest*: nesting dolls in three stacks, each showing only its outermost doll; a
-  stack scores as a full set, so you remember what each one hides.
-- [ ] C. *Ice hole*: winter fishing where the lure is a rhythm you jig and the bite is a
-  twitch of the rod tip you have to read.
-- [ ] D. Something else: ______
-
 **Q15. What makes Samovar's cups different?** (review 08, IR08-1; backlog #53). As built,
 every cup has the same shape, so a three-star brew stops at the same share of each cup's
 height and the cup's size changes only how long the pour takes. The Playtester's Iterate
 also asks for the same fill time on every cup (#52), which on its own would make the cups
-identical. The ⭐ is built in sprint 09 with #51 and #52.
+identical. Blank at plan 09, so the ⭐ is built in sprint 09 as [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md), with #52;
+ticking B or C before sprint 09's review turns it around.
 - [ ] A. ⭐ **Shapes.** Cups of different shapes: a straight tea glass in its holder, a
   tulip glass that narrows at the waist, a wide bowl. The level no longer climbs evenly, so
   the right stop sits at a different height in each, and the shape is what you learn.
@@ -63,6 +51,22 @@ $18–19. Moving all five (26 KB) saves about $1, about 5%. Arcade sessions woul
 
 The ⭐ is a production doc change, so it waits for your tick rather than being taken; an
 arcade session makes it. Nothing in the studio depends on it.
+
+**Q17. When does a studio pull request merge?** (plan 09, backlog #49,
+[SHS-074](../iterations/09/tickets/SHS-074-skill-describes-pull-requests.md)). [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md) §5 says a ticket's pull request merges when CI is green and
+"the review approves", but the sprint's review runs once, after every build, and a later
+ticket often builds on an earlier one. The ⭐ is written into the skill in sprint 09 and
+used from sprint 10.
+- [ ] A. ⭐ **At the end of its build.** It squash-merges when CI and the local `push` stage
+  are green, which is when trunk pushes today, also before review. The sprint's review
+  posts the Independent Reviewer's verdict on each pull request and fixes forward. A
+  production fix is the exception: its pull request stays open until its review record
+  exists (ADR-0008).
+- [ ] B. **After its own review.** The Independent Reviewer reviews each pull request before
+  it merges: one more Opus agent per ticket, about $1 each, so about $3 (about 17 %) a sprint.
+- [ ] C. **All at the sprint's review.** Pull requests stay open and stack on each other
+  until review, then merge together. A later ticket branches from an earlier one's branch.
+- [ ] D. Something else: ______
 
 **Q5. Anything else** about how you want to run this company, what a good review looks
 like, or things it must never do?

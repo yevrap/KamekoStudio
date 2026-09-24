@@ -13,9 +13,9 @@
  * iterations ship past it.
  */
 export const PULSE = {
-  iteration: '08',
+  iteration: '09',
   shipped: '2026-09-24',
-  summary: 'Shipped: the studio\'s first original game, Samovar, where you pour tea for an evening of ten guests by feel, and River Run\'s power-ups now glow from far up the river so you can steer for them.'
+  summary: 'In progress: Samovar\'s second pour. Three tea glasses of different shapes that each fill in the same time, a hair over the brim costing a star instead of the cup, and your best evening on the first screen.'
 };
 
 /**
