@@ -53,7 +53,7 @@ hold both halves, the far-off pickup lands first and the label goes back to the 
   still `Box3.setFromObject(mesh)`, the mesh alone. The power-up label has a set
   `line-height`/`height` of 16 px: it was 28 px with the shield's emoji and 23 px without,
   now 26 px in all three states at both widths. Both changes are recorded in the fork's
-  section of `studio/README.md` (the fork's record of how it differs, since SHS-060 retired
+  section of `studio/README.md` (the fork's record of how it differs, since [SHS-060](../../06/tickets/SHS-060-river-run-power-ups.md) retired
   the byte-for-byte edit list) and in comments tagged SHS-069 in the file.
 - **Tested by:** `tests/studio/river-run-fork.test.mjs` section 6, red first against the old
   fork (8.0×8.0 and 9.0×10.0 px; label 28/23/28 px), then green: the pickup is measured by

@@ -9,7 +9,8 @@ coverage), 03 (maintenance: the `SHS-` prefix, TD-009 diagnosed, one file per ti
 sprint 1 of 3: River Run forked, and the 3D page's River Run portal opens the fork), 06
 (E1 · sprint 2 of 3: the fork's first experiment, power-ups; ticket numbers link), 07
 (E1 · sprint 3 of 3: power-ups you can read, the arcade's River Run restarts; E1 done, E2
-proposed) · latest tag `studio-iteration-07`
+proposed), 08 (E2 · sprint 1 of 3: *Samovar*, the studio's first original game; the fork's
+pickups glow from afar) · latest tag `studio-iteration-08`
 **Live:** https://yevrap.github.io/KamekoStudio/studio/ ·
 [Overtighten](https://yevrap.github.io/KamekoStudio/studio/games/overtighten/) ·
 [River Runner 3D, the fork](https://yevrap.github.io/KamekoStudio/studio/games/river-run/)
@@ -100,11 +101,17 @@ own, and the 3D page's River Run portal now leads to it.
 Iteration 06 ran the fork's first experiment: a shield and a spread shot float down the
 river. It also fixed a restart that could freeze the fork, found the same freeze in the
 arcade's River Run (queued in both lanes), and made every studio ticket number in the docs
-a link. Sprint 07 is E1's last granted sprint.
+a link.
 
-**Open decisions:** the Keep / Iterate / Kill on the power-ups, in
-`docs/studio/iterations/06/review.md` (E1 needs it to finish); Q10 (should a production fix
-also need your approval?), Q1 (the name) and Q5 (anything else), in
+Iteration 07 made the power-ups readable at phone width and fixed the arcade's River Run
+restart freeze the fork had found. E1 finished inside its budget.
+
+Iteration 08 opened E2 with the studio's first game of its own: **Samovar**, pouring tea
+for an evening of guests, judged by colour. The Playtester said Iterate, and sprint 09
+acts on that. The fork's pickups now glow from far up the river (Keep).
+
+**Open decisions:** Q15 (what makes Samovar's cups different), Q16 (trim the root
+`CLAUDE.md`), Q14 (the ⭐ was built) and Q5 (anything else), in
 [Shadow Studio — Questionnaire](questionnaire.md).
 
 ---

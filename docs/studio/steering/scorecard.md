@@ -2,16 +2,40 @@
 
 One row per iteration, written at close-out. The point is the trend, not the numbers.
 
-| # | Goal | Tickets (done/committed) | Fix rounds | Checks caught | Debt +/− | Docs | Subagents | Stops for Yev | K / I / K | Output tokens | Costliest step |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| 00 | Stand up the company | 11/9 | 3 | 6 built + 17 reviewed | +5 / −0 | 33 repo docs, 9 planning notes | 2 | 0 | pending | — | — |
-| 01 | Identity, shelf, portals | 9/3 | 7 | 1 built + 26 reviewed | +1 / −1 | 9 repo docs, 7 planning notes | 2 (3 review passes) | 1 | pending | — | — |
-| 02 | First experiment + boot coverage | 18/2 | 14 | 84 built + 10 rejections | +2 / −1 | 18 tickets, 8 repo docs, 7 planning notes | 11 (10 review passes + QA) | 1 | pending | — | — |
-| 03 | Maintenance: ticket prefix, TD-009 diagnosed, one file per ticket | 7/3 | 6 | 7 built + 19 reviewed | +2 / −0 | 7 tickets + 3 reconstructed, 2 ADRs, 9 repo docs, 9 planning notes | 4 (2 rounds × QA + reviewer) | 2 | pending | — | — |
-| 04 | First production fix, under a written permission; trunk-based trial | 5/3 | 7 | 4 built + 24 reviewed | +2 / −3 | 5 tickets, 1 ADR, 1 review record, 16 repo docs, 9 planning notes, 3 context files, 1 skill | 4 (2 rounds × QA + reviewer) | 0 | pending | — | — |
-| 05 | E1 · 1 of 3: River Run forked, the 3D portal opens it | 4/3 | 0 | 6 built + 12 reviewed | +1 / −0 | 4 tickets, 1 ADR, the fork procedure, the ticket template, the first Active rules list, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | pending | — | — |
-| 06 | E1 · 2 of 3: River Run's first experiment (power-ups), ticket numbers link | 4/3 | 1 | 3 built + 7 reviewed | +0 / −1 | 4 tickets, the ticket-link script, the ticket template, Active rules revised, 1 skill edit, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | 0 / 1 / 0 (Playtester) | — | — |
-| 07 | E1 · 3 of 3: power-ups you can read, a River Run that restarts; E1 done, E2 proposed | 4/3 | 1 | 3 built + 8 reviewed | +0 / −0 | 4 tickets, 1 production-fix review, a guardrail exception, the handbook's Standing rules, E2, 1 skill + workflow edit, 1 arcade doc | 4 (1 round × QA + reviewer + Playtester; Playtester at plan) | 0 | 2 / 0 / 0 (Playtester) | 213,718 to close (the retro's own not counted here) | review, 82,272 (its three reviewers included) |
+| # | Goal | Tickets (done/committed) | Fix rounds | Checks caught | Debt +/− | Docs | Subagents | Stops for Yev | K / I / K | Output tokens | Cost, plan to close (writes / reads / output) | Costliest step |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 00 | Stand up the company | 11/9 | 3 | 6 built + 17 reviewed | +5 / −0 | 33 repo docs, 9 planning notes | 2 | 0 | pending | — | — | — |
+| 01 | Identity, shelf, portals | 9/3 | 7 | 1 built + 26 reviewed | +1 / −1 | 9 repo docs, 7 planning notes | 2 (3 review passes) | 1 | pending | — | — | — |
+| 02 | First experiment + boot coverage | 18/2 | 14 | 84 built + 10 rejections | +2 / −1 | 18 tickets, 8 repo docs, 7 planning notes | 11 (10 review passes + QA) | 1 | pending | — | — | — |
+| 03 | Maintenance: ticket prefix, TD-009 diagnosed, one file per ticket | 7/3 | 6 | 7 built + 19 reviewed | +2 / −0 | 7 tickets + 3 reconstructed, 2 ADRs, 9 repo docs, 9 planning notes | 4 (2 rounds × QA + reviewer) | 2 | pending | — | — | — |
+| 04 | First production fix, under a written permission; trunk-based trial | 5/3 | 7 | 4 built + 24 reviewed | +2 / −3 | 5 tickets, 1 ADR, 1 review record, 16 repo docs, 9 planning notes, 3 context files, 1 skill | 4 (2 rounds × QA + reviewer) | 0 | pending | — | — | — |
+| 05 | E1 · 1 of 3: River Run forked, the 3D portal opens it | 4/3 | 0 | 6 built + 12 reviewed | +1 / −0 | 4 tickets, 1 ADR, the fork procedure, the ticket template, the first Active rules list, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | pending | — | — | — |
+| 06 | E1 · 2 of 3: River Run's first experiment (power-ups), ticket numbers link | 4/3 | 1 | 3 built + 7 reviewed | +0 / −1 | 4 tickets, the ticket-link script, the ticket template, Active rules revised, 1 skill edit, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | 0 / 1 / 0 (Playtester) | — | — | — |
+| 07 | E1 · 3 of 3: power-ups you can read, a River Run that restarts; E1 done, E2 proposed | 4/3 | 1 | 3 built + 8 reviewed | +0 / −0 | 4 tickets, 1 production-fix review, a guardrail exception, the handbook's Standing rules, E2, 1 skill + workflow edit, 1 arcade doc | 4 (1 round × QA + reviewer + Playtester; Playtester at plan) | 0 | 2 / 0 / 0 (Playtester) | 213,718 to close (the retro's own not counted here) | **$17.98** ($7.96 / $5.75 / $4.27), measured at retro 08 | review, $8.32 (82,272 output tokens, its three reviewers included) |
+| 08 | E2 · 1 of 3: Samovar, the studio's first original game; the fork's pickups glow from afar | 4/3 | 2 | 1 built + 9 reviewed | +0 / −0 | 4 tickets, 3 pitches, Samovar's design note, Q14–Q16, the ticket template, the cost reader, 3 skill + workflow edits | 4 (1 round × QA + reviewer + Playtester; Playtester at plan) | 0 | 1 / 1 / 0 (Playtester) | 237,398 to close | **$18.37** ($7.30 / $6.32 / $4.75) | review, $7.86 (43%; 93,988 output tokens) |
+
+## Iteration 08 — what the row means
+
+- **Tickets, 4 against 3.** [SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md), 069 and 070 were committed; [SHS-071](../iterations/08/tickets/SHS-071-iteration-record.md) is the record.
+  None was opened by review.
+- **What a player got.** *Samovar*, the studio's first game of its own, on the realm's
+  shelf and playable on a phone (the Playtester: Iterate), and the fork's pickups glowing
+  from far up the river (Keep).
+- **Fix rounds, 2**, both in the review step: [SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md) (the drawer and a hidden tab,
+  Space for every guest, IR08-3 to IR08-5) and [SHS-070](../iterations/08/tickets/SHS-070-checks-accept-studio-branches.md) (a ticket branch's wording,
+  IR08-6), each with a test shown red first.
+- **Checks caught, 1 + 9.** Built: `commit-lint` on the executive's unticketed commit at
+  plan. Reviewed: IR08-1 to IR08-7 and the Playtester's two notes; the two design findings
+  became backlog #51–#53 with Q15.
+- **Cost, first measured in dollars** (issue #4): $18.37 from plan to close against
+  $17.98 for 07, the same measure. Review is 43% of it and fell 6%; the Independent
+  Reviewer fell from $3.55 to $1.10 after retro 07's change. By output tokens alone review
+  rose 14%. The retro's change: the Playtester keeps screenshots out of its context.
+- **Stops for you, 0.** Q16 (trim the root `CLAUDE.md`) waits for your tick but blocks
+  nothing.
+- **The honest summary.** The studio made a game of its own that a player gets better at
+  within an evening. Its hook didn't hold up to arithmetic, and review caught that, so
+  sprint 09 is about making the cups matter and the brim forgiving.
 
 ## Iteration 07 — what the row means
 

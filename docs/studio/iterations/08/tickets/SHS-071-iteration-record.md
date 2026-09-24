@@ -62,4 +62,7 @@ Nothing beyond the record.
 - **Deferred:** to the `retro` step, under this ticket: `retro.md`, the realm's retro line,
   `learning-log.md`, `tech-debt.md`, the ticket-link script's run, the scorecard's cost per
   step, the steering views, and the two `feedback` issues (#3, #4) closed with what changed.
+  **All done at the retro**, plus the cost reader (`tests/studio/sprint-cost.mjs`, its lib
+  and tests) and the skill, workflow and template edits in [retro.md](../retro.md).
+  `tech-debt.md` needed no change: no row opened or closed.
 - **Fix rounds used:** 0 / 2

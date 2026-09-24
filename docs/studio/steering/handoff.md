@@ -2,81 +2,84 @@
 
 *The latest iteration's report. Rewritten by each run; never edited by hand.*
 
-## Iteration 07 — power-ups you can read, a River Run that restarts, and E1 done
+## Iteration 08 — Samovar, the studio's first game of its own
 
-**E1 · sprint 3 of 3 (+1 reserve, unclaimed).** E1 is done inside its budget. E2 is
-proposed in [Direction](direction.md), and plan 08 adopts it unless you change it.
+**E2 · sprint 1 of 3 (+1 reserve, unclaimed).**
 
 **Summary**
 
-- **The fork's power-ups, second pass** ([SHS-064](../iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md)). The score stays on one line at 320
-  and 390 wide, the power-up label has its own pill below it, and "✦ SPREAD 6.0s" counts
-  real seconds at any frame rate and waits while the drawer is open. The Playtester's
-  Iterate from 06 became a Keep.
-- **The arcade's River Run never freezes on restart** ([SHS-066](../iterations/07/tickets/SHS-066-production-river-run-restart.md), arcade p0-17). The fix
-  the fork proved in 06, applied to production under ADR-0008: tests red 5 of 5 before it,
-  reviewed before it was pushed, 80 restarts clean at review. Kept by the Playtester.
-- **The studio can edit its own skills and conductor** in a ticketed commit ([SHS-065](../iterations/07/tickets/SHS-065-studio-edits-its-own-workflow.md)).
-  This retro was the first to use it.
+- ***Samovar*** ([SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md)). An evening of ten guests: hold to pour
+  the brew, hold again to top up with water, and match each guest's colour between the
+  dashed line and the brim. The Playtester said **Iterate**. The loop reads at once and
+  players improve within an evening (5 → 24 of 30), but a hair over the brim costs the
+  whole cup, and the review's arithmetic showed the cups don't change the decision. Sprint
+  09 fixes both (#51–#54, Q15).
+- **The fork's pickups glow from far up the river** ([SHS-069](../iterations/08/tickets/SHS-069-river-run-power-ups-read-at-a-glance.md)), and the power-up
+  label keeps one height. **Keep.**
+- **The checks accept a ticket branch and a squash-merged pull request** ([SHS-070](../iterations/08/tickets/SHS-070-checks-accept-studio-branches.md)),
+  the first part of ADR-0011's pull-request flow.
 
-**Review: one round.** The Independent Reviewer (`opus`) and QA (`sonnet`) each approved
-with findings; the Playtester (`opus`) kept both player-visible changes. Four findings
-fixed in the step, one to the backlog with Q13 (#43), three Playtester notes to the
-backlog (#44–#46).
+**Review: one round.** The Independent Reviewer (`opus`) approved with findings and QA
+(`sonnet`) approved. Four small findings were fixed in the step with tests shown red
+first, two design findings went to the backlog with Q15, and one was declined with its reason.
 
 **Checks**
-- **Gate** against `studio-iteration-06`: red once on `docs-current` ([SHS-063](../iterations/06/tickets/SHS-063-exempt-adr-0011-commits.md) lacked its
-  Result fields), then 11/11.
-- **Post-deploy** after the tag: all three markers found on the first attempt.
-- **Close-out 3/3** at this retro: iteration docs, doc cleanliness (160 documents),
-  changelog.
+- **Gate** against `studio-iteration-07`: 11/11 on the first run, the first time in four
+  sprints.
+- **Post-deploy** after the tag: all three markers found (the realm's pulse on the second
+  attempt).
+- **Close-out** at this retro: see the retro's commit.
 
-**Live:** https://yevrap.github.io/KamekoStudio/studio/games/river-run/ (or the River Run
-portal on https://yevrap.github.io/KamekoStudio/3d.html) ·
-https://yevrap.github.io/KamekoStudio/games/river-run/ · **Tag:** `studio-iteration-07`
+**Live:** https://yevrap.github.io/KamekoStudio/studio/games/samovar/ ·
+https://yevrap.github.io/KamekoStudio/studio/games/river-run/ · **Tag:** `studio-iteration-08`
 
 **Where the docs are**
 
-- **Iteration record:** `docs/studio/iterations/07/`: plan, log, review,
-  `reviews/SHS-066.md`, retro (with E1's epic review), and 4 tickets ([SHS-064](../iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md) to [SHS-067](../iterations/07/tickets/SHS-067-iteration-record.md)).
-- **Handbook:** `process.md` (*Standing rules*, the direction's eight under the same
-  numbers; the reviewers' models as ADR-0011 has them), `guardrails.md` (the skills and
-  conductor exception), `learning-log.md`, `CHANGELOG.md`.
-- **Workflow:** the reviewers' prompt, in `.claude/workflows/studio-sprint.js` and the
-  `studio-sprint` skill's prompts file.
-- **Direction:** E1 marked done; E2 under *Proposed next epic*.
+- **Iteration record:** `docs/studio/iterations/08/`: plan (with the three pitches), log,
+  review, retro, and 4 tickets ([SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md) to [SHS-071](../iterations/08/tickets/SHS-071-iteration-record.md)).
+- **The game:** `docs/studio/games/samovar.md`, the design note with what review found.
+- **Cost:** `tests/studio/sprint-cost.mjs` prices a sprint's writes and reads from the
+  local transcripts.
+- **Handbook:** `templates/ticket.md` (a game ticket states its numbers), `process.md` and
+  [Direction](direction.md) (rule 8 in dollars), `team/playtester.md`, `learning-log.md`.
+- **Skills:** `studio-iteration` (the retro's cost step), `studio-request` (a request's
+  path), and the Playtester's prompt in the workflow and the `studio-sprint` prompts file.
 
 **Trend.**
 
-| | 04 | 05 | 06 | 07 |
+| | 05 | 06 | 07 | 08 |
 |---|---|---|---|---|
-| Tickets (done/committed) | 5/3 | 4/3 | 4/3 | **4/3** |
-| Review-opened tickets | 1 | 0 | 0 | **0** |
-| Review passes | 4 | 2 | 2 | **2 + Playtester** |
-| Fix rounds | 7 | 0 | 1 | **1** |
-| Debt (+/−) | +2/−3 | +1/−0 | +0/−1 | **+0/−0** |
-| Output tokens | — | — | — | **213,718** to close |
+| Tickets (done/committed) | 4/3 | 4/3 | 4/3 | **4/3** |
+| Review-opened tickets | 0 | 0 | 0 | **0** |
+| Fix rounds | 0 | 1 | 1 | **2** |
+| Debt (+/−) | +1/−0 | +0/−1 | +0/−0 | **+0/−0** |
+| Output tokens, plan to close | — | — | 213,718 | **237,398** |
+| Cost, plan to close | — | — | $17.98 | **$18.37** |
+| Review's cost | — | — | $8.32 | **$7.86** |
 
-[Shadow Studio — Scorecard](scorecard.md) has row 07.
+[Shadow Studio — Scorecard](scorecard.md) has row 08.
 
 **Changes from the retro**
-- **The costliest step was review** (82,272 of 213,718 tokens, all three reviewers
-  included). The Independent Reviewer and QA no longer re-run evidence the tickets already
-  count, or play what the Playtester is playing. Sprint 08's retro checks the number.
-- E1's rules are in the handbook now, under the same numbers.
-- Backlog #47: `docs-current` also runs at `push`. It was red at the gate three sprints
-  running, each time for a new reason.
-- Active rules: *run `--stage=ticket` before every commit* left the list (the skill does
-  it); *every ticket starts from the template* joined it.
+- **Your issue #4:** the scorecard keeps each sprint's cost in dollars (writes / reads /
+  output), measured by a new reader, with sprint 07 back-filled for comparison. The
+  sprint cost about the same as 07 (+2%) and built a whole game.
+- **The costliest step is still review (43%).** The Playtester now keeps screenshots out of
+  its context unless it needs to see how something looks. The next retro checks review's
+  writes ($3.43) and the Playtester's writes and reads ($1.97).
+- **Your issue #3:** the team picked and built an original game on its own; game code went
+  from about 6% to 30% of changed lines. The request lane hasn't been used yet;
+  `studio-request` now tells you a request's whole path when you file one.
+- **A game ticket states its numbers before the build** (the ticket template), since
+  Samovar's hook failed on arithmetic that review did in a few lines.
 
-**Did the last retro's changes help?** Yes. The close order held, regression tests showed
-red every run with a count, layout was measured at 320, and the new clock rule was applied.
-#21 missed the process slot again, to your ADR-0011 request.
+**Did the last retro's changes help?** Yes. The Independent Reviewer stopped repeating
+counted evidence, and its cost fell from $3.55 to $1.10. #47 wasn't built, and the gate
+was green anyway.
 
 **Needs you**
 
-Nothing blocks. Optional: strike or reshape E2 before plan 08; tick Q13; the two
-real-phone questions in [07's review](../iterations/07/review.md).
+Nothing blocks. Optional: Q16 (trim the root `CLAUDE.md`); Q15 before plan 09 if you don't
+want cup shapes; the three real-phone questions in [08's review](../iterations/08/review.md).
 
-**Say next:** "run the studio" (sprint 08, watched) or `studio next`, in a new session.
+**Say next:** "run the studio" (sprint 09, watched) or `studio next`, in a new session.
 [Shadow Studio — Next step](next.md) says which step is due.

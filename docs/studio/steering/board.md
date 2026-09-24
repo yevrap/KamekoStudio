@@ -3,17 +3,19 @@
 *Regenerated from the repo by each run. Don't hand-edit — add anything you want to say to
 [Shadow Studio — Feedback Inbox](inbox.md) instead.*
 
-**Epic E1 · The Studio Wing opens · done in 3 of 3 sprints (reserve unclaimed).** E2, *the
-studio's first original game worth playing*, is proposed in [Direction](direction.md);
-plan 08 adopts it unless you strike or change it.
+**Epic E2 · The studio's first original game worth playing · sprint 1 of 3 (+1 reserve,
+unclaimed).** Its first game, *Samovar*, is live as a prototype with the Playtester's
+Iterate; sprint 09 acts on it.
 
-**Iteration 07 · shipped.** The River Run fork's power-ups read at phone width and count
-real seconds, and the arcade's River Run no longer freezes on restart. Tag
-`studio-iteration-07`. Live: https://yevrap.github.io/KamekoStudio/studio/games/river-run/
-(or the River Run portal on https://yevrap.github.io/KamekoStudio/3d.html) and
-https://yevrap.github.io/KamekoStudio/games/river-run/
+**Iteration 08 · shipped.** *Samovar*: pour tea for an evening of ten guests, one button,
+each cup's strength judged by its colour. The River Run fork's pickups glow from far up
+the river. Tag `studio-iteration-08`. Live:
+https://yevrap.github.io/KamekoStudio/studio/games/samovar/ and
+https://yevrap.github.io/KamekoStudio/studio/games/river-run/ (or the River Run portal on
+https://yevrap.github.io/KamekoStudio/3d.html)
 
-One review round; both passes approved with findings. The Playtester kept both changes.
+One review round; the Independent Reviewer approved with findings, QA approved. The
+Playtester: Samovar **Iterate**, the fork's pickups **Keep**.
 
 ## Waiting on you
 
@@ -21,37 +23,37 @@ Nothing blocks. When you have a minute:
 
 | What | Where |
 |---|---|
-| Strike or change E2 before plan 08 adopts it | *Proposed next epic* in [Direction](direction.md) |
-| May a production fix bump `version.json`? (⭐ yes; waits for your tick, since it touches releases) | Q13 in [Shadow Studio — Questionnaire](questionnaire.md) |
-| Two things only a real phone can answer: River Run's music after many restarts on an iPhone, and whether a spread shot is worth grabbing at 120 Hz | [07's review](../iterations/07/review.md) |
-| Name the realm, if "Shadow Studio" isn't it | Q1, same questionnaire |
+| Trim the root `CLAUDE.md` to make every agent's start cheaper? (⭐ move two arcade-only blocks; about 2% a sprint) | Q16 in [Shadow Studio — Questionnaire](questionnaire.md) |
+| What makes Samovar's cups different (⭐ shapes, taken at plan 09 unless you tick another) | Q15, same questionnaire |
+| Three things only a real phone can answer: Samovar's small-cup timing under a thumb, Golden vs Amber in normal light, River Run's glow outdoors | [08's review](../iterations/08/review.md) |
+| Strike the Playtester's verdicts if you disagree | [08's review](../iterations/08/review.md), or "studio verdict: …" |
 
 ## Next
 
-`plan` sprint 08, **E2 · sprint 1 of 3**. At the top of
+`plan` sprint 09, **E2 · sprint 2 of 3**. At the top of
 [Shadow Studio — Backlog](backlog.md):
 
-1. #48 E2's first game: three pitches, the pick with its ⭐, the core mechanic as a
-   prototype (refined at plan)
-2. #44 the fork's power-up label keeps one height (Ready)
-3. #42 a far-off pickup reads at a glance (Ready)
-4. #40 branches and pull requests, first part — the process slot (split at plan)
-5. #37 a deterministic restart test for the fork (Ready)
+1. #51 Samovar: a forgiving brim (Ready)
+2. #52 Samovar: every cup fills in the same time, and the result card leaves the rim in
+   view (Ready, with #53)
+3. #53 Samovar: cups of different shapes, so the cup changes the decision (Ready, Q15 ⭐)
+4. #54 Samovar: the best evening on the first screen (Ready)
+5. #49 branches and pull requests, part 2 — the process slot (Ready)
 
-#21 and #47 (Ready) wait for later process slots.
+#21, #47 and #43 wait for later process slots.
 
 ## Blocked
 
 Nothing.
 
-## Done — iteration 07
+## Done — iteration 08
 
 | Ticket | What |
 |---|---|
-| [SHS-064](../iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md) | **The fork's score and power-up label read at 320 and 390; the spread shot counts real seconds** |
-| [SHS-065](../iterations/07/tickets/SHS-065-studio-edits-its-own-workflow.md) | A ticketed studio commit may change the studio's own skills and conductor |
-| [SHS-066](../iterations/07/tickets/SHS-066-production-river-run-restart.md) | **The arcade's River Run never freezes on restart** (p0-17, reviewed before push) |
-| [SHS-067](../iterations/07/tickets/SHS-067-iteration-record.md) | The iteration's record, E1's epic review and E2 |
+| [SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md) | ***Samovar*, the studio's first original game: pour tea for an evening of guests** |
+| [SHS-069](../iterations/08/tickets/SHS-069-river-run-power-ups-read-at-a-glance.md) | **The fork's far-off pickups glow; the power-up label keeps one height** |
+| [SHS-070](../iterations/08/tickets/SHS-070-checks-accept-studio-branches.md) | The checks accept a ticket branch and a squash-merged pull request |
+| [SHS-071](../iterations/08/tickets/SHS-071-iteration-record.md) | The iteration's record, and the retro's cost reader |
 
 ## Open debt
 
@@ -66,7 +68,7 @@ Nothing.
 | TD-012 | A production fix to a test harness could empty it with every check green before its review |
 | TD-013 | A merge that takes a fix file from one parent is invisible to `path-guard` |
 
-No row opened or closed in 07. Full register, with the cost of leaving each one:
+No row opened or closed in 08. Full register, with the cost of leaving each one:
 `docs/studio/tech-debt.md` in the repo.
 
 ---

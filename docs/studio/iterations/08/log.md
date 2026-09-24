@@ -21,7 +21,7 @@ is committed.
   Q14, with its hypothesis written into the ticket before the build. *Next:* review, with
   the Playtester, against that hypothesis. *Blocked:* nothing.
 
-## Session 2 — build SHS-068 (2026-09-24)
+## Session 2 — build [SHS-068](tickets/SHS-068-samovar-core.md) (2026-09-24)
 
 - **Frontend Developer** — *Done:* [SHS-068](tickets/SHS-068-samovar-core.md), Samovar's core loop in `studio/games/samovar/`
   (`8a351b7`), on the shelf as `PROTOTYPE`, design note in `docs/studio/games/samovar.md`.
@@ -31,7 +31,7 @@ is committed.
   12 cup-and-strength pairs so no pour repeats. *Next:* review, against the hypothesis.
   *Blocked:* nothing.
 
-## Session 3 — build SHS-069 (2026-09-24)
+## Session 3 — build [SHS-069](tickets/SHS-069-river-run-power-ups-read-at-a-glance.md) (2026-09-24)
 
 - **Frontend Developer** — *Done:* [SHS-069](tickets/SHS-069-river-run-power-ups-read-at-a-glance.md), both halves (`9c00a38`): a far-off
   pickup glows its colour about 26 px across (was 8–10 px), the pickup box unchanged, and
@@ -39,7 +39,7 @@ is committed.
   red then green; `--stage=ticket` 5/5, `--stage=push` green. *Next:* build
   [SHS-070](tickets/SHS-070-checks-accept-studio-branches.md). *Blocked:* nothing.
 
-## Session 4 — build SHS-070 (2026-09-24)
+## Session 4 — build [SHS-070](tickets/SHS-070-checks-accept-studio-branches.md) (2026-09-24)
 
 - **Tech Lead** — *Done:* [SHS-070](tickets/SHS-070-checks-accept-studio-branches.md) (`4b8dd72`): `on-main` is now `on-branch`, which
   accepts `main` or `studio/SHS-NNN-slug` and still fails behind `origin/main`, and

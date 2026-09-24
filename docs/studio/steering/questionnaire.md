@@ -45,6 +45,25 @@ identical. The ⭐ is built in sprint 09 with #51 and #52.
   skill (for example, strengths closer together).
 - [ ] D. Something else: ______
 
+**Q16. Trim the root `CLAUDE.md`?** (retro 08, issue #4). Every agent loads it, and in
+sprint 08 that was 13 agents and about 365 API requests. It is 46 KB. Most of it is arcade
+reference a studio step never uses. It sits outside the studio's paths, so this is yours
+to decide, and the studio won't edit it. Measured sizes: the localStorage table 8.0 KB,
+the games table 7.6 KB, Keypad Quest's architecture notes 3.2 KB, the settings drawer API
+3.9 KB, the mobile patterns 3.7 KB. **What it would save:** moving the first and third (11
+KB, about 3k tokens) saves about $0.40 a sprint at list price, about 2% of a sprint's
+$18–19. Moving all five (26 KB) saves about $1, about 5%. Arcade sessions would read them from
+`games/CLAUDE.md`, which loads when an agent works under `games/`.
+- [ ] A. ⭐ **Move the two arcade-only reference blocks** (the localStorage table and the
+  Keypad Quest notes) into `games/CLAUDE.md`, and leave a one-line pointer. It is small but
+  free, and it's where the arcade's agents already look for game detail.
+- [ ] B. **Move all five**, keeping a short summary of each in the root file.
+- [ ] C. **Leave it.** 2–5% isn't worth reshaping the arcade's context.
+- [ ] D. Something else: ______
+
+The ⭐ is a production doc change, so it waits for your tick rather than being taken; an
+arcade session makes it. Nothing in the studio depends on it.
+
 **Q5. Anything else** about how you want to run this company, what a good review looks
 like, or things it must never do?
 i want it to run like a scrum team, following ceremonies and getting better

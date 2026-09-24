@@ -17,7 +17,9 @@ place. The iteration sections below are the history, and they don't bind on thei
    (01, 02). A checker ticket lists its refusal cases in its criteria (05; now in
    `templates/ticket.md`)
 4. **Copy a marker from the diff and a number from a command.** A number in the record
-   names where it was measured. (03, 04)
+   names where it was measured, and is checked against a second source before it's
+   trusted. (03, 04; widened in 08: a transcript's output count is the stream's first
+   one, under a tenth of the real figure)
 5. **Gate a push on the stage's own exit code**, never on a filter of its output. (05)
 6. **Every ticket starts from `templates/ticket.md`**, in a sprint or between sprints, and
    carries its Result fields when it is Done. (07; until backlog #47 makes it a check)
@@ -29,6 +31,11 @@ place. The iteration sections below are the history, and they don't bind on thei
    measured in real time, whatever the game counts internally. (06, held in 07)
 10. **Every browser trial gets its own profile**, so one trial's saves can't decide
     another's. (03, 05; the half of the old rule 6 the template doesn't carry)
+
+*At the 08 retro:* the sprint's main lesson, *check a hook's numbers before building it*,
+went straight into `templates/ticket.md` rather than onto this list, so nothing was
+promoted. Rule 4 was widened (above). Rule 6 held: the gate was green on its first run, and
+it stays until #47 turns it into a check.
 
 *Converted at the 07 retro:*
 - *Run `--stage=ticket` before every commit* (05) is a step of the `studio-iteration`
@@ -353,3 +360,28 @@ place. The iteration sections below are the history, and they don't bind on thei
 - **A fix to one file can leave its twin wrong.** Review matched the reviewer's role file to
   ADR-0011 on models but not `process.md`, which said the opposite. When a finding corrects
   a statement, search for the statement, not the file.
+
+## Iteration 08
+
+- **A hook is a claim with numbers behind it; work them out before the build.** Samovar's
+  design said the cup's size was the cue for how long to pour. With one cup shape, the
+  three-star stop is the same share of every cup's height, and the review's arithmetic
+  showed that in a few lines. The ticket template now asks for those numbers, per case the
+  player meets.
+- **A test that pours to exact targets can't find a cliff at ordinary human timing.**
+  Samovar's browser tests passed while a first evening with a 150–200 ms release lag
+  scored 0 of 30. Only the Playtester's hands found it. When a game turns on timing, a test
+  also plays it with a human's lag.
+- **Measure the bill, not the part that's easy to count.** Output tokens were a quarter of
+  the cost. By output tokens, retro 07's change made review worse (+14%); in dollars it
+  made review 6% cheaper. Cache writes, each fresh agent's starting context, were the
+  biggest part.
+- **A log's number is what the log counts, not what its name says.** Claude Code's
+  transcripts record `output_tokens` as the stream opens: 18k over the sprint where the
+  workflow measured 237k. The first price for Opus cache reads, a tenth of input, was also
+  wrong. Checking against the executive's own sprint-07 figures caught both before they
+  went into the record.
+- **A request lane that nobody has used is a guess.** The path from an issue to a build
+  existed in the skills, but nobody had filed a request, and the path wasn't written where the
+  executive would see it while filing. It is now in `studio-request`'s report. The first
+  real request tests it.

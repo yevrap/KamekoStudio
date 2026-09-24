@@ -3,7 +3,7 @@
 **Verdict:** Approve with findings (Independent Reviewer, `opus`, round 1 of 1)
 
 QA (`sonnet`, round 1 of 1): **Verdict:** Approve. Every claim in the Result sections of
-SHS-068, SHS-069 and SHS-070 reproduced against the code and real local runs, and QA found
+[SHS-068](tickets/SHS-068-samovar-core.md), [SHS-069](tickets/SHS-069-river-run-power-ups-read-at-a-glance.md) and [SHS-070](tickets/SHS-070-checks-accept-studio-branches.md) reproduced against the code and real local runs, and QA found
 no defect. Playtester (`opus`): **Iterate** on Samovar, **Keep** on the River Run fork's
 pickups. Neither reviewer rejected, so there is no second round.
 
@@ -117,7 +117,7 @@ server and made no change to the repository.
 | IR08-5 | `studio/README.md` said a cup short of the dashed line loses one star; below three quarters of the brim the code takes two | nit | **Fixed now**, `14d4db8`: the README gives both rules, as the design note does |
 | IR08-6 | On a ticket branch, `on-branch`'s pass detail says *(unpushed)* whenever the branch is ahead of `origin/main`, which is always true of a pushed branch waiting for its merge | nit (process) | **Fixed now**, `fd3cc18`: a ticket branch reads *(not merged into main yet)*; *(unpushed)* stays for `main`. One case in `branch-check.test.mjs`, red first, then 19/19 |
 | IR08-7 | `SQUASH_SUFFIX_RE` strips any trailing ` (#N)`, so a commit made straight on `main` could add a made-up suffix and pass `commit-lint` at up to 85 characters | nit (process) | **Declined.** The lint is a style check on subjects the team writes, not a boundary against an adversary, and the slack is at most the suffix's length. Telling a real squash-merge from a hand-written suffix would mean asking GitHub about each commit, which the push stage shouldn't depend on. Revisit if #50's first real pull request shows a reason |
-| IR08-8 | No defect: SHS-069's glow is its own scene object, the pickup box is unchanged and the glow is disposed; SHS-070's exemption is the full hash; no production path changed; Samovar's header clears the settings button at 320 and 390; a real touch hold pours | — | Recorded |
+| IR08-8 | No defect: [SHS-069](tickets/SHS-069-river-run-power-ups-read-at-a-glance.md)'s glow is its own scene object, the pickup box is unchanged and the glow is disposed; [SHS-070](tickets/SHS-070-checks-accept-studio-branches.md)'s exemption is the full hash; no production path changed; Samovar's header clears the settings button at 320 and 390; a real touch hold pours | — | Recorded |
 | Playtester | Samovar: the brim is a cliff, small cups are about twice as hard, the result card hides the tall glass's top, a first best isn't celebrated, the best shows only at the end, an evening lasts about a minute | player-facing | **Backlog #51, #52, #54** (Ready), **#53** with Q15. The evening's length is the second layer's question (sprint 10, per the epic) |
 | Playtester | The realm's River Runner card still reads *Iteration 07* | record | **Already covered:** `close` updates the shelf entry of every game the sprint changed |
 

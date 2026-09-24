@@ -138,7 +138,7 @@ E2 unless the executive strikes or changes it.
 
 ## Reserved capacity
 
-The 20% went to the review fixes (IR-1, IR-2, IR-4, IR-5), SHS-063's relabel at close, the
+The 20% went to the review fixes (IR-1, IR-2, IR-4, IR-5), [SHS-063](../06/tickets/SHS-063-exempt-adr-0011-commits.md)'s relabel at close, the
 arcade roadmap row (p0-17), the handbook edits here and this record. Debt: +0 / −0. No
 shortcut was taken. The 0.1 s step cap below 10 fps is deliberate and written on the
 ticket, and the frame-counted river is #46, a change someone could want rather than debt.

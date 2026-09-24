@@ -27,8 +27,8 @@ export const PULSE = {
  * updating this line fails before it reaches the page.
  */
 export const LEARNED = {
-  iteration: '07',
-  line: 'Our three reviewers kept re-running the same restarts and screen widths the build had already counted, and review cost more than the rest of the sprint\'s builds together. They now leave counted evidence alone and spend their runs on what it doesn\'t reach.'
+  iteration: '08',
+  line: 'Samovar\'s big idea was that each cup\'s size tells you how long to pour. A reviewer\'s arithmetic showed it doesn\'t: with one cup shape, the right stop is the same share of every cup. A game ticket now shows its numbers before we build it, and the cups get shapes of their own next.'
 };
 
 /**
