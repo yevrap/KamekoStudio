@@ -19,15 +19,21 @@ place. The iteration sections below are the history, and they don't bind on thei
 4. **Copy a marker from the diff and a number from a command.** A number in the record
    names where it was measured. (03, 04)
 5. **Gate a push on the stage's own exit code**, never on a filter of its output. (05)
-6. **Run `--stage=ticket` before every commit**, ceremony commits included. (05)
+6. **Every ticket starts from `templates/ticket.md`**, in a sprint or between sprints, and
+   carries its Result fields when it is Done. (07; until backlog #47 makes it a check)
 7. **A convention change is checked for violations of the new rule by a test**, not a
    search. (03, 04)
 8. **A check that reads only what exists can't see what is missing.** Decide existence
    from an independent source. (03)
 9. **A game's clock is not the player's clock.** A number a player reads as seconds is
-   measured in real time, whatever the game counts internally. (06)
+   measured in real time, whatever the game counts internally. (06, held in 07)
 10. **Every browser trial gets its own profile**, so one trial's saves can't decide
     another's. (03, 05; the half of the old rule 6 the template doesn't carry)
+
+*Converted at the 07 retro:*
+- *Run `--stage=ticket` before every commit* (05) is a step of the `studio-iteration`
+  skill's `build` and a line of `process.md` (*Trunk, commits, tags*), so it no longer
+  needs a place on the list.
 
 *Converted at the 06 retro:*
 - *A comparison of nothing never passes* (04) is encoded in every check that compares two
@@ -322,3 +328,28 @@ place. The iteration sections below are the history, and they don't bind on thei
   gate before the records the gate needs, while `process.md` had them the right way round.
   The gate went red at close two sprints running. When a step fails the same way twice, compare the skill
   with the handbook before blaming the ticket.
+
+## Iteration 07
+
+- **A check that runs only at the gate finds a sprint's paperwork at the end.**
+  `docs-current` was red at close three sprints running, each time for a new reason. The
+  third was a ticket built between sprints without the template's Result fields. Where a
+  lesson keeps recurring in new shapes, move the check earlier rather than adding a rule
+  per shape (backlog #47).
+- **Fix the copy first, then the original with the copy's proof.** The fork's restart fix
+  (06) and its reproduction made the arcade's fix ([SHS-066](iterations/07/tickets/SHS-066-production-river-run-restart.md)) small and certain: the same
+  disposal, a test red 5 of 5 before it, and a reviewer who re-ran it red 3 of 3.
+- **Moving one timer to real time leaves the game on two clocks.** [SHS-064](iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md) put the
+  power-up timers on wall-clock seconds and left the river on frames. The label is now
+  honest, but on a 120 Hz screen a spread shot gives fewer shots. A clock change is
+  scoped system by system (#46), and the ticket says which systems stay on frames.
+- **A capped time step bends real time at very low frame rates.** The 0.1 s cap per update
+  keeps a stalled tab from skipping a power-up, and below 10 fps it stretches "6.0s" (about
+  8 s at 8 fps). A cap is a choice; the ticket states it with numbers.
+- **Parallel reviewers repeat each other unless told not to.** The Independent Reviewer,
+  QA and the Playtester re-ran the same restarts and widths the build had already counted,
+  and the review step cost 38% of the sprint. The reviewer prompt now names the evidence
+  not to repeat.
+- **A fix to one file can leave its twin wrong.** Review matched the reviewer's role file to
+  ADR-0011 on models but not `process.md`, which said the opposite. When a finding corrects
+  a statement, search for the statement, not the file.

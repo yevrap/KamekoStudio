@@ -25,7 +25,7 @@ folder means changing a live URL, so it gets cheaper the sooner it's decided.
 
 **Q13. Should a studio production fix bump `version.json`?** (Sprint 07 review, IR-3;
 backlog #43.) The arcade offers "New version available" to a player who already has it
-open only when `version.json` changes. The studio's production fixes (SHS-052, SHS-066)
+open only when `version.json` changes. The studio's production fixes ([SHS-052](../iterations/04/tickets/SHS-052-td-009-fixed.md), [SHS-066](../iterations/07/tickets/SHS-066-production-river-run-restart.md))
 never bumped it, because the path guard doesn't allow it, so a player with the arcade open
 keeps the unfixed page until a reload. It touches the arcade's release marker, so, unlike
 the other questions here, the team waits for a tick before building it.

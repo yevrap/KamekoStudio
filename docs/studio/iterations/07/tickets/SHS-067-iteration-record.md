@@ -56,8 +56,11 @@ Nothing beyond the record.
     `studio` issue list at plan; no new input arrived after it.
 - **Tested by:** `pulse-current.test.mjs`; `docs-current` and `reviewer-verdict` at the
   gate; `iteration-docs`, `changelog` and `doc-cleanliness` at close-out.
-- **Deferred:** to the `retro` step, under this ticket: `retro.md` with E1's epic review
-  and E2 under *Proposed next epic*, the realm's retro line, `learning-log.md`,
-  `tech-debt.md`, the ticket-link script's run, the token count per step on the scorecard,
-  and the steering views.
+- **Done at the retro:** `retro.md` with E1's epic review; E2 under *Proposed next epic*
+  and E1's rules as *Standing rules* in `process.md`; the realm's retro line;
+  `learning-log.md` (Active rules and the 07 lessons); the reviewers' prompt in the
+  workflow and the `studio-sprint` prompts file (the change aimed at the costliest step);
+  the backlog (#33, #35, #38, #41 removed, #47 and #48 new); the ticket-link script's run;
+  the scorecard with tokens per step; the board, handoff and index. `tech-debt.md` needed
+  no change (+0 / −0).
 - **Fix rounds used:** 0 / 2

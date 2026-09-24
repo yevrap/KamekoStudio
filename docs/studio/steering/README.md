@@ -7,8 +7,9 @@ is doing and to steer it.
 coverage), 03 (maintenance: the `SHS-` prefix, TD-009 diagnosed, one file per ticket), 04
 (the first production fix, under a written permission; trunk-based, as a trial), 05 (E1 ·
 sprint 1 of 3: River Run forked, and the 3D page's River Run portal opens the fork), 06
-(E1 · sprint 2 of 3: the fork's first experiment, power-ups; ticket numbers link) ·
-latest tag `studio-iteration-06`
+(E1 · sprint 2 of 3: the fork's first experiment, power-ups; ticket numbers link), 07
+(E1 · sprint 3 of 3: power-ups you can read, the arcade's River Run restarts; E1 done, E2
+proposed) · latest tag `studio-iteration-07`
 **Live:** https://yevrap.github.io/KamekoStudio/studio/ ·
 [Overtighten](https://yevrap.github.io/KamekoStudio/studio/games/overtighten/) ·
 [River Runner 3D, the fork](https://yevrap.github.io/KamekoStudio/studio/games/river-run/)
@@ -17,6 +18,8 @@ latest tag `studio-iteration-06`
 
 | You say | What happens |
 |---|---|
+| **"run the studio"** | The whole current sprint, one fresh agent per step, while you watch in `/workflows` (optionally "… with focus: X"). Skill: `studio-sprint` |
+| **"studio request: X"** · **"studio feedback: X"** · **"studio verdict: …"** | Files a `studio` issue the next plan or retro acts on. Skill: `studio-request` |
 | **"studio next"** | The team does the next step of its sprint (plan, build one ticket, review, close or retro), then stops and tells you. Start a new session for each. Skill: `studio-iteration` |
 | **"studio next — focus: X"** | The same, and the next sprint is planned around X |
 | **"studio status"** | Read-only: where it is, what's open, the trend. Skill: `studio-standup` |
@@ -42,7 +45,9 @@ latest tag `studio-iteration-06`
 | [Shadow Studio — Automated Process Review](process-review-2026-09-21.md) | An automated reviewer's take on the workflow (Sept 21); triaged in iteration 03's retro |
 
 **The skills** live in this repo: `.claude/skills/studio-iteration/SKILL.md`,
-`.claude/skills/studio-standup/SKILL.md`, `.claude/skills/studio-promote/SKILL.md` — shared with
+`.claude/skills/studio-sprint/SKILL.md` (with the workflow `.claude/workflows/studio-sprint.js`),
+`.claude/skills/studio-request/SKILL.md`, `.claude/skills/studio-standup/SKILL.md`,
+`.claude/skills/studio-promote/SKILL.md` — shared with
 Antigravity through the `.agents/skills` symlink and listed in `CLAUDE.md`. They follow
 `docs/studio/process.md`; when the two disagree, the handbook wins and the skill is fixed.
 

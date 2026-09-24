@@ -2,15 +2,39 @@
 
 One row per iteration, written at close-out. The point is the trend, not the numbers.
 
-| # | Goal | Tickets (done/committed) | Fix rounds | Checks caught | Debt +/− | Docs | Subagents | Stops for Yev | K / I / K |
-|---|---|---|---|---|---|---|---|---|---|
-| 00 | Stand up the company | 11/9 | 3 | 6 built + 17 reviewed | +5 / −0 | 33 repo docs, 9 planning notes | 2 | 0 | pending |
-| 01 | Identity, shelf, portals | 9/3 | 7 | 1 built + 26 reviewed | +1 / −1 | 9 repo docs, 7 planning notes | 2 (3 review passes) | 1 | pending |
-| 02 | First experiment + boot coverage | 18/2 | 14 | 84 built + 10 rejections | +2 / −1 | 18 tickets, 8 repo docs, 7 planning notes | 11 (10 review passes + QA) | 1 | pending |
-| 03 | Maintenance: ticket prefix, TD-009 diagnosed, one file per ticket | 7/3 | 6 | 7 built + 19 reviewed | +2 / −0 | 7 tickets + 3 reconstructed, 2 ADRs, 9 repo docs, 9 planning notes | 4 (2 rounds × QA + reviewer) | 2 | pending |
-| 04 | First production fix, under a written permission; trunk-based trial | 5/3 | 7 | 4 built + 24 reviewed | +2 / −3 | 5 tickets, 1 ADR, 1 review record, 16 repo docs, 9 planning notes, 3 context files, 1 skill | 4 (2 rounds × QA + reviewer) | 0 | pending |
-| 05 | E1 · 1 of 3: River Run forked, the 3D portal opens it | 4/3 | 0 | 6 built + 12 reviewed | +1 / −0 | 4 tickets, 1 ADR, the fork procedure, the ticket template, the first Active rules list, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | pending |
-| 06 | E1 · 2 of 3: River Run's first experiment (power-ups), ticket numbers link | 4/3 | 1 | 3 built + 7 reviewed | +0 / −1 | 4 tickets, the ticket-link script, the ticket template, Active rules revised, 1 skill edit, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | pending |
+| # | Goal | Tickets (done/committed) | Fix rounds | Checks caught | Debt +/− | Docs | Subagents | Stops for Yev | K / I / K | Output tokens | Costliest step |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 00 | Stand up the company | 11/9 | 3 | 6 built + 17 reviewed | +5 / −0 | 33 repo docs, 9 planning notes | 2 | 0 | pending | — | — |
+| 01 | Identity, shelf, portals | 9/3 | 7 | 1 built + 26 reviewed | +1 / −1 | 9 repo docs, 7 planning notes | 2 (3 review passes) | 1 | pending | — | — |
+| 02 | First experiment + boot coverage | 18/2 | 14 | 84 built + 10 rejections | +2 / −1 | 18 tickets, 8 repo docs, 7 planning notes | 11 (10 review passes + QA) | 1 | pending | — | — |
+| 03 | Maintenance: ticket prefix, TD-009 diagnosed, one file per ticket | 7/3 | 6 | 7 built + 19 reviewed | +2 / −0 | 7 tickets + 3 reconstructed, 2 ADRs, 9 repo docs, 9 planning notes | 4 (2 rounds × QA + reviewer) | 2 | pending | — | — |
+| 04 | First production fix, under a written permission; trunk-based trial | 5/3 | 7 | 4 built + 24 reviewed | +2 / −3 | 5 tickets, 1 ADR, 1 review record, 16 repo docs, 9 planning notes, 3 context files, 1 skill | 4 (2 rounds × QA + reviewer) | 0 | pending | — | — |
+| 05 | E1 · 1 of 3: River Run forked, the 3D portal opens it | 4/3 | 0 | 6 built + 12 reviewed | +1 / −0 | 4 tickets, 1 ADR, the fork procedure, the ticket template, the first Active rules list, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | pending | — | — |
+| 06 | E1 · 2 of 3: River Run's first experiment (power-ups), ticket numbers link | 4/3 | 1 | 3 built + 7 reviewed | +0 / −1 | 4 tickets, the ticket-link script, the ticket template, Active rules revised, 1 skill edit, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | 0 / 1 / 0 (Playtester) | — | — |
+| 07 | E1 · 3 of 3: power-ups you can read, a River Run that restarts; E1 done, E2 proposed | 4/3 | 1 | 3 built + 8 reviewed | +0 / −0 | 4 tickets, 1 production-fix review, a guardrail exception, the handbook's Standing rules, E2, 1 skill + workflow edit, 1 arcade doc | 4 (1 round × QA + reviewer + Playtester; Playtester at plan) | 0 | 2 / 0 / 0 (Playtester) | 213,718 to close (the retro's own not counted here) | review, 82,272 (its three reviewers included) |
+
+## Iteration 07 — what the row means
+
+- **Tickets, 4 against 3.** [SHS-064](../iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md), 065 and 066 were committed; [SHS-067](../iterations/07/tickets/SHS-067-iteration-record.md) is the record.
+  None was opened by review.
+- **The ones that matter to a player shipped.** The fork's power-ups read at phone width in
+  real seconds, and the arcade's River Run no longer freezes on restart. The Playtester
+  kept both.
+- **Fix rounds, 1.** A dead CSS line removed at review ([SHS-064](../iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md), IR-5); no player-facing
+  defect needed one.
+- **Checks caught, 3 + 8.**
+  - Built: `commit-lint` on a 95-character subject before a push; `production-fix-reviewed`
+    holding the production fix until its review record existed (the rule working);
+    `docs-current` at the gate on [SHS-063](../iterations/06/tickets/SHS-063-exempt-adr-0011-commits.md)'s missing fields.
+  - Reviewed: IR-1 to IR-5 and the Playtester's three notes; four fixed in the step.
+- **Debt +0 / −0.**
+- **Output tokens, first measured.** 213,718 from plan to close; review was 82,272 of it
+  (38%), with all three reviewers. Sprint 06 ran by hand and wasn't measured, so there is
+  no comparison yet. The retro's change: the reviewers stop repeating counted evidence.
+- **Stops for you, 0.** Q13 (`version.json`) waits for your tick but blocks nothing.
+- **The honest summary.** E1 is done inside its budget: a fork behind its portal, a changed
+  game with a Keep, and a production bug found by the copy and fixed in the original. What
+  it didn't make is a game much more fun to play. E2 is aimed at that.
 
 ## Iteration 06 — what the row means
 
@@ -191,4 +215,7 @@ One row per iteration, written at close-out. The point is the trend, not the num
 - **Stops for Yev** — times the run had to halt for a decision. Zero is not automatically
   good; it can mean the run decided something it should have asked about. Here it is
   accurate: the two real decisions were written into a questionnaire rather than blocking.
-- **K / I / K** — your Keep / Iterate / Kill tally from the review.
+- **K / I / K** — the Keep / Iterate / Kill tally from the review: the Playtester's since
+  ADR-0011, or yours where you gave one.
+- **Output tokens / Costliest step** — measured by the `studio-sprint` workflow from
+  iteration 07 on (direction rule 8). Steps run by hand weren't measured: "—".

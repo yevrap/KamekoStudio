@@ -48,6 +48,9 @@ A fork that turns out better than its original can go back to the arcade only th
 **Goal:** the first forked game is live behind its 3D portal, and has had at least one
 real gameplay experiment the executive can play and judge.
 
+**Status:** done at sprint 07's retro, inside its 3 sprints, reserve unclaimed; the epic
+review is in [07's retro](../iterations/07/retro.md). The next `plan` adopts E2 below.
+
 **Budget:** 3 sprints (05, 06, 07) + 1 reserve. See [the budget](#the-budget). What each
 sprint pulls comes from the ordered [Backlog](backlog.md).
 
@@ -78,18 +81,49 @@ the earlier ⭐, stays in the arcade.
 
 ## Proposed next epic
 
-*E1's last retro (sprint 07) writes E2 here: goal, done-when, budget, out of scope. The
-`plan` after it adopts it unless the executive strikes or edits it.*
+*Written by E1's last retro (sprint 07). The next `plan` adopts it unless the executive
+strikes or edits it first.*
 
-The executive's wish for E2 (2026-09-23): **games that are interesting to play.** E2 should
-be game-first — an original studio game with a hook of its own, or a River Run experiment
-deep enough that the Playtester calls it fun — rather than more of the studio's own
-machinery.
+### E2 — The studio's first original game worth playing
+
+**Why:** the executive's wish for E2 (2026-09-23) is games that are interesting to play. E1
+was a fork, and the charter asks epics to vary, so E2 is an original studio game with a
+hook of its own.
+
+**Goal:** an original game, made by the studio, is on the realm's shelf, playable on a phone,
+and the Playtester calls it fun.
+
+**Budget:** 3 sprints (08, 09, 10) + 1 reserve.
+
+**Done when:**
+- a new game with an original hook (a game named as a reference is a genre, never a
+  blueprint) lives in `studio/games/<slug>/`, is on the realm's shelf, plays at 320 and 390
+  wide, and keeps its saves under `studio_<slug>_*`;
+- its core mechanic shipped on its own first, with a Keep / Iterate / Kill, and at least
+  one later sprint acted on that verdict;
+- the Playtester's latest verdict on it is Keep, or it was killed with a written reason and
+  stays on the shelf as killed;
+- it has browser tests for its core loop and a design note in `docs/studio/` (what it is,
+  the hook, what was cut);
+- an epic retro proposes E3.
+
+**Suggested shape (the team owns the plan):** 08: three pitches in the plan, the pick as a
+questionnaire item with its ⭐, and the core mechanic built as a playable prototype. 09: act
+on the Playtester's verdict. 10: the second layer (progression, a mode) only if the core
+was kept; otherwise a second pass on the core; then the epic review.
+
+**Out of scope:** promotion to the arcade; a 3D portal for the new game (that touches
+`shared/3d/`, production, and needs the executive's exception); new River Run experiments
+(#6, #7, #23). The River Run fork's Ready fixes (#42, #44) may take a sprint's second games
+slot, and #40 keeps the process slot.
 
 ## Rules for this epic
 
-These apply from sprint 05 on. The process parts are in the handbook (`process.md`,
-[ADR-0009](../decisions/ADR-0009-one-step-per-session.md)) and the `studio-iteration` skill.
+These apply from sprint 05 on, to every epic until this file changes them. Since sprint
+07's retro they are also the handbook's *Standing rules*, under the same numbers, in
+[process.md](../process.md#standing-rules), so "direction rule 8" means the same thing in
+both; the process parts are in [ADR-0009](../decisions/ADR-0009-one-step-per-session.md)
+and the `studio-iteration` skill.
 
 1. **Every sprint has a goal you can see.** The goal names what the executive will be able
    to see, play or read afterwards: a game change, a test suite that now exists, a doc.

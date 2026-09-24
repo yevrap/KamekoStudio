@@ -27,8 +27,8 @@ export const PULSE = {
  * updating this line fails before it reaches the page.
  */
 export const LEARNED = {
-  iteration: '06',
-  line: 'A regression test that is red most of the time is waiting for the bug, not causing it. Ours caught a reverted fix four runs in six, so a regression test now has to show red every run, with the count.'
+  iteration: '07',
+  line: 'Our three reviewers kept re-running the same restarts and screen widths the build had already counted, and review cost more than the rest of the sprint\'s builds together. They now leave counted evidence alone and spend their runs on what it doesn\'t reach.'
 };
 
 /**

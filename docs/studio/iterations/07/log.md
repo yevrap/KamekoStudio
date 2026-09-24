@@ -21,7 +21,7 @@ is committed.
   L614. Merged #35 and #38 into one M, with the layout as the fallback if it grows.
   *Next:* build [SHS-064](tickets/SHS-064-river-run-power-up-hud-real-time.md). *Blocked:* nothing.
 
-## Session 2 — build SHS-064 (2026-09-23)
+## Session 2 — build [SHS-064](tickets/SHS-064-river-run-power-up-hud-real-time.md) (2026-09-23)
 
 - **Game Designer / Developer** — *Done:* [SHS-064](tickets/SHS-064-river-run-power-up-hud-real-time.md) whole, both halves (`fee743d`): the
   score and the power-up label stack below the top row and the score stays on one line at
@@ -31,7 +31,7 @@ is committed.
   (commit-lint, 95 > 80 characters, fixed before the push). *Next:* build
   [SHS-065](tickets/SHS-065-studio-edits-its-own-workflow.md). *Blocked:* nothing.
 
-## Session 3 — build SHS-065 (2026-09-23)
+## Session 3 — build [SHS-065](tickets/SHS-065-studio-edits-its-own-workflow.md) (2026-09-23)
 
 - **Tech Lead** — *Done:* [SHS-065](tickets/SHS-065-studio-edits-its-own-workflow.md) (`1209d09`): the path guard admits
   `.claude/skills/studio-*/**` and `.claude/workflows/studio-sprint.js` in ticketed studio
@@ -41,7 +41,7 @@ is committed.
   exports), then green; `--stage=ticket` 5/5. *Next:* build
   [SHS-066](tickets/SHS-066-production-river-run-restart.md). *Blocked:* nothing.
 
-## Session 4 — build SHS-066 (2026-09-23)
+## Session 4 — build [SHS-066](tickets/SHS-066-production-river-run-restart.md) (2026-09-23)
 
 - **Tech Lead** — *Done:* [SHS-066](tickets/SHS-066-production-river-run-restart.md) (`1414dab`, production fix under
   ADR-0008): the arcade's River Run disposes the old music sequence without `stop()` and
@@ -80,3 +80,17 @@ is committed.
   attempt: `POWERUP_MAX_STEP_S` on the fork, `River Run music failed to restart` on the
   arcade's River Run, the new pulse line on the realm. No `studio` issue was open to close.
   *Next:* retro. *Blocked:* nothing.
+
+## Session 7 — retro (2026-09-23)
+
+- **Learning Lead** — *Done:* [retro.md](retro.md). No `feedback` issue or line to act on.
+  Tokens per step recorded (213,718 plan to close; review the costliest at 82,272, its
+  reviewers included; sprint 06 unmeasured). The change aimed at review: the reviewers'
+  prompt no longer has them repeat counted evidence or play what the Playtester plays
+  (workflow and prompts file). Active rules: rule 6 converted, a template rule promoted.
+  *Next:* plan 08. *Blocked:* nothing.
+- **Product Owner** — *Done:* E1's epic review (done, reserve unclaimed); E2 *the studio's
+  first original game worth playing* under *Proposed next epic*; E1's rules in
+  `process.md` as *Standing rules*. Backlog: #33, #35, #38, #41 removed; #48 (E2's first
+  game) on top, #47 (`docs-current` at push) new. *Next:* plan 08 adopts E2.
+  *Blocked:* nothing.

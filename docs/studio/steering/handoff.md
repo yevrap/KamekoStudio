@@ -2,82 +2,81 @@
 
 *The latest iteration's report. Rewritten by each run; never edited by hand.*
 
-## Iteration 06 — power-ups on the river, and ticket numbers you can click
+## Iteration 07 — power-ups you can read, a River Run that restarts, and E1 done
 
-**E1 · sprint 2 of 3 (+1 reserve, unclaimed).** On track; the epic now waits on your
-verdict on the power-ups.
+**E1 · sprint 3 of 3 (+1 reserve, unclaimed).** E1 is done inside its budget. E2 is
+proposed in [Direction](direction.md), and plan 08 adopts it unless you change it.
 
 **Summary**
 
-- **River Run's first experiment** ([SHS-060](../iterations/06/tickets/SHS-060-river-run-power-ups.md)). In the fork, one pickup at a time
-  floats down the river.
-  - A **shield** puts a bubble on the boat that takes the next rock or log.
-  - A **spread shot** makes every shot three for about 6 s, with a countdown on screen.
-  - Sounds respect mute, the drawer's pause pauses them, Watch Mode picks them up, and
-    nothing new is saved.
-- **A restart can no longer freeze the fork** ([SHS-061](../iterations/06/tickets/SHS-061-river-run-tone-start-time.md)). The music restart threw and
-  aborted the new run before its game loop. The arcade's River Run has the same bug: the
-  review reproduced it, and it is queued as arcade 🐞 p0-17 and studio #33.
-- **Every studio ticket number in the docs is a link** ([SHS-059](../iterations/06/tickets/SHS-059-ticket-mentions-link-to-tickets.md)), your focus at plan.
-  378 mentions in 48 files, and the retro re-runs the script.
+- **The fork's power-ups, second pass** ([SHS-064](../iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md)). The score stays on one line at 320
+  and 390 wide, the power-up label has its own pill below it, and "✦ SPREAD 6.0s" counts
+  real seconds at any frame rate and waits while the drawer is open. The Playtester's
+  Iterate from 06 became a Keep.
+- **The arcade's River Run never freezes on restart** ([SHS-066](../iterations/07/tickets/SHS-066-production-river-run-restart.md), arcade p0-17). The fix
+  the fork proved in 06, applied to production under ADR-0008: tests red 5 of 5 before it,
+  reviewed before it was pushed, 80 restarts clean at review. Kept by the Playtester.
+- **The studio can edit its own skills and conductor** in a ticketed commit ([SHS-065](../iterations/07/tickets/SHS-065-studio-edits-its-own-workflow.md)).
+  This retro was the first to use it.
 
-**Review: one round.** QA (`opus`) and the Independent Reviewer (`fable`) each approved
-with findings. 7 distinct findings: two fixed in the step (the spread shot's shot pool,
-the link lib's header), four to the backlog (#33, #35, #36, #37; #36 also follows the
-header fix), two declined with a reason.
+**Review: one round.** The Independent Reviewer (`opus`) and QA (`sonnet`) each approved
+with findings; the Playtester (`opus`) kept both player-visible changes. Four findings
+fixed in the step, one to the backlog with Q13 (#43), three Playtester notes to the
+backlog (#44–#46).
 
 **Checks**
-- **Gate** against `studio-iteration-05`: red on its first run on `docs-current` alone (the
-  record ticket was still open), green once the close records landed.
-- **Post-deploy** after the tag, green.
-- **Close-out 3/3** at this retro: iteration docs, doc cleanliness (148 documents),
+- **Gate** against `studio-iteration-06`: red once on `docs-current` ([SHS-063](../iterations/06/tickets/SHS-063-exempt-adr-0011-commits.md) lacked its
+  Result fields), then 11/11.
+- **Post-deploy** after the tag: all three markers found on the first attempt.
+- **Close-out 3/3** at this retro: iteration docs, doc cleanliness (160 documents),
   changelog.
 
 **Live:** https://yevrap.github.io/KamekoStudio/studio/games/river-run/ (or the River Run
-portal on https://yevrap.github.io/KamekoStudio/3d.html) · **Tag:** `studio-iteration-06`
+portal on https://yevrap.github.io/KamekoStudio/3d.html) ·
+https://yevrap.github.io/KamekoStudio/games/river-run/ · **Tag:** `studio-iteration-07`
 
 **Where the docs are**
 
-- **Iteration record:** `docs/studio/iterations/06/`. It has the plan, the log (a
-  stand-up per session), the review, the retro, and 4 tickets ([SHS-059](../iterations/06/tickets/SHS-059-ticket-mentions-link-to-tickets.md) to [SHS-062](../iterations/06/tickets/SHS-062-iteration-record.md)).
-- **Handbook:** `process.md` (ticket numbers are links), `templates/ticket.md` (a
-  regression test's red count, layout at 320), `learning-log.md` (Active rules revised),
-  `forking.md`, `CHANGELOG.md`.
-- **Skill:** `studio-iteration`'s close step now writes the records before the gate.
-- **Arcade docs:** `docs/roadmap.md` (p0-17), two Black Hole in One docs (links).
+- **Iteration record:** `docs/studio/iterations/07/`: plan, log, review,
+  `reviews/SHS-066.md`, retro (with E1's epic review), and 4 tickets ([SHS-064](../iterations/07/tickets/SHS-064-river-run-power-up-hud-real-time.md) to [SHS-067](../iterations/07/tickets/SHS-067-iteration-record.md)).
+- **Handbook:** `process.md` (*Standing rules*, the direction's eight under the same
+  numbers; the reviewers' models as ADR-0011 has them), `guardrails.md` (the skills and
+  conductor exception), `learning-log.md`, `CHANGELOG.md`.
+- **Workflow:** the reviewers' prompt, in `.claude/workflows/studio-sprint.js` and the
+  `studio-sprint` skill's prompts file.
+- **Direction:** E1 marked done; E2 under *Proposed next epic*.
 
 **Trend.**
 
-| | 03 | 04 | 05 | 06 |
+| | 04 | 05 | 06 | 07 |
 |---|---|---|---|---|
-| Tickets (done/committed) | 7/3 | 5/3 | 4/3 | **4/3** |
-| Review-opened tickets | 0 | 1 | 0 | **0** |
-| Review passes | 4 | 4 | 2 | **2** |
-| Fix rounds | 6 | 7 | 0 | **1** |
-| Debt (+/−) | +2/−0 | +2/−3 | +1/−0 | **+0/−1** |
+| Tickets (done/committed) | 5/3 | 4/3 | 4/3 | **4/3** |
+| Review-opened tickets | 1 | 0 | 0 | **0** |
+| Review passes | 4 | 2 | 2 | **2 + Playtester** |
+| Fix rounds | 7 | 0 | 1 | **1** |
+| Debt (+/−) | +2/−3 | +1/−0 | +0/−1 | **+0/−0** |
+| Output tokens | — | — | — | **213,718** to close |
 
-[Shadow Studio — Scorecard](scorecard.md) has row 06.
+[Shadow Studio — Scorecard](scorecard.md) has row 07.
 
 **Changes from the retro**
-- The skill's close step writes the records before running the gate, as `process.md`
-  already did. The gate had gone red at close two sprints running.
-- A regression test shows red on every run against the unfixed code, with the count. Its
-  own restart test caught the bug only four runs in six.
-- Layout evidence is taken at 320 wide as well as 390.
-- Active rules: one converted, one split, one new (*a game's clock is not the player's
-  clock*).
+- **The costliest step was review** (82,272 of 213,718 tokens, all three reviewers
+  included). The Independent Reviewer and QA no longer re-run evidence the tickets already
+  count, or play what the Playtester is playing. Sprint 08's retro checks the number.
+- E1's rules are in the handbook now, under the same numbers.
+- Backlog #47: `docs-current` also runs at `push`. It was red at the gate three sprints
+  running, each time for a new reason.
+- Active rules: *run `--stage=ticket` before every commit* left the list (the skill does
+  it); *every ticket starts from the template* joined it.
 
-**Did the last retro's changes help?** Yes where exercised. The record ticket's criteria
-held; the gate's red had a new cause (the skill's order). #21 didn't get sprint 06's
-process slot, because your focus took it. There was still no production fix, so the
-production-fix review is untested; #33 will test it.
+**Did the last retro's changes help?** Yes. The close order held, regression tests showed
+red every run with a count, layout was measured at 320, and the new clock rule was applied.
+#21 missed the process slot again, to your ADR-0011 request.
 
 **Needs you**
 
-1. **Keep / Iterate / Kill on the power-ups**, at the end of
-   `docs/studio/iterations/06/review.md`. The team says Iterate: the HUD sits over the
-   score on narrow phones (#35), and the timers count frames (#38). E1 can't finish
-   without your verdict, and sprint 07 is its last granted sprint.
+Nothing blocks. Optional: strike or reshape E2 before plan 08; tick Q13; the two
+real-phone questions in [07's review](../iterations/07/review.md).
 
-**Say next:** `studio next`, in a new session. [Shadow Studio — Next step](next.md) says
-which step is due; [Shadow Studio — Backlog](backlog.md) holds the order of work.
+**Say next:** "run the studio" (sprint 08, watched) or `studio next`, in a new session.
+[Shadow Studio — Next step](next.md) says which step is due.

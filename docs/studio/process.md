@@ -11,7 +11,7 @@ each session does the step `steering/next.md` names, rewrites that file, and sto
 |---|---|---|
 | 0 | **Preflight** | Inputs logged; clean tree; up-to-date `main`; no `STOP`; baseline suites green |
 | 1 | **Refine and plan** | `iterations/NN/plan.md`, `iterations/NN/tickets/*.md` |
-| 2 | **Build** | Small commits to `main`, each green; each ticket pushed and deploy-checked when it is done |
+| 2 | **Build** | Small commits to `main`, each green; each ticket verified locally and pushed when it is done |
 | 3 | **Fix, bounded** | At most 2 fix rounds per ticket, then the ticket is marked Blocked |
 | 4 | **Independent review** | QA and Independent Reviewer findings → fixes or new tickets |
 | 5 | **Document** | Tickets closed, `CHANGELOG.md`, `learning-log.md`, studio log entries |
@@ -60,6 +60,36 @@ the executive. `plan` triages them into the backlog; `close` closes the ones tha
   split, and the remainder goes back to the backlog. At most one planned ticket per sprint
   goes to the studio's own machinery (checks, handbook, steering views). Tests, docs and
   tech debt for the games are ordinary work.
+
+## Standing rules
+
+The direction's working rules from sprint 05 on, kept here under the same numbers as
+`steering/direction.md` (so "direction rule 8" is rule 8 below), since they outlive the
+epic that wrote them (moved at sprint 07's retro).
+
+1. **Every sprint has a goal you can see**: what the executive will be able to see, play or
+   read afterwards. `review.md` links it.
+2. **Tests, docs and tech debt are real work.** At least two of every sprint's planned
+   tickets change what a player sees or plays; at most one goes to the studio's own
+   machinery (checks, handbook, steering views). A new studio check is built only for a
+   defect that reached the live site, or for a retro lesson that has recurred.
+3. **One review round by default** (*Roles*, below).
+4. **One step per session** (*Sessions*, above). Tickets are S or M; one that outgrows its
+   session is split, never carried.
+5. **Fork on first change** ([forking.md](forking.md)): a game is copied into
+   `studio/games/<slug>/`, every key renamed under `studio_`, the first time the studio
+   works on it; after that, production gets bug fixes only.
+6. **Every ticket traces to its source**: the direction line, inbox line, issue or retro
+   item it came from. `review.md` opens with **In plain words**, five sentences a stranger
+   could follow.
+7. **Lessons become rules or retire.** `learning-log.md` opens with at most ten Active
+   rules; each retro promotes one, turns a recurring one into a check or a skill edit, or
+   retires one.
+8. **Every sprint a little better and cheaper than the last.** The executive's feedback on
+   a run is the retro's first input and becomes a rule, an edit or a check. The workflow
+   measures output tokens per step; the scorecard keeps the trend, and each retro makes one
+   change aimed at the costliest step and checks at the next retro whether it worked. A
+   change that removes a step, a read or a rule beats one that adds.
 
 ## Ceremonies
 
@@ -165,11 +195,13 @@ deliberately run with fresh context, because independence is the whole point of 
 - **QA Engineer** — writes and runs the test plan against the diff.
 - **Independent Reviewer** — critiques the iteration's diff without having written it.
 
-**Both run on a named model, and the reviewer's is deliberately not the author's.** Fresh
-context buys independence of *memory*; it does not buy independence of *priors*. Iteration
-02 ran both passes on the author's model and they found the same two primary defects
-independently — read at the time as corroboration, equally consistent with a shared blind
-spot. See `team/independent-reviewer.md` for the pairing and the reasoning.
+**Both run on a named model, and the two passes run on different ones** (ADR-0011): the
+Independent Reviewer on the strongest model available, which may be the author's, and QA on
+another. Fresh context buys independence of *memory*; it does not buy independence of
+*priors*, which is what the second model is for. Iteration 02 ran both passes on the
+author's model and they found the same two primary defects independently — read at the
+time as corroboration, equally consistent with a shared blind spot. Each review says when
+two passes shared a model. See `team/independent-reviewer.md` for the pairing.
 
 **One review round by default** ([ADR-0009](decisions/ADR-0009-one-step-per-session.md)).
 A second round runs only when the first rejects on something a player would hit, a

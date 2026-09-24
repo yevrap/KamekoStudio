@@ -56,7 +56,7 @@ The review step writes `reviews/SHS-066.md` and pushes through `--stage=push`.
 - **What changed:** `games/river-run/index.html` `initGame` disposes the old music
   sequence without calling `stop()`, and the whole music restart (dispose, new sequence,
   Transport start) sits in a `try`/`catch` that logs and lets the run start, the fork's
-  SHS-061 fix line for line (commit `1414dab`). `scripts/e2e.mjs` gains three River Run
+  [SHS-061](../../06/tickets/SHS-061-river-run-tone-start-time.md) fix line for line (commit `1414dab`). `scripts/e2e.mjs` gains three River Run
   cases (same commit). `PRODUCTION_FIXES` names both files for SHS-066, iteration 07.
   Arcade roadmap p0-17 marked ✅ in the arcade commit `61e69c6`; backlog #33 marked done.
 - **Tested by:** `npm run e2e`, five runs before the fix and five after:
