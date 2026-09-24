@@ -1,0 +1,310 @@
+/* Samovar — a tea table in the studio's workshop palette.
+ *
+ * The realm's tokens (warm ground, teal for anything interactive), redeclared
+ * here rather than linked: the realm sheet pads the page for its own chrome,
+ * and this page needs the whole first screen for the table.
+ *
+ * The theme follows body.dark-mode, which the arcade's settings drawer owns. */
+
+:root {
+  --ground: #f2efe9;
+  --surface: #fbf9f5;
+  --ink: #1e1c18;
+  --ink-dim: #5b5348;
+  --edge: #ded7ca;
+  --rule: #cdc4b4;
+  --accent: #0f6d7a;
+  --accent-ink: #ffffff;
+  --worklight: #8a4b0c;
+  --glass: rgba(30, 28, 24, 0.55);
+  --glass-fill: rgba(255, 255, 255, 0.55);
+  --band: rgba(15, 109, 122, 0.75);
+  --water: rgba(190, 220, 235, 0.95);
+  --lift: 0 1px 1px rgba(30, 28, 24, 0.05), 0 6px 16px -10px rgba(30, 28, 24, 0.35);
+  --radius: 12px;
+  --gutter: 16px;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+body.dark-mode {
+  --ground: #131418;
+  --surface: #1b1d23;
+  --ink: #e9e6df;
+  --ink-dim: #a49d91;
+  --edge: #2c2f37;
+  --rule: #363a44;
+  --accent: #3fd0e0;
+  --accent-ink: #0b1f22;
+  --worklight: #f0a84c;
+  --glass: rgba(233, 230, 223, 0.6);
+  --glass-fill: rgba(255, 255, 255, 0.06);
+  --band: rgba(63, 208, 224, 0.8);
+  --water: rgba(200, 225, 240, 0.9);
+  --lift: 0 1px 1px rgba(0, 0, 0, 0.5), 0 10px 22px -14px rgba(0, 0, 0, 0.9);
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--ground); }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.45;
+  -webkit-text-size-adjust: 100%;
+}
+
+a { color: var(--accent); }
+.mono { font-family: var(--mono); }
+
+main { max-width: 34rem; margin: 0 auto; }
+
+/* ---- The first screen: header, guest, the table, the button ------------- */
+
+.screen {
+  display: flex;
+  flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 8px) var(--gutter) calc(env(safe-area-inset-bottom) + 16px);
+}
+
+/* Only while playing does the table take the whole screen. Without scripts the
+   header is all there is, and the notes follow straight after it. */
+.screen.playing {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* 60px on the left for the arcade's settings button, fixed at top-left. */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-left: 60px;
+  min-height: 48px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.wordmark {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.game {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.game[hidden] { display: none; }
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.row p { margin: 0; }
+.guest { font-weight: 600; }
+.score { color: var(--worklight); font-weight: 700; white-space: nowrap; }
+
+.hint {
+  margin: 4px 0 0;
+  min-height: 2.9em;
+  font-size: 0.92rem;
+  color: var(--ink-dim);
+}
+
+/* ---- The table ---------------------------------------------------------- */
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 180px;
+  margin: 6px 0 12px;
+}
+
+.wants {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 72px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.wants-label { display: block; font-weight: 400; color: var(--ink-dim); }
+
+.swatch {
+  display: block;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--rule), var(--lift);
+}
+
+/* The cup: its size is its volume. `--cup-h` is a share of the table's height
+   and `--cup-aspect` its width over its height; main.js sets both per guest. */
+.cup {
+  position: absolute;
+  left: 58%;
+  bottom: 4px;
+  transform: translateX(-50%);
+  height: calc(var(--cup-h, 0.6) * (100% - 24px));
+  aspect-ratio: var(--cup-aspect, 1);
+  max-width: 62%;
+  border: 3px solid var(--glass);
+  border-top: none;
+  border-radius: 4px 4px 22px 22px;
+  background: var(--glass-fill);
+  overflow: hidden;
+}
+
+.cup.spilled { border-color: #c0392b; }
+
+.liquid {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  background: transparent;
+}
+
+/* The fill band: from here to the brim is a full cup. */
+.band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 10%;
+  border-bottom: 2px dashed var(--band);
+  pointer-events: none;
+}
+
+/* The pour itself, from above the cup to the surface of the tea. */
+.stream {
+  position: absolute;
+  top: 0;
+  left: 58%;
+  width: 8px;
+  margin-left: -4px;
+  border-radius: 4px;
+  height: 0;
+  opacity: 0;
+}
+
+.stream.on { opacity: 1; box-shadow: 0 0 0 1px var(--glass-fill), 0 0 6px var(--glass-fill); }
+
+/* ---- Cards over the table ----------------------------------------------- */
+
+.card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(100%, 22rem);
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  box-shadow: var(--lift);
+  text-align: center;
+}
+
+.card[hidden] { display: none; }
+
+/* A cup's result sits at the top of the table, so the cup it judges stays in view. */
+.card.result { top: 0; transform: translateX(-50%); }
+.card h2 { margin: 0 0 4px; font-size: 1.1rem; }
+.card p { margin: 6px 0; }
+
+.compare { display: flex; justify-content: center; gap: 28px; }
+.compare figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.85rem; color: var(--ink-dim); }
+.compare .swatch { width: 64px; height: 64px; }
+
+.stars { font-size: 1.6rem; letter-spacing: 0.15em; color: var(--worklight); line-height: 1.2; }
+.verdict { font-size: 0.95rem; }
+
+.total { font-size: 1.4rem; font-weight: 700; color: var(--worklight); }
+.best { color: var(--ink-dim); }
+
+.cups {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 3px;
+  margin: 8px 0 12px;
+  padding: 0;
+  list-style: none;
+}
+
+.cups li {
+  padding: 4px 0;
+  border-radius: 4px;
+  background: var(--ground);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+}
+
+.again, .pour {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ---- The pour button: one thumb, bottom of the screen ------------------- */
+
+.pour {
+  flex: none;
+  min-height: 76px;
+  font-size: 1.05rem;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pour.pouring { filter: brightness(0.85); transform: scale(0.98); }
+.pour:disabled { opacity: 0.45; cursor: default; }
+.pour:focus-visible, .again:focus-visible { outline: 3px solid var(--worklight); outline-offset: 2px; }
+
+/* ---- Below the fold ----------------------------------------------------- */
+
+.notes, .empty { padding: 8px var(--gutter) 32px; }
+.notes h2 { font-size: 1rem; }
+.notes p { color: var(--ink-dim); }
+.how a { display: inline-flex; align-items: center; min-height: 44px; }

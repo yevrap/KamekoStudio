@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Samovar — Shadow Studio</title>
+<meta name="description" content="Pour tea for an evening of guests: hold to pour the brew, hold again to top up with hot water. Match the colour they asked for, fill to the brim, don't spill.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<main>
+  <!-- The game fills the first screen. Revealed by main.js, so the no-JS page
+       shows its explanation instead of a button that does nothing. -->
+  <div class="screen" id="screen">
+  <header class="bar">
+    <a class="back" href="../../">← Studio</a>
+    <h1 class="wordmark">Samovar</h1>
+  </header>
+
+  <section id="game" class="game" hidden>
+
+    <div class="row">
+      <p class="guest" id="guest"></p>
+      <p class="score mono" id="score" aria-label="Stars this evening"></p>
+    </div>
+
+    <p class="hint" id="hint" role="status" aria-live="polite"></p>
+
+    <div class="stage" id="stage">
+      <figure class="wants" id="wants">
+        <span class="swatch" id="swatch"></span>
+        <figcaption><span class="wants-label">wants</span> <span id="wants-word"></span></figcaption>
+      </figure>
+
+      <div class="stream" id="stream" aria-hidden="true"></div>
+      <div class="cup" id="cup" role="img" aria-label="The cup">
+        <div class="liquid" id="liquid"></div>
+        <div class="band" aria-hidden="true"></div>
+      </div>
+
+      <div class="card result" id="result" hidden>
+        <div class="compare">
+          <figure><span class="swatch" id="result-wanted"></span><figcaption>wanted</figcaption></figure>
+          <figure><span class="swatch" id="result-poured"></span><figcaption>poured</figcaption></figure>
+        </div>
+        <p class="stars" id="result-stars"></p>
+        <p class="verdict" id="result-line"></p>
+      </div>
+
+      <div class="card end" id="end" hidden>
+        <h2>The evening is over</h2>
+        <p class="total"><span id="end-total"></span></p>
+        <p class="best" id="end-best"></p>
+        <ol class="cups" id="end-cups" aria-label="Stars per cup, in order"></ol>
+        <button type="button" class="again" id="again">Pour again</button>
+      </div>
+    </div>
+
+    <button type="button" class="pour" id="pour"></button>
+  </section>
+  </div>
+
+  <section class="notes">
+    <h2>What this is testing</h2>
+    <p>
+      Samovar is the studio's first original game, and this is its core mechanic on its own.
+      Tea is strong or weak by its <em>ratio</em>, not its amount: you pour the dark brew
+      first, then top the cup up with hot water to the brim, so the one real decision is
+      how long to pour the brew for this cup's size. Once the water goes in, the strength
+      is fixed.
+    </p>
+    <p>
+      It is fun if your misses shrink over an evening and you want to pour another. It is
+      not if the cups feel random, or if the colour you're asked for can't be read at a
+      glance. Stars and the best evening are all there is, on purpose: progression waits
+      for a verdict on the pour.
+    </p>
+    <p class="how">
+      <a href="https://github.com/yevrap/KamekoStudio/tree/main/studio/games/samovar">Source →</a>
+      and the design note in
+      <a href="https://github.com/yevrap/KamekoStudio/blob/main/docs/studio/games/samovar.md">docs/studio</a>.
+    </p>
+  </section>
+
+  <noscript>
+    <p class="empty">
+      Samovar pours its tea in the browser, so it needs JavaScript to be playable. The
+      design, the hypothesis it is testing and its tests are readable without it:
+      <a href="https://github.com/yevrap/KamekoStudio/tree/main/studio/games/samovar">read the source on GitHub</a>.
+    </p>
+  </noscript>
+</main>
+
+<script src="main.js" type="module"></script>
+<script src="../../../shared/settings.js" data-gallery-depth="3"></script>
+</body>
+</html>

@@ -19,6 +19,7 @@ This file covers what is in this folder and the rules that apply to its code.
 | `main.js` | The only file that touches the document, plus the visit logbook that exercises the storage rule. |
 | `games/overtighten/` | *Overtighten* — the studio's first experiment. See below. |
 | `games/river-run/` | *River Runner 3D* — the studio's fork of the arcade's River Run. See below. |
+| `games/samovar/` | *Samovar* — the studio's first original game: pour tea by the ratio. See below. |
 
 ### The status tags
 
@@ -91,6 +92,28 @@ It is one inline-script file, as production's is; the ES module split is fork de
 backlog. From the fork onward, production River Run takes bug fixes only. See
 [`../docs/studio/forking.md`](../docs/studio/forking.md).
 
+### `games/samovar/` — PROTOTYPE
+
+The studio's first original game, built in iteration 08 ([SHS-068](../docs/studio/iterations/08/tickets/SHS-068-samovar-core.md)) as its core
+mechanic alone. An evening is ten guests, one at a time; each brings a small cup, a teacup
+or a tall glass and wants their tea at a strength shown as a colour swatch. One button:
+hold to pour the dark brew, let go; hold again to top up with hot water, let go to serve.
+Strength is the brew's share of the cup, so the decision is how long to pour the brew for
+*this* cup before the water fixes it. Over the brim is a spill (0 stars); otherwise 0–3
+stars from the strength, minus one if the cup is short of the dashed fill line.
+
+| File | What it is |
+|---|---|
+| `constants.js` | Cups, strengths, the colour ramp, the pour rate and the star bands. |
+| `gameplay.js` | The rules of a cup, pure: pour amounts from milliseconds, colour by ratio, judging. |
+| `state.js` | An evening's guests (seeded generator) and reading the saved best, pure. |
+| `main.js` | The only file that touches the document: the hold, the loop, the cards, storage. |
+
+Pours are timed from `performance.now()` at press and release, so a 120 Hz screen pours at
+the same rate as a 60 Hz one. The page stops a pour and holds the result timer while it
+is hidden or the settings drawer is open. The design note is
+[`docs/studio/games/samovar.md`](../docs/studio/games/samovar.md).
+
 ## Rules for code in this folder
 
 - **Same stack as production:** vanilla JS, native ES modules, no framework, no build step,
@@ -119,6 +142,7 @@ Documented before use, and checked by `npm run studio:check`.
 | `studio_visitCount` | `main.js` | integer string | How many times it has been opened |
 | `studio_overtighten_progress` | `games/overtighten/main.js` | integer string | How many plates have been cleared. Clamped to the number of plates that exist; anything unreadable counts as none |
 | `studio_overtighten_muted` | `games/overtighten/main.js` | `'1'` or `'0'` | Whether the game's synthesized audio is muted |
+| `studio_samovar_best` | `games/samovar/main.js` | integer string (0–30) | The best evening's stars. Anything unreadable counts as none |
 | `studio_riverRun_highScore` | `games/river-run/index.html` | integer string | Best run score in the fork. Production's is `riverRunHighScore`, never read |
 | `studio_riverRun_muted` | `games/river-run/index.html` | `'true'` or `'false'` | Music muted; unset means muted. Production's is the unnamespaced `muted`, never read |
 | `studio_riverRun_invertControls` | `games/river-run/index.html` | `'true'` or `'false'` | The drawer's Invert Drag toggle |

@@ -45,6 +45,14 @@ export const LEARNED = {
  */
 export const SHELF = [
   {
+    title: 'Samovar',
+    status: 'PROTOTYPE',
+    blurb: 'The studio\'s first original game. Pour tea for an evening of ten guests: hold to pour the dark brew, hold again to top it up with hot water, and match the colour each guest asks for without spilling. Built to test whether judging a ratio by feel, cup after cup, is fun on its own: whether your misses shrink across an evening and you pour another.',
+    iteration: '08',
+    changed: '2026-09-24',
+    url: 'games/samovar/'
+  },
+  {
     title: 'Overtighten',
     status: 'PROTOTYPE',
     blurb: 'Hold a bolt to turn it; every bolt it is coupled to loosens while you hold. Seat them all inside their bands at once. Built to test whether the coupling would make it an ordering puzzle — it does not, and the page says so.',
