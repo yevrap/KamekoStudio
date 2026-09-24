@@ -51,3 +51,19 @@ is committed.
   (29/29 each run). `npm run smoke` green, `npm test` 840/840, `--stage=ticket` 5/5. Arcade
   p0-17 marked ✅ in the arcade commit `61e69c6`. Nothing pushed: the review step reviews
   `1414dab`, writes `reviews/SHS-066.md`, then pushes. *Next:* review. *Blocked:* nothing.
+
+## Session 5 — review (2026-09-23)
+
+- **Scrum Master** — *Done:* recorded the round run by the `studio-sprint` workflow: the
+  Independent Reviewer (`opus`) and QA (`sonnet`) both approve with findings, the
+  Playtester (`opus`) keeps [SHS-064](tickets/SHS-064-river-run-power-up-hud-real-time.md) and [SHS-066](tickets/SHS-066-production-river-run-restart.md). No rejection, so no second round.
+  Wrote [reviews/SHS-066.md](reviews/SHS-066.md) (`1414dab`, approved) and pushed the
+  production fix through `--stage=push`. *Next:* close. *Blocked:* nothing.
+- **Tech Lead** — *Done:* fixed the S findings now: [SHS-066](tickets/SHS-066-production-river-run-restart.md)'s criteria ticked (IR-1 ·
+  QA F1), the reviewer's role file matches ADR-0011 on models (IR-2), [SHS-064](tickets/SHS-064-river-run-power-up-hud-real-time.md)'s Result
+  states the 10 fps limit (IR-4), dead `z-index` removed from the fork (`0d1f540`, IR-5).
+  *Next:* nothing until close. *Blocked:* nothing.
+- **Product Owner** — *Done:* backlog #43 (`version.json` for production fixes, IR-3) with
+  Q13 in the questionnaire (⭐ yes, but it waits for a tick: it touches releases), and
+  #44–#46 from the Playtester's notes and questions. The next new item is #47.
+  *Next:* nothing until close. *Blocked:* nothing.

@@ -41,13 +41,18 @@ defect.
 Run as a separate session with its own context, so that "I remember why I wrote it that
 way" cannot happen.
 
-**Run on a different model from the author.** This is not a preference; iteration 02
-produced the evidence for it. In the first round the QA pass and this role ran on the same
-model as the author and found the *same two* primary defects independently. That was
-written up at the time as strong corroboration — and it is equally consistent with the
-three of them sharing blind spots. Independence of *context* is not independence of
-*priors*. A different model is the cheapest way to get both, and it costs nothing in cache
-terms because a fresh-context reviewer reuses no cache anyway.
+**Which model.** Since [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md) this
+role runs on `opus`, the strongest model available, and the builds run on the same model.
+Its independence is of *context* only: a fresh session with no memory of the work. The
+review round's different-*model* pass is QA, on `sonnet`. Iteration 02 is why the pair
+matters: in its first round QA and this role ran on the same model as the author and found
+the *same two* primary defects independently, which is as consistent with shared blind
+spots as with corroboration. Independence of context is not independence of priors. So a
+finding only this role and the author's model would miss is exactly what QA is there for,
+and when the two passes agree the review says whether they ran on the same model.
+(Changed at sprint 07's review, IR-2: this file had said the role must run on a different
+model from the author, which the conductor no longer does. Whether it should is the
+executive's call, in ADR-0011.)
 
 A reviewer from a different vendor holds this role equally well; the repository and the
 process are the same either way.

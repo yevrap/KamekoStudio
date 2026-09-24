@@ -24,7 +24,7 @@ commit.
 
 ## Acceptance criteria
 
-- [ ] `games/river-run/index.html` restarts its music without `Sequence.stop()` (it
+- [x] `games/river-run/index.html` restarts its music without `Sequence.stop()` (it
       disposes the old sequence, as the fork does), and a failure in the music restart
       can't stop the run from starting.
 - [x] A browser test in `scripts/e2e.mjs` restarts the game 20 times and sees every
@@ -34,7 +34,7 @@ commit.
       in 5 runs of 5.
 - [x] `PRODUCTION_FIXES` in `tests/studio/lib/rules.mjs` has an entry for each production
       file, naming this ticket.
-- [ ] The commits stay local until `iterations/07/reviews/SHS-066.md` records the
+- [x] The commits stay local until `iterations/07/reviews/SHS-066.md` records the
       reviewed hash and verdict; `production-fix-reviewed` passes at the push.
 - [x] Arcade 🐞 p0-17 is marked ✅ with the date and this ticket, and backlog #33 is done.
 
@@ -53,8 +53,6 @@ The review step writes `reviews/SHS-066.md` and pushes through `--stage=push`.
 
 ## Result
 
-*Filled in as the ticket is worked. Empty until then.*
-
 - **What changed:** `games/river-run/index.html` `initGame` disposes the old music
   sequence without calling `stop()`, and the whole music restart (dispose, new sequence,
   Transport start) sits in a `try`/`catch` that logs and lets the run start, the fork's
@@ -71,8 +69,9 @@ The review step writes `reviews/SHS-066.md` and pushes through `--stage=push`.
 
   Each fixed run: `E2E passed: 29 test(s)`. `npm run smoke` green; `npm test` 840/840;
   `--stage=ticket` 5/5 (path-guard names both files as production fix SHS-066).
-- **Not pushed yet:** `1414dab` and `61e69c6`, and this session's records, stay local; the
-  review step writes `reviews/SHS-066.md` and pushes through `--stage=push` (the fifth
-  criterion is ticked then).
+- **Reviewed, then pushed:** `1414dab` and `61e69c6` stayed local until the review step
+  (sprint 07's one round): [reviews/SHS-066.md](../reviews/SHS-066.md) records the
+  reviewed hash and both passes' approval, and the push went through `--stage=push` with
+  `production-fix-reviewed` green.
 - **Deferred:** none. The fork's own deterministic restart test stays #37, as planned.
 - **Fix rounds used:** 0 / 2

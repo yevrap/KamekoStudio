@@ -65,7 +65,10 @@ the review. `npm run studio:check -- --stage=ticket`, then `--stage=push`.
   the first pickup (5 s) and the gap between pickups (10 s) count wall-clock seconds from
   `performance.now()`, one step capped at 0.1 s; the clock stops (the next update counts
   nothing) on a new run, when the drawer opens and when the tab is hidden. The label shows
-  the seconds left. The rest of the game still counts frames, as scoped.
+  the seconds left. The rest of the game still counts frames, as scoped. The seconds are
+  real above 10 fps: below that the 0.1 s cap per update slows them on purpose (a stalled
+  frame is not play), so at 8 fps "SPREAD 6.0s" lasts about 8 s (sprint 07 review, IR-4:
+  6.01 s at 125 updates a second, 6.04 s at 30, 7.94 s at 8).
 - **Tested by:** `tests/studio/river-run-fork.test.mjs` section 5. (1) Layout at 390×780 and
   320×640 with a shield and a spread shot active and "Score: 1234": the score is one line,
   and the score, the label, "← Studio", Mute and the settings button (added to the four the
