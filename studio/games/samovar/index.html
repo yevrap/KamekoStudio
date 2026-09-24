@@ -24,7 +24,10 @@
 
     <div class="row">
       <p class="guest" id="guest"></p>
-      <p class="score mono" id="score" aria-label="Stars this evening"></p>
+      <p class="tally">
+        <span class="score mono" id="score" aria-label="Stars this evening"></span>
+        <span class="best-now mono" id="best-now" hidden></span>
+      </p>
     </div>
 
     <p class="hint" id="hint" role="status" aria-live="polite"></p>
@@ -47,6 +50,14 @@
           </g>
           <line class="band" id="band"></line>
           <path class="glass-edge" id="glass-edge"></path>
+          <!-- Tea over the brim, outside the glass: a drip down its side (#51),
+               or a spill down both sides into a puddle at the foot. -->
+          <g class="overflow" id="overflow">
+            <path class="run-under" id="run-under"></path>
+            <path class="drop-under" id="drop-under"></path>
+            <path class="run" id="run"></path>
+            <path class="drop" id="drop"></path>
+          </g>
         </svg>
       </div>
 
@@ -84,6 +95,8 @@
       a tulip glass, a wide bowl) and every one fills in the same time, so the right stop
       for one strength sits at a different height in each: about half-way up the straight
       glass for Amber, well under half-way in the tulip, two thirds of the way up the bowl.
+      The water is the easy part: a drop over the brim costs a star and drips down the
+      glass; only a real overflow spills the cup.
     </p>
     <p>
       It is fun if your misses on the tulip and the bowl shrink over an evening as you learn

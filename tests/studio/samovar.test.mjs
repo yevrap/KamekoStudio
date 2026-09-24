@@ -1,9 +1,13 @@
 // samovar.test.mjs — SHS-068: Samovar, the studio's first original game, its core loop;
-// SHS-072: three glasses of different shapes, each filling in the same time.
+// SHS-072: three glasses of different shapes, each filling in the same time;
+// SHS-073: a hair over the brim costs a star, not the cup, and the best evening
+// shows from the start.
 //
 // What is proved:
 //
-//  1. The rules, without a browser: a spill scores 0, a cup poured to the
+//  1. The rules, without a browser: a cup over the brim by up to 8 % of its
+//     volume drips and costs one star (never below 0), past 8 % it spills and
+//     scores 0, a cup poured to the
 //     wanted ratio and filled into the band scores 3, a short cup loses stars,
 //     the tea darkens as the brew ratio rises, the four strengths read as
 //     different colours, an evening has ten guests with every cup and at
@@ -19,6 +23,12 @@
 //     - the best evening is saved under studio_samovar_best, no other key is
 //       written, and it is still there after a reload;
 //     - holding the brew past the brim spills: the cup scores 0 and says so;
+//     - a hold of either liquid past 108 % spills mid-hold and serves at once,
+//       and a brew let go in the drip band serves at once, judged as a drip;
+//     - a pour that ends a drop over the brim (~104 %) shows a drip down the
+//       cup's side, scores one star under its strength, and says so;
+//     - a saved best shows on the first screen before the first pour, none
+//       saved shows none, and a first evening above 0 ends as a new best;
 //     - the pour follows real time: a one-second hold pours the same at
 //       ~120 and ~30 updates a second;
 //     - hiding the page stops a pour where it is and holds the result timer;
@@ -31,8 +41,10 @@
 //       none overlapping, the button at least 44 px tall in the bottom third,
 //       nothing scrolls sideways; the liquid's surface is drawn at the height
 //       the cup's profile gives for the volume in it, and the dashed line at
-//       90 % of its volume, each within 3 % of the cup's height; and the result
-//       card leaves the cup's top 15 % (rim and dashed line) in view.
+//       90 % of its volume, each within 3 % of the cup's height; the result
+//       card leaves the cup's top 15 % (rim and dashed line) in view; a drip
+//       shows outside the glass's right wall and a spill outside both, each
+//       beside the result card, above it and on screen.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -41,8 +53,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromeAvailable, collectErrors, launch, serve, settle } from './lib/browser.mjs';
 import { extractStorageKeys, findStorageViolations } from './lib/rules.mjs';
-import { CUPS, EVENING_LENGTH, FILL_MS, FULL_FROM, POUR_RATE, STRENGTHS } from '../../studio/games/samovar/constants.js';
-import { colourAt, heightAtVolume, judge, pourAmount, ratioOf, verdictLine, volumeAtHeight } from '../../studio/games/samovar/gameplay.js';
+import { CUPS, DRIP_BAND, EVENING_LENGTH, FILL_MS, FULL_FROM, POUR_RATE, STRENGTHS } from '../../studio/games/samovar/constants.js';
+import { colourAt, heightAtVolume, judge, overBrim, pourAmount, ratioOf, spilled, verdictLine, volumeAtHeight } from '../../studio/games/samovar/gameplay.js';
 import { makeEvening, readBest, rng } from '../../studio/games/samovar/state.js';
 import { SHELF } from '../../studio/shelf-data.js';
 
@@ -62,13 +74,40 @@ test('a cup poured to the wanted ratio and filled into the band scores 3', () =>
   }
 });
 
-test('over the brim is a spill and scores 0, however good the strength', () => {
-  const r = judge({ brew: 50, water: 71, volume: 120, wanted: 50 / 121 });
-  assert.equal(r.spilled, true);
-  assert.equal(r.stars, 0);
-  assert.match(verdictLine(r), /Spilled/);
-  // Exactly at the brim is still in.
-  assert.equal(judge({ brew: 48, water: 72, volume: 120, wanted: 0.4 }).stars, 3);
+test('a drop over the brim costs one star; past 8 % of the cup it spills and scores 0 (SHS-073)', () => {
+  assert.equal(DRIP_BAND, 0.08);
+  // [share of the cup poured, stars with the strength matched, with it a band off, with it far off, fill]
+  const cases = [
+    [1.000, 3, 2, 0, 'full'],    // exactly at the brim is still in
+    [1.005, 2, 1, 0, 'drip'],    // just over the brim: a drip, one star less
+    [1.040, 2, 1, 0, 'drip'],
+    [1.080, 2, 1, 0, 'drip'],    // the drip band's edge is still a drip
+    [1.085, 0, 0, 0, 'spilled']  // just past it: a spill, however good the strength
+  ];
+  for (const cup of CUPS) {
+    for (const [share, matched, off, far, fill] of cases) {
+      const total = cup.volume * share;
+      const at = ratio => judge({ brew: total * ratio, water: total * (1 - ratio), volume: cup.volume, wanted: 0.4 });
+      const where = `${cup.id} at ${(share * 100).toFixed(1)} %`;
+      assert.equal(at(0.4).stars, matched, `${where}, strength matched`);
+      assert.equal(at(0.47).stars, off, `${where}, strength 7 points off`);
+      assert.equal(at(0.7).stars, far, `${where}, strength far off: never below 0`);
+      assert.equal(at(0.4).fill, fill, where);
+      assert.equal(at(0.4).spilled, fill === 'spilled', where);
+      assert.equal(overBrim(total * 0.4, total * 0.6, cup.volume), share > 1, where);
+      assert.equal(spilled(total * 0.4, total * 0.6, cup.volume), fill === 'spilled', where);
+    }
+  }
+  const total = 104;
+  const drip = judge({ brew: total * 0.4, water: total * 0.6, volume: 100, wanted: 0.4 });
+  assert.match(verdictLine(drip), /a drop over the brim/);
+  assert.match(verdictLine(drip), /^Just the strength they wanted/);
+  assert.match(verdictLine(judge({ brew: 50, water: 60, volume: 100, wanted: 0.45 })), /Spilled/);
+  // A brew let go in the drip band, with no water: judged like any drip.
+  const brewOnly = judge({ brew: 104, water: 0, volume: 100, wanted: 0.7 });
+  assert.equal(brewOnly.fill, 'drip');
+  assert.equal(brewOnly.stars, 0);
+  assert.match(verdictLine(brewOnly), /Much too strong, but a drop over the brim/);
 });
 
 test('strength and fill each cost stars', () => {
@@ -298,6 +337,9 @@ test('in a browser: a full evening poured right scores 3 a cup, and the best sur
       assert.equal(end.total, String(EVENING_LENGTH * 3));
       assert.match(end.text, /30 of 30 stars/);
       assert.match(end.text, /Pour again/);
+      // Nothing was saved before this evening: its 30 reads as a new best (SHS-073, #54).
+      assert.match(end.text, /new best evening, your first/i);
+      assert.equal(await page.evaluate(() => document.getElementById('end').dataset.newBest), 'true');
 
       const store = await page.evaluate(() => ({ best: localStorage.getItem('studio_samovar_best'), writes: window.__writes, maze: localStorage.getItem('mazeWarden_bestWave') }));
       assert.equal(store.best, '30');
@@ -339,20 +381,183 @@ test('in a browser: Pour again starts a new evening at once, and a spill scores 
       assert.equal(fresh.phase, 'brew');
       assert.equal(fresh.guest, '1');
 
-      // Hold the brew well past the brim: it spills mid-hold.
-      const volume = Number(fresh.volume);
-      await hold(page, volume / POUR_RATE * 1000 + 400);
-      await page.waitForFunction(() => document.getElementById('game').dataset.phase === 'result');
+      // Hold the brew past the drip band: it spills mid-hold, with the button still held.
+      const box = await (await page.$('#pour')).boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      const pressed = Date.now();
+      await page.mouse.down();
+      await page.waitForFunction(() => document.getElementById('game').dataset.phase === 'result', { timeout: 5000 });
+      const heldFor = Date.now() - pressed;
       const result = await page.evaluate(() => ({
         stars: document.getElementById('result').dataset.stars,
         line: document.getElementById('result-line').textContent,
-        spilled: document.getElementById('cup').classList.contains('spilled')
+        spilled: document.getElementById('cup').classList.contains('spilled'),
+        overflow: document.getElementById('cup').dataset.overflow,
+        brew: Number(document.getElementById('game').dataset.brew),
+        volume: Number(document.getElementById('game').dataset.volume)
       }));
+      await page.mouse.up();
+      assert.ok(heldFor < FILL_MS * (1 + DRIP_BAND) + 400, `the brew spilled only after ${heldFor} ms`);
+      assert.ok(result.brew > result.volume * (1 + DRIP_BAND) && result.brew < result.volume * 1.2,
+        `the brew stopped at ${result.brew} of ${result.volume}, not just past the drip band`);
       assert.equal(result.stars, '0');
       assert.match(result.line, /Spilled/);
       assert.ok(result.spilled);
+      assert.equal(result.overflow, 'spill', 'a spill should show tea over the cup\'s side');
       assert.deepEqual(errors.map(e => e.text), []);
       await page.close();
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+test('in a browser: a pour that ends a drop over the brim drips, costs one star and says so (SHS-073)',
+  { skip, timeout: 60_000 },
+  async () => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      for (const [width, height] of [[320, 640], [390, 780]]) {
+        const { page, errors } = await openGame(browser, site.origin, { width, height });
+        // Pour to the guest's strength, 104 % of the cup: a drop over the brim, well inside the drip band.
+        const d = await data(page);
+        const total = Number(d.volume) * 1.04;
+        const wanted = Number(d.wanted);
+        await hold(page, total * wanted / POUR_RATE * 1000);
+        await wait(60);
+        assert.equal((await data(page)).phase, 'water');
+        await hold(page, total * (1 - wanted) / POUR_RATE * 1000);
+        await page.waitForFunction(() => document.getElementById('game').dataset.phase === 'result');
+        const r = await page.evaluate(() => {
+          const box = id => {
+            const b = document.getElementById(id).getBoundingClientRect();
+            return { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height };
+          };
+          const g = document.getElementById('game').dataset;
+          return {
+            stars: Number(document.getElementById('result').dataset.stars),
+            line: document.getElementById('result-line').textContent,
+            overflow: document.getElementById('cup').dataset.overflow,
+            spilledClass: document.getElementById('cup').classList.contains('spilled'),
+            brew: Number(g.brew), water: Number(g.water), volume: Number(g.volume), wanted: Number(g.wanted),
+            cupId: g.cup, cup: box('cup'), run: box('run'), result: box('result')
+          };
+        });
+        const where = `${r.cupId} at ${width}`;
+        const level = (r.brew + r.water) / r.volume;
+        assert.ok(level > 1 && level <= 1 + DRIP_BAND, `the pour ended at ${(level * 100).toFixed(1)} %, not in the drip band, ${where}`);
+        // The same tea at the brim: the stars its strength alone earns.
+        const strengthOnly = judge({ brew: r.brew / level, water: r.water / level, volume: r.volume, wanted: r.wanted }).stars;
+        assert.ok(strengthOnly >= 1, `the strength missed, ${where}: ${JSON.stringify(r)}`);
+        assert.equal(r.stars, strengthOnly - 1, `a drip should cost exactly one star, ${where}`);
+        assert.match(r.line, /a drop over the brim/, where);
+        assert.equal(r.overflow, 'drip', `no drip drawn, ${where}`);
+        assert.ok(!r.spilledClass, `a drip is drawn as a spill, ${where}`);
+        // The drip runs down the outside of the glass's right wall, from the rim, beside the result card.
+        const cupDef = CUPS.find(c => c.id === r.cupId);
+        const rimRight = r.cup.left + (50 + 50 * cupDef.halfWidth(1)) / 100 * r.cup.width;
+        assert.ok(r.run.right > rimRight + 1, `the drip is not outside the glass, ${where}`);
+        assert.ok(r.run.top <= r.cup.top + 0.05 * r.cup.height, `the drip does not start at the rim, ${where}`);
+        assert.ok(r.run.height >= 0.1 * r.cup.height, `the drip does not run down the side, ${where}`);
+        assert.ok(Math.min(r.run.bottom, r.result.top) - r.run.top >= 8, `the drip is hidden by the result card, ${where}`);
+        assert.ok(r.run.right <= width, `the drip is off screen, ${where}`);
+        assert.deepEqual(errors.map(e => e.text), []);
+        await page.close();
+      }
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+test('in a browser: a brew let go over the brim serves at once, and water held past 108 % spills mid-hold (SHS-073)',
+  { skip, timeout: 60_000 },
+  async () => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      const { page, errors } = await openGame(browser, site.origin);
+      // Guest 1: the brew alone to ~104 %, let go: no room for water, so it serves as a drip.
+      await hold(page, FILL_MS * 1.04);
+      await wait(60);
+      const brewOnly = await page.evaluate(() => ({
+        phase: document.getElementById('game').dataset.phase,
+        water: document.getElementById('game').dataset.water,
+        line: document.getElementById('result-line').textContent,
+        overflow: document.getElementById('cup').dataset.overflow
+      }));
+      assert.equal(brewOnly.phase, 'result', 'a brew let go over the brim should serve at once');
+      assert.equal(brewOnly.water, '0.00');
+      assert.match(brewOnly.line, /a drop over the brim/);
+      assert.equal(brewOnly.overflow, 'drip');
+      await nextGuestOrEnd(page, 1);
+
+      // Guest 2: a brew of 40 %, then water held on: it spills at 108 %, with the button still held.
+      await hold(page, FILL_MS * 0.4);
+      await wait(60);
+      assert.equal((await data(page)).phase, 'water');
+      const box = await (await page.$('#pour')).boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForFunction(() => document.getElementById('game').dataset.phase === 'result', { timeout: 5000 });
+      const water = await page.evaluate(() => ({
+        stars: document.getElementById('result').dataset.stars,
+        line: document.getElementById('result-line').textContent,
+        overflow: document.getElementById('cup').dataset.overflow,
+        brew: Number(document.getElementById('game').dataset.brew),
+        water: Number(document.getElementById('game').dataset.water),
+        volume: Number(document.getElementById('game').dataset.volume)
+      }));
+      await page.mouse.up();
+      const level = (water.brew + water.water) / water.volume;
+      assert.ok(level > 1 + DRIP_BAND && level < 1.15, `the water stopped at ${(level * 100).toFixed(1)} %, not just past the drip band`);
+      assert.equal(water.stars, '0');
+      assert.match(water.line, /Spilled/);
+      assert.equal(water.overflow, 'spill');
+      assert.deepEqual(errors.map(e => e.text), []);
+      await page.close();
+    } finally {
+      await browser.close();
+      await site.close();
+    }
+  });
+
+test('in a browser: a saved best shows on the first screen before the first pour, and none saved shows none (SHS-073)',
+  { skip, timeout: 60_000 },
+  async () => {
+    const site = await serve(ROOT);
+    const browser = await launch();
+    try {
+      const shown = page => page.evaluate(() => {
+        const b = document.getElementById('best-now');
+        const r = b.getBoundingClientRect();
+        return { hidden: b.hidden || r.width === 0, text: b.textContent, top: r.top, bottom: r.bottom, right: r.right,
+          phase: document.getElementById('game').dataset.phase, brew: document.getElementById('game').dataset.brew,
+          scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth };
+      });
+      for (const [width, height] of [[320, 640], [390, 780]]) {
+        const { page, errors } = await openGame(browser, site.origin, { width, height });
+        await page.evaluate(() => localStorage.setItem('studio_samovar_best', '17'));
+        await page.reload({ waitUntil: 'networkidle2' });
+        await settle(400);
+        const saved = await shown(page);
+        assert.equal(saved.phase, 'brew');
+        assert.equal(saved.brew, '0.00', 'measured after a pour, not before the first');
+        assert.ok(!saved.hidden, `a saved best is not on the first screen at ${width}`);
+        assert.match(saved.text, /17/);
+        assert.ok(saved.top >= 0 && saved.bottom <= height && saved.right <= width, `the best is off screen at ${width}`);
+        assert.ok(saved.scrollWidth <= saved.clientWidth, `the page scrolls sideways at ${width}`);
+
+        await page.evaluate(() => localStorage.removeItem('studio_samovar_best'));
+        await page.reload({ waitUntil: 'networkidle2' });
+        await settle(400);
+        const none = await shown(page);
+        assert.ok(none.hidden, `a best shows with none saved at ${width}: "${none.text}"`);
+        assert.equal(none.text, '');
+        assert.deepEqual(errors.map(e => e.text), []);
+        await page.close();
+      }
     } finally {
       await browser.close();
       await site.close();
@@ -484,7 +689,7 @@ test('in a browser: Space on the button pours guest after guest, with no Tab bet
     }
   });
 
-test('in a browser: at 320 and 390 wide every cup fits, its tea sits at the profile\'s height, and the result card leaves the rim in view',
+test('in a browser: at 320 and 390 wide every cup fits, its tea sits at the profile\'s height, the result card leaves the rim in view, and a drip or a spill shows beside it',
   { skip, timeout: 60_000 },
   async () => {
     const site = await serve(ROOT);
@@ -516,19 +721,35 @@ test('in a browser: at 320 and 390 wide every cup fits, its tea sits at the prof
                 pourBg: getComputedStyle(document.getElementById('pour')).backgroundColor,
                 pourInk: getComputedStyle(document.getElementById('pour')).color
               };
-              // Serve it with the longest result line the game writes, and measure the card.
+              // Serve it a drop over the brim, with the longest result line the game
+              // writes, and measure the card and the drip beside it.
               const r = g.strength.ratio;
-              m.session.brew = 0.8 * r * g.cup.volume;
-              m.session.water = 0.8 * (1 - r) * g.cup.volume;
+              const pourTo = level => {
+                m.session.brew = level * r * g.cup.volume;
+                m.session.water = level * (1 - r) * g.cup.volume;
+              };
+              pourTo(1.04);
               m.serveCup();
               await frames();
+              const overflow = () => ({
+                kind: document.getElementById('cup').dataset.overflow,
+                run: box('run'),
+                scrollWidth: document.documentElement.scrollWidth,
+                clientWidth: document.documentElement.clientWidth
+              });
               const serving = {
                 cup: box('cup'), swatch: box('swatch'), pour: box('pour'), guest: box('guest'), result: box('result'),
                 line: document.getElementById('result-line').textContent,
-                scrollWidth: document.documentElement.scrollWidth,
-                clientWidth: document.documentElement.clientWidth
+                ...overflow()
               };
-              return { ...playing, serving };
+              // And a spill, past the drip band.
+              m.showGuest();
+              pourTo(1.12);
+              m.serveCup();
+              await frames();
+              const spill = { cup: box('cup'), result: box('result'), ...overflow() };
+              m.showGuest();
+              return { ...playing, serving, spill };
             }, c, 0.6);
             const where = `${CUPS[c].id} at ${width}×${height} (${theme})`;
             for (const name of ['cup', 'swatch', 'pour', 'guest']) {
@@ -558,7 +779,7 @@ test('in a browser: at 320 and 390 wide every cup fits, its tea sits at the prof
 
             // The result card leaves the rim and the dashed line in view.
             const v = boxes.serving;
-            assert.match(v.line, /short of the brim/, 'the card was not measured with its longest line');
+            assert.match(v.line, /^Just the strength they wanted, but a drop over the brim/, 'the card was not measured with its longest line');
             const rim = { left: v.cup.left, right: v.cup.right, top: v.cup.top, bottom: v.cup.top + 0.15 * v.cup.height };
             assert.ok(!overlap(v.result, rim), `the result card covers the cup's top 15 %, ${where}: ${JSON.stringify(v.result)}`);
             assert.ok(v.result.left >= 0 && v.result.top >= 0 && v.result.right <= width + 0.5 && v.result.bottom <= height + 0.5,
@@ -570,6 +791,22 @@ test('in a browser: at 320 and 390 wide every cup fits, its tea sits at the prof
               `the cup runs into something while its result shows, ${where}`);
             assert.ok(v.pour.height >= 44 && v.pour.top >= height * 2 / 3, `the button moved while the result shows, ${where}`);
             assert.ok(v.scrollWidth <= v.clientWidth, `the page scrolls sideways while the result shows, ${where}`);
+
+            // A drip shows outside the right wall, and a spill outside both, from the rim, beside the card (SHS-073).
+            const wallAt = (b, sign) => b.left + (50 + sign * 50 * CUPS[c].halfWidth(1)) / 100 * b.width;
+            const beside = (o, card) => Math.min(o.run.bottom, card.top) - o.run.top;
+            assert.equal(v.kind, 'drip', `no drip drawn, ${where}`);
+            assert.ok(v.run.right > wallAt(v.cup, 1) + 1 && v.run.left > wallAt(v.cup, -1),
+              `the drip is not outside the right wall alone, ${where}: ${JSON.stringify(v.run)}`);
+            assert.ok(beside(v, v.result) >= 8, `the drip is hidden by the result card, ${where}`);
+            assert.ok(v.run.left >= 0 && v.run.top >= 0 && v.run.right <= width + 0.5, `the drip is off screen, ${where}`);
+            const sp = boxes.spill;
+            assert.equal(sp.kind, 'spill', `no spill drawn, ${where}`);
+            assert.ok(sp.run.right > wallAt(sp.cup, 1) + 1 && sp.run.left < wallAt(sp.cup, -1) - 1,
+              `the spill is not outside both walls, ${where}: ${JSON.stringify(sp.run)}`);
+            assert.ok(beside(sp, sp.result) >= 8, `the spill is hidden by the result card, ${where}`);
+            assert.ok(sp.run.left >= 0 && sp.run.top >= 0 && sp.run.right <= width + 0.5, `the spill is off screen, ${where}`);
+            assert.ok(sp.scrollWidth <= sp.clientWidth && v.scrollWidth <= v.clientWidth, `the overflow scrolls the page sideways, ${where}`);
           }
           await page.close();
         }

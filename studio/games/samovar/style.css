@@ -125,7 +125,11 @@ main { max-width: 34rem; margin: 0 auto; }
 
 .row p { margin: 0; }
 .guest { font-weight: 600; }
+.tally { display: flex; flex-direction: column; align-items: flex-end; flex: none; }
 .score { color: var(--worklight); font-weight: 700; white-space: nowrap; }
+/* The best evening, under the running stars from the first screen on (#54). */
+.best-now { font-size: 0.75rem; color: var(--ink-dim); white-space: nowrap; }
+.best-now[hidden] { display: none; }
 
 .hint {
   margin: 4px 0 0;
@@ -203,6 +207,22 @@ main { max-width: 34rem; margin: 0 auto; }
 
 .cup.spilled .glass-edge { stroke: #c0392b; }
 
+/* Tea over the brim, outside the glass (#51): drawn by main.js down the wall's
+   outside. The under-stroke outlines the tea so a pale cup still reads against
+   the table in either theme; the strokes don't stretch with the box. */
+.overflow path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.overflow .run-under { stroke: var(--glass); stroke-width: 8px; }
+.overflow .run { stroke-width: 5px; }
+.overflow .drop-under { stroke: var(--glass); stroke-width: 13px; }
+.overflow .drop { stroke-width: 10px; }
+.cup[data-overflow="spill"] .run-under { stroke-width: 10px; }
+.cup[data-overflow="spill"] .run { stroke-width: 7px; }
+
 /* The fill band: from the dashed line (90 % of this glass's volume) to the brim is a full cup. */
 .band {
   stroke: var(--band);
@@ -267,6 +287,7 @@ main { max-width: 34rem; margin: 0 auto; }
 
 .total { font-size: 1.4rem; font-weight: 700; color: var(--worklight); }
 .best { color: var(--ink-dim); }
+.best.new { color: var(--worklight); font-weight: 700; }
 
 .cups {
   display: grid;

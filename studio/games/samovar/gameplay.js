@@ -3,7 +3,7 @@
 // main.js measures how long a pour has run and calls these; everything the
 // player is judged by is decided here, so it is tested without a browser.
 
-import { COLOUR_STOPS, FULL_FROM, POUR_RATE, SHORT_FROM, STRENGTH_BANDS } from './constants.js';
+import { COLOUR_STOPS, DRIP_BAND, FULL_FROM, POUR_RATE, SHORT_FROM, STRENGTH_BANDS } from './constants.js';
 
 /** Units poured by a hold of `ms` milliseconds. */
 export function pourAmount(ms, rate = POUR_RATE) {
@@ -16,7 +16,7 @@ export function ratioOf(brew, water) {
   return total > 0 ? brew / total : 0;
 }
 
-/** The level of the cup as a share of its brim (may pass 1: that is a spill). */
+/** The level of the cup as a share of its brim (may pass 1: a drip, then a spill). */
 export function levelOf(brew, water, volume) {
   return (brew + water) / volume;
 }
@@ -72,9 +72,17 @@ export function heightAtVolume(cup, volume) {
   return (lo + (span > 0 ? (v - table[lo]) / span : 0)) / STEPS;
 }
 
-/** Whether the cup has overflowed. Exactly at the brim is still in. */
-export function spilled(brew, water, volume) {
+/** Whether the tea is over the brim at all: a drip or a spill. Exactly at the brim is still in. */
+export function overBrim(brew, water, volume) {
   return brew + water > volume + 1e-9;
+}
+
+/**
+ * Whether the cup has spilled: over the brim by more than the drip band (#51).
+ * Up to DRIP_BAND of the cup over, the tea drips down the side and costs a star.
+ */
+export function spilled(brew, water, volume) {
+  return brew + water > volume * (1 + DRIP_BAND) + 1e-9;
 }
 
 /** [r, g, b] of tea at `ratio`, interpolated between COLOUR_STOPS. */
@@ -99,12 +107,14 @@ export function cssColour(ratio) {
 /**
  * Judge a served cup.
  *
- * Spilling scores 0. Otherwise strength gives 0–3 stars by the gap between the
- * poured and the wanted ratio, and a cup short of the fill band loses one star
- * (two if it is well short).
+ * Spilling (over the brim by more than the drip band) scores 0. Otherwise
+ * strength gives 0–3 stars by the gap between the poured and the wanted ratio;
+ * a cup a drop over the brim loses one star (#51), and a cup short of the fill
+ * band loses one (two if it is well short).
  *
  * @returns {{ stars: number, spilled: boolean, ratio: number, level: number,
- *             gap: number, strength: 'right'|'strong'|'weak', fill: 'full'|'short'|'low'|'spilled' }}
+ *             gap: number, strength: 'right'|'strong'|'weak',
+ *             fill: 'full'|'drip'|'short'|'low'|'spilled' }}
  */
 export function judge({ brew, water, volume, wanted }) {
   const ratio = ratioOf(brew, water);
@@ -114,8 +124,9 @@ export function judge({ brew, water, volume, wanted }) {
     return { stars: 0, spilled: true, ratio, level, gap, strength: strengthWord(ratio, wanted), fill: 'spilled' };
   }
   const strengthStars = gap <= STRENGTH_BANDS[0] ? 3 : gap <= STRENGTH_BANDS[1] ? 2 : gap <= STRENGTH_BANDS[2] ? 1 : 0;
-  const fill = level >= FULL_FROM ? 'full' : level >= SHORT_FROM ? 'short' : 'low';
-  const penalty = fill === 'full' ? 0 : fill === 'short' ? 1 : 2;
+  const fill = overBrim(brew, water, volume) ? 'drip'
+    : level >= FULL_FROM ? 'full' : level >= SHORT_FROM ? 'short' : 'low';
+  const penalty = { full: 0, drip: 1, short: 1, low: 2 }[fill];
   return {
     stars: Math.max(0, strengthStars - penalty),
     spilled: false,
@@ -134,12 +145,17 @@ function strengthWord(ratio, wanted) {
 
 /** One line saying what happened to a cup, for the result card. */
 export function verdictLine(result) {
-  if (result.spilled) return 'Spilled over the brim — no stars for this one.';
+  if (result.spilled) return 'Spilled over the side — no stars for this one.';
   const strength = {
     right: 'Just the strength they wanted',
     strong: result.gap > STRENGTH_BANDS[1] ? 'Much too strong' : 'A touch too strong',
     weak: result.gap > STRENGTH_BANDS[1] ? 'Much too weak' : 'A touch too weak'
   }[result.strength];
-  const fill = { full: ', filled to the brim.', short: ', but short of the brim.', low: ', and barely half a cup.' }[result.fill];
+  const fill = {
+    full: ', filled to the brim.',
+    drip: ', but a drop over the brim.',
+    short: ', but short of the brim.',
+    low: ', and barely half a cup.'
+  }[result.fill];
   return strength + fill;
 }

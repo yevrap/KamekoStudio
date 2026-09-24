@@ -5,8 +5,8 @@
 // the result timer; it stands still while the page is hidden or the settings
 // drawer is open.
 
-import { BEST_KEY, CUPS, EVENING_LENGTH, FULL_FROM, RESULT_MS } from './constants.js';
-import { cssColour, heightAtVolume, judge, levelOf, pourAmount, ratioOf, spilled, verdictLine } from './gameplay.js';
+import { BEST_KEY, CUPS, DRIP_BAND, EVENING_LENGTH, FULL_FROM, RESULT_MS } from './constants.js';
+import { cssColour, heightAtVolume, judge, levelOf, overBrim, pourAmount, ratioOf, spilled, verdictLine } from './gameplay.js';
 import { makeEvening, readBest } from './state.js';
 
 // --- Storage -----------------------------------------------------------------
@@ -113,6 +113,62 @@ function drawGlass(cup) {
   band.setAttribute('y2', String(fmt(100 * (1 - h))));
 }
 
+// Tea over the brim runs down the outside of the glass, following its profile
+// a few pixels out from the wall. Within the drip band (#51) one drip runs down
+// the right side, longer the further over the brim, with a drop hanging at its
+// end. Past it the cup has spilled: tea heaped over the whole rim and running
+// down both sides to the foot (no drops there: the result card covers the foot). The strokes don't scale with the stretched box,
+// so a drop stays round; `data-overflow` on the cup says which is drawn.
+
+const OVERFLOW_PATHS = ['run-under', 'drop-under', 'run', 'drop'];
+
+function drawOverflow(cup, level, colour) {
+  const over = level - 1;
+  const kind = over <= 1e-9 ? '' : level > 1 + DRIP_BAND + 1e-9 ? 'spill' : 'drip';
+  const box = el('cup');
+  if (!kind) {
+    if (box.dataset.overflow) {
+      delete box.dataset.overflow;
+      for (const id of OVERFLOW_PATHS) el(id).removeAttribute('d');
+    }
+    return;
+  }
+  // Box units per pixel, across and down: the box is 100 × 100 however big the glass is.
+  const rect = box.getBoundingClientRect();
+  const px = 100 / (rect.width || 100);
+  const py = 100 / (rect.height || 100);
+  const out = 4 * px;
+  const down = kind === 'spill' ? 1 : 0.12 + 0.28 * Math.min(1, over / DRIP_BAND);
+  const rim = 50 * cup.halfWidth(1);
+  const side = sign => {
+    const lip = [50 + sign * (rim - 3 * px), -2 * py];
+    const points = [lip];
+    for (let i = 0; i <= 24; i++) {
+      const h = 1 - down * i / 24;
+      points.push([50 + sign * (50 * cup.halfWidth(h) + out), 100 * (1 - h)]);
+    }
+    return points;
+  };
+  const line = points => `M ${points.map(([x, y]) => `${fmt(x)} ${fmt(y)}`).join(' L ')}`;
+  const runs = (kind === 'spill' ? [1, -1] : [1]).map(side);
+  const drops = kind === 'drip'
+    ? runs.map(points => {
+      const [x, y] = points[points.length - 1];
+      return `M ${fmt(x)} ${fmt(y + 3 * py)} L ${fmt(x)} ${fmt(y + 3 * py)}`;
+    })
+    // A spill heaps the tea over the whole rim, lip to lip.
+    : [`M ${fmt(50 - rim + 2 * px)} ${fmt(-2 * py)} L ${fmt(50 + rim - 2 * px)} ${fmt(-2 * py)}`];
+  const run = runs.map(line).join(' ');
+  const drop = drops.join(' ');
+  el('run-under').setAttribute('d', run);
+  el('run').setAttribute('d', run);
+  el('drop-under').setAttribute('d', drop);
+  el('drop').setAttribute('d', drop);
+  el('run').style.stroke = colour;
+  el('drop').style.stroke = colour;
+  box.dataset.overflow = kind;
+}
+
 function capital(text) { return text.charAt(0).toUpperCase() + text.slice(1); }
 
 // --- Pouring -----------------------------------------------------------------
@@ -146,12 +202,15 @@ function stopPour(t = now()) {
   return true;
 }
 
-/** The player let go: brew moves on to water, water serves the cup. */
+/**
+ * The player let go: brew moves on to water, water serves the cup. A brew let
+ * go over the brim serves at once: there is no room left for water (#51).
+ */
 function release() {
   const liquid = s.pour?.liquid;
   if (!stopPour()) return;
   const g = guest();
-  if (spilled(s.brew, s.water, g.cup.volume)) return serve();
+  if (overBrim(s.brew, s.water, g.cup.volume)) return serve();
   if (liquid === 'brew') {
     s.phase = 'water';
     setData();
@@ -211,9 +270,14 @@ function endEvening() {
     writeStoredBest(total);
   }
   el('end-total').textContent = `${total} of ${EVENING_LENGTH * 3} stars`;
-  el('end-best').textContent = newBest && before > 0
-    ? `Your best evening yet (the last best was ${before}).`
-    : `Best evening: ${s.best}.`;
+  // A first evening above 0 is a best too (#54): nothing was saved to beat.
+  el('end-best').textContent = !newBest
+    ? (s.best > 0 ? `Best evening: ${s.best}.` : 'No best evening yet: pour another.')
+    : before > 0
+      ? `A new best evening! The last best was ${before}.`
+      : 'A new best evening, your first!';
+  el('end-best').classList.toggle('new', newBest);
+  el('end').dataset.newBest = String(newBest);
   el('end-cups').innerHTML = s.results
     .map((r, i) => `<li title="Cup ${i + 1}">${r.spilled ? '×' : r.stars}</li>`).join('');
   el('end').dataset.total = String(total);
@@ -252,6 +316,7 @@ function paint(t = now()) {
   liquid.setAttribute('y', String(100 * (1 - surfaceAt)));
   liquid.setAttribute('height', String(100 * surfaceAt + 1));
   liquid.style.fill = brew + water > 0 ? cssColour(ratioOf(brew, water)) : 'transparent';
+  drawOverflow(g.cup, levelOf(brew, water, g.cup.volume), cssColour(ratioOf(brew, water)));
 
   const stream = el('stream');
   if (s.pour) {
@@ -285,6 +350,14 @@ function paint(t = now()) {
   const stars = s.results.reduce((sum, r) => sum + r.stars, 0);
   const score = `★ ${stars}`;
   if (el('score').textContent !== score) el('score').textContent = score;
+  // The best evening, from the first screen on (#54); none saved shows none.
+  const best = el('best-now');
+  const bestText = s.best > 0 ? `best ${s.best}` : '';
+  if (best.textContent !== bestText) {
+    best.textContent = bestText;
+    best.hidden = !bestText;
+    best.setAttribute('aria-label', `Best evening: ${s.best} stars`);
+  }
 }
 
 /** State a reader (or a test) can see without reaching into the module. */
