@@ -39,9 +39,12 @@ export const onBranch = {
     if (behind !== '0') {
       return { status: 'fail', detail: `${where}, ${behind} commit(s) behind origin/main — rebase first` };
     }
+    // A ticket branch stays ahead of origin/main after it is pushed, until its
+    // pull request merges: "unpushed" is only true on main (sprint 08 review, IR08-6).
+    const why = branch === 'main' ? 'unpushed' : 'not merged into main yet';
     return {
       status: 'pass',
-      detail: ahead === '0' ? `${where}, in sync with origin` : `${where}, ${ahead} commit(s) ahead of origin/main (unpushed)`
+      detail: ahead === '0' ? `${where}, in sync with origin` : `${where}, ${ahead} commit(s) ahead of origin/main (${why})`
     };
   }
 };

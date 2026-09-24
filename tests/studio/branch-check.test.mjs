@@ -62,6 +62,21 @@ test('a ticket branch ahead of origin/main passes, and the detail names the bran
   } finally { done(); }
 });
 
+test('ahead of origin/main: main says unpushed, a ticket branch says not merged (IR08-6)', () => {
+  // A pushed ticket branch waiting for its merge is always ahead of origin/main,
+  // so "(unpushed)" would be wrong in exactly the state the branch flow creates.
+  const { work, done } = repos();
+  try {
+    work.commit('test(studio): SHS-070 on main', ['studio/main.txt']);
+    assert.match(check.run({ root: work.root }).detail, /ahead of origin\/main \(unpushed\)/);
+    work.git('switch', '--quiet', '-c', 'studio/SHS-070-checks-accept-branches');
+    const r = check.run({ root: work.root });
+    assert.equal(r.status, 'pass', r.detail);
+    assert.doesNotMatch(r.detail, /unpushed/);
+    assert.match(r.detail, /not merged into main yet/);
+  } finally { done(); }
+});
+
 test('a ticket branch behind origin/main fails: rebase first', () => {
   const { origin, work, done } = repos();
   try {
