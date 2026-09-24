@@ -20,3 +20,13 @@ is committed.
 - **Game Designer** — *Done:* three pitches in [plan.md](plan.md#three-pitches); Samovar ⭐ as
   Q14, with its hypothesis written into the ticket before the build. *Next:* review, with
   the Playtester, against that hypothesis. *Blocked:* nothing.
+
+## Session 2 — build SHS-068 (2026-09-24)
+
+- **Frontend Developer** — *Done:* [SHS-068](tickets/SHS-068-samovar-core.md), Samovar's core loop in `studio/games/samovar/`
+  (`8a351b7`), on the shelf as `PROTOTYPE`, design note in `docs/studio/games/samovar.md`.
+  `tests/studio/samovar.test.mjs` 14/14, `--stage=ticket` 5/5. *Next:* build
+  [SHS-069](tickets/SHS-069-river-run-power-ups-read-at-a-glance.md). *Blocked:* nothing.
+- **Game Designer** — *Done:* tuning recorded in the design note; an evening draws 10 of the
+  12 cup-and-strength pairs so no pour repeats. *Next:* review, against the hypothesis.
+  *Blocked:* nothing.
