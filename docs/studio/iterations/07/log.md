@@ -67,3 +67,16 @@ is committed.
   Q13 in the questionnaire (⭐ yes, but it waits for a tick: it touches releases), and
   #44–#46 from the Playtester's notes and questions. The next new item is #47.
   *Next:* nothing until close. *Blocked:* nothing.
+
+## Session 6 — close (2026-09-23)
+
+- **Scrum Master** — *Done:* the close records (`684305b`): the changelog's
+  `studio-iteration-07` section, the pulse line and River Run's shelf entry, backlog #35,
+  #38 and #41 marked done, [SHS-067](tickets/SHS-067-iteration-record.md) Done. `review.md` needed nothing more: its *In plain words*,
+  demo and verdicts were written at review. The gate's first run was red on one check,
+  `docs-current`: [SHS-063](../06/tickets/SHS-063-exempt-adr-0011-commits.md), built between sprints, was Done without the template's *What
+  changed* and *Tested by* fields. Relabelled (`666ab60`), the full gate went 11 of 11.
+  Pushed, tagged `studio-iteration-07`; postdeploy found each marker live on its first
+  attempt: `POWERUP_MAX_STEP_S` on the fork, `River Run music failed to restart` on the
+  arcade's River Run, the new pulse line on the realm. No `studio` issue was open to close.
+  *Next:* retro. *Blocked:* nothing.
