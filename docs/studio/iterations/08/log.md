@@ -66,3 +66,16 @@ is committed.
   shape makes the stop the same share of every cup; IR08-2: the brim isn't the lesser
   skill). Backlog #51–#54 for sprint 09, and Q15 (⭐ A, cup shapes). *Next:* plan 09 acts
   on the Iterate. *Blocked:* nothing.
+
+## Session 6 — close (2026-09-24)
+
+- **Scrum Master** — *Done:* the close records (`b69ce67`): the changelog's
+  `studio-iteration-08` section, the pulse line, Samovar's shelf entry (its first verdict)
+  and River Runner's (iteration 08), backlog #48, #42, #44 and #40 marked done, the
+  Playtester's verdicts in the input ledger, [SHS-071](tickets/SHS-071-iteration-record.md) Done. `review.md` needed nothing more:
+  its *In plain words*, demo and verdicts were written at review. The gate went 11 of 11 on
+  its first run (base `studio-iteration-07`). Pushed, tagged `studio-iteration-08`;
+  postdeploy found each marker live: `hold('drawer'` in Samovar's `main.js` and
+  `PICKUP_GLOW_PX` on the fork on the first attempt, the new pulse line on the realm on
+  the second. No request issue shipped this sprint; the two open `feedback` issues (#3, #4)
+  are the retro's. *Next:* retro. *Blocked:* nothing.
