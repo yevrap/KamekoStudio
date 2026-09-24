@@ -2,6 +2,7 @@
 
 import path from 'node:path';
 import { attempt, git, gitPath, exists } from '../lib/shell.mjs';
+import { branchProblem } from '../lib/rules.mjs';
 
 export const treeClean = {
   id: 'tree-clean',
@@ -18,23 +19,29 @@ export const treeClean = {
   }
 };
 
-export const onMain = {
-  id: 'on-main',
+export const onBranch = {
+  // Was `on-main` until SHS-070: ADR-0011 §4 gives each ticket a branch and a
+  // pull request, so a ticket branch is as good a place to start as `main`.
+  id: 'on-branch',
   stages: ['preflight', 'push'],
-  description: 'The iteration starts from the branch that deploys',
+  description: 'On main or a ticket branch (studio/SHS-NNN-slug), and not behind origin/main',
   run(ctx) {
     const branch = git(ctx.root, 'rev-parse', '--abbrev-ref', 'HEAD');
-    if (branch !== 'main') return { status: 'fail', detail: `on "${branch}", expected "main"` };
+    const problem = branchProblem(branch);
+    if (problem) return { status: 'fail', detail: problem };
+    const where = branch === 'main' ? 'on main' : `on ticket branch ${branch}`;
 
     const fetched = attempt(gitPath(), ['fetch', '--quiet', 'origin', 'main'], { cwd: ctx.root });
     if (!fetched.ok) return { status: 'skip', detail: `could not reach origin: ${fetched.out || 'network unavailable'}` };
 
     const behind = git(ctx.root, 'rev-list', '--count', 'HEAD..origin/main');
     const ahead = git(ctx.root, 'rev-list', '--count', 'origin/main..HEAD');
-    if (behind !== '0') return { status: 'fail', detail: `main is ${behind} commit(s) behind origin/main` };
+    if (behind !== '0') {
+      return { status: 'fail', detail: `${where}, ${behind} commit(s) behind origin/main — rebase first` };
+    }
     return {
       status: 'pass',
-      detail: ahead === '0' ? 'on main, in sync with origin' : `on main, ${ahead} commit(s) ahead of origin (unpushed)`
+      detail: ahead === '0' ? `${where}, in sync with origin` : `${where}, ${ahead} commit(s) ahead of origin/main (unpushed)`
     };
   }
 };

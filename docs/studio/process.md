@@ -130,6 +130,10 @@ is testing and how its retrospective judges it.
 
 - Commit to `main`. No ticket branches, no merge commits. A ticket is one or more small
   commits, each naming it.
+  The checks are ready for the branch-per-ticket flow ADR-0011 §4 moves to (backlog #49,
+  #50): `on-branch` accepts `main` or a ticket branch `studio/SHS-NNN-slug`, and
+  `commit-lint` does not count the ` (#N)` a squash-merge adds (SHS-070). Until #49
+  changes this list, the studio stays on `main`.
 - **Rebase, don't merge.** The arcade ships on the same `main`, so when the remote has moved,
   `git pull --rebase`. A merge that brings in studio and arcade commits together fails the
   path guard, and only a hash exemption gets it through (iteration 05 review).

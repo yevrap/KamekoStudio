@@ -181,7 +181,9 @@ consequences the team lives with:
 
 1. **Before every push**, the full existing suite runs: `npm test`, `npm run smoke`,
    `npm run e2e`. Not the studio's tests — all of them. The `push` stage of the checker
-   runs it.
+   runs it, with `on-branch`: the push starts from `main`, or from a ticket branch
+   `studio/SHS-NNN-slug` (ADR-0011 §4), never behind `origin/main`, and nowhere else
+   (SHS-070).
 2. **After every deploy**, the run verifies that a production game page still loads, that
    the new build is the one being served, and that no file outside the allowed paths
    differs from the previous release — other than the production fixes this iteration's

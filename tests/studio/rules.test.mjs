@@ -1119,3 +1119,34 @@ test('commit lint: every example commit subject in the handbook passes the lint'
   assert.ok(found.length, 'no example commit subjects found — the pattern no longer matches the handbook');
   for (const { file, subject } of found) assert.equal(lintCommitSubject(subject), null, `${file}: ${subject}`);
 });
+
+// --- A squash-merged pull request (SHS-070, ADR-0011 §4) ------------------------
+// GitHub's squash-merge appends " (#N)" to the subject. The lint counts the
+// subject without it, and judges everything else exactly as before.
+
+const at80 = 'feat(studio): SHS-070 ' + 'x'.repeat(80 - 'feat(studio): SHS-070 '.length);
+
+test('commit lint: a squash-merged subject passes when it fits in 80 without its " (#N)"', () => {
+  assert.equal(at80.length, 80);
+  assert.equal(lintCommitSubject(`${at80} (#12)`), null);
+  assert.equal(lintCommitSubject('fix(studio): SHS-070 accept a ticket branch (#1234)'), null);
+});
+
+test('commit lint: a squash-merged subject still fails without a ticket, or past 80 without the suffix', () => {
+  assert.match(lintCommitSubject('feat(studio): accept a ticket branch (#12)'), /expected/);
+  assert.match(lintCommitSubject('feat: SHS-070 accept a ticket branch (#12)'), /expected/);
+  assert.match(lintCommitSubject(`${at80}x (#12)`), /81 characters/);
+  // Only a trailing " (#N)" is a squash-merge's; anything else still counts.
+  assert.match(lintCommitSubject(`${at80}(#12)`), /characters/);
+  assert.match(lintCommitSubject(`${at80} (#12) more`), /characters/);
+  assert.match(lintCommitSubject(`${at80} (#x)`), /characters/);
+});
+
+test('path guard: a squash-merged studio commit is judged like any other studio commit', () => {
+  const squash = 'feat(studio): SHS-070 accept a ticket branch (#12)';
+  assert.equal(commitKind({ sha: 'd'.repeat(40), subject: squash }).kind, 'studio');
+  const inside = sortCommitsByKind([C(squash, ['studio/a.js', 'tests/studio/b.mjs'])]);
+  assert.deepEqual(classifyPaths(inside.studioPaths).violations, []);
+  const outside = sortCommitsByKind([C(squash, ['studio/a.js', 'games/durak/main.js'])]);
+  assert.deepEqual(classifyPaths(outside.studioPaths).violations, ['games/durak/main.js']);
+});

@@ -773,6 +773,14 @@ export function lintCommit({ sha, parentCount = 1, subject }) {
   return waiver ? { status: 'waived', reason: waiver } : { status: 'fail', problem };
 }
 
+/**
+ * The ` (#N)` GitHub's squash-merge appends to a pull request's subject
+ * (ADR-0011 §4). Only a trailing one: the lint measures the subject the author
+ * wrote, so a subject that fits in 80 does not fail for the number the merge
+ * added (SHS-070).
+ */
+export const SQUASH_SUFFIX_RE = / \(#\d+\)$/;
+
 export function lintCommitSubject(subject, { parentCount = 1 } = {}) {
   if (parentCount > 1) return null;
   const match = COMMIT_RE.exec(subject);
@@ -781,8 +789,28 @@ export function lintCommitSubject(subject, { parentCount = 1 } = {}) {
   }
   const problem = ticketIdProblem(match[3], Number(match[4]));
   if (problem) return problem;
-  if (subject.length > 80) return `subject is ${subject.length} characters (max 80)`;
+  const written = subject.replace(SQUASH_SUFFIX_RE, '');
+  if (written.length > 80) {
+    const note = written === subject ? '' : ', not counting the squash-merge\'s " (#N)"';
+    return `subject is ${written.length} characters (max 80${note})`;
+  }
   return null;
+}
+
+/**
+ * A ticket branch (ADR-0011 §4): `studio/SHS-NNN-slug`, a valid ticket number
+ * and a lowercase slug of words joined by single hyphens. The branch check
+ * admits `main` and these, and nothing else (SHS-070).
+ */
+export const STUDIO_BRANCH_RE = /^studio\/SHS-(\d{3})-[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+/** Why the check may not run on this branch, or null for `main` or a ticket branch. */
+export function branchProblem(name) {
+  if (name === 'main') return null;
+  const match = STUDIO_BRANCH_RE.exec(String(name ?? ''));
+  if (!match) return `on "${name}", expected "main" or a ticket branch "studio/SHS-NNN-slug" (lowercase slug)`;
+  const problem = ticketIdProblem('SHS', Number(match[1]));
+  return problem ? `on "${name}": ${problem}` : null;
 }
 
 /**

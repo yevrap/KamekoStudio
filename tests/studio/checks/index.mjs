@@ -4,7 +4,7 @@
 // { status: 'pass' | 'fail' | 'skip', detail }. A module may export several.
 // Order here is the order they run in.
 
-import { treeClean, onMain, noStopFile } from './preflight.mjs';
+import { treeClean, onBranch, noStopFile } from './preflight.mjs';
 import { baselineSuites, fullSuites, studioTests } from './suites.mjs';
 import { pathGuard, productionUnchanged } from './path-guard.mjs';
 import { storageKeys } from './storage-keys.mjs';
@@ -18,7 +18,7 @@ import { productionFixReviewed } from './production-review.mjs';
 
 export const CHECKS = [
   treeClean,
-  onMain,
+  onBranch,
   noStopFile,
   baselineSuites,
   pathGuard,
@@ -52,8 +52,8 @@ export const STAGES = ['preflight', 'ticket', 'gate', 'push', 'postdeploy', 'clo
  *
  * `push` is the gate without the two checks that only make sense once the
  * iteration has been reviewed — `docs-current` and `reviewer-verdict` — plus
- * `on-main` and `no-stop-file`, because the push goes straight to the branch
- * that deploys and must respect a halt.
+ * `on-branch` and `no-stop-file`, because the push goes to `main` or to a
+ * ticket branch that will be merged into it, and must respect a halt.
  */
 export const CONCLUSIVE_STAGES = ['gate', 'push', 'postdeploy'];
 

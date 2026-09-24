@@ -7,10 +7,10 @@ import { splitArg } from './lib/rules.mjs';
 
 const ids = stage => checksForStage(stage).map(c => c.id);
 
-test('push is the gate without the two review checks, plus on-main and no-stop-file', () => {
+test('push is the gate without the two review checks, plus on-branch and no-stop-file', () => {
   const expected = [
     ...ids('gate').filter(id => !['docs-current', 'reviewer-verdict'].includes(id)),
-    'on-main', 'no-stop-file'
+    'on-branch', 'no-stop-file'
   ].sort();
   assert.deepEqual(ids('push').sort(), expected);
 });
