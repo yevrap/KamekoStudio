@@ -3,6 +3,45 @@
 All notable changes to Shadow Studio, one section per iteration. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are iteration tags.
 
+## [studio-iteration-08] — 2026-09-24
+
+The studio's first original game: *Samovar*, where you pour tea for an evening of guests
+by feel, joins the realm's shelf; the River Run fork's pickups glow from far up the river;
+and the studio's checks accept a ticket branch, the first step toward pull requests.
+Sprint 1 of 3 of epic E2.
+
+### Added
+
+- **Samovar, the studio's first original game** ([SHS-068](iterations/08/tickets/SHS-068-samovar-core.md))
+  — an evening of ten guests, each with a cup (a small cup, a teacup or a tall glass) and a wanted
+  strength shown as a colour. Hold to pour the dark brew, release; hold again to top up
+  with hot water, release to serve. Each cup earns up to three stars for the colour, loses
+  one or two for stopping short of the dashed line, and scores none if it spills. Pours are timed
+  from the press and release, so a 120 Hz phone pours as fast as a 60 Hz one. The best
+  evening is kept under `studio_samovar_best`. On the realm's shelf as `PROTOTYPE`. The
+  Playtester's verdict is **Iterate**: the brim is a cliff and the small cup is about
+  twice as hard (backlog #51–#54, Q15).
+
+### Changed
+
+- **The fork's far-off pickups glow their colour** ([SHS-069](iterations/08/tickets/SHS-069-river-run-power-ups-read-at-a-glance.md))
+  — pink for the spread shot, cyan for the shield, about 26 px on screen while far off and
+  fading into the solid shape up close, so a player can pick one out soon enough to steer
+  for it. The pickup's hit box is unchanged. The power-up label keeps one height, 26 px,
+  whatever it shows. The Playtester's verdict is **Keep**.
+- **The studio's checks accept a ticket branch** ([SHS-070](iterations/08/tickets/SHS-070-checks-accept-studio-branches.md))
+  — `on-main` is now `on-branch`: it passes on `main` or on a `studio/SHS-NNN-slug` branch
+  and still fails behind `origin/main`; a ticket branch ahead of `main` reads *not merged
+  into main yet*. `commit-lint` doesn't count a squash-merge's trailing ` (#N)`. The team
+  still works on `main` until the skill describes the new flow (backlog #49).
+
+### Fixed
+
+- **Samovar stays paused behind the settings drawer** (review, IR08-3) — hiding and
+  showing the page while the drawer was open let the next guest arrive behind it.
+- **Space pours guest after guest** (review, IR08-4) — the pour button gets the
+  keyboard's focus back with each guest, so a keyboard player no longer tabs back to it.
+
 ## [studio-iteration-07] — 2026-09-23
 
 Power-ups you can read, and a River Run that restarts: the fork's score and power-up label

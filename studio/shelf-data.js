@@ -14,8 +14,8 @@
  */
 export const PULSE = {
   iteration: '08',
-  shipped: '2026-09-23',
-  summary: 'In progress: the studio\'s first original game, Samovar, where you pour tea for an evening of guests by feel, and River Run\'s power-ups made easy to spot from far up the river.'
+  shipped: '2026-09-24',
+  summary: 'Shipped: the studio\'s first original game, Samovar, where you pour tea for an evening of ten guests by feel, and River Run\'s power-ups now glow from far up the river so you can steer for them.'
 };
 
 /**
@@ -47,7 +47,7 @@ export const SHELF = [
   {
     title: 'Samovar',
     status: 'PROTOTYPE',
-    blurb: 'The studio\'s first original game. Pour tea for an evening of ten guests: hold to pour the dark brew, hold again to top it up with hot water, and match the colour each guest asks for without spilling. Built to test whether judging a ratio by feel, cup after cup, is fun on its own: whether your misses shrink across an evening and you pour another.',
+    blurb: 'The studio\'s first original game. Pour tea for an evening of ten guests: hold to pour the dark brew, hold again to top it up with hot water, and match the colour each guest asks for without spilling. Built to test whether judging a ratio by feel, cup after cup, is fun on its own: whether your misses shrink across an evening and you pour another. First verdict: iterate, because the brim is too harsh.',
     iteration: '08',
     changed: '2026-09-24',
     url: 'games/samovar/'
@@ -63,9 +63,9 @@ export const SHELF = [
   {
     title: 'River Runner 3D',
     status: 'ITERATING',
-    blurb: 'The arcade\'s river runner, forked into the studio with saves of its own. Its first experiment: a shield and a spread shot float down the river, one at a time, with a label of their own that leaves the score readable on a phone and a spread timer in real seconds. The arcade\'s build stays as it was.',
-    iteration: '07',
-    changed: '2026-09-23',
+    blurb: 'The arcade\'s river runner, forked into the studio with saves of its own. Its first experiment: a shield and a spread shot float down the river one at a time, each glowing its colour from far off so you can steer for it, with a label of one height that leaves the score readable on a phone and a spread timer in real seconds. The arcade\'s build stays as it was.',
+    iteration: '08',
+    changed: '2026-09-24',
     url: 'games/river-run/'
   }
 ];
