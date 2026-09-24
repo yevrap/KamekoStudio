@@ -111,4 +111,13 @@ pour hiss (optional), a 3D portal (production, `shared/3d/`), the arcade gallery
   red first: these are new-feature tests, and no mutation run was made.
 - **Deferred:** nothing beyond the ticket's out of scope. Studio-boot holds Samovar to the
   generic contract only (no game-specific judge), as it does the River Run fork.
-- **Fix rounds used:** 0 / 2
+- **Review fixes (sprint 08 review, `14d4db8`):** the drawer held the result timer only
+  until the page was hidden and shown once (IR08-3), and a keyboard player lost the
+  button's focus at every result card (IR08-4). Now the hidden page and the open drawer each
+  hold the evening and let go only of their own hold, and the button gets the keyboard's
+  focus back with the next guest. Two browser tests, each red first (phase `brew` where
+  `result` was expected; focus on `body`), then green: the suite 16/16. The realm README's
+  short-cup rule matches the code (IR08-5). The design note's two tuning claims that the
+  review disproved (IR08-1, IR08-2) are corrected in it, and the changes they call for are
+  backlog #51–#53.
+- **Fix rounds used:** 1 / 2 (the review's)

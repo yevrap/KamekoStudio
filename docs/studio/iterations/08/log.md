@@ -47,3 +47,22 @@ is committed.
   on scratch repositories, red first against the old check and a loose `studio/*` rule;
   three lint and guard cases in `rules.test.mjs`. `--stage=ticket` 5/5, `--stage=push`
   green on `main`. *Next:* review. *Blocked:* nothing.
+
+## Session 5 — review (2026-09-24)
+
+- **Scrum Master** — *Done:* one review round, run by the workflow: the Independent
+  Reviewer (`opus`) approved with findings, QA (`sonnet`) approved, no second round.
+  Verdicts and every finding are in [review.md](review.md). *Next:* close. *Blocked:*
+  nothing.
+- **Frontend Developer** — *Done:* the review's S fixes. `14d4db8` ([SHS-068](tickets/SHS-068-samovar-core.md)): the drawer
+  holds Samovar through a hide and show, and Space pours guest after guest (IR08-3,
+  IR08-4), each with a browser test red first, suite 16/16, and the README's short-cup rule
+  (IR08-5). `--stage=ticket` 5/5. *Next:* nothing until plan 09. *Blocked:* nothing.
+- **Tech Lead** — *Done:* `fd3cc18` ([SHS-070](tickets/SHS-070-checks-accept-studio-branches.md)): a ticket branch ahead of `main` reads *not
+  merged into main yet* (IR08-6), red first, 19/19. IR08-7 declined with its reason.
+  *Next:* close. *Blocked:* nothing.
+- **Game Designer** — *Done:* the Playtester's **Iterate** on Samovar and **Keep** on the
+  fork's pickups recorded. The design note now says what the review found (IR08-1: one cup
+  shape makes the stop the same share of every cup; IR08-2: the brim isn't the lesser
+  skill). Backlog #51–#54 for sprint 09, and Q15 (⭐ A, cup shapes). *Next:* plan 09 acts
+  on the Iterate. *Blocked:* nothing.

@@ -82,6 +82,10 @@ commit form (#21). The studio keeps working on `main` this sprint.
 - **Deferred:** nothing. The skill's `build` and `review` steps and ADR-0007's successor
   stay with #49, the first real pull request with #50. ADR-0011 (executive-only) still says
   `on-main` in its §4 note; it is left as written.
-- **Fix rounds used:** 0 / 2 (one fixture fix before the first commit: the working
+- **Review fix (sprint 08 review, IR08-6, `fd3cc18`):** a pushed ticket branch waiting for
+  its merge is always ahead of `origin/main`, so the pass detail's *(unpushed)* was wrong
+  there; on a ticket branch it now says *(not merged into main yet)*, and *(unpushed)* only
+  on `main`. One case in `branch-check.test.mjs`, red first, then 19/19.
+- **Fix rounds used:** 1 / 2, the review's (and before it one fixture fix before the first commit: the working
   repository's first commit wrote the same file its origin already had, so there was
   nothing to commit)

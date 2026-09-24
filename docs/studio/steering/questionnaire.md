@@ -30,6 +30,21 @@ for new pitches.
   twitch of the rod tip you have to read.
 - [ ] D. Something else: ______
 
+**Q15. What makes Samovar's cups different?** (review 08, IR08-1; backlog #53). As built,
+every cup has the same shape, so a three-star brew stops at the same share of each cup's
+height and the cup's size changes only how long the pour takes. The Playtester's Iterate
+also asks for the same fill time on every cup (#52), which on its own would make the cups
+identical. The ⭐ is built in sprint 09 with #51 and #52.
+- [ ] A. ⭐ **Shapes.** Cups of different shapes: a straight tea glass in its holder, a
+  tulip glass that narrows at the waist, a wide bowl. The level no longer climbs evenly, so
+  the right stop sits at a different height in each, and the shape is what you learn.
+- [ ] B. **Hide the brew.** The metal glass-holder covers the lower part of every glass,
+  so the brew can't be judged by its level, only by how long you poured; the colour shows
+  once the water rises above the holder.
+- [ ] C. **Keep one shape.** Accept a stop-at-a-line game and make the colour the whole
+  skill (for example, strengths closer together).
+- [ ] D. Something else: ______
+
 **Q5. Anything else** about how you want to run this company, what a good review looks
 like, or things it must never do?
 i want it to run like a scrum team, following ceremonies and getting better
