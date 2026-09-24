@@ -37,7 +37,14 @@ verdicts, so the executive rarely needs one.
 
 ## Result
 
-- The SHS-063 test: red 3 of 3 before the exemptions, green 3 of 3 after.
-- `--stage=push`: `commit-lint` passes with the five commits reported exempt (run before
-  the push of this commit; see the commit message).
-- Not one of sprint 07's planned tickets, and it doesn't count against the caps.
+- **What changed:** `tests/studio/lib/rules.mjs` lists the five ADR-0011 commits in
+  `COMMIT_EXEMPTIONS`, each with a reason naming ADR-0011 and SHS-063; `guardrails.md` and
+  backlog #39 say so (`2544ebe`).
+- **Tested by:** the SHS-063 case in `tests/studio/rules.test.mjs`, red 3 of 3 before the
+  exemptions and green 3 of 3 after, with the existing *a new unnumbered (studio) commit …
+  still fails* case; `--stage=push`, where `commit-lint` passes with the five commits
+  reported exempt (run before the push of this commit; see the commit message).
+- **Deferred:** nothing. Not one of sprint 07's planned tickets, and it doesn't count
+  against the caps. *(Result reshaped into the template's fields at sprint 07's close, when
+  the gate's `docs-current` first read this ticket.)*
+- **Fix rounds used:** 0 / 2
