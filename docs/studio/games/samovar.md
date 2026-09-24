@@ -1,7 +1,8 @@
 # Samovar — design note
 
 **Status:** PROTOTYPE, core mechanic only · built in iteration 08 ([SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md)), second
-pass in iteration 09 (glasses of three shapes, [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md)) · play it at `studio/games/samovar/`
+pass in iteration 09 (glasses of three shapes, [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md); a forgiving brim and the best evening from
+the start, [SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md)) · play it at `studio/games/samovar/`
 (the realm's shelf) · epic E2, *the studio's first original game worth playing*
 ([Direction](../steering/direction.md)).
 
@@ -14,12 +15,16 @@ from the samovar's teapot, let go; hold again to top up with hot water, let go t
 The liquid in the cup is always the colour of what is in it, drawn in the glass's shape,
 and its surface sits where that much tea reaches in that glass.
 
-A cup over the brim spills and scores nothing. Otherwise it scores 0–3 stars from the gap
-between the poured and the wanted strength, less one star if it is short of the dashed
-fill line at 90 % of the brim (two if it is under three quarters full). The result card shows the wanted and the poured
+A cup scores 0–3 stars from the gap between the poured and the wanted strength, less one
+star if it is short of the dashed fill line at 90 % of the brim (two if it is under three
+quarters full), and less one if it went a drop over the brim: up to 8 % of the cup over,
+the tea drips down the glass's side. Past that the cup spills, tea runs down both sides,
+and it scores nothing; a brew poured over the brim serves at once, since there is no room
+left for water. The result card shows the wanted and the poured
 colour side by side for a moment, low on the table so the glass's rim and dashed line stay
-in view, then the next guest comes. After ten cups: the evening's
-stars out of 30, the best evening so far, a strip of each cup's stars, and *Pour again*.
+in view, then the next guest comes. The best evening so far sits under the running stars
+from the first screen on. After ten cups: the evening's stars out of 30, the best evening
+(a new best says so, a first one included), a strip of each cup's stars, and *Pour again*.
 
 ## The hook
 
@@ -30,7 +35,8 @@ estimate whose result shows at once as a colour.
 
 Against the genre: pour-the-drink phone games fill one liquid to a line. Here there are two
 liquids, a hidden target ratio, and a brim that punishes both too much brew (the water no
-longer fits) and too little (the cup is pale or short). No game named in the brief was used
+longer fits) and too little (the cup is pale or short). Since sprint 09 the brim punishes
+by degrees: a drop over costs a star, only a real overflow costs the cup. No game named in the brief was used
 as a blueprint.
 
 **What the review found (sprint 08, IR08-1).** As built, the ratio is not hidden and the
@@ -78,8 +84,16 @@ count seconds.
 | Cups | A straight tea glass (half-width `1`), a tulip glass (`1 − 0.42 · sin(π·h / 1.6)`: a wide belly, a waist at 80 % of the height, a slight flare) and a wide bowl (`0.5 + 0.5·h`: the foot half the rim's width), `h` from foot 0 to rim 1, in `constants.js` | *Sprint 09 (#53, Q15 ⭐ A):* one profile per glass, read by the drawing and the rules alike. The three-star brew stop, as built, in % of the glass's height (for a cup topped up to the brim; filling only to the dashed line lowers each stop by a tenth of its volume): **Light** 25 / 14 / 40, **Golden** 40 / 25 / 56, **Amber** 55 / 39 / 69, **Dark** 70 / 56 / 81 for straight / tulip / bowl; the dashed line at 90 / 85.5 / 94. For every strength two glasses' stops are at least 10.5 points apart (a test holds 10). *Review 08, before:* one shape for every cup put the stop at the same share of each cup's height (IR08-1) |
 | Strengths | 25 %, 40 %, 55 %, 70 % brew | Four colours far enough apart on the ramp to tell at a glance (a test holds their luminance at least 25 apart) |
 | Star bands | within 5 / 10 / 17 points of the wanted ratio | Three stars needs the brew within ±125 ms on every cup (sprint 09); in sprint 08 it was ±75 ms on the small cup and ±162 ms on the tall glass, so small weak cups were the hard ones |
-| Fill line | 90 % of the cup's volume, drawn at the height that is in each glass | A band, not a line, meant to make the water the lesser skill. *Sprint 09:* the band lasts 250 ms on every cup (it was 150 / 225 / 325 ms); the forgiving brim is [SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md). *Review 08:* it isn't yet. The band (10 % of the cup) is as long in time as the three-star brew window (about 150 / 225 / 325 ms for small / teacup / tall), and a miss over the brim costs every star while a strength miss costs one per band (IR08-2) |
+| Fill line | 90 % of the cup's volume, drawn at the height that is in each glass; a drip band of 8 % of the cup over the brim (`DRIP_BAND`) | **The water is now the smaller skill** (sprint 09, #51, [SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md)): stopping anywhere from the dashed line to the brim is free for 250 ms, the next 200 ms over the brim cost one star and show a drip down the glass's side, and only then does the cup spill: 450 ms before a spill, against ±125 ms for three stars on the brew. Letting go at the dashed line with a 200 ms lag lands at 98 % (full); at the brim with a 150–200 ms lag, 106–108 % (a drip, a star less, not a zero). 8 % and not the backlog's first 5 %: the Playtester's release lag is 6–8 % of a 2.5 s fill, so at 5 % letting go at the brim would still spill. The band as built is the table below. *Review 08, before:* the band was as long in time as the three-star brew window, and a miss over the brim cost every star while a strength miss cost one per band (IR08-2) |
 | An evening | 10 of the 12 cup-and-strength pairs, drawn without replacement | Every cup and every strength turns up, and no pour is asked twice |
+
+**The brim, as built** (the same on every cup, which all fill in 2.5 s):
+
+| Where the water stops | Share of the cup | Time in it | Costs |
+|---|---|---|---|
+| The fill band, dashed line to brim | 90–100 % | 250 ms | nothing |
+| The drip band, just over the brim | over 100 %, up to 108 % | 200 ms | one star (never below 0), `drip`; a drip runs down the glass's right side, longer the further over |
+| Over the drip band | above 108 % | — | the cup: a spill, 0 stars, tea heaped over the rim and down both sides; a hold that passes it serves at once |
 
 Pours are timed from `performance.now()` at press and release, not counted in frames, so a
 120 Hz phone pours at the same rate as a 60 Hz one (Active rule 9). Hiding the page or
@@ -95,7 +109,12 @@ every cup spilled by a hair, some with the colour matched. What sprint 09 change
 verdict and the review: a forgiving brim (#51), the same fill time on every cup and a result
 card that leaves the rim in view (#52), and a decision the cup's size or shape really
 changes (#53, Q15). Also noted: an evening lasts about a minute, and the best evening only
-shows at its end.
+shows at its end (#54).
+
+**Done in sprint 09:** #52 and #53, glasses of three shapes filling in the same time
+([SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md)); #51, the forgiving brim, a drop over costing a star and showing a drip, and
+#54, the best evening under the running stars from the first screen, a first evening above
+0 ending as a new best ([SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md)). The evening's length is unchanged, waiting on a Keep.
 
 ## What was cut
 
@@ -109,10 +128,13 @@ accident.
 
 `tests/studio/samovar.test.mjs`: the rules without a browser (sprint 09 adds the three
 profiles, each one's volume-to-height mapping and its inverse, the stops at least 10 % of
-a cup apart for every strength, and the same fill time on every cup), then in headless Chrome a
-full evening poured by real pointer holds (30 of 30 stars), a spill, the best evening
+a cup apart for every strength, the same fill time on every cup, and the brim at 100 %,
+just over, 108 % and just past it with the strength matched, a band off and far off), then in headless Chrome a
+full evening poured by real pointer holds (30 of 30 stars, a first best), a spill mid-hold
+of either liquid, a pour ending about 4 % over the brim (a drip down the side, one star less, said on the card), a brew let go over the brim
+serving at once, the best on the first screen (and none when none is saved), the best evening
 surviving a reload under `studio_samovar_best` with no other key written, the pour at two
 frame rates, pausing when hidden, the open drawer still holding the result after a hide
 and show, Space pouring guest after guest without a Tab, and the layout at 320 and 390 wide with every cup in
 both themes: the tea's surface and the dashed line where each glass's profile puts them,
-and the result card clear of the glass's top 15 %.
+and the result card clear of the glass's top 15 %, with a drip and a spill each drawn outside the glass's walls, beside the card and on screen.

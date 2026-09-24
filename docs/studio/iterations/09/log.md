@@ -31,3 +31,16 @@ is committed.
   the closest pair is 10.5 points (Light, straight against tulip). The design note carries
   the table and sprint 09's hypothesis. *Next:* review, where the Playtester is asked
   whether players watch the glass or count seconds. *Blocked:* nothing.
+
+## Session 3 — build [SHS-073](tickets/SHS-073-samovar-forgiving-brim.md) (2026-09-24)
+
+- **Frontend Developer** — *Done:* [SHS-073](tickets/SHS-073-samovar-forgiving-brim.md), Samovar's forgiving brim and the best from the start
+  (`571c385`): a cup up to 8 % over the brim drips down the glass's side and costs one
+  star, past it spills with tea over both sides; a brew let go over the brim serves at
+  once; the best evening under the running stars from the first screen, a first evening
+  above 0 a new best. `tests/studio/samovar.test.mjs` 23/23, `--stage=ticket` 5/5.
+  *Next:* build [SHS-074](tickets/SHS-074-skill-describes-pull-requests.md). *Blocked:* nothing.
+- **Game Designer** — *Done:* the brim as built is the plan's table (250 ms free, 200 ms
+  at a star, then a spill), in the design note with #51 and #54 marked done. *Next:*
+  review, where the Playtester says whether a first evening still scores near 0.
+  *Blocked:* nothing.

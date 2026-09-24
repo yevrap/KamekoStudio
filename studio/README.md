@@ -107,16 +107,18 @@ wide bowl and wants their tea at a strength shown as a colour swatch. One button
 pour the dark brew, let go; hold again to top up with hot water, let go to serve.
 Strength is the brew's share of the cup, and every glass fills in the same 2.5 s, so the
 decision is where to stop the brew in *this* glass: its shape puts the same share at a
-different height in each. Over the brim is a spill (0 stars); otherwise 0–3
-stars from the strength, minus one if the cup is short of the dashed fill line (at 90 % of
-the brim), two if it is under three quarters full.
+different height in each. 0–3 stars from the strength, minus one if the cup is short of
+the dashed fill line (at 90 % of the brim), two if it is under three quarters full, and
+minus one if it went a drop over the brim (up to 8 % of the cup: a drip down the glass's
+side, [SHS-073](../docs/studio/iterations/09/tickets/SHS-073-samovar-forgiving-brim.md)); past that it spills and scores 0. The best evening shows from the
+first screen.
 
 | File | What it is |
 |---|---|
-| `constants.js` | Cups (each glass's profile), strengths, the colour ramp, the fill time and the star bands. |
+| `constants.js` | Cups (each glass's profile), strengths, the colour ramp, the fill time, the star bands and the drip band. |
 | `gameplay.js` | The rules of a cup, pure: pour amounts from milliseconds, a glass's volume share to its height share and back, colour by ratio, judging. |
 | `state.js` | An evening's guests (seeded generator) and reading the saved best, pure. |
-| `main.js` | The only file that touches the document: the hold, the loop, the glass drawn from its profile, the cards, storage. |
+| `main.js` | The only file that touches the document: the hold, the loop, the glass drawn from its profile, a drip or a spill down its outside, the cards, the best, storage. |
 
 Pours are timed from `performance.now()` at press and release, so a 120 Hz screen pours at
 the same rate as a 60 Hz one. The page stops a pour and holds the result timer while it
