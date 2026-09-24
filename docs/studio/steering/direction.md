@@ -128,9 +128,12 @@ and the `studio-iteration` skill.
 8. **Every sprint runs a little better and cheaper than the last** (executive,
    2026-09-23). The executive's feedback on how a run went is the retro's first input, and
    each piece becomes a rule, a skill or workflow edit, or a check — never only a note. The
-   `studio-sprint` workflow measures each step's output tokens; the scorecard keeps the
-   trend, and each retro names the costliest step and makes one change aimed at it, then
-   checks next retro whether it worked. **Prefer removing:** a change that deletes a step,
+   `studio-sprint` workflow measures each step's output tokens and
+   `tests/studio/sprint-cost.mjs` prices each step's cache writes and reads, so the
+   scorecard keeps the sprint's cost in dollars, in those three parts (executive, issue #4,
+   2026-09-24); each retro names the costliest step and makes one change aimed at it, then
+   checks next retro whether it worked. Quality comes first: a cheaper sprint that ships a
+   worse game or misses a bug is not better. **Prefer removing:** a change that deletes a step,
    a read or a rule beats one that adds; a new check names the defect that reached the
    live site or the rule it replaces; the Active rules cap of ten holds. Better means
    leaner, not more ceremony.

@@ -43,7 +43,12 @@ Append, when they apply: the executive's focus (first step only, as
 > repository (Chrome is at `$CHROME_PATH`, or the default macOS path), or your tool's own
 > browser. Play at 390×780 and at 320×640, with a fresh browser profile each time, using
 > real pointer and key input, over several full runs: the first minute, a long run, a
-> restart, game over and back. Take screenshots at the moments that matter.
+> restart, game over and back. Take screenshots at the moments that matter and save them
+> to disk; measure what the page can tell you (positions, sizes, text, timings) from the
+> DOM. Open a screenshot to look at it only when the question is how it looks (colour,
+> legibility, what catches the eye), at viewport size, and late in the session: every
+> image you open is re-read on each later turn, which made the Playtester the review's
+> costliest agent (retro 08).
 >
 > Rules: write throwaway scripts and screenshots OUTSIDE the repository, in the system temp
 > directory. Do not create, modify or commit any file in the repository. Do not read the

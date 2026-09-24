@@ -209,11 +209,14 @@ included (iteration 06 retro; `process.md` has the same order).
    inbox or the Input Ledger since the last retro, becomes a rule, a skill or workflow edit,
    or a check — preferring the change that removes something — and the retro says which.
    Close each feedback issue with a comment naming what changed.
-   **Efficiency:** the workflow passes each step's output tokens (by hand: not measured, say
-   so). Add the sprint's total and its costliest step to the scorecard (add the columns if
-   they're missing; older rows read "—"), compare with the last sprint, and make **one**
-   change aimed at the costliest step — a smaller prompt, less to read, a cheaper model, a
-   check that saves a fix round. Next retro says whether it helped.
+   **Efficiency, in dollars** (issue #4): `node tests/studio/sprint-cost.mjs` prices each
+   step's cache writes and reads from the local transcripts (`--list` for older runs); the
+   workflow passes each step's output tokens, priced at the step's model (by hand: not
+   measured, say so). Put the sprint's cost in three parts and its costliest step in the
+   scorecard, compare plan-to-close with the last sprint, and make **one** change aimed at
+   the costliest step — a smaller prompt, less to read, a cheaper model, a check that saves
+   a fix round — without lowering the bar. Next retro says whether it helped. Only totals
+   are committed, never a transcript or its path.
 2. `learning-log.md`: add the sprint's lessons, and keep the **Active rules** list at the top
    (ten at most). Promote a new rule, turn a rule that has recurred into a check or skill edit
    (a backlog item), or retire a rule that no longer earns its place.

@@ -23,6 +23,13 @@ Another ticket's number is a link to its file, `[SHS-NNN](../../NN/tickets/SHS-N
 each as a criterion ("a commit that … is reported as a violation"). The build starts from
 them as tests shown red first (iteration 05 retro).
 
+*A ticket that builds or changes a game's core decision* also states its design
+hypothesis with the numbers behind it: for each case the player meets (each cup, each
+enemy, each width), the window or quantity the decision turns on, worked out before the
+build. A hook that the numbers don't support is caught here, not at review (iteration 08
+retro: Samovar's "the cup's size is the cue" didn't hold, and only review's arithmetic
+showed it).
+
 *The sprint's record ticket* lists only what `close` checks: `plan.md`, `log.md`,
 `review.md`, the pulse line, the input ledger and `CHANGELOG.md`. The gate needs the ticket
 Done before the retro exists, so retro-step work (`retro.md`, the retro line, the learning

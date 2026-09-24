@@ -38,9 +38,14 @@ is Yevster's own edit, between runs.
    ```
    If a label is missing, create it once: `studio`, `priority: now`, `priority: next`,
    `priority: later`, `in backlog`, `feedback`, `verdict`.
-5. **Report** in two lines: the issue URL, and when it'll be picked up — at the next
-   `plan`, which a running sprint reaches after its retro. `priority: now` doesn't interrupt
-   a running sprint.
+5. **Report** in two lines: the issue URL, and its path — the next `plan` makes it a
+   backlog row (a `now` one is that sprint's first ticket once it's Ready), a build
+   session builds it with tests, review has it played by the Playtester, and `close`
+   closes the issue with the live URL. A new game idea becomes a core-mechanic prototype
+   in `studio/games/<slug>/` first, with its own verdict, and its second layer later (the
+   path Samovar took in sprint 08). `priority: now` doesn't interrupt a running sprint; to
+   start it at once, stop the run and say "run the studio with focus: <X> now", which
+   re-plans the sprint around it.
 
 ## Feedback and verdicts
 

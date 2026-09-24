@@ -86,10 +86,12 @@ epic that wrote them (moved at sprint 07's retro).
    rules; each retro promotes one, turns a recurring one into a check or a skill edit, or
    retires one.
 8. **Every sprint a little better and cheaper than the last.** The executive's feedback on
-   a run is the retro's first input and becomes a rule, an edit or a check. The workflow
-   measures output tokens per step; the scorecard keeps the trend, and each retro makes one
-   change aimed at the costliest step and checks at the next retro whether it worked. A
-   change that removes a step, a read or a rule beats one that adds.
+   a run is the retro's first input and becomes a rule, an edit or a check. The scorecard
+   keeps each sprint's cost in dollars (cache writes and reads from
+   `tests/studio/sprint-cost.mjs`, output from the workflow's tokens per step), and each
+   retro makes one change aimed at the costliest step, without lowering the bar, and checks
+   at the next retro whether it worked. A change that removes a step, a read or a rule
+   beats one that adds.
 
 ## Ceremonies
 
@@ -132,7 +134,7 @@ is testing and how its retrospective judges it.
   commits, each naming it.
   The checks are ready for the branch-per-ticket flow ADR-0011 §4 moves to (backlog #49,
   #50): `on-branch` accepts `main` or a ticket branch `studio/SHS-NNN-slug`, and
-  `commit-lint` does not count the ` (#N)` a squash-merge adds (SHS-070). Until #49
+  `commit-lint` does not count the ` (#N)` a squash-merge adds ([SHS-070](iterations/08/tickets/SHS-070-checks-accept-studio-branches.md)). Until #49
   changes this list, the studio stays on `main`.
 - **Rebase, don't merge.** The arcade ships on the same `main`, so when the remote has moved,
   `git pull --rebase`. A merge that brings in studio and arcade commits together fails the

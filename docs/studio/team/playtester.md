@@ -16,7 +16,10 @@ A local build served from the checkout (`npx serve -l 5173 .`), **by playing it*
 reading the diff first. Headless Chrome through puppeteer at 390×780 and 320×640, with a
 fresh profile per session, driving real pointer or key input. Several full runs, not one:
 the first minute, a long run, a restart, game over and back. Screenshots at the moments
-that matter.
+that matter, saved to disk. What the page can tell (positions, sizes, text, timings) is
+measured from the DOM; a screenshot is opened only to judge how something looks, at
+viewport size and late in the session, since every image opened is re-read on each later
+turn (retro 08: the Playtester was the review's costliest agent).
 
 ## Voice
 
