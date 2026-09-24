@@ -5,8 +5,8 @@
 // the result timer; it stands still while the page is hidden or the settings
 // drawer is open.
 
-import { BEST_KEY, CUPS, EVENING_LENGTH, RESULT_MS } from './constants.js';
-import { cssColour, judge, levelOf, pourAmount, ratioOf, spilled, verdictLine } from './gameplay.js';
+import { BEST_KEY, CUPS, EVENING_LENGTH, FULL_FROM, RESULT_MS } from './constants.js';
+import { cssColour, heightAtVolume, judge, levelOf, pourAmount, ratioOf, spilled, verdictLine } from './gameplay.js';
 import { makeEvening, readBest } from './state.js';
 
 // --- Storage -----------------------------------------------------------------
@@ -65,7 +65,8 @@ function startGuest() {
   const cup = el('cup');
   cup.classList.remove('spilled');
   cup.style.setProperty('--cup-h', String(g.cup.height));
-  cup.style.setProperty('--cup-aspect', String(g.cup.width / g.cup.height * CUP_SHAPE));
+  cup.style.setProperty('--cup-aspect', String(g.cup.aspect));
+  drawGlass(g.cup);
   cup.setAttribute('aria-label', `${capital(g.cup.name)}, empty`);
   el('swatch').style.background = cssColour(g.strength.ratio);
   el('wants-word').textContent = g.strength.word;
@@ -74,8 +75,43 @@ function startGuest() {
   paint();
 }
 
-/** The table is wider than it is tall on most phones' stage; this keeps cups cup-shaped. */
-const CUP_SHAPE = 1.3;
+// --- The glass ---------------------------------------------------------------
+// Drawn from the cup's own profile, the one the rules read (constants.js), in a
+// 100 × 100 box stretched over the glass's inside: y 0 is the rim, y 100 the
+// foot, and x 50 ± 50 the widest the glass gets. Stretching keeps heights true,
+// so the surface drawn at a height share is at that share of the glass on screen.
+
+const PROFILE_POINTS = 48;
+
+function wall(cup) {
+  const points = [];
+  for (let i = 0; i <= PROFILE_POINTS; i++) {
+    const h = i / PROFILE_POINTS;
+    points.push([50 * cup.halfWidth(h), 100 * (1 - h)]);
+  }
+  return points; // foot to rim: [half-width, y]
+}
+
+const fmt = n => Number(n.toFixed(2));
+
+function drawGlass(cup) {
+  const side = wall(cup);
+  const left = side.map(([w, y]) => `${fmt(50 - w)} ${fmt(y)}`).reverse(); // rim down to foot
+  const right = side.map(([w, y]) => `${fmt(50 + w)} ${fmt(y)}`);          // foot up to rim
+  const open = `M ${left.join(' L ')} L ${right.join(' L ')}`;
+  el('glass-edge').setAttribute('d', open);
+  el('glass-back').setAttribute('d', `${open} Z`);
+  el('glass-clip').setAttribute('d', `${open} Z`);
+
+  // The dashed line: 90 % of this glass's volume, wall to wall at that height.
+  const h = heightAtVolume(cup, FULL_FROM);
+  const w = 50 * cup.halfWidth(h);
+  const band = el('band');
+  band.setAttribute('x1', String(fmt(50 - w)));
+  band.setAttribute('x2', String(fmt(50 + w)));
+  band.setAttribute('y1', String(fmt(100 * (1 - h))));
+  band.setAttribute('y2', String(fmt(100 * (1 - h))));
+}
 
 function capital(text) { return text.charAt(0).toUpperCase() + text.slice(1); }
 
@@ -210,16 +246,18 @@ function paint(t = now()) {
   const g = guest();
   if (!g) return;
   const { brew, water } = amounts(t);
-  const level = Math.min(1.08, levelOf(brew, water, g.cup.volume));
+  // The level is a share of the cup's volume; the glass's shape says how high that is.
+  const surfaceAt = heightAtVolume(g.cup, levelOf(brew, water, g.cup.volume));
   const liquid = el('liquid');
-  liquid.style.height = `${Math.min(100, level * 100)}%`;
-  liquid.style.background = brew + water > 0 ? cssColour(ratioOf(brew, water)) : 'transparent';
+  liquid.setAttribute('y', String(100 * (1 - surfaceAt)));
+  liquid.setAttribute('height', String(100 * surfaceAt + 1));
+  liquid.style.fill = brew + water > 0 ? cssColour(ratioOf(brew, water)) : 'transparent';
 
   const stream = el('stream');
   if (s.pour) {
     const stage = el('stage').getBoundingClientRect();
     const cup = el('cup').getBoundingClientRect();
-    const surface = cup.bottom - Math.min(1, level) * cup.height;
+    const surface = cup.bottom - surfaceAt * cup.height;
     stream.style.height = `${Math.max(0, surface - stage.top)}px`;
     stream.style.background = s.pour.liquid === 'brew' ? cssColour(0.85) : 'var(--water)';
     stream.classList.add('on');
@@ -361,4 +399,4 @@ function boot() {
 boot();
 
 // Exposed for tests and curious readers; nothing in the page reads it.
-export { s as session, startGuest as showGuest, CUPS, BEST_KEY };
+export { s as session, startGuest as showGuest, serve as serveCup, CUPS, BEST_KEY };

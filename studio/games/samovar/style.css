@@ -169,43 +169,46 @@ main { max-width: 34rem; margin: 0 auto; }
   box-shadow: 0 0 0 1px var(--rule), var(--lift);
 }
 
-/* The cup: its size is its volume. `--cup-h` is a share of the table's height
-   and `--cup-aspect` its width over its height; main.js sets both per guest. */
+/* The cup: the box is the glass's inside, rim to foot. `--cup-h` is a share of
+   the table's height and `--cup-aspect` its width over its height; main.js sets
+   both per guest and draws the glass's shape into the SVG from its profile.
+   A wide bowl may reach under the swatch: it is short, so it passes beneath. */
 .cup {
   position: absolute;
   left: 58%;
-  bottom: 4px;
+  bottom: 6px;
   transform: translateX(-50%);
   height: calc(var(--cup-h, 0.6) * (100% - 24px));
   aspect-ratio: var(--cup-aspect, 1);
-  max-width: 62%;
-  border: 3px solid var(--glass);
-  border-top: none;
-  border-radius: 4px 4px 22px 22px;
-  background: var(--glass-fill);
-  overflow: hidden;
+  max-width: 82%;
 }
 
-.cup.spilled { border-color: #c0392b; }
-
-.liquid {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 0;
-  background: transparent;
+.glass {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
 }
 
-/* The fill band: from here to the brim is a full cup. */
+.glass-back { fill: var(--glass-fill); }
+
+.glass-edge {
+  fill: none;
+  stroke: var(--glass);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.cup.spilled .glass-edge { stroke: #c0392b; }
+
+/* The fill band: from the dashed line (90 % of this glass's volume) to the brim is a full cup. */
 .band {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 10%;
-  border-bottom: 2px dashed var(--band);
-  pointer-events: none;
+  stroke: var(--band);
+  stroke-width: 2px;
+  stroke-dasharray: 6 4;
+  vector-effect: non-scaling-stroke;
 }
 
 /* The pour itself, from above the cup to the surface of the tea. */
@@ -240,8 +243,18 @@ main { max-width: 34rem; margin: 0 auto; }
 
 .card[hidden] { display: none; }
 
-/* A cup's result sits at the top of the table, so the cup it judges stays in view. */
-.card.result { top: 0; transform: translateX(-50%); }
+/* A cup's result sits low on the table, over the glass's foot, so its rim and
+   dashed line stay in view (#52): the level the player stopped at is the lesson. */
+.card.result {
+  top: auto;
+  bottom: 0;
+  transform: translateX(-50%);
+  padding: 8px 12px;
+}
+.card.result p { margin: 4px 0 0; }
+.card.result .compare { align-items: center; gap: 16px; }
+.card.result .compare .swatch { width: 44px; height: 44px; }
+.card.result .stars { margin: 0; }
 .card h2 { margin: 0 0 4px; font-size: 1.1rem; }
 .card p { margin: 6px 0; }
 

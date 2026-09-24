@@ -21,6 +21,57 @@ export function levelOf(brew, water, volume) {
   return (brew + water) / volume;
 }
 
+// --- A glass's shape: volume share against height share -------------------
+//
+// A cup's `halfWidth(h)` profile (constants.js) gives its width at each height.
+// The volume below height h is the sum of the round slices under it, each
+// slice's area going as the square of its half-width. Summed once per profile
+// into a table of STEPS slices; both directions read the same table, so one is
+// the other's exact inverse.
+
+const STEPS = 512;
+const tables = new WeakMap();
+
+function tableFor(cup) {
+  const profile = cup.halfWidth;
+  let table = tables.get(profile);
+  if (table) return table;
+  table = new Float64Array(STEPS + 1);
+  const area = h => profile(h) ** 2;
+  for (let i = 1; i <= STEPS; i++) {
+    // Simpson's rule on each slice: exact for the straight glass and the bowl.
+    const a = (i - 1) / STEPS, b = i / STEPS;
+    table[i] = table[i - 1] + (b - a) / 6 * (area(a) + 4 * area((a + b) / 2) + area(b));
+  }
+  const total = table[STEPS];
+  for (let i = 0; i <= STEPS; i++) table[i] /= total;
+  tables.set(profile, table);
+  return table;
+}
+
+const clamp01 = x => Math.min(1, Math.max(0, Number.isFinite(x) ? x : 0));
+
+/** The share of `cup`'s volume below `height` (a share of its height, foot 0 to rim 1). */
+export function volumeAtHeight(cup, height) {
+  const table = tableFor(cup);
+  const x = clamp01(height) * STEPS;
+  const i = Math.min(STEPS - 1, Math.floor(x));
+  return table[i] + (table[i + 1] - table[i]) * (x - i);
+}
+
+/** Where the surface sits, as a share of `cup`'s height, when `volume` of its brim is poured. */
+export function heightAtVolume(cup, volume) {
+  const table = tableFor(cup);
+  const v = clamp01(volume);
+  let lo = 0, hi = STEPS;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (table[mid] <= v) lo = mid; else hi = mid;
+  }
+  const span = table[hi] - table[lo];
+  return (lo + (span > 0 ? (v - table[lo]) / span : 0)) / STEPS;
+}
+
 /** Whether the cup has overflowed. Exactly at the brim is still in. */
 export function spilled(brew, water, volume) {
   return brew + water > volume + 1e-9;

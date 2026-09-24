@@ -1,13 +1,18 @@
-// samovar.test.mjs — SHS-068: Samovar, the studio's first original game, its core loop.
+// samovar.test.mjs — SHS-068: Samovar, the studio's first original game, its core loop;
+// SHS-072: three glasses of different shapes, each filling in the same time.
 //
 // What is proved:
 //
 //  1. The rules, without a browser: a spill scores 0, a cup poured to the
 //     wanted ratio and filled into the band scores 3, a short cup loses stars,
 //     the tea darkens as the brew ratio rises, the four strengths read as
-//     different colours, an evening has ten guests with every cup size and at
+//     different colours, an evening has ten guests with every cup and at
 //     least four strengths and no two guests asking for the same pour, and an
-//     unreadable saved best counts as none.
+//     unreadable saved best counts as none. The cups are a straight tea glass,
+//     a tulip glass and a wide bowl; each one's profile maps a volume share to
+//     a height share and back (0 to 0, 1 to 1, rising, the inverse within
+//     0.5 %); for every strength the three-star stop sits at least 10 % of the
+//     cup's height apart between any two cups; every cup fills in the same time.
 //  2. In a real browser, by real pointer holds on the pour button:
 //     - a full evening of ten cups, each poured to its guest's ratio and filled
 //       into the band, scores 3 stars a cup, and the end screen says so;
@@ -21,9 +26,13 @@
 //       is hidden and shown again (sprint 08 review, IR08-3);
 //     - a keyboard player can hold Space on the button for guest after guest,
 //       without tabbing back to it after each result card (IR08-4);
-//     - at 320×640 and 390×780, with each cup size, the cup, the wanted
-//       swatch and the pour button are all on screen, none overlapping, the
-//       button at least 44 px tall in the bottom third, nothing scrolls sideways.
+//     - at 320×640 and 390×780, in both themes, with each cup: the cup, the
+//       wanted swatch, the guest line and the pour button are all on screen,
+//       none overlapping, the button at least 44 px tall in the bottom third,
+//       nothing scrolls sideways; the liquid's surface is drawn at the height
+//       the cup's profile gives for the volume in it, and the dashed line at
+//       90 % of its volume, each within 3 % of the cup's height; and the result
+//       card leaves the cup's top 15 % (rim and dashed line) in view.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -32,8 +41,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromeAvailable, collectErrors, launch, serve, settle } from './lib/browser.mjs';
 import { extractStorageKeys, findStorageViolations } from './lib/rules.mjs';
-import { CUPS, EVENING_LENGTH, FULL_FROM, POUR_RATE, STRENGTHS } from '../../studio/games/samovar/constants.js';
-import { colourAt, judge, pourAmount, ratioOf, verdictLine } from '../../studio/games/samovar/gameplay.js';
+import { CUPS, EVENING_LENGTH, FILL_MS, FULL_FROM, POUR_RATE, STRENGTHS } from '../../studio/games/samovar/constants.js';
+import { colourAt, heightAtVolume, judge, pourAmount, ratioOf, verdictLine, volumeAtHeight } from '../../studio/games/samovar/gameplay.js';
 import { makeEvening, readBest, rng } from '../../studio/games/samovar/state.js';
 import { SHELF } from '../../studio/shelf-data.js';
 
@@ -87,6 +96,75 @@ test('the tea darkens as the brew ratio rises, and the four strengths read apart
     assert.ok(swatches[i - 1] - swatches[i] > 25, `${STRENGTHS[i - 1].id} and ${STRENGTHS[i].id} are too close to tell apart`);
   }
   assert.ok(STRENGTHS.length >= 4 && CUPS.length >= 3);
+});
+
+test('the cups are a straight tea glass, a tulip glass and a wide bowl, each with its own profile', () => {
+  assert.deepEqual(CUPS.map(c => c.id), ['straight', 'tulip', 'bowl']);
+  const at = (id, h) => CUPS.find(c => c.id === id).halfWidth(h);
+  // Straight: the same width all the way up.
+  for (const h of [0, 0.3, 0.7, 1]) assert.equal(at('straight', h), 1);
+  // Tulip: widest low down, a waist near 80 % of the height, a flare above it.
+  assert.ok(at('tulip', 0.1) > at('tulip', 0.5) && at('tulip', 0.5) > at('tulip', 0.8));
+  assert.ok(at('tulip', 1) > at('tulip', 0.8), 'the tulip does not flare at the rim');
+  // Bowl: the foot half as wide as the rim, widening evenly.
+  assert.equal(at('bowl', 0), 0.5);
+  assert.equal(at('bowl', 1), 1);
+  assert.ok(at('bowl', 0.5) > at('bowl', 0.25));
+  for (const cup of CUPS) {
+    for (let i = 0; i <= 20; i++) {
+      const w = cup.halfWidth(i / 20);
+      assert.ok(w > 0 && w <= 1, `${cup.id} at ${i / 20}: half-width ${w} is not in (0, 1]`);
+    }
+  }
+});
+
+test('each cup maps a volume share to a height share and back: 0 to 0, 1 to 1, rising, inverse within 0.5 %', () => {
+  for (const cup of CUPS) {
+    assert.ok(Math.abs(heightAtVolume(cup, 0)) < 1e-9, `${cup.id}: an empty cup is not at the foot`);
+    assert.ok(Math.abs(heightAtVolume(cup, 1) - 1) < 1e-9, `${cup.id}: a full cup is not at the rim`);
+    assert.ok(Math.abs(volumeAtHeight(cup, 0)) < 1e-9);
+    assert.ok(Math.abs(volumeAtHeight(cup, 1) - 1) < 1e-9);
+    let last = -1;
+    for (let i = 0; i <= 200; i++) {
+      const v = i / 200;
+      const h = heightAtVolume(cup, v);
+      assert.ok(h > last, `${cup.id}: the level does not rise at ${v}`);
+      last = h;
+      assert.ok(Math.abs(volumeAtHeight(cup, h) - v) <= 0.005, `${cup.id}: the inverse misses at ${v}`);
+      assert.ok(Math.abs(heightAtVolume(cup, volumeAtHeight(cup, v)) - v) <= 0.005, `${cup.id}: the inverse misses at height ${v}`);
+    }
+  }
+  // Past the brim the surface stays at the rim; the rules call that a spill.
+  assert.equal(heightAtVolume(CUPS[0], 1.2), 1);
+});
+
+test('for every strength the three-star stop sits at least 10 % of the cup apart between any two cups', () => {
+  for (const { id, ratio } of STRENGTHS) {
+    const stops = CUPS.map(cup => ({ cup: cup.id, h: heightAtVolume(cup, ratio) }));
+    for (let a = 0; a < stops.length; a++) {
+      for (let b = a + 1; b < stops.length; b++) {
+        const gap = Math.abs(stops[a].h - stops[b].h);
+        assert.ok(gap >= 0.10, `${id}: ${stops[a].cup} stops at ${stops[a].h.toFixed(3)} and ${stops[b].cup} at ${stops[b].h.toFixed(3)}, only ${(gap * 100).toFixed(1)} % apart`);
+      }
+    }
+  }
+  // The table the plan worked out (heights in % of the cup): as built, each stop within a point of it.
+  const plan = [[25, 14, 40], [40, 25, 56], [55, 39, 69], [70, 56, 81], [90, 86, 94]];
+  const ratios = [...STRENGTHS.map(s => s.ratio), FULL_FROM];
+  ratios.forEach((ratio, row) => CUPS.forEach((cup, col) => {
+    const built = heightAtVolume(cup, ratio) * 100;
+    assert.ok(Math.abs(built - plan[row][col]) <= 1, `${cup.id} at ${ratio}: built ${built.toFixed(1)}, planned ${plan[row][col]}`);
+  }));
+});
+
+test('every cup fills from empty to the brim in the same time, within 5 %', () => {
+  const times = CUPS.map(cup => cup.volume / POUR_RATE * 1000);
+  for (const [i, ms] of times.entries()) {
+    assert.ok(Math.abs(ms - FILL_MS) <= FILL_MS * 0.05, `${CUPS[i].id} fills in ${ms} ms, not ~${FILL_MS}`);
+    assert.ok(Math.abs(ms - times[0]) <= times[0] * 0.05, `${CUPS[i].id} fills in ${ms} ms against ${times[0]}`);
+  }
+  // The same hold pours the same share of any cup.
+  for (const cup of CUPS) assert.ok(Math.abs(pourAmount(FILL_MS) / cup.volume - 1) < 1e-9);
 });
 
 test('pour amounts come from milliseconds, and an empty cup reads as water', () => {
@@ -406,7 +484,7 @@ test('in a browser: Space on the button pours guest after guest, with no Tab bet
     }
   });
 
-test('in a browser: at 320 and 390 wide every cup, the swatch and the button fit without overlapping',
+test('in a browser: at 320 and 390 wide every cup fits, its tea sits at the profile\'s height, and the result card leaves the rim in view',
   { skip, timeout: 60_000 },
   async () => {
     const site = await serve(ROOT);
@@ -417,22 +495,41 @@ test('in a browser: at 320 and 390 wide every cup, the swatch and the button fit
           const { page } = await openGame(browser, site.origin, { width, height });
           await page.evaluate(t => document.body.classList.toggle('dark-mode', t === 'dark'), theme);
           for (let c = 0; c < CUPS.length; c++) {
-            const boxes = await page.evaluate(async index => {
+            const boxes = await page.evaluate(async (index, known) => {
               const m = await import('/studio/games/samovar/main.js');
-              m.session.guests[m.session.index].cup = m.CUPS[index];
+              const frames = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+              const g = m.session.guests[m.session.index];
+              g.cup = m.CUPS[index];
               m.showGuest();
+              // A known volume in the cup, painted by the game's own loop.
+              m.session.brew = known * g.cup.volume;
+              await frames();
               const box = id => {
                 const r = document.getElementById(id).getBoundingClientRect();
                 return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
               };
-              return {
+              const playing = {
                 cup: box('cup'), swatch: box('swatch'), pour: box('pour'), guest: box('guest'),
+                liquid: box('liquid'), band: box('band'),
                 scrollWidth: document.documentElement.scrollWidth,
                 clientWidth: document.documentElement.clientWidth,
                 pourBg: getComputedStyle(document.getElementById('pour')).backgroundColor,
                 pourInk: getComputedStyle(document.getElementById('pour')).color
               };
-            }, c);
+              // Serve it with the longest result line the game writes, and measure the card.
+              const r = g.strength.ratio;
+              m.session.brew = 0.8 * r * g.cup.volume;
+              m.session.water = 0.8 * (1 - r) * g.cup.volume;
+              m.serveCup();
+              await frames();
+              const serving = {
+                cup: box('cup'), swatch: box('swatch'), pour: box('pour'), guest: box('guest'), result: box('result'),
+                line: document.getElementById('result-line').textContent,
+                scrollWidth: document.documentElement.scrollWidth,
+                clientWidth: document.documentElement.clientWidth
+              };
+              return { ...playing, serving };
+            }, c, 0.6);
             const where = `${CUPS[c].id} at ${width}×${height} (${theme})`;
             for (const name of ['cup', 'swatch', 'pour', 'guest']) {
               const b = boxes[name];
@@ -448,6 +545,31 @@ test('in a browser: at 320 and 390 wide every cup, the swatch and the button fit
             assert.ok(boxes.pour.top >= height * 2 / 3, `the button is above the bottom third, ${where}`);
             assert.ok(boxes.scrollWidth <= boxes.clientWidth, `the page scrolls sideways, ${where}`);
             assert.notEqual(boxes.pourBg, boxes.pourInk, `the button's label is invisible, ${where}`);
+
+            // The tea is drawn in the glass's shape: its surface where the profile puts 60 % of the volume.
+            const surface = (boxes.cup.bottom - boxes.liquid.top) / boxes.cup.height;
+            const wantSurface = heightAtVolume(CUPS[c], 0.6);
+            assert.ok(Math.abs(surface - wantSurface) <= 0.03,
+              `the surface is at ${surface.toFixed(3)} of the cup, the profile says ${wantSurface.toFixed(3)}, ${where}`);
+            const band = (boxes.cup.bottom - (boxes.band.top + boxes.band.bottom) / 2) / boxes.cup.height;
+            const wantBand = heightAtVolume(CUPS[c], FULL_FROM);
+            assert.ok(Math.abs(band - wantBand) <= 0.03,
+              `the dashed line is at ${band.toFixed(3)} of the cup, 90 % of its volume is at ${wantBand.toFixed(3)}, ${where}`);
+
+            // The result card leaves the rim and the dashed line in view.
+            const v = boxes.serving;
+            assert.match(v.line, /short of the brim/, 'the card was not measured with its longest line');
+            const rim = { left: v.cup.left, right: v.cup.right, top: v.cup.top, bottom: v.cup.top + 0.15 * v.cup.height };
+            assert.ok(!overlap(v.result, rim), `the result card covers the cup's top 15 %, ${where}: ${JSON.stringify(v.result)}`);
+            assert.ok(v.result.left >= 0 && v.result.top >= 0 && v.result.right <= width + 0.5 && v.result.bottom <= height + 0.5,
+              `the result card is off screen, ${where}`);
+            for (const name of ['pour', 'guest', 'swatch']) {
+              assert.ok(!overlap(v.result, v[name]), `the result card covers the ${name}, ${where}`);
+            }
+            assert.ok(!overlap(v.cup, v.pour) && !overlap(v.cup, v.guest) && !overlap(v.cup, v.swatch),
+              `the cup runs into something while its result shows, ${where}`);
+            assert.ok(v.pour.height >= 44 && v.pour.top >= height * 2 / 3, `the button moved while the result shows, ${where}`);
+            assert.ok(v.scrollWidth <= v.clientWidth, `the page scrolls sideways while the result shows, ${where}`);
           }
           await page.close();
         }
