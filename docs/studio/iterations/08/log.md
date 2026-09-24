@@ -30,3 +30,11 @@ is committed.
 - **Game Designer** — *Done:* tuning recorded in the design note; an evening draws 10 of the
   12 cup-and-strength pairs so no pour repeats. *Next:* review, against the hypothesis.
   *Blocked:* nothing.
+
+## Session 3 — build SHS-069 (2026-09-24)
+
+- **Frontend Developer** — *Done:* [SHS-069](tickets/SHS-069-river-run-power-ups-read-at-a-glance.md), both halves (`9c00a38`): a far-off
+  pickup glows its colour about 26 px across (was 8–10 px), the pickup box unchanged, and
+  the power-up label is 26 px in every state (was 28 / 23). Section 6 of the fork's test,
+  red then green; `--stage=ticket` 5/5, `--stage=push` green. *Next:* build
+  [SHS-070](tickets/SHS-070-checks-accept-studio-branches.md). *Blocked:* nothing.
