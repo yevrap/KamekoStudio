@@ -78,24 +78,41 @@ measured" (at `retro`).
 > You are the *(Independent Reviewer | QA Engineer)* of Shadow Studio, with fresh context.
 > Read `docs/studio/team/(independent-reviewer | qa-engineer).md` (your role) first.
 >
-> Review the current sprint: its diff is `git diff <tag>..HEAD`, where `<tag>` is the newest
-> `studio-iteration-*` tag (`git describe --tags --match 'studio-iteration-*' --abbrev=0`),
-> and its tickets are in the newest `docs/studio/iterations/NN/tickets/`. Check each ticket's
-> claims against the code and against real runs on a local server (`npx serve -l <free port
-> 5173-5199> .`), not the live site; a finding is a reproduction or a file:line, not an
-> opinion. Production fixes (ADR-0008) get extra care: name the full commit hash you
-> reviewed.
->
-> Don't repeat evidence the sprint already has: a red or green count a ticket records, or a
-> suite the checks ran, is re-run only if you doubt it, and the Playtester is playing every
-> player-visible change as you work, so play only to reproduce something you suspect. Spend
-> your runs on the claims that evidence doesn't reach.
+> *(task — the Independent Reviewer's or QA's, below)*
 >
 > Read-only: do not create, modify or commit any file in the repository; put scratch files
 > in the system temp directory. Return your **Verdict:** line (Approve, Approve with
 > findings, or Reject, with one line why) and your findings, each with an id, the ticket it
 > concerns (so the review step can post it on that ticket's pull request), a severity
 > (player-facing, production, save, process, test strength, or nit) and its evidence.
+
+*The diff:* `git diff <tag>..HEAD`, where `<tag>` is the newest `studio-iteration-*` tag
+(`git describe --tags --match 'studio-iteration-*' --abbrev=0`); the tickets are in the
+newest `docs/studio/iterations/NN/tickets/`.
+
+- **Independent Reviewer — the claims:** *Review the current sprint (the diff). Check each
+  ticket's claims against the code and against real runs on a local server (`npx serve -l
+  <free port 5173-5199> .`), not the live site; a finding is a reproduction or a file:line,
+  not an opinion. Production fixes (ADR-0008) get extra care: name the full commit hash you
+  reviewed. Don't repeat evidence the sprint already has: a red or green count a ticket
+  records, or a suite the checks ran, is re-run only if you doubt it, and the Playtester is
+  playing every player-visible change as you work, so play only to reproduce something you
+  suspect. Spend your runs on the claims that evidence doesn't reach.*
+- **QA Engineer — the tests** (retro 09: in sprints 08 and 09 QA re-read what the
+  Independent Reviewer read, found nothing of its own, and missed a test that couldn't see
+  its criterion, IR09-3): *Test the current sprint's tests (the diff). The Independent
+  Reviewer checks every claim criterion by criterion and reads the records, so don't: read
+  only each ticket's acceptance criteria and the diff of code and tests (`git diff
+  <tag>..HEAD -- studio tests`), not the plan, the log or the Result sections, and don't
+  re-run a suite to see it green. For each criterion a test was added or changed for, break
+  the code it guards in a copy outside the repository (`git archive HEAD | tar -x -C <temp
+  dir>`, then link the repository's `node_modules` into it) and run only that test there
+  (`node --test --test-name-pattern=…`): it must fail, for the reason its criterion names.
+  A test that stays green, or fails for another reason, is a test-strength finding. Then
+  walk the paths the author didn't: the second run, the empty state, the stale save, the
+  narrow viewport, the double tap. Drive a browser with puppeteer-core and measure from the
+  DOM; keep screenshots out of your context. A finding is a reproduction or a file:line,
+  not an opinion.*
 
 Models, where the tool lets you choose: the Independent Reviewer and the Playtester on the
 strongest model available (Opus-class at most), QA on a different one, so the two review

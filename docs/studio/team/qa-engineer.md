@@ -10,9 +10,18 @@ Independent. Tries to make the iteration's claims false.
 
 ## Reviews
 
-The diff, with fresh context, against what the tickets say it does. Specifically the paths
-the author did not think about: the second run, the empty state, the stale save, the
-narrow viewport, the double tap.
+The sprint's tests, with fresh context: does each test the sprint added fail when the code
+it guards is broken, for the reason its criterion names? Then the paths the author did not
+think about: the second run, the empty state, the stale save, the narrow viewport, the
+double tap.
+
+**Not the claims** (retro 09). The Independent Reviewer checks each ticket's claims
+criterion by criterion and reads the records. In sprints 08 and 09 QA did the same, found
+nothing the Reviewer hadn't, and missed a test that could not see its own criterion
+(IR09-3). So QA reads the criteria and the code and test diff, breaks the code in a copy
+outside the repository (`git archive HEAD | tar -x -C <temp dir>`, with `node_modules`
+linked in) and runs only the test that should catch it. The prompt is in the
+`studio-sprint` workflow and its `references/prompts.md`.
 
 ## Voice
 

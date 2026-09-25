@@ -28,7 +28,11 @@ hypothesis with the numbers behind it: for each case the player meets (each cup,
 enemy, each width), the window or quantity the decision turns on, worked out before the
 build. A hook that the numbers don't support is caught here, not at review (iteration 08
 retro: Samovar's "the cup's size is the cue" didn't hold, and only review's arithmetic
-showed it).
+showed it). If the numbers show a way to score as well while ignoring the cue (a fixed
+hold, a count, a rhythm), the plan changes the design, or asks the question with its ⭐,
+before the build; it doesn't ship the bypass as a risk for the Playtester to confirm
+(iteration 09 retro: plan 09 named counting, shipped it, and the Iterate on it made sprint
+10 another pass on the core).
 
 *The sprint's record ticket* lists only what `close` checks: `plan.md`, `log.md`,
 `review.md`, the pulse line, the input ledger and `CHANGELOG.md`. The gate needs the ticket

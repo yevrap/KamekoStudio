@@ -100,11 +100,20 @@ How to play: drive headless Chrome with puppeteer-core, which is installed in th
 
 Rules: write your throwaway scripts and screenshots OUTSIDE the repository, in the system temp directory. Do not create, modify or commit any file in the repository. Do not read the diff, the tickets' Result sections or review notes before you have played. Judge the game as a player, against the taste brief, not against the ticket.`
 
-const REVIEWER = (role, file) => `You are the ${role} of Shadow Studio, with fresh context. Read docs/studio/team/${file} (your role) first.
+const DIFF = `its diff is \`git diff <tag>..HEAD\`, where <tag> is the newest \`studio-iteration-*\` tag (\`git describe --tags --match 'studio-iteration-*' --abbrev=0\`), and its tickets are in the newest docs/studio/iterations/NN/tickets/`
 
-Review the current sprint: its diff is \`git diff <tag>..HEAD\`, where <tag> is the newest \`studio-iteration-*\` tag (\`git describe --tags --match 'studio-iteration-*' --abbrev=0\`), and its tickets are in the newest docs/studio/iterations/NN/tickets/. Check each ticket's claims against the code and against real runs on a local server (\`npx serve -l <free port 5173-5199> .\`), not the live site; a finding is a reproduction or a file:line, not an opinion. Production fixes (ADR-0008) get extra care: name the full commit hash you reviewed.
+const CLAIMS = `Review the current sprint: ${DIFF}. Check each ticket's claims against the code and against real runs on a local server (\`npx serve -l <free port 5173-5199> .\`), not the live site; a finding is a reproduction or a file:line, not an opinion. Production fixes (ADR-0008) get extra care: name the full commit hash you reviewed.
 
-Don't repeat evidence the sprint already has: a red or green count a ticket records, or a suite the checks ran, is re-run only if you doubt it, and the Playtester is playing every player-visible change as you work, so play only to reproduce something you suspect. Spend your runs on the claims that evidence doesn't reach.
+Don't repeat evidence the sprint already has: a red or green count a ticket records, or a suite the checks ran, is re-run only if you doubt it, and the Playtester is playing every player-visible change as you work, so play only to reproduce something you suspect. Spend your runs on the claims that evidence doesn't reach.`
+
+// QA tests the tests (retro 09): in sprints 08 and 09 QA re-read what the Independent
+// Reviewer read, re-ran a suite the checks had run, found nothing of its own, and missed a
+// test that couldn't see its criterion (IR09-3).
+const TESTS = `Test the current sprint's tests: ${DIFF}. The Independent Reviewer checks every claim criterion by criterion and reads the records, so don't: read only each ticket's acceptance criteria and the diff of code and tests (\`git diff <tag>..HEAD -- studio tests\`), not the plan, the log or the Result sections, and don't re-run a suite to see it green. For each criterion a test was added or changed for, break the code it guards in a copy outside the repository (\`git archive HEAD | tar -x -C <temp dir>\`, then link the repository's node_modules into it) and run only that test there (\`node --test --test-name-pattern=…\`): it must fail, for the reason its criterion names. A test that stays green, or fails for another reason, is a test-strength finding. Then walk the paths the author didn't: the second run, the empty state, the stale save, the narrow viewport, the double tap. Drive a browser with puppeteer-core and measure from the DOM; keep screenshots out of your context. A finding is a reproduction or a file:line, not an opinion.`
+
+const REVIEWER = (role, file, task) => `You are the ${role} of Shadow Studio, with fresh context. Read docs/studio/team/${file} (your role) first.
+
+${task}
 
 Read-only: do not create, modify or commit any file in the repository; put any scratch files in the system temp directory. Return your verdict line and your findings, each naming the ticket it concerns, so the review step can post them on that ticket's pull request.`
 
@@ -161,9 +170,9 @@ while (done.length < MAX_STEPS) {
 
   if (kind === 'review') {
     const [ir, qa, pt] = await parallel([
-      () => agent(REVIEWER('Independent Reviewer', 'independent-reviewer.md'),
+      () => agent(REVIEWER('Independent Reviewer', 'independent-reviewer.md', CLAIMS),
         { label: 'Independent Reviewer', phase: 'Review', model: 'opus', schema: FINDINGS }),
-      () => agent(REVIEWER('QA Engineer', 'qa-engineer.md'),
+      () => agent(REVIEWER('QA Engineer', 'qa-engineer.md', TESTS),
         { label: 'QA Engineer', phase: 'Review', model: 'sonnet', schema: FINDINGS }),
       () => agent(PLAYTESTER(
         `Play every player-visible change this sprint made. The newest docs/studio/iterations/NN/plan.md says what will be visible (read only that section). To play, ${LOCAL}. Give each one a Keep / Iterate / Kill.`),
