@@ -3,6 +3,52 @@
 All notable changes to Shadow Studio, one section per iteration. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are iteration tags.
 
+## [studio-iteration-09] — 2026-09-24
+
+Samovar's second pour: three tea glasses of different shapes, each filling in the same
+time; a hair over the brim costs a star and drips instead of emptying the cup; and your
+best evening shows from the first screen. The studio's skill now describes the branch and
+pull-request flow its next sprint works in. Sprint 2 of 3 of epic E2.
+
+### Changed
+
+- **Samovar's glasses have shapes of their own** ([SHS-072](iterations/09/tickets/SHS-072-samovar-cup-shapes.md))
+  — a straight tea glass, a tulip glass and a wide bowl, each drawn from one profile that
+  the rules also read, so the tea rises unevenly and a strength's right stop sits at a
+  different height in each (at least 10 % of the glass apart). Every glass holds the same
+  and fills in 2.5 s, so three stars on strength is ±125 ms on every cup. The result card
+  sits low on the table, leaving the rim and the dashed line in view. The Playtester's
+  verdict is **Iterate**: with every glass filling in the same time, counting the hold
+  beats watching the level (backlog #57 on Q18's ⭐, #58).
+- **A hair over the brim costs a star, not the cup** ([SHS-073](iterations/09/tickets/SHS-073-samovar-forgiving-brim.md))
+  — up to 8 % over the brim the tea drips down the glass's right side, the cup scores one
+  star less and the card says *a drop over the brim*; past that the tea heaps over the rim
+  and down both sides, a spill, no stars. A brew let go over the brim serves at once. The
+  Playtester's verdict is **Keep**: letting go at the dashed line never spilled in about 80
+  cups, and first evenings scored 8 to 25 of 30 instead of 0.
+- **The best evening shows from the first screen** ([SHS-073](iterations/09/tickets/SHS-073-samovar-forgiving-brim.md))
+  — *best 25* under the running stars once one is saved, and the end card names a new best,
+  a first one included. Still one key, `studio_samovar_best`. The Playtester's verdict is
+  **Keep**.
+- **The skill describes the pull-request flow** ([SHS-074](iterations/09/tickets/SHS-074-skill-describes-pull-requests.md))
+  — the `studio-iteration` skill's `build` step is one ticket, one branch and one pull
+  request, squash-merged once CI is green; `review` posts the Independent Reviewer's verdict
+  on each pull request; records stay on `main`. `process.md` and the `studio-sprint`
+  workflow agree, and ADR-0007 (trunk-based) is superseded. A production fix stays on trunk
+  until backlog #56. The flow starts at plan 10.
+
+### Fixed
+
+- **Samovar's two misses read "and"** (review, the Playtester) — *Much too weak, and a
+  drop over the brim*; *but* only after the strength the guest wanted.
+- **The tea is tested in the glass's shape** (review, IR09-3) — the layout test asks what
+  is painted inside and outside each glass's wall, not the liquid's bounding box.
+- **The pull request's title is linted before it is opened** (review, IR09-1) — a squash
+  of several commits takes the title as its subject, and nothing else checked it before
+  `main`.
+- **Samovar's spill tests allow the page's rounding** (review) — a spill caught a hair past
+  108 % could read as 108.00 and fail the test.
+
 ## [studio-iteration-08] — 2026-09-24
 
 The studio's first original game: *Samovar*, where you pour tea for an evening of guests

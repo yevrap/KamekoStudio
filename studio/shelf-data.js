@@ -15,7 +15,7 @@
 export const PULSE = {
   iteration: '09',
   shipped: '2026-09-24',
-  summary: 'In progress: Samovar\'s second pour. Three tea glasses of different shapes that each fill in the same time, a hair over the brim costing a star instead of the cup, and your best evening on the first screen.'
+  summary: 'Shipped: Samovar\'s second pour. Three tea glasses of different shapes that each fill in the same time, a hair over the brim that drips and costs a star instead of the whole cup, and your best evening on the first screen.'
 };
 
 /**
@@ -47,8 +47,8 @@ export const SHELF = [
   {
     title: 'Samovar',
     status: 'PROTOTYPE',
-    blurb: 'The studio\'s first original game. Pour tea for an evening of ten guests: hold to pour the dark brew, hold again to top it up with hot water, and match the colour each guest asks for without spilling. Built to test whether judging a ratio by feel, cup after cup, is fun on its own: whether your misses shrink across an evening and you pour another. First verdict: iterate, because the brim is too harsh.',
-    iteration: '08',
+    blurb: 'The studio\'s first original game. Pour tea for an evening of ten guests: hold to pour the dark brew, hold again to top it up with hot water, and match the colour each guest asks for without spilling. The glass changes from guest to guest (a tea glass, a tulip, a wide bowl), so each strength stops at a different height, and a hair over the brim drips for one star less. Built to test whether judging a ratio by feel, cup after cup, is fun on its own. Second verdict: keep the forgiving brim; iterate on the glasses, because counting the seconds still beats watching the tea.',
+    iteration: '09',
     changed: '2026-09-24',
     url: 'games/samovar/'
   },

@@ -13,6 +13,35 @@ The sprint was built on trunk (ADR-0007's last sprint; the pull-request flow sta
 changed no production file, so there is no `reviews/<TICKET>.md` record. All three
 reviewers returned.
 
+## In plain words
+
+Samovar, the studio's own tea-pouring game, got its second pass: its three cups are now
+glasses of different shapes (a straight tea glass, a tulip and a wide bowl), so the same
+strength of tea stops at a different height in each, and every glass takes the same 2.5
+seconds to fill. Going a hair over the brim now costs one star and shows a drip down the
+side instead of losing the whole cup, and your best evening shows on the first screen. The
+studio also wrote down how its work goes through pull requests from the next sprint on, so
+each ticket passes the repository's automatic checks before it reaches the main branch. The
+reviewers approved everything, and a few small fixes were made straight away, among them a
+clearer line when a cup misses on both strength and fill. The Playtester kept the forgiving
+brim and the best evening but asked for another pass on the glasses: because every glass
+fills in the same time, a player who counts seconds scores better than one who watches the
+tea, so the next sprint plans a flow that differs from guest to guest.
+
+## Demo
+
+- **Samovar:** https://yevrap.github.io/KamekoStudio/studio/games/samovar/ (on the realm's
+  shelf, https://yevrap.github.io/KamekoStudio/studio/, as `PROTOTYPE`). Your best evening
+  sits under the stars from the first screen. Hold *Hold to pour the tea* and let go at
+  the colour the guest asked for; hold *Hold to add hot water* and let go at the dashed
+  line. The glass changes from guest to guest (a tea glass, a tulip glass, a wide bowl),
+  so the right stop sits at a different height in each. Let go a little late and the tea
+  drips down the glass's side for one star less; much later and it spills. After ten
+  guests the end card says whether the evening was a new best, then *Pour again*.
+- **For the reader:** the pull-request flow in the `studio-iteration` skill's `build` and
+  `review` steps and in [process.md](../../process.md#branches-commits-tags)
+  ([SHS-074](tickets/SHS-074-skill-describes-pull-requests.md)); the first real pull request is sprint 10's.
+
 ## Keep / Iterate / Kill
 
 > Since [ADR-0011](../../decisions/ADR-0011-the-studio-runs-itself.md) the Playtester's
