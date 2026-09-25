@@ -140,7 +140,9 @@ commands in order.
 - Every commit is green: `npm run studio:check -- --stage=ticket` before committing.
 - **When a ticket is done:** `--stage=push` green — the gate's checks short of the review
   ones, the full repository suite included — then push the branch, open a pull request with
-  `gh pr create` (its title the commit subject the squash-merge will take; its body the
+  `gh pr create` (its title the commit subject the squash-merge will take, linted with
+  `lintCommitSubject` before the pull request is opened, since `commit-lint` reads only the
+  branch's commits and a squash of several takes the title; its body the
   ticket's criteria and evidence, and `Closes #N` for a request it answers), watch CI
   (`.github/workflows/checks.yml`, the one check the studio doesn't write) to green, and
   `gh pr merge --squash --delete-branch`.

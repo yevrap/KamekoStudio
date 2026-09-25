@@ -140,10 +140,15 @@ another step itself.
    3. When the ticket is done: `--stage=push` green. If `main` has moved, the branch isn't
       on the remote yet, so `git pull --rebase origin main` and run the stage again.
    4. `git push -u origin studio/SHS-NNN-slug`.
-   5. `gh pr create --base main --title "type(studio): SHS-NNN description" --body-file <file>`,
-      the file in the scratchpad. The title is a commit subject, because the squash-merge
-      takes it (with ` (#N)` added). The body lists the ticket's acceptance criteria with
-      the evidence for each, and `Closes #N` for a `studio` request it answers.
+   5. Lint the title first: a squash of several commits takes it as its subject, and
+      nothing else checks it before it is on `main` (`commit-lint` reads the branch's
+      commits; review 09, IR09-1).
+      `node --input-type=module -e "import { lintCommitSubject as lint } from './tests/studio/lib/rules.mjs'; const p = lint(process.argv[1]); if (p) { console.error(p); process.exit(1); }" "<title>"`,
+      then `gh pr create --base main --title "<title>" --body-file <file>`, the file in the
+      scratchpad. The title is a commit subject, `type(studio): SHS-NNN description`, and
+      isn't edited after it is linted; the squash-merge adds ` (#N)`. The body lists the
+      ticket's acceptance criteria with the evidence for each, and `Closes #N` for a
+      `studio` request it answers.
    6. `gh pr checks --watch` until CI (`.github/workflows/checks.yml`) is green; if it
       reports no checks yet, wait a few seconds and run it again. Red is a fix round: fix
       on the branch, from 2.
