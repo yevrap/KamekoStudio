@@ -78,3 +78,19 @@ is committed.
 - **Game Designer** — *Done:* the hook rewritten to one current version; the drip band
   kept at 8 %, with the lag behind it recorded as an assumption and put to the executive's
   phone. *Next:* the flow-per-guest numbers at plan 10. *Blocked:* nothing.
+
+## Session 6 — close (2026-09-24)
+
+- **Scrum Master** — *Done:* the close records (`3e1151c`): `review.md`'s *In plain words*
+  and demo list, the changelog's `studio-iteration-09` section, the pulse line, Samovar's
+  shelf entry (iteration 09, its second verdict), backlog #49 and #51–#54 marked done, the
+  Playtester's verdicts and Q15's fold in the input ledger, [SHS-075](tickets/SHS-075-iteration-record.md) Done. The gate
+  (base `studio-iteration-08`) went red once, on `docs-current`: [SHS-072](tickets/SHS-072-samovar-cup-shapes.md) and [SHS-073](tickets/SHS-073-samovar-forgiving-brim.md) wrote
+  their commit between *What changed* and its colon, so the label read as missing
+  (`67a97ac` moves it; the fourth sprint `docs-current` was red at a gate, backlog #47).
+  The rerun hung: two browser suites (`river-run-fork`, `samovar`) sat idle for over nine
+  minutes with no Chrome running, and were stopped; `samovar` alone then went 23/23 in
+  124 s, and the full gate 11 of 11. Pushed, tagged `studio-iteration-09`; postdeploy
+  found each marker live: the new Samovar blurb on the realm (attempt 3) and the verdict
+  line's `joint` in Samovar's `gameplay.js` (attempt 1). No `studio` issue was tied to this
+  sprint. *Next:* retro. *Blocked:* nothing.
