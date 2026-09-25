@@ -713,7 +713,18 @@ test('in a browser: at 320 and 390 wide every cup fits, its tea sits at the prof
                 const r = document.getElementById(id).getBoundingClientRect();
                 return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
               };
+              // What is painted at a point a tenth of the way up the glass: `x` in the
+              // glass's box units, 0 at its left edge and 100 at its right. The liquid's
+              // bounding box ignores the clip path, so only a point says where tea shows.
+              const cupBox = document.getElementById('cup').getBoundingClientRect();
+              const paintedAt = x => {
+                const hit = document.elementFromPoint(cupBox.left + x / 100 * cupBox.width, cupBox.bottom - 0.1 * cupBox.height);
+                return hit ? hit.id || hit.tagName.toLowerCase() : null;
+              };
+              const wall = 50 + 50 * g.cup.halfWidth(0.1);
               const playing = {
+                // Inside the glass on its axis, and half-way from its right wall to the box's edge.
+                probe: { inside: paintedAt(50), outside: wall < 97 ? paintedAt((wall + 100) / 2) : null },
                 cup: box('cup'), swatch: box('swatch'), pour: box('pour'), guest: box('guest'),
                 liquid: box('liquid'), band: box('band'),
                 scrollWidth: document.documentElement.scrollWidth,
@@ -772,6 +783,13 @@ test('in a browser: at 320 and 390 wide every cup fits, its tea sits at the prof
             const wantSurface = heightAtVolume(CUPS[c], 0.6);
             assert.ok(Math.abs(surface - wantSurface) <= 0.03,
               `the surface is at ${surface.toFixed(3)} of the cup, the profile says ${wantSurface.toFixed(3)}, ${where}`);
+            // ...and clipped to the glass: tea inside it near the foot, none just outside
+            // a narrower wall (the straight glass's wall is the box's edge) (IR09-3).
+            assert.equal(boxes.probe.inside, 'liquid', `no tea inside the glass near its foot, ${where}`);
+            if (CUPS[c].id !== 'straight') {
+              assert.notEqual(boxes.probe.outside, null, `the outside probe did not run, ${where}`);
+              assert.notEqual(boxes.probe.outside, 'liquid', `the tea is painted outside the glass's wall, ${where}`);
+            }
             const band = (boxes.cup.bottom - (boxes.band.top + boxes.band.bottom) / 2) / boxes.cup.height;
             const wantBand = heightAtVolume(CUPS[c], FULL_FROM);
             assert.ok(Math.abs(band - wantBand) <= 0.03,
