@@ -6,7 +6,7 @@ or just tell me in chat. Anything you leave blank takes the default (⭐), and s
 once rather than waiting; answering later overturns it. Answered questions
 are folded into the design and removed from here.
 
-*Answered: Q14 (E2's first game → ⭐ Samovar, blank at plans 08 and 09; built as [SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md) and iterated in sprint 09), Q1 (name → keep "Shadow Studio" and `studio/`, ticked 2026-09-24; folded into [the design](design.md)), Q13 (a studio production fix bumps `version.json` → yes, ticked 2026-09-24; backlog #43 is Ready on it), Q10 (production fixes → the studio merges them itself after its own review, through a pull request once backlog #40 lands; the executive, in chat 2026-09-23, recorded in [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md)), Q12 (first River Run experiment → ⭐ power-ups, blank at sprint 06's plan; built as [SHS-060](../iterations/06/tickets/SHS-060-river-run-power-ups.md)), Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
+*Answered: Q15 (what makes Samovar's cups different → ⭐ shapes, blank through sprint 09's review; built as [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md), and the Playtester's Iterate on it is Q18), Q14 (E2's first game → ⭐ Samovar, blank at plans 08 and 09; built as [SHS-068](../iterations/08/tickets/SHS-068-samovar-core.md) and iterated in sprint 09), Q1 (name → keep "Shadow Studio" and `studio/`, ticked 2026-09-24; folded into [the design](design.md)), Q13 (a studio production fix bumps `version.json` → yes, ticked 2026-09-24; backlog #43 is Ready on it), Q10 (production fixes → the studio merges them itself after its own review, through a pull request once backlog #40 lands; the executive, in chat 2026-09-23, recorded in [ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md)), Q12 (first River Run experiment → ⭐ power-ups, blank at sprint 06's plan; built as [SHS-060](../iterations/06/tickets/SHS-060-river-run-power-ups.md)), Q11 (first fork → River Run, in chat 2026-09-22; recorded in [Direction](direction.md)). Answered and built: Q2 (identity → Backstage), Q3 (portal-limit fix → approved), Q6 (what
 02 builds → the first experiment), Q7 (Overtighten → left on the shelf as an honest
 prototype, ⭐ by silence), Q8 (process → keep the gate and break ties yourself, keep
 `docs-current`, cap planned work only — all ⭐ by silence), Q4 (3D zone → the studio's
@@ -16,22 +16,6 @@ round-2 tie-break of iteration 03 (handed back to the team — decided 2026-09-2
 are now in [Shadow Studio](design.md) under *How the work is chosen*. The ticket
 prefix → `SHS-`, your decision in [Shadow Studio — Naming Conventions](naming-conventions.md). See
 [Shadow Studio — Input Ledger](input-ledger.md).*
-
-**Q15. What makes Samovar's cups different?** (review 08, IR08-1; backlog #53). As built,
-every cup has the same shape, so a three-star brew stops at the same share of each cup's
-height and the cup's size changes only how long the pour takes. The Playtester's Iterate
-also asks for the same fill time on every cup (#52), which on its own would make the cups
-identical. Blank at plan 09, so the ⭐ is built in sprint 09 as [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md), with #52;
-ticking B or C before sprint 09's review turns it around.
-- [ ] A. ⭐ **Shapes.** Cups of different shapes: a straight tea glass in its holder, a
-  tulip glass that narrows at the waist, a wide bowl. The level no longer climbs evenly, so
-  the right stop sits at a different height in each, and the shape is what you learn.
-- [ ] B. **Hide the brew.** The metal glass-holder covers the lower part of every glass,
-  so the brew can't be judged by its level, only by how long you poured; the colour shows
-  once the water rises above the holder.
-- [ ] C. **Keep one shape.** Accept a stop-at-a-line game and make the colour the whole
-  skill (for example, strengths closer together).
-- [ ] D. Something else: ______
 
 **Q16. Trim the root `CLAUDE.md`?** (retro 08, issue #4). Every agent loads it, and in
 sprint 08 that was 13 agents and about 365 API requests. It is 46 KB. Most of it is arcade
@@ -73,6 +57,22 @@ used from sprint 10.
 (its §6), so the team left it as it is; a tick here, or a line in §5, settles it. One part
 of A waits: a production fix stays on trunk until backlog #56 lets `production-fix-reviewed`
 follow a squash-merge.
+
+**Q18. How does a Samovar glass matter to a player who counts?** (review 09, the
+Playtester's Iterate on [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md); backlog #57). Every glass fills in the same 2.5 s, so one
+strength's hold is the same on every glass. A scripted player who never looked at the glass
+and held for the strength times 2.5 s scored 23–26 of 30 on a first evening, better than
+one watching the level. The shapes are learnable, but counting walks around them. Blank at
+plan 10, the ⭐ is built in sprint 10.
+- [ ] A. ⭐ **A flow per guest.** The pour's flow differs from guest to guest, shown by how
+  thick the stream is, within a range narrow enough that three stars on strength stays at
+  ±100 ms or more. No fixed hold works, so the level in the glass is the cue again, and
+  the shapes are what you learn.
+- [ ] B. **Sizes again.** Glasses of different sizes at one flow, so each glass's hold
+  differs. It brings back what #52 removed: a small glass's windows are much shorter.
+- [ ] C. **Accept counting.** The shapes stay a first-evening obstacle, and sprint 10 goes
+  to the second layer (progression, guests, a mode) instead.
+- [ ] D. Something else: ______
 
 **Q5. Anything else** about how you want to run this company, what a good review looks
 like, or things it must never do?

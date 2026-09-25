@@ -58,3 +58,23 @@ is committed.
   squash-merge replaces, so a production fix stays on trunk until backlog #56 (new, S,
   Ready). ADR-0011 §5 is the executive's, so Q17 carries a note rather than an edit.
   *Next:* review. *Blocked:* nothing.
+
+## Session 5 — review (2026-09-24)
+
+- **Scrum Master** — *Done:* one round, run by the `studio-sprint` workflow: the
+  Independent Reviewer (`opus`) approved with seven findings, QA (`sonnet`) approved with
+  none, and all three reviewers returned; no second round. Built on trunk, so no pull
+  request to post on. Fixed now: `7ec99e6` (the tea's clip probed by point, red first),
+  `cbc4383` (*and* for two misses, red first; stale comments; the spill tests' rounding
+  flake, found when the ticket stage went red once), `d715105` (the skill lints a pull
+  request's title before opening it), `59c701c` (the design note's hook, the lag as an
+  assumption). *Next:* close. *Blocked:* nothing.
+- **Product Owner** — *Done:* the Playtester's verdicts into [review.md](review.md): Iterate on
+  the glasses' shapes ([SHS-072](tickets/SHS-072-samovar-cup-shapes.md)), Keep on the brim and on the best from the first screen
+  ([SHS-073](tickets/SHS-073-samovar-forgiving-brim.md)). Backlog #57 (a flow per guest, on Q18's ⭐, new) and #58 (the glasses drawn
+  true) from the Iterate, #59 from IR09-4. Q15 folded into the answered list: blank
+  through this review, so the shapes stand. *Next:* sprint 10 plans against #57 and #58.
+  *Blocked:* nothing.
+- **Game Designer** — *Done:* the hook rewritten to one current version; the drip band
+  kept at 8 %, with the lag behind it recorded as an assumption and put to the executive's
+  phone. *Next:* the flow-per-guest numbers at plan 10. *Blocked:* nothing.

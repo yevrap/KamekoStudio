@@ -1,27 +1,24 @@
 # Shadow Studio — Next step
 
-**Next:** `review` — sprint 09's one round: QA, the Independent Reviewer and the Playtester
+**Next:** `close` — sprint 09's records, gate and the one live-site check
 **Say:** "run the studio" (the whole sprint, watched), or `studio next` (this one step, in a new session)
 
 | | |
 |---|---|
 | Epic | E2 · The studio's first original game worth playing · sprint 2 of 3 (+1 reserve, unclaimed) |
 | Sprint | 09 · Samovar, second pour: glasses of their own and a forgiving brim ([plan.md](../iterations/09/plan.md)) |
-| Steps | plan ✓ · build [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md) ✓ · build [SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md) ✓ · build [SHS-074](../iterations/09/tickets/SHS-074-skill-describes-pull-requests.md) ✓ · review · close · retro |
-| Waiting on you | Nothing blocks. Q15 took its ⭐ (shapes) and Q17 its ⭐ (a pull request merges at the end of its build; ADR-0011 §5 is yours to align, see the note under Q17); tick either in the [questionnaire](questionnaire.md) to overturn it. Q16 waits for your tick and blocks nothing |
+| Steps | plan ✓ · build [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md) ✓ · build [SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md) ✓ · build [SHS-074](../iterations/09/tickets/SHS-074-skill-describes-pull-requests.md) ✓ · review ✓ · close · retro |
+| Waiting on you | Nothing blocks. Q18 is new and takes its ⭐ (a flow per guest); Q17 its ⭐; Q15 folded in (shapes). Q16 waits for your tick and blocks nothing. Three real-phone questions are in [review.md](../iterations/09/review.md) |
 
 ## Notes for the next session
 
-- Sprint 09 was built on trunk, so its review has no pull request to post on; the skill's
-  new flow starts at plan 10, and #50 rides on sprint 10's first games ticket.
-- Samovar at review: the brim is 250 ms free, 200 ms at a star (a drip, `data-overflow`
-  on `#cup`), then a spill; the Playtester is asked whether a first evening still scores
-  near 0 and whether players watch the glass or count seconds ([SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md)).
-- [SHS-074](../iterations/09/tickets/SHS-074-skill-describes-pull-requests.md) changed one criterion at build (ADR-0011 is executive-only) and found
-  that a production fix can't take a pull request until backlog #56; both are in its Result.
-- Screenshots: save to disk, compose into one image, look once (retro 08); retro 09 checks
-  review's writes ($3.43 in 08) and the Playtester's writes and reads ($1.97).
-- The next new backlog item is #57, the next ticket SHS-076.
+- Review: Approve with findings (IR), Approve (QA). Playtester: Iterate on the shapes
+  ([SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md)), Keep on the brim and the best ([SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md)). Fixes pushed: `7ec99e6`, `cbc4383`,
+  `d715105`, `59c701c`; `review.md` still needs *In plain words* and the demo list.
+- Close updates Samovar's shelf entry (it still says *Iteration 08*) and the CHANGELOG;
+  postdeploy marks `studio/games/samovar/` (the new *and* line is a marker candidate).
+- No `studio` issue is tied to this sprint's work; no production file changed.
+- The next new backlog item is #60, the next ticket SHS-076.
 
 *Rewritten by every session (the studio-iteration skill). Loaded into every new Claude Code
 session by the SessionStart hook in `.claude/settings.json`.*
