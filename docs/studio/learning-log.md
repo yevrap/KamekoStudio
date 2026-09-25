@@ -39,7 +39,7 @@ it stays until #47 turns it into a check.
 
 *Converted at the 07 retro:*
 - *Run `--stage=ticket` before every commit* (05) is a step of the `studio-iteration`
-  skill's `build` and a line of `process.md` (*Trunk, commits, tags*), so it no longer
+  skill's `build` and a line of `process.md` (*Branches, commits, tags*), so it no longer
   needs a place on the list.
 
 *Converted at the 06 retro:*

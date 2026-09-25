@@ -54,6 +54,7 @@ const FINDINGS = {
         properties: {
           id: { type: 'string' },
           severity: { type: 'string', description: 'player-facing, production, save, process, test strength, or nit' },
+          ticket: { type: 'string', description: 'the SHS-NNN ticket the finding concerns, or empty for the sprint as a whole' },
           finding: { type: 'string' },
           evidence: { type: 'string', description: 'reproduction steps, commands and their output, file:line' },
         },
@@ -88,7 +89,7 @@ const VERDICTS = {
 
 const STEP_PROMPT = extra => `You are one step of the Shadow Studio sprint, run by the studio-sprint workflow in Yevster's Claude Code session (docs/studio/decisions/ADR-0011-the-studio-runs-itself.md). Yevster is watching the run but not answering questions: never ask or wait for input — an open product question goes to docs/studio/steering/questionnaire.md with its ⭐ and you proceed on the ⭐.
 
-Read ${SKILL} and follow it exactly for the ONE step docs/studio/steering/next.md names — nothing more. Do not spawn subagents: where the skill asks for QA, the Independent Reviewer or the Playtester, this workflow has run them and their results are below. End the way the skill says (next.md rewritten, records committed and pushed through the checks), then return the structured result. Verify on a local server, not the live site: don't wait for GitHub Pages — only the close step checks the live site, once. Report checks honestly: never "pass" for a check that did not run.
+Read ${SKILL} and follow it exactly for the ONE step docs/studio/steering/next.md names — nothing more. Do not spawn subagents: where the skill asks for QA, the Independent Reviewer or the Playtester, this workflow has run them and their results are below. A ticket's work travels on its own branch and pull request, squash-merged at the end of its build once CI is green; records go straight to main (the skill has the commands in order). End the way the skill says (next.md rewritten, records committed and pushed through the checks), then return the structured result. Verify on a local server, not the live site: don't wait for GitHub Pages — only the close step checks the live site, once. Report checks honestly: never "pass" for a check that did not run.
 ${extra}`
 
 const PLAYTESTER = task => `You are the Playtester of Shadow Studio. Read docs/studio/team/playtester.md (your role) and docs/brief.md (the studio's taste) first.
@@ -105,7 +106,7 @@ Review the current sprint: its diff is \`git diff <tag>..HEAD\`, where <tag> is 
 
 Don't repeat evidence the sprint already has: a red or green count a ticket records, or a suite the checks ran, is re-run only if you doubt it, and the Playtester is playing every player-visible change as you work, so play only to reproduce something you suspect. Spend your runs on the claims that evidence doesn't reach.
 
-Read-only: do not create, modify or commit any file in the repository; put any scratch files in the system temp directory. Return your verdict line and your findings.`
+Read-only: do not create, modify or commit any file in the repository; put any scratch files in the system temp directory. Return your verdict line and your findings, each naming the ticket it concerns, so the review step can post them on that ticket's pull request.`
 
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -173,7 +174,7 @@ while (done.length < MAX_STEPS) {
     if (ir) log(`Independent Reviewer: ${ir.verdict}`)
     if (qa) log(`QA: ${qa.verdict}`)
     if (pt) log(`Playtester: ${pt.items.map(i => `${i.item} → ${i.verdict}`).join('; ') || 'nothing player-visible'}`)
-    extra += `\n\nThe reviewers this workflow ran for you (one round). Record each verdict line in review.md as the skill says, turn every finding into a fix now (if S), a backlog item, or a recorded decline, and put the Playtester's verdicts in the Keep / Iterate / Kill section. A reviewer that is missing did not return: say so, don't invent its verdict.\n\nIndependent Reviewer (opus):\n${JSON.stringify(ir, null, 2)}\n\nQA Engineer (sonnet):\n${JSON.stringify(qa, null, 2)}\n\nPlaytester (opus):\n${JSON.stringify(pt, null, 2)}`
+    extra += `\n\nThe reviewers this workflow ran for you (one round). Record each verdict line in review.md as the skill says, turn every finding into a fix now (if S), a backlog item, or a recorded decline, post the Independent Reviewer's verdict on each of the sprint's pull requests (gh pr comment) with its findings on that ticket, and put the Playtester's verdicts in the Keep / Iterate / Kill section. A reviewer that is missing did not return: say so, don't invent its verdict.\n\nIndependent Reviewer (opus):\n${JSON.stringify(ir, null, 2)}\n\nQA Engineer (sonnet):\n${JSON.stringify(qa, null, 2)}\n\nPlaytester (opus):\n${JSON.stringify(pt, null, 2)}`
   }
 
   const r = await agent(STEP_PROMPT(extra), { label: name, phase: cap(kind), schema: STEP_RESULT })

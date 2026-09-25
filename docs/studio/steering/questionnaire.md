@@ -68,6 +68,12 @@ used from sprint 10.
   until review, then merge together. A later ticket branches from an earlier one's branch.
 - [ ] D. Something else: ______
 
+*Team note, [SHS-074](../iterations/09/tickets/SHS-074-skill-describes-pull-requests.md) build:* the ⭐ is written into the `studio-iteration` skill and
+`process.md`. ADR-0011 §5 still reads "when … the review approves": that record is yours
+(its §6), so the team left it as it is; a tick here, or a line in §5, settles it. One part
+of A waits: a production fix stays on trunk until backlog #56 lets `production-fix-reviewed`
+follow a squash-merge.
+
 **Q5. Anything else** about how you want to run this company, what a good review looks
 like, or things it must never do?
 i want it to run like a scrum team, following ceremonies and getting better

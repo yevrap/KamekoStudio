@@ -52,7 +52,7 @@ turn the run green by omission — the report shows it, and the `gate`, `push` a
 | `preflight` | Before planning | `tree-clean`, `on-branch`, `no-stop-file`, `baseline-suites` |
 | `ticket` | After each ticket | `path-guard`, `storage-keys`, `portal-capacity`, `studio-tests`, `studio-boot` |
 | `gate` | Before the iteration is tagged | `tree-clean`, `path-guard`, `storage-keys`, `portal-capacity`, `studio-boot`, `hygiene`, `full-suites`, `commit-lint`, `production-fix-reviewed`, `docs-current`, `reviewer-verdict` |
-| `push` | Before every push to `main` | `tree-clean`, `on-branch`, `no-stop-file`, `path-guard`, `storage-keys`, `portal-capacity`, `studio-boot`, `hygiene`, `full-suites`, `commit-lint`, `production-fix-reviewed` |
+| `push` | Before every push, to `main` or a ticket branch | `tree-clean`, `on-branch`, `no-stop-file`, `path-guard`, `storage-keys`, `portal-capacity`, `studio-boot`, `hygiene`, `full-suites`, `commit-lint`, `production-fix-reviewed` |
 | `postdeploy` | After Pages updates, after every push | `studio-live`, `production-live`, `production-unchanged` |
 | `closeout` | End of the iteration | `iteration-docs`, `doc-cleanliness`, `changelog` |
 

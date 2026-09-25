@@ -1,8 +1,10 @@
 # ADR-0007 — Trunk-based development, as a trial from iteration 04
 
-- **Status:** Accepted — as a trial. Iteration 04's retrospective decides whether it stays.
-  To be superseded by [ADR-0011](ADR-0011-the-studio-runs-itself.md) (branches and pull
-  requests) once backlog #40 is Done.
+- **Status:** Superseded by [ADR-0011](ADR-0011-the-studio-runs-itself.md) §5 (a branch and
+  a pull request per ticket) from sprint 10. The trial ran iterations 04 to 09; the skill
+  and `process.md` took up the new flow in sprint 09
+  ([SHS-074](../iterations/09/tickets/SHS-074-skill-describes-pull-requests.md)). A
+  production fix stays on trunk until backlog #56.
 - **Date:** 2026-09-21
 - **Iteration:** 03
 

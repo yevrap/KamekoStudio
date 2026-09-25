@@ -19,7 +19,7 @@ they always show the current state — and the history lives here.
 | [0004](ADR-0004-checks-as-a-script.md) | The self-checks are an executable script, not a checklist |
 | [0005](ADR-0005-front-wall-portal-row.md) | `shared/3d/gameplay.js` gets one recorded exception for the front-wall portal row |
 | [0006](ADR-0006-ticket-prefix.md) | Tickets are numbered `SHS-NNN`; the `SS-` prefix is retired at 042 |
-| [0007](ADR-0007-trunk-based-development.md) | Trunk-based development, as a trial from iteration 04 |
+| [0007](ADR-0007-trunk-based-development.md) | Trunk-based development, as a trial from iteration 04 — superseded by 0011 from sprint 10 |
 | [0008](ADR-0008-production-fixes.md) | The studio fixes production, under the full process, one ticket per file |
 | [0009](ADR-0009-one-step-per-session.md) | One step per session, an ordered backlog, and an epic budget |
 | [0010](ADR-0010-fork-portal-url.md) | `shared/3d/constants.js` gets one recorded exception: River Run's portal opens the studio fork |

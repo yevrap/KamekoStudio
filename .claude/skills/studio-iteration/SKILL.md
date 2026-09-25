@@ -126,25 +126,47 @@ another step itself.
    for the sprint's ceremony commits. Numbers continue the `SHS-` sequence.
 7. Mark the pulled backlog rows `in sprint NN`. Set `next.md` to `build <first ticket>`.
 
-### `build <SHS-NNN>` — one ticket
+### `build <SHS-NNN>` — one ticket, one pull request
 
 1. `npm run studio:check -- --stage=preflight --skip-slow` (the push stage runs the full
    suites later).
-2. Read the ticket and `guardrails.md`. *(Once backlog #40 is Done, this step follows the
-   branch-and-pull-request flow of ADR-0011 §4, and #40 rewrites it here; until then, trunk.)*
-   Implement on `main` in small commits (ADR-0007): add
-   tests → `--stage=ticket` green → commit `type(studio): SHS-NNN description`. When the
-   ticket is done, run `--stage=push` → `git push origin main`. **Verify locally, not on the
-   live site** (executive, 2026-09-23): the checks and browser tests already serve the repo
-   locally; for a look by hand, `npx serve -l 5173 .` and open
-   `http://localhost:5173/studio/…`. Don't wait for Pages. The live site is checked once, at
-   `close`.
-3. **A production fix is not pushed yet.** Commit locally and note the commits in `next.md`.
-   The `review` step reviews them, and then they're pushed (ADR-0008).
-4. **If it grows:** stop at the last green commit, finish the ticket as Done for what landed,
-   and put the rest in the backlog as a new item. Don't carry scope.
-5. Fill in the ticket's Result with evidence. Add a stand-up line to `iterations/NN/log.md`
-   (done / next / blocked).
+2. Read the ticket and `guardrails.md`. The ticket travels on its own branch and pull
+   request (ADR-0011 §5; trunk, ADR-0007, ended with sprint 09). In this order:
+   1. `git switch main && git pull --rebase`, then
+      `git switch -c studio/SHS-NNN-slug` (a lowercase slug: `on-branch` refuses any other
+      name).
+   2. Small commits, each green: add tests → `--stage=ticket` green → commit
+      `type(studio): SHS-NNN description`.
+   3. When the ticket is done: `--stage=push` green. If `main` has moved, the branch isn't
+      on the remote yet, so `git pull --rebase origin main` and run the stage again.
+   4. `git push -u origin studio/SHS-NNN-slug`.
+   5. `gh pr create --base main --title "type(studio): SHS-NNN description" --body-file <file>`,
+      the file in the scratchpad. The title is a commit subject, because the squash-merge
+      takes it (with ` (#N)` added). The body lists the ticket's acceptance criteria with
+      the evidence for each, and `Closes #N` for a `studio` request it answers.
+   6. `gh pr checks --watch` until CI (`.github/workflows/checks.yml`) is green; if it
+      reports no checks yet, wait a few seconds and run it again. Red is a fix round: fix
+      on the branch, from 2.
+   7. `gh pr merge --squash --delete-branch`. A pull request merges at the end of its build
+      (questionnaire Q17, ⭐ A); the sprint's `review` posts on it afterwards and fixes
+      forward. Never force-push a pushed branch (a hard stop): if `main` has overtaken it
+      and it can't merge, `gh pr update-branch`, then watch CI again.
+   8. Back on `main`: `git switch main && git pull --rebase`.
+
+   **Verify locally, not on the live site** (executive, 2026-09-23): the checks and browser
+   tests already serve the repo locally; for a look by hand, `npx serve -l 5173 .` and open
+   `http://localhost:5173/studio/…`. Don't wait for Pages, which deploys the squash-merge.
+   The live site is checked once, at `close`.
+3. **A production fix stays on trunk for now:** commit it on `main`, don't push, and note the
+   commits in `next.md`. The `review` step reviews them, and then they're pushed (ADR-0008).
+   It gets a pull request once backlog #56 is Done: `production-fix-reviewed` needs the
+   reviewed commit in `main`'s history, and a squash-merge replaces it.
+4. **If it grows:** stop at the last green commit, merge the pull request for what landed,
+   finish the ticket as Done for that, and put the rest in the backlog as a new item. Don't
+   carry scope.
+5. Fill in the ticket's Result with evidence, linking the pull request, its CI run and the
+   squash-merged commit. Add a stand-up line to `iterations/NN/log.md` (done / next /
+   blocked). These are records: they go on `main` after the merge (*Ending every session*).
 6. Set `next.md` to the next planned ticket, or to `review` when none are left.
 
 ### `review` — independent review, one round
@@ -168,11 +190,20 @@ Opus is the largest model to use; Fable isn't available.
   evidence; every Iterate or Kill becomes backlog items at once.
 
 - Every finding becomes one of three things: a fix made now (if S), a backlog item, or a
-  recorded decline with a reason.
+  recorded decline with a reason. The sprint's pull requests are merged already, so a fix
+  made now travels like a build: a branch named for the ticket it fixes
+  (`studio/SHS-NNN-review-fix`), a pull request, CI, a squash-merge.
 - Record each reviewer's `**Verdict:**` line in `iterations/NN/review.md` (the gate checks
   for it), including a rejection.
+- **Post the Independent Reviewer's verdict on each of the sprint's pull requests** (each
+  ticket's Result links its own): `gh pr comment <N> --body-file <file>` with the verdict
+  line, the findings on that ticket, and what became of each. A sprint built on trunk has
+  none to post on.
 - Production fixes: write `iterations/NN/reviews/<TICKET>.md` with the `**Reviewed:** <full
-  hash>` and `**Verdict:**` lines, then push through the `push` stage.
+  hash>` and `**Verdict:**` lines, then push through the `push` stage. Until backlog #56 a
+  fix is on trunk (see `build`); after it, the fix's pull request is the one that waits: it
+  merges only once that record names its head commit and the `push` stage is green
+  (ADR-0008).
 - **A second round** runs only when the first rejects on something a player would hit, a
   production file, or a save. Set `next.md` to `review round 2` and stop. There is never a
   third round: write down what it would likely have found.
@@ -190,7 +221,8 @@ included (iteration 06 retro; `process.md` has the same order).
 2. Update `CHANGELOG.md`, the realm's pulse line, and the shelf entry of every game the
    sprint changed (`studio/shelf-data.js`; no test ties a blurb to the sprint). Close the
    tickets, the record ticket too. Commit. Close every `studio` issue whose work shipped:
-   `gh issue close N --comment "Shipped in iteration NN: <live URL>"`.
+   `gh issue close N --comment "Shipped in iteration NN: <live URL>"`. One a pull request's
+   `Closes #N` closed at its merge gets the same line as a comment (`gh issue comment N`).
 3. `npm run studio:check -- --stage=gate --base=<previous iteration tag>`. Red → fix within
    the caps, or stop with `next.md` saying what is red.
 4. Publish: `git push origin main`, `git tag -a studio-iteration-NN -m "…"`,
@@ -240,7 +272,9 @@ included (iteration 06 retro; `process.md` has the same order).
    needs that aren't in a ticket (for example, *production fix committed locally, not pushed:
    `abc1234`*). Keep it under 30 lines, because every new session loads it.
 2. **Commit and push** the session's records through the `push` stage, like any ceremony
-   record (commit subject names the sprint's record ticket).
+   record (commit subject names the sprint's record ticket). Records — the plan, stand-up
+   lines, ticket Results, the review, close and the retro — go on `main` and are pushed as
+   they land, never on a ticket's branch.
 3. **Report in chat, compact:**
    - **Did** — 2–3 lines
    - **Checks** — each one, pass / fail / not run

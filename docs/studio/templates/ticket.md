@@ -5,14 +5,14 @@
 - **Iteration:** NN
 - **Role lead:** <role from team/>
 - **Depends on:** <ticket IDs, or none>
-- **Branch:** none — trunk-based, commits to `main` (ADR-0007)
+- **Branch:** `studio/SHS-NNN-slug` → pull request #N, squash-merged at the end of the build (ADR-0011 §5; a production fix: `main`, until backlog #56)
 
 ## Motivation
 
 Two sentences at most. What is wrong or missing, and where the request came from
 (a direction, a review finding, a bug, the debt register). Neutral technical language.
 Another ticket's number is a link to its file, `[SHS-NNN](../../NN/tickets/SHS-NNN-slug.md)`
-(process.md, *Trunk, commits, tags*).
+(process.md, *Branches, commits, tags*).
 
 ## Acceptance criteria
 

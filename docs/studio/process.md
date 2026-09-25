@@ -11,7 +11,7 @@ each session does the step `steering/next.md` names, rewrites that file, and sto
 |---|---|---|
 | 0 | **Preflight** | Inputs logged; clean tree; up-to-date `main`; no `STOP`; baseline suites green |
 | 1 | **Refine and plan** | `iterations/NN/plan.md`, `iterations/NN/tickets/*.md` |
-| 2 | **Build** | Small commits to `main`, each green; each ticket verified locally and pushed when it is done |
+| 2 | **Build** | A branch and a pull request per ticket: small commits, each green; verified locally and squash-merged into `main` when it is done and CI is green |
 | 3 | **Fix, bounded** | At most 2 fix rounds per ticket, then the ticket is marked Blocked |
 | 4 | **Independent review** | QA and Independent Reviewer findings → fixes or new tickets |
 | 5 | **Document** | Tickets closed, `CHANGELOG.md`, `learning-log.md`, studio log entries |
@@ -28,7 +28,7 @@ The protocol above is spread over short sessions, one step each. The prompt is a
 | Session step | Covers protocol steps | Ends with `next.md` at |
 |---|---|---|
 | `plan` | 0–1: preflight, inputs logged, backlog refined, sprint goal, 2–3 tickets pulled | the first `build` |
-| `build <ticket>` | 2–3 for **one** ticket: implement, test, commit, push, deploy-check | the next ticket, or `review` |
+| `build <ticket>` | 2–3 for **one** ticket: branch, implement, test, commit, pull request, CI, squash-merge | the next ticket, or `review` |
 | `review` | 4: one round of QA and the Independent Reviewer | `close`, or `review round 2` |
 | `close` | 5–7: document, gate, publish, tag; `review.md` with *In plain words* | `retro` |
 | `retro` | 8–9: retro, learning log, backlog, budget, steering views | the next `plan` (only a hard stop waits on the executive — ADR-0011) |
@@ -100,7 +100,7 @@ epic that wrote them (moved at sprint 07's retro).
 | Backlog refinement | Start | Tickets sized S/M/L with acceptance criteria; debt items pulled in |
 | Iteration planning | Start | Goal, committed tickets, capacity, risks (`plan.md`) |
 | Async stand-up | Between tickets | Three lines in `iterations/NN/log.md`: done / next / blocked, per role that acted |
-| Build and test loop | Middle | Small commits to `main`, each ticket pushed when done, test results recorded on the ticket |
+| Build and test loop | Middle | Small commits on the ticket's branch, its pull request squash-merged when done, test results recorded on the ticket |
 | Review / demo | End | Demo list, URLs, and the Playtester's Keep / Iterate / Kill per item, which the executive may override (`review.md`) |
 | Retrospective | End | Went well / didn't / change next time; every change becomes a ticket or a doc edit (`retro.md`) |
 
@@ -124,35 +124,51 @@ any of:
 - context exhaustion;
 - a `STOP` file appearing in the working directory the run was started from.
 
-## Trunk, commits, tags
+## Branches, commits, tags
 
-The studio works trunk-based, as a trial from iteration 04 — see
-[ADR-0007](decisions/ADR-0007-trunk-based-development.md), which also says what the trial
-is testing and how its retrospective judges it.
+From sprint 10 the studio works on **a branch and a pull request per ticket**
+([ADR-0011](decisions/ADR-0011-the-studio-runs-itself.md) §5). Iterations 04 to 09 were
+trunk-based, a trial ([ADR-0007](decisions/ADR-0007-trunk-based-development.md), now
+superseded) whose habits carry over: small green commits, each ticket shipped as soon as it
+is done, records pushed as they land. The `studio-iteration` skill's `build` step has the
+commands in order.
 
-- Commit to `main`. No ticket branches, no merge commits. A ticket is one or more small
-  commits, each naming it.
-  The checks are ready for the branch-per-ticket flow ADR-0011 §4 moves to (backlog #49,
-  #50): `on-branch` accepts `main` or a ticket branch `studio/SHS-NNN-slug`, and
-  `commit-lint` does not count the ` (#N)` a squash-merge adds ([SHS-070](iterations/08/tickets/SHS-070-checks-accept-studio-branches.md)). Until #49
-  changes this list, the studio stays on `main`.
+- **A ticket is a branch**, `studio/SHS-NNN-slug`, cut from an up-to-date `main`: one or
+  more small commits, each naming the ticket. `on-branch` accepts `main` or such a branch
+  and nothing else, and `commit-lint` does not count the ` (#N)` a squash-merge adds
+  ([SHS-070](iterations/08/tickets/SHS-070-checks-accept-studio-branches.md)).
+- Every commit is green: `npm run studio:check -- --stage=ticket` before committing.
+- **When a ticket is done:** `--stage=push` green — the gate's checks short of the review
+  ones, the full repository suite included — then push the branch, open a pull request with
+  `gh pr create` (its title the commit subject the squash-merge will take; its body the
+  ticket's criteria and evidence, and `Closes #N` for a request it answers), watch CI
+  (`.github/workflows/checks.yml`, the one check the studio doesn't write) to green, and
+  `gh pr merge --squash --delete-branch`.
+- **A pull request merges at the end of its build**, when CI and the `push` stage are green
+  (questionnaire Q17, ⭐ A). The sprint's review comes after every build, so it posts the
+  Independent Reviewer's verdict on each merged pull request and fixes forward, each fix on a
+  branch and pull request of its own.
+- **Records go straight to `main`.** The plan, each stand-up entry, ticket Results, the
+  review, close and the retrospective are committed on `main` and pushed as soon as they
+  land, through the same `push` stage, so work in flight is visible on the remote while it
+  happens rather than all at once at the end. A ticket's branch never carries them.
 - **Rebase, don't merge.** The arcade ships on the same `main`, so when the remote has moved,
-  `git pull --rebase`. A merge that brings in studio and arcade commits together fails the
-  path guard, and only a hash exemption gets it through (iteration 05 review).
-- Every commit leaves `main` releasable: `npm run studio:check -- --stage=ticket` green
-  before committing.
-- When a ticket is done: `--stage=push` green — the gate's checks short of the review ones,
-  the full repository suite included — then push. Pages deploys every push, but the
-  ticket is verified locally; the live site is checked once per sprint, at `close`, with
+  `git pull --rebase`, on `main` or on a branch not yet pushed. A merge that brings in studio
+  and arcade commits together fails the path guard, and only a hash exemption gets it
+  through (iteration 05 review). A pushed branch is never force-pushed (a hard stop,
+  ADR-0011): if `main` has overtaken it and it can't merge, `gh pr update-branch`, and the
+  squash-merge flattens the result.
+- Pages deploys every push to `main`, each squash-merge included, but the ticket is
+  verified locally; the live site is checked once per sprint, at `close`, with
   `--stage=postdeploy` and a `--marker` per changed page (executive, 2026-09-23: Pages is
   slow to update, and the local build is the same files).
-- **A production fix waits for review.** Its commits stay local until an independent review
-  has passed them and `iterations/NN/reviews/<TICKET>.md` names the commit it saw; the
-  `push` stage refuses the push otherwise, and again whenever the fix changes after its
-  review ([ADR-0008](decisions/ADR-0008-production-fixes.md)).
-- Ceremony records — the plan, each stand-up entry, the review, the retrospective — are
-  pushed as soon as they are committed, through the same `push` stage, so work in flight is
-  visible on the remote while it happens rather than all at once at the end.
+- **A production fix waits for review, on trunk for now.** Its commits stay local on `main`
+  until an independent review has passed them and `iterations/NN/reviews/<TICKET>.md` names
+  the commit it saw; the `push` stage refuses the push otherwise, and again whenever the fix
+  changes after its review ([ADR-0008](decisions/ADR-0008-production-fixes.md)). It takes
+  no pull request yet: `production-fix-reviewed` needs the reviewed commit in `main`'s
+  history, and a squash-merge replaces it (backlog #56). Once #56 is Done, a fix's pull
+  request stays open until that record names its head commit and the `push` stage is green.
 - A page a player could reach but that is not ready stays off the shelf until its ticket
   is done.
 - Review findings are fixed forward. A push that breaks the live site is undone with one

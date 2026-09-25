@@ -19,8 +19,10 @@ server when you are done.*
 > Read `.claude/skills/studio-iteration/SKILL.md` and follow it exactly for the ONE step
 > `docs/studio/steering/next.md` names — nothing more. Do not start reviewers yourself:
 > where the skill asks for QA, the Independent Reviewer or the Playtester, their results are
-> below. End the way the skill says (`next.md` rewritten, records committed and pushed
-> through the checks). Report checks honestly: never "pass" for a check that did not run.
+> below. A ticket's work travels on its own branch and pull request, squash-merged at the
+> end of its build once CI is green; records go straight to `main` (the skill has the
+> commands in order). End the way the skill says (`next.md` rewritten, records committed
+> and pushed through the checks). Report checks honestly: never "pass" for a check that did not run.
 > Verify on a local server, not the live site: only the close step checks the live site,
 > once.
 >
@@ -30,7 +32,9 @@ server when you are done.*
 
 Append, when they apply: the executive's focus (first step only, as
 `focus: <X>`); the Playtester's verdicts (before `plan`); the three reviewers' results (at
-`review`); tokens per step, or "not measured" (at `retro`).
+`review`, with: post the Independent Reviewer's verdict on each of the sprint's pull
+requests, `gh pr comment`, with its findings on that ticket); tokens per step, or "not
+measured" (at `retro`).
 
 ## Playtester
 
@@ -89,7 +93,8 @@ Append, when they apply: the executive's focus (first step only, as
 >
 > Read-only: do not create, modify or commit any file in the repository; put scratch files
 > in the system temp directory. Return your **Verdict:** line (Approve, Approve with
-> findings, or Reject, with one line why) and your findings, each with an id, a severity
+> findings, or Reject, with one line why) and your findings, each with an id, the ticket it
+> concerns (so the review step can post it on that ticket's pull request), a severity
 > (player-facing, production, save, process, test strength, or nit) and its evidence.
 
 Models, where the tool lets you choose: the Independent Reviewer and the Playtester on the
