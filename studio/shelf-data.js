@@ -27,8 +27,8 @@ export const PULSE = {
  * updating this line fails before it reaches the page.
  */
 export const LEARNED = {
-  iteration: '08',
-  line: 'Samovar\'s big idea was that each cup\'s size tells you how long to pour. A reviewer\'s arithmetic showed it doesn\'t: with one cup shape, the right stop is the same share of every cup. A game ticket now shows its numbers before we build it, and the cups get shapes of their own next.'
+  iteration: '09',
+  line: 'Before building Samovar\'s glasses we worked out that a player could count seconds instead of watching the tea, and we shipped them anyway; the Playtester counted and won. Now, when the numbers show a way around the game, we change the design before we build.'
 };
 
 /**

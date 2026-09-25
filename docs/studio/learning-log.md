@@ -22,7 +22,8 @@ place. The iteration sections below are the history, and they don't bind on thei
    one, under a tenth of the real figure)
 5. **Gate a push on the stage's own exit code**, never on a filter of its output. (05)
 6. **Every ticket starts from `templates/ticket.md`**, in a sprint or between sprints, and
-   carries its Result fields when it is Done. (07; until backlog #47 makes it a check)
+   carries its Result fields when it is Done. (07; recurred in 09, so backlog #47 makes it
+   a check next and the rule retires with it)
 7. **A convention change is checked for violations of the new rule by a test**, not a
    search. (03, 04)
 8. **A check that reads only what exists can't see what is missing.** Decide existence
@@ -31,6 +32,12 @@ place. The iteration sections below are the history, and they don't bind on thei
    measured in real time, whatever the game counts internally. (06, held in 07)
 10. **Every browser trial gets its own profile**, so one trial's saves can't decide
     another's. (03, 05; the half of the old rule 6 the template doesn't carry)
+
+*At the 09 retro:* rule 6 recurred: `docs-current` was red at the gate a fourth time,
+on a Result label written in the wrong form. So it becomes its check, backlog #47, planned
+next in the process slot, and the rule retires when #47 lands. Nothing promoted: the
+sprint's main lesson, *don't ship a bypass the numbers show*, went into
+`templates/ticket.md` beside retro 08's, and the cost lesson into QA's prompt.
 
 *At the 08 retro:* the sprint's main lesson, *check a hook's numbers before building it*,
 went straight into `templates/ticket.md` rather than onto this list, so nothing was
@@ -385,3 +392,29 @@ it stays until #47 turns it into a check.
   existed in the skills, but nobody had filed a request, and the path wasn't written where the
   executive would see it while filing. It is now in `studio-request`'s report. The first
   real request tests it.
+
+## Iteration 09
+
+- **A bypass the numbers show is a design question, not a risk to ship.** Plan 09's
+  arithmetic showed that with every glass filling in the same time, one strength's hold
+  is the same on every glass, so counting could replace watching. The plan shipped it and
+  asked the Playtester, who measured exactly that, and the epic's last granted sprint is
+  now another pass on the core. The ticket template now says to change the design or ask
+  with a ⭐ before the build.
+- **A rule about writing a record can't catch a record written slightly wrong.**
+  `docs-current` went red at a gate for the fourth time (05, 06, 07, 09), each time on a
+  new shape; this time *What changed* had the commit before its colon. Only a check at push
+  finds the next shape before the gate does (#47).
+- **Per-test timeouts don't bound a suite.** Every browser test in the two suites that hung
+  has its own timeout, and the gate still sat for nine minutes: whatever held it was
+  outside the test bodies, and nothing limits a whole suite's run (TD-015, #60).
+- **Look at the first turn, not only the files you control.** Every agent's starting
+  context grew by about 14k tokens between two runs a few hours apart, with no change in the
+  repository. That is about $2 of the sprint's rise, and the transcripts showed it only
+  when the first turn was compared.
+- **A resumed run doesn't measure what it replays.** The workflow's per-step output count
+  read 0 for every step finished before the usage limit. A figure of 0 isn't a
+  measurement. The retro says *not measured* and compares what was measured.
+- **Two passes reading the same thing is one pass paid twice.** QA read what the
+  Independent Reviewer read and found nothing of its own for two sprints; the test that
+  couldn't see its own criterion was left for the Reviewer to find. QA now tests the tests.

@@ -60,4 +60,7 @@ Nothing beyond the record.
   `learning-log.md`, `tech-debt.md`, the ticket-link script's run, the scorecard's cost per
   step (and whether retro 08's change to the Playtester's screenshots held), and the
   steering views.
+  **All done at the retro** ([retro.md](../retro.md)), plus its changes: QA's prompt in the
+  `studio-sprint` workflow and `references/prompts.md`, `team/qa-engineer.md`, and a line in
+  `templates/ticket.md`; `tech-debt.md` opened TD-015; backlog #60 is new and #47 moved up.
 - **Fix rounds used:** 0 / 2

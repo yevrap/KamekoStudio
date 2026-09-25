@@ -94,3 +94,19 @@ is committed.
   found each marker live: the new Samovar blurb on the realm (attempt 3) and the verdict
   line's `joint` in Samovar's `gameplay.js` (attempt 1). No `studio` issue was tied to this
   sprint. *Next:* retro. *Blocked:* nothing.
+
+## Session 7 — retro (2026-09-24)
+
+- **Scrum Master** — *Done:* [retro.md](retro.md). No `feedback` issue or inbox line to act
+  on. Cost, plan to close, $24.63 in writes and reads against $13.63 for sprint 08 (+81 %);
+  output not measured, because the run was resumed after a usage limit and the resumed run
+  counts replayed steps as 0. The costliest step is review, $9.37. The one change: QA tests
+  the tests instead of re-checking the claims. The first retro attempt, stopped by the
+  limit, wrote nothing. *Next:* plan 10. *Blocked:* nothing.
+- **Product Owner** — *Done:* backlog #49 and #51–#54 removed; #47 ahead of #21 in the
+  process slot (the fourth `docs-current` red at a gate); #60 new (a hung suite), with
+  TD-015. Top five Ready: #57, #58, #50, #47, #60. *Next:* plan 10, the last granted sprint
+  of E2. *Blocked:* nothing.
+- **Game Designer** — *Done:* the ticket template says a bypass the numbers show is decided
+  at plan, not shipped as a risk. *Next:* #57's flow range worked out at plan 10, checked
+  against a scripted counter before the build. *Blocked:* nothing.

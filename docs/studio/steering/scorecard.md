@@ -13,6 +13,32 @@ One row per iteration, written at close-out. The point is the trend, not the num
 | 06 | E1 · 2 of 3: River Run's first experiment (power-ups), ticket numbers link | 4/3 | 1 | 3 built + 7 reviewed | +0 / −1 | 4 tickets, the ticket-link script, the ticket template, Active rules revised, 1 skill edit, 3 arcade docs | 2 (1 round × QA + reviewer) | 0 | 0 / 1 / 0 (Playtester) | — | — | — |
 | 07 | E1 · 3 of 3: power-ups you can read, a River Run that restarts; E1 done, E2 proposed | 4/3 | 1 | 3 built + 8 reviewed | +0 / −0 | 4 tickets, 1 production-fix review, a guardrail exception, the handbook's Standing rules, E2, 1 skill + workflow edit, 1 arcade doc | 4 (1 round × QA + reviewer + Playtester; Playtester at plan) | 0 | 2 / 0 / 0 (Playtester) | 213,718 to close (the retro's own not counted here) | **$17.98** ($7.96 / $5.75 / $4.27), measured at retro 08 | review, $8.32 (82,272 output tokens, its three reviewers included) |
 | 08 | E2 · 1 of 3: Samovar, the studio's first original game; the fork's pickups glow from afar | 4/3 | 2 | 1 built + 9 reviewed | +0 / −0 | 4 tickets, 3 pitches, Samovar's design note, Q14–Q16, the ticket template, the cost reader, 3 skill + workflow edits | 4 (1 round × QA + reviewer + Playtester; Playtester at plan) | 0 | 1 / 1 / 0 (Playtester) | 237,398 to close | **$18.37** ($7.30 / $6.32 / $4.75) | review, $7.86 (43%; 93,988 output tokens) |
+| 09 | E2 · 2 of 3: Samovar's second pour: glasses of three shapes, a forgiving brim, the best on the first screen | 4/3 | 3 | 3 built + 11 reviewed | +1 / −0 | 4 tickets, Samovar's design note (the shapes, the brim, one hook), the pull-request flow in the skill and `process.md`, ADR-0007 superseded, Q17 and Q18, the ticket template, QA's prompt and role file | 4 (1 round × QA + reviewer + Playtester; Playtester at plan) | 0 | 2 / 1 / 0 (Playtester) | not measured (the run was resumed after a usage limit; a resumed run counts replayed steps as 0) | **$24.63** in writes + reads ($12.97 / $11.66 / not measured) | review, $9.37 (38%) |
+
+## Iteration 09 — what the row means
+
+- **Tickets, 4 against 3.** [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md), 073 and 074 were committed; [SHS-075](../iterations/09/tickets/SHS-075-iteration-record.md) is the record.
+  None was opened by review.
+- **What a player got.** Samovar's second pass: glasses of three shapes (the Playtester:
+  Iterate, because counting the hold beats watching the glass), a hair over the brim that
+  drips and costs a star (Keep), and the best evening on the first screen (Keep).
+- **Fix rounds, 3**, one each on [SHS-072](../iterations/09/tickets/SHS-072-samovar-cup-shapes.md) (the clip probed by point, IR09-3; the hook,
+  IR09-5), [SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md) (*and* for two misses; stale comments; the rounding flake) and [SHS-074](../iterations/09/tickets/SHS-074-skill-describes-pull-requests.md)
+  (the title lint, IR09-1), all in the review step. Close also relabelled two Results for
+  `docs-current`.
+- **Checks caught, 3 + 11.** Built: `docs-current` at the gate (the fourth time), `hygiene`
+  on [SHS-073](../iterations/09/tickets/SHS-073-samovar-forgiving-brim.md)'s first push (a false positive, #59), and the ticket stage on a rounding
+  flake at review. Reviewed: IR09-1 to IR09-7 and the Playtester's four notes.
+- **Debt +1 / −0.** TD-015: nothing limits how long a suite runs (#60).
+- **Cost, writes and reads only:** $24.63 from plan to close against $13.63 for 08 (+81%).
+  Output isn't measured this sprint. About $2 of the rise is a bigger starting context
+  outside the repository; the rest is more, longer turns, most in close (a red gate and a
+  hung rerun) and in the review's Independent Reviewer and QA. The Playtester fell 38%
+  after retro 08's change. The retro's change: QA tests the tests.
+- **Stops for you, 0.** Q16 still waits for your tick and blocks nothing.
+- **The honest summary.** Samovar is now forgiving and has a target to beat, but its core
+  decision can still be counted rather than read. The plan saw that coming and shipped it
+  anyway, so the epic's last granted sprint goes to the core again.
 
 ## Iteration 08 — what the row means
 

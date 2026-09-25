@@ -10,10 +10,12 @@ sprint 1 of 3: River Run forked, and the 3D page's River Run portal opens the fo
 (E1 · sprint 2 of 3: the fork's first experiment, power-ups; ticket numbers link), 07
 (E1 · sprint 3 of 3: power-ups you can read, the arcade's River Run restarts; E1 done, E2
 proposed), 08 (E2 · sprint 1 of 3: *Samovar*, the studio's first original game; the fork's
-pickups glow from afar) · latest tag `studio-iteration-08`
+pickups glow from afar), 09 (E2 · sprint 2 of 3: Samovar's glasses of three shapes, a
+forgiving brim, the best on the first screen) · latest tag `studio-iteration-09`
 **Live:** https://yevrap.github.io/KamekoStudio/studio/ ·
 [Overtighten](https://yevrap.github.io/KamekoStudio/studio/games/overtighten/) ·
-[River Runner 3D, the fork](https://yevrap.github.io/KamekoStudio/studio/games/river-run/)
+[River Runner 3D, the fork](https://yevrap.github.io/KamekoStudio/studio/games/river-run/) ·
+[Samovar](https://yevrap.github.io/KamekoStudio/studio/games/samovar/)
 
 ## Say this
 
@@ -110,8 +112,14 @@ Iteration 08 opened E2 with the studio's first game of its own: **Samovar**, pou
 for an evening of guests, judged by colour. The Playtester said Iterate, and sprint 09
 acts on that. The fork's pickups now glow from far up the river (Keep).
 
-**Open decisions:** Q15 (what makes Samovar's cups different), Q16 (trim the root
-`CLAUDE.md`), Q14 (the ⭐ was built) and Q5 (anything else), in
+Iteration 09 gave Samovar its second pass: three glasses of different shapes, a hair over
+the brim that drips and costs a star instead of the whole cup, and the best evening on the
+first screen. The Playtester kept the brim and the best, and asked for another pass on the
+glasses, because counting the hold beats watching the tea; sprint 10, the epic's last
+granted sprint, makes the flow differ from guest to guest.
+
+**Open decisions:** Q18 (how Samovar's flow varies), Q16 (trim the root `CLAUDE.md`), Q17
+(when a pull request merges; the ⭐ is in the skill) and Q5 (anything else), in
 [Shadow Studio — Questionnaire](questionnaire.md).
 
 ---
