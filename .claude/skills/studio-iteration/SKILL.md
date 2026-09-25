@@ -1,6 +1,6 @@
 ---
 name: studio-iteration
-description: "Runs the Shadow Studio scrum team one step per session: reads docs/studio/steering/next.md, does exactly that step of the current sprint (plan, build one ticket, review, close, retro), updates next.md, and stops with the prompt for the next session. Use when Yevster says 'studio next', 'run a studio iteration', 'continue the sprint', 'shadow studio', or asks the studio team to build something. 'studio next — focus: X' steers the next sprint toward X."
+description: "Runs the Shadow Studio scrum team one step per session: reads docs/studio/steering/next.md, does exactly that step of the current sprint (plan, build one ticket, review, close, retro), updates next.md, and stops with the prompt for the next session. Also tables the studio and brings it back: the restart step learns from past runs and from what's new in AI tools. Use when Yevster says 'studio next', 'run a studio iteration', 'continue the sprint', 'shadow studio', 'table / pause / shelve the studio', 'restart the studio', or asks the studio team to build something. 'studio next — focus: X' steers the next sprint toward X."
 ---
 
 # Studio — one step per session
@@ -13,6 +13,7 @@ one step, not a sprint.
 
 ```
 plan  →  build (one ticket per session, repeated)  →  review  →  close  →  retro  →  plan …
+                     tabled between sprints  →  restart  →  plan …
 ```
 
 **The studio runs itself** ([ADR-0011](../../../docs/studio/decisions/ADR-0011-the-studio-runs-itself.md)).
@@ -269,6 +270,85 @@ included (iteration 06 retro; `process.md` has the same order).
    `steering/board.md`, `steering/scorecard.md` (one row) and `steering/handoff.md`, and keep
    the iteration count in `steering/README.md` current.
 6. Set `next.md` to `plan NN+1` (to *waiting on you* only for a hard stop).
+
+### `restart` — bring a tabled studio back
+
+Runs when `next.md` says `restart` ("restart the studio", or "run the studio" while it is
+tabled; a focus may come with it). A restart is one step and its own run. It learns from
+the past runs and from what's new, changes the process to match, picks the epic, and
+stops, so Yevster can read what changed before the first sprint of the new season. The
+two scouts (tools, practice) have already run inside the workflow, and their results are
+in your prompt. By hand, run them first as subagents, with the prompts in
+`.claude/skills/studio-sprint/references/prompts.md`.
+
+1. `npm run studio:check -- --stage=preflight` (full). If a check went stale while the
+   studio was tabled (an arcade change it can't read, a moved path), it is the studio's
+   own: fix it under this step's ticket. Anything else red ends the session with a report.
+2. **Read** `steering/restart.md` whole, then:
+   - `direction.md` and the last `retro.md`;
+   - the questionnaire;
+   - the owner's open `studio` issues (the same command and trust rule as `plan` step 3);
+   - `docs/playtest-log.md` since the tabling date;
+   - `git log --since=<tabled date> --stat -- shared games docs/brief.md`, for arcade
+     changes the forks or the taste depend on.
+
+   restart.md summarises the older iteration records, so don't read them; open one only to
+   check a claim.
+3. **What's new.** Compare the scouts' rows with restart.md's *Capability baseline*. Keep
+   every sourced row: what it is, its source and date, and what it could change here.
+   Mark each *adopt now*, *try in the first sprint*, or *not now, because …*.
+4. **Decide the feedback.** Each numbered item under restart.md's *Feedback*, and each
+   *adopt now* row, becomes one of the following. Prefer the change that removes something
+   (direction rule 8).
+   - **A change inside the studio's paths** (the skills, the workflow, the handbook, the
+     steering views, the checks and their tests): make it now, retire what it replaces,
+     and keep `references/prompts.md` and the workflow saying the same thing.
+   - **A change ADR-0011 §6 keeps Yevster's** (the hard stops, the allowed paths and
+     exceptions, the storage and hygiene rules, ADR-0011 itself): a questionnaire item with
+     its ⭐, which waits for Yevster's tick.
+   - **A trial:** a backlog row at the top, naming the sprint that tries it.
+   - **"Not now":** a line in the Restart log with the reason.
+5. **Epic.**
+   - With a focus from Yevster, the focus becomes the epic: a goal, done-when, budget and
+     out of scope, written in `direction.md` like any epic.
+   - Otherwise the paused epic resumes where it stopped (its budget clock restarts),
+     unless what the restart learned says it shouldn't. Write the reason in
+     `direction.md`.
+6. **Record.**
+   - Append to restart.md's *Restart log*: the date, what the scan found, what changed,
+     and what waits on Yevster.
+   - Rewrite the *Capability baseline* with today's date.
+   - Replace *Where it stopped* with a line saying the studio is running again.
+   - Clear the tabled status from `direction.md` and `process.md`, and point the realm's
+     pulse line back at the work.
+   - Log the restart and its focus in the Input Ledger.
+   - The step's work goes under a ticket numbered next in the `SHS-` sequence, filed in
+     the newest iteration's `tickets/` (as SHS-076 was).
+7. Set `next.md` to `plan NN+1`, with the season's first notes. Commit and push through
+   the `push` stage. Report as in *Ending every session*, and add the questionnaire items
+   waiting for Yevster's tick. Then stop.
+
+### Tabling — "table the studio"
+
+Yevster can shelve the studio between sprints and bring it back at any time
+(SHS-076). Tabling isn't a step of the sprint. The session Yevster asks does it:
+
+1. **Stop at a step boundary.** Finish the step in flight. If it is a build, merge what
+   landed and put the rest back in the backlog. Leave nothing on a branch or unpushed.
+2. **Update `steering/restart.md`:**
+   - *Where it stopped*;
+   - the sprints since the last restart, added to *What … taught*;
+   - any feedback Yevster gives, as numbered items;
+   - a *Restart log* line.
+3. **Rewrite `next.md` to the tabled form.** The first lines are
+   ``**Next:** `restart` — the studio is tabled (since <date>, after <step>)`` and a
+   **Say:** line naming "restart the studio". The SessionStart hook prints only those
+   lines while the studio is tabled.
+4. **Say it's tabled** in `direction.md` (the status line; stop the epic's budget clock)
+   and `process.md` (*Tabling and restarting*), and on the realm's pulse line
+   (`studio/shelf-data.js`).
+5. Log the direction in the Input Ledger. Commit under a ticket, and push through the
+   `push` stage.
 
 ## Ending every session
 

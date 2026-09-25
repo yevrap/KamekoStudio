@@ -1,6 +1,6 @@
 ---
 name: studio-sprint
-description: "Runs the Shadow Studio's current sprint from wherever docs/studio/steering/next.md is to its retro, one step at a time, while Yevster watches — plan, each build, review with QA, the Independent Reviewer and the Playtester, close, retro. Use when Yevster says 'run the studio', 'run a studio sprint', 'kick off the studio', optionally with 'focus: X' or 'for N sprints'. For a single step, use studio-iteration ('studio next') instead."
+description: "Runs the Shadow Studio's current sprint from wherever docs/studio/steering/next.md is to its retro, one step at a time, while Yevster watches — plan, each build, review with QA, the Independent Reviewer and the Playtester, close, retro. Use when Yevster says 'run the studio', 'run a studio sprint', 'kick off the studio', optionally with 'focus: X' or 'for N sprints', or 'restart the studio' when it is tabled (the restart runs alone, with two scouts on what's new, and the run stops after it). For a single step, use studio-iteration ('studio next') instead."
 ---
 
 # Run the studio
@@ -25,7 +25,7 @@ runs the reviewers, and measures tokens per step.
    file is at the repo root, stop and say so. Don't run while another tool is running the
    studio in this checkout: both would move the same `next.md` and `main`.
 2. **Loop over steps.** While the `**Next:**` line names a step (`` `plan …` ``,
-   `` `build …` ``, `` `review` ``, `` `close` ``, `` `retro` ``):
+   `` `build …` ``, `` `review` ``, `` `close` ``, `` `retro` ``, `` `restart` ``):
    - Stop before a `plan` once a sprint has finished in this run (after one sprint, unless
      Yevster asked for more). Stop on any other `**Next:**` line: that's a hard stop.
    - **Run the step with fresh context:** hand it to a **subagent** with the step prompt in
@@ -34,6 +34,10 @@ runs the reviewers, and measures tokens per step.
      re-read `next.md` before the next one.
    - **Before `plan`:** the Playtester pass on open verdicts (prompts file). Its verdicts go
      into the plan step's prompt.
+   - **Before `restart`** (a tabled studio, SHS-076): the two scouts, tools and practice
+     (prompts file); their results go into the restart step's prompt. **Stop after the
+     restart**, even if `next.md` now names a `plan`: Yevster reads the Restart log in
+     `docs/studio/steering/restart.md` first.
    - **At `review`:** run the Independent Reviewer, QA and the Playtester (prompts file) —
      as parallel subagents if you can, on two different models if you can choose — then
      give their results to the review step. Without subagents, do each as a separate pass

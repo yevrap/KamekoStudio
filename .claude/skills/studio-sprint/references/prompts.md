@@ -18,8 +18,8 @@ server when you are done.*
 >
 > Read `.claude/skills/studio-iteration/SKILL.md` and follow it exactly for the ONE step
 > `docs/studio/steering/next.md` names — nothing more. Do not start reviewers yourself:
-> where the skill asks for QA, the Independent Reviewer or the Playtester, their results are
-> below. A ticket's work travels on its own branch and pull request, squash-merged at the
+> where the skill asks for QA, the Independent Reviewer, the Playtester or the restart's
+> scouts, their results are below. A ticket's work travels on its own branch and pull request, squash-merged at the
 > end of its build once CI is green; records go straight to `main` (the skill has the
 > commands in order). End the way the skill says (`next.md` rewritten, records committed
 > and pushed through the checks). Report checks honestly: never "pass" for a check that did not run.
@@ -34,7 +34,10 @@ Append, when they apply: the executive's focus (first step only, as
 `focus: <X>`); the Playtester's verdicts (before `plan`); the three reviewers' results (at
 `review`, with: post the Independent Reviewer's verdict on each of the sprint's pull
 requests, `gh pr comment`, with its findings on that ticket); tokens per step, or "not
-measured" (at `retro`).
+measured" (at `retro`); the two scouts' results (at `restart`, with: compare their rows
+with restart.md's Capability baseline and decide each one as the skill's restart step
+says; a scout that is missing did not return, so say so in the Restart log rather than
+inventing its findings).
 
 ## Playtester
 
@@ -72,6 +75,45 @@ measured" (at `retro`).
 - **At `review`:** *Play every player-visible change this sprint made. The newest
   `docs/studio/iterations/NN/plan.md` says what will be visible (read only that section).
   To play, `<local>`. Give each one a Keep / Iterate / Kill.*
+
+## Restart scouts (SHS-076)
+
+Before a `restart` step, two scouts run with fresh context, on the strongest model
+available, in parallel if you can. Both get this frame:
+
+> You are the *(Scout for tools | Scout for practice)* of Shadow Studio, scouting for its
+> restart, with fresh context. The studio was tabled and is being brought back. Read
+> `docs/studio/steering/restart.md` first: its Capability baseline says what existed when it
+> was tabled (and on which date), and its Feedback says what the executive wants the next
+> season to do better.
+>
+> *(task — below)*
+>
+> Only report what you can source: a URL or document with its date, or what your own
+> environment shows. Leave a guess out rather than hedging it. Read-only: do not create,
+> modify or commit any file in the repository; put scratch files in the system temp
+> directory.
+>
+> Return rows, each with what it is, its source and date, whether it is new since the
+> baseline, changed or gone, what it could change here (naming the feedback item G1–G6,
+> P1–P7, or the step it serves), and a call: *adopt now*, *try in the first sprint* or
+> *not now*, with why. Then three sentences on what matters most for the studio.
+
+- **Scout for tools:** *Find what is new, changed or gone since the baseline's date in: the
+  Claude models this session and its workflows can use (and whether a bigger one is now
+  available); Claude Code's features (its release notes and documentation: skills, hooks,
+  workflows, subagents, worktrees, cloud sessions and schedules, browser control,
+  published artifacts, notifications, review); and the agent features of Antigravity
+  (Gemini), which runs the same sprint through the studio-sprint skill. For each, say what
+  it could change here, looking first for what serves the games items G1–G4 (a cheap
+  verdict from the executive, parallel prototypes, look and feel, game roles with their own
+  agents).*
+- **Scout for practice:** *Find what has changed since the baseline's date in how people
+  run AI agents to build software and games: how teams split agent roles, review and test;
+  how they keep an agent's docs and memory lean; how they get a human's judgement into an
+  autonomous loop cheaply; and how small studios prototype and playtest games fast. Prefer
+  primary sources (engineering write-ups, documentation, papers) with dates. For each, say
+  what the studio could try, tied to a feedback item or a step.*
 
 ## Independent Reviewer and QA Engineer
 

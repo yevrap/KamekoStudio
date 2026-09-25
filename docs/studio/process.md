@@ -32,6 +32,7 @@ The protocol above is spread over short sessions, one step each. The prompt is a
 | `review` | 4: one round of QA and the Independent Reviewer | `close`, or `review round 2` |
 | `close` | 5–7: document, gate, publish, tag; `review.md` with *In plain words* | `retro` |
 | `retro` | 8–9: retro, learning log, backlog, budget, steering views | the next `plan` (only a hard stop waits on the executive — ADR-0011) |
+| `restart` | A tabled studio coming back (*Tabling and restarting*, below): the scouts' findings and `restart.md`'s feedback decided, the epic picked | the next `plan`; the run stops there |
 
 A session does its one step and stops, even with capacity left. A session that runs long
 stops at a green commit and leaves `next.md` saying exactly what remains.
@@ -45,6 +46,24 @@ writes *waiting on you* as the `**Next:**` line, and the run stops there.
 
 **Requests** arrive as GitHub issues labelled `studio` with a `priority:` label, opened by
 the executive. `plan` triages them into the backlog; `close` closes the ones that shipped.
+
+### Tabling and restarting
+
+The executive can table the studio between sprints ("table the studio") and bring it back
+at any time ("restart the studio"), SHS-076.
+
+- **Tabling** stops at a step boundary with nothing in flight, writes
+  [`steering/restart.md`](steering/restart.md) and sets `next.md` to `restart`.
+  `restart.md` says where the studio stopped, what its sprints taught, the executive's
+  feedback, and a dated baseline of AI models and tools.
+- **The `restart` step** is its own run:
+  1. Two scouts check what's new in the tools and in practice since that baseline.
+  2. The restart decides each feedback item and each finding: adopt now, try in the first
+     sprint, or not now. Changes ADR-0011 §6 keeps the executive's go to the
+     questionnaire.
+  3. It picks the epic, appends to the *Restart log*, and stops before the next `plan`.
+
+**Tabled since 2026-09-25**, after sprint 09's retro.
 
 ## Backlog and budget
 
@@ -91,7 +110,9 @@ epic that wrote them (moved at sprint 07's retro).
    `tests/studio/sprint-cost.mjs`, output from the workflow's tokens per step), and each
    retro makes one change aimed at the costliest step, without lowering the bar, and checks
    at the next retro whether it worked. A change that removes a step, a read or a rule
-   beats one that adds.
+   beats one that adds. Cycles are fine, waste isn't (executive, 2026-09-25): "cheaper"
+   means less spent writing and re-reading records, never less spent on the games, the
+   reviewers or the playtesting.
 
 ## Ceremonies
 

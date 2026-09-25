@@ -11,7 +11,8 @@ sprint 1 of 3: River Run forked, and the 3D page's River Run portal opens the fo
 (E1 · sprint 3 of 3: power-ups you can read, the arcade's River Run restarts; E1 done, E2
 proposed), 08 (E2 · sprint 1 of 3: *Samovar*, the studio's first original game; the fork's
 pickups glow from afar), 09 (E2 · sprint 2 of 3: Samovar's glasses of three shapes, a
-forgiving brim, the best on the first screen) · latest tag `studio-iteration-09`
+forgiving brim, the best on the first screen) · latest tag `studio-iteration-09` ·
+**tabled since 2026-09-25**: [restart brief](restart.md)
 **Live:** https://yevrap.github.io/KamekoStudio/studio/ ·
 [Overtighten](https://yevrap.github.io/KamekoStudio/studio/games/overtighten/) ·
 [River Runner 3D, the fork](https://yevrap.github.io/KamekoStudio/studio/games/river-run/) ·
@@ -29,12 +30,15 @@ forgiving brim, the best on the first screen) · latest tag `studio-iteration-09
 | **"promote X"** | Prepares a move into the production arcade, for your approval. Skill: `studio-promote` |
 | **anything, in chat** | Logged in [Shadow Studio — Input Ledger](input-ledger.md), triaged, and reported back |
 | **"stop"** | Halts at the next step. A `STOP` file at the repo root does the same |
+| **"table the studio"** | Shelves it between sprints: nothing in flight, [restart.md](restart.md) written, `next.md` set to `restart`. Skill: `studio-iteration` |
+| **"restart the studio"** | Brings it back: two scouts check what's new in AI tools and practice, the restart step acts on restart.md's lessons and feedback, then stops before the next plan (optionally "… — focus: X"). Skill: `studio-sprint` |
 
 ## Your views
 
 | Note | What it is |
 |---|---|
 | [Shadow Studio — Next step](next.md) | Where the team is and what the next session will do. Loaded into every new session |
+| [Shadow Studio — Restart brief](restart.md) | **While tabled, start here.** Where it stopped, what the sprints taught, your feedback for the next season, and the AI capability baseline a restart compares against |
 | [Shadow Studio — Direction](direction.md) | **Yours to edit.** The product goal, the current epic and its sprint budget, the working rules |
 | [Shadow Studio — Backlog](backlog.md) | **Yours to reorder.** What the team does next, top first |
 | [Shadow Studio — Handoff](handoff.md) | The latest report. Start here. |

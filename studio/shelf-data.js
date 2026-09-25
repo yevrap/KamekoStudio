@@ -15,7 +15,7 @@
 export const PULSE = {
   iteration: '09',
   shipped: '2026-09-24',
-  summary: 'Shipped: Samovar\'s second pour. Three tea glasses of different shapes that each fill in the same time, a hair over the brim that drips and costs a star instead of the whole cup, and your best evening on the first screen.'
+  summary: 'On hold since 25 Sep 2026: the studio is tabled until it is restarted, and everything on the shelf stays playable. Last shipped: Samovar\'s second pour, with three tea glasses of different shapes, a hair over the brim that drips and costs a star instead of the whole cup, and your best evening on the first screen.'
 };
 
 /**

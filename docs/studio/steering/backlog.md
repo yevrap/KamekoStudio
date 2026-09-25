@@ -11,6 +11,9 @@ register (`docs/studio/tech-debt.md`) and the games' idea files. It keeps the to
 **Ready** (sized, with acceptance criteria — `docs/studio/definition-of-ready.md`). The
 epic and its budget are in [Direction](direction.md).
 
+*Tabled since 2026-09-25: the restart reorders and prunes this list from the feedback in
+[restart.md](restart.md) before the next plan (P1, P2, P4).*
+
 **Type:** feature · fix · test · docs · debt · process (the studio's own machinery — at most
 one per sprint). **Size:** S or M; an L is split before it's pulled.
 

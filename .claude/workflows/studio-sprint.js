@@ -1,9 +1,10 @@
 export const meta = {
   name: 'studio-sprint',
   description: 'Run the Shadow Studio sprint step by step, one fresh agent per step, from next.md to the end of the sprint',
-  whenToUse: 'When Yevster says "run the studio", "run a studio sprint" or "kick off the studio". Args (optional): a focus string, or { focus, sprints, steps }. See docs/studio/decisions/ADR-0011-the-studio-runs-itself.md.',
+  whenToUse: 'When Yevster says "run the studio", "run a studio sprint", "kick off the studio" or, while it is tabled, "restart the studio". Args (optional): a focus string, or { focus, sprints, steps }. See docs/studio/decisions/ADR-0011-the-studio-runs-itself.md and docs/studio/steering/restart.md.',
   phases: [
     { title: 'Start', detail: 'read where the studio is' },
+    { title: 'Restart', detail: 'a tabled studio: scouts on what is new, then the restart step; the run stops after it' },
     { title: 'Plan', detail: 'Playtester on open verdicts, then sprint planning' },
     { title: 'Build', detail: 'one ticket per agent' },
     { title: 'Review', detail: 'QA, Independent Reviewer and Playtester in parallel, then the record' },
@@ -23,7 +24,8 @@ const opts = typeof args === 'string' ? { focus: args } : (args || {})
 const MAX_SPRINTS = opts.sprints || 1
 const MAX_STEPS = opts.steps || 14
 // Agents return the **Next:** line with or without its bold prefix; accept both.
-const RUNNABLE = /^\s*(?:\*\*Next:\*\*\s*)?`(plan|build|review|close|retro)\b/
+// `restart` is where a tabled studio waits (SHS-076); it runs alone and the run stops after it.
+const RUNNABLE = /^\s*(?:\*\*Next:\*\*\s*)?`(plan|build|review|close|retro|restart)\b/
 const SKILL = '.claude/skills/studio-iteration/SKILL.md'
 // Local first (executive, 2026-09-23): everything is checked on a local server; Pages is
 // slow to update, so the live site is checked once, by the close step. Opus is the largest
@@ -89,7 +91,7 @@ const VERDICTS = {
 
 const STEP_PROMPT = extra => `You are one step of the Shadow Studio sprint, run by the studio-sprint workflow in Yevster's Claude Code session (docs/studio/decisions/ADR-0011-the-studio-runs-itself.md). Yevster is watching the run but not answering questions: never ask or wait for input — an open product question goes to docs/studio/steering/questionnaire.md with its ⭐ and you proceed on the ⭐.
 
-Read ${SKILL} and follow it exactly for the ONE step docs/studio/steering/next.md names — nothing more. Do not spawn subagents: where the skill asks for QA, the Independent Reviewer or the Playtester, this workflow has run them and their results are below. A ticket's work travels on its own branch and pull request, squash-merged at the end of its build once CI is green; records go straight to main (the skill has the commands in order). End the way the skill says (next.md rewritten, records committed and pushed through the checks), then return the structured result. Verify on a local server, not the live site: don't wait for GitHub Pages — only the close step checks the live site, once. Report checks honestly: never "pass" for a check that did not run.
+Read ${SKILL} and follow it exactly for the ONE step docs/studio/steering/next.md names — nothing more. Do not spawn subagents: where the skill asks for QA, the Independent Reviewer, the Playtester or the restart's scouts, this workflow has run them and their results are below. A ticket's work travels on its own branch and pull request, squash-merged at the end of its build once CI is green; records go straight to main (the skill has the commands in order). End the way the skill says (next.md rewritten, records committed and pushed through the checks), then return the structured result. Verify on a local server, not the live site: don't wait for GitHub Pages — only the close step checks the live site, once. Report checks honestly: never "pass" for a check that did not run.
 ${extra}`
 
 const PLAYTESTER = task => `You are the Playtester of Shadow Studio. Read docs/studio/team/playtester.md (your role) and docs/brief.md (the studio's taste) first.
@@ -116,6 +118,41 @@ const REVIEWER = (role, file, task) => `You are the ${role} of Shadow Studio, wi
 ${task}
 
 Read-only: do not create, modify or commit any file in the repository; put any scratch files in the system temp directory. Return your verdict line and your findings, each naming the ticket it concerns, so the review step can post them on that ticket's pull request.`
+
+// The restart's scouts (SHS-076): what changed in the tools and in practice since the
+// studio was tabled, measured against docs/studio/steering/restart.md's baseline.
+const SCOUTED = {
+  type: 'object',
+  properties: {
+    rows: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          what: { type: 'string', description: 'the model, tool, feature or practice' },
+          source: { type: 'string', description: 'where you found it (a URL, a doc, your own environment) and its date' },
+          since: { type: 'string', description: 'new since the baseline, changed, or gone' },
+          could: { type: 'string', description: 'what it could change here, naming the feedback item (G1-G6, P1-P7) or the step it serves' },
+          call: { type: 'string', enum: ['adopt now', 'try in the first sprint', 'not now'] },
+          why: { type: 'string' },
+        },
+        required: ['what', 'source', 'could', 'call'],
+      },
+    },
+    summary: { type: 'string', description: 'three sentences: what matters most for the studio, and why' },
+  },
+  required: ['rows'],
+}
+
+const SCOUT = (role, task) => `You are the ${role} of Shadow Studio, scouting for its restart, with fresh context. The studio was tabled and is being brought back. Read docs/studio/steering/restart.md first: its Capability baseline says what existed when it was tabled (and on which date), and its Feedback says what the executive wants the next season to do better.
+
+${task}
+
+Only report what you can source: a URL or document with its date, or what your own environment shows. Leave a guess out rather than hedging it. Read-only: do not create, modify or commit any file in the repository; put scratch files in the system temp directory.`
+
+const SCOUT_TOOLS = SCOUT('Scout for tools', 'Find what is new, changed or gone since the baseline\'s date in: the Claude models this session and its workflows can use (and whether a bigger one is now available); Claude Code\'s features (its release notes and documentation: skills, hooks, workflows, subagents, worktrees, cloud sessions and schedules, browser control, published artifacts, notifications, review); and the agent features of Antigravity (Gemini), which runs the same sprint through the studio-sprint skill. For each, say what it could change here, looking first for what serves the games items G1-G4 (a cheap verdict from the executive, parallel prototypes, look and feel, game roles with their own agents).')
+
+const SCOUT_PRACTICE = SCOUT('Scout for practice', 'Find what has changed since the baseline\'s date in how people run AI agents to build software and games: how teams split agent roles, review and test; how they keep an agent\'s docs and memory lean; how they get a human\'s judgement into an autonomous loop cheaply; and how small studios prototype and playtest games fast. Prefer primary sources (engineering write-ups, documentation, papers) with dates. For each, say what the studio could try, tied to a feedback item or a step.')
 
 const cap = s => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -153,6 +190,17 @@ while (done.length < MAX_STEPS) {
   phase(cap(kind))
   let extra = focus
   focus = ''
+
+  if (kind === 'restart') {
+    const [tools, practice] = await parallel([
+      () => agent(SCOUT_TOOLS, { label: 'Scout: tools', phase: 'Restart', model: 'opus', schema: SCOUTED }),
+      () => agent(SCOUT_PRACTICE, { label: 'Scout: practice', phase: 'Restart', model: 'opus', schema: SCOUTED }),
+    ])
+    for (const [n, s] of [['tools', tools], ['practice', practice]]) {
+      log(s ? `Scout (${n}): ${s.rows.length} finding(s)${s.summary ? ` — ${s.summary}` : ''}` : `Scout (${n}) did not return — the restart records that`)
+    }
+    extra += `\n\nThe restart's two scouts (fresh context, read-only). Compare their rows with restart.md's Capability baseline and decide each one as the skill's restart step says. A scout that is missing did not return: say so in the Restart log, don't invent its findings.\n\nScout for tools (opus):\n${JSON.stringify(tools, null, 2)}\n\nScout for practice (opus):\n${JSON.stringify(practice, null, 2)}`
+  }
 
   if (kind === 'retro' && cost.length) {
     extra += `\n\nThis run's output tokens per step so far (direction rule 8 — record the sprint's total and costliest step in the scorecard, compare with the last sprint, and make one change aimed at the costliest step):\n${cost.map(c => `- ${c.step}: ${c.tokens ?? 'not measured'}`).join('\n')}\nSteps run by hand in earlier sessions weren't measured; say so rather than guessing.`
@@ -197,6 +245,10 @@ while (done.length < MAX_STEPS) {
   if (r.nextLine === nextLine) { log('Stopping: next.md did not move, so the step made no progress.'); break }
   if (kind === 'retro') sprintsDone++
   nextLine = r.nextLine
+  if (kind === 'restart') {
+    log('Restart done. What it learned and changed is in the Restart log (docs/studio/steering/restart.md); say "run the studio" for the first sprint of the new season.')
+    break
+  }
 }
 if (done.length >= MAX_STEPS) log(`Stopping: reached the ${MAX_STEPS}-step limit for one run.`)
 

@@ -8,6 +8,12 @@ executive edits it, or when chat direction is recorded here (and logged in the
 
 Day-to-day notes go in the [Feedback Inbox](inbox.md), not here.
 
+> **Tabled since 2026-09-25** (the executive, [SHS-076](../iterations/09/tickets/SHS-076-table-the-studio.md)). Nothing runs until the
+> executive says "restart the studio". The `restart` step reads [restart.md](restart.md)
+> first: where the studio stopped, what sprints 00–09 taught, the executive's feedback for
+> the next season, and a baseline of AI models and tools to compare against what's new.
+> E2 is paused at sprint 2 of 3, and its budget clock is stopped.
+
 ## Standing charter — the studio runs itself
 
 Since 2026-09-23 ([ADR-0011](../decisions/ADR-0011-the-studio-runs-itself.md)) the executive
@@ -47,7 +53,9 @@ A fork that turns out better than its original can go back to the arcade only th
 
 **Status:** adopted at plan 08 (2026-09-24) from *Proposed next epic*, written by E1's last
 retro; the executive did not strike or change it. Sprint 08 was sprint 1 of 3; sprint 09
-is sprint 2, acting on the Playtester's Iterate on Samovar.
+is sprint 2, acting on the Playtester's Iterate on Samovar. **Paused** when the studio was
+tabled after sprint 09 (2026-09-25); it resumes at the restart unless the restart, or a
+focus from the executive, says otherwise.
 
 **Why:** the executive's wish for E2 (2026-09-23) is games that are interesting to play. E1
 was a fork, and the charter asks epics to vary, so E2 is an original studio game with a
@@ -137,7 +145,9 @@ and the `studio-iteration` skill.
    worse game or misses a bug is not better. **Prefer removing:** a change that deletes a step,
    a read or a rule beats one that adds; a new check names the defect that reached the
    live site or the rule it replaces; the Active rules cap of ten holds. Better means
-   leaner, not more ceremony.
+   leaner, not more ceremony. **Cycles are fine, waste isn't** (executive, 2026-09-25):
+   "cheaper" means less spent writing and re-reading records, never less spent on the
+   games, the reviewers or the playtesting.
 
 ## The budget
 
@@ -171,6 +181,8 @@ and the `studio-iteration` skill.
 | Decide an open question | The [Questionnaire](questionnaire.md). A blank answer takes the ⭐ |
 | See where things stand | "studio status", or the [Board](board.md) |
 | Halt | "stop the studio", or a `STOP` file at the repo root |
+| Shelve it for a while | "table the studio": it stops at a step boundary, writes [restart.md](restart.md) and sets `next.md` to `restart` |
+| Bring it back | "restart the studio" (optionally "… — focus: X"): two scouts check what's new, the restart step learns from restart.md and changes the process, then stops before the next plan |
 
 ## Reading it later
 
