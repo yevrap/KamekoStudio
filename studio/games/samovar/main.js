@@ -117,8 +117,9 @@ function drawGlass(cup) {
 // a few pixels out from the wall. Within the drip band (#51) one drip runs down
 // the right side, longer the further over the brim, with a drop hanging at its
 // end. Past it the cup has spilled: tea heaped over the whole rim and running
-// down both sides to the foot (no drops there: the result card covers the foot). The strokes don't scale with the stretched box,
-// so a drop stays round; `data-overflow` on the cup says which is drawn.
+// down both sides to the foot (no drops there: the result card covers the
+// foot). The strokes don't scale with the stretched box, so a drop stays round;
+// `data-overflow` on the cup says which is drawn.
 
 const OVERFLOW_PATHS = ['run-under', 'drop-under', 'run', 'drop'];
 

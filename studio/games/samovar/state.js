@@ -20,7 +20,7 @@ export function rng(seed) {
  * Drawn without replacement from every cup-and-strength pair (three cups by
  * four strengths is twelve), so no two guests in an evening ask for the same
  * pour, and ten of twelve always include every cup and every strength: a cup
- * size has four pairs and a strength three, and only two are left out.
+ * has four pairs and a strength three, and only two are left out.
  */
 export function makeEvening(random = Math.random, length = EVENING_LENGTH) {
   const pairs = [];

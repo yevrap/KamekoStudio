@@ -151,10 +151,12 @@ export function verdictLine(result) {
     strong: result.gap > STRENGTH_BANDS[1] ? 'Much too strong' : 'A touch too strong',
     weak: result.gap > STRENGTH_BANDS[1] ? 'Much too weak' : 'A touch too weak'
   }[result.strength];
+  // "but" after a strength they wanted, "and" when the fill is a second miss.
+  const joint = result.strength === 'right' ? 'but' : 'and';
   const fill = {
     full: ', filled to the brim.',
-    drip: ', but a drop over the brim.',
-    short: ', but short of the brim.',
+    drip: `, ${joint} a drop over the brim.`,
+    short: `, ${joint} short of the brim.`,
     low: ', and barely half a cup.'
   }[result.fill];
   return strength + fill;

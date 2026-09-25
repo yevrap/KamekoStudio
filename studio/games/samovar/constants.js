@@ -76,9 +76,10 @@ export const FULL_FROM = 0.9;
 /**
  * The drip band (#51): a cup over the brim by up to this share of its volume
  * drips down its side and costs one star; past it the cup spills and scores 0.
- * 8 % is 200 ms of any cup's 2.5 s fill: the release lag the Playtester
- * measured (150-200 ms), so letting go as the level reaches the brim drips
- * rather than spills.
+ * 8 % is 200 ms of any cup's 2.5 s fill: a release lag of 150-200 ms, the
+ * one sprint 08's Playtester simulated in headless Chrome (an assumption about
+ * a real thumb, not a measurement of one), so letting go as the level reaches
+ * the brim drips rather than spills. Aiming at the dashed line leaves 450 ms.
  */
 export const DRIP_BAND = 0.08;
 /** Below this share of the brim, a cup is short by two stars. */

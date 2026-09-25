@@ -107,7 +107,10 @@ test('a drop over the brim costs one star; past 8 % of the cup it spills and sco
   const brewOnly = judge({ brew: 104, water: 0, volume: 100, wanted: 0.7 });
   assert.equal(brewOnly.fill, 'drip');
   assert.equal(brewOnly.stars, 0);
-  assert.match(verdictLine(brewOnly), /Much too strong, but a drop over the brim/);
+  // Two misses read as two: "and", not "but" (the Playtester, sprint 09 review).
+  assert.match(verdictLine(brewOnly), /^Much too strong, and a drop over the brim\.$/);
+  assert.match(verdictLine(judge({ brew: 28, water: 60, volume: 100, wanted: 0.45 })), /^Much too weak, and short of the brim\.$/);
+  assert.match(verdictLine(judge({ brew: 40, water: 45, volume: 100, wanted: 0.45 })), /^Just the strength they wanted, but short of the brim\.$/);
 });
 
 test('strength and fill each cost stars', () => {
@@ -398,7 +401,8 @@ test('in a browser: Pour again starts a new evening at once, and a spill scores 
       }));
       await page.mouse.up();
       assert.ok(heldFor < FILL_MS * (1 + DRIP_BAND) + 400, `the brew spilled only after ${heldFor} ms`);
-      assert.ok(result.brew > result.volume * (1 + DRIP_BAND) && result.brew < result.volume * 1.2,
+      // The page writes the brew to 0.01 of a unit: a spill a hair past 108 can read 108.00.
+      assert.ok(result.brew >= result.volume * (1 + DRIP_BAND) - 0.01 && result.brew < result.volume * 1.2,
         `the brew stopped at ${result.brew} of ${result.volume}, not just past the drip band`);
       assert.equal(result.stars, '0');
       assert.match(result.line, /Spilled/);
@@ -511,7 +515,10 @@ test('in a browser: a brew let go over the brim serves at once, and water held p
       }));
       await page.mouse.up();
       const level = (water.brew + water.water) / water.volume;
-      assert.ok(level > 1 + DRIP_BAND && level < 1.15, `the water stopped at ${(level * 100).toFixed(1)} %, not just past the drip band`);
+      // The page writes each liquid to 0.01 of a unit, so a spill caught a hair past
+      // 108 % can read as 108.00 (a flake at review 09): allow that rounding, and
+      // let the game's own verdict below say it spilled.
+      assert.ok(level >= 1 + DRIP_BAND - 1e-4 && level < 1.15, `the water stopped at ${(level * 100).toFixed(2)} %, not just past the drip band`);
       assert.equal(water.stars, '0');
       assert.match(water.line, /Spilled/);
       assert.equal(water.overflow, 'spill');
