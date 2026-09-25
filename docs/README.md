@@ -100,7 +100,9 @@ Arcade-wide ideas that haven't become rows yet: [arcade idea inbox](planning/ide
 ## Shadow Studio
 
 An agent scrum company that builds and runs an experimental realm in `studio/`, one step per
-session. Live at [the studio](https://yevrap.github.io/KamekoStudio/studio/).
+session. Live at [the studio](https://yevrap.github.io/KamekoStudio/studio/). **Tabled since
+2026-09-25:** the [restart brief](studio/steering/restart.md) says where it stopped, what its
+sprints taught and what a restart does; "restart the studio" brings it back.
 
 - [Index](studio/steering/README.md) · [Next step](studio/steering/next.md) · [Direction](studio/steering/direction.md) · [Backlog](studio/steering/backlog.md) · [Board](studio/steering/board.md)
 - [Handoff](studio/steering/handoff.md) · [Scorecard](studio/steering/scorecard.md) · [Inbox](studio/steering/inbox.md) · [Questionnaire](studio/steering/questionnaire.md)

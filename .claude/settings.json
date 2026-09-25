@@ -25,7 +25,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "f=\"$CLAUDE_PROJECT_DIR/docs/studio/steering/next.md\"; [ -f \"$f\" ] && { echo \"[Shadow Studio] Where the studio team is (docs/studio/steering/next.md). \\\"studio next\\\" runs this step with the studio-iteration skill; ignore it for arcade work.\"; cat \"$f\"; }; true",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/docs/studio/steering/next.md\"; [ -f \"$f\" ] || exit 0; if grep -q '^\\*\\*Next:\\*\\* `restart' \"$f\"; then echo \"[Shadow Studio] Tabled, so ignore it for arcade work; docs/studio/steering/restart.md says how it comes back.\"; head -4 \"$f\"; else echo \"[Shadow Studio] Where the studio team is (docs/studio/steering/next.md). \\\"studio next\\\" runs this step with the studio-iteration skill; ignore it for arcade work.\"; cat \"$f\"; fi; true",
             "timeout": 10
           }
         ]

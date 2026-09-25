@@ -14,7 +14,7 @@ This repository is the whole studio — code, planning, decisions and the agent 
 | Playtest verdicts | `docs/playtest-log.md` — newest first; the strongest steering input |
 | Per-game design | `docs/games/<slug>/` — `README.md` (what it is, decisions and why), `ideas.md` (idea inbox), `plans/` (build plans) |
 | Studio-wide direction | `docs/brief.md` (taste brief), `docs/mission.md`, `docs/planning/` |
-| Shadow Studio | `studio/` (the realm), `docs/studio/` (its handbook), `docs/studio/steering/` — `next.md` (the step due), `direction.md` (the epic and its budget), `backlog.md` (ordered work), board, handoff, inbox, open questions |
+| Shadow Studio | `studio/` (the realm), `docs/studio/` (its handbook), `docs/studio/steering/` — `next.md` (the step due), `restart.md` (the restart brief: **tabled since 2026-09-25**), `direction.md` (the epic and its budget), `backlog.md` (ordered work), board, handoff, inbox, open questions |
 | Agent workflows | `.claude/skills/` — see *Skills* under AI Workflow |
 
 ## What This Project Is
@@ -324,8 +324,8 @@ Agents do not have a human's time pressure and can afford to double-check before
 | `refine` | "act on the maze warden answers", "plan a sprint for tysiacha" | Ideas, answers and verdicts → agent-shippable roadmap rows and questionnaires; ends with a prompt list |
 | `improve` | "quality scan" | Read-only codebase scan → ranked issue list |
 | `new-game` | "jam a new game" | Three original pitches → a single-file Lab prototype → deployed, documented, with a verdict questionnaire |
-| `studio-iteration` · `studio-standup` · `studio-promote` | "studio next" · "studio status" · "promote X" | Shadow Studio's scrum team, one step per session (plan, build one ticket, review, close, retro); `docs/studio/steering/next.md` says which step is due and a SessionStart hook loads it — see `docs/studio/` |
-| `studio-sprint` (skill + workflow) | "run the studio" (optionally "… with focus: X") | Runs the studio's current sprint to its retro with QA, the Independent Reviewer and the Playtester at review (ADR-0011). In Claude Code the skill starts the saved workflow (`.claude/workflows/`), one fresh agent per step, watched in `/workflows` — saying this is the explicit opt-in. In Antigravity the skill conducts the steps itself, with subagents where it can |
+| `studio-iteration` · `studio-standup` · `studio-promote` | "studio next" · "table the studio" · "studio status" · "promote X" | Shadow Studio's scrum team, one step per session (plan, build one ticket, review, close, retro); `docs/studio/steering/next.md` says which step is due and a SessionStart hook loads it — see `docs/studio/`. **Tabled since 2026-09-25:** `next.md` says `restart`, and `docs/studio/steering/restart.md` holds what the sprints taught, the director's feedback and the AI capability baseline |
+| `studio-sprint` (skill + workflow) | "run the studio" (optionally "… with focus: X") · "restart the studio" | Runs the studio's current sprint to its retro; on a tabled studio it runs the restart instead (two scouts on what's new in AI tools and practice, then the restart step) and stops before the next plan. Runs the sprint with QA, the Independent Reviewer and the Playtester at review (ADR-0011). In Claude Code the skill starts the saved workflow (`.claude/workflows/`), one fresh agent per step, watched in `/workflows` — saying this is the explicit opt-in. In Antigravity the skill conducts the steps itself, with subagents where it can |
 | `studio-request` | "studio request: X", "studio feedback: X", "studio verdict: Keep X" | Files a `studio` GitHub issue: a request (with a `priority:` label) becomes a backlog row at the next plan and is closed when it ships; `feedback` on how a run went goes to the next retro (direction rule 8); a `verdict` overrides the Playtester's |
 
 <!-- GEMINI-OVERRIDE:ai-workflow-tool-section -->
