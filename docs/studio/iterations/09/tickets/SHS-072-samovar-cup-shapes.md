@@ -107,7 +107,7 @@ brew (Q15 B); the evening's length and any second layer (sprint 10, on a Keep); 
 
 ## Result
 
-- **What changed** (`fa2d4d0`): `studio/games/samovar/constants.js` gives each cup a
+- **What changed:** (`fa2d4d0`) `studio/games/samovar/constants.js` gives each cup a
   `halfWidth(h)` profile, the plan's working ones unchanged (straight `1`, tulip
   `1 − 0.42 · sin(π·h / 1.6)`, bowl `0.5 + 0.5·h`), a `height` and an `aspect` for its
   look; every cup holds 100 units and `FILL_MS` is 2500, so `POUR_RATE` is 40 units/s.

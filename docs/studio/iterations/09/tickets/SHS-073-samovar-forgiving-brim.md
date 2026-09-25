@@ -66,7 +66,7 @@ any second layer (sprint 10, on a Keep).
 
 ## Result
 
-- **What changed** (`571c385`): `constants.js` adds `DRIP_BAND` 0.08. `gameplay.js`:
+- **What changed:** (`571c385`) `constants.js` adds `DRIP_BAND` 0.08. `gameplay.js`:
   `overBrim` (any tea over the brim) and `spilled`, which now means over the brim by more
   than the drip band; `judge` gives a cup over the brim within the band the fill `drip`
   and one star less than its strength (never below 0), and `verdictLine` says *…, but a
