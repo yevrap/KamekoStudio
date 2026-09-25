@@ -44,3 +44,17 @@ is committed.
   at a star, then a spill), in the design note with #51 and #54 marked done. *Next:*
   review, where the Playtester says whether a first evening still scores near 0.
   *Blocked:* nothing.
+
+## Session 4 — build [SHS-074](tickets/SHS-074-skill-describes-pull-requests.md) (2026-09-24)
+
+- **Scrum Master** — *Done:* [SHS-074](tickets/SHS-074-skill-describes-pull-requests.md), the pull-request flow written down (`337b280`): the
+  `studio-iteration` skill's `build` names the eight commands in order, `review` posts the
+  Independent Reviewer's verdict on each pull request, records stay on `main`; the
+  workflow's prompts and `references/prompts.md` agree; `process.md`'s *Branches, commits,
+  tags* and the ticket template follow; ADR-0007 superseded. `--stage=push` 11/11.
+  *Next:* review. *Blocked:* nothing.
+- **Tech Lead** — *Done:* read the commands against the checks and found one the plan
+  missed: `production-fix-reviewed` needs the reviewed commit in `main`'s history, which a
+  squash-merge replaces, so a production fix stays on trunk until backlog #56 (new, S,
+  Ready). ADR-0011 §5 is the executive's, so Q17 carries a note rather than an edit.
+  *Next:* review. *Blocked:* nothing.
