@@ -407,6 +407,33 @@ test('forcedAction: a legal transfer keeps Take optional; one the next seat can\
   assert.equal(forcedAction(1), 'take');
 });
 
+// ─── Game log ───────────────────────────────────────────────────────────────
+
+test('log: every pass is recorded — attacker, thrower, and pile-on Done (passes were never logged)', () => {
+  newGame('ai', 3); state.deck = []; state.trumpSuit = 4;
+  state.players[0].hand = [new Card(7, 1), new Card(9, 3)];
+  state.players[1].hand = [new Card(10, 1), new Card(6, 2), new Card(8, 2)];
+  state.players[2].hand = [new Card(11, 2), new Card(8, 3)];
+  playAttack(0, state.players[0].hand[0].id);
+  playDefense(1, state.players[1].hand[0].id);
+  passAttack(0);
+  passAttack(2);
+  const passes = state.log.filter(e => e.type === 'pass').map(e => e.seat);
+  assert.deepEqual(passes, [0, 2]);
+  // The pass lands before the bout result it caused.
+  const types = state.log.map(e => e.type);
+  assert.ok(types.lastIndexOf('pass') < types.indexOf('bout_defended'));
+
+  // Pile-on: Done is a pass too. Seat 1 attacks seat 2, who takes.
+  state.players[1].hand = [new Card(9, 1), new Card(9, 2)];
+  state.players[2].hand = [new Card(6, 3), new Card(7, 3), new Card(8, 3)];
+  playAttack(1, state.players[1].hand[0].id);
+  declareTake(2);
+  assert.equal(state.phase, 'pileOn');
+  pileOnPass(state.prioritySeat);
+  assert.equal(state.log.filter(e => e.type === 'pass').length, 3);
+});
+
 // ─── Draw order ────────────────────────────────────────────────────────────
 
 test('draw order: attacker → contributors (in contribution order) → defender last', () => {

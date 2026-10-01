@@ -204,6 +204,7 @@ export function passAttack(seat) {
   var contribs = adjacentContributors();
   if (contribs.indexOf(seat) === -1) return false;
 
+  logEvent('pass', { seat: seat });
   if (seat === state.attackerSeat) state.attackerPassed = true;
   else state.contributorPassed = true;
 
@@ -216,7 +217,6 @@ export function passAttack(seat) {
     var passed = (s === state.attackerSeat) ? state.attackerPassed : state.contributorPassed;
     if (!passed) { state.prioritySeat = s; return true; }
   }
-  logEvent('pass', { seat: seat });
   endBout('defended');
   return true;
 }
@@ -245,6 +245,7 @@ export function pileOnPass(seat) {
   var contribs = adjacentContributors();
   if (contribs.indexOf(seat) === -1) return false;
 
+  logEvent('pass', { seat: seat });
   if (seat === state.attackerSeat) state.attackerPassed = true;
   else state.contributorPassed = true;
 
@@ -256,7 +257,6 @@ export function pileOnPass(seat) {
     var passed = (s === state.attackerSeat) ? state.attackerPassed : state.contributorPassed;
     if (!passed) { state.prioritySeat = s; return true; }
   }
-  logEvent('pass', { seat: seat });
   endBout('taken');
   return true;
 }
