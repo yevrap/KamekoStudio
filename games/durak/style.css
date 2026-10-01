@@ -587,7 +587,7 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
              rotate(var(--fan-angle, 0deg))
              translateY(var(--fan-lift, 0px))
              scale(var(--card-scale, 1));
-  transition: transform 0.1s, box-shadow 0.15s, opacity 0.15s ease;
+  transition: transform 0.1s, box-shadow 0.15s, opacity 0.15s ease, filter 0.15s ease;
   flex-shrink: 0;
   user-select: none;
   overflow: hidden;
@@ -606,6 +606,8 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
   box-shadow: 0 0 8px rgba(255, 200, 50, 0.4), inset 0 0 6px rgba(255, 200, 50, 0.2);
 }
 .card-btn.field-card { cursor: default; opacity: 0.95; width: 76px; height: 106px; }
+/* Hand cards overlap, so dim with a filter — opacity would show the card behind. */
+.card-btn.unplayable { filter: brightness(0.6) saturate(0.5); cursor: default; }
 
 .card-placeholder {
   width: 76px;

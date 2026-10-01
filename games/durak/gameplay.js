@@ -14,6 +14,12 @@ import { logEvent } from './log.js';
 export function legalAttack(seat, card) {
   if (state.phase !== 'playing' && state.phase !== 'pileOn') return false;
   if (state.prioritySeat !== seat) return false;
+  return canThrow(seat, card);
+}
+
+// Throw-in rules minus the turn check, so a seat that doesn't hold priority
+// yet can be asked about too (anyContributorCanThrow).
+function canThrow(seat, card) {
   if (!state.players[seat] || state.players[seat].isOut) return false;
 
   var contribs = adjacentContributors();
@@ -22,15 +28,14 @@ export function legalAttack(seat, card) {
   var attackCount = state.field.attacks.length;
   if (attackCount >= 6) return false;
 
-  if (state.phase === 'playing') {
-    // Defender must be able to beat any remaining undefended attacks.
-    var undefended = 0;
-    for (var i = 0; i < state.field.defenses.length; i++) {
-      if (state.field.defenses[i] === null) undefended++;
-    }
-    var defender = getPlayer(state.defenderSeat);
-    if (undefended >= defender.hand.length) return false;
+  // Unbeaten cards may never outnumber the defender's hand — before a Take,
+  // and in the pile-on after it (classic rule; the pile-on was uncapped).
+  var undefended = 0;
+  for (var i = 0; i < state.field.defenses.length; i++) {
+    if (state.field.defenses[i] === null) undefended++;
   }
+  var defender = getPlayer(state.defenderSeat);
+  if (undefended >= defender.hand.length) return false;
 
   if (attackCount === 0) return seat === state.attackerSeat;
 
@@ -282,18 +287,40 @@ function anyContributorCanThrow() {
   for (var i = 0; i < contribs.length; i++) {
     var hand = getPlayer(contribs[i]).hand;
     for (var h = 0; h < hand.length; h++) {
-      var card = hand[h];
-      // Rank must match something on the field (attacks + defenses).
-      var v = parseInt(card.value);
-      for (var a = 0; a < state.field.attacks.length; a++) {
-        if (parseInt(state.field.attacks[a].value) === v) return true;
-      }
-      for (var d = 0; d < state.field.defenses.length; d++) {
-        var def = state.field.defenses[d];
-        if (def && parseInt(def.value) === v) return true;
-      }
+      if (canThrow(contribs[i], hand[h])) return true;
     }
   }
+  return false;
+}
+
+// ── Forced moves ───────────────────────────────────────────────────────────
+
+export function cardPlayable(seat, card) {
+  return legalAttack(seat, card) || legalDefense(seat, card) || legalTransfer(seat, card);
+}
+
+// The move left to a seat that holds priority but can't play any card:
+// 'pass' or 'done' for a thrower, 'take' for the defender. null while some
+// card is playable or it isn't this seat's turn. The AI passes on its own;
+// main.js plays this for a human so the table never waits on a dead turn.
+export function forcedAction(seat) {
+  if (state.phase !== 'playing' && state.phase !== 'pileOn') return null;
+  if (state.prioritySeat !== seat) return null;
+  var p = getPlayer(seat);
+  if (!p || p.isOut) return null;
+  if (state.field.attacks.length === 0) return null;
+  for (var i = 0; i < p.hand.length; i++) {
+    if (cardPlayable(seat, p.hand[i])) return null;
+  }
+  if (state.phase === 'pileOn') return 'done';
+  return seat === state.defenderSeat ? 'take' : 'pass';
+}
+
+export function playForcedAction(seat) {
+  var action = forcedAction(seat);
+  if (action === 'take') return declareTake(seat);
+  if (action === 'pass') return passAttack(seat);
+  if (action === 'done') return pileOnPass(seat);
   return false;
 }
 

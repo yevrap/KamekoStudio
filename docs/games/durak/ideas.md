@@ -4,7 +4,7 @@
 ## Inbox
 - [x] **No Russian/i18n at all** → **p2-36**, shipped 2026-07-20. Full EN/RU toggle, live drawer switch, no restart. Plan archived: [Durak — Russian Localization Sprint](../../archive/plans/durak-russian-localization-sprint-july-2026.md). See [Dev Log](../../archive/dev-logs/arcade.md).
 
-Pass when nothing I can do should be skipped 
+- [x] **Pass when nothing I can do should be skipped** → **p1-53**, shipped 2026-09-30: forced Pass/Done/Take play themselves after a short beat, hot-seat skips the cover, unplayable cards dim.
 *(empty — cleared July 12, 2026, aside from the i18n item above)*
 
 ## Currently open on the repo roadmap (verified 2026-07-18)

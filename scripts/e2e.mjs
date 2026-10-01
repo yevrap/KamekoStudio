@@ -924,6 +924,89 @@ await test('durak-tactics: Play is free and starts the game', async page => {
   assert(started, 'start screen still visible after Play');
 });
 
+// ── Durak: a turn with no playable card plays itself (p1-53) ────────────────
+
+const DURAK = base + '/games/durak/';
+
+// Start a match from the setup screen, then deal a crafted mid-game table.
+// `table` is a plain object so it crosses into the page: hands as [value, suit].
+async function durakStart(page, mode, count, table) {
+  await page.goto(DURAK, { waitUntil: 'load' });
+  await page.evaluate(() => {
+    localStorage.setItem('durak_perevodnoy', 'false');
+    localStorage.setItem('durak_difficulty', 'normal');
+  });
+  await page.click('#mode-toggle [data-mode="' + mode + '"]');
+  await page.click('#count-toggle [data-count="' + count + '"]');
+  await page.click('#btn-play');
+  await sleep(300);
+  if (mode === 'hotseat') { await page.click('#pass-device-overlay'); await sleep(200); }
+  await page.evaluate(async t => {
+    const { state } = await import('/games/durak/state.js');
+    const { Card } = await import('/games/durak/constants.js');
+    const { renderAll } = await import('/games/durak/ui.js');
+    const cards = list => list.map(([v, s]) => new Card(v, s));
+    state.trumpSuit = 4;
+    state.deck = cards(t.deck);
+    state.attackerSeat = t.attacker; state.defenderSeat = t.defender; state.prioritySeat = t.priority;
+    state.field.attacks = cards(t.attacks); state.field.defenses = cards(t.defenses);
+    state.contributionOrder = t.attacks.length ? [t.attacker] : [];
+    t.hands.forEach((h, i) => { state.players[i].hand = cards(h); });
+    renderAll();
+  }, table);
+}
+
+const durakState = page => page.evaluate(async () => {
+  const { state } = await import('/games/durak/state.js');
+  return {
+    phase: state.phase, priority: state.prioritySeat, attacks: state.field.attacks.length,
+    discard: state.discard.length, reveal: state.pendingReveal && state.pendingReveal.seat,
+    status: document.getElementById('status-display').textContent,
+    passHidden: document.getElementById('btn-pass').classList.contains('hidden'),
+    dimmed: [...document.querySelectorAll('#human-hand .card-btn.unplayable')].map(b => b.dataset.cardId)
+  };
+});
+
+await test('durak: defender out of cards — your dead throw-in is dimmed and Pass plays itself', async page => {
+  // You attack with 7♠; the computer's only card, 10♠, beats it. Your 7♣
+  // matches the field but can't be thrown at a defender holding nothing.
+  await durakStart(page, 'ai', 2, {
+    deck: [[6, 3], [8, 3], [11, 3], [12, 3], [13, 3], [14, 3]],
+    attacker: 0, defender: 1, priority: 0, attacks: [], defenses: [],
+    hands: [[[7, 1], [7, 2], [9, 3]], [[10, 1]]]
+  });
+  await page.click('#human-hand .card-btn[data-card-id="71"]');
+  let s, sawForced = null;
+  for (const deadline = Date.now() + 4000; Date.now() < deadline; await sleep(50)) {
+    s = await durakState(page);
+    if (!sawForced && /Nothing to throw/.test(s.status)) sawForced = s;
+    if (s.discard === 2) break;
+  }
+  assert(sawForced, 'never showed the forced-pass status; last status: "' + s.status + '"');
+  assert(sawForced.passHidden, 'Pass button still offered during a forced pass');
+  assert(sawForced.dimmed.includes('72'), '7♣ was not dimmed while unplayable: ' + JSON.stringify(sawForced.dimmed));
+  assert(s.discard === 2 && s.attacks === 0, 'bout never closed on its own: ' + JSON.stringify(s));
+  assert(s.priority === 1, 'defender should lead the next bout, priority is seat ' + s.priority);
+});
+
+await test('durak: hot-seat skips the pass-device cover for a forced pass', async page => {
+  // Seat 0 passes with a playable card in hand. Seat 2 can throw nothing, so
+  // its pass is forced: no cover for it — the bout closes and the cover names
+  // seat 1, who leads next.
+  await durakStart(page, 'hotseat', 3, {
+    deck: [[6, 3], [8, 3], [11, 3], [12, 3], [13, 3], [14, 3]],
+    attacker: 0, defender: 1, priority: 0, attacks: [[7, 1]], defenses: [[10, 1]],
+    hands: [[[7, 2], [9, 3]], [[6, 2], [8, 2]], [[11, 2]]]
+  });
+  const before = await durakState(page);
+  assert(!before.passHidden && before.dimmed.length === 1, 'precondition: Pass offered, only 9♦ dimmed — ' + JSON.stringify(before));
+  await page.click('#btn-pass');
+  await sleep(200);
+  const s = await durakState(page);
+  assert(s.discard === 2, 'bout did not close after the forced pass: ' + JSON.stringify(s));
+  assert(s.phase === 'passDevice' && s.reveal === 1, 'cover should be for seat 1 (next leader), got ' + JSON.stringify(s));
+});
+
 await browser.close();
 server.close();
 

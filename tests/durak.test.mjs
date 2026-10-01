@@ -8,7 +8,7 @@ import {
 import {
   legalAttack, legalDefense, playAttack, playDefense,
   passAttack, declareTake, pileOnPass, endBout, dealInitial, checkGameOver,
-  legalTransfer, playTransfer, defenseTargetIndex
+  legalTransfer, playTransfer, defenseTargetIndex, forcedAction, playForcedAction
 } from '../games/durak/gameplay.js';
 import { _test_aiTurn, speedMultiplier } from '../games/durak/ai.js';
 
@@ -277,7 +277,7 @@ test('pileOn: non-adjacent seat cannot throw; cards end up with defender', () =>
   state.field.attacks = []; state.field.defenses = [];
   state.contributionOrder = [];
   state.players[0].hand = [new Card(7, 1), new Card(7, 2)];
-  state.players[1].hand = [new Card(6, 3)]; // can't beat
+  state.players[1].hand = [new Card(6, 3), new Card(8, 3), new Card(9, 3)]; // can't beat; room for 2 pile-ons
   state.players[2].hand = [new Card(7, 3)]; // right-of-defender: legal
   state.players[3].hand = [new Card(7, 4)]; // far seat: NOT legal
 
@@ -303,7 +303,108 @@ test('pileOn: non-adjacent seat cannot throw; cards end up with defender', () =>
 
   // Bout ended with all cards to defender (seat 1).
   // Original 7♠ + 7♣ from seat 0 + 7♦ from seat 2 = 3 cards.
-  assert.equal(state.players[1].hand.length, 1 /*kept 6♦*/ + 3);
+  assert.equal(state.players[1].hand.length, 3 /*kept*/ + 3);
+});
+
+// ─── Pile-on cap (p1-53) ────────────────────────────────────────────────────
+
+test('pileOn cap: a take by a 1-card defender closes the bout at once', () => {
+  newGame('ai', 2); state.deck = []; state.trumpSuit = 4;
+  state.players[0].hand = [new Card(7, 1), new Card(7, 2), new Card(7, 3)];
+  state.players[1].hand = [new Card(6, 2)];
+  playAttack(0, state.players[0].hand[0].id);
+  declareTake(1);
+  // One unbeaten card already matches the one card held: nothing can be piled on.
+  assert.equal(state.phase, 'playing');
+  assert.equal(state.players[1].hand.length, 2);
+});
+
+test('pileOn cap: unbeaten cards never outnumber the defender\'s hand', () => {
+  newGame('ai', 2); state.deck = []; state.trumpSuit = 4;
+  state.players[0].hand = [new Card(7, 1), new Card(7, 2), new Card(7, 3), new Card(7, 4)];
+  state.players[1].hand = [new Card(6, 2), new Card(8, 3), new Card(9, 3)];
+  playAttack(0, state.players[0].hand[0].id);
+  declareTake(1);
+  assert.equal(state.phase, 'pileOn');
+  assert.equal(playAttack(0, state.players[0].hand[0].id), true);  // 2 unbeaten vs 3 held
+  assert.equal(playAttack(0, state.players[0].hand[0].id), true);  // 3 vs 3
+  assert.equal(legalAttack(0, state.players[0].hand[0]), false);   // a 4th would outnumber
+  assert.equal(forcedAction(0), 'done');
+});
+
+// ─── Forced moves: a turn with no playable card (p1-53) ─────────────────────
+
+test('forcedAction: defender out of cards → Pass is forced, not a dead throw-in (reported bug)', () => {
+  newGame('ai', 2); state.deck = []; state.trumpSuit = 4;
+  state.players[0].hand = [new Card(7, 1), new Card(7, 2), new Card(9, 3)];
+  state.players[1].hand = [new Card(10, 1)];
+  playAttack(0, state.players[0].hand[0].id);
+  playDefense(1, state.players[1].hand[0].id); // beaten with the defender's last card
+  assert.equal(state.prioritySeat, 0);
+  // 7♣ matches the field, but a defender with no cards can't be thrown at.
+  assert.equal(legalAttack(0, state.players[0].hand[0]), false);
+  assert.equal(forcedAction(0), 'pass');
+  assert.equal(playForcedAction(0), true);
+  assert.equal(state.field.attacks.length, 0);
+  assert.equal(state.discard.length, 2); // bout closed as defended
+});
+
+test('forcedAction: null while a card is playable or it is not your turn', () => {
+  newGame('ai', 2); state.deck = []; state.trumpSuit = 4;
+  state.players[0].hand = [new Card(7, 1), new Card(7, 2)];
+  state.players[1].hand = [new Card(10, 1), new Card(6, 3)];
+  assert.equal(forcedAction(0), null);  // opening attack
+  playAttack(0, state.players[0].hand[0].id);
+  assert.equal(forcedAction(0), null);  // defender's turn
+  assert.equal(forcedAction(1), null);  // 10♠ beats 7♠
+  playDefense(1, state.players[1].hand[0].id);
+  assert.equal(forcedAction(0), null);  // 7♣ can still go in: the defender holds a card
+  assert.equal(playForcedAction(0), false);
+});
+
+test('forcedAction: pile-on with nothing left to throw → Done is forced', () => {
+  newGame('ai', 2); state.deck = []; state.trumpSuit = 4;
+  state.players[0].hand = [new Card(7, 1), new Card(7, 2), new Card(12, 3)];
+  state.players[1].hand = [new Card(6, 2), new Card(8, 3), new Card(9, 3)];
+  playAttack(0, state.players[0].hand[0].id);
+  declareTake(1);
+  assert.equal(forcedAction(0), null);  // 7♣ can pile on
+  playAttack(0, state.players[0].hand.find(c => c.value === 7).id);
+  assert.equal(state.prioritySeat, 0);
+  assert.equal(forcedAction(0), 'done');
+  assert.equal(playForcedAction(0), true);
+  assert.equal(state.players[1].hand.length, 3 + 2);
+});
+
+test('forcedAction: a thrower holding 0 cards passes; the next thrower still gets a turn', () => {
+  newGame('ai', 3); state.deck = []; state.trumpSuit = 4;
+  state.players[0].hand = [new Card(7, 1)];
+  state.players[1].hand = [new Card(10, 1), new Card(6, 2)];
+  state.players[2].hand = [new Card(11, 2)];
+  playAttack(0, state.players[0].hand[0].id);
+  playDefense(1, state.players[1].hand[0].id);
+  assert.equal(forcedAction(0), 'pass');
+  playForcedAction(0);
+  assert.equal(state.prioritySeat, 2);
+  assert.equal(forcedAction(2), 'pass'); // J♣ matches nothing on the field
+});
+
+test('forcedAction: defender with no beat and no transfer → Take is forced', () => {
+  newGame('ai', 2); state.deck = []; state.trumpSuit = 4;
+  state.players[0].hand = [new Card(12, 1), new Card(9, 3)];
+  state.players[1].hand = [new Card(7, 1), new Card(8, 2)];
+  playAttack(0, state.players[0].hand[0].id); // Q♠
+  assert.equal(forcedAction(1), 'take');
+  assert.equal(playForcedAction(1), true);
+  assert.equal(state.players[1].hand.length, 3); // nothing to pile on: took Q♠ alone
+});
+
+test('forcedAction: a legal transfer keeps Take optional; one the next seat can\'t cover does not', () => {
+  setupTransferBoard();                  // seat 1 holds 6♣ against 6♠, nothing that beats it
+  assert.equal(forcedAction(1), null);
+  state.players[2].hand = [new Card(7, 1)]; // too few cards to defend a grown attack
+  assert.equal(legalTransfer(1, state.players[1].hand[0]), false);
+  assert.equal(forcedAction(1), 'take');
 });
 
 // ─── Draw order ────────────────────────────────────────────────────────────
@@ -526,8 +627,9 @@ test('post-transfer AI: takes when the first open attack has no beater', () => {
   global.localStorage.setItem('durak_difficulty', 'normal');
   playTransfer(1, state.players[1].hand[0].id); // field: 6♠, 6♣ — both open
   // AI seat 2 can only beat the second attack — the bout is unwinnable.
-  state.players[2].hand = [new Card(8, 2), new Card(12, 3)];
-  // Attacker seat 1 holds a rank match so declareTake settles at pileOn.
+  state.players[2].hand = [new Card(8, 2), new Card(12, 3), new Card(9, 3)];
+  // Attacker seat 1 holds a rank match (and the taker's hand leaves room
+  // under the pile-on cap) so declareTake settles at pileOn.
   state.players[1].hand = [new Card(6, 3), new Card(12, 2)];
   _test_aiTurn(2);
   assert.equal(state.phase, 'pileOn');

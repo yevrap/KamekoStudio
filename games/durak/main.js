@@ -12,9 +12,9 @@ import {
 import {
   playAttack, playDefense, passAttack, declareTake,
   pileOnPass, checkGameOver, dealInitial, legalDefense, legalAttack, getMatchStats,
-  legalTransfer, playTransfer
+  legalTransfer, playTransfer, forcedAction, playForcedAction
 } from './gameplay.js';
-import { scheduleAiAction, clearAiTimeout } from './ai.js';
+import { scheduleAiAction, scheduleForcedAction, clearAiTimeout } from './ai.js';
 import { t, getLang, setLang, defaultPlayerName } from './i18n.js';
 
 // ── Persisted setup ────────────────────────────────────────────────────────
@@ -226,7 +226,10 @@ function tick() {
 
   var p = getPlayer(state.prioritySeat);
   if (!p) return;
-  if (p.isHuman && localStorage.getItem('durak_autoPlay') !== 'true') return;
+  if (p.isHuman && localStorage.getItem('durak_autoPlay') !== 'true') {
+    if (forcedAction(state.prioritySeat)) scheduleForcedAction(state.prioritySeat, handleAfterAction);
+    return;
+  }
   scheduleAiAction(state.prioritySeat, tick);
 }
 
@@ -243,6 +246,9 @@ function handleAfterAction(actorSeat) {
   if (!canCover) { tick(); return; }
   var next = getPlayer(state.prioritySeat);
   if (!next || !next.isHuman || state.prioritySeat === actorSeat) { tick(); return; }
+  // A forced Pass/Done/Take needs no decision: play it now rather than hand
+  // the device over just for the game to press the button.
+  if (playForcedAction(state.prioritySeat)) { handleAfterAction(actorSeat); return; }
   var resumePhase = state.phase;
   state.passDeviceSender = actorSeat;
   state.phase = 'passDevice';

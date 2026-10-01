@@ -7,7 +7,8 @@ import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
 import { cardStrength, canBeat } from './constants.js';
 import {
   legalAttack, legalDefense, playAttack, playDefense,
-  passAttack, declareTake, pileOnPass, legalTransfer, playTransfer
+  passAttack, declareTake, pileOnPass, legalTransfer, playTransfer,
+  playForcedAction
 } from './gameplay.js';
 
 var aiTimeout = null;
@@ -41,6 +42,20 @@ export function scheduleAiAction(seat, onDone) {
     aiTurn(seat);
     if (onDone) onDone();
   }, delay);
+}
+
+// A human whose only move is Pass / Done / Take gets it played for them after
+// a short beat, so the last card is seen landing before the table moves on.
+// Shares the AI timer so every clearAiTimeout() (pause, restart) cancels it.
+export var FORCED_MOVE_DELAY_MS = 700;
+
+export function scheduleForcedAction(seat, onDone) {
+  clearAiTimeout();
+  aiTimeout = setTimeout(function () {
+    aiTimeout = null;
+    if (state.prioritySeat !== seat) return;
+    if (playForcedAction(seat) && onDone) onDone(seat);
+  }, FORCED_MOVE_DELAY_MS);
 }
 
 // ── Entry Router ─────────────────────────────────────────────────────────────

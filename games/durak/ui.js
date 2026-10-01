@@ -8,6 +8,7 @@ import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
 import { suitEmoji, suitName, cardStrength } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 import { getHardAiMove } from './ai.js';
+import { cardPlayable, forcedAction } from './gameplay.js';
 import { logEvent } from './log.js';
 import { t, cardText } from './i18n.js';
 
@@ -346,9 +347,12 @@ function renderHumanHand() {
   var p = state.players[viewer];
   if (!p) return;
   var hand = sortedHandForDisplay(p.hand);
+  var yourTurn = state.prioritySeat === viewer &&
+                 (state.phase === 'playing' || state.phase === 'pileOn');
   for (var i = 0; i < hand.length; i++) {
     var el = createCardEl(hand[i], 'hand');
     el.dataset.seat = viewer;
+    if (yourTurn && !cardPlayable(viewer, hand[i])) el.classList.add('unplayable');
     $humanHand.appendChild(el);
   }
   var cards = $humanHand.querySelectorAll('.card-btn');
@@ -382,6 +386,9 @@ function updateActionButtons() {
                 && fullyDefended;
 
   var canDone = hasPriority && state.phase === 'pileOn';
+
+  // A forced move plays itself (main.js), so its button would only be noise.
+  if (hasPriority && forcedAction(viewer)) canTake = canPass = canDone = false;
 
   $btnTake.dataset.seat = viewer;
   $btnPass.dataset.seat = viewer;
@@ -443,6 +450,10 @@ function getStatusText() {
   var viewer = currentViewerSeat();
   var priorityP = state.players[state.prioritySeat];
   var pName = priorityP ? priorityP.name : '';
+
+  var forced = forcedAction(viewer);
+  if (forced === 'take') return t('status.forcedTake');
+  if (forced) return t('status.forcedPass');
 
   if (state.phase === 'pileOn') {
     if (state.prioritySeat === viewer) return t('status.pileOnSelf');
@@ -599,14 +610,17 @@ export function renderAll() {
       el.style.setProperty('--flip-dy', '0px');
 
       (function(animEl) {
-        animEl.addEventListener('transitionend', function cleanup(e) {
+        // Declared, not inlined as a named expression: the fallback timer
+        // below needs the name too (it threw "cleanup is not defined").
+        function cleanup(e) {
           if (e.propertyName === 'transform') {
             animEl.classList.remove('flip-animating');
             animEl.style.removeProperty('--flip-dx');
             animEl.style.removeProperty('--flip-dy');
             animEl.removeEventListener('transitionend', cleanup);
           }
-        });
+        }
+        animEl.addEventListener('transitionend', cleanup);
 
         setTimeout(function() {
           animEl.classList.remove('flip-animating');

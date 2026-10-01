@@ -17,7 +17,8 @@ Durak is a classic Russian card game for 2–6 players. Modes include vs Compute
 
 ## Rules / Mechanics
 - Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap.
-- Pile-on during the defender's take.
+- Pile-on during the defender's take — capped like any throw-in: unbeaten cards never outnumber the defender's hand (p1-53, 2026-09-30; before that the pile-on was capped only at 6).
+- **Forced moves play themselves** (p1-53, 2026-09-30): when your only legal move is Pass, Done or Take, the game makes it after a 0.7s beat with a status line ("Nothing to throw — passing…" / "Nothing beats it — taking…"). In hot-seat a forced move by the next player is made at once, with no pass-device cover. On your turn, cards you can't legally play are dimmed.
 - Ordered end-of-bout draws (attacker → contributors → defender).
 - Elimination when hand and deck are both empty.
 - Last player holding cards is the Durak.
@@ -39,6 +40,12 @@ Durak is a classic Russian card game for 2–6 players. Modes include vs Compute
 - **Bug fixed — post-transfer hang:** Yev's playtest found the game stuck after a transfer ("CPU 2 attacking…" forever, screenshot in the inbox). Root cause: after covering one attack, priority went back to the attacker even with attacks still open — the attacker could neither add a card nor legally pass, so the AI spun forever. Priority now stays with the defender until the field is fully covered. Regression-tested; the perevodnoy variant had shipped with zero transfer tests, the suite now covers it.
 - **Choice popup over auto-play:** a modal keeps the tap-to-play flow for the 95% case (single-purpose cards play immediately) and only interrupts when the card is genuinely ambiguous. *Update July 12, 2026: questionnaire Q2=C — the modal will be replaced by inline Transfer/Beat buttons above the hand (roadmap p1-23).*
 - **Automatic defense targeting:** the defender never picks a target attack explicitly; each card covers the first open attack it can beat. Full control is still possible via tap order. A tap-attack-to-target flow was considered and deferred (questionnaire Q1). *Update July 12, 2026: Q1=B — tap-to-target is now the chosen direction (roadmap p1-22).*
+
+## Decisions & Why (September 30, 2026 — p1-53)
+- **Bug fixed — dead turns:** Yev was offered throw-ins the game wouldn't take — the defender had run out of cards, yet "Throw on or Pass" stayed up and the bout waited on Pass. Root cause: the engine gives priority to a seat with no playable card, and only the AI knew to pass. The same stall hit pile-on (Done), a thrower holding 0 cards, and a defender with nothing that beats or transfers (Take); hot-seat even put up a pass-device cover just to press Pass.
+- **Auto-play forced moves, with a beat:** Yev chose a ~0.7s pause over an instant pass so the last card is seen landing, and auto-Take too (only when no defense *and* no transfer is legal). `forcedAction(seat)` in `gameplay.js` is the single definition of "only one move left"; the AI keeps its own pacing.
+- **Dim unplayable cards:** a tap that won't work should look like it — covers the transfer case too (same-rank card when the next player holds too few cards to take the transfer).
+- **Classic pile-on cap:** a defender who takes can't be handed more unbeaten cards than they hold — the same rule the throw-in already followed, now one shared `canThrow()` check so the two can't drift again.
 
 ## Known Simplifications
 - AI personalities are limited by difficulty (Easy, Normal, Hard) and do not have unique per-seat behaviors.
