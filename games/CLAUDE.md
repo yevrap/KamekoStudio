@@ -92,7 +92,7 @@ window.addEventListener('settingsOpened', () => { /* pause */ });
 window.addEventListener('settingsClosed', () => { /* resume */ });
 ```
 
-**Per-game settings sections:** register once at game boot with `window.KamekoSettings.registerSection(id, { title, when, render })` — `title` may be a function (re-evaluated per open), the optional `when()` predicate hides the section contextually, and `render(container)` is re-run from scratch on EVERY drawer open so controls always show live state. Never remove sections on `settingsClosed`; the drawer owns the lifecycle. Keep only instant-apply, persisted controls in the drawer — match-scoped choices (names, rules, target score) go on the game's own setup/new-match screen. See `games/keypad-quest/main.js` (a `when()`-gated stats section) and `games/tysiacha/main.js` / `games/durak/main.js` for full examples. Full API docs: root `CLAUDE.md` → "Drawer API".
+**Per-game settings sections:** register once at game boot with `window.KamekoSettings.registerSection(id, { title, when, render })` — `title` may be a function (re-evaluated per open), the optional `when()` predicate hides the section contextually, and `render(container)` is re-run from scratch on EVERY drawer open so controls always show live state. Never remove sections on `settingsClosed`; the drawer owns the lifecycle. Keep only instant-apply, persisted controls in the drawer — match-scoped choices (names, rules, target score) go on the game's own setup/new-match screen. Build rows with `window.KamekoSettings.ui` (`group`, `toggle`, `segmented`) so drawers match; on/off settings are switches, never flip-label buttons. See `games/keypad-quest/main.js` (a `when()`-gated stats section) and `games/durak/main.js` (the reference drawer) / `games/tysiacha/main.js` for full examples. Full API docs: root `CLAUDE.md` → "Drawer API".
 
 ## localStorage Keys
 
@@ -107,6 +107,7 @@ window.addEventListener('settingsClosed', () => { /* resume */ });
 | `blobZapper_autoPlay` | blob-zapper | Auto-play toggle |
 | `blobZapper_autoRestart` | blob-zapper | Auto-restart toggle |
 | `lastPlayed_durak` | durak | Set on session start |
+| `durak_showPlayable` | durak | Dim unplayable cards on your turn; unset = on |
 | `durak_autoPlay` | durak | Simulates matches |
 | `durak_autoPlaySpeed` | durak | Delay between auto actions |
 | `durak_autoRestart` | durak | Automatically restart |

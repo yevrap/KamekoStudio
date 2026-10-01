@@ -202,7 +202,7 @@
       // Durak
       'durak_mode', 'durak_playerCount', 'durak_difficulty',
       'durak_wins', 'durak_losses', 'durak_draws',
-      'durak_coach', 'durak_perevodnoy', 'durak_first_transfer',
+      'durak_coach', 'durak_showPlayable', 'durak_perevodnoy', 'durak_first_transfer',
       'durak_sort', 'durak_autoPlay', 'durak_autoPlaySpeed', 'durak_revealHands', 'durak_autoRestart',
       'durak_lang',
       // Durak Dungeon / Tactics
@@ -357,27 +357,20 @@
     if (!wrapper) {
       wrapper = document.createElement('div');
       wrapper.id = 'game-settings-' + entry.id;
-      wrapper.style.display = 'flex';
-      wrapper.style.flexDirection = 'column';
-      wrapper.style.gap = '12px';
+      wrapper.className = 'ks-section';
     }
     wrapper.innerHTML = '';
 
     const titleText = typeof entry.options.title === 'function' ? entry.options.title() : entry.options.title;
     if (titleText) {
       const title = document.createElement('h3');
+      title.className = 'ks-section-title';
       title.textContent = titleText;
-      title.style.margin = '0';
-      title.style.fontSize = '1.1em';
-      title.style.fontFamily = 'sans-serif';
-      title.style.color = 'rgba(255,255,255,0.85)';
       wrapper.appendChild(title);
     }
 
     const contentContainer = document.createElement('div');
-    contentContainer.style.display = 'flex';
-    contentContainer.style.flexDirection = 'column';
-    contentContainer.style.gap = '8px';
+    contentContainer.className = 'ks-section-body';
     wrapper.appendChild(contentContainer);
 
     // appendChild moves an existing wrapper to the end; iterating the
@@ -399,7 +392,81 @@
     if (body) body.scrollTop = st;
   }
 
+  // ─── Section building blocks (KamekoSettings.ui) ─────────────────────────────
+  // So every game's drawer reads the same way: rows in a grouped card, label
+  // (+ optional hint) on the left, the control on the right. A switch shows
+  // its state at a glance — use it for anything on/off rather than a button
+  // whose label flips.
+  function el(tag, cls, text) {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function rowText(label, hint) {
+    const text = el('span', 'ks-row-text');
+    text.appendChild(el('span', 'ks-row-label', label));
+    if (hint) text.appendChild(el('span', 'ks-row-hint', hint));
+    return text;
+  }
+
+  const ui = {
+    // group([row, row, …]) — a card of rows; falsy entries are skipped.
+    group: function (rows) {
+      const group = el('div', 'ks-group');
+      rows.forEach(function (row) { if (row) group.appendChild(row); });
+      return group;
+    },
+    // toggle({ label, hint?, checked, onChange(checked), id? }) — the whole
+    // row is a <label>, so a tap anywhere on it flips the switch.
+    toggle: function (opts) {
+      const row = el('label', 'ks-row ks-row-toggle');
+      row.appendChild(rowText(opts.label, opts.hint));
+      const sw = el('span', 'kameko-switch');
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = !!opts.checked;
+      if (opts.id) input.id = opts.id;
+      input.addEventListener('change', function () { opts.onChange(input.checked); });
+      sw.appendChild(input);
+      sw.appendChild(el('span', 'kameko-slider'));
+      row.appendChild(sw);
+      return row;
+    },
+    // segmented({ label, hint?, options: [{ value, label }], value, onChange(value) })
+    segmented: function (opts) {
+      const row = el('div', 'ks-row ks-row-stack');
+      row.appendChild(rowText(opts.label, opts.hint));
+      const seg = el('div', 'ks-seg');
+      seg.setAttribute('role', 'radiogroup');
+      seg.setAttribute('aria-label', opts.label);
+      function select(value) {
+        seg.querySelectorAll('.ks-seg-btn').forEach(function (b) {
+          const on = b.dataset.value === String(value);
+          b.classList.toggle('active', on);
+          b.setAttribute('aria-checked', String(on));
+        });
+      }
+      opts.options.forEach(function (o) {
+        const btn = el('button', 'ks-seg-btn', o.label);
+        btn.type = 'button';
+        btn.dataset.value = o.value;
+        btn.setAttribute('role', 'radio');
+        btn.addEventListener('click', function () {
+          select(o.value);
+          opts.onChange(o.value);
+        });
+        seg.appendChild(btn);
+      });
+      select(opts.value);
+      row.appendChild(seg);
+      return row;
+    }
+  };
+
   window.KamekoSettings = {
+    ui: ui,
     openDrawer: openSettings,
     closeDrawer: closeSettings,
     registerSection: function(id, options) {
@@ -417,85 +484,14 @@
     },
     registerWatchSection: function(gamePrefix, watchOptions) {
       this.registerSection(gamePrefix + '-watch', {
-        title: '▶ Watch Mode',
+        title: 'Watch Mode',
         render: function(container) {
           const isWatching = localStorage.getItem(gamePrefix + '_autoPlay') === 'true';
-          
-          if (watchOptions.hasSpeed !== false) {
-            const speedRow = document.createElement('div');
-            speedRow.className = 'settings-row-pair';
-            const speedVal = localStorage.getItem(gamePrefix + '_autoPlaySpeed') || 'normal';
-            ['slow', 'normal', 'fast'].forEach(function(s) {
-              const btn = document.createElement('button');
-              btn.className = 'settings-btn compact' + (speedVal === s ? ' active' : '');
-              btn.textContent = s.charAt(0).toUpperCase() + s.slice(1);
-              if (speedVal === s) btn.style.background = 'rgba(255,255,255,0.2)';
-              btn.addEventListener('click', function() {
-                localStorage.setItem(gamePrefix + '_autoPlaySpeed', s);
-                renderAllGameSections();
-              });
-              speedRow.appendChild(btn);
-            });
-            container.appendChild(speedRow);
-          }
 
-          if (watchOptions.hasRevealHands) {
-            const revealRow = document.createElement('div');
-            revealRow.className = 'settings-row';
-            revealRow.style.background = 'transparent';
-            revealRow.style.border = 'none';
-            revealRow.style.padding = '0';
-            const revealLabel = document.createElement('label');
-            revealLabel.textContent = 'Reveal all hands';
-            revealLabel.style.cursor = 'pointer';
-            const revealSwitch = document.createElement('label');
-            revealSwitch.className = 'kameko-switch';
-            const revealInput = document.createElement('input');
-            revealInput.type = 'checkbox';
-            revealInput.checked = localStorage.getItem(gamePrefix + '_revealHands') === 'true';
-            revealInput.addEventListener('change', function(e) {
-              localStorage.setItem(gamePrefix + '_revealHands', e.target.checked ? 'true' : 'false');
-            });
-            const revealSlider = document.createElement('span');
-            revealSlider.className = 'kameko-slider';
-            revealSwitch.appendChild(revealInput);
-            revealSwitch.appendChild(revealSlider);
-            revealRow.appendChild(revealLabel);
-            revealRow.appendChild(revealSwitch);
-            container.appendChild(revealRow);
-          }
-
-          // Auto-restart is opt-out: games that don't implement it (keypad-quest,
-          // river-run — no discrete game-over/restart to loop) pass hasAutoRestart:false
-          // so the drawer doesn't show a dead switch (b-26).
-          if (watchOptions.hasAutoRestart !== false) {
-            const restartRow = document.createElement('div');
-            restartRow.className = 'settings-row';
-            restartRow.style.background = 'transparent';
-            restartRow.style.border = 'none';
-            restartRow.style.padding = '0';
-            const restartLabel = document.createElement('label');
-            restartLabel.textContent = 'Auto-restart match';
-            restartLabel.style.cursor = 'pointer';
-            const restartSwitch = document.createElement('label');
-            restartSwitch.className = 'kameko-switch';
-            const restartInput = document.createElement('input');
-            restartInput.type = 'checkbox';
-            restartInput.checked = localStorage.getItem(gamePrefix + '_autoRestart') === 'true';
-            restartInput.addEventListener('change', function(e) {
-              localStorage.setItem(gamePrefix + '_autoRestart', e.target.checked ? 'true' : 'false');
-            });
-            const restartSlider = document.createElement('span');
-            restartSlider.className = 'kameko-slider';
-            restartSwitch.appendChild(restartInput);
-            restartSwitch.appendChild(restartSlider);
-            restartRow.appendChild(restartLabel);
-            restartRow.appendChild(restartSwitch);
-            container.appendChild(restartRow);
-          }
-
+          // The action comes first: while watching, Take Over is the one
+          // thing you opened the drawer for.
           const btnAction = document.createElement('button');
-          btnAction.className = isWatching ? 'settings-primary-btn' : 'settings-btn';
+          btnAction.className = isWatching ? 'settings-primary-btn' : 'settings-btn compact';
           btnAction.textContent = isWatching ? 'Take Over / Stop' : '▶ Watch';
           btnAction.addEventListener('click', function() {
             localStorage.setItem(gamePrefix + '_autoPlay', isWatching ? 'false' : 'true');
@@ -507,6 +503,47 @@
             renderAllGameSections();
           });
           container.appendChild(btnAction);
+
+          function flag(key) { return localStorage.getItem(gamePrefix + key) === 'true'; }
+          function setFlag(key) {
+            return function (on) { localStorage.setItem(gamePrefix + key, on ? 'true' : 'false'); };
+          }
+          const rows = [];
+          if (watchOptions.hasSpeed !== false) {
+            rows.push(ui.segmented({
+              label: 'Speed',
+              options: [
+                { value: 'slow', label: 'Slow' },
+                { value: 'normal', label: 'Normal' },
+                { value: 'fast', label: 'Fast' }
+              ],
+              value: localStorage.getItem(gamePrefix + '_autoPlaySpeed') || 'normal',
+              onChange: function (s) { localStorage.setItem(gamePrefix + '_autoPlaySpeed', s); }
+            }));
+          }
+          if (watchOptions.hasRevealHands) {
+            rows.push(ui.toggle({
+              label: 'Reveal all hands', checked: flag('_revealHands'), onChange: setFlag('_revealHands')
+            }));
+          }
+          // Auto-restart is opt-out: games that don't implement it (keypad-quest,
+          // river-run — no discrete game-over/restart to loop) pass hasAutoRestart:false
+          // so the drawer doesn't show a dead switch (b-26).
+          if (watchOptions.hasAutoRestart !== false) {
+            rows.push(ui.toggle({
+              label: 'Auto-restart match', checked: flag('_autoRestart'), onChange: setFlag('_autoRestart')
+            }));
+          }
+          if (!rows.length) return;
+          // Most players never watch: until they do, the options fold away.
+          if (isWatching) {
+            container.appendChild(ui.group(rows));
+          } else {
+            const more = el('details', 'ks-disclosure');
+            more.appendChild(el('summary', null, 'Watch options'));
+            more.appendChild(ui.group(rows));
+            container.appendChild(more);
+          }
         }
       });
     }

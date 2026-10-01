@@ -775,23 +775,6 @@ body:not(.dark-mode) .placement-row.is-durak .placement-rank { color: #d32f2f; }
 .count-btn { min-width: 44px; padding: 8px 0; }
 .mode-btn.active, .count-btn.active { background: #e53935; color: #fff; }
 
-/* --- Settings panel section --- */
-#durak-settings {
-  padding: 12px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-body:not(.dark-mode) #durak-settings { border-bottom-color: rgba(0,0,0,0.08); }
-#durak-settings .settings-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  margin-bottom: 8px;
-}
-#durak-settings .settings-info { font-size: 0.95rem; font-weight: 600; color: var(--text); }
-#durak-settings .settings-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
-
 /* --- Thinking pulse --- */
 .status-thinking { animation: pulse 1s ease-in-out infinite; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }

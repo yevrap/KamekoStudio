@@ -935,6 +935,7 @@ async function durakStart(page, mode, count, table) {
   await page.evaluate(() => {
     localStorage.setItem('durak_perevodnoy', 'false');
     localStorage.setItem('durak_difficulty', 'normal');
+    localStorage.removeItem('durak_showPlayable');   // the default: dimming on
   });
   await page.click('#mode-toggle [data-mode="' + mode + '"]');
   await page.click('#count-toggle [data-count="' + count + '"]');
@@ -997,6 +998,31 @@ await test('durak: defender out of cards — your dead throw-in is dimmed and Pa
   assert(sawForced.dimmed.includes('72'), '7♣ was not dimmed while unplayable: ' + JSON.stringify(sawForced.dimmed));
   assert(s.discard === 2 && s.attacks === 0, 'bout never closed on its own: ' + JSON.stringify(s));
   assert(s.priority === 1, 'defender should lead the next bout, priority is seat ' + s.priority);
+});
+
+await test('durak: "Show playable cards" is on by default and the drawer switch turns the dimming off (p1-54)', async page => {
+  // You attacked 7♠, it was beaten; 7♣ can be thrown on, 9♥ can't.
+  await durakStart(page, 'ai', 2, {
+    deck: [[6, 3], [8, 3], [11, 3], [12, 3], [13, 3], [14, 3]],
+    attacker: 0, defender: 1, priority: 0, attacks: [[7, 1]], defenses: [[10, 1]],
+    hands: [[[7, 2], [9, 3]], [[11, 2], [12, 2], [13, 2]]]
+  });
+  let s = await durakState(page);
+  assert(JSON.stringify(s.dimmed) === '["93"]', 'by default only 9♥ should be dimmed: ' + JSON.stringify(s.dimmed));
+
+  await page.click('#settings-hamburger-btn');
+  await sleep(400);
+  const before = await page.$eval('#durak-show-playable', i => i.checked);
+  assert(before === true, 'drawer switch should start on');
+  await page.evaluate(() => document.getElementById('durak-show-playable').closest('label').click());
+  await page.click('#settings-close-btn');
+  await sleep(400);
+
+  s = await durakState(page);
+  assert(s.dimmed.length === 0, 'dimming still on after switching it off: ' + JSON.stringify(s.dimmed));
+  assert(s.priority === 0, 'still your turn, priority is seat ' + s.priority);
+  const saved = await page.evaluate(() => localStorage.getItem('durak_showPlayable'));
+  assert(saved === 'false', 'the choice should persist, got ' + saved);
 });
 
 await test('durak: hot-seat skips the pass-device cover for a forced pass', async page => {

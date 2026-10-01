@@ -360,11 +360,13 @@ function renderHumanHand() {
   var hand = sortedHandForDisplay(p.hand);
   var yourTurn = state.prioritySeat === viewer &&
                  (state.phase === 'playing' || state.phase === 'pileOn');
+  // ☰ → Play Aids → Show playable cards; on unless switched off.
+  var dimUnplayable = yourTurn && localStorage.getItem('durak_showPlayable') !== 'false';
   var sel = activeSelection();
   for (var i = 0; i < hand.length; i++) {
     var el = createCardEl(hand[i], 'hand');
     el.dataset.seat = viewer;
-    if (yourTurn && !cardPlayable(viewer, hand[i])) el.classList.add('unplayable');
+    if (dimUnplayable && !cardPlayable(viewer, hand[i])) el.classList.add('unplayable');
     if (sel && hand[i].id === sel.cardId) el.classList.add('selected');
     $humanHand.appendChild(el);
   }

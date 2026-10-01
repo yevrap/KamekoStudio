@@ -48,6 +48,8 @@
 
 /* ─── Drawer Panel ─── */
 #settings-panel {
+  /* One accent for every "on / selected / focused" state in the drawer. */
+  --ks-accent: #6366f1;
   background: #1a1a2e;
   color: white;
   width: 320px; /* Fixed width drawer */
@@ -133,7 +135,7 @@
 #settings-game-section {
   display: none; /* Hidden unless a game injects content */
   flex-direction: column;
-  gap: 12px;
+  gap: 22px;
   padding-bottom: 20px;
   border-bottom: 1px solid rgba(255,255,255,0.1);
   margin-bottom: 4px;
@@ -141,6 +143,157 @@
 
 #settings-game-section:not(:empty) {
   display: flex;
+}
+
+/* ─── Game sections and their controls (KamekoSettings.ui) ───
+   A section is a small caps heading over its controls; on/off and
+   pick-one settings sit as rows in a grouped card, label left, control
+   right, with an optional one-line hint under the label. */
+.ks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ks-section-title {
+  margin: 0 0 0 4px;
+  font: 600 0.75em/1.2 system-ui, -apple-system, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+
+.ks-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ks-group {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.ks-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  min-height: 52px;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #fff;
+}
+
+.ks-row + .ks-row {
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* The whole toggle row is the tap target, not just the switch. */
+.ks-row-toggle {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+@media (hover: hover) {
+  .ks-row-toggle:hover { background: rgba(255,255,255,0.04); }
+}
+
+.ks-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ks-row-label {
+  font-size: 0.98em;
+  line-height: 1.25;
+}
+
+.ks-row-hint {
+  font-size: 0.8em;
+  line-height: 1.3;
+  color: rgba(255,255,255,0.55);
+}
+
+/* Pick-one rows stack: label on top, the full-width segmented control under it. */
+.ks-row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.ks-seg {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 10px;
+}
+
+.ks-seg-btn {
+  /* Widths follow the labels, so a long word (Нормально) takes the room it needs. */
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255,255,255,0.72);
+  font: 600 0.92em system-ui, -apple-system, sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s, color 0.15s;
+}
+
+@media (hover: hover) {
+  .ks-seg-btn:not(.active):hover { background: rgba(255,255,255,0.08); color: #fff; }
+}
+
+.ks-seg-btn.active {
+  background: var(--ks-accent);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
+}
+
+/* Folded options under a section's main control. */
+.ks-disclosure summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 6px 4px;
+  font: 0.88em system-ui, -apple-system, sans-serif;
+  color: rgba(255,255,255,0.6);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ks-disclosure summary::-webkit-details-marker { display: none; }
+.ks-disclosure summary::after { content: ' ▸'; font-size: 0.85em; }
+.ks-disclosure[open] summary::after { content: ' ▾'; }
+.ks-disclosure[open] summary { margin-bottom: 6px; }
+
+/* Keyboard focus is visible on laptops; taps never show a ring. */
+#settings-panel button:focus-visible,
+#settings-panel a:focus-visible,
+#settings-panel select:focus-visible,
+#settings-panel summary:focus-visible,
+#settings-panel .kameko-switch input:focus-visible + .kameko-slider {
+  outline: 2px solid var(--ks-accent);
+  outline-offset: 2px;
+}
+
+#settings-panel .kameko-switch input:checked + .kameko-slider {
+  background-color: var(--ks-accent);
 }
 
 /* ─── Arcade Cluster ─── */
@@ -330,6 +483,20 @@
 
 .settings-danger-btn:hover {
   background: #b91c1c;
+}
+
+/* A destructive action that isn't the point of the drawer: outlined, not filled. */
+.settings-danger-btn.quiet {
+  background: transparent;
+  color: #fca5a5;
+  border: 1px solid rgba(239,68,68,0.55);
+  font-weight: 600;
+  text-align: center;
+  min-height: 48px;
+}
+
+.settings-danger-btn.quiet:hover {
+  background: rgba(239,68,68,0.15);
 }
 
 /* ─── Toggle Switch ─── */

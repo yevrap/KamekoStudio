@@ -466,21 +466,25 @@ $btnReplay.addEventListener('pointerdown', function (e) {
 
 function injectDurakSettings() {
   if (!window.KamekoSettings) return;
+  var ui = window.KamekoSettings.ui;
+  function inMatch() { return state.phase !== 'start' && state.phase !== 'gameover'; }
 
   window.KamekoSettings.registerSection('durak-quick-actions', {
-    title: function() { return t('set.quickActions'); },
     render: function(container) {
+      var pair = document.createElement('div');
+      pair.className = 'settings-row-pair';
+
       var btnRules = document.createElement('button');
-      btnRules.className = 'settings-btn';
-      btnRules.textContent = t('act.rules');
+      btnRules.className = 'settings-btn compact';
+      btnRules.textContent = t('act.rulesShort');
       btnRules.addEventListener('click', function() {
         window.KamekoSettings.closeDrawer();
         window.$rulesOverlay.classList.remove('hidden');
       });
-      container.appendChild(btnRules);
+      pair.appendChild(btnRules);
 
       var btnLog = document.createElement('button');
-      btnLog.className = 'settings-btn';
+      btnLog.className = 'settings-btn compact';
       btnLog.textContent = t('act.log');
       btnLog.addEventListener('click', function() {
         window.KamekoSettings.closeDrawer();
@@ -499,133 +503,95 @@ function injectDurakSettings() {
           window.$logOverlay.classList.remove('hidden');
         });
       });
-      container.appendChild(btnLog);
+      pair.appendChild(btnLog);
 
-      // Coach hints: quick action, not a settings toggle (drawer-UX Q5).
-      var btnCoach = document.createElement('button');
-      btnCoach.className = 'settings-btn';
-      function coachLabel() {
-        return localStorage.getItem('durak_coach') === 'true' ? t('act.coachOff') : t('act.coachOn');
-      }
-      btnCoach.textContent = coachLabel();
-      btnCoach.addEventListener('click', function() {
-        var on = localStorage.getItem('durak_coach') === 'true';
-        localStorage.setItem('durak_coach', on ? 'false' : 'true');
-        btnCoach.textContent = coachLabel();
-        renderAll();
-      });
-      container.appendChild(btnCoach);
+      container.appendChild(pair);
+    }
+  });
 
-      // Language — persistent preference, not match-scoped, so it lives in
-      // this always-visible section (tysiacha's set-lang placement).
-      var langRow = document.createElement('div');
-      langRow.className = 'settings-row';
-      var langLabel = document.createElement('label');
-      langLabel.textContent = 'Language / Язык';
-      var langSelect = document.createElement('select');
-      langSelect.style.cssText = 'background:rgba(255,255,255,0.1); color:#fff; border:1px solid rgba(255,255,255,0.25); border-radius:8px; padding:6px 10px; font-size:0.9em;';
-      ['en', 'ru'].forEach(function(l) {
-        var opt = document.createElement('option');
-        opt.value = l;
-        opt.textContent = l === 'en' ? 'English' : 'Русский';
-        langSelect.appendChild(opt);
-      });
-      langSelect.value = getLang();
-      langSelect.addEventListener('change', function() {
-        setLang(langSelect.value);
-        refreshDefaultPlayerNames();
-        localizeStatic();
-        renderAll();
-        if (state.phase === 'gameover') showGameOver(state.winnerOutcome, getMatchStats());
-        injectDurakSettings();
-      });
-      langRow.appendChild(langLabel);
-      langRow.appendChild(langSelect);
-      container.appendChild(langRow);
+  // Aids you flip mid-game sit right under the quick actions (drawer-UX Q5),
+  // as switches so their state shows at a glance.
+  window.KamekoSettings.registerSection('durak-aids', {
+    title: function() { return t('set.aids'); },
+    render: function(container) {
+      container.appendChild(ui.group([
+        ui.toggle({
+          id: 'durak-show-playable',
+          label: t('set.showPlayable'), hint: t('set.showPlayableHint'),
+          checked: localStorage.getItem('durak_showPlayable') !== 'false',
+          onChange: function(on) {
+            localStorage.setItem('durak_showPlayable', on ? 'true' : 'false');
+            renderAll();
+          }
+        }),
+        ui.toggle({
+          id: 'durak-coach',
+          label: t('set.coach'), hint: t('set.coachHint'),
+          checked: localStorage.getItem('durak_coach') === 'true',
+          onChange: function(on) {
+            localStorage.setItem('durak_coach', on ? 'true' : 'false');
+            renderAll();
+          }
+        })
+      ]));
+    }
+  });
+
+  // Persisted preferences. Mode, players and rules are match-scoped and live
+  // on the setup screen (drawer-UX p1-18); AI difficulty shows only during a
+  // match against the computer.
+  window.KamekoSettings.registerSection('durak-settings', {
+    title: function() { return t('set.title'); },
+    render: function(container) {
+      container.appendChild(ui.group([
+        ui.segmented({
+          label: t('set.handSort'),
+          options: [
+            { value: 'none', label: t('set.sortOff') },
+            { value: 'suit', label: t('set.sortSuit') },
+            { value: 'strength', label: t('set.sortStrength') }
+          ],
+          value: localStorage.getItem('durak_sort') || 'none',
+          onChange: function(mode) {
+            localStorage.setItem('durak_sort', mode);
+            renderAll();
+          }
+        }),
+        (state.mode === 'ai' && inMatch()) ? ui.segmented({
+          label: t('set.aiDifficulty'),
+          options: [
+            { value: 'easy', label: t('set.diffEasy') },
+            { value: 'normal', label: t('set.diffNormal') },
+            { value: 'hard', label: t('set.diffHard') }
+          ],
+          value: localStorage.getItem('durak_difficulty') || 'normal',
+          onChange: function(d) { localStorage.setItem('durak_difficulty', d); }
+        }) : null,
+        // Bilingual label so it can be found from either language.
+        ui.segmented({
+          label: 'Language / Язык',
+          options: [{ value: 'en', label: 'English' }, { value: 'ru', label: 'Русский' }],
+          value: getLang(),
+          onChange: function(lang) {
+            setLang(lang);
+            refreshDefaultPlayerNames();
+            localizeStatic();
+            renderAll();
+            if (state.phase === 'gameover') showGameOver(state.winnerOutcome, getMatchStats());
+            injectDurakSettings();
+          }
+        })
+      ]));
     }
   });
 
   window.KamekoSettings.registerWatchSection('durak', { hasRevealHands: true });
 
-  // Match-scoped section: only rendered while a round is actually underway.
-  // On the start menu there is no current match — mode/players/rules live on
-  // the setup screen itself (drawer-UX p1-18).
-  window.KamekoSettings.registerSection('durak', {
-    title: function() {
-      return t('setup.matchTitle', state.mode, state.playerCount);
-    },
-    when: function() {
-      return state.phase !== 'start' && state.phase !== 'gameover';
-    },
+  window.KamekoSettings.registerSection('durak-end-round', {
+    when: inMatch,
     render: function(container) {
-      if (state.mode === 'ai') {
-        var diffLabel = document.createElement('div');
-        diffLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin-bottom:6px;';
-        diffLabel.textContent = t('set.aiDifficulty');
-        container.appendChild(diffLabel);
-
-        var diffToggle = document.createElement('div');
-        diffToggle.className = 'mode-toggle';
-        var diffs = ['easy', 'normal', 'hard'];
-        var diffNames = [t('set.diffEasy'), t('set.diffNormal'), t('set.diffHard')];
-        var currentDiff = localStorage.getItem('durak_difficulty') || 'normal';
-
-        for (var i = 0; i < diffs.length; i++) {
-          (function(d, name) {
-            var btn = document.createElement('button');
-            btn.className = 'mode-btn' + (currentDiff === d ? ' active' : '');
-            btn.type = 'button';
-            btn.dataset.diff = d;
-            btn.textContent = name;
-            btn.addEventListener('click', function(e) {
-              e.preventDefault();
-              localStorage.setItem('durak_difficulty', d);
-              var btns = diffToggle.querySelectorAll('.mode-btn');
-              for (var j = 0; j < btns.length; j++) {
-                btns[j].classList.toggle('active', btns[j].dataset.diff === d);
-              }
-            });
-            diffToggle.appendChild(btn);
-          })(diffs[i], diffNames[i]);
-        }
-        container.appendChild(diffToggle);
-      }
-
-      var sortLabel = document.createElement('div');
-      sortLabel.style.cssText = 'font-size:0.7em;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;font-family:sans-serif;margin:12px 0 6px;';
-      sortLabel.textContent = t('set.handSort');
-      container.appendChild(sortLabel);
-
-      var sortToggle = document.createElement('div');
-      sortToggle.className = 'mode-toggle';
-      var sorts = ['none', 'suit', 'strength'];
-      var sortNames = [t('set.sortOff'), t('set.sortSuit'), t('set.sortStrength')];
-      var currentSort = localStorage.getItem('durak_sort') || 'none';
-
-      for (var s = 0; s < sorts.length; s++) {
-        (function(mode, name) {
-          var btn = document.createElement('button');
-          btn.className = 'mode-btn' + (currentSort === mode ? ' active' : '');
-          btn.type = 'button';
-          btn.dataset.sort = mode;
-          btn.textContent = name;
-          btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            localStorage.setItem('durak_sort', mode);
-            var btns = sortToggle.querySelectorAll('.mode-btn');
-            for (var j = 0; j < btns.length; j++) {
-              btns[j].classList.toggle('active', btns[j].dataset.sort === mode);
-            }
-            renderAll();
-          });
-          sortToggle.appendChild(btn);
-        })(sorts[s], sortNames[s]);
-      }
-      container.appendChild(sortToggle);
-
       var btnEnd = document.createElement('button');
-      btnEnd.className = 'settings-danger-btn';
-      btnEnd.style.marginTop = '12px';
+      btnEnd.className = 'settings-danger-btn quiet';
       btnEnd.textContent = t('act.endRound');
       btnEnd.addEventListener('click', function(e) {
         e.preventDefault();

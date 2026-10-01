@@ -103,7 +103,6 @@ const EN = {
   'setup.modeLabel': 'Mode', 'setup.playersLabel': 'Players', 'setup.rulesLabel': 'Rules',
   'setup.play': '▶ Play', 'setup.watch': '▶ Watch',
   'setup.editNames': '✎ Edit Names',
-  'setup.matchTitle': (mode, n) => `Current Match: ${modeStr(mode)} (${n} players)`,
 
   'title': 'DURAK',
   'subtitle': 'Classic Russian card game, 2–6 players',
@@ -119,11 +118,15 @@ const EN = {
   'names.seat': n => `Seat ${n}`,
   'names.subtitle': (mode, n) => `${modeStr(mode)} — ${n} players`,
 
-  'act.rules': '❓ Rules of Durak', 'act.log': '📜 Game Log',
-  'act.coachOn': '🧭 Turn on Coach Hints', 'act.coachOff': '🧭 Turn off Coach Hints',
+  'act.rules': '❓ Rules of Durak', 'act.log': '📜 Game Log', 'act.rulesShort': '❓ Rules',
   'act.endRound': 'End round & back to menu',
 
-  'set.quickActions': 'Quick Actions',
+  'set.aids': 'Play Aids',
+  'set.showPlayable': 'Show playable cards',
+  'set.showPlayableHint': 'On your turn, cards you can’t play are dimmed',
+  'set.coach': 'Coach hints',
+  'set.coachHint': 'A banner suggests a move on your turn',
+  'set.title': 'Game Settings',
   'set.aiDifficulty': 'AI Difficulty',
   'set.diffEasy': 'Easy', 'set.diffNormal': 'Normal', 'set.diffHard': 'Hard',
   'set.handSort': 'Hand Sort',
@@ -186,7 +189,6 @@ const RU = {
   'setup.modeLabel': 'Режим', 'setup.playersLabel': 'Игроки', 'setup.rulesLabel': 'Правила',
   'setup.play': '▶ Играть', 'setup.watch': '▶ Смотреть',
   'setup.editNames': '✎ Изменить имена',
-  'setup.matchTitle': (mode, n) => `Текущая партия: ${modeStr(mode)} (${n} ${ruPlayerWord(n)})`,
 
   'title': 'ДУРАК',
   'subtitle': 'Классическая русская карточная игра, 2–6 игроков',
@@ -202,11 +204,15 @@ const RU = {
   'names.seat': n => `Место ${n}`,
   'names.subtitle': (mode, n) => `${modeStr(mode)} — ${n} ${ruPlayerWord(n)}`,
 
-  'act.rules': '❓ Правила Дурака', 'act.log': '📜 Журнал игры',
-  'act.coachOn': '🧭 Включить подсказки', 'act.coachOff': '🧭 Выключить подсказки',
+  'act.rules': '❓ Правила Дурака', 'act.log': '📜 Журнал игры', 'act.rulesShort': '❓ Правила',
   'act.endRound': 'Завершить раунд и вернуться в меню',
 
-  'set.quickActions': 'Быстрые действия',
+  'set.aids': 'Помощь в игре',
+  'set.showPlayable': 'Показывать доступные карты',
+  'set.showPlayableHint': 'В ваш ход карты, которыми нельзя сыграть, затемнены',
+  'set.coach': 'Подсказки тренера',
+  'set.coachHint': 'Подсказывает ход, когда ваша очередь',
+  'set.title': 'Настройки игры',
   'set.aiDifficulty': 'Сила соперников',
   'set.diffEasy': 'Легко', 'set.diffNormal': 'Нормально', 'set.diffHard': 'Сложно',
   'set.handSort': 'Сортировка руки',

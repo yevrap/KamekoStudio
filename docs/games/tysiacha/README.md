@@ -36,7 +36,7 @@ A 3-player trick-taking card game from the Russian/Belarusian card canon — the
 
 Everything match-scoped lives on a **New Match screen**, not in the drawer (same pattern as durak's start screen; your questionnaire pick Q1=A). The game boots to this screen — no more auto-spending a token on page load. It holds **player names** (rename any seat, persists), **target score**, and the classic rules below. The Play button is honest about cost: `▶ Play · 1 🪙` when starting fresh; changing rules mid-session restarts **free** (Q2=A). The ↺ button and the drawer's "🔁 New match / rules…" quick action both open it. Match settings persist across reloads now (they used to silently reset).
 
-The ☰ drawer keeps only instant, persisted settings — language, AI difficulty, sound, 1-tap play — plus quick actions (rules, coach, new match) and the shared arcade chrome (game switcher, tokens, theme).
+The ☰ drawer keeps only instant, persisted settings — language, AI difficulty, sound, 1-tap play — plus quick actions (rules, new match) and a Coach hints switch (a switch since 2026-10-01, p1-54 — same control as Durak's) and the shared arcade chrome (game switcher, tokens, theme).
 
 ## Watch Mode (unified 2026-07-12 — Settings & Automation Cleanup Sprint 3)
 

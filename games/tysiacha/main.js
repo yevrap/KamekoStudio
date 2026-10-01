@@ -106,22 +106,25 @@ function injectTysiachaSettings() {
         render: function(container) {
             container.innerHTML = `
                 <button class="settings-btn" id="drawer-btn-rules">❓ ${t('howto.title')}</button>
-                <button class="settings-btn" id="drawer-btn-coach">${state.coach ? t('set.coachOff') : t('set.coachOn')}</button>
                 <button class="settings-btn" id="drawer-btn-new-match">${t('set.newMatch')}</button>
             `;
             $('drawer-btn-rules').onclick = () => {
                 window.KamekoSettings.closeDrawer();
                 showHowto();
             };
-            $('drawer-btn-coach').onclick = () => {
-                state.coach = !state.coach;
-                render();
-                $('drawer-btn-coach').textContent = state.coach ? t('set.coachOff') : t('set.coachOn');
-            };
             $('drawer-btn-new-match').onclick = () => {
                 window.KamekoSettings.closeDrawer();
                 showSetup();
             };
+            // A switch, like Durak's, so its state shows at a glance (drawer-UX Q5).
+            container.appendChild(window.KamekoSettings.ui.group([
+                window.KamekoSettings.ui.toggle({
+                    id: 'drawer-coach',
+                    label: t('set.coach'), hint: t('set.coachHint'),
+                    checked: state.coach,
+                    onChange: on => { state.coach = on; render(); }
+                })
+            ]));
         }
     });
 
