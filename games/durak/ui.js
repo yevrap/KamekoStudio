@@ -17,6 +17,7 @@ var $app, $opponents, $field, $humanHand, $humanOptions,
     $startOverlay, $gameoverOverlay, $winnerText, $gameoverStats,
     $passDeviceOverlay, $passDeviceName, $pileBanner,
     $btnTake, $btnPass, $btnDone, $waitSpinner,
+    $choiceBar, $btnChoiceTransfer, $btnChoiceBeat, $choiceHint,
     $deckStack, $trumpSlot,
     $tableCenter, $fieldWatermark;
 
@@ -42,6 +43,10 @@ export function cacheDom() {
   $btnPass           = document.getElementById('btn-pass');
   $btnDone           = document.getElementById('btn-done');
   $waitSpinner       = document.getElementById('wait-spinner');
+  $choiceBar         = document.getElementById('choice-bar');
+  $btnChoiceTransfer = document.getElementById('btn-choice-transfer');
+  $btnChoiceBeat     = document.getElementById('btn-choice-beat');
+  $choiceHint        = document.getElementById('choice-hint');
   $deckStack         = document.getElementById('deck-stack');
   $trumpSlot         = document.getElementById('trump-slot');
   $tableCenter       = document.getElementById('table-center');
@@ -295,11 +300,17 @@ function renderField() {
       $fieldWatermark.innerHTML = '';
     }
   }
+  var sel = activeSelection();
   for (var i = 0; i < n; i++) {
     var pair = document.createElement('div');
     pair.className = 'field-pair';
     var atkEl = createCardEl(attacks[i], 'field');
     atkEl.classList.add('field-card');
+    if (sel && sel.targets.length > 1 && sel.targets.indexOf(i) !== -1) {
+      pair.classList.add('is-target');
+      pair.dataset.attackIndex = i;
+      atkEl.classList.add('target');
+    }
     atkEl.style.removeProperty('--fan-angle');
     atkEl.style.removeProperty('--fan-lift');
     pair.appendChild(atkEl);
@@ -349,10 +360,12 @@ function renderHumanHand() {
   var hand = sortedHandForDisplay(p.hand);
   var yourTurn = state.prioritySeat === viewer &&
                  (state.phase === 'playing' || state.phase === 'pileOn');
+  var sel = activeSelection();
   for (var i = 0; i < hand.length; i++) {
     var el = createCardEl(hand[i], 'hand');
     el.dataset.seat = viewer;
     if (yourTurn && !cardPlayable(viewer, hand[i])) el.classList.add('unplayable');
+    if (sel && hand[i].id === sel.cardId) el.classList.add('selected');
     $humanHand.appendChild(el);
   }
   var cards = $humanHand.querySelectorAll('.card-btn');
@@ -365,6 +378,27 @@ function renderHumanHand() {
     cards[j].style.setProperty('--fan-angle', angle.toFixed(2) + 'deg');
     cards[j].style.setProperty('--fan-lift', lift.toFixed(2) + 'px');
   }
+}
+
+// ── Defense choice (selected card) ─────────────────────────────────────────
+
+// The selection main.js set for a dual-purpose or multi-target defense card,
+// while it still belongs to the seat on screen and that seat's turn.
+function activeSelection() {
+  var sel = state.selection;
+  if (!sel || state.phase !== 'playing') return null;
+  var viewer = currentViewerSeat();
+  if (sel.seat !== viewer || state.prioritySeat !== viewer) return null;
+  return sel;
+}
+
+function renderChoiceBar() {
+  var sel = activeSelection();
+  $choiceBar.classList.toggle('hidden', !sel);
+  if (!sel) return;
+  $btnChoiceTransfer.classList.toggle('hidden', !sel.transfer);
+  $btnChoiceBeat.classList.toggle('hidden', sel.targets.length !== 1);
+  $choiceHint.classList.toggle('hidden', sel.targets.length < 2);
 }
 
 // ── Action buttons ─────────────────────────────────────────────────────────
@@ -575,6 +609,7 @@ export function renderAll() {
   renderDiscard();
   renderField();
   renderHumanHand();
+  renderChoiceBar();
   updateActionButtons();
   updatePileBanner();
 
@@ -668,7 +703,7 @@ export function localizeStatic() {
 
   setText('btn-choice-transfer', t('choice.transfer'));
   setText('btn-choice-beat', t('choice.beat'));
-  setText('choice-hint', t('choice.hint'));
+  setText('choice-hint', t('choice.pickTarget'));
 
   setText('btn-replay', t('gameover.playAgain'));
 
@@ -691,8 +726,6 @@ export function hideOverlays() {
   if ($passDeviceOverlay) $passDeviceOverlay.classList.add('hidden');
   var namesOverlay = document.getElementById('names-overlay');
   if (namesOverlay) namesOverlay.classList.add('hidden');
-  var choiceOverlay = document.getElementById('choice-overlay');
-  if (choiceOverlay) choiceOverlay.classList.add('hidden');
 }
 
 function renderPlacements() {

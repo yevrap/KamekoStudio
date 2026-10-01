@@ -945,15 +945,17 @@ async function durakStart(page, mode, count, table) {
     const { state } = await import('/games/durak/state.js');
     const { Card } = await import('/games/durak/constants.js');
     const { renderAll } = await import('/games/durak/ui.js');
-    const cards = list => list.map(([v, s]) => new Card(v, s));
+    const cards = list => list.map(c => c && new Card(c[0], c[1]));   // null = an open slot
     state.trumpSuit = 4;
     state.deck = cards(t.deck);
     state.attackerSeat = t.attacker; state.defenderSeat = t.defender; state.prioritySeat = t.priority;
     state.field.attacks = cards(t.attacks); state.field.defenses = cards(t.defenses);
     state.contributionOrder = t.attacks.length ? [t.attacker] : [];
     t.hands.forEach((h, i) => { state.players[i].hand = cards(h); });
+    Object.assign(state, t.extra || {});
     renderAll();
   }, table);
+  await sleep(450);   // let the cards finish their FLIP slide, or a tap can land on a neighbour
 }
 
 const durakState = page => page.evaluate(async () => {
@@ -961,6 +963,14 @@ const durakState = page => page.evaluate(async () => {
   return {
     phase: state.phase, priority: state.prioritySeat, attacks: state.field.attacks.length,
     discard: state.discard.length, reveal: state.pendingReveal && state.pendingReveal.seat,
+    defenses: state.field.defenses.map(d => d && d.id), defender: state.defenderSeat,
+    selected: [...document.querySelectorAll('#human-hand .card-btn.selected')].map(b => b.dataset.cardId),
+    targets: [...document.querySelectorAll('#field .field-pair.is-target')].map(p => +p.dataset.attackIndex),
+    bar: document.getElementById('choice-bar').classList.contains('hidden') ? null : {
+      transfer: !document.getElementById('btn-choice-transfer').classList.contains('hidden'),
+      beat: !document.getElementById('btn-choice-beat').classList.contains('hidden'),
+      hint: !document.getElementById('choice-hint').classList.contains('hidden')
+    },
     status: document.getElementById('status-display').textContent,
     passHidden: document.getElementById('btn-pass').classList.contains('hidden'),
     dimmed: [...document.querySelectorAll('#human-hand .card-btn.unplayable')].map(b => b.dataset.cardId)
@@ -1005,6 +1015,59 @@ await test('durak: hot-seat skips the pass-device cover for a forced pass', asyn
   const s = await durakState(page);
   assert(s.discard === 2, 'bout did not close after the forced pass: ' + JSON.stringify(s));
   assert(s.phase === 'passDevice' && s.reveal === 1, 'cover should be for seat 1 (next leader), got ' + JSON.stringify(s));
+});
+
+// ── Durak: defense choices inline (p1-23) and tap-to-target (p1-22) ─────────
+
+await test('durak: a card that can transfer or beat opens the inline bar, not a modal (p1-23)', async page => {
+  // CPU 2 attacks you with 6♠. Your 6♥ is trump: it can beat the 6♠ or transfer it on.
+  await durakStart(page, 'ai', 3, {
+    deck: [[6, 3], [8, 3], [11, 3], [12, 3], [13, 3], [14, 3]],
+    attacker: 2, defender: 0, priority: 0, attacks: [[6, 1]], defenses: [null],
+    hands: [[[6, 4], [9, 3]], [[7, 1], [8, 1], [12, 2]], [[13, 1]]],
+    extra: { variantPerevodnoy: true, attacksThisGame: 5 }
+  });
+  assert(!(await page.$('#choice-overlay')), 'the old choice modal is still in the page');
+  await page.click('#human-hand .card-btn[data-card-id="64"]');
+  let s = await durakState(page);
+  assert(s.bar && s.bar.transfer && s.bar.beat && !s.bar.hint, 'expected Transfer + Beat in the bar: ' + JSON.stringify(s.bar));
+  assert(s.selected.includes('64') && s.defenses[0] === null, 'card should be selected, not played: ' + JSON.stringify(s));
+  await page.click('#human-hand .card-btn[data-card-id="64"]');           // tap again: cancel
+  s = await durakState(page);
+  assert(!s.bar && !s.selected.length, 'tapping the selected card again did not cancel');
+  await page.click('#human-hand .card-btn[data-card-id="64"]');
+  await page.click('#opponents');                                          // tap elsewhere: cancel
+  s = await durakState(page);
+  assert(!s.bar && !s.selected.length, 'tapping elsewhere did not cancel');
+  await page.click('#human-hand .card-btn[data-card-id="64"]');
+  await page.click('#btn-choice-beat');
+  s = await durakState(page);
+  assert(s.defenses[0] === '64' && !s.bar, 'Beat did not cover the attack: ' + JSON.stringify(s));
+});
+
+await test('durak: with 2 open attacks, tap a card then the attack it covers; unambiguous taps still play at once (p1-22)', async page => {
+  // After a transfer you face 6♠ and 6♣. 7♥ (trump) beats both — you choose; 8♣ beats only 6♣.
+  const table = {
+    deck: [[6, 3], [8, 3], [11, 3], [12, 3], [13, 3], [14, 3]],
+    attacker: 2, defender: 0, priority: 0, attacks: [[6, 1], [6, 2]], defenses: [null, null],
+    hands: [[[7, 4], [8, 2], [10, 1], [12, 3]], [[7, 1], [9, 1], [12, 2]], [[13, 1], [11, 1]]]
+  };
+  await durakStart(page, 'ai', 3, table);
+  await page.click('#human-hand .card-btn[data-card-id="74"]');
+  let s = await durakState(page);
+  assert(JSON.stringify(s.targets) === '[0,1]', 'both attacks should glow as targets: ' + JSON.stringify(s.targets));
+  assert(s.bar && s.bar.hint && !s.bar.beat && !s.bar.transfer, 'expected only the pick-an-attack hint: ' + JSON.stringify(s.bar));
+  await page.click('#field .field-pair.is-target[data-attack-index="1"]');
+  s = await durakState(page);
+  assert(s.defenses[0] === null && s.defenses[1] === '74', '7♥ should cover the tapped 2nd attack: ' + JSON.stringify(s.defenses));
+  await page.click('#human-hand .card-btn[data-card-id="101"]');        // one attack left: instant
+  s = await durakState(page);
+  assert(s.defenses[0] === '101', 'single open attack: the tap should play at once: ' + JSON.stringify(s.defenses));
+
+  await durakStart(page, 'ai', 3, table);
+  await page.click('#human-hand .card-btn[data-card-id="82"]');         // 2 open, but 8♣ fits only 6♣
+  s = await durakState(page);
+  assert(s.defenses[1] === '82' && !s.bar, 'a card with one possible target should play at once: ' + JSON.stringify(s));
 });
 
 await browser.close();

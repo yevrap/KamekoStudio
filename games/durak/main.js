@@ -2,9 +2,7 @@
 // MAIN — event wiring, start/restart, settings integration, tick orchestration
 // ═══════════════════════════════════════════════════════════════════════════
 
-import { state, newGame, getPlayer, isTrump } from './state.js';
-import { suitName } from './constants.js';
-import { buildCardFaceSvg } from './cards.js';
+import { state, newGame, getPlayer } from './state.js';
 import {
   renderAll, hideOverlays, showGameOver, cacheDom,
   showPassDevice, hidePassDevice, localizeStatic
@@ -12,7 +10,7 @@ import {
 import {
   playAttack, playDefense, passAttack, declareTake,
   pileOnPass, checkGameOver, dealInitial, legalDefense, legalAttack, getMatchStats,
-  legalTransfer, playTransfer, forcedAction, playForcedAction
+  legalTransfer, playTransfer, forcedAction, playForcedAction, defenseTargets
 } from './gameplay.js';
 import { scheduleAiAction, scheduleForcedAction, clearAiTimeout } from './ai.js';
 import { t, getLang, setLang, defaultPlayerName } from './i18n.js';
@@ -208,6 +206,7 @@ function refreshDefaultPlayerNames() {
 // ── Tick ───────────────────────────────────────────────────────────────────
 
 function tick() {
+  state.selection = null;
   renderAll();
   if (checkGameOver()) {
     clearAiTimeout();
@@ -215,7 +214,7 @@ function tick() {
     renderAll();
     if (localStorage.getItem('durak_autoRestart') === 'true') {
       setTimeout(function() {
-        if (state.phase === 'gameover') spendTokenAndStart();
+        if (state.phase === 'gameover') startMatch();
       }, 2500);
     }
     return;
@@ -273,7 +272,6 @@ $passOverlay.addEventListener('pointerdown', function (e) {
 function abortDurakAutoPlay() {
   if (localStorage.getItem('durak_autoPlay') === 'true') {
     localStorage.setItem('durak_autoPlay', 'false');
-    if (window.KamekoSettings) window.KamekoSettings.openDrawer = window.KamekoSettings.openDrawer;
   }
 }
 
@@ -335,14 +333,10 @@ $humanHand.addEventListener('pointerup', function (e) {
 
   var ok = false;
   if (seat === state.defenderSeat && state.phase === 'playing') {
-    var canTransfer = legalTransfer(seat, card);
-    var canBeatIt = legalDefense(seat, card);
-    if (canTransfer && canBeatIt) { showChoice(seat, card); return; }
-    if (canTransfer) {
-      ok = playTransfer(seat, start.cardId);
-    } else if (canBeatIt) {
-      ok = playDefense(seat, start.cardId);
-    }
+    var reselect = !state.selection || state.selection.cardId !== card.id;
+    state.selection = null;
+    if (!reselect) { renderAll(); return; }   // tapping the selected card again cancels
+    ok = playOrSelectDefense(seat, card);
   } else if (legalAttack(seat, card)) {
     ok = playAttack(seat, start.cardId);
   }
@@ -353,56 +347,81 @@ $humanHand.addEventListener('pointerup', function (e) {
 
 $humanHand.addEventListener('pointercancel', function () { tapStart = null; });
 
-// ── Transfer-or-beat choice (perevodnoy) ───────────────────────────────────
-// A trump card matching the attack rank can either transfer the bout or beat
-// the attack — the defender picks; auto-transferring was taking the choice away.
+// ── Defense choices: transfer or beat, and which attack to cover ───────────
+// A tap plays at once when it can mean only one move. A card that could both
+// transfer and beat, or cover more than one open attack, is selected instead:
+// the bar above the hand offers ⇄ Transfer / 🛡 Beat, and the attacks it could
+// cover glow on the field for a second tap (p1-22, p1-23).
 
-var $choiceOverlay = document.getElementById('choice-overlay');
-var $choiceCard = document.getElementById('choice-card');
-var pendingChoice = null;
+var $field = document.getElementById('field');
 
-function showChoice(seat, card) {
-  pendingChoice = { seat: seat, cardId: card.id };
-  $choiceCard.className = 'card-btn suit-' + suitName(card.suit) + (isTrump(card.suit) ? ' trump-card' : '');
-  $choiceCard.innerHTML = buildCardFaceSvg(card.suit, card.value);
-  $choiceOverlay.classList.remove('hidden');
-}
-
-function hideChoice() {
-  pendingChoice = null;
-  $choiceOverlay.classList.add('hidden');
-}
-
-function resolveChoice(action) {
-  if (!pendingChoice) return;
-  var pc = pendingChoice;
-  hideChoice();
-  var ok = action === 'transfer' ? playTransfer(pc.seat, pc.cardId) : playDefense(pc.seat, pc.cardId);
-  if (ok) {
-    abortDurakAutoPlay();
-    handleAfterAction(pc.seat);
+function playOrSelectDefense(seat, card) {
+  var transfer = legalTransfer(seat, card);
+  var targets = legalDefense(seat, card) ? defenseTargets(card) : [];
+  if (!transfer && targets.length === 1) return playDefense(seat, card.id, targets[0]);
+  if (transfer && targets.length === 0) return playTransfer(seat, card.id);
+  if (transfer || targets.length > 1) {
+    state.selection = { seat: seat, cardId: card.id, transfer: transfer, targets: targets };
   }
+  renderAll();
+  return false;
+}
+
+function clearSelection() {
+  if (!state.selection) return;
+  state.selection = null;
+  renderAll();
+}
+
+function resolveSelection(action, target) {
+  var sel = state.selection;
+  if (!sel) return;
+  state.selection = null;
+  var ok = action === 'transfer' ? playTransfer(sel.seat, sel.cardId)
+                                 : playDefense(sel.seat, sel.cardId, target);
+  if (!ok) { renderAll(); return; }
+  abortDurakAutoPlay();
+  handleAfterAction(sel.seat);
 }
 
 document.getElementById('btn-choice-transfer').addEventListener('pointerdown', function (e) {
   e.preventDefault();
-  e.stopPropagation();
-  resolveChoice('transfer');
+  resolveSelection('transfer');
 });
 document.getElementById('btn-choice-beat').addEventListener('pointerdown', function (e) {
   e.preventDefault();
-  e.stopPropagation();
-  resolveChoice('beat');
+  if (state.selection) resolveSelection('beat', state.selection.targets[0]);
 });
-$choiceOverlay.addEventListener('pointerdown', function (e) {
-  if (e.target === $choiceOverlay) hideChoice();
+
+// The field scrolls sideways when 5–6 pairs overflow, so a target is chosen
+// on a tap, not a drag — same threshold as the hand.
+var fieldTap = null;
+$field.addEventListener('pointerdown', function (e) {
+  var pair = state.selection && e.target.closest('.field-pair.is-target');
+  fieldTap = pair ? { x: e.clientX, y: e.clientY, id: e.pointerId, index: parseInt(pair.dataset.attackIndex, 10) } : null;
+});
+$field.addEventListener('pointerup', function (e) {
+  if (!fieldTap || e.pointerId !== fieldTap.id) return;
+  var tap = fieldTap;
+  fieldTap = null;
+  var dx = e.clientX - tap.x;
+  var dy = e.clientY - tap.y;
+  if (dx * dx + dy * dy > TAP_MAX_DIST_SQ) return;
+  resolveSelection('beat', tap.index);
+});
+$field.addEventListener('pointercancel', function () { fieldTap = null; });
+
+// Tapping anywhere else cancels the selection.
+document.addEventListener('pointerdown', function (e) {
+  if (!state.selection) return;
+  if (e.target.closest('#human-hand .card-btn, #choice-bar, .field-pair.is-target')) return;
+  clearSelection();
 });
 
 // ── Start / restart ────────────────────────────────────────────────────────
 
 function startGame() {
   clearAiTimeout();
-  hideChoice();
   newGame(setupMode, setupCount);
   dealInitial();
   hideOverlays();
@@ -419,8 +438,7 @@ function startGame() {
   }
 }
 
-function spendTokenAndStart() {
-
+function startMatch() {
   localStorage.setItem('lastPlayed_durak', Date.now());
   startGame();
 }
@@ -428,20 +446,20 @@ function spendTokenAndStart() {
 $btnPlay.addEventListener('pointerdown', function (e) {
   e.preventDefault();
   localStorage.setItem('durak_autoPlay', 'false');
-  spendTokenAndStart();
+  startMatch();
 });
 
 if ($btnWatch) {
   $btnWatch.addEventListener('pointerdown', function (e) {
     e.preventDefault();
     localStorage.setItem('durak_autoPlay', 'true');
-    spendTokenAndStart();
+    startMatch();
   });
 }
 
 $btnReplay.addEventListener('pointerdown', function (e) {
   e.preventDefault();
-  spendTokenAndStart();
+  startMatch();
 });
 
 // ── Settings panel integration ─────────────────────────────────────────────
@@ -628,7 +646,7 @@ function injectDurakSettings() {
 // open, so the listeners below only handle pause/resume.
 window.addEventListener('settingsOpened', function () {
   clearAiTimeout();
-  hideChoice();
+  state.selection = null;
   if (state.phase === 'playing' || state.phase === 'pileOn' || state.phase === 'passDevice') {
     prevStatePhase = state.phase;
     state.phase = 'paused';

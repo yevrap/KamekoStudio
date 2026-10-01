@@ -38,6 +38,12 @@
     </div>
 
     <div id="human-zone">
+      <!-- Defense choice for a selected card: transfer, beat, or tap a glowing attack -->
+      <div id="choice-bar" class="hidden">
+        <button class="action-btn choice-transfer hidden" type="button" id="btn-choice-transfer">&#8644; Transfer</button>
+        <button class="action-btn choice-beat hidden" type="button" id="btn-choice-beat">&#128737;&#65039; Beat</button>
+        <span class="choice-hint hidden" id="choice-hint">Tap a glowing attack to cover it</span>
+      </div>
       <div id="human-hand" class="hand-row"></div>
       <div id="coach-banner" class="hidden" style="color:#88ccff; font-size:0.85rem; text-align:center; padding:4px; margin-top:-8px; margin-bottom:4px; opacity:0.9;"></div>
       <div id="human-options" class="options-row">
@@ -97,18 +103,6 @@
     <div class="g-sub" id="pass-device-title">Pass device to</div>
     <div class="g-title" id="pass-device-name"></div>
     <div class="g-rules" id="pass-device-hint">Tap anywhere when ready.</div>
-  </div>
-
-  <!-- Transfer-or-beat choice (perevodnoy: tapped card can do both) -->
-  <div id="choice-overlay" class="overlay choice-overlay hidden">
-    <div id="choice-panel">
-      <div id="choice-card"></div>
-      <div class="choice-buttons">
-        <button class="action-btn choice-transfer" type="button" id="btn-choice-transfer">&#8644; Transfer</button>
-        <button class="action-btn choice-beat" type="button" id="btn-choice-beat">&#128737;&#65039; Beat</button>
-      </div>
-      <div class="choice-hint" id="choice-hint">Tap outside to cancel</div>
-    </div>
   </div>
 
   <!-- Game over screen -->

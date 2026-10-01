@@ -57,15 +57,23 @@ export function legalDefense(seat, card) {
   return defenseTargetIndex(card) !== -1;
 }
 
-// First open attack this card can beat. After a transfer several attacks can
+// Every open attack this card can beat. After a transfer several attacks can
 // be open at once; the defender may cover them in any order, so a defense is
 // legal against any open attack, not just the first.
-export function defenseTargetIndex(card) {
+export function defenseTargets(card) {
+  var out = [];
   for (var i = 0; i < state.field.attacks.length; i++) {
     if (state.field.defenses[i] === null &&
-        canBeat(state.field.attacks[i], card, state.trumpSuit)) return i;
+        canBeat(state.field.attacks[i], card, state.trumpSuit)) out.push(i);
   }
-  return -1;
+  return out;
+}
+
+// The default pairing — the first open attack it beats (AI, and a human tap
+// with only one possible target).
+export function defenseTargetIndex(card) {
+  var targets = defenseTargets(card);
+  return targets.length ? targets[0] : -1;
 }
 
 // ── Card play ──────────────────────────────────────────────────────────────
@@ -104,7 +112,6 @@ export function playAttack(seat, cardId) {
 
   if (state.phase === 'pileOn') {
     if (state.field.attacks.length >= 6) { endBout('taken'); return true; }
-    if (getPlayer(state.defenderSeat).hand.length <= 0) { /* defender can't hold more? they still take */ }
     cyclePilePriority(seat);
     return true;
   }
@@ -172,10 +179,13 @@ export function playTransfer(seat, cardId) {
   return true;
 }
 
-export function playDefense(seat, cardId) {
+// `target` picks which open attack to cover (tap-to-target); omitted, the
+// card covers the first open attack it beats.
+export function playDefense(seat, cardId, target) {
   var card = findCard(seat, cardId);
   if (!card || !legalDefense(seat, card)) return false;
-  var target = defenseTargetIndex(card);
+  if (target === undefined) target = defenseTargetIndex(card);
+  else if (defenseTargets(card).indexOf(target) === -1) return false;
   removeFromHand(seat, cardId);
   state.field.defenses[target] = card;
 

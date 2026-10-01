@@ -113,7 +113,7 @@ const EN = {
   'passDevice.hint': 'Tap anywhere when ready.',
 
   'choice.transfer': '⇄ Transfer', 'choice.beat': '🛡️ Beat',
-  'choice.hint': 'Tap outside to cancel',
+  'choice.pickTarget': 'Tap a glowing attack to cover it',
 
   'names.title': 'PLAYER NAMES', 'names.done': 'Done', 'names.reset': 'Reset Defaults',
   'names.seat': n => `Seat ${n}`,
@@ -196,7 +196,7 @@ const RU = {
   'passDevice.hint': 'Нажмите в любом месте, когда будете готовы.',
 
   'choice.transfer': '⇄ Перевести', 'choice.beat': '🛡️ Отбить',
-  'choice.hint': 'Нажмите снаружи, чтобы отменить',
+  'choice.pickTarget': 'Нажмите на подсвеченную атаку, чтобы её отбить',
 
   'names.title': 'ИМЕНА ИГРОКОВ', 'names.done': 'Готово', 'names.reset': 'Сбросить',
   'names.seat': n => `Место ${n}`,

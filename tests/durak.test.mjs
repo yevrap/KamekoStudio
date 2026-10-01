@@ -8,7 +8,7 @@ import {
 import {
   legalAttack, legalDefense, playAttack, playDefense,
   passAttack, declareTake, pileOnPass, endBout, dealInitial, checkGameOver,
-  legalTransfer, playTransfer, defenseTargetIndex, forcedAction, playForcedAction
+  legalTransfer, playTransfer, defenseTargetIndex, defenseTargets, forcedAction, playForcedAction
 } from '../games/durak/gameplay.js';
 import { _test_aiTurn, speedMultiplier } from '../games/durak/ai.js';
 
@@ -647,6 +647,34 @@ test('post-transfer: defense may cover ANY open attack, not just the first', () 
   assert.equal(state.field.defenses[0], null);
   assert.equal(state.field.defenses[1].id, eightClubs.id);
   assert.equal(state.prioritySeat, 2); // first attack still open
+});
+
+test('tap-to-target (p1-22): defenseTargets lists every open attack a card beats', () => {
+  setupTransferBoard();
+  playTransfer(1, state.players[1].hand[0].id); // field: 6♠, 6♣ — both open
+  const sevenHearts = new Card(7, 4);           // trump: beats both
+  const eightClubs = new Card(8, 2);            // beats 6♣ only
+  assert.deepEqual(defenseTargets(sevenHearts), [0, 1]);
+  assert.deepEqual(defenseTargets(eightClubs), [1]);
+  state.field.defenses[1] = new Card(9, 2);     // cover 6♣
+  assert.deepEqual(defenseTargets(sevenHearts), [0]);
+});
+
+test('tap-to-target (p1-22): playDefense lands on the chosen attack, and refuses one it cannot cover', () => {
+  setupTransferBoard();
+  playTransfer(1, state.players[1].hand[0].id); // field: 6♠, 6♣ — both open
+  const sevenHearts = new Card(7, 4);
+  const eightClubs = new Card(8, 2);
+  state.players[2].hand = [sevenHearts, eightClubs, new Card(12, 1)];
+  assert.equal(playDefense(2, eightClubs.id, 0), false);   // 8♣ can't beat 6♠
+  assert.equal(playDefense(2, sevenHearts.id, 1), true);   // trump picked for the SECOND attack
+  assert.equal(state.field.defenses[0], null);
+  assert.equal(state.field.defenses[1].id, sevenHearts.id);
+  assert.equal(playDefense(2, eightClubs.id, 1), false);   // already covered
+  // Without a target the default is unchanged: first open attack it beats.
+  state.players[2].hand.push(new Card(10, 1));
+  assert.equal(playDefense(2, '101'), true);
+  assert.equal(state.field.defenses[0].id, '101');
 });
 
 test('post-transfer AI: takes when the first open attack has no beater', () => {

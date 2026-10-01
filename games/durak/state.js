@@ -24,6 +24,7 @@ export var state = {
 
   phase: 'start',     // 'start' | 'playing' | 'pileOn' | 'passDevice' | 'paused' | 'gameover'
   pendingReveal: null, // { seat } during passDevice
+  selection: null,    // { seat, cardId, transfer, targets } — a defense card awaiting its choice (main.js)
   mode: 'ai',         // 'ai' | 'hotseat'
   playerCount: 2,
   winnerOutcome: null // { kind: 'draw' | 'durak' | 'gameover', isYou, name } — localized at render time
@@ -133,6 +134,7 @@ export function newGame(mode, count) {
   state.prioritySeat = 0;
   state.phase = 'playing';
   state.pendingReveal = null;
+  state.selection = null;
   state.winnerOutcome = null;
 
   state.variantPerevodnoy = localStorage.getItem('durak_perevodnoy') === 'true';
