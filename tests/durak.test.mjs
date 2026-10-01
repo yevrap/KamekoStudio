@@ -10,7 +10,8 @@ import {
   passAttack, declareTake, pileOnPass, endBout, dealInitial, checkGameOver,
   legalTransfer, playTransfer, defenseTargetIndex, defenseTargets, forcedAction, playForcedAction
 } from '../games/durak/gameplay.js';
-import { _test_aiTurn, speedMultiplier } from '../games/durak/ai.js';
+import { _test_aiTurn, speedMultiplier, aiThinkMs, AI_FORCED_MS } from '../games/durak/ai.js';
+import { fieldLayout, pairHeight } from '../games/durak/layout.js';
 
 global.localStorage = {
   _store: {},
@@ -780,4 +781,56 @@ test('speedMultiplier: slow/normal/fast scale the Auto Play delay distinctly (p2
   assert.equal(speedMultiplier('normal'), 1);
   assert.equal(speedMultiplier('fast'), 0.3);
   assert.equal(speedMultiplier(undefined), 1); // unknown/missing speed falls back to normal pacing
+});
+
+// ─── Pacing: a forced AI move doesn't "think" (p1-55) ───────────────────────
+
+test('aiThinkMs: a forced Pass/Done/Take is a short beat; a real decision takes 400–700ms', () => {
+  assert.equal(aiThinkMs(true, 'normal', 0.99), AI_FORCED_MS);
+  assert.ok(AI_FORCED_MS < 400);
+  assert.equal(aiThinkMs(false, 'normal', 0), 400);
+  assert.equal(aiThinkMs(false, 'normal', 0.999), 699);
+  assert.ok(aiThinkMs(false, 'normal', 0) > 300, 'must outlast the 300ms card flight');
+  assert.equal(aiThinkMs(true, 'fast', 0), Math.round(AI_FORCED_MS * 0.3));   // Watch speed still scales it
+});
+
+// ─── Field layout: pairs never overlap and always fit (p1-55) ───────────────
+
+const PHONE = { maxW: 76, minW: 34, gapX: 6, gapY: 10 };
+
+function assertFits(n, w, h, opts) {
+  const { cardW, perRow } = fieldLayout(n, w, h, opts);
+  const rows = Math.ceil(n / perRow);
+  assert.ok(cardW <= opts.maxW, `card ${cardW} wider than the cap ${opts.maxW}`);
+  assert.ok(perRow * cardW + (perRow - 1) * opts.gapX <= w, `${n} pairs, ${perRow}/row at ${cardW}px overflow ${w}px wide`);
+  assert.ok(rows * pairHeight(cardW) + (rows - 1) * opts.gapY <= h, `${n} pairs, ${rows} rows at ${cardW}px overflow ${h}px tall`);
+  return { cardW, perRow, rows };
+}
+
+test('fieldLayout: every attack count 1–6 fits a phone field without overlap', () => {
+  for (let n = 1; n <= 6; n++) assertFits(n, 330, 320, PHONE);
+});
+
+test('fieldLayout: a few pairs keep full-size cards in one row', () => {
+  const r = assertFits(3, 330, 320, PHONE);
+  assert.equal(r.cardW, 76);
+  assert.equal(r.rows, 1);
+});
+
+test('fieldLayout: six pairs on a narrow phone wrap to two rows rather than shrink to slivers', () => {
+  const r = assertFits(6, 330, 320, PHONE);
+  assert.equal(r.rows, 2);
+  assert.equal(r.perRow, 3);   // balanced, 3 + 3
+  assert.equal(r.cardW, 76);
+});
+
+test('fieldLayout: a short landscape field keeps all six pairs in one row', () => {
+  const r = assertFits(6, 620, 150, PHONE);
+  assert.equal(r.rows, 1);
+  assert.ok(r.cardW >= 50, 'cards too small: ' + r.cardW);
+});
+
+test('fieldLayout: no room at all falls back to the minimum width, never below', () => {
+  assert.equal(fieldLayout(6, 100, 60, PHONE).cardW, PHONE.minW);
+  assert.equal(fieldLayout(0, 330, 320, PHONE).cardW, PHONE.maxW);
 });

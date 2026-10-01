@@ -44,7 +44,7 @@ shared/
   utils.js          — Pure utility functions (tested; loaded by keypad-quest)
 tests/
   keypad-quest.test.js      — Unit tests for shared/utils.js (node --test tests/)
-  durak.test.mjs            — Unit tests for games/durak/ pure rules (constants, state, gameplay)
+  durak.test.mjs            — Unit tests for games/durak/ pure rules (constants, state, gameplay, AI pacing, field layout)
   durak-alchemist.test.mjs  — Unit tests for games/durak-alchemist/ pure rules (gridLogic, combatLogic, constants)
   tysiacha.test.mjs         — Unit tests for games/tysiacha/ pure rules (constants, state, gameplay)
   README.md                 — How to run tests
@@ -61,7 +61,7 @@ drafts/             — WIP files not yet in production (see drafts/CLAUDE.md)
 games/              — One subdirectory per game (see games/CLAUDE.md)
   blob-zapper/      — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   durak-alchemist/  — index.html + style.css + ES modules (constants/state/gridLogic/combatLogic/ui/main.js)
-  durak/            — index.html + style.css + ES modules (constants/state/gameplay/ai/cards/ui/main.js)
+  durak/            — index.html + style.css + ES modules (constants/state/gameplay/ai/cards/layout/ui/main.js)
   durak-dungeon/    — index.html + style.css + ES modules (constants/state/ui/gameplay/main.js)
   durak-tactics/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)
   hidden-object/    — index.html + style.css + ES modules (constants/state/gameplay/main.js)

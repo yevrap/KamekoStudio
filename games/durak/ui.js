@@ -11,14 +11,15 @@ import { getHardAiMove } from './ai.js';
 import { cardPlayable, forcedAction } from './gameplay.js';
 import { logEvent } from './log.js';
 import { t, cardText } from './i18n.js';
+import { fieldLayout } from './layout.js';
 
 var $app, $opponents, $field, $humanHand, $humanOptions,
     $statusDisplay, $trumpDisplay, $deckCount, $discardZone, $discardStack, $discardCount,
     $startOverlay, $gameoverOverlay, $winnerText, $gameoverStats,
-    $passDeviceOverlay, $passDeviceName, $pileBanner,
+    $passDeviceOverlay, $passDeviceName,
     $btnTake, $btnPass, $btnDone, $waitSpinner,
     $choiceBar, $btnChoiceTransfer, $btnChoiceBeat, $choiceHint,
-    $deckStack, $trumpSlot,
+    $deckStack, $trumpSlot, $deckLabel, $discardLabel,
     $tableCenter, $fieldWatermark;
 
 var cardPool = {};
@@ -38,7 +39,6 @@ export function cacheDom() {
   $gameoverStats     = document.getElementById('gameover-stats');
   $passDeviceOverlay = document.getElementById('pass-device-overlay');
   $passDeviceName    = document.getElementById('pass-device-name');
-  $pileBanner        = document.getElementById('pile-banner');
   $btnTake           = document.getElementById('btn-take');
   $btnPass           = document.getElementById('btn-pass');
   $btnDone           = document.getElementById('btn-done');
@@ -54,6 +54,8 @@ export function cacheDom() {
   $discardZone       = document.getElementById('discard-zone');
   $discardStack      = document.getElementById('discard-stack');
   $discardCount      = document.getElementById('discard-count');
+  $deckLabel         = document.getElementById('deck-label');
+  $discardLabel      = document.getElementById('discard-label');
 
   window.$logOverlay = document.getElementById('log-overlay');
   window.$logBody    = document.getElementById('log-body');
@@ -65,6 +67,8 @@ export function cacheDom() {
   window.$coachBanner = document.getElementById('coach-banner');
 
   wireHandScroll($humanHand);
+  // Turning the phone or resizing the window re-fits the cards on the table.
+  window.addEventListener('resize', fitField);
 }
 
 function wireHandScroll(el) {
@@ -253,6 +257,7 @@ function renderDiscard() {
     $discardCount.textContent = '';
     $discardCount.style.display = 'none';
   }
+  if ($discardLabel) $discardLabel.classList.toggle('hidden', n === 0);
   
   $discardStack.innerHTML = '';
   if (n === 0) return;
@@ -327,6 +332,25 @@ function renderField() {
     }
     $field.appendChild(pair);
   }
+  fitField();
+}
+
+// Size the field cards so every pair fits the table with no overlap: the
+// geometry is layout.js's, the room and gaps are read from the live CSS.
+function fitField() {
+  if (!$field || state.field.attacks.length === 0) return;
+  var cs = getComputedStyle($field);
+  var availW = $field.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  var availH = $field.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+  if (availW <= 0 || availH <= 0) return;
+  var fit = fieldLayout(state.field.attacks.length, availW, availH, {
+    maxW: parseFloat(cs.getPropertyValue('--fc-max')) || 76,
+    minW: 34,
+    gapX: parseFloat(cs.columnGap) || 0,
+    gapY: parseFloat(cs.rowGap) || 0
+  });
+  $field.style.setProperty('--fc-w', fit.cardW + 'px');
+  $field.style.setProperty('--field-cols', fit.perRow);
 }
 
 // ── Human hand ─────────────────────────────────────────────────────────────
@@ -435,7 +459,8 @@ function updateActionButtons() {
   $btnDone.classList.toggle('hidden', !canDone);
 
   if ($waitSpinner) {
-    var waiting = !canTake && !canPass && !canDone && (state.phase === 'playing' || state.phase === 'pileOn');
+    // Only while someone else is up — on your own turn it read as "wait".
+    var waiting = !hasPriority && (state.phase === 'playing' || state.phase === 'pileOn');
     $waitSpinner.classList.toggle('hidden', !waiting);
   }
 
@@ -491,9 +516,12 @@ function getStatusText() {
   if (forced === 'take') return t('status.forcedTake');
   if (forced) return t('status.forcedPass');
 
+  // Pile-on says who is taking — it used to need a second banner on the table.
   if (state.phase === 'pileOn') {
-    if (state.prioritySeat === viewer) return t('status.pileOnSelf');
-    return t('status.pileOnOther', pName);
+    var taker = state.players[state.defenderSeat];
+    if (state.prioritySeat === viewer) return t('status.pileOnSelf', taker ? taker.name : '');
+    if (state.defenderSeat === viewer) return t('status.pileOnYouTake', pName);
+    return t('status.pileOnOther', pName, taker ? taker.name : '');
   }
 
   // 'playing'
@@ -536,10 +564,12 @@ function updateHeader() {
   if ($trumpDisplay) {
     if (state.phase !== 'start' && state.trumpSuit) {
       var isRed = (state.trumpSuit === 3 || state.trumpSuit === 4);
-      $trumpDisplay.className = isRed ? 'suit-red' : 'suit-black';
+      $trumpDisplay.className = 'trump-chip ' + (isRed ? 'suit-red' : 'suit-black');
       // Suit only (p1-24): the actual trump card is already face-up under the
       // deck in #trump-slot, so the header chip needn't repeat its value.
-      $trumpDisplay.textContent = suitEmoji(state.trumpSuit);
+      $trumpDisplay.innerHTML = '<span class="trump-label"></span><span class="trump-suit"></span>';
+      $trumpDisplay.firstChild.textContent = t('hud.trump');
+      $trumpDisplay.lastChild.textContent = suitEmoji(state.trumpSuit);
     } else {
       $trumpDisplay.textContent = '';
       $trumpDisplay.className = '';
@@ -555,12 +585,7 @@ function updateHeader() {
       $deckCount.style.display = 'none';
     }
   }
-}
-
-function updatePileBanner() {
-  if (!$pileBanner) return;
-  var pileActive = state.phase === 'pileOn';
-  $pileBanner.classList.toggle('hidden', !pileActive);
+  if ($deckLabel) $deckLabel.classList.toggle('hidden', state.deck.length === 0 || state.phase === 'start');
 }
 
 function renderDeckZone() {
@@ -613,7 +638,6 @@ export function renderAll() {
   renderHumanHand();
   renderChoiceBar();
   updateActionButtons();
-  updatePileBanner();
 
   // FLIP Last & Invert — write delta to CSS vars so it composes with fan + scale
   for (var i = 0; i < flippedEls.length; i++) {
@@ -717,7 +741,8 @@ export function localizeStatic() {
   setText('rules-title', t('act.rules'));
   setHTML('rules-body', t('howto').map(([title, body]) => `<h3>${title}</h3>${body}`).join(''));
 
-  setText('pile-banner', t('pileBanner.text'));
+  setText('deck-label', t('hud.deck'));
+  setText('discard-label', t('hud.discard'));
 }
 
 // ── Overlays ───────────────────────────────────────────────────────────────

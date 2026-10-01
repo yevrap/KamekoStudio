@@ -1025,6 +1025,71 @@ await test('durak: "Show playable cards" is on by default and the drawer switch 
   assert(saved === 'false', 'the choice should persist, got ' + saved);
 });
 
+// p1-55: six open attacks, you defending — on every screen shape the pairs
+// stay inside the table without overlapping, Take is fully on screen, and the
+// instruction above the hand isn't cut off.
+const SIX_ATTACKS = {
+  deck: [[6, 4], [8, 4], [11, 4], [12, 4], [13, 4], [14, 4]],
+  attacker: 1, defender: 0, priority: 0,
+  attacks: [[6, 1], [6, 2], [6, 3], [7, 1], [7, 2], [7, 3]],
+  defenses: [null, null, null, null, null, null],
+  hands: [[[14, 1], [8, 2], [9, 3]], [[9, 1]]]
+};
+for (const [label, vp] of [
+  ['phone', { width: 390, height: 844, isMobile: true, hasTouch: true }],
+  ['small phone', { width: 375, height: 667, isMobile: true, hasTouch: true }],
+  ['phone on its side', { width: 844, height: 390, isMobile: true, hasTouch: true, isLandscape: true }],
+  ['laptop', { width: 1440, height: 900 }]
+]) {
+  await test('durak: six attacks fit the table on a ' + label + ', no overlap, Take on screen (p1-55)', async page => {
+    await page.setViewport(vp);
+    await durakStart(page, 'ai', 2, SIX_ATTACKS);
+    const g = await page.evaluate(() => {
+      const r = el => { const b = el.getBoundingClientRect(); return { l: b.left, t: b.top, r: b.right, b: b.bottom }; };
+      const status = document.getElementById('status-display');
+      return {
+        table: r(document.getElementById('table-center')),
+        pairs: [...document.querySelectorAll('#field .field-pair')].map(r),
+        take: document.getElementById('btn-take').classList.contains('hidden') ? null : r(document.getElementById('btn-take')),
+        vw: innerWidth, vh: innerHeight,
+        status: status.textContent, statusCut: status.scrollWidth > status.clientWidth + 1,
+        statusInHand: !!status.closest('#human-zone')
+      };
+    });
+    assert(g.pairs.length === 6, 'expected 6 pairs, got ' + g.pairs.length);
+    for (const p of g.pairs) {
+      assert(p.l >= g.table.l - 1 && p.r <= g.table.r + 1 && p.t >= g.table.t - 1 && p.b <= g.table.b + 1,
+        'a pair spills out of the table: ' + JSON.stringify({ pair: p, table: g.table }));
+    }
+    for (let i = 0; i < g.pairs.length; i++) for (let j = i + 1; j < g.pairs.length; j++) {
+      const a = g.pairs[i], b = g.pairs[j];
+      const overlap = a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1;
+      assert(!overlap, `pairs ${i} and ${j} overlap: ` + JSON.stringify([a, b]));
+    }
+    assert(g.take, 'Take should be offered');
+    assert(g.take.t >= 0 && g.take.b <= g.vh && g.take.l >= 0 && g.take.r <= g.vw, 'Take is off screen: ' + JSON.stringify(g.take));
+    assert(g.statusInHand, 'the instruction should sit with the hand');
+    assert(/Defend/.test(g.status) && !g.statusCut, 'instruction missing or cut off: "' + g.status + '"');
+  });
+}
+
+await test('durak: the waiting spinner never shows on your own turn (p1-55)', async page => {
+  await durakStart(page, 'ai', 2, {
+    deck: [[6, 3], [8, 3], [11, 3], [12, 3], [13, 3], [14, 3]],
+    attacker: 0, defender: 1, priority: 0, attacks: [], defenses: [],
+    hands: [[[7, 1], [9, 2]], [[10, 1], [11, 1], [12, 1]]]
+  });
+  const mine = await page.evaluate(() => document.getElementById('wait-spinner').classList.contains('hidden'));
+  assert(mine, 'spinner shown while it is your attack');
+  await page.click('#human-hand .card-btn[data-card-id="71"]');
+  await sleep(80);
+  const theirs = await page.evaluate(async () => {
+    const { state } = await import('/games/durak/state.js');
+    return { pri: state.prioritySeat, hidden: document.getElementById('wait-spinner').classList.contains('hidden') };
+  });
+  assert(theirs.pri === 1 && !theirs.hidden, 'spinner should show while the computer defends: ' + JSON.stringify(theirs));
+});
+
 await test('durak: hot-seat skips the pass-device cover for a forced pass', async page => {
   // Seat 0 passes with a playable card in hand. Seat 2 can throw nothing, so
   // its pass is forced: no cover for it — the bout closes and the cover names

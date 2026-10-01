@@ -73,8 +73,9 @@ const EN = {
 
   'status.paused': 'Paused',
   'status.passDevice': 'Pass device',
-  'status.pileOnSelf': 'Pile on or tap Done',
-  'status.pileOnOther': name => `${name} may throw on`,
+  'status.pileOnSelf': taker => `${taker} is taking — pile on more or tap Done`,
+  'status.pileOnOther': (name, taker) => `${taker} is taking — ${name} may pile on`,
+  'status.pileOnYouTake': name => `You’re taking — ${name} may pile on`,
   'status.defend': 'Defend — play a higher card or Take',
   'status.yourAttack': 'Your attack — play a card',
   'status.throwOrPass': 'Throw on or Pass',
@@ -83,7 +84,6 @@ const EN = {
   'status.defending': name => `${name} defending…`,
   'status.attacking': name => `${name} attacking…`,
 
-  'pileBanner.text': 'Defender is taking — pile on or tap Done',
 
   'coach.prefix': 'Coach:',
   'coach.pass': 'Pass', 'coach.take': 'Take', 'coach.transfer': 'Transfer',
@@ -106,7 +106,9 @@ const EN = {
 
   'title': 'DURAK',
   'subtitle': 'Classic Russian card game, 2–6 players',
-  'rulesBlurb': 'Attack with pairs, defend with higher cards of the same suit or trumps. The last player still holding cards is the Durak!',
+  'rulesBlurb': 'Attack with any card; the others may throw in cards of a rank already on the table. Beat each one with a higher card of its suit or a trump — or take them all. The last player still holding cards is the Durak!',
+
+  'hud.trump': 'Trump', 'hud.deck': 'Deck', 'hud.discard': 'Discard',
 
   'passDevice.title': 'Pass device to',
   'passDevice.hint': 'Tap anywhere when ready.',
@@ -159,8 +161,9 @@ const RU = {
 
   'status.paused': 'Пауза',
   'status.passDevice': 'Передайте устройство',
-  'status.pileOnSelf': 'Подкиньте карту или нажмите «Готово»',
-  'status.pileOnOther': name => `${name} может подкинуть`,
+  'status.pileOnSelf': taker => `${taker} берёт — подкиньте ещё или нажмите «Готово»`,
+  'status.pileOnOther': (name, taker) => `${taker} берёт — ${name} может подкинуть`,
+  'status.pileOnYouTake': name => `Вы берёте — ${name} может подкинуть`,
   'status.defend': 'Защищайтесь — сыграйте карту старше или возьмите',
   'status.yourAttack': 'Ваша атака — сыграйте карту',
   'status.throwOrPass': 'Подкиньте карту или пасуйте',
@@ -169,7 +172,6 @@ const RU = {
   'status.defending': name => `${name} защищается…`,
   'status.attacking': name => `${name} атакует…`,
 
-  'pileBanner.text': 'Защищающийся берёт — подкиньте карту или нажмите «Готово»',
 
   'coach.prefix': 'Совет:',
   'coach.pass': 'Пас', 'coach.take': 'Взять', 'coach.transfer': 'Перевести',
@@ -192,7 +194,9 @@ const RU = {
 
   'title': 'ДУРАК',
   'subtitle': 'Классическая русская карточная игра, 2–6 игроков',
-  'rulesBlurb': 'Атакуйте парами карт, защищайтесь старшими картами той же масти или козырями. Последний игрок с картами на руках — Дурак!',
+  'rulesBlurb': 'Атакуйте любой картой; другие могут подкидывать карты того же достоинства, что уже на столе. Бейте каждую старшей картой той же масти или козырем — или заберите все. Последний игрок с картами на руках — Дурак!',
+
+  'hud.trump': 'Козырь', 'hud.deck': 'Колода', 'hud.discard': 'Бито',
 
   'passDevice.title': 'Передайте устройство игроку',
   'passDevice.hint': 'Нажмите в любом месте, когда будете готовы.',

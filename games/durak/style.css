@@ -94,7 +94,8 @@ body {
   height: 100dvh;
   max-width: 700px;
   margin: 0 auto;
-  padding: env(safe-area-inset-top) 4px env(safe-area-inset-bottom);
+  padding: env(safe-area-inset-top) max(4px, env(safe-area-inset-right))
+           env(safe-area-inset-bottom) max(4px, env(safe-area-inset-left));
 }
 
 /* --- Header --- */
@@ -124,18 +125,31 @@ body {
   font-size: 0.88rem;
   flex-shrink: 0;
 }
-#trump-display.suit-red   { color: var(--card-red); }
-#trump-display.suit-black { color: var(--card-black); }
+/* "Trump ♥" — gold-edged like the trump cards in your hand. */
+#trump-display.trump-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px;
+  border: 1px solid rgba(255, 200, 50, 0.7);
+  border-radius: 999px;
+  background: rgba(255, 200, 50, 0.08);
+}
+#trump-display .trump-label { color: var(--text-muted); font-size: 0.7rem; }
+#trump-display .trump-suit  { font-size: 1rem; line-height: 1; }
+#trump-display.suit-red   .trump-suit { color: var(--card-red); }
+#trump-display.suit-black .trump-suit { color: var(--card-black); }
 
+/* What to do now — right above your hand, never cut off. */
 #status-display {
-  flex: 1;
-  text-align: right;
-  font-size: 0.75rem;
-  font-weight: 600;
+  flex-shrink: 0;
+  min-height: 1.3em;
+  padding: 4px 12px 0;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.3;
   color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 #status-display.is-attack   { color: #ffb347; }
 #status-display.is-defend   { color: #88ccff; }
@@ -279,53 +293,6 @@ body:not(.dark-mode) .seat-role.role-thrower  { color: #6a3fb5; }
   filter: grayscale(0.6);
 }
 
-/* --- Action Prompt (on the table) --- */
-.action-prompt {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: calc(100% - 140px);
-  padding: 8px 18px;
-  border-radius: 999px;
-  background: var(--prompt-bg);
-  color: var(--prompt-text);
-  font-size: 0.95rem;
-  font-weight: 700;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  border: 1px solid transparent;
-  z-index: 3;
-  transition: background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
-}
-
-.action-prompt.hidden { display: none; }
-
-.action-prompt.is-attack   { border-left: 3px solid #ffb347; padding-left: 15px; }
-.action-prompt.is-defend   { border-left: 3px solid #88ccff; padding-left: 15px; }
-.action-prompt.is-pile-on  { border-left: 3px solid #c2a0ff; padding-left: 15px; }
-.action-prompt.is-wait     { opacity: 0.8; }
-
-body:not(.dark-mode) .action-prompt.is-attack  { border-left-color: #e07a1a; }
-body:not(.dark-mode) .action-prompt.is-defend  { border-left-color: #1976d2; }
-body:not(.dark-mode) .action-prompt.is-pile-on { border-left-color: #6a3fb5; }
-
-.action-prompt.status-thinking { animation: pulse 1s ease-in-out infinite; }
-
-#pile-banner {
-  color: #ffb347;
-  background: rgba(255, 179, 71, 0.18);
-}
-body:not(.dark-mode) #pile-banner {
-  color: #e07a1a;
-  background: rgba(224, 122, 26, 0.15);
-}
-
 /* --- Table Center — felt surface --- */
 #table-center {
   flex: 1.5;
@@ -399,6 +366,21 @@ body:not(.dark-mode) #pile-banner {
 }
 
 
+.pile-label {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+.pile-label.hidden { display: none; }
+
 #deck-zone .card-btn,
 #discard-zone .card-btn {
   width: 46px;
@@ -443,29 +425,45 @@ body:not(.dark-mode) #pile-banner {
   pointer-events: none;
 }
 
+/* Pairs sit side by side with no overlap and wrap into balanced rows.
+   fitField() (ui.js, geometry in layout.js) picks --fc-w and --field-cols so
+   they always fit; --fc-max is the card size when there's room to spare.
+   Portrait keeps a band at the top clear of the deck and discard piles;
+   landscape keeps bands at the sides instead. */
 #field {
+  --fc-max: 76px;
+  --fc-w: var(--fc-max);
   position: relative;
   z-index: 1;
   flex: 1;
-  display: flex;
-  align-items: flex-end;
-  justify-content: safe center;
-  gap: 6px;
+  align-self: stretch;
+  display: grid;
+  grid-template-columns: repeat(var(--field-cols, 6), var(--fc-w));
+  justify-content: center;
+  align-content: center;
+  column-gap: 6px;
+  row-gap: 10px;
   height: 100%;
+  min-width: 0;
   background: transparent;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: visible;
-  overscroll-behavior-x: contain;
-  touch-action: pan-x;
+  overflow: auto;
+  overscroll-behavior: contain;
   scrollbar-width: none;
-  padding: 6px 44px 20px 44px;
+  padding: 92px 8px 10px;
   box-sizing: border-box;
 }
 #field::-webkit-scrollbar { display: none; }
-.field-pair { display: flex; flex-direction: column; align-items: center; position: relative; }
-.field-pair + .field-pair { margin-left: -20px; }
-.field-pair > * + * { margin-top: -54px; }
+.field-pair {
+  position: relative;
+  width: var(--fc-w);
+  height: calc(var(--fc-w) * 1.4 * 1.45);
+}
+.field-pair > .defense,
+.field-pair > .card-placeholder {
+  position: absolute;
+  left: 0;
+  top: calc(var(--fc-w) * 1.4 * 0.45);
+}
 
 /* --- Human zone (bottom) --- */
 #human-zone {
@@ -606,7 +604,7 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
   border-color: rgba(255, 200, 50, 0.9);
   box-shadow: 0 0 8px rgba(255, 200, 50, 0.4), inset 0 0 6px rgba(255, 200, 50, 0.2);
 }
-.card-btn.field-card { cursor: default; opacity: 0.95; width: 76px; height: 106px; }
+.card-btn.field-card { cursor: default; opacity: 0.95; width: var(--fc-w); height: calc(var(--fc-w) * 1.4); }
 /* The selected defense card rides up out of the fan while its choice is open. */
 .card-btn.selected {
   --select-lift: -18px;
@@ -625,12 +623,15 @@ body:not(.dark-mode) .action-btn:active { background: rgba(0,0,0,0.1); }
 /* Hand cards overlap, so dim with a filter — opacity would show the card behind. */
 .card-btn.unplayable { filter: brightness(0.6) saturate(0.5); cursor: default; }
 
+/* The empty slot under an attack nobody has beaten yet. */
 .card-placeholder {
-  width: 76px;
-  height: 106px;
+  width: var(--fc-w);
+  height: calc(var(--fc-w) * 1.4);
   pointer-events: none;
-  visibility: hidden;
+  border: 2px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
 }
+body:not(.dark-mode) .card-placeholder { border-color: rgba(255, 255, 255, 0.45); }
 
 /* --- Overlays --- */
 .overlay {
@@ -852,8 +853,6 @@ body:not(.dark-mode) .mbtn.outline:active {
 /* --- Responsive --- */
 @media (max-width: 380px) {
   .card-btn { width: 74px; height: 104px; }
-  .card-btn.field-card { width: 64px; height: 90px; }
-  .card-placeholder { width: 64px; height: 90px; }
   .hand-row { --hand-card-w: 74px; }
   .hand-row > * + * { margin-left: calc(var(--hand-card-w) * -0.45); }
   .action-btn { padding: 8px 14px; font-size: 0.9rem; min-width: 64px; }
@@ -868,17 +867,12 @@ body:not(.dark-mode) .mbtn.outline:active {
   #trump-slot { width: 40px; height: 56px; top: 6px; left: 28px; transform: rotate(90deg); }
   #discard-zone { top: 6px; right: 6px; left: auto; width: 40px; height: 56px; }
   #deck-zone .card-btn, #discard-zone .card-btn { width: 40px; height: 56px; }
-  #field { padding: 6px 40px 20px 40px; }
-  .field-pair + .field-pair { margin-left: -18px; }
-  .field-pair > * + * { margin-top: -45px; }
-  .action-prompt { font-size: 0.82rem; padding: 6px 12px; top: 8px; max-width: calc(100% - 100px); }
+  #field { --fc-max: 66px; padding-top: 82px; }
   #deck-count, #discard-count { min-width: 22px; height: 22px; font-size: 0.72rem; line-height: 22px; border-radius: 11px; }
 }
 
 @media (min-width: 500px) {
   .card-btn { width: 94px; height: 132px; }
-  .card-btn.field-card { width: 84px; height: 118px; }
-  .card-placeholder { width: 84px; height: 118px; }
   .hand-row { --hand-card-w: 94px; }
   .hand-row > * + * { margin-left: calc(var(--hand-card-w) * -0.45); }
   .seat-tile .seat-card { width: 56px; height: 78px; }
@@ -886,17 +880,12 @@ body:not(.dark-mode) .mbtn.outline:active {
   #trump-slot { width: 56px; height: 78px; top: 12px; left: 40px; transform: rotate(90deg); }
   #discard-zone { top: 12px; right: 12px; left: auto; width: 56px; height: 78px; }
   #deck-zone .card-btn, #discard-zone .card-btn { width: 56px; height: 78px; }
-  #field { padding: 6px 64px 20px 64px; }
-  .field-pair + .field-pair { margin-left: -22px; }
-  .field-pair > * + * { margin-top: -60px; }
-  .action-prompt { font-size: 1.1rem; padding: 10px 22px; top: 14px; }
+  #field { --fc-max: 84px; padding-top: 110px; }
   .seat-count, #deck-count, #discard-count { min-width: 28px; height: 28px; font-size: 0.9rem; line-height: 28px; border-radius: 14px; top: -7px; right: -7px; }
 }
 
 @media (min-width: 768px) {
   .card-btn { width: 106px; height: 148px; border-radius: 8px; }
-  .card-btn.field-card { width: 94px; height: 132px; }
-  .card-placeholder { width: 94px; height: 132px; }
   .hand-row { --hand-card-w: 106px; }
   .hand-row > * + * { margin-left: calc(var(--hand-card-w) * -0.45); }
   .action-btn { padding: 10px 28px; font-size: 1.2rem; }
@@ -905,9 +894,7 @@ body:not(.dark-mode) .mbtn.outline:active {
   #trump-slot { width: 62px; height: 87px; top: 14px; left: 45px; transform: rotate(90deg); }
   #discard-zone { top: 14px; right: 14px; left: auto; width: 62px; height: 87px; }
   #deck-zone .card-btn, #discard-zone .card-btn { width: 62px; height: 87px; }
-  #field { padding: 6px 74px 20px 74px; }
-  .field-pair + .field-pair { margin-left: -24px; }
-  .field-pair > * + * { margin-top: -66px; }
+  #field { --fc-max: 94px; padding-top: 122px; }
   .seat-count, #deck-count, #discard-count { min-width: 32px; height: 32px; font-size: 1.05rem; line-height: 32px; border-radius: 16px; top: -8px; right: -8px; }
 }
 
@@ -915,3 +902,70 @@ body:not(.dark-mode) .mbtn.outline:active {
   .seat-tile .seat-role { font-size: 0.5rem; padding: 1px 3px; letter-spacing: 0.02em; }
 }
 #coach-banner.hidden { display: none; }
+
+/* --- Landscape: deck and discard take side bands, not a top band --- */
+@media (orientation: landscape) {
+  #field { padding: 10px 140px; }
+}
+@media (orientation: landscape) and (max-width: 767px) {
+  #field { padding: 10px 116px; }
+}
+
+/* --- Laptop / desktop: use the width instead of a phone-sized column --- */
+@media (min-width: 1024px) and (min-height: 600px) {
+  #app { max-width: 1040px; }
+}
+
+/* --- Phone on its side: everything compact, buttons beside the hand ---
+   A 390px-tall screen can't stack header, seats, table, hand and buttons at
+   portrait sizes — the table collapsed to a sliver and Take fell off screen. */
+@media (orientation: landscape) and (max-height: 520px) {
+  #app { max-width: none; }
+  #header { height: 30px; }
+  #settings-hamburger-btn { width: 34px !important; height: 34px !important; top: calc(env(safe-area-inset-top) + 2px) !important; }
+  #opponents { gap: 14px; padding: 2px 12px 0; }
+  .seat-tile { gap: 2px; }
+  .seat-tile .seat-card { width: 28px; height: 40px; border-radius: 4px; }
+  .seat-count { min-width: 20px; height: 20px; padding: 0 4px; font-size: 0.68rem; line-height: 20px; top: -6px; right: -12px; border-radius: 10px; }
+  .seat-name { font-size: 0.6rem; }
+  .seat-role { font-size: 0.5rem; padding: 0 4px; }
+  #deck-zone { width: 40px; height: 56px; top: 6px; left: 6px; }
+  #trump-slot { width: 40px; height: 56px; top: 6px; left: 28px; }
+  #discard-zone { width: 40px; height: 56px; top: 6px; right: 6px; }
+  #deck-zone .card-btn, #discard-zone .card-btn { width: 40px; height: 56px; }
+  #deck-count, #discard-count { min-width: 20px; height: 20px; font-size: 0.68rem; line-height: 20px; border-radius: 10px; }
+  #field { --fc-max: 76px; padding: 4px 92px; }
+  #table-center { flex: 1 1 0; margin: 2px 8px; }
+  #human-zone {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "status status" "hand options" "coach coach";
+    align-items: center;
+    padding-top: 0;
+  }
+  #status-display { grid-area: status; padding-top: 2px; font-size: 0.9rem; }
+  #human-hand { grid-area: hand; }
+  #coach-banner { grid-area: coach; }
+  #human-options { grid-area: options; min-height: 0; padding: 0 12px 0 4px; }
+  .hand-row { --hand-card-w: 58px; padding: 10px 8px 4px; }
+  .hand-row .card-btn { width: 58px; height: 82px; }
+  .action-btn { min-height: 44px; padding: 6px 18px; font-size: 1rem; }
+  #wait-spinner { height: 44px; gap: 10px; font-size: 1.2rem; }
+}
+
+/* --- Big screens with height to spare: bigger cards and text --- */
+@media (min-width: 1024px) and (min-height: 760px) {
+  #header { height: 48px; font-size: 0.9rem; }
+  #game-title { font-size: 1.05rem; }
+  #trump-display .trump-label { font-size: 0.8rem; }
+  #trump-display .trump-suit { font-size: 1.2rem; }
+  #status-display { font-size: 1.2rem; padding-top: 8px; }
+  .card-btn { width: 120px; height: 168px; }
+  .hand-row { --hand-card-w: 120px; }
+  .seat-tile .seat-card { width: 70px; height: 98px; }
+  .seat-name { font-size: 0.85rem; }
+  .seat-role { font-size: 0.7rem; }
+  #field { --fc-max: 112px; }
+  .pile-label { font-size: 0.7rem; }
+}

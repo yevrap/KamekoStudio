@@ -59,6 +59,16 @@ Durak is a classic Russian card game for 2–6 players. Modes include vs Compute
 - **Segmented controls for every pick-one:** Hand Sort, Difficulty, Language and Watch speed all use one control with one accent colour. Before, there were three different looks (red segments, faint grey buttons, a native dropdown), and the red segments turned white in light mode because the game's own `.mode-btn` styles reached into the drawer.
 - **The drawer stays dark in light mode:** it's the arcade's chrome and other games still draw inline-styled white text into it; a light drawer would mean touching every game's section. Not done.
 
+## Decisions & Why (October 1, 2026 — p1-55)
+Yev asked for Durak to feel more responsive and be easier to understand. An agent played full matches in headless Chrome at phone, small-phone, phone-on-its-side, tablet and laptop sizes, timing every wait and reading every screen; these are what it found and what changed.
+- **Phone on its side was unplayable:** header, seats, table, hand and buttons stacked at portrait sizes left the table a ~30px sliver, and Take fell off the bottom of the screen. Short landscape screens now get a compact layout — smaller seats and hand, Take/Pass/Done beside the hand, deck and discard at the sides of the table.
+- **Cards on the table overlapped on every screen**, each pair sliding under the next, even on a mostly empty felt; a laptop squeezed all of it into a 700px column. Pairs now sit side by side and wrap into balanced rows (3 + 3), sized by `layout.js` so they always fit the table — full size when there's room, smaller only when they must. The empty slot under an open attack is a faint dashed outline, so what still needs beating is visible. Screens ≥1024px wide use a 1040px column with bigger cards.
+- **The instruction moved next to your hand:** it lived in the header's top-right corner, far from where you look, and on a phone was cut off ("Defend — play a higher card …" lost "or Take"). It's now a full line right above the hand. Pile-on folds in who is taking ("CPU 1 is taking — pile on more or tap Done") — the separate on-table banner that said it got cut off too and is gone.
+- **Named what wasn't named:** the trump is a gold-edged "Trump ♥" chip (gold like the trump cards in your hand), not a bare suit after the title; the two card-back stacks are labelled Deck and Discard.
+- **The "waiting" spinner showed on your own turn** (it appeared whenever no button was up — including when you lead an attack). It now shows only while someone else is up.
+- **Waiting less:** on 4–6 seat tables the average wait between your turns was 3–5s (up to 15s). Much of it was the computer "thinking" 0.5–0.9s before a Pass, Done or Take it had no choice about — those now take 0.25s — and a real decision now takes 0.4–0.7s, still longer than the 0.3s card flight. Measured after: about 2s on average.
+- **Start-screen blurb fixed:** it said "Attack with pairs", which isn't the rule; it now says you attack with any card, others throw in matching ranks, and you beat each with a higher card of its suit or a trump, or take them all.
+
 ## Known Simplifications
 - AI personalities are limited by difficulty (Easy, Normal, Hard) and do not have unique per-seat behaviors.
 - Same-bout eliminations tie in seat order on the placement list rather than being marked as explicit ties.

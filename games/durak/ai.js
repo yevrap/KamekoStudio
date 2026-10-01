@@ -8,7 +8,7 @@ import { cardStrength, canBeat } from './constants.js';
 import {
   legalAttack, legalDefense, playAttack, playDefense,
   passAttack, declareTake, pileOnPass, legalTransfer, playTransfer,
-  playForcedAction
+  playForcedAction, forcedAction
 } from './gameplay.js';
 
 var aiTimeout = null;
@@ -17,12 +17,22 @@ export function clearAiTimeout() {
   if (aiTimeout !== null) { clearTimeout(aiTimeout); aiTimeout = null; }
 }
 
-// Auto Play speed setting (p2-27) scales the base thinking delay; 'normal'
-// keeps the original 500-900ms pacing unchanged.
+// Auto Play speed setting (p2-27) scales the base thinking delay (aiThinkMs).
 export function speedMultiplier(speed) {
   if (speed === 'slow') return 2;
   if (speed === 'fast') return 0.3;
   return 1;
+}
+
+// How long a seat "thinks" before its move: 400–700ms, enough for the last
+// card's 300ms flight to land and be read. A move it can't avoid — Pass, Done
+// or Take with no playable card — isn't a decision, so it gets a short beat
+// instead: on a 4–6 seat table those dead passes were most of the wait
+// between your turns (p1-55). `r` is a 0–1 random draw.
+export var AI_FORCED_MS = 250;
+export function aiThinkMs(forced, speed, r) {
+  var base = forced ? AI_FORCED_MS : 400 + Math.floor(r * 300);
+  return Math.round(base * speedMultiplier(speed));
 }
 
 export function scheduleAiAction(seat, onDone) {
@@ -32,7 +42,7 @@ export function scheduleAiAction(seat, onDone) {
   if (getPlayer(seat).isHuman && localStorage.getItem('durak_autoPlay') !== 'true') return;
 
   var speed = (typeof localStorage !== 'undefined') ? (localStorage.getItem('durak_autoPlaySpeed') || 'normal') : 'normal';
-  var delay = Math.round((500 + Math.floor(Math.random() * 400)) * speedMultiplier(speed));
+  var delay = aiThinkMs(forcedAction(seat) !== null, speed, Math.random());
   aiTimeout = setTimeout(function () {
     aiTimeout = null;
     if (state.phase !== 'playing' && state.phase !== 'pileOn') return;

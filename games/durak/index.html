@@ -17,7 +17,6 @@
     <div id="header">
       <span id="game-title">DURAK</span>
       <span id="trump-display"></span>
-      <span id="status-display"></span>
     </div>
 
     <div id="opponents"></div>
@@ -28,16 +27,19 @@
         <div id="trump-slot"></div>
         <div id="deck-stack"></div>
         <div id="deck-count"></div>
+        <div class="pile-label" id="deck-label">Deck</div>
       </div>
       <div id="discard-zone">
         <div id="discard-stack"></div>
         <div id="discard-count"></div>
+        <div class="pile-label" id="discard-label">Discard</div>
       </div>
-      <div id="pile-banner" class="action-prompt is-pile-on hidden">Defender is taking &mdash; pile on or tap Done</div>
       <div id="field"></div>
     </div>
 
     <div id="human-zone">
+      <!-- What to do now, right above the cards you do it with -->
+      <div id="status-display" role="status" aria-live="polite"></div>
       <!-- Defense choice for a selected card: transfer, beat, or tap a glowing attack -->
       <div id="choice-bar" class="hidden">
         <button class="action-btn choice-transfer hidden" type="button" id="btn-choice-transfer">&#8644; Transfer</button>
