@@ -8,7 +8,8 @@ import {
 import {
   legalAttack, legalDefense, playAttack, playDefense,
   passAttack, declareTake, pileOnPass, endBout, dealInitial, checkGameOver,
-  legalTransfer, playTransfer, defenseTargetIndex, defenseTargets, forcedAction, playForcedAction
+  legalTransfer, playTransfer, defenseTargetIndex, defenseTargets, forcedAction, playForcedAction,
+  shutOutOfThrowIn
 } from '../games/durak/gameplay.js';
 import { _test_aiTurn, speedMultiplier, aiThinkMs, AI_FORCED_MS } from '../games/durak/ai.js';
 import { fieldLayout, pairHeight } from '../games/durak/layout.js';
@@ -305,6 +306,65 @@ test('pileOn: non-adjacent seat cannot throw; cards end up with defender', () =>
   // Bout ended with all cards to defender (seat 1).
   // Original 7♠ + 7♣ from seat 0 + 7♦ from seat 2 = 3 cards.
   assert.equal(state.players[1].hand.length, 3 /*kept*/ + 3);
+});
+
+// ─── Shut out of the throw-in (p1-56) ───────────────────────────────────────
+
+test('shutOutOfThrowIn: nobody at 2–3 players — every other seat sits next to the defender', () => {
+  newGame('ai', 3);
+  state.attackerSeat = 0; state.defenderSeat = 1;
+  assert.equal(shutOutOfThrowIn(0), null);
+  assert.equal(shutOutOfThrowIn(2), null);
+  assert.equal(shutOutOfThrowIn(1), null); // the defender is never "shut out"
+});
+
+test('shutOutOfThrowIn: at 4 players the seat across from the defender gets the two neighbours', () => {
+  newGame('ai', 4);
+  state.attackerSeat = 1; state.defenderSeat = 2;
+  assert.deepEqual(shutOutOfThrowIn(0), [1, 3]);
+  assert.equal(shutOutOfThrowIn(1), null);
+  assert.equal(shutOutOfThrowIn(3), null);
+});
+
+test('shutOutOfThrowIn: at 6 players all three far seats are shut out; an eliminated seat is not', () => {
+  newGame('ai', 6);
+  state.attackerSeat = 0; state.defenderSeat = 1;
+  assert.deepEqual(shutOutOfThrowIn(3), [0, 2]);
+  assert.deepEqual(shutOutOfThrowIn(4), [0, 2]);
+  assert.deepEqual(shutOutOfThrowIn(5), [0, 2]);
+  state.players[4].isOut = true;
+  assert.equal(shutOutOfThrowIn(4), null);
+});
+
+test('shutOutOfThrowIn: Yev\'s bout — a transfer away from the attacker shuts them out of the pile-on', () => {
+  // 4 players, trump ♦. Seat 0 attacks seat 1 with 10♣; seat 1 transfers
+  // with 10♠ to seat 2, who covers both, then takes seat 1's J♥. Seat 0
+  // holds 10♦ and J♦ but sits across from seat 2: neighbours-only (Q1=A).
+  newGame('ai', 4);
+  state.deck = []; state.trumpSuit = 3;
+  state.variantPerevodnoy = true; state.variantFirstTransfer = false;
+  state.attacksThisGame = 5;
+  state.attackerSeat = 0; state.defenderSeat = 1; state.prioritySeat = 0;
+  state.phase = 'playing';
+  state.field.attacks = []; state.field.defenses = []; state.contributionOrder = [];
+  state.players[0].hand = [new Card(10, 2), new Card(10, 3), new Card(11, 3)];
+  state.players[1].hand = [new Card(10, 1), new Card(11, 4), new Card(7, 1)];
+  state.players[2].hand = [new Card(11, 2), new Card(12, 3), new Card(7, 2), new Card(8, 2), new Card(9, 2)];
+  state.players[3].hand = [new Card(12, 1), new Card(7, 4)];
+  const card = (s, v, su) => state.players[s].hand.find(c => c.value === v && c.suit === su);
+
+  assert.equal(shutOutOfThrowIn(0), null); // attacking seat 1, a neighbour
+  playAttack(0, card(0, 10, 2).id);
+  assert.equal(playTransfer(1, card(1, 10, 1).id), true);
+  assert.deepEqual(shutOutOfThrowIn(0), [1, 3]);
+  playDefense(2, card(2, 11, 2).id);
+  playDefense(2, card(2, 12, 3).id);
+  assert.equal(playAttack(1, card(1, 11, 4).id), true);
+  assert.equal(declareTake(2), true);
+  assert.equal(state.phase, 'pileOn');
+  assert.deepEqual(shutOutOfThrowIn(0), [1, 3]);
+  state.prioritySeat = 0;
+  assert.equal(legalAttack(0, card(0, 10, 3)), false, 'the rule itself is unchanged');
 });
 
 // ─── Pile-on cap (p1-53) ────────────────────────────────────────────────────

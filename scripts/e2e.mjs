@@ -1161,6 +1161,39 @@ await test('durak: with 2 open attacks, tap a card then the attack it covers; un
   assert(s.defenses[1] === '82' && !s.bar, 'a card with one possible target should play at once: ' + JSON.stringify(s));
 });
 
+// ── Durak: the status line says why you can't throw in (p1-56) ──────────────
+
+await test('durak: shut out after a transfer — the line above your hand names the neighbours who may throw in (p1-56)', async page => {
+  // Yev's bout: CPU 1 transferred to CPU 2, so only CPU 1 and CPU 3 sit next
+  // to the defender. You hold a 10 and a J, matching the field, but sit across.
+  const hands = [[[10, 3], [11, 3], [14, 2]], [[11, 1], [6, 2]], [[7, 2], [8, 2], [9, 2], [13, 1], [6, 1]], [[12, 1], [7, 3]]];
+  const waitFor = async re => {
+    let s;
+    for (const deadline = Date.now() + 2000; Date.now() < deadline; await sleep(50)) {
+      s = await durakState(page);
+      if (re.test(s.status)) return s;
+    }
+    return s;
+  };
+
+  await durakStart(page, 'ai', 4, {
+    deck: [], attacker: 1, defender: 2, priority: 1,
+    attacks: [[10, 2], [10, 1], [11, 4]], defenses: [[11, 2], [12, 4], null], hands,
+    extra: { phase: 'pileOn' }
+  });
+  let s = await waitFor(/may pile on/);
+  assert(s.status === 'CPU 2 is taking — only CPU 1 and CPU 3 (next to them) may pile on',
+    'pile-on should say who may pile on and why; got "' + s.status + '"');
+
+  await durakStart(page, 'ai', 4, {
+    deck: [], attacker: 1, defender: 2, priority: 1,
+    attacks: [[10, 2], [10, 1]], defenses: [[11, 2], [12, 4]], hands
+  });
+  s = await waitFor(/may throw in/);
+  assert(s.status === 'Only CPU 1 and CPU 3 (next to CPU 2) may throw in',
+    'a throw-in round should say who may throw in; got "' + s.status + '"');
+});
+
 await browser.close();
 server.close();
 

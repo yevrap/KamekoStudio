@@ -76,6 +76,8 @@ const EN = {
   'status.pileOnSelf': taker => `${taker} is taking — pile on more or tap Done`,
   'status.pileOnOther': (name, taker) => `${taker} is taking — ${name} may pile on`,
   'status.pileOnYouTake': name => `You’re taking — ${name} may pile on`,
+  'status.pileOnShutOut': (taker, a, b) => `${taker} is taking — only ${a} and ${b} (next to them) may pile on`,
+  'status.throwInShutOut': (defender, a, b) => `Only ${a} and ${b} (next to ${defender}) may throw in`,
   'status.defend': 'Defend — play a higher card or Take',
   'status.yourAttack': 'Your attack — play a card',
   'status.throwOrPass': 'Throw on or Pass',
@@ -106,7 +108,7 @@ const EN = {
 
   'title': 'DURAK',
   'subtitle': 'Classic Russian card game, 2–6 players',
-  'rulesBlurb': 'Attack with any card; the others may throw in cards of a rank already on the table. Beat each one with a higher card of its suit or a trump — or take them all. The last player still holding cards is the Durak!',
+  'rulesBlurb': 'Attack with any card; the defender’s two neighbours may throw in cards of a rank already on the table. Beat each one with a higher card of its suit or a trump — or take them all. The last player still holding cards is the Durak!',
 
   'hud.trump': 'Trump', 'hud.deck': 'Deck', 'hud.discard': 'Discard',
 
@@ -164,6 +166,8 @@ const RU = {
   'status.pileOnSelf': taker => `${taker} берёт — подкиньте ещё или нажмите «Готово»`,
   'status.pileOnOther': (name, taker) => `${taker} берёт — ${name} может подкинуть`,
   'status.pileOnYouTake': name => `Вы берёте — ${name} может подкинуть`,
+  'status.pileOnShutOut': (taker, a, b) => `${taker} берёт — подкинуть могут только соседи: ${a} и ${b}`,
+  'status.throwInShutOut': (defender, a, b) => `Подкидывать могут только соседи защищающегося: ${a} и ${b}`,
   'status.defend': 'Защищайтесь — сыграйте карту старше или возьмите',
   'status.yourAttack': 'Ваша атака — сыграйте карту',
   'status.throwOrPass': 'Подкиньте карту или пасуйте',
@@ -194,7 +198,7 @@ const RU = {
 
   'title': 'ДУРАК',
   'subtitle': 'Классическая русская карточная игра, 2–6 игроков',
-  'rulesBlurb': 'Атакуйте любой картой; другие могут подкидывать карты того же достоинства, что уже на столе. Бейте каждую старшей картой той же масти или козырем — или заберите все. Последний игрок с картами на руках — Дурак!',
+  'rulesBlurb': 'Атакуйте любой картой; два соседа защищающегося могут подкидывать карты того же достоинства, что уже на столе. Бейте каждую старшей картой той же масти или козырем — или заберите все. Последний игрок с картами на руках — Дурак!',
 
   'hud.trump': 'Козырь', 'hud.deck': 'Колода', 'hud.discard': 'Бито',
 
@@ -235,16 +239,16 @@ export const _RU = RU;
 
 const HOWTO_EN = [
   ['The Goal', `<p>Get rid of all your cards. The last player left holding cards is the Durak (Fool).</p><p>The bottom card of the deck sets the trump suit, which beats every other suit.</p>`],
-  ['Attacking', `<p>Play a card to attack the player to your left. Other players can pile on by playing cards of the same rank as those already in the bout — up to 6 attacks, and never more unbeaten cards than the defender holds, even after they take.</p>`],
+  ['Attacking', `<p>Play a card to attack the player to your left. Only the defender’s two neighbours — the attacker and the player on the defender’s other side — can pile on, with cards of a rank already in the bout; everyone else sits the bout out. Up to 6 attacks, and never more unbeaten cards than the defender holds, even after they take.</p>`],
   ['Defending', `<p>Beat attacks with a higher card of the same suit, or any trump card.</p>`],
-  ['Transfer (Perevodnoy)', `<p>If enabled, you can transfer an attack to the next player by playing a card of the same rank — provided you haven't defended yet and they have enough cards.</p>`],
+  ['Transfer (Perevodnoy)', `<p>If enabled, you can transfer an attack to the next player by playing a card of the same rank — provided you haven't defended yet and they have enough cards. The bout moves with it: now the new defender’s neighbours are the ones who may pile on.</p>`],
   ['Resolution', `<p>If you beat all attacks, the bout is discarded. If you can't or won't defend, you take all the cards on the table. The attacker draws first, then the others, to refill hands back to 6 cards.</p>`],
 ];
 
 const HOWTO_RU = [
   ['Цель игры', `<p>Избавьтесь от всех карт. Последний игрок, у которого остались карты на руках, — Дурак.</p><p>Нижняя карта колоды задаёт козырь — он бьёт карту любой другой масти.</p>`],
-  ['Атака', `<p>Сыграйте карту, чтобы атаковать игрока слева от вас. Остальные могут подкидывать карты того же достоинства, что уже лежат в раунде, — не больше 6 атак, и неотбитых карт не больше, чем карт у защищающегося, даже когда он берёт.</p>`],
+  ['Атака', `<p>Сыграйте карту, чтобы атаковать игрока слева от вас. Подкидывать карты того же достоинства, что уже лежат в раунде, могут только два соседа защищающегося — атакующий и игрок с другой стороны от него; остальные пропускают этот раунд. Не больше 6 атак, и неотбитых карт не больше, чем карт у защищающегося, даже когда он берёт.</p>`],
   ['Защита', `<p>Отбивайте атаки более старшей картой той же масти или любым козырем.</p>`],
-  ['Перевод (переводной)', `<p>Если правило включено, вы можете перевести атаку следующему игроку картой того же достоинства — если вы ещё не отбивались и у него хватает карт.</p>`],
+  ['Перевод (переводной)', `<p>Если правило включено, вы можете перевести атаку следующему игроку картой того же достоинства — если вы ещё не отбивались и у него хватает карт. Раунд переходит вместе с атакой: теперь подкидывать могут соседи нового защищающегося.</p>`],
   ['Итог раунда', `<p>Если вы отбили все атаки, раунд уходит в отбой. Если вы не можете или не хотите защищаться, вы забираете все карты со стола. Атакующий добирает первым, затем остальные — до 6 карт в руке.</p>`],
 ];

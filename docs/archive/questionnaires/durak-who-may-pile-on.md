@@ -1,18 +1,18 @@
 ---
 title: "Durak Questionnaire — Who May Pile On"
 type: questionnaire
-status: open
+status: answered
 game: durak
 created: 2026-10-03
-gates: [p1-56]
+gates: []
 tags: [questionnaire, durak]
 ---
 
 # Durak Questionnaire — Who May Pile On
 
-**Related:** [Studio Dashboard](../README.md) · [Durak](../games/durak/README.md) · [Roadmap](../roadmap.md) · [Playtest log](../playtest-log.md)
+**Related:** [Studio Dashboard](../../README.md) · [Durak](../../games/durak/README.md) · [Roadmap](../../roadmap.md) · [Playtest log](../../playtest-log.md)
 
-> **Status: open — asked 2026-10-03.** Yev, from a phone game (4 players, vs Computer, Transfer on): *"i think i should have been able to add more to the bout but the computer auto played and didn't ask me to pile on."*
+> **Status: answered 2026-10-03 (Q1=A, Q2=A), shipped the same day as p1-56.** Yev: *"no i want the traditional rules for only the nearest neigbors can pile on."* Asked 2026-10-03. Yev, from a phone game (4 players, vs Computer, Transfer on): *"i think i should have been able to add more to the bout but the computer auto played and didn't ask me to pile on."*
 
 ## What happened, replayed in the engine
 
@@ -26,7 +26,7 @@ The rule bites only at 4–6 players: at 2–3, every other seat already sits ne
 
 ## Q1 — At 4–6 players, who may throw cards into a bout? 🔑
 
-- [ ] **A — Neighbours only (today).** Keep the classic rule and fix the Rules and start-screen text to say so. After a transfer, you can still be shut out of a bout you started.
+- [x] **A — Neighbours only (today).** Keep the classic rule and fix the Rules and start-screen text to say so. After a transfer, you can still be shut out of a bout you started.
 - [ ] **B ⭐ — Everyone except the defender, as a start-screen rule switch next to Transfer, on by default.** This is what you expected mid-game, and it's a common way the game is played at home. The switch keeps the classic rule one tap away. Turn order: the attacker first, then clockwise. A seat that passed gets another chance whenever someone adds a card (today's rule, extended to every seat). The 6-card cap and the defender's-hand cap stay. Bouts get harder for the defender, and 5–6 player tables get more AI turns.
 - [ ] **C — Everyone except the defender, always.** Same as B, with no switch; the neighbours-only rule goes away.
 
@@ -34,7 +34,7 @@ The rule bites only at 4–6 players: at 2–3, every other seat already sits ne
 
 *Only matters with A, or with B's switch off.*
 
-- [ ] **A ⭐ — Yes, on the line above your hand.** For example: *"CPU 2 is taking — only CPU 1 and CPU 3 (next to them) may pile on."* Today it says *"CPU 2 is taking — CPU 3 may pile on"* and gives no reason why you can't.
+- [x] **A ⭐ — Yes, on the line above your hand.** For example: *"CPU 2 is taking — only CPU 1 and CPU 3 (next to them) may pile on."* Today it says *"CPU 2 is taking — CPU 3 may pile on"* and gives no reason why you can't.
 - [ ] **B — No.** The Thrower badges on the opponent tiles are enough.
 
 ## Q3 — Free space

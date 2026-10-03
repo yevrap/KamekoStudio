@@ -326,6 +326,18 @@ export function forcedAction(seat) {
   return seat === state.defenderSeat ? 'take' : 'pass';
 }
 
+// The defender's neighbours, when `seat` is an active non-defender who isn't
+// one of them: only those two may throw in, so the status line names them
+// instead of leaving that seat waiting with matching cards (p1-56). Happens
+// at 4+ players — the seat across from the defender, or after a transfer.
+export function shutOutOfThrowIn(seat) {
+  var p = getPlayer(seat);
+  if (!p || p.isOut || seat === state.defenderSeat) return null;
+  var contribs = adjacentContributors();
+  if (contribs.length < 2 || contribs.indexOf(seat) !== -1) return null;
+  return contribs;
+}
+
 export function playForcedAction(seat) {
   var action = forcedAction(seat);
   if (action === 'take') return declareTake(seat);

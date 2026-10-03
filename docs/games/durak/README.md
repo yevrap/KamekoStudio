@@ -16,7 +16,7 @@ tags: [game, card-game]
 Durak is a classic Russian card game for 2–6 players. Modes include vs Computer (1 human + 2–5 AI) and Hot-seat (2–6 humans sharing a device, with a pass-device cover at 3+ players).
 
 ## Rules / Mechanics
-- Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap.
+- Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap. At 4–6 players that leaves the far seats out of a bout, and a transfer moves the bout with it. When you're the one left out, the line above your hand names who may throw in (p1-56, 2026-10-03).
 - Pile-on during the defender's take — capped like any throw-in: unbeaten cards never outnumber the defender's hand (p1-53, 2026-09-30; before that the pile-on was capped only at 6).
 - **Forced moves play themselves** (p1-53, 2026-09-30): when your only legal move is Pass, Done or Take, the game makes it after a 0.7s beat with a status line ("Nothing to throw — passing…" / "Nothing beats it — taking…"). In hot-seat a forced move by the next player is made at once, with no pass-device cover. On your turn, cards you can't legally play are dimmed — on by default, switchable off in ☰ → Play Aids → **Show playable cards** (p1-54, 2026-10-01).
 - Ordered end-of-bout draws (attacker → contributors → defender).
@@ -85,3 +85,8 @@ Source: `games/durak/`
 - [Durak Questionnaire — Perevodnoy UX](../../archive/questionnaires/durak-perevodnoy-ux.md) — answered & archived July 12, 2026 (tap-to-target, inline choice, win semantics)
 - [Russian Localization Sprint](../../archive/plans/durak-russian-localization-sprint-july-2026.md) — p2-36 plan, shipped 2026-07-20, archived
 - [Dev Log](../../archive/dev-logs/arcade.md)
+
+## Decisions & Why (October 3, 2026 — p1-56)
+- **Neighbours-only stays — Yev's call:** in a 4-player game Yev attacked, CPU 1 transferred to CPU 2, and only CPU 1 and CPU 3 were offered the pile-on while Yev sat across holding a 10 and a jack. An agent had picked the neighbours-only rule when multiplayer shipped (`63b56a8`); asked, Yev kept it: "i want the traditional rules for only the nearest neighbors can pile on" ([questionnaire](../../archive/questionnaires/durak-who-may-pile-on.md), Q1=A). An everyone-throws-in switch was offered and declined.
+- **Say why you're left out (Q2=A):** the confusion was the real bug. The line above your hand used to read "CPU 2 is taking — CPU 3 may pile on", which gave no reason you couldn't. When the rule leaves you out it now says *"CPU 2 is taking — only CPU 1 and CPU 3 (next to them) may pile on"*, and in a throw-in round *"Only CPU 1 and CPU 3 (next to CPU 2) may throw in"*. `shutOutOfThrowIn(seat)` in `gameplay.js` decides it, and it's unit-tested at 3, 4 and 6 seats and on Yev's exact bout. It wraps to two lines on a phone, and the hand still fits.
+- **The rules text had said otherwise:** ☰ → Rules said "Other players can pile on" and the start screen said "the others may throw in", which is likely why the shut-out felt like a bug. Both now say only the defender's two neighbours may, and the Transfer rule adds that the bout moves with a transfer (EN and RU).

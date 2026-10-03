@@ -8,7 +8,7 @@ import { state, getPlayer, isTrump, adjacentContributors } from './state.js';
 import { suitEmoji, suitName, cardStrength } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 import { getHardAiMove } from './ai.js';
-import { cardPlayable, forcedAction } from './gameplay.js';
+import { cardPlayable, forcedAction, shutOutOfThrowIn } from './gameplay.js';
 import { logEvent } from './log.js';
 import { t, cardText } from './i18n.js';
 import { fieldLayout } from './layout.js';
@@ -516,12 +516,17 @@ function getStatusText() {
   if (forced === 'take') return t('status.forcedTake');
   if (forced) return t('status.forcedPass');
 
+  var shutOut = shutOutOfThrowIn(viewer);
+  var neighbours = shutOut && shutOut.map(function (s) { return state.players[s].name; });
+  var defenderP = state.players[state.defenderSeat];
+  var defenderName = defenderP ? defenderP.name : '';
+
   // Pile-on says who is taking — it used to need a second banner on the table.
   if (state.phase === 'pileOn') {
-    var taker = state.players[state.defenderSeat];
-    if (state.prioritySeat === viewer) return t('status.pileOnSelf', taker ? taker.name : '');
+    if (state.prioritySeat === viewer) return t('status.pileOnSelf', defenderName);
     if (state.defenderSeat === viewer) return t('status.pileOnYouTake', pName);
-    return t('status.pileOnOther', pName, taker ? taker.name : '');
+    if (neighbours) return t('status.pileOnShutOut', defenderName, neighbours[0], neighbours[1]);
+    return t('status.pileOnOther', pName, defenderName);
   }
 
   // 'playing'
@@ -532,6 +537,9 @@ function getStatusText() {
   }
   if (!priorityP) return '';
   if (state.prioritySeat === state.defenderSeat) return t('status.defending', pName);
+  if (neighbours && state.field.attacks.length > 0) {
+    return t('status.throwInShutOut', defenderName, neighbours[0], neighbours[1]);
+  }
   return t('status.attacking', pName);
 }
 
