@@ -62,6 +62,7 @@ questions are still open. The status here matches each file's frontmatter (a tes
 
 | Questionnaire | Game | Status | Gates |
 |---|---|---|---|
+| [Durak: Who May Pile On](questionnaires/durak-who-may-pile-on.md) | Durak | open | p1-56 |
 | [Keypad Quest: Sprint Direction](questionnaires/keypad-quest-sprint-direction.md) | Keypad Quest | partly-answered | p2-04, p2-45, p2-46, p2-47, p2-49 |
 | [Materials Run: Modernization Direction](questionnaires/materials-run-modernization.md) | Materials Run | partly-answered | p2-06, p2-37, p2-38 |
 | [Maze Warden: Iteration 8 Direction](questionnaires/maze-warden-iteration-8.md) | Maze Warden | partly-answered | the shooting-mechanic rework |
