@@ -81,7 +81,7 @@ Source: `games/durak/`
 
 ## Related
 - [Improvements](ideas.md)
-- [Google AI Studio Remake Prompts](plans/ai-studio-remake.md): a prompt kit (2026-10-07) for building a better-looking Durak in AI Studio's Build mode. It carries the exact rules and the turn-flow lessons above, sets a kitchen-table art direction, and ends with a prompt for bringing the good parts home.
+- [Google AI Studio Prompt: A Simple Version With the Rules Right](plans/ai-studio-remake.md): a prompt (2026-10-07) for a deliberately minimal Durak in AI Studio's Build mode, with no Russian references (Yev's call). It carries the exact rules above, plus a follow-up that makes Gemini prove them on a hidden test page.
 - [Durak Questionnaire — Open Decisions (July 2026)](../../archive/questionnaires/durak-open-decisions-july-2026.md) — answered & archived July 12, 2026 (AI personalities → p2-07 confirmed, token cosmetics → new p2-32, seeded deals → p2-12 confirmed, spectate reveal → p2-27 unblocked)
 - [Durak Questionnaire — Perevodnoy UX](../../archive/questionnaires/durak-perevodnoy-ux.md) — answered & archived July 12, 2026 (tap-to-target, inline choice, win semantics)
 - [Russian Localization Sprint](../../archive/plans/durak-russian-localization-sprint-july-2026.md) — p2-36 plan, shipped 2026-07-20, archived
