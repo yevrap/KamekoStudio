@@ -83,6 +83,7 @@ Source: `games/durak/`
 ## Related
 - [Improvements](ideas.md)
 - [Durak v1 prompt for Google AI Studio](plans/ai-studio-v1-prompt.md) (2026-10-07): one prompt to paste into AI Studio's Build mode. It holds the full rules (with the lowest trump leading) and the instructions for building a simple v1, plus a hidden test page that proves the rules. It has no Russian references, per Yev.
+- [Durak game log prompt for Google AI Studio](plans/ai-studio-log-prompt.md) (2026-10-07): the follow-up prompt to paste after v1. It adds a last-move strip and a full game log that explains each move and pauses the game while open, and it never reveals an opponent's drawn cards.
 - [Durak Questionnaire — Open Decisions (July 2026)](../../archive/questionnaires/durak-open-decisions-july-2026.md) — answered & archived July 12, 2026 (AI personalities → p2-07 confirmed, token cosmetics → new p2-32, seeded deals → p2-12 confirmed, spectate reveal → p2-27 unblocked)
 - [Durak Questionnaire — Perevodnoy UX](../../archive/questionnaires/durak-perevodnoy-ux.md) — answered & archived July 12, 2026 (tap-to-target, inline choice, win semantics)
 - [Russian Localization Sprint](../../archive/plans/durak-russian-localization-sprint-july-2026.md) — p2-36 plan, shipped 2026-07-20, archived
