@@ -10,6 +10,7 @@
 ## Currently open on the repo roadmap (verified 2026-07-18)
 - [x] Tap-to-target defense (`p1-22`) — shipped 2026-09-30 — with 2+ open attacks after a transfer, tap a card then tap the attack it should cover; single-open-attack stays instant.
 - [x] Inline transfer/beat choice (`p1-23`) — shipped 2026-09-30 — replace the centered modal with small inline Transfer/Beat buttons above the hand.
+- [ ] Lowest trump leads (`p1-57`): Yev, 2026-10-07; the next feature to ship.
 - [ ] Coach lines in the 📜 log — distinct styling + hide toggle (`p1-25`).
 - [ ] Smarter AI with tells (`p2-07`) — per-seat personality variation (one hoards trumps, one attacks recklessly) on top of hesitation delays that already exist; pairs with tysiacha's `p2-31`.
 - [ ] Seeded deals + share link (`p2-12`) — confirmed "I'd use this, build it soon" (2026-07-12).

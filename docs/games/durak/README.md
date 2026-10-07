@@ -19,6 +19,7 @@ Durak is a classic Russian card game for 2–6 players. Modes include vs Compute
 - Classic multi-player rules: throw-ins only from the two seats adjacent to the defender, 6-card attack cap. At 4–6 players that leaves the far seats out of a bout, and a transfer moves the bout with it. When you're the one left out, the line above your hand names who may throw in (p1-56, 2026-10-03).
 - Pile-on during the defender's take — capped like any throw-in: unbeaten cards never outnumber the defender's hand (p1-53, 2026-09-30; before that the pile-on was capped only at 6).
 - **Forced moves play themselves** (p1-53, 2026-09-30): when your only legal move is Pass, Done or Take, the game makes it after a 0.7s beat with a status line ("Nothing to throw — passing…" / "Nothing beats it — taking…"). In hot-seat a forced move by the next player is made at once, with no pass-device cover. On your turn, cards you can't legally play are dimmed — on by default, switchable off in ☰ → Play Aids → **Show playable cards** (p1-54, 2026-10-01).
+- **Who leads:** today the human attacks first in every match. Yev wants the classic rule, where the player holding the lowest trump leads (2026-10-07). It's queued as the next feature to ship, [p1-57](../../roadmap.md).
 - Ordered end-of-bout draws (attacker → contributors → defender).
 - Elimination when hand and deck are both empty.
 - Last player holding cards is the Durak.
