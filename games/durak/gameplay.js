@@ -483,12 +483,37 @@ export function checkGameOver() {
 
 // ── Initial deal ───────────────────────────────────────────────────────────
 
-// Draw 6 cards each, starting from the primary attacker and going clockwise.
+// Draw 6 cards each, clockwise from seat 0, then hand the first attack to
+// whoever holds the lowest trump (p1-57).
 export function dealInitial() {
-  var n = state.players.length;
-  for (var step = 0; step < n; step++) {
-    var seat = (state.attackerSeat + step) % n;
+  for (var seat = 0; seat < state.players.length; seat++) {
     var hand = state.players[seat].hand;
     while (hand.length < 6 && state.deck.length > 0) hand.push(state.deck.pop());
   }
+  setOpeningLead(findOpeningLead());
+}
+
+// The seat holding the lowest trump, and that card. Only dealt cards count:
+// the face-up trump under the deck is nobody's until it's drawn, except at 6
+// players, where it is dealt. Nobody holding a trump (possible at 2–3
+// players) falls back to seat 0 with card null.
+export function findOpeningLead() {
+  var lead = { seat: 0, card: null };
+  for (var s = 0; s < state.players.length; s++) {
+    var hand = state.players[s].hand;
+    for (var i = 0; i < hand.length; i++) {
+      var c = hand[i];
+      if (parseInt(c.suit) !== state.trumpSuit) continue;
+      if (!lead.card || parseInt(c.value) < parseInt(lead.card.value)) lead = { seat: s, card: c };
+    }
+  }
+  return lead;
+}
+
+export function setOpeningLead(lead) {
+  state.attackerSeat = lead.seat;
+  state.defenderSeat = nextActiveSeat(lead.seat);
+  state.prioritySeat = lead.seat;
+  state.openingLead = lead;
+  logEvent('lead', { seat: lead.seat, card: lead.card });
 }

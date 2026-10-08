@@ -22,6 +22,7 @@ export var state = {
   attackerPassed: false,                 // primary attacker has passed this round
   contributorPassed: false,              // right-of-defender contributor has passed this round
 
+  openingLead: null,  // { seat, card } from dealInitial(): who attacks first and why; card null = nobody held a trump
   phase: 'start',     // 'start' | 'playing' | 'pileOn' | 'passDevice' | 'paused' | 'gameover'
   pendingReveal: null, // { seat } during passDevice
   selection: null,    // { seat, cardId, transfer, targets } — a defense card awaiting its choice (main.js)
@@ -142,4 +143,5 @@ export function newGame(mode, count) {
   state.attacksThisGame = 0;
   state.boutNum = 1;
   state.log = [];
+  state.openingLead = null;
 }

@@ -13,6 +13,7 @@ import {
 } from '../games/durak/gameplay.js';
 import { _test_aiTurn, speedMultiplier, aiThinkMs, AI_FORCED_MS } from '../games/durak/ai.js';
 import { fieldLayout, pairHeight } from '../games/durak/layout.js';
+import { eventText, leadText } from '../games/durak/log.js';
 
 global.localStorage = {
   _store: {},
@@ -111,6 +112,118 @@ test('newGame + dealInitial: 4-player deal draws 24 total', () => {
 test('hotseat mode marks all players human', () => {
   newGame('hotseat', 3);
   for (let i = 0; i < 3; i++) assert.equal(state.players[i].isHuman, true);
+});
+
+// ─── Opening lead: the lowest trump attacks first (p1-57) ──────────────────
+
+// Stack the deck so dealInitial() hands each seat exactly hands[seat] (six
+// [value, suit] pairs). `under` stays in the deck; its first card is the
+// face-up trump. With no `under` (6 players) the trump is hands[5][5].
+function stackDeal(mode, count, hands, under = []) {
+  newGame(mode, count);
+  const C = ([v, s]) => new Card(v, s);
+  const deck = under.map(C);
+  for (let s = count - 1; s >= 0; s--) deck.push(...hands[s].map(C).reverse());
+  state.deck = deck;
+  state.trumpCard = deck[0];
+  state.trumpSuit = deck[0].suit;
+  dealInitial();
+}
+
+// Six non-trump cards (hearts are trump in these deals).
+const plain = s => [8, 9, 10, 11, 12, 13].map(v => [v, (s % 3) + 1]);
+const plainHands = count => Array.from({ length: count }, (_, s) => plain(s));
+
+test('opening lead: whichever seat holds the lowest trump attacks, the next seat defends', () => {
+  for (let k = 0; k < 4; k++) {
+    const hands = plainHands(4);
+    hands[k][0] = [7, 4];
+    hands[(k + 2) % 4][0] = [9, 4];
+    hands[(k + 3) % 4][1] = [14, 4];
+    stackDeal('ai', 4, hands, [[13, 4]]);
+    assert.equal(state.attackerSeat, k, 'lowest trump 7♥ is at seat ' + k);
+    assert.equal(state.prioritySeat, k);
+    assert.equal(state.defenderSeat, (k + 1) % 4);
+    assert.deepEqual(state.openingLead, { seat: k, card: state.players[k].hand[0] });
+  }
+});
+
+test('opening lead: the face-up trump under the deck is nobody\'s, so it doesn\'t count', () => {
+  const hands = plainHands(2);
+  hands[0][0] = [10, 4];
+  hands[1][0] = [8, 4];
+  stackDeal('ai', 2, hands, [[6, 4], [7, 1]]);
+  assert.equal(state.trumpCard.id, '64');
+  assert.equal(state.deck[0].id, '64', 'the 6♥ is still under the deck');
+  assert.equal(state.attackerSeat, 1);
+  assert.equal(state.openingLead.card.id, '84');
+});
+
+test('opening lead: at 6 players the face-up trump is dealt, so it counts', () => {
+  const hands = plainHands(6);
+  hands[2][0] = [7, 4];
+  hands[5][5] = [6, 4];   // the 36th card: the face-up trump
+  stackDeal('ai', 6, hands);
+  assert.equal(state.deck.length, 0);
+  assert.equal(state.trumpCard.id, '64');
+  assert.equal(state.attackerSeat, 5);
+  assert.equal(state.defenderSeat, 0, 'the defender wraps round to seat 0');
+  assert.equal(state.openingLead.card.id, '64');
+});
+
+test('opening lead: nobody holding a trump falls back to seat 0', () => {
+  stackDeal('ai', 2, plainHands(2), [[6, 4]]);
+  assert.equal(state.attackerSeat, 0);
+  assert.equal(state.defenderSeat, 1);
+  assert.equal(state.prioritySeat, 0);
+  assert.deepEqual(state.openingLead, { seat: 0, card: null });
+});
+
+test('opening lead: the log and the status line say who leads and why', () => {
+  const hands = plainHands(3);
+  hands[2][3] = [7, 4];
+  stackDeal('ai', 3, hands, [[13, 4]]);
+  const lead = state.log.filter(e => e.type === 'lead');
+  assert.equal(lead.length, 1);
+  assert.equal(eventText(lead[0]), 'CPU 2 has the lowest trump, 7❤, and attacks first');
+  assert.equal(leadText(2, state.openingLead.card, true), 'You have the lowest trump, 7❤, and attack first');
+
+  stackDeal('ai', 2, plainHands(2), [[6, 4]]);
+  assert.equal(eventText(state.log[0]), 'Nobody holds a trump — you attack first');
+  stackDeal('hotseat', 2, plainHands(2), [[6, 4]]);
+  assert.equal(eventText(state.log[0]), 'Nobody holds a trump — Player 1 attacks first');
+});
+
+test('opening lead: on random deals at 2–6 players the attacker always holds the lowest dealt trump', () => {
+  for (let count = 2; count <= 6; count++) {
+    for (let i = 0; i < 200; i++) {
+      newGame('ai', count);
+      dealInitial();
+      let low = null;
+      for (const p of state.players) {
+        for (const c of p.hand) if (c.suit === state.trumpSuit && (!low || c.value < low.value)) low = c;
+      }
+      const leader = state.players[state.attackerSeat];
+      if (low) assert.ok(leader.hand.includes(low), count + 'p: leader does not hold ' + low.id);
+      else assert.equal(state.attackerSeat, 0);
+      assert.equal(state.defenderSeat, (state.attackerSeat + 1) % count);
+    }
+  }
+});
+
+test('opening lead: a first-turn transfer still means the match\'s first attack, whoever makes it', () => {
+  const hands = plainHands(3);
+  hands[2][0] = [7, 4];
+  hands[2][1] = [6, 1];
+  hands[0][0] = [6, 2];
+  stackDeal('ai', 3, hands, [[13, 4]]);
+  state.variantPerevodnoy = true;
+  state.variantFirstTransfer = false;
+  assert.equal(playAttack(2, '61'), true);   // CPU 2 leads; you defend
+  assert.equal(state.attacksThisGame, 1);
+  assert.equal(legalTransfer(0, state.players[0].hand[0]), false);
+  state.variantFirstTransfer = true;
+  assert.equal(legalTransfer(0, state.players[0].hand[0]), true);
 });
 
 // ─── Rotation helpers ───────────────────────────────────────────────────────

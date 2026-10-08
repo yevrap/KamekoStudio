@@ -35,6 +35,10 @@ export function aiThinkMs(forced, speed, r) {
   return Math.round(base * speedMultiplier(speed));
 }
 
+// A computer that leads the match holds its first attack this much longer, so
+// the "has the lowest trump and attacks first" line can be read (p1-57).
+export var AI_OPENING_MS = 1500;
+
 export function scheduleAiAction(seat, onDone) {
   clearAiTimeout();
   if (state.phase !== 'playing' && state.phase !== 'pileOn') return;
@@ -43,6 +47,7 @@ export function scheduleAiAction(seat, onDone) {
 
   var speed = (typeof localStorage !== 'undefined') ? (localStorage.getItem('durak_autoPlaySpeed') || 'normal') : 'normal';
   var delay = aiThinkMs(forcedAction(seat) !== null, speed, Math.random());
+  if (state.attacksThisGame === 0) delay += Math.round(AI_OPENING_MS * speedMultiplier(speed));
   aiTimeout = setTimeout(function () {
     aiTimeout = null;
     if (state.phase !== 'playing' && state.phase !== 'pileOn') return;

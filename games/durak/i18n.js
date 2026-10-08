@@ -71,6 +71,11 @@ const EN = {
   'log.coachHint': e => `Coach suggests: ${e.text}`,
   'log.bout': n => `Bout ${n}`,
 
+  'lead.trump': (name, card) => `${name} has the lowest trump, ${card}, and attacks first`,
+  'lead.trumpYou': card => `You have the lowest trump, ${card}, and attack first`,
+  'lead.noTrump': name => `Nobody holds a trump — ${name} attacks first`,
+  'lead.noTrumpYou': 'Nobody holds a trump — you attack first',
+
   'status.paused': 'Paused',
   'status.passDevice': 'Pass device',
   'status.pileOnSelf': taker => `${taker} is taking — pile on more or tap Done`,
@@ -108,7 +113,7 @@ const EN = {
 
   'title': 'DURAK',
   'subtitle': 'Classic Russian card game, 2–6 players',
-  'rulesBlurb': 'Attack with any card; the defender’s two neighbours may throw in cards of a rank already on the table. Beat each one with a higher card of its suit or a trump — or take them all. The last player still holding cards is the Durak!',
+  'rulesBlurb': 'Whoever holds the lowest trump attacks first. Attack with any card; the defender’s two neighbours may throw in cards of a rank already on the table. Beat each one with a higher card of its suit or a trump — or take them all. The last player still holding cards is the Durak!',
 
   'hud.trump': 'Trump', 'hud.deck': 'Deck', 'hud.discard': 'Discard',
 
@@ -161,6 +166,11 @@ const RU = {
   'log.coachHint': e => `Совет: ${e.text}`,
   'log.bout': n => `Раунд ${n}`,
 
+  'lead.trump': (name, card) => `Первый ход — ${name}: младший козырь ${card}`,
+  'lead.trumpYou': card => `Первый ход ваш: у вас младший козырь ${card}`,
+  'lead.noTrump': name => `Козырей ни у кого нет — первый ход: ${name}`,
+  'lead.noTrumpYou': 'Козырей ни у кого нет — первый ход ваш',
+
   'status.paused': 'Пауза',
   'status.passDevice': 'Передайте устройство',
   'status.pileOnSelf': taker => `${taker} берёт — подкиньте ещё или нажмите «Готово»`,
@@ -198,7 +208,7 @@ const RU = {
 
   'title': 'ДУРАК',
   'subtitle': 'Классическая русская карточная игра, 2–6 игроков',
-  'rulesBlurb': 'Атакуйте любой картой; два соседа защищающегося могут подкидывать карты того же достоинства, что уже на столе. Бейте каждую старшей картой той же масти или козырем — или заберите все. Последний игрок с картами на руках — Дурак!',
+  'rulesBlurb': 'Первым ходит тот, у кого младший козырь. Атакуйте любой картой; два соседа защищающегося могут подкидывать карты того же достоинства, что уже на столе. Бейте каждую старшей картой той же масти или козырем — или заберите все. Последний игрок с картами на руках — Дурак!',
 
   'hud.trump': 'Козырь', 'hud.deck': 'Колода', 'hud.discard': 'Бито',
 
@@ -239,6 +249,7 @@ export const _RU = RU;
 
 const HOWTO_EN = [
   ['The Goal', `<p>Get rid of all your cards. The last player left holding cards is the Durak (Fool).</p><p>The bottom card of the deck sets the trump suit, which beats every other suit.</p>`],
+  ['Who Goes First', `<p>The player holding the lowest trump attacks first. The face-up trump under the deck doesn’t count until someone draws it (at 6 players it’s dealt, so it does). If nobody holds a trump, the first seat leads. After that, whoever beats off an attack leads the next bout; whoever takes is skipped.</p>`],
   ['Attacking', `<p>Play a card to attack the player to your left. Only the defender’s two neighbours — the attacker and the player on the defender’s other side — can pile on, with cards of a rank already in the bout; everyone else sits the bout out. Up to 6 attacks, and never more unbeaten cards than the defender holds, even after they take.</p>`],
   ['Defending', `<p>Beat attacks with a higher card of the same suit, or any trump card.</p>`],
   ['Transfer (Perevodnoy)', `<p>If enabled, you can transfer an attack to the next player by playing a card of the same rank — provided you haven't defended yet and they have enough cards. The bout moves with it: now the new defender’s neighbours are the ones who may pile on.</p>`],
@@ -247,6 +258,7 @@ const HOWTO_EN = [
 
 const HOWTO_RU = [
   ['Цель игры', `<p>Избавьтесь от всех карт. Последний игрок, у которого остались карты на руках, — Дурак.</p><p>Нижняя карта колоды задаёт козырь — он бьёт карту любой другой масти.</p>`],
+  ['Кто ходит первым', `<p>Первым атакует игрок с младшим козырем. Открытый козырь под колодой не считается, пока его не возьмут (при 6 игроках он раздаётся, поэтому считается). Если козырей ни у кого нет, первым ходит первое место. Дальше следующий раунд начинает тот, кто отбился; кто взял карты — пропускает ход.</p>`],
   ['Атака', `<p>Сыграйте карту, чтобы атаковать игрока слева от вас. Подкидывать карты того же достоинства, что уже лежат в раунде, могут только два соседа защищающегося — атакующий и игрок с другой стороны от него; остальные пропускают этот раунд. Не больше 6 атак, и неотбитых карт не больше, чем карт у защищающегося, даже когда он берёт.</p>`],
   ['Защита', `<p>Отбивайте атаки более старшей картой той же масти или любым козырем.</p>`],
   ['Перевод (переводной)', `<p>Если правило включено, вы можете перевести атаку следующему игроку картой того же достоинства — если вы ещё не отбивались и у него хватает карт. Раунд переходит вместе с атакой: теперь подкидывать могут соседи нового защищающегося.</p>`],

@@ -9,7 +9,7 @@ import { suitEmoji, suitName, cardStrength } from './constants.js';
 import { buildCardFaceSvg, buildCardBackSvg, suitSvgForWatermark } from './cards.js';
 import { getHardAiMove } from './ai.js';
 import { cardPlayable, forcedAction, shutOutOfThrowIn } from './gameplay.js';
-import { logEvent } from './log.js';
+import { logEvent, leadText } from './log.js';
 import { t, cardText } from './i18n.js';
 import { fieldLayout } from './layout.js';
 
@@ -515,6 +515,12 @@ function getStatusText() {
   var forced = forcedAction(viewer);
   if (forced === 'take') return t('status.forcedTake');
   if (forced) return t('status.forcedPass');
+
+  // Until the first card lands, say who leads and why (p1-57).
+  var lead = state.openingLead;
+  if (lead && state.phase === 'playing' && state.attacksThisGame === 0) {
+    return leadText(lead.seat, lead.card, lead.seat === viewer);
+  }
 
   var shutOut = shutOutOfThrowIn(viewer);
   var neighbours = shutOut && shutOut.map(function (s) { return state.players[s].name; });

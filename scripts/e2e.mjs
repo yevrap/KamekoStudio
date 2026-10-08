@@ -946,7 +946,12 @@ async function durakStart(page, mode, count, table) {
     const { state } = await import('/games/durak/state.js');
     const { Card } = await import('/games/durak/constants.js');
     const { renderAll } = await import('/games/durak/ui.js');
+    const { clearAiTimeout } = await import('/games/durak/ai.js');
     const cards = list => list.map(c => c && new Card(c[0], c[1]));   // null = an open slot
+    // The real deal may have handed the lead to a computer (p1-57), whose
+    // first move would land on the crafted table.
+    clearAiTimeout();
+    state.openingLead = null;
     state.trumpSuit = 4;
     state.deck = cards(t.deck);
     state.attackerSeat = t.attacker; state.defenderSeat = t.defender; state.prioritySeat = t.priority;
@@ -1192,6 +1197,85 @@ await test('durak: shut out after a transfer — the line above your hand names 
   s = await waitFor(/may throw in/);
   assert(s.status === 'Only CPU 1 and CPU 3 (next to CPU 2) may throw in',
     'a throw-in round should say who may throw in; got "' + s.status + '"');
+});
+
+// ── Durak: the lowest trump leads (p1-57) ───────────────────────────────────
+
+// Math.random pinned to 0.3 for the shuffle deals 3 players a hand where
+// CPU 1 holds the lowest trump, 6❤ (8❤ is face up under the deck).
+async function durakPlayPinnedDeal(page, mode, button = '#btn-play') {
+  await page.goto(DURAK, { waitUntil: 'load' });
+  await page.evaluate(() => {
+    localStorage.setItem('durak_perevodnoy', 'false');
+    localStorage.removeItem('durak_autoPlaySpeed');
+  });
+  await page.click('#mode-toggle [data-mode="' + mode + '"]');
+  await page.click('#count-toggle [data-count="3"]');
+  await page.evaluate(() => { window.__random = Math.random; Math.random = () => 0.3; });
+  await page.click(button);
+  await page.evaluate(() => { Math.random = window.__random; });
+}
+
+const durakLog = page => page.evaluate(async () => {
+  const { state } = await import('/games/durak/state.js');
+  return { bout: state.boutNum, log: state.log.map(e => ({ type: e.type, seat: e.seat })),
+           status: document.getElementById('status-display').textContent };
+});
+
+await test('durak: the lowest trump leads — a computer holding it attacks first on its own (p1-57)', async page => {
+  await durakPlayPinnedDeal(page, 'ai');
+  const opening = await page.evaluate(async () => {
+    const { state } = await import('/games/durak/state.js');
+    const { eventText } = await import('/games/durak/log.js');
+    return {
+      attacker: state.attackerSeat, defender: state.defenderSeat, priority: state.prioritySeat,
+      lead: state.openingLead.card.id, trump: state.trumpCard.id,
+      log: state.log.map(eventText),
+      status: document.getElementById('status-display').textContent
+    };
+  });
+  assert(opening.trump === '84' && opening.lead === '64', 'the pinned deal changed: ' + JSON.stringify(opening));
+  assert(opening.attacker === 1 && opening.priority === 1 && opening.defender === 2,
+    'CPU 1 holds the lowest trump and should lead against CPU 2: ' + JSON.stringify(opening));
+  assert(opening.status === 'CPU 1 has the lowest trump, 6❤, and attacks first',
+    'the opening line should say who leads and why; got "' + opening.status + '"');
+  assert(opening.log[0] === opening.status, 'the log should open with the same line: ' + JSON.stringify(opening.log));
+
+  // No input from you: CPU 1 attacks, then CPU 2 answers it.
+  let s;
+  const answered = log => log.some(e => e.seat === 2 && (e.type === 'defend' || e.type === 'take'));
+  for (const deadline = Date.now() + 6000; Date.now() < deadline; await sleep(100)) {
+    s = await durakLog(page);
+    if (answered(s.log)) break;
+  }
+  const first = s.log.find(e => e.type === 'attack');
+  assert(first && first.seat === 1, 'CPU 1 never made the first attack: ' + JSON.stringify(s));
+  assert(answered(s.log), 'CPU 2 never answered the opening attack: ' + JSON.stringify(s));
+  assert(!/lowest trump/.test(s.status), 'the opening line outlived the first attack: "' + s.status + '"');
+});
+
+await test('durak: Watch Mode — a computer leader opens and the first bout plays out (p1-57)', async page => {
+  await durakPlayPinnedDeal(page, 'ai', '#btn-watch');
+  let s;
+  for (const deadline = Date.now() + 10000; Date.now() < deadline; await sleep(100)) {
+    s = await durakLog(page);
+    if (s.bout >= 2) break;
+  }
+  await page.evaluate(() => localStorage.setItem('durak_autoPlay', 'false'));
+  const first = s.log.find(e => e.type === 'attack');
+  assert(first && first.seat === 1, 'CPU 1 should open the watched match: ' + JSON.stringify(s));
+  assert(s.bout >= 2, 'the first watched bout never finished: ' + JSON.stringify(s));
+});
+
+await test('durak: hot-seat — the pass-device cover goes to the player holding the lowest trump (p1-57)', async page => {
+  await durakPlayPinnedDeal(page, 'hotseat');
+  const cover = await page.evaluate(() => document.getElementById('pass-device-name').textContent);
+  assert(cover === 'Player 2', 'the opening cover should name Player 2 (seat 1), got "' + cover + '"');
+  await page.click('#pass-device-overlay');
+  await sleep(200);
+  const status = await page.evaluate(() => document.getElementById('status-display').textContent);
+  assert(status === 'You have the lowest trump, 6❤, and attack first',
+    'the leader should be told why they go first; got "' + status + '"');
 });
 
 await browser.close();

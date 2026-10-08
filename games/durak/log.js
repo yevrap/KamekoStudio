@@ -12,12 +12,23 @@ function formatCard(card) {
     return cardText(card);
 }
 
+// Who attacks first and why (p1-57) — the log entry and the opening status
+// line. `isYou` picks the second-person form for the seat reading it.
+export function leadText(seat, card, isYou) {
+    const p = getPlayer(seat);
+    const name = p ? p.name : '';
+    if (!card) return isYou ? t('lead.noTrumpYou') : t('lead.noTrump', name);
+    return isYou ? t('lead.trumpYou', cardText(card)) : t('lead.trump', name, cardText(card));
+}
+
 export function eventText(e) {
     const p = e.seat !== undefined ? getPlayer(e.seat) : null;
     const name = p ? p.name : 'Unknown';
     const ctx = { name, cardText: formatCard(e.card) };
 
     switch (e.type) {
+        case 'lead':
+            return leadText(e.seat, e.card, state.mode === 'ai' && e.seat === 0);
         case 'attack':
             return t('log.attack', ctx);
         case 'defend':
