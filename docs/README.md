@@ -62,6 +62,7 @@ questions are still open. The status here matches each file's frontmatter (a tes
 
 | Questionnaire | Game | Status | Gates |
 |---|---|---|---|
+| [In-Game Rule Checks](questionnaires/in-game-checks.md) | studio-wide | open | p1-59, p1-60, p1-61, p2-53 |
 | [Keypad Quest: Sprint Direction](questionnaires/keypad-quest-sprint-direction.md) | Keypad Quest | partly-answered | p2-04, p2-45, p2-46, p2-47, p2-49 |
 | [Materials Run: Modernization Direction](questionnaires/materials-run-modernization.md) | Materials Run | partly-answered | p2-06, p2-37, p2-38 |
 | [Maze Warden: Iteration 8 Direction](questionnaires/maze-warden-iteration-8.md) | Maze Warden | partly-answered | the shooting-mechanic rework |
